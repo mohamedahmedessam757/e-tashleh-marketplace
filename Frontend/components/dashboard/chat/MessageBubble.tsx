@@ -206,18 +206,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAcceptO
                 </div>
               )}
 
-              {(message.text || message.translationPending) && (
+              {message.text && (
                 <div className="relative">
-                  {message.translationPending ? (
-                    <TranslationTypingIndicator />
-                  ) : (
-                    <TypewriterText
-                      text={message.text}
-                      active={!!message.animateTranslation}
-                      className="text-sm leading-relaxed whitespace-pre-wrap"
-                    />
+                  <TypewriterText
+                    text={message.text}
+                    active={!!message.animateTranslation}
+                    className="text-sm leading-relaxed whitespace-pre-wrap"
+                  />
+                  {message.translationPending && (
+                    <div className="mt-1">
+                      <TranslationTypingIndicator />
+                    </div>
                   )}
-                  {message.isTranslated && !message.translationPending && (
+                  {message.isTranslated && (
                     <div className="flex items-center gap-1 mt-1 text-[10px] text-gold-400 font-medium">
                       <Globe size={10} />
                       <span>{language === 'ar' ? 'مترجم تلقائياً' : 'Auto-Translated'}</span>

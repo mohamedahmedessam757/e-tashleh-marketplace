@@ -237,6 +237,20 @@ pm2 logs e-tashleh-api --lines 50
 □ الموقع يفتح على https://e-tashleh.net
 ```
 
+## تحديثات بعد النشر (git pull)
+
+```bash
+cd /var/www/e-tashleh
+git pull
+cd backend && npm install --legacy-peer-deps && npm run build
+cd ../Frontend && npm install --legacy-peer-deps && npm run build
+sudo cp deploy/nginx/e-tashleh.conf /etc/nginx/sites-available/e-tashleh
+sudo nginx -t && sudo systemctl reload nginx
+pm2 restart e-tashleh-api
+```
+
+**backend `.env` (OTP logo):** احذف `RESEND_LOGO_URL` إن كان يشير لـ Google Drive — الشعار يُضمَّن تلقائياً من `backend/assets/logo-email.png`.
+
 ## المرحلة 3
 
 اختبارات Go-Live الكاملة (دفع، OTP، chat، cron).

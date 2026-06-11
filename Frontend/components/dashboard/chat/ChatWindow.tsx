@@ -446,14 +446,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
 
         {displayChat.messages?.map((msg: any) => {
           const wantsTranslation = isTranslationEnabled && !!msg.text;
-          const translationPending =
-            !!msg.translationPending || (wantsTranslation && !msg.translatedText);
+          const translationPending = !!msg.translationPending;
           const displayText =
-            translationPending
-              ? ''
-              : wantsTranslation && msg.translatedText
-                ? msg.translatedText
-                : msg.text;
+            wantsTranslation && msg.translatedText
+              ? msg.translatedText
+              : msg.text;
           return (
           <MessageBubble
             key={msg.id}

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
-import { EmailConfig } from './email.config';
+import { EMAIL_LOGO_CID, EmailConfig } from './email.config';
 import { buildOtpEmail, type OtpEmailLanguage } from './templates/otp-email.template';
 import type { OtpPurpose } from '../auth/otp-purpose';
 
@@ -47,12 +47,24 @@ export class EmailChannelService {
         });
 
         try {
+            const attachments =
+                this.config.useEmbeddedLogo && this.config.embeddedLogoBuffer
+                    ? [
+                          {
+                              filename: 'logo.png',
+                              content: this.config.embeddedLogoBuffer,
+                              contentId: EMAIL_LOGO_CID,
+                          },
+                      ]
+                    : undefined;
+
             const { data, error } = await this.client.emails.send({
                 from: this.config.fromEmail,
                 to: params.to,
                 subject: content.subject,
                 html: content.html,
                 text: content.text,
+                attachments,
             });
 
             if (error) {

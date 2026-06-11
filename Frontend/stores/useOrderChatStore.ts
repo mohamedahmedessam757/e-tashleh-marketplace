@@ -12,7 +12,7 @@ export interface OrderChatMessage {
     translatedText?: string;
     /** Play typewriter reveal once when translation just arrived */
     revealTranslation?: boolean;
-    /** Optimistic: waiting for translation (show typing dots, hide source language) */
+    /** Optimistic temp-* only: waiting for API confirm (text still shown) */
     translationPending?: boolean;
     mediaUrl?: string;
     mediaType?: string;
@@ -210,7 +210,7 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
             mediaName,
             priority,
             subject,
-            translationPending: !!(translationEnabled && text?.trim()),
+            translationPending: true,
         };
 
         set((state) => ({
@@ -231,9 +231,11 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
             });
 
             // Replace temp message with real DB message immediately (no wait for WebSocket)
+            const mapped = mapSupabaseMessage(response.data);
             const realMessage = {
-                ...mapSupabaseMessage(response.data),
-                revealTranslation: !!(translationEnabled && mapSupabaseMessage(response.data).translatedText),
+                ...mapped,
+                translationPending: false,
+                revealTranslation: !!(translationEnabled && mapped.translatedText),
             };
             set((state) => {
                 if (!state.activeChat) return state;
@@ -408,6 +410,7 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
                                     ? {
                                         ...m,
                                         translatedText: message.translatedText,
+                                        translationPending: false,
                                         revealTranslation: !!message.translatedText,
                                     }
                                     : m

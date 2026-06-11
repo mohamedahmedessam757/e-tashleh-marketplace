@@ -399,21 +399,12 @@ export class ChatService {
             (chat.adminTranslationEnabledAt && chat.adminTranslationEnabledAt <= messageCreatedAt)
         );
 
-        let translatedText: string | null = null;
-        if (shouldTranslate && text?.trim() && this.openRouterService.isConfigured()) {
-            try {
-                translatedText = await this.openRouterService.translateMarketplaceMessage(text);
-            } catch (e: any) {
-                console.error('Inline translation failed:', e?.message || e);
-            }
-        }
-
         const message = await this.prisma.orderChatMessage.create({
             data: {
                 chatId,
                 senderId: senderId || undefined,
                 text: text || '',
-                translatedText,
+                translatedText: null,
                 mediaUrl,
                 mediaType,
                 mediaName,
@@ -431,7 +422,7 @@ export class ChatService {
             console.error('WebSocket dispatch failed', e);
         }
 
-        if (shouldTranslate && text && !translatedText) {
+        if (shouldTranslate && text?.trim()) {
             this.translateMessageInBackground(message.id, chatId, text).catch((e) => {
                 console.error('Background translation failed:', e?.message || e);
             });

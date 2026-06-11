@@ -24,7 +24,10 @@ interface TypewriterTextProps {
   className?: string;
 }
 
-/** Reveals translated text character-by-character for a live-typing feel */
+const INSTANT_REVEAL_MAX_CHARS = 40;
+const MAX_REVEAL_MS = 400;
+
+/** Reveals translated text quickly; instant for short messages */
 export const TypewriterText: React.FC<TypewriterTextProps> = ({ text, active, className }) => {
   const [displayed, setDisplayed] = useState(active ? '' : text);
 
@@ -33,18 +36,25 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({ text, active, cl
       setDisplayed(text);
       return;
     }
-    setDisplayed('');
-    if (!text) return;
+    if (!text) {
+      setDisplayed('');
+      return;
+    }
+    if (text.length <= INSTANT_REVEAL_MAX_CHARS) {
+      setDisplayed(text);
+      return;
+    }
 
+    setDisplayed('');
     let index = 0;
-    const chars = Math.max(12, Math.min(40, Math.floor(600 / text.length)));
+    const stepMs = Math.max(4, Math.min(12, Math.floor(MAX_REVEAL_MS / text.length)));
     const timer = window.setInterval(() => {
       index += 1;
       setDisplayed(text.slice(0, index));
       if (index >= text.length) {
         window.clearInterval(timer);
       }
-    }, chars);
+    }, stepMs);
 
     return () => window.clearInterval(timer);
   }, [text, active]);

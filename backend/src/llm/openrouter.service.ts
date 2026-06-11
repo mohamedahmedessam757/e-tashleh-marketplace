@@ -107,7 +107,7 @@ Reply with exactly one word: VIOLATION or CLEAN. Do not explain or add anything 
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userText },
             ],
-            { maxTokens: 512, timeoutMs: 15_000 },
+            { maxTokens: 512, timeoutMs: 8_000 },
         );
         if (!raw?.trim()) return null;
         return this.sanitizeModelOutput(raw);
