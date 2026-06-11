@@ -3,8 +3,16 @@
 **/.env.local
 **/.env.*.local
 
+# Dependencies & build
+**/node_modules/
+**/dist/
+**/.next/
+
 # OS / IDE
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+
+# Legacy reference (not deployed)
+vue-ts-e-tashlehnet-1/

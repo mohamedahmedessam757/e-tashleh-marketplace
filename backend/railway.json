@@ -1,0 +1,19 @@
+{
+    "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "npm install && npx prisma generate && npm run build",
+        "nixpacksPlan": {
+            "providers": [
+                "node"
+            ],
+            "variables": {
+                "NIXPACKS_NODE_VERSION": "20"
+            }
+        }
+    },
+    "deploy": {
+        "startCommand": "npm run start:prod",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 5
+    }
+}

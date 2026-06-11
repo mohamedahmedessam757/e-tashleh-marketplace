@@ -1,0 +1,43 @@
+import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+import { OrderCleanupService } from './order-cleanup.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { OrdersModule } from '../orders/orders.module'; // To access OrderStateMachine
+import { NotificationsModule } from '../notifications/notifications.module';
+import { EscrowCronService } from './escrow-cron.service';
+import { PaymentsModule } from '../payments/payments.module';
+import { StoreSuspensionService } from './store-suspension.service';
+import { ViolationDecayService } from './violation-decay.service';
+import { SecurityMaintenanceService } from './security-maintenance.service';
+import { WarrantyExpirationService } from './warranty-expiration.service';
+import { WithdrawalReminderService } from './withdrawal-reminder.service';
+import { MerchantGovernanceService } from './merchant-governance.service';
+import { OfferGovernanceNotifyService } from './offer-governance-notify.service';
+import { MerchantPerformanceModule } from '../merchant-performance/merchant-performance.module';
+import { MerchantPerformanceCronService } from '../merchant-performance/merchant-performance-cron.service';
+import { ViolationsModule } from '../violations/violations.module';
+
+@Module({
+    imports: [
+        ScheduleModule.forRoot(),
+        PrismaModule,
+        OrdersModule,
+        NotificationsModule,
+        PaymentsModule,
+        MerchantPerformanceModule,
+        ViolationsModule,
+    ],
+    providers: [
+        OrderCleanupService, 
+        EscrowCronService, 
+        StoreSuspensionService, 
+        ViolationDecayService,
+        SecurityMaintenanceService,
+        WarrantyExpirationService,
+        WithdrawalReminderService,
+        MerchantGovernanceService,
+        MerchantPerformanceCronService,
+        OfferGovernanceNotifyService,
+    ],
+})
+export class SchedulerModule { }
