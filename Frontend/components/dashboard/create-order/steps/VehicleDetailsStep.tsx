@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Car, Calendar, Hash, Camera, Info, ChevronDown, AlertCircle } from 'lucide-react';
+import { Car, Calendar, Hash, Camera, Info, ChevronDown, AlertCircle, HelpCircle } from 'lucide-react';
 import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useCatalogStore } from '../../../../stores/useCatalogStore';
@@ -164,6 +164,14 @@ export const VehicleDetailsStep: React.FC = () => {
         <div className="space-y-2">
           <label className="text-sm font-medium text-white/80 flex items-center gap-2">
             {t.dashboard.createOrder.vehicle.vin} <span className="text-white/30 text-xs">({t.common.optional})</span>
+            <button
+              type="button"
+              className="text-gold-500/70 hover:text-gold-400 transition-colors"
+              title={(t.dashboard.createOrder.vehicle as { vinTooltip?: string }).vinTooltip}
+              aria-label={(t.dashboard.createOrder.vehicle as { vinTooltip?: string }).vinTooltip}
+            >
+              <HelpCircle size={14} />
+            </button>
             {vehicle.vinImage && <span className="text-green-400 text-xs px-2 bg-green-500/10 rounded-full">{language === 'ar' ? 'تم إرفاق الصورة' : 'Image Attached'}</span>}
           </label>
           <div className="relative">

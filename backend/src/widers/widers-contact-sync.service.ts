@@ -129,6 +129,8 @@ export class WidersContactSyncService {
             return { synced: false, skipped: true };
         }
 
+        const phone = this.widers.normalizePhone(user.phone, user.countryCode);
+
         const audience = this.audienceFromRole(user.role);
         if (!audience) {
             return { synced: false, skipped: true };
@@ -143,7 +145,7 @@ export class WidersContactSyncService {
 
         const result = await this.callMakeContact(
             {
-                phone: user.phone,
+                phone,
                 name: user.name?.trim() || undefined,
                 email: user.email,
                 groups:

@@ -248,6 +248,12 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const [isSavingBank, setIsSavingBank] = useState(false);
     const [showBankForm, setShowBankForm] = useState(false);
 
+    const availableBalance = isLoading ? null : Number(stats?.customerBalance ?? 0);
+    const canWithdraw =
+        !stats?.withdrawalsFrozen &&
+        availableBalance !== null &&
+        availableBalance >= withdrawalLimits.min;
+
     useEffect(() => {
         fetchWalletData();
         fetchWithdrawals();
@@ -1203,13 +1209,21 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                             value={withdrawAmount}
                                             onChange={(e) => setWithdrawAmount(e.target.value)}
                                             placeholder="0.00"
-                                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all"
+                                            disabled={!canWithdraw || stats?.withdrawalsFrozen}
+                                            className={`w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all ${!canWithdraw ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     </div>
                                     <div className="flex justify-between text-[10px] font-bold">
-                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available Balance:'} <span className="text-emerald-400 font-black">{(stats?.customerBalance || 0).toLocaleString()} AED</span></span>
+                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available Balance:'} <span className="text-emerald-400 font-black">{isLoading ? '…' : `${(stats?.customerBalance ?? 0).toLocaleString()} AED`}</span></span>
                                         <span className="text-white/30">{isAr ? 'الحد الأدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
+                                    {!canWithdraw && !isLoading && !stats?.withdrawalsFrozen && (
+                                        <p className="text-[10px] text-white/40">
+                                            {isAr
+                                                ? `الحد الأدنى للسحب ${withdrawalLimits.min} AED — رصيدك الحالي غير كافٍ`
+                                                : `Minimum withdrawal is ${withdrawalLimits.min} AED — your balance is insufficient`}
+                                        </p>
+                                    )}
                                     
                                     {withdrawError && (
                                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-[10px] font-bold animate-shake">
@@ -1224,10 +1238,10 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                     
                                     <button 
                                         type="submit"
-                                        disabled={isSubmitting || !withdrawAmount || stats?.withdrawalsFrozen}
+                                        disabled={isSubmitting || !withdrawAmount || stats?.withdrawalsFrozen || !canWithdraw}
                                         className={`w-full py-4 font-black uppercase tracking-[3px] text-xs rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 mt-4 ${
-                                            stats?.withdrawalsFrozen 
-                                            ? 'bg-white/5 text-white/20 border border-white/10 cursor-not-allowed' 
+                                            stats?.withdrawalsFrozen || !canWithdraw
+                                            ? 'bg-white/5 text-white/20 border border-white/10 cursor-not-allowed opacity-50' 
                                             : 'bg-gold-500 hover:bg-gold-400 text-black shadow-gold-500/10'
                                         }`}
                                     >

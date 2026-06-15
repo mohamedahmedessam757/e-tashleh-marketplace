@@ -26,7 +26,8 @@ import { OrderInvoicesPanel } from '../shared/OrderInvoicesPanel';
 import { OrderWaybillsPanel } from '../shared/OrderWaybillsPanel';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../../utils/orderSla';
 import { shouldShowAdminVerificationSections } from '../../../utils/orderVerificationVisibility';
-import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
+import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../../ui/VerificationPhaseBanner';
+import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
@@ -423,7 +424,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 )}
                             </div>
                             <div className="text-white/60 text-sm flex flex-wrap items-center gap-2">
-                                <span>{(t.dashboard.orders as any)?.orderId || 'Order #'} {order.id}</span>
+                                <span>{(t.dashboard.orders as any)?.orderId || 'Order #'} {formatOrderDisplayId(order)}</span>
                                 <span>•</span>
                                 <span>{order.vehicle?.make ? `${order.vehicle.make} ${order.vehicle.model}` : order.car}</span>
                             </div>
@@ -493,6 +494,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         
                         return !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
                             <div className="p-6">
+                                {shouldShowVerificationBanner(order.status) && (
+                                    <VerificationPhaseBanner className="mb-6" />
+                                )}
                                 <div className="flex justify-between items-center mb-6">
                                     <StatusTimeline
                                         currentStatus={order.status}
@@ -526,6 +530,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             </div>
                         ) : (
                             <div className="p-6">
+                                {shouldShowVerificationBanner(order.status) && (
+                                    <VerificationPhaseBanner className="mb-6" />
+                                )}
                                 <StatusTimeline
                                     currentStatus={order.status}
                                     fulfillmentSummary={fulfillmentSummary}

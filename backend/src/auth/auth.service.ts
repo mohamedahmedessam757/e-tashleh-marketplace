@@ -19,6 +19,8 @@ import { PlatformSettingsService } from '../platform-settings/platform-settings.
 import { OtpService } from './otp.service';
 import { OtpPurpose, OtpChannel } from './otp-purpose';
 import { WidersContactSyncService } from '../widers/widers-contact-sync.service';
+import { WhatsAppChannelService } from '../widers/whatsapp-channel.service';
+import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import { resolveJwtExpiresIn } from './jwt-expiry.util';
 
 @Injectable()
@@ -33,6 +35,7 @@ export class AuthService {
         private platformSettings: PlatformSettingsService,
         private otpService: OtpService,
         private contactSync: WidersContactSyncService,
+        private whatsappChannel: WhatsAppChannelService,
     ) { }
 
     private scheduleWidersContactSync(user: {
@@ -240,7 +243,39 @@ export class AuthService {
                 `Widers contact sync after register failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
             ),
         );
+        void this.sendWelcomeWhatsApp(user).catch((err) =>
+            this.logger.warn(
+                `Welcome WhatsApp after register failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
+            ),
+        );
         return user;
+    }
+
+    private async sendWelcomeWhatsApp(user: {
+        id: string;
+        phone: string | null;
+        countryCode: string | null;
+        name: string;
+        role: string;
+        whatsappOptIn?: boolean;
+    }): Promise<void> {
+        if (!user.phone || user.whatsappOptIn === false) return;
+
+        const family =
+            user.role === 'VENDOR'
+                ? 'welcome_vendor'
+                : user.role === 'CUSTOMER'
+                  ? 'welcome_customer'
+                  : null;
+        if (!family) return;
+
+        const phone = normalizeGulfPhone(user.phone, user.countryCode);
+        await this.whatsappChannel.sendByFamily(family, {
+            phone,
+            language: 'ar',
+            fields: { name: user.name?.trim() || 'مستخدم' },
+            logContext: { recipientUserId: user.id },
+        });
     }
 
     async initRegistration(

@@ -1111,22 +1111,66 @@ export class OrdersService {
     }
 
     async renewOrder(orderId: string, userId: string) {
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                parts: true,
+                _count: { select: { offers: true } },
+            },
+        });
         if (!order) throw new NotFoundException('Order not found');
         if (order.customerId !== userId) throw new ForbiddenException('Only owner can renew order');
 
-        const newDeadline = new Date();
-        newDeadline.setHours(newDeadline.getHours() + 24);
+        const isMultiPart =
+            order.requestType === 'multiple' || (order.parts?.length ?? 0) > 1;
+        if (isMultiPart) {
+            throw new BadRequestException('Only single-part orders can be renewed');
+        }
+
+        if (order._count.offers > 0) {
+            throw new BadRequestException('Cannot renew an order that already has offers');
+        }
+
+        const allowedStatuses: OrderStatus[] = [
+            OrderStatus.CANCELLED,
+            OrderStatus.AWAITING_SELECTION,
+            OrderStatus.COLLECTING_OFFERS,
+            OrderStatus.AWAITING_OFFERS,
+        ];
+        if (!allowedStatuses.includes(order.status)) {
+            throw new BadRequestException('Order is not eligible for renewal');
+        }
+
+        const renewalCount = await this.prisma.auditLog.count({
+            where: { orderId, action: 'ORDER_RENEWED' },
+        });
+        if (renewalCount >= 2) {
+            throw new BadRequestException('Maximum renewals reached for this order');
+        }
+
+        const lastRenew = await this.prisma.auditLog.findFirst({
+            where: { orderId, action: 'ORDER_RENEWED' },
+            orderBy: { timestamp: 'desc' },
+        });
+        if (lastRenew && Date.now() - lastRenew.timestamp.getTime() < 24 * 60 * 60 * 1000) {
+            throw new BadRequestException('Please wait 24 hours before renewing again');
+        }
+
+        const now = Date.now();
+        const newDeadline = new Date(now + 24 * 60 * 60 * 1000);
+        const offersStopAt = new Date(now + 23.75 * 60 * 60 * 1000);
 
         const updated = await this.prisma.order.update({
             where: { id: orderId },
             data: {
-                status: OrderStatus.AWAITING_OFFERS,
+                status: OrderStatus.COLLECTING_OFFERS,
+                revealOffersAt: newDeadline,
                 offersDeadlineAt: newDeadline,
-            }
+                offersStopAt,
+                selectionDeadlineAt: null,
+            },
         });
 
-        // Audit Log
         await this.auditLogs.logAction({
             orderId,
             action: 'ORDER_RENEWED',
@@ -1135,8 +1179,41 @@ export class OrdersService {
             actorId: userId,
             actorName: 'Customer',
             reason: 'Order renewed by customer (24h extension)',
-            metadata: { oldDeadline: order.offersDeadlineAt, newDeadline }
+            metadata: {
+                oldDeadline: order.offersDeadlineAt,
+                newDeadline,
+                renewalCount: renewalCount + 1,
+            },
         });
+
+        try {
+            const matchingStores = await this.prisma.store.findMany({
+                where: {
+                    status: 'ACTIVE',
+                    OR: [
+                        { selectedMakes: { has: order.vehicleMake } },
+                        { customMake: { equals: order.vehicleMake, mode: 'insensitive' } },
+                    ],
+                },
+                select: { ownerId: true },
+            });
+
+            for (const store of matchingStores) {
+                await this.notifications.create({
+                    recipientId: store.ownerId,
+                    recipientRole: 'MERCHANT',
+                    titleAr: 'طلب مُجدَّد — فرصة جديدة',
+                    titleEn: 'Renewed order — new opportunity',
+                    messageAr: `تم تجديد الطلب #${order.orderNumber}. قدّم عرضك خلال 24 ساعة.`,
+                    messageEn: `Order #${order.orderNumber} was renewed. Submit your offer within 24 hours.`,
+                    type: 'ORDER',
+                    link: `/merchant/orders/${order.id}`,
+                    metadata: { orderId: order.id, orderNumber: order.orderNumber },
+                }).catch(() => {});
+            }
+        } catch (e) {
+            console.error('Failed to notify merchants of order renewal', e);
+        }
 
         return updated;
     }

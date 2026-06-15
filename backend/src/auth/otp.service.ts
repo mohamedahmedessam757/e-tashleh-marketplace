@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WhatsAppChannelService } from '../widers/whatsapp-channel.service';
+import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import { WidersConfig } from '../widers/widers.config';
 import { EmailChannelService } from '../email/email-channel.service';
 import { EmailConfig } from '../email/email.config';
@@ -55,8 +56,8 @@ export class OtpService {
         private readonly emailConfig: EmailConfig,
     ) {}
 
-    private normalizePhone(phone: string): string {
-        return phone.replace(/\s+/g, '').trim();
+    private normalizePhone(phone: string, countryCode?: string | null): string {
+        return normalizeGulfPhone(phone, countryCode);
     }
 
     private generateCode(): string {

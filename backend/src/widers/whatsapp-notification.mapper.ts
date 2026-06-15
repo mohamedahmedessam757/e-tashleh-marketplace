@@ -108,6 +108,10 @@ export function resolveTemplateFamily(
         return 'txn_document_vendor';
     }
 
+    if (type === 'OFFER') {
+        return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+    }
+
     if (type === 'SHIPMENT_UPDATE') {
         return role === 'CUSTOMER' ? 'txn_shipment_customer' : 'txn_shipment_merchant';
     }

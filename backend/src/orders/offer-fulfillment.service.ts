@@ -428,6 +428,7 @@ export class OfferFulfillmentService {
             messageEn: `Verification for "${partName}" is under admin review.`,
             type: 'ORDER',
             link: `/dashboard/orders/${order.id}`,
+            metadata: { offerId, orderId, verification: true },
         }).catch(() => {});
 
         return { success: true, orderStatus: newStatus };

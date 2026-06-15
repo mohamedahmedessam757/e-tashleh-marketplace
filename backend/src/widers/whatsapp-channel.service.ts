@@ -19,6 +19,7 @@ import {
     type NotificationDispatchInput,
 } from './whatsapp-notification.mapper';
 import { WhatsAppMessageLogService } from './whatsapp-message-log.service';
+import { resolveUserPhone } from '../common/phone/gulf-phone.util';
 
 export interface WhatsAppDispatchContext {
     phone: string;
@@ -190,6 +191,7 @@ export class WhatsAppChannelService {
                 where: { id: params.recipientId },
                 select: {
                     phone: true,
+                    countryCode: true,
                     name: true,
                     whatsappOptIn: true,
                     settings: { select: { preferredLanguage: true } },
@@ -198,6 +200,9 @@ export class WhatsAppChannelService {
             });
 
             if (!user?.phone || user.whatsappOptIn === false) return;
+
+            const normalizedPhone = resolveUserPhone(user.phone, user.countryCode);
+            if (!normalizedPhone) return;
 
             const orderId = extractOrderId(params.metadata, params.link);
             const offerId = extractOfferId(params.metadata);
@@ -248,7 +253,7 @@ export class WhatsAppChannelService {
             }
 
             const result = await this.sendByFamily(family, {
-                phone: user.phone,
+                phone: normalizedPhone,
                 language: lang,
                 fields,
                 orderId: orderId ?? undefined,
@@ -258,7 +263,7 @@ export class WhatsAppChannelService {
 
             if (!result.sent) {
                 this.logger.warn(
-                    `WhatsApp maybeSend failed (${family}) → ${user.phone}: ${result.error}`,
+                    `WhatsApp maybeSend failed (${family}) → ${normalizedPhone}: ${result.error}`,
                 );
             }
         } catch (err) {

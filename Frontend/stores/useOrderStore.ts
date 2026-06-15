@@ -1235,7 +1235,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         set({ isLoading: true });
         try {
             await ordersApi.renew(id);
-            await get().fetchOrders(); // Full refresh to get new deadline
+            await get().fetchOrder(id);
+            await get().fetchOrders();
+            set({ isLoading: false });
             return true;
         } catch (err) {
             console.error('Failed to renew order', err);

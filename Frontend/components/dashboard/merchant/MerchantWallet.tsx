@@ -279,6 +279,12 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const [showBankForm, setShowBankForm] = useState(false);
     const [stripeSuccess, setStripeSuccess] = useState(false);
 
+    const merchantAvailable = isLoading ? null : Number(stats?.available ?? 0);
+    const canWithdraw =
+        !withdrawalsFrozen &&
+        merchantAvailable !== null &&
+        merchantAvailable >= withdrawalLimits.min;
+
     const [performanceSnap, setPerformanceSnap] = useState<{
         progressToNext?: {
             nextTier: string | null;
@@ -1068,13 +1074,21 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                             value={withdrawAmount}
                                             onChange={(e) => setWithdrawAmount(e.target.value)}
                                             placeholder="0.00"
-                                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all font-mono"
+                                            disabled={!canWithdraw || withdrawalsFrozen}
+                                            className={`w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all font-mono ${!canWithdraw ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     </div>
                                     <div className="flex justify-between text-[10px] font-bold">
-                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available:'} <span className="text-gold-500 font-black">{(stats.available || 0).toLocaleString()} AED</span></span>
+                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available:'} <span className="text-gold-500 font-black">{isLoading ? '…' : `${(stats.available || 0).toLocaleString()} AED`}</span></span>
                                         <span className="text-white/30">{isAr ? 'حد أدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
+                                    {!canWithdraw && !isLoading && !withdrawalsFrozen && (
+                                        <p className="text-[10px] text-white/40">
+                                            {isAr
+                                                ? `الحد الأدنى للسحب ${withdrawalLimits.min} AED — رصيدك الحالي غير كافٍ`
+                                                : `Minimum withdrawal is ${withdrawalLimits.min} AED — your balance is insufficient`}
+                                        </p>
+                                    )}
                                     {withdrawError && (
                                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-[10px] font-bold">
                                             <AlertCircle size={14} /> {withdrawError}
@@ -1087,8 +1101,8 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                     )}
                                     <button
                                         onClick={(e) => { e.preventDefault(); handleSubmitWithdrawal(e as any); }}
-                                        disabled={isSubmitting || withdrawalsFrozen || !withdrawAmount || Number(withdrawAmount) <= 0}
-                                        className="w-full py-4 bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-black font-black uppercase tracking-[3px] text-xs rounded-2xl transition-all shadow-xl shadow-gold-500/10 flex items-center justify-center gap-2"
+                                        disabled={isSubmitting || withdrawalsFrozen || !withdrawAmount || Number(withdrawAmount) <= 0 || !canWithdraw}
+                                        className={`w-full py-4 font-black uppercase tracking-[3px] text-xs rounded-2xl transition-all shadow-xl shadow-gold-500/10 flex items-center justify-center gap-2 ${!canWithdraw || withdrawalsFrozen ? 'opacity-50 cursor-not-allowed bg-gold-500/50' : 'bg-gold-500 hover:bg-gold-400 text-black'}`}
                                     >
                                         {isSubmitting ? <RotateCcw size={18} className="animate-spin" /> : <ArrowUpRight size={18} />}
                                         {isAr ? 'تأكيد طلب السحب' : 'Confirm Withdrawal'}

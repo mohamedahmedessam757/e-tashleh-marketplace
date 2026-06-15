@@ -140,7 +140,7 @@ export const getMerchantStatusLabel = (status: string, isAr: boolean): string =>
         PREPARATION: { ar: 'قيد التجهيز', en: 'In Preparation' },
         DELAYED_PREPARATION: { ar: 'تأخير في التجهيز', en: 'Delayed Preparation' },
         PREPARED: { ar: 'تم التجهيز', en: 'Prepared' },
-        VERIFICATION: { ar: 'قيد التوثيق', en: 'Verification' },
+        VERIFICATION: { ar: 'قيد فحص القطعة', en: 'Part Inspection' },
         VERIFICATION_SUCCESS: { ar: 'تم التوثيق', en: 'Verified' },
         READY_FOR_SHIPPING: { ar: 'جاهز للشحن', en: 'Ready for Shipping' },
         PARTIALLY_SHIPPED: { ar: 'شحن جزئي', en: 'Partially Shipped' },

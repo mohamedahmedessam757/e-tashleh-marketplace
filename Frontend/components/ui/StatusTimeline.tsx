@@ -60,7 +60,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     { id: 'offers', label: { ar: 'العروض', en: 'Offers' }, icon: Clock },
     { id: 'payment', label: { ar: 'الدفع', en: 'Payment' }, icon: Package },
     { id: 'preparation', label: { ar: 'التجهيز', en: 'Preparation' }, icon: Package },
-    { id: 'verification', label: { ar: 'التوثيق', en: 'Verification' }, icon: ShieldCheck },
+    { id: 'verification', label: { ar: 'فحص القطعة', en: 'Part Inspection' }, icon: ShieldCheck },
     { id: 'shipping', label: { ar: 'الشحن', en: 'Shipping' }, icon: Truck },
     { id: 'delivery', label: { ar: 'الاستلام', en: 'Delivery' }, icon: CheckCircle },
   ];

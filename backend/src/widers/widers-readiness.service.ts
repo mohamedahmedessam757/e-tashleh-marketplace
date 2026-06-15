@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WidersConfig } from './widers.config';
 import { WidersService } from './widers.service';
 import { TEMPLATE_REGISTRY } from './template-registry';
+import { WidersTemplateAuditService } from './widers-template-audit.service';
 
 export type ReadinessStatus = 'pass' | 'warn' | 'fail' | 'skip';
 
@@ -33,6 +34,7 @@ export class WidersReadinessService {
         private readonly config: WidersConfig,
         private readonly widers: WidersService,
         private readonly prisma: PrismaService,
+        private readonly templateAudit: WidersTemplateAuditService,
     ) {}
 
     async evaluate(): Promise<WidersReadinessReport> {
@@ -140,12 +142,32 @@ export class WidersReadinessService {
             detail: '/widers/test/otp, /contacts/sync-batch, /webhook/logs',
         });
 
-        checks.push({
-            id: 'meta_templates_approved',
-            label: 'Meta templates APPROVED (manual)',
-            status: 'warn',
-            detail: 'User action: approve all txn_* + auth_otp in Widers dashboard',
-        });
+        const templateAuditReport = this.config.enabled && this.widers.isReady()
+            ? await this.templateAudit.audit()
+            : null;
+
+        if (templateAuditReport) {
+            checks.push({
+                id: 'meta_templates_approved',
+                label: 'Meta templates APPROVED in Widers API',
+                status:
+                    templateAuditReport.allPresentInWiders && templateAuditReport.allWired
+                        ? 'pass'
+                        : isProd && this.config.enabled
+                          ? 'fail'
+                          : 'warn',
+                detail: templateAuditReport.allPresentInWiders
+                    ? `${templateAuditReport.registryCount}/${templateAuditReport.registryCount} in Widers API`
+                    : `Missing: ${templateAuditReport.missingInWiders.join(', ') || 'none'}`,
+            });
+        } else {
+            checks.push({
+                id: 'meta_templates_approved',
+                label: 'Meta templates APPROVED (manual)',
+                status: 'warn',
+                detail: 'User action: approve all txn_* + auth_otp in Widers dashboard',
+            });
+        }
 
         checks.push({
             id: 'webhook_sender_url',

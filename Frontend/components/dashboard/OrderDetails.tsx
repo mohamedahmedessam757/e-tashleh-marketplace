@@ -5,6 +5,8 @@ import { Button } from '../ui/Button';
 import { Badge, StatusType } from '../ui/Badge';
 import { StatusTimeline } from '../ui/StatusTimeline';
 import type { FulfillmentSummaryPartHint } from '../ui/StatusTimeline';
+import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../ui/VerificationPhaseBanner';
+import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 import { OfferCard } from './OfferCard';
 import { PartOffersDrawer } from './PartOffersDrawer';
 import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, X, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
@@ -197,6 +199,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [showExpiredModal, setShowExpiredModal] = useState(false);
     const [expiredModalVariant, setExpiredModalVariant] = useState<OrderExpiryScenario>('no_offers');
     const [expiryTick, setExpiryTick] = useState(0);
+    const [isRenewing, setIsRenewing] = useState(false);
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
     const deepLink = useMemo(() => readDashboardDeepLink(), []);
     const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'waybills'>(
@@ -965,7 +968,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 )}
                             </div>
                             <div className="text-white/60 text-sm flex items-center gap-2">
-                                <span>{(t.dashboard.orders as any).orderId} {order.id}</span>
+                                <span>{(t.dashboard.orders as any).orderId} {formatOrderDisplayId(order)}</span>
                                 <span>•</span>
                                 <span>{order.car}</span>
                             </div>
@@ -1115,6 +1118,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     {/* Extended Tracking View Trigger */}
                     {!['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
                         <div className="p-6">
+                            {shouldShowVerificationBanner(order.status) && (
+                                <VerificationPhaseBanner className="mb-6" />
+                            )}
                             <div className="flex justify-between items-center mb-6">
                                 <StatusTimeline
                                     currentStatus={order.status}
@@ -1360,6 +1366,52 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         ? 'يمكنك اعادة أرسال الطلب خلال أيام العمل من الاثنين الى الخميس'
                                         : 'You can resubmit the order during working days from Monday to Thursday')}
                             </p>
+                            {!isMultiPartOrder && expiryScenario === 'no_offers' && (
+                                <div className="flex flex-col items-center gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={isRenewing}
+                                        title={(t.dashboard.orders as any).renewOrderHint}
+                                        onClick={async () => {
+                                            setIsRenewing(true);
+                                            try {
+                                                const ok = await useOrderStore.getState().renewOrder(order.id);
+                                                if (ok) {
+                                                    await useOrderStore.getState().fetchOrder(order.id);
+                                                    addNotification({
+                                                        titleAr: (t.dashboard.orders as any).renewOrderSuccess,
+                                                        titleEn: (t.dashboard.orders as any).renewOrderSuccess,
+                                                        messageAr: (t.dashboard.orders as any).renewOrderHint,
+                                                        messageEn: (t.dashboard.orders as any).renewOrderHint,
+                                                        type: 'SYSTEM',
+                                                    });
+                                                } else {
+                                                    addNotification({
+                                                        titleAr: (t.dashboard.orders as any).renewOrderError,
+                                                        titleEn: (t.dashboard.orders as any).renewOrderError,
+                                                        messageAr: '',
+                                                        messageEn: '',
+                                                        type: 'SYSTEM',
+                                                    });
+                                                }
+                                            } finally {
+                                                setIsRenewing(false);
+                                            }
+                                        }}
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-black rounded-xl font-bold text-sm transition-all"
+                                    >
+                                        {isRenewing ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <RefreshCcw size={16} />
+                                        )}
+                                        {(t.dashboard.orders as any).renewOrder}
+                                    </button>
+                                    <p className="text-white/40 text-xs max-w-sm">
+                                        {(t.dashboard.orders as any).renewOrderHint}
+                                    </p>
+                                </div>
+                            )}
                         </GlassCard>
                     )}
 

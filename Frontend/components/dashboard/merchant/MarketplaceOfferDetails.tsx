@@ -19,6 +19,7 @@ import { ordersApi } from '../../../services/api/orders';
 import { shipmentsApi } from '../../../services/api/shipments.api';
 import { StatusTimeline } from '../../ui/StatusTimeline';
 import type { FulfillmentSummaryPartHint } from '../../ui/StatusTimeline';
+import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../../ui/VerificationPhaseBanner';
 import { VerificationForm } from './VerificationForm';
 import { OrderInvoicesPanel } from '../shared/OrderInvoicesPanel';
 import { OrderWaybillsPanel } from '../shared/OrderWaybillsPanel';
@@ -1054,6 +1055,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     {/* ★ Order Progress Tracker (Mirror of Customer View) */}
                     <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
                         <div className="p-6">
+                            {shouldShowVerificationBanner(
+                                merchantAcceptedOffers.length > 0
+                                    ? merchantTimelineStatus
+                                    : order.status,
+                            ) && <VerificationPhaseBanner className="mb-6" />}
                             <StatusTimeline
                                 currentStatus={
                                     merchantAcceptedOffers.length > 0

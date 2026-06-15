@@ -6,6 +6,7 @@ import { WidersContactSyncService } from './widers-contact-sync.service';
 import { WidersWebhookController } from './widers-webhook.controller';
 import { WidersWebhookService } from './widers-webhook.service';
 import { WidersReadinessService } from './widers-readiness.service';
+import { WidersTemplateAuditService } from './widers-template-audit.service';
 import { WhatsAppMessageLogService } from './whatsapp-message-log.service';
 import { WidersController } from './widers.controller';
 
@@ -20,6 +21,7 @@ import { WidersController } from './widers.controller';
         WhatsAppMessageLogService,
         WidersWebhookService,
         WidersReadinessService,
+        WidersTemplateAuditService,
     ],
     exports: [
         WidersConfig,
@@ -29,6 +31,7 @@ import { WidersController } from './widers.controller';
         WhatsAppMessageLogService,
         WidersWebhookService,
         WidersReadinessService,
+        WidersTemplateAuditService,
     ],
 })
 export class WidersModule {}

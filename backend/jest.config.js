@@ -3,7 +3,7 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     roots: ['<rootDir>/src'],
-    testMatch: ['**/offer-resolution.helpers.spec.ts'],
+    testMatch: ['**/offer-resolution.helpers.spec.ts', '**/gulf-phone.util.spec.ts'],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',
     },

@@ -6,6 +6,7 @@ import type {
     WidersApiResponse,
     WidersTemplateComponent,
 } from './widers.types';
+import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import { truncateWhatsAppParam } from './template-registry';
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -20,14 +21,9 @@ export class WidersService {
         return this.widersConfig.isConfigured();
     }
 
-    /** E.164-ish normalization for Saudi numbers */
-    normalizePhone(phone: string): string {
-        const digits = phone.replace(/\D/g, '');
-        if (digits.startsWith('966')) return `+${digits}`;
-        if (digits.startsWith('05')) return `+966${digits.slice(1)}`;
-        if (digits.startsWith('5') && digits.length === 9) return `+966${digits}`;
-        if (phone.startsWith('+')) return phone;
-        return `+${digits}`;
+    /** E.164 normalization for GCC registration countries (+966 … +968). */
+    normalizePhone(phone: string, countryCode?: string | null): string {
+        return normalizeGulfPhone(phone, countryCode);
     }
 
     private async post<T>(

@@ -1,9 +1,14 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Tag } from 'lucide-react';
+import { X, Package, Tag, ArrowUpDown, Shield } from 'lucide-react';
 import { OfferCard } from './OfferCard';
 import { OrderOffer } from '../../stores/useOrderStore';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+    applyOfferFilters,
+    type OfferPriceSort,
+    type OfferWarrantyFilter,
+} from '../../utils/offerFilters';
 
 interface PartOffersDrawerProps {
     isOpen: boolean;
@@ -36,11 +41,19 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
 }) => {
     const { language } = useLanguage();
     const isAr = language === 'ar';
+    const [priceSort, setPriceSort] = useState<OfferPriceSort>('default');
+    const [warrantyFilter, setWarrantyFilter] = useState<OfferWarrantyFilter>('all');
     const [acceptLoadingOfferId, setAcceptLoadingOfferId] = React.useState<string | null>(null);
     const isRejectedOfferStatus = (status?: string) => String(status || '').toUpperCase() === 'REJECTED';
 
-    // Strictly limit to 10 and exclude rejected offers
-    const displayedOffers = offers.filter(o => !isRejectedOfferStatus(o.status)).slice(0, 10);
+    const baseOffers = useMemo(
+        () => offers.filter((o) => !isRejectedOfferStatus(o.status)).slice(0, 10),
+        [offers],
+    );
+    const displayedOffers = useMemo(
+        () => applyOfferFilters(baseOffers, { priceSort, warrantyFilter }),
+        [baseOffers, priceSort, warrantyFilter],
+    );
 
     // Memoize handlers to prevent OfferCard re-renders
     const handleAccept = useCallback(async (offer: any) => {
@@ -125,14 +138,58 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                             </div>
                         </div>
 
-                        {/* Offers Info Bar */}
-                        <div className="flex items-center gap-3 px-6 py-3 bg-gold-500/5 border-b border-gold-500/10 shrink-0">
-                            <Tag size={14} className="text-gold-500/60" />
-                            <p className="text-xs text-white/50">
-                                {isAr
-                                    ? `عرض ${displayedOffers.length} من أصل ${Math.min(offers.length, 10)} عرض متاح لهذه القطعة (الحد الأقصى 10)`
-                                    : `Showing ${displayedOffers.length} of up to 10 offers for this part`}
-                            </p>
+                        {/* Offers Info Bar + Filters */}
+                        <div className="px-6 py-3 bg-gold-500/5 border-b border-gold-500/10 shrink-0 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Tag size={14} className="text-gold-500/60 shrink-0" />
+                                <p className="text-xs text-white/50">
+                                    {isAr
+                                        ? `عرض ${displayedOffers.length} من ${baseOffers.length} (الحد الأقصى 10)`
+                                        : `Showing ${displayedOffers.length} of ${baseOffers.length} offers`}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-1.5">
+                                    <ArrowUpDown size={12} className="text-gold-500/50" />
+                                    {(['default', 'low', 'high'] as OfferPriceSort[]).map((sort) => (
+                                        <button
+                                            key={sort}
+                                            type="button"
+                                            onClick={() => setPriceSort(sort)}
+                                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border transition-all ${
+                                                priceSort === sort
+                                                    ? 'bg-gold-500/20 border-gold-500/40 text-gold-300'
+                                                    : 'bg-white/5 border-white/10 text-white/50 hover:text-white/80'
+                                            }`}
+                                        >
+                                            {sort === 'default'
+                                                ? isAr ? 'الافتراضي' : 'Default'
+                                                : sort === 'low'
+                                                  ? isAr ? 'الأقل سعراً' : 'Lowest'
+                                                  : isAr ? 'الأعلى سعراً' : 'Highest'}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Shield size={12} className="text-gold-500/50" />
+                                    {(['all', '3', '6', '12'] as OfferWarrantyFilter[]).map((w) => (
+                                        <button
+                                            key={w}
+                                            type="button"
+                                            onClick={() => setWarrantyFilter(w)}
+                                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border transition-all ${
+                                                warrantyFilter === w
+                                                    ? 'bg-gold-500/20 border-gold-500/40 text-gold-300'
+                                                    : 'bg-white/5 border-white/10 text-white/50 hover:text-white/80'
+                                            }`}
+                                        >
+                                            {w === 'all'
+                                                ? isAr ? 'كل الضمان' : 'All warranty'
+                                                : isAr ? `${w}+ أشهر` : `${w}+ mo`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Offers List */}
