@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
-import { Menu, X, Globe, LogIn, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Menu, X, LogIn, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { LanguageToggle } from './ui/LanguageToggle';
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -15,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language } = useLanguage();
   const ChevronIcon = language === 'ar' ? ChevronLeft : ChevronRight;
 
   const navItems = [
@@ -126,14 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-4">
 
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-gold-500/30 transition-all text-white/90 text-xs md:text-sm font-medium"
-            >
-              <Globe size={14} className="text-gold-400 md:w-4 md:h-4" />
-              <span className="mt-0.5 uppercase">{language === 'ar' ? 'EN' : 'عربي'}</span>
-            </button>
+            <LanguageToggle compact className="rounded-full" />
 
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block"></div>
 

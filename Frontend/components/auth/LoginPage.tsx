@@ -7,11 +7,13 @@ import { OTPMethodSelection } from './OTPMethodSelection';
 import { authApi } from '@/services/api/auth';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import type { PendingRedirect } from '../../utils/widersDeepLink';
+import { saveRegisterPrefill, type RegisterPrefill } from '../../utils/registerPrefill';
 
 interface LoginPageProps {
   onRegisterClick: () => void;
   onCustomerRegisterClick: () => void;
   onLoginSuccess: (role: 'customer' | 'merchant') => void;
+  onAccountNotFoundRegister?: (prefill: RegisterPrefill) => void;
   onForgotPasswordClick?: () => void;
   onRecoveryClick?: (role: 'customer' | 'merchant') => void;
   initialTab?: 'customer' | 'merchant';
@@ -24,6 +26,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onRegisterClick,
   onCustomerRegisterClick,
   onLoginSuccess,
+  onAccountNotFoundRegister,
   onForgotPasswordClick,
   onRecoveryClick,
   initialTab = 'customer',
@@ -180,7 +183,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     } catch (err: any) {
       console.error('Login Init Failed', err);
-      
+
+      const isAccountNotFound =
+        err.response?.status === 401 ||
+        err.response?.status === 404 ||
+        (err.message && /account not found|الحساب غير موجود/i.test(err.message));
+
+      if (isAccountNotFound && onAccountNotFoundRegister) {
+        const role = activeTab;
+        const prefill: RegisterPrefill = {
+          role,
+          method: activationMethod,
+          countryCode: activationMethod === 'whatsapp' ? countryCode : undefined,
+          phone: activationMethod === 'whatsapp' ? phone : undefined,
+          email: activationMethod === 'email' ? loginEmail : undefined,
+        };
+        saveRegisterPrefill(prefill);
+        onAccountNotFoundRegister(prefill);
+        return;
+      }
+
       // Handle technical TypeErrors (like undefined role) as readable errors
       if (err instanceof TypeError) {
         setError(t.auth.errors?.loginFailed || (language === 'ar' ? 'فشل الاتصال بالخادم. يرجى المحاولة لاحقاً.' : 'Connection error. Please try again later.'));

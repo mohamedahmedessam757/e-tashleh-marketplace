@@ -2,9 +2,9 @@
 import React from 'react';
 import { Container } from './ui/Container';
 import { NomoBadge } from './ui/NomoBadge';
-import { Headset, MapPin, Mail, Phone } from 'lucide-react';
+import { Headset, MapPin, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { SITE_CONTACT_EMAIL } from '../config/site';
+import { SITE_CUSTOMER_EMAIL, SITE_MERCHANT_EMAIL } from '../config/site';
 
 interface FooterProps {
     onOpenSupport: () => void;
@@ -41,11 +41,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSupport, onAdminClick, onN
                         <ul className="space-y-3">
                             <li className="flex items-center gap-3 justify-center lg:justify-start text-white/70 text-sm">
                                 <Mail size={16} className="text-gold-500 shrink-0" />
-                                <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="hover:text-white transition-colors">{SITE_CONTACT_EMAIL}</a>
+                                <div className="flex flex-col items-center lg:items-start gap-0.5">
+                                    <span className="text-white/40 text-xs">{(t.footer as any).customerEmailLabel}</span>
+                                    <a href={`mailto:${SITE_CUSTOMER_EMAIL}`} className="hover:text-white transition-colors dir-ltr">{SITE_CUSTOMER_EMAIL}</a>
+                                </div>
                             </li>
                             <li className="flex items-center gap-3 justify-center lg:justify-start text-white/70 text-sm">
-                                <Phone size={16} className="text-gold-500 shrink-0" />
-                                <a href="tel:0525700525" className="hover:text-white transition-colors">0525700525</a>
+                                <Mail size={16} className="text-gold-500 shrink-0" />
+                                <div className="flex flex-col items-center lg:items-start gap-0.5">
+                                    <span className="text-white/40 text-xs">{(t.footer as any).merchantEmailLabel}</span>
+                                    <a href={`mailto:${SITE_MERCHANT_EMAIL}`} className="hover:text-white transition-colors dir-ltr">{SITE_MERCHANT_EMAIL}</a>
+                                </div>
                             </li>
                             <li className="flex items-start gap-3 justify-center lg:justify-start text-white/70 text-sm">
                                 <MapPin size={16} className="text-gold-500 shrink-0 mt-1" />

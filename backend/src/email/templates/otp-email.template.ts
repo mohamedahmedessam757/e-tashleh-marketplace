@@ -27,7 +27,7 @@ const COLORS = {
 
 const BRAND_AR = 'E-Tshaleh | إي تشليح';
 const BRAND_EN = 'E-Tshaleh';
-const EXPIRY_MINUTES = 10;
+const EXPIRY_MINUTES = 3;
 
 export function buildOtpEmail(params: {
     name: string;

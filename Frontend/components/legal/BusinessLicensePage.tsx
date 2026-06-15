@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Building2, Globe, FileCheck, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, FileCheck, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Container } from '../ui/Container';
 import { GlassCard } from '../ui/GlassCard';
+import { LanguageToggle } from '../ui/LanguageToggle';
 import { businessLicenseSections } from '../../data/businessLicense';
 
 interface BusinessLicensePageProps {
@@ -12,11 +13,9 @@ interface BusinessLicensePageProps {
 }
 
 export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack, onVerifyRegistry }) => {
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === 'ar';
   const ArrowIcon = isAr ? ArrowRight : ArrowLeft;
-
-  const toggleLanguage = () => setLanguage(isAr ? 'en' : 'ar');
 
   return (
     <div className="min-h-screen bg-[#1A1814] text-white">
@@ -35,13 +34,7 @@ export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack
             <span>{isAr ? 'العودة' : 'Back'}</span>
           </button>
 
-          <button
-            onClick={toggleLanguage}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-gold-500/30 hover:bg-gold-500/10 transition-all text-sm font-bold"
-          >
-            <Globe size={16} className="text-gold-500" />
-            <span>{isAr ? 'English' : 'العربية'}</span>
-          </button>
+          <LanguageToggle />
         </div>
 
         <motion.div

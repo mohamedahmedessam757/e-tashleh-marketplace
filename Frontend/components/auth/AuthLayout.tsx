@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { LanguageToggle } from '../ui/LanguageToggle';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -45,6 +46,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, onBack, title,
               className="w-8 h-8 object-contain brightness-0 invert"
             />
           </div>
+
+          <LanguageToggle compact />
         </div>
 
         {/* Main Card */}

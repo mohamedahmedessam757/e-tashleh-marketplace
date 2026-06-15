@@ -120,7 +120,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-white/90 text-xs font-medium mb-3 border border-white/10 backdrop-blur-md">
                             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                            {t.dashboard.headers.welcome} Mohammed
+                            {t.dashboard.headers.welcome} {user?.name || (isAr ? 'مستخدم' : 'User')}
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
                             {isAr ? 'هل تحتاج لقطعة غيار؟' : 'Need a spare part?'}

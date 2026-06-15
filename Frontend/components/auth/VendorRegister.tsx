@@ -12,6 +12,7 @@ import { OTPVerification } from './OTPVerification';
 import { OTPMethodSelection } from './OTPMethodSelection';
 import { authApi } from '@/services/api/auth';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
+import { consumeRegisterPrefill } from '../../utils/registerPrefill';
 import { useCatalogStore } from '../../stores/useCatalogStore';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 
@@ -46,6 +47,20 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
 
   const { makes, fetchCatalog, isLoading: isLoadingCatalog, subscribeToCatalog, unsubscribeFromCatalog } = useCatalogStore();
   const [errorField, setErrorField] = React.useState<'name' | 'email' | 'phone' | 'storeName' | 'address' | 'makes' | 'models' | 'all' | null>(null);
+  const [prefillNotice, setPrefillNotice] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const prefill = consumeRegisterPrefill();
+    if (!prefill || prefill.role !== 'merchant') return;
+    setPrefillNotice(
+      t.auth.errors?.accountNotFoundRedirect ||
+        (language === 'ar' ? 'لا يوجد حساب — أكمل التسجيل أدناه' : 'No account found — complete registration below'),
+    );
+    if (prefill.email) store.updateAccount('email', prefill.email);
+    if (prefill.countryCode) store.updateAccount('countryCode', prefill.countryCode);
+    if (prefill.phone) store.updateAccount('phone', prefill.phone);
+    if (prefill.method) setOtpMethod(prefill.method);
+  }, []);
 
   // Computed Models list based on selected makes
   const availableModels = React.useMemo(() => {
@@ -523,6 +538,12 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
               exit={{ opacity: 0, x: -20 }}
               className="p-4 space-y-6"
             >
+              {prefillNotice && (
+                <div className="bg-gold-500/10 border border-gold-500/30 rounded-xl px-4 py-3 flex items-start gap-2">
+                  <AlertCircle size={18} className="text-gold-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gold-200">{prefillNotice}</p>
+                </div>
+              )}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gold-200 mb-2">{t.auth.vendor.account.name}</label>

@@ -6,6 +6,7 @@ import { authApi } from '@/services/api/auth';
 import { OTPMethodSelection } from './OTPMethodSelection';
 import { OTPVerification } from './OTPVerification';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
+import { consumeRegisterPrefill } from '../../utils/registerPrefill';
 
 interface CustomerRegisterProps {
   onLoginClick: () => void;
@@ -74,6 +75,22 @@ export const CustomerRegister: React.FC<CustomerRegisterProps> = ({ onLoginClick
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpMethodError, setOtpMethodError] = useState<string | null>(null);
   const [otpExpiresInSeconds, setOtpExpiresInSeconds] = useState<number | undefined>();
+  const [prefillNotice, setPrefillNotice] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const prefill = consumeRegisterPrefill();
+    if (!prefill || prefill.role !== 'customer') return;
+    setPrefillNotice(
+      t.auth.errors?.accountNotFoundRedirect ||
+        (language === 'ar' ? 'لا يوجد حساب — أكمل التسجيل أدناه' : 'No account found — complete registration below'),
+    );
+    if (prefill.email) {
+      setFormData((prev) => ({ ...prev, email: prefill.email! }));
+    }
+    if (prefill.countryCode) setCountryCode(prefill.countryCode);
+    if (prefill.phone) setPhone(prefill.phone);
+    if (prefill.method) setOtpMethod(prefill.method);
+  }, []);
 
   const countries = [
     { code: '+966', name: language === 'ar' ? 'السعودية' : 'Saudi Arabia', flag: '🇸🇦' },
@@ -285,6 +302,13 @@ export const CustomerRegister: React.FC<CustomerRegisterProps> = ({ onLoginClick
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+
+        {prefillNotice && (
+          <div className="bg-gold-500/10 border border-gold-500/30 rounded-xl px-4 py-3 flex items-start gap-2">
+            <AlertCircle size={18} className="text-gold-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-gold-200">{prefillNotice}</p>
+          </div>
+        )}
 
         {/* Informational Message For 2FA */}
         <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 flex items-center justify-center gap-2">

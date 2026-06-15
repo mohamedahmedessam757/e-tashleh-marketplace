@@ -6,6 +6,8 @@ import { getCurrentUserId } from '../utils/auth';
 
 type Language = 'ar' | 'en';
 
+const GUEST_LANGUAGE_KEY = 'preferred_language';
+
 interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
@@ -16,10 +18,22 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+function readGuestLanguage(): Language | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(GUEST_LANGUAGE_KEY);
+  return stored === 'ar' || stored === 'en' ? stored : null;
+}
+
+function writeGuestLanguage(lang: Language): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GUEST_LANGUAGE_KEY, lang);
+}
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('ar');
+  const [language, setLanguageState] = useState<Language>(() => readGuestLanguage() ?? 'ar');
 
   const persistLanguage = useCallback((lang: Language) => {
+    writeGuestLanguage(lang);
     if (!getCurrentUserId()) return;
     useProfileStore.getState().updateSettings({ language: lang });
   }, []);
@@ -32,10 +46,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const toggleLanguage = useCallback(() => {
     setLanguageState((prev) => {
       const next = prev === 'ar' ? 'en' : 'ar';
-      persistLanguage(next);
+      writeGuestLanguage(next);
+      if (getCurrentUserId()) {
+        useProfileStore.getState().updateSettings({ language: next });
+      }
       return next;
     });
-  }, [persistLanguage]);
+  }, []);
 
   const t = translations[language];
   const dir = language === 'ar' ? 'rtl' : 'ltr';
@@ -49,6 +66,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const syncFromProfile = (settings: { language?: Language }) => {
       if (settings.language === 'ar' || settings.language === 'en') {
         setLanguageState(settings.language);
+        writeGuestLanguage(settings.language);
       }
     };
 

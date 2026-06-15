@@ -52,6 +52,8 @@ export const auth = {
     footer: {
       rights: 'جميع الحقوق محفوظة © 2026 إي تشليح',
       company: 'إحدى منصات شركة ELLIPP FZ LLC',
+      customerEmailLabel: 'للعملاء',
+      merchantEmailLabel: 'للمتاجر',
       support: 'الدعم الفني',
       secureBadge: 'نظام لوحة التحكم V2.0 • اتصال آمن',
       sbcTitle: 'موثق في المركز السعودي للأعمال',
@@ -329,6 +331,8 @@ export const auth = {
       },
       errors: {
         wrongAccountType: 'نوع الحساب غير صحيح (حاول التبديل بين عميل/تاجر)',
+        accountNotFound: 'الحساب غير موجود',
+        accountNotFoundRedirect: 'لا يوجد حساب بهذه البيانات — أكمل التسجيل أدناه',
         invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
         loginFailed: 'فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى.',
         unauthorized: 'غير مصرح لك بالوصول لهذا القسم',
@@ -390,6 +394,8 @@ export const auth = {
     footer: {
       rights: 'All Rights Reserved © 2026 E-Tashleh',
       company: 'Owned by ELLIPP FZ LLC',
+      customerEmailLabel: 'For Customers',
+      merchantEmailLabel: 'For Merchants',
       support: 'Technical Support',
       secureBadge: 'ADMIN PANEL SYSTEM V2.0 • SECURE CONNECTION',
       sbcTitle: 'Authenticated by Saudi Business Center',
@@ -696,6 +702,7 @@ export const auth = {
       serverError: 'Server error',
       wrongAccountType: 'Incorrect Account Type',
       accountNotFound: 'Account not found',
+      accountNotFoundRedirect: 'No account found with these details — complete registration below',
       loginFailed: 'Login failed',
       invalidCode: 'Invalid verification code',
       invalidPhone: 'Mobile number is required',

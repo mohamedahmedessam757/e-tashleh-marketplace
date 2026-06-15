@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Mail, ArrowRight, ArrowLeft, Phone, Info, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { SITE_WHOLESALE_EMAIL } from '../config/site';
+import { LanguageToggle } from './ui/LanguageToggle';
 
 interface WholesaleScreenProps {
     onBack: () => void;
@@ -14,6 +16,9 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            <div className="absolute top-4 z-20 end-4">
+                <LanguageToggle compact />
+            </div>
             {/* Background Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-green-500/5 rounded-full blur-[100px]" />
@@ -75,10 +80,10 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                                     {t.wholesale?.emailLabel || 'البريد الإلكتروني'}
                                 </p>
                                 <a
-                                    href="mailto:shop@e-tashleh.shop"
+                                    href={`mailto:${SITE_WHOLESALE_EMAIL}`}
                                     className="text-2xl md:text-3xl font-bold text-white hover:text-[#2E965E] transition-colors dir-ltr font-mono"
                                 >
-                                    {t.wholesale?.email || 'shop@e-tashleh.shop'}
+                                    {t.wholesale?.email || SITE_WHOLESALE_EMAIL}
                                 </a>
                             </div>
 
@@ -97,7 +102,7 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                             <a
-                                href="mailto:shop@e-tashleh.shop"
+                                href={`mailto:${SITE_WHOLESALE_EMAIL}`}
                                 className="flex items-center justify-center gap-2 bg-[#2E965E] hover:bg-[#257a4d] text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-[#2E965E]/20 active:scale-95"
                             >
                                 <Send size={18} />

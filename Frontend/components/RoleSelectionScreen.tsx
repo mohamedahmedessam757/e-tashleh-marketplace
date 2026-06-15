@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Store, ShoppingCart, HelpCircle, ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LandingFooter } from './LandingFooter';
+import { LanguageToggle } from './ui/LanguageToggle';
 
 interface RoleSelectionScreenProps {
     onCustomerClick: () => void;
@@ -55,6 +56,10 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col relative overflow-x-hidden">
+
+            <div className="fixed top-4 z-20 end-4">
+                <LanguageToggle compact />
+            </div>
 
             {/* Background Elements - Fixed */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">

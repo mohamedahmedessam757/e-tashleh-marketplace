@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Wrench, Truck, CreditCard, Video, FileCheck, ShieldCheck, FileText, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LandingFooter } from './LandingFooter';
+import { LanguageToggle } from './ui/LanguageToggle';
 
 interface HowWeWorkScreenProps {
     onComplete: () => void; // "Order Now" -> Role Selection
@@ -51,6 +52,10 @@ export const HowWeWorkScreen: React.FC<HowWeWorkScreenProps> = ({
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col relative overflow-x-hidden">
+
+            <div className="fixed top-4 z-20 end-4">
+                <LanguageToggle compact />
+            </div>
 
             {/* Background Effects - Fixed */}
             <div className="fixed inset-0 z-0 pointer-events-none">

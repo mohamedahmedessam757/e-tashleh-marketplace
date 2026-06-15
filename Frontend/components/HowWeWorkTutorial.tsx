@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Info, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LandingFooter } from './LandingFooter';
+import { LanguageToggle } from './ui/LanguageToggle';
 
 interface HowWeWorkTutorialProps {
     onComplete: () => void; // "انتقل للطلب الآن"
@@ -56,6 +57,9 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col relative overflow-x-hidden">
+            <div className="fixed top-4 z-20 end-4">
+                <LanguageToggle compact />
+            </div>
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-luxury-gradient opacity-20" />

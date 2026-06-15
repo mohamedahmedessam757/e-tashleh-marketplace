@@ -347,6 +347,27 @@ function AppContent() {
     pushView(view);
   };
 
+  const handleAccountNotFoundRegister = (prefill: import('./utils/registerPrefill').RegisterPrefill) => {
+    const targetView = prefill.role === 'merchant' ? 'vendor-register' : 'customer-register';
+    setCurrentView(targetView);
+    pushView(targetView);
+  };
+
+  const handleHistoryBack = (fallbackView: ViewState) => {
+    const canGoBack =
+      typeof window !== 'undefined' &&
+      window.history.length > 1 &&
+      window.history.state?.view;
+
+    if (canGoBack) {
+      window.history.back();
+      return;
+    }
+
+    setCurrentView(fallbackView);
+    pushView(fallbackView);
+  };
+
   const handleLoadingComplete = () => {
     setLoading(false);
 
@@ -897,17 +918,11 @@ function AppContent() {
               <WholesaleScreen onBack={() => handleNavigate('role-selection')} />
             ) : currentView === 'business-license' ? (
               <BusinessLicensePage
-                onBack={() => {
-                  setCurrentView(previousView);
-                  pushView(previousView);
-                }}
+                onBack={() => handleHistoryBack('role-selection')}
                 onVerifyRegistry={handleNavigateToLicenseVerify}
               />
             ) : currentView === 'business-license-verify' ? (
-              <RegistryPdfViewer onBack={() => {
-                setCurrentView('business-license');
-                pushView('business-license');
-              }} />
+              <RegistryPdfViewer onBack={() => handleHistoryBack('business-license')} />
             ) : currentView === 'how-we-work' ? (
               <HowWeWorkScreen
                 onComplete={() => {
@@ -987,6 +1002,7 @@ function AppContent() {
                         roleMismatch={loginRoleMismatch}
                         onRegisterClick={() => handleNavigate('vendor-register')}
                         onCustomerRegisterClick={() => handleNavigate('customer-register')}
+                        onAccountNotFoundRegister={handleAccountNotFoundRegister}
                         onLoginSuccess={handleLoginSuccess}
                         onForgotPasswordClick={() => handleNavigate('forgot-password')}
                         onRecoveryClick={(r) => { setRecoveryRole(r); handleNavigate('account-recovery'); }}
@@ -1000,6 +1016,7 @@ function AppContent() {
                         roleMismatch={loginRoleMismatch}
                         onRegisterClick={() => { /* Should not happen in forced mode usually */ }}
                         onCustomerRegisterClick={() => handleNavigate('customer-register')}
+                        onAccountNotFoundRegister={handleAccountNotFoundRegister}
                         onLoginSuccess={handleLoginSuccess}
                         onForgotPasswordClick={() => handleNavigate('forgot-password')}
                         onRecoveryClick={(r) => { setRecoveryRole(r); handleNavigate('account-recovery'); }}
@@ -1013,6 +1030,7 @@ function AppContent() {
                         roleMismatch={loginRoleMismatch}
                         onRegisterClick={() => handleNavigate('vendor-register')}
                         onCustomerRegisterClick={() => { /* Should not happen */ }}
+                        onAccountNotFoundRegister={handleAccountNotFoundRegister}
                         onLoginSuccess={handleLoginSuccess}
                         onForgotPasswordClick={() => handleNavigate('forgot-password')}
                         onRecoveryClick={(r) => { setRecoveryRole(r); handleNavigate('account-recovery'); }}

@@ -1,5 +1,5 @@
 /** Mirrors backend/src/auth/otp-purpose.ts OTP_EXPIRY_MINUTES */
-export const OTP_EXPIRY_MINUTES = 10;
+export const OTP_EXPIRY_MINUTES = 3;
 export const OTP_EXPIRY_SECONDS = OTP_EXPIRY_MINUTES * 60;
 
 export function otpSecondsFromMinutes(minutes?: number): number {
