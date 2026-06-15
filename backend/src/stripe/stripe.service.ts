@@ -21,56 +21,137 @@ export class StripeService {
         });
     }
 
+    isConfigured(): boolean {
+        const key = this.configService.get<string>('STRIPE_SECRET_KEY');
+        return Boolean(key?.trim());
+    }
+
+    private assertConfigured(): void {
+        if (!this.isConfigured()) {
+            throw new BadRequestException(
+                'Stripe is not configured on the server (missing STRIPE_SECRET_KEY).',
+            );
+        }
+    }
+
+    /** Maps Stripe SDK errors to safe 400 responses (avoids opaque 500 in production). */
+    mapStripeError(error: unknown): BadRequestException {
+        const err = error as { message?: string; type?: string; code?: string; statusCode?: number };
+        const msg = err?.message || 'Stripe request failed';
+        this.logger.error(`Stripe API error: ${msg}`, err?.type || err?.code || '');
+
+        if (
+            msg.includes('signed up for Connect') ||
+            msg.includes('complete your platform profile') ||
+            msg.includes('managing losses')
+        ) {
+            return new BadRequestException(
+                'Stripe Connect is not enabled on this platform. Please contact support or use bank transfer.',
+            );
+        }
+        if (err?.type === 'StripeAuthenticationError' || err?.statusCode === 401) {
+            return new BadRequestException(
+                'Stripe API key is invalid or mismatched (test vs live). Check server STRIPE_SECRET_KEY.',
+            );
+        }
+        if (msg.includes('Invalid email') || err?.code === 'email_invalid') {
+            return new BadRequestException('A valid account email is required for Stripe Connect.');
+        }
+        if (msg.includes('must be a valid URL') || msg.includes('redirect')) {
+            return new BadRequestException(
+                'Stripe onboarding redirect URL is invalid. Ensure FRONTEND_URL is https://e-tashleh.net on the server.',
+            );
+        }
+        return new BadRequestException(`Stripe error: ${msg}`);
+    }
+
+    async retrieveAccountOrNull(accountId: string): Promise<any | null> {
+        this.assertConfigured();
+        try {
+            return await this.stripe.accounts.retrieve(accountId);
+        } catch (error: unknown) {
+            const err = error as { code?: string; statusCode?: number };
+            if (err?.code === 'resource_missing' || err?.statusCode === 404) {
+                return null;
+            }
+            throw this.mapStripeError(error);
+        }
+    }
+
     /**
      * Creates a new connected Express account
      */
     async createConnectedAccount(storeId: string, email: string, isCustomer: boolean = false): Promise<any> {
-        const account = await this.stripe.accounts.create({
-            controller: {
-                fees: { payer: 'application' },
-                losses: { payments: 'application' },
-                stripe_dashboard: { type: 'express' },
-                requirement_collection: 'stripe',
-            },
-            email: email,
-            capabilities: {
-                transfers: { requested: true }
-            },
-            metadata: { 
-                id: storeId,
-                type: isCustomer ? 'customer' : 'store'
-            },
-            settings: {
-                payouts: {
-                    schedule: { interval: 'manual' } // Important for Escrow
-                }
-            }
-        } as any);
-
-        if (!isCustomer) {
-            await this.prisma.store.update({
-                where: { id: storeId },
-                data: { 
-                    stripeAccountId: account.id,
-                    payoutSchedule: 'MANUAL'
-                }
-            });
+        this.assertConfigured();
+        const normalizedEmail = email?.trim();
+        if (!normalizedEmail) {
+            throw new BadRequestException('A valid email is required before Stripe Connect onboarding.');
         }
 
-        return account;
+        try {
+            const account = await this.stripe.accounts.create({
+                controller: {
+                    fees: { payer: 'application' },
+                    losses: { payments: 'application' },
+                    stripe_dashboard: { type: 'express' },
+                    requirement_collection: 'stripe',
+                },
+                country: 'AE',
+                email: normalizedEmail,
+                capabilities: {
+                    transfers: { requested: true },
+                },
+                metadata: {
+                    id: storeId,
+                    ...(isCustomer ? {} : { storeId }),
+                    type: isCustomer ? 'customer' : 'store',
+                },
+                settings: {
+                    payouts: {
+                        schedule: { interval: 'manual' },
+                    },
+                },
+            } as any);
+
+            if (!isCustomer) {
+                await this.prisma.store.update({
+                    where: { id: storeId },
+                    data: {
+                        stripeAccountId: account.id,
+                        payoutSchedule: 'MANUAL',
+                    },
+                });
+            }
+
+            return account;
+        } catch (error: unknown) {
+            throw this.mapStripeError(error);
+        }
     }
 
     /**
      * Creates an onboarding URL for the connected account
      */
     async createOnboardingLink(accountId: string, returnUrl: string, refreshUrl: string): Promise<string> {
-        const accountLink = await this.stripe.accountLinks.create({
-            account: accountId,
-            refresh_url: refreshUrl,
-            return_url: returnUrl,
-            type: 'account_onboarding',
-        });
-        return accountLink.url;
+        this.assertConfigured();
+        const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+        if (isProd && (!returnUrl.startsWith('https://') || !refreshUrl.startsWith('https://'))) {
+            throw new BadRequestException(
+                'Stripe live mode requires HTTPS return URLs. Set FRONTEND_URL=https://e-tashleh.net on the server.',
+            );
+        }
+
+        try {
+            const accountLink = await this.stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: refreshUrl,
+                return_url: returnUrl,
+                type: 'account_onboarding',
+            });
+            return accountLink.url;
+        } catch (error: unknown) {
+            throw this.mapStripeError(error);
+        }
     }
 
     /**

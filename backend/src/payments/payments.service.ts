@@ -2039,8 +2039,11 @@ export class PaymentsService {
             }
         }
 
-        const returnUrl = `http://localhost:5173/dashboard/wallet?stripe_status=return`;
-        const refreshUrl = `http://localhost:5173/dashboard/wallet?stripe_status=refresh`;
+        const frontendUrl = (
+            process.env.FRONTEND_URL || 'https://e-tashleh.net'
+        ).replace(/\/$/, '');
+        const returnUrl = `${frontendUrl}/dashboard/wallet?stripe_status=return`;
+        const refreshUrl = `${frontendUrl}/dashboard/wallet?stripe_status=refresh`;
 
         return this.stripeService.createOnboardingLink(stripeAccountId, returnUrl, refreshUrl);
     }
@@ -2071,8 +2074,11 @@ export class PaymentsService {
             }
         }
 
-        const returnUrl = `http://localhost:5173/dashboard/wallet?stripe_status=return`;
-        const refreshUrl = `http://localhost:5173/dashboard/wallet?stripe_status=refresh`;
+        const frontendUrl = (
+            process.env.FRONTEND_URL || 'https://e-tashleh.net'
+        ).replace(/\/$/, '');
+        const returnUrl = `${frontendUrl}/dashboard/wallet?stripe_status=return`;
+        const refreshUrl = `${frontendUrl}/dashboard/wallet?stripe_status=refresh`;
 
         return this.stripeService.createOnboardingLink(stripeAccountId, returnUrl, refreshUrl);
     }

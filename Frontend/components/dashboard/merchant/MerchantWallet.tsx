@@ -437,7 +437,13 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             window.location.href = url;
         } catch (error: any) {
             console.error('Stripe Connect Error:', error);
-            const msg = error.response?.data?.message || error.message || '';
+            const raw = error.response?.data?.message;
+            const msg =
+                typeof raw === 'string'
+                    ? raw
+                    : Array.isArray(raw)
+                      ? raw.join('; ')
+                      : error.message || 'Internal server error';
 
             if (msg.includes('Stripe Connect is not enabled') || msg.includes('signed up for Connect')) {
                 alert(isAr
