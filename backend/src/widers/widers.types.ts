@@ -9,6 +9,8 @@ export type WidersOtpMode = 'authentication' | 'utility';
 export interface WidersTextParameter {
     type: 'text';
     text: string;
+    /** Meta named-parameter templates (Widers «إعداد القالب») */
+    parameter_name?: string;
 }
 
 export interface WidersTemplateComponent {
@@ -21,8 +23,10 @@ export interface WidersTemplateComponent {
 export interface SendTemplateMessagePayload {
     phone: string;
     templateName: string;
-    templateLanguage: WidersTemplateLanguage;
+    templateLanguage: WidersTemplateLanguage | string;
     components?: WidersTemplateComponent[];
+    /** Contact display name — Widers resolves {{1}} when mapped to «اسم جهة الاتصال» */
+    contactName?: string;
 }
 
 export interface MakeContactPayload {

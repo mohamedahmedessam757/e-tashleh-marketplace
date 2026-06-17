@@ -15,6 +15,20 @@ const BODY_FIELD_DEFAULTS: Partial<Record<TemplateBodyField, string>> = {
     doc_type: 'مستند',
 };
 
+/** Widers dashboard variable keys (إعداد القالب → متغيرات النظام) */
+const WIDERS_PARAMETER_NAMES: Partial<Record<TemplateBodyField, string>> = {
+    name: 'name',
+    otp_code: 'otp_code',
+    order_number: 'order_number',
+    status_detail: 'status_detail',
+    tracking_number: 'tracking_number',
+    invoice_number: 'invoice_number',
+    amount: 'amount',
+    summary: 'summary',
+    store_name: 'store_name',
+    doc_type: 'doc_type',
+};
+
 /** Meta (#100) and Widers often reject empty template variables. */
 export function resolveTemplateBodyValue(
     field: TemplateBodyField,
@@ -33,16 +47,17 @@ export function isWhatsAppInvalidParameterError(error?: string | null): boolean 
         normalized.includes('(#100)') ||
         normalized.includes('error 100') ||
         normalized.includes('132000') ||
-        normalized.includes('132001')
+        normalized.includes('132001') ||
+        normalized.includes('parameter name')
     );
 }
 
 export interface BuildTemplateComponentsOptions {
     bodyTexts: string[];
+    bodyFields?: TemplateBodyField[];
     headerText?: string;
     buttonSuffix?: string;
-    /** Used only for welcome_* fallback when Widers template has a static header. */
-    welcomeFallbackHeader?: string;
+    useNamedBodyParameters?: boolean;
 }
 
 export function buildTemplateComponents(
@@ -65,10 +80,19 @@ export function buildTemplateComponents(
     if (options.bodyTexts.length > 0) {
         components.push({
             type: 'body',
-            parameters: options.bodyTexts.map((t) => ({
-                type: 'text' as const,
-                text: truncateWhatsAppParam(t),
-            })),
+            parameters: options.bodyTexts.map((text, index) => {
+                const field = options.bodyFields?.[index];
+                const parameterName =
+                    options.useNamedBodyParameters && field
+                        ? WIDERS_PARAMETER_NAMES[field]
+                        : undefined;
+
+                return {
+                    type: 'text' as const,
+                    text: truncateWhatsAppParam(text),
+                    ...(parameterName ? { parameter_name: parameterName } : {}),
+                };
+            }),
         });
     }
 
@@ -84,70 +108,141 @@ export function buildTemplateComponents(
     return components;
 }
 
-function componentKey(components: WidersTemplateComponent[]): string {
-    return JSON.stringify(components);
+function componentKey(components?: WidersTemplateComponent[]): string {
+    return JSON.stringify(components ?? null);
+}
+
+export interface TemplateSendAttempt {
+    components?: WidersTemplateComponent[];
+    contactName?: string;
+    label: string;
 }
 
 /**
- * Ordered component payloads to try when Meta returns (#100) Invalid parameter.
- * Covers static vs dynamic URL buttons and optional/missing headers in Widers.
+ * Ordered send attempts for standard (transactional) templates.
  */
 export function buildTemplateComponentVariants(
     options: BuildTemplateComponentsOptions,
-): WidersTemplateComponent[][] {
-    const primary = buildTemplateComponents(options);
-    const variants: WidersTemplateComponent[][] = [primary];
-    const seen = new Set<string>([componentKey(primary)]);
+): TemplateSendAttempt[] {
+    const attempts: TemplateSendAttempt[] = [];
+    const seen = new Set<string>();
 
-    const push = (components: WidersTemplateComponent[]) => {
-        const key = componentKey(components);
+    const push = (attempt: TemplateSendAttempt) => {
+        const key = `${attempt.label}:${componentKey(attempt.components)}:${attempt.contactName ?? ''}`;
         if (seen.has(key)) return;
         seen.add(key);
-        variants.push(components);
+        attempts.push(attempt);
     };
 
+    const base = {
+        bodyTexts: options.bodyTexts,
+        bodyFields: options.bodyFields,
+        headerText: options.headerText,
+        buttonSuffix: options.buttonSuffix,
+    };
+
+    push({
+        label: 'primary',
+        components: buildTemplateComponents(base),
+    });
+
     if (options.buttonSuffix) {
-        push(
-            buildTemplateComponents({
-                ...options,
+        push({
+            label: 'no-button',
+            components: buildTemplateComponents({
+                ...base,
                 buttonSuffix: undefined,
             }),
-        );
+        });
     }
 
     if (options.headerText) {
-        push(
-            buildTemplateComponents({
-                ...options,
+        push({
+            label: 'no-header',
+            components: buildTemplateComponents({
+                ...base,
                 headerText: undefined,
             }),
-        );
+        });
     }
 
     if (options.buttonSuffix && options.headerText) {
-        push(
-            buildTemplateComponents({
+        push({
+            label: 'body-only',
+            components: buildTemplateComponents({
                 bodyTexts: options.bodyTexts,
+                bodyFields: options.bodyFields,
             }),
-        );
+        });
     }
 
-    if (!options.headerText && options.welcomeFallbackHeader) {
-        push(
-            buildTemplateComponents({
-                ...options,
-                headerText: options.welcomeFallbackHeader,
+    if (options.useNamedBodyParameters) {
+        push({
+            label: 'named-body',
+            components: buildTemplateComponents({
+                ...base,
+                buttonSuffix: undefined,
+                useNamedBodyParameters: true,
             }),
-        );
-        if (options.buttonSuffix) {
-            push(
-                buildTemplateComponents({
-                    bodyTexts: options.bodyTexts,
-                    headerText: options.welcomeFallbackHeader,
-                }),
-            );
-        }
+        });
     }
 
-    return variants;
+    return attempts;
+}
+
+/**
+ * Welcome templates in Widers: body {{1}} only (no header). Prefer contact-backed
+ * resolution, then positional body, then named body, then optional URL button.
+ */
+export function buildWelcomeSendAttempts(
+    options: BuildTemplateComponentsOptions & { contactName: string },
+): TemplateSendAttempt[] {
+    const attempts: TemplateSendAttempt[] = [];
+    const seen = new Set<string>();
+
+    const push = (attempt: TemplateSendAttempt) => {
+        const key = `${attempt.label}:${componentKey(attempt.components)}:${attempt.contactName ?? ''}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        attempts.push(attempt);
+    };
+
+    const base = {
+        bodyTexts: options.bodyTexts,
+        bodyFields: options.bodyFields,
+    };
+
+    // Widers «إعداد القالب»: {{1}} → اسم جهة الاتصال (resolved from contact)
+    push({
+        label: 'contact-only',
+        contactName: options.contactName,
+    });
+
+    push({
+        label: 'body-positional',
+        contactName: options.contactName,
+        components: buildTemplateComponents(base),
+    });
+
+    push({
+        label: 'body-named',
+        contactName: options.contactName,
+        components: buildTemplateComponents({
+            ...base,
+            useNamedBodyParameters: true,
+        }),
+    });
+
+    if (options.buttonSuffix) {
+        push({
+            label: 'body-button-positional',
+            contactName: options.contactName,
+            components: buildTemplateComponents({
+                ...base,
+                buttonSuffix: options.buttonSuffix,
+            }),
+        });
+    }
+
+    return attempts;
 }

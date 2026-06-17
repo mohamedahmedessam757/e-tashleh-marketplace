@@ -154,12 +154,19 @@ export class WidersService {
             template_language: payload.templateLanguage,
         };
 
+        if (payload.contactName?.trim()) {
+            body.name = payload.contactName.trim();
+        }
+
         if (payload.components?.length) {
             body.components = payload.components;
         }
 
         this.logger.log(
-            `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone}`,
+            `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone}` +
+                (payload.components?.length
+                    ? ` [${payload.components.length} component(s)]`
+                    : ' [contact-backed]'),
         );
 
         return this.post('sendtemplatemessage', body);

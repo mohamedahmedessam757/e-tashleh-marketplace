@@ -11,8 +11,10 @@ import {
 } from './template-registry';
 import {
     buildTemplateComponentVariants,
+    buildWelcomeSendAttempts,
     isWhatsAppInvalidParameterError,
     resolveTemplateBodyValue,
+    type TemplateSendAttempt,
 } from './widers-template-components.util';
 import type { WidersTemplateLanguage } from './widers.types';
 import {
@@ -65,6 +67,75 @@ export class WhatsAppChannelService {
         return buildButtonSuffix(pattern, { orderId, offerId });
     }
 
+    private async dispatchTemplateAttempts(
+        templateName: string,
+        templateLanguage: string,
+        phone: string,
+        attempts: TemplateSendAttempt[],
+        retryAllOnFailure: boolean,
+    ) {
+        const languages =
+            templateLanguage === 'ar'
+                ? ['ar', 'ar_SA', 'ar_AE']
+                : [templateLanguage];
+
+        let lastResult = await this.widers.sendTemplateMessage({
+            phone,
+            templateName,
+            templateLanguage: languages[0],
+            components: attempts[0]?.components,
+            contactName: attempts[0]?.contactName,
+        });
+
+        const shouldRetry = (result: typeof lastResult) =>
+            retryAllOnFailure ||
+            isWhatsAppInvalidParameterError(result.error ?? result.message);
+
+        for (let i = 1; i < attempts.length && !lastResult.success; i += 1) {
+            if (!shouldRetry(lastResult)) break;
+
+            const attempt = attempts[i];
+            lastResult = await this.widers.sendTemplateMessage({
+                phone,
+                templateName,
+                templateLanguage: languages[0],
+                components: attempt.components,
+                contactName: attempt.contactName,
+            });
+
+            if (lastResult.success) {
+                this.logger.warn(
+                    `WhatsApp template ${templateName} recovered via "${attempt.label}" (attempt ${i + 1}/${attempts.length})`,
+                );
+            }
+        }
+
+        if (!lastResult.success && languages.length > 1) {
+            for (const lang of languages.slice(1)) {
+                if (!shouldRetry(lastResult)) break;
+
+                for (const attempt of attempts) {
+                    const retry = await this.widers.sendTemplateMessage({
+                        phone,
+                        templateName,
+                        templateLanguage: lang,
+                        components: attempt.components,
+                        contactName: attempt.contactName,
+                    });
+                    lastResult = retry;
+                    if (retry.success) {
+                        this.logger.warn(
+                            `WhatsApp template ${templateName} recovered with language ${lang} (${attempt.label})`,
+                        );
+                        return lastResult;
+                    }
+                }
+            }
+        }
+
+        return lastResult;
+    }
+
     async sendByFamily(
         familyBase: string,
         ctx: WhatsAppDispatchContext,
@@ -90,40 +161,33 @@ export class WhatsAppChannelService {
             ? this.buildCtaSuffix(definition.buttonSuffixPattern, ctx.orderId, ctx.offerId)
             : undefined;
 
-        const componentVariants = buildTemplateComponentVariants({
-            bodyTexts,
-            headerText: definition.headerText,
-            buttonSuffix,
-            welcomeFallbackHeader: familyBase.startsWith('welcome_')
-                ? 'ترحيب'
-                : undefined,
-        });
+        const contactName =
+            ctx.fields.name?.trim() ||
+            bodyTexts[definition.bodyFields.indexOf('name')] ||
+            'مستخدم';
 
-        let result = await this.widers.sendTemplateMessage({
-            phone: ctx.phone,
-            templateName: definition.name,
-            templateLanguage: definition.language,
-            components: componentVariants[0],
-        });
+        const isWelcome = familyBase.startsWith('welcome_');
+        const sendAttempts: TemplateSendAttempt[] = isWelcome
+            ? buildWelcomeSendAttempts({
+                  bodyTexts,
+                  bodyFields: definition.bodyFields,
+                  buttonSuffix,
+                  contactName,
+              })
+            : buildTemplateComponentVariants({
+                  bodyTexts,
+                  bodyFields: definition.bodyFields,
+                  headerText: definition.headerText,
+                  buttonSuffix,
+              });
 
-        if (!result.success && isWhatsAppInvalidParameterError(result.error ?? result.message)) {
-            for (let i = 1; i < componentVariants.length; i += 1) {
-                const retry = await this.widers.sendTemplateMessage({
-                    phone: ctx.phone,
-                    templateName: definition.name,
-                    templateLanguage: definition.language,
-                    components: componentVariants[i],
-                });
-                if (retry.success) {
-                    this.logger.warn(
-                        `WhatsApp template ${definition.name} recovered after component fallback (variant ${i + 1}/${componentVariants.length})`,
-                    );
-                    result = retry;
-                    break;
-                }
-                result = retry;
-            }
-        }
+        let result = await this.dispatchTemplateAttempts(
+            definition.name,
+            definition.language,
+            ctx.phone,
+            sendAttempts,
+            isWelcome,
+        );
 
         void this.messageLog
             .logOutbound({

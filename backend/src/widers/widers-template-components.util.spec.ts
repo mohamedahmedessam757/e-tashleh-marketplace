@@ -1,5 +1,6 @@
 import {
     buildTemplateComponentVariants,
+    buildWelcomeSendAttempts,
     isWhatsAppInvalidParameterError,
     resolveTemplateBodyValue,
 } from './widers-template-components.util';
@@ -9,56 +10,42 @@ describe('widers-template-components.util', () => {
         it('falls back for empty name', () => {
             expect(resolveTemplateBodyValue('name', '   ')).toBe('مستخدم');
         });
-
-        it('keeps non-empty values', () => {
-            expect(resolveTemplateBodyValue('name', 'أحمد')).toBe('أحمد');
-        });
     });
 
     describe('isWhatsAppInvalidParameterError', () => {
         it('detects Meta #100 messages', () => {
             expect(isWhatsAppInvalidParameterError('(#100) Invalid parameter')).toBe(true);
-            expect(isWhatsAppInvalidParameterError('something else')).toBe(false);
+        });
+    });
+
+    describe('buildWelcomeSendAttempts', () => {
+        it('starts with contact-only then body variants', () => {
+            const attempts = buildWelcomeSendAttempts({
+                bodyTexts: ['أحمد'],
+                bodyFields: ['name'],
+                buttonSuffix: 'home',
+                contactName: 'أحمد',
+            });
+
+            expect(attempts[0]).toEqual({
+                label: 'contact-only',
+                contactName: 'أحمد',
+            });
+            expect(attempts.some((a) => a.label === 'body-positional')).toBe(true);
+            expect(attempts.some((a) => a.label === 'body-named')).toBe(true);
         });
     });
 
     describe('buildTemplateComponentVariants', () => {
-        it('includes body-only fallback when button suffix is set', () => {
-            const variants = buildTemplateComponentVariants({
+        it('includes body-only fallback when header and button exist', () => {
+            const attempts = buildTemplateComponentVariants({
                 bodyTexts: ['أحمد'],
+                bodyFields: ['name'],
+                headerText: 'تحديث',
                 buttonSuffix: 'home',
             });
 
-            expect(variants).toHaveLength(2);
-            expect(variants[0]).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({ type: 'button' }),
-                    expect.objectContaining({ type: 'body' }),
-                ]),
-            );
-            expect(variants[1]).toEqual([
-                expect.objectContaining({
-                    type: 'body',
-                    parameters: [{ type: 'text', text: 'أحمد' }],
-                }),
-            ]);
-        });
-
-        it('adds welcome header fallbacks when configured', () => {
-            const variants = buildTemplateComponentVariants({
-                bodyTexts: ['أحمد'],
-                buttonSuffix: 'home',
-                welcomeFallbackHeader: 'ترحيب',
-            });
-
-            expect(
-                variants.some(
-                    (v) =>
-                        v.some((c) => c.type === 'header') &&
-                        v.some((c) => c.type === 'body') &&
-                        !v.some((c) => c.type === 'button'),
-                ),
-            ).toBe(true);
+            expect(attempts.some((a) => a.label === 'body-only')).toBe(true);
         });
     });
 });

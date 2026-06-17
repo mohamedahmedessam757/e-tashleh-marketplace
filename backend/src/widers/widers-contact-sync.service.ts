@@ -107,11 +107,12 @@ export class WidersContactSyncService {
         await this.callMakeContact(
             {
                 phone,
-                name: params.name?.trim() || undefined,
+                name: params.name?.trim() || 'مستخدم',
                 email: params.email,
                 groups: group,
                 tags: this.buildTags(WIDERS_CONTACT_TAGS.lead, WIDERS_CONTACT_TAGS.registered2026),
                 fields: {
+                    name: params.name?.trim() || 'مستخدم',
                     preferred_language: 'ar',
                     registration_stage: 'lead',
                 },
@@ -146,7 +147,7 @@ export class WidersContactSyncService {
         const result = await this.callMakeContact(
             {
                 phone,
-                name: user.name?.trim() || undefined,
+                name: user.name?.trim() || 'مستخدم',
                 email: user.email,
                 groups:
                     audience === 'vendor'
@@ -154,6 +155,7 @@ export class WidersContactSyncService {
                         : WIDERS_CONTACT_GROUPS.customer,
                 tags: this.buildTags(roleTag, WIDERS_CONTACT_TAGS.registered2026),
                 fields: {
+                    name: user.name?.trim() || 'مستخدم',
                     preferred_language: 'ar',
                     registration_stage: 'registered',
                     user_id: user.id,
