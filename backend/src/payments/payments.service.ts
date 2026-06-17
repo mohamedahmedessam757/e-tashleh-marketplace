@@ -26,7 +26,7 @@ import {
     buildWithdrawalGovernance,
     countOpenMerchantCases,
 } from './merchant-withdrawal-governance.util';
-import { buildPayoutBankDetailsResponse } from './payout-account.util';
+import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPayoutMethodReady } from './payout-account.util';
 import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
@@ -2266,12 +2266,11 @@ export class PaymentsService {
         // ------------------------------------------------------
 
         // Validate payout method prerequisites
-        if (payoutMethod === 'STRIPE' && !store.stripeOnboarded) {
-            throw new BadRequestException('Please complete Stripe onboarding first');
-        }
-        if (payoutMethod === 'BANK_TRANSFER' && !(store as any).bankIban) {
-            throw new BadRequestException('Please add your bank details first');
-        }
+        const payoutReadiness = getPayoutReadiness({
+            bankIban: store.bankIban,
+            stripeOnboarded: store.stripeOnboarded,
+        });
+        assertWithdrawalPayoutMethodReady(payoutMethod, payoutReadiness);
 
         // Check against global limits
         const limits = await this.getWithdrawalLimits();
@@ -2343,12 +2342,11 @@ export class PaymentsService {
         // ------------------------------------------------------
 
         // Validate payout method prerequisites
-        if (payoutMethod === 'STRIPE' && !user.stripeOnboarded) {
-            throw new BadRequestException('Please complete Stripe onboarding first');
-        }
-        if (payoutMethod === 'BANK_TRANSFER' && !user.bankIban) {
-            throw new BadRequestException('Please add your bank details first');
-        }
+        const payoutReadiness = getPayoutReadiness({
+            bankIban: user.bankIban,
+            stripeOnboarded: user.stripeOnboarded,
+        });
+        assertWithdrawalPayoutMethodReady(payoutMethod, payoutReadiness);
 
         // Check against global limits
         const limits = await this.getWithdrawalLimits();

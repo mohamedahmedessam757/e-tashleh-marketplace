@@ -73,7 +73,7 @@ interface ProfileState {
 
   // Security Actions
   updatePassword: (current: string, newPass: string) => Promise<void>;
-  detectCurrentSession: () => Promise<void>;
+  detectCurrentSession: (lang?: 'ar' | 'en') => Promise<void>;
   deleteAccount: () => Promise<void>;
   
   // System Actions
@@ -415,25 +415,22 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  detectCurrentSession: async () => {
+  detectCurrentSession: async (lang: 'ar' | 'en' = 'en') => {
     try {
       const { authApi } = await import('../services/api/auth');
 
-      // Fetch Real Sessions from Database
-      const dbSessions = await authApi.getSessions();
+      const dbSessions = await authApi.getSessions(lang);
 
-      // Parse token from local storage to identify "current"
-      const currentToken = localStorage.getItem('token');
-
-      // Map DB schema to Frontend Store schema
       const mappedSessions = dbSessions.map((s: any) => ({
         id: s.id,
         device: s.device || 'Unknown Device',
         os: s.os || 'Unknown OS',
-        location: s.location || 'Unknown Location',
+        location:
+          s.location ||
+          (lang === 'ar' ? 'موقع غير معروف' : 'Unknown Location'),
         ip: s.ip || 'Unknown IP',
         lastActive: s.lastActive || s.createdAt,
-        isCurrent: s.token === currentToken // Mark whichever matches our active token
+        isCurrent: Boolean(s.isCurrent),
       }));
 
       // Sort so current is always first

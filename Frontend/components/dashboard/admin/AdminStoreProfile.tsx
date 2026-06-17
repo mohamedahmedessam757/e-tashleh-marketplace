@@ -2412,7 +2412,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                                                         <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-bold uppercase tracking-tight">
                                                                             <Hash size={10} className="text-gold-500/40" />
-                                                                            {session.ipAddress}
+                                                                            {session.ip || session.ipAddress || '---'}
                                                                         </div>
                                                                         <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-bold uppercase tracking-tight">
                                                                             <MapPin size={10} className="text-gold-500/40" />

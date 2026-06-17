@@ -10,8 +10,8 @@ export const MerchantSessionsTab: React.FC = () => {
     const [isWarningOpen, setIsWarningOpen] = useState(false);
 
     useEffect(() => {
-        detectCurrentSession();
-    }, []);
+        detectCurrentSession(language === 'ar' ? 'ar' : 'en');
+    }, [language]);
 
     const handleTerminateAll = async () => {
         try {

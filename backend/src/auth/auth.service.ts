@@ -11,7 +11,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UAParser } from 'ua-parser-js';
-import * as geoip from 'geoip-lite';
+import {
+    enrichSessionLocations,
+    normalizeClientIp,
+    resolveIpLocationAsync,
+    resolveIpLocationSync,
+} from '../common/ip/ip-geolocation.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -97,18 +102,11 @@ export class AuthService {
         const browserName = ua.browser.name ? `${ua.browser.name} ${ua.browser.version || ''}` : 'Unknown Browser';
         const deviceName = ua.device.model ? `${ua.device.vendor || ''} ${ua.device.model}` : browserName;
 
-        // Clean IP: Handle '::ffff:127.0.0.1' or proxy lists '1.1.1.1, 2.2.2.2'
-        let cleanIp = ip || 'Unknown';
-        if (cleanIp.includes(',')) cleanIp = cleanIp.split(',')[0].trim();
-        if (cleanIp.startsWith('::ffff:')) cleanIp = cleanIp.substring(7);
+        const cleanIp = normalizeClientIp(ip);
 
-        let location = 'Unknown Location';
-        if (cleanIp && cleanIp !== '::1' && cleanIp !== '127.0.0.1' && !cleanIp.startsWith('192.168.')) {
-            const geo = geoip.lookup(cleanIp);
-            if (geo) {
-                location = [geo.city, geo.region, geo.country].filter(Boolean).join(', ');
-            }
-        }
+        let location =
+            resolveIpLocationSync(cleanIp, 'en') ||
+            (await resolveIpLocationAsync(cleanIp, 'en'));
 
         // Session Deduplication Logic: Upsert if fingerprint exists
         if (fingerprint) {
@@ -607,7 +605,7 @@ export class AuthService {
         return result;
     }
 
-    async getActiveSessions(userId: string) {
+    async getActiveSessions(userId: string, currentToken?: string, locale: 'en' | 'ar' = 'en') {
         const sessions = await this.prisma.session.findMany({
             where: { userId },
             orderBy: { lastActive: 'desc' },
@@ -617,11 +615,27 @@ export class AuthService {
                 device: true,
                 os: true,
                 ip: true,
+                location: true,
+                token: true,
                 lastActive: true,
                 createdAt: true,
             },
         });
-        return sessions;
+
+        const enriched = await enrichSessionLocations(sessions, {
+            locale,
+            onPersist: async (id, location) => {
+                await this.prisma.session.update({
+                    where: { id },
+                    data: { location },
+                });
+            },
+        });
+
+        return enriched.map(({ token, ...session }) => ({
+            ...session,
+            isCurrent: Boolean(currentToken && token === currentToken),
+        }));
     }
 
     async terminateSession(userId: string, sessionId: string) {

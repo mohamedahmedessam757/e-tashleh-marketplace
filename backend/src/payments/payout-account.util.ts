@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 export type PayoutVerificationStatus = 'NOT_LINKED' | 'PENDING_REVIEW' | 'VERIFIED';
 
 export interface PayoutBankDetailsDto {
@@ -57,4 +59,42 @@ export function buildPayoutBankDetailsResponse(input: {
         stripeOnboarded: Boolean(input.stripeOnboarded),
         stripeAccountId: input.stripeAccountId ?? null,
     };
+}
+
+export interface PayoutReadiness {
+    hasBank: boolean;
+    hasStripe: boolean;
+    hasAny: boolean;
+}
+
+export function getPayoutReadiness(input: {
+    bankIban?: string | null;
+    stripeOnboarded?: boolean;
+}): PayoutReadiness {
+    const hasBank = Boolean(input.bankIban?.trim());
+    const hasStripe = Boolean(input.stripeOnboarded);
+    return { hasBank, hasStripe, hasAny: hasBank || hasStripe };
+}
+
+export function assertWithdrawalPayoutMethodReady(
+    payoutMethod: string,
+    readiness: PayoutReadiness,
+): void {
+    if (!readiness.hasAny) {
+        throw new BadRequestException(
+            'You must link a payout method before withdrawing. Stripe Connect is recommended for faster payouts, or add your bank account details.',
+        );
+    }
+
+    if (payoutMethod === 'STRIPE' && !readiness.hasStripe) {
+        throw new BadRequestException(
+            'Complete Stripe Connect onboarding first, or switch to bank transfer.',
+        );
+    }
+
+    if (payoutMethod === 'BANK_TRANSFER' && !readiness.hasBank) {
+        throw new BadRequestException(
+            'Add your bank account details first, or switch to Stripe Connect (recommended for faster payouts).',
+        );
+    }
 }

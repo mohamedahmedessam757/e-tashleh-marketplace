@@ -10,8 +10,8 @@ export const SecurityTab: React.FC = () => {
     const [isWarningOpen, setIsWarningOpen] = useState(false);
 
     useEffect(() => {
-        detectCurrentSession();
-    }, []);
+        detectCurrentSession(language === 'ar' ? 'ar' : 'en');
+    }, [language]);
 
     const handleTerminateAll = () => {
         terminateAllSessions();
@@ -49,7 +49,7 @@ export const SecurityTab: React.FC = () => {
                                     <div className="text-xs text-white/40 mt-1 flex flex-wrap items-center gap-2">
                                         <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider">{session.os}</span>
                                         <span>•</span>
-                                        <span className="text-gold-200/60">{session.location === 'Unknown Location' && language === 'ar' ? 'موقع غير معروف' : session.location}</span>
+                                        <span className="text-gold-200/60">{session.location}</span>
                                         <span>•</span>
                                         <span className="font-mono text-[10px] bg-black/20 px-1.5 py-0.5 rounded border border-white/5">{session.ip}</span>
                                         <span>•</span>

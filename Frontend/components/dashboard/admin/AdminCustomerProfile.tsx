@@ -6,7 +6,7 @@ import {
     ChevronLeft, ChevronRight, User, Mail, Phone, Lock, Unlock,
     Shield, Smartphone, Globe, Package, Scale, RefreshCcw,
     DollarSign, Target, MessageSquare, CheckCircle2, Loader2,
-    Calendar, Clock, ShieldAlert, Crown, Diamond, AlertTriangle, Eye, FileText
+    Calendar, Clock, ShieldAlert, Crown, Diamond, AlertTriangle, Eye, FileText, MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../../ui/Badge';
@@ -1255,11 +1255,16 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                                                         </div>
                                                                         <div>
                                                                             <div className="text-sm font-black text-white group-hover:text-gold-500 transition-colors">{session.device || 'Unknown Device'}</div>
-                                                                            <div className="flex items-center gap-3 mt-1">
+                                                                            <div className="flex items-center gap-3 mt-1 flex-wrap">
                                                                                 <div className="text-[10px] text-white/30 font-mono tracking-widest uppercase bg-white/5 px-2 py-0.5 rounded-md">IP: {session.ip || '---'}</div>
                                                                                 <span className="w-1 h-1 rounded-full bg-white/10" />
+                                                                                <div className="text-[10px] text-white/30 font-medium flex items-center gap-1">
+                                                                                    <MapPin size={10} className="text-gold-500/50" />
+                                                                                    {session.location || (isAr ? 'موقع غير محدد' : 'Unknown Location')}
+                                                                                </div>
+                                                                                <span className="w-1 h-1 rounded-full bg-white/10" />
                                                                                 <div className="text-[10px] text-white/20 font-medium">
-                                                                                    {isAr ? 'آخر ظهور:' : 'Last seen:'} {new Date(session.lastSeen || session.createdAt).toLocaleTimeString(isAr ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                                                    {isAr ? 'آخر ظهور:' : 'Last seen:'} {new Date(session.lastActive || session.lastSeen || session.createdAt).toLocaleTimeString(isAr ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </div>
                                                                             </div>
                                                                         </div>

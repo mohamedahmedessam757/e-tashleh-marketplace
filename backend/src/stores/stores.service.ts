@@ -5,6 +5,7 @@ import { StoreStatus, OrderStatus, StoreSubscriptionTier } from '@prisma/client'
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
+import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 
 @Injectable()
 export class StoresService {
@@ -421,11 +422,23 @@ export class StoresService {
         const modificationRatePercent =
             modTotal > 0 ? Math.round((modActions / modTotal) * 1000) / 10 : 0;
 
+        const ownerSessions = s.owner?.Session
+            ? await enrichSessionLocations(s.owner.Session, {
+                  locale: 'en',
+                  onPersist: async (id, location) => {
+                      await this.prisma.session.update({
+                          where: { id },
+                          data: { location },
+                      });
+                  },
+              })
+            : [];
+
         const enrichedStore = {
             ...store,
             owner: s.owner ? {
                 ...s.owner,
-                sessions: s.owner.Session || []
+                sessions: ownerSessions,
             } : null,
             orders: inclusiveOrders,
             walletTransactions: s.owner ? s.owner.walletTransactions || [] : [],

@@ -50,6 +50,13 @@ import { MerchantStoreTierProgress } from './MerchantStoreTierProgress';
 import { useMerchantWalletStore, subscribeToMerchantWalletUpdates } from '../../../stores/useMerchantWalletStore';
 import { PayoutMethodPanel } from '../wallet/PayoutMethodPanel';
 import { BankDetailsModal } from '../wallet/BankDetailsModal';
+import { PayoutLinkRequiredAlert } from '../wallet/PayoutLinkRequiredAlert';
+import {
+    getPayoutReadiness,
+    getNoPayoutLinkedMessage,
+    getSelectedPayoutMethodNotReadyMessage,
+    isPayoutMethodReady,
+} from '../../../utils/payout-readiness';
 import { getCurrentUser } from '../../../utils/auth';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 
@@ -147,10 +154,15 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const withdrawalRestrictionMessage = isAr
         ? stats?.withdrawalRestrictionMessageAr
         : stats?.withdrawalRestrictionMessageEn;
+    const payoutReadiness = useMemo(
+        () => getPayoutReadiness(bankDetails, stats?.stripeOnboarded),
+        [bankDetails, stats?.stripeOnboarded],
+    );
+    const payoutMethodReady = isPayoutMethodReady(payoutMethod, payoutReadiness);
+    const hasEnoughBalance =
+        maxWithdrawable !== null && maxWithdrawable >= withdrawalLimits.min;
     const canWithdraw =
-        !withdrawalsFrozen &&
-        maxWithdrawable !== null &&
-        maxWithdrawable >= withdrawalLimits.min;
+        !withdrawalsFrozen && hasEnoughBalance && payoutMethodReady;
 
     const currentUser = getCurrentUser();
 
@@ -363,13 +375,13 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             return;
         }
 
-        // Validate prerequisites for chosen method
-        if (payoutMethod === 'STRIPE' && !stats.stripeOnboarded) {
-            setWithdrawError(isAr ? 'يجب ربط حسابك عبر Stripe أولاً' : 'Please complete Stripe onboarding first');
+        // Validate payout method prerequisites
+        if (!payoutReadiness.hasAny) {
+            setWithdrawError(getNoPayoutLinkedMessage(isAr));
             return;
         }
-        if (payoutMethod === 'BANK_TRANSFER' && !bankDetails?.iban) {
-            setWithdrawError(isAr ? 'يجب إضافة بيانات الحساب البنكي أولاً' : 'Please add your bank details first');
+        if (!payoutMethodReady) {
+            setWithdrawError(getSelectedPayoutMethodNotReadyMessage(isAr, payoutMethod));
             return;
         }
 
@@ -937,6 +949,16 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                 </div>
                             </div>
 
+                            <div className="mb-6">
+                                <PayoutLinkRequiredAlert
+                                    isAr={isAr}
+                                    readiness={payoutReadiness}
+                                    payoutMethod={payoutMethod}
+                                    onConnectStripe={handleStripeConnect}
+                                    onAddBank={() => setShowBankForm(true)}
+                                />
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Left: Amount */}
                                 <div className="space-y-4">
@@ -962,7 +984,18 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                         <span className="text-white/30">{isAr ? 'الحد الأقصى للسحب:' : 'Max withdraw:'} <span className="text-white/80">{(maxWithdrawable ?? 0).toLocaleString()} AED</span></span>
                                         <span className="text-white/30">{isAr ? 'حد أدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
-                                    {!canWithdraw && !isLoading && !withdrawalsFrozen && (
+                                    {!canWithdraw && !isLoading && !withdrawalsFrozen && !payoutMethodReady && (
+                                        <p className="text-[10px] text-white/40">
+                                            {!payoutReadiness.hasAny
+                                                ? isAr
+                                                    ? 'اربط Stripe Connect أو حسابك البنكي لتفعيل السحب'
+                                                    : 'Link Stripe Connect or your bank account to enable withdrawals'
+                                                : isAr
+                                                  ? 'طريقة السحب المختارة غير مربوطة بعد'
+                                                  : 'Your selected payout method is not linked yet'}
+                                        </p>
+                                    )}
+                                    {!canWithdraw && !isLoading && !withdrawalsFrozen && payoutMethodReady && !hasEnoughBalance && (
                                         <p className="text-[10px] text-white/40">
                                             {isAr
                                                 ? `الحد الأدنى للسحب ${withdrawalLimits.min} AED — رصيدك الحالي غير كافٍ`

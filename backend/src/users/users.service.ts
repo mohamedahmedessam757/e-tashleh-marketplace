@@ -6,6 +6,7 @@ import { User } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
+import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 
 @Injectable()
 export class UsersService {
@@ -534,8 +535,19 @@ export class UsersService {
     });
     const violationScore = activeViolations.reduce((sum, v) => sum + v.points, 0);
 
+    const enrichedSessions = await enrichSessionLocations(user.Session, {
+      locale: 'en',
+      onPersist: async (id, location) => {
+        await this.prisma.session.update({
+          where: { id },
+          data: { location },
+        });
+      },
+    });
+
     return {
       ...user,
+      Session: enrichedSessions,
       ltv,
       totalSpent: ltv, // Consistency for 2026 platform standards
       successRate,

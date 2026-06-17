@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Delete, Param, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -172,8 +172,14 @@ export class AuthController {
 
     @UseGuards(JwtAuthGuard)
     @Get('sessions')
-    async getSessions(@Request() req) {
-        return this.authService.getActiveSessions(req.user.id || req.user.userId);
+    async getSessions(@Request() req, @Query('lang') lang?: string) {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const locale = lang === 'ar' ? 'ar' : 'en';
+        return this.authService.getActiveSessions(
+            req.user.id || req.user.userId,
+            token,
+            locale,
+        );
     }
 
     @UseGuards(JwtAuthGuard)

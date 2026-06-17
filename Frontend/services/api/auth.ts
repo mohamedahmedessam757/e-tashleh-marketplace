@@ -122,8 +122,10 @@ export const authApi = {
     },
 
     // Session Management
-    getSessions: async () => {
-        const response = await client.get('/auth/sessions');
+    getSessions: async (lang?: 'ar' | 'en') => {
+        const response = await client.get('/auth/sessions', {
+            params: lang ? { lang } : undefined,
+        });
         return response.data;
     },
 

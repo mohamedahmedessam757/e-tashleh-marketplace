@@ -2,7 +2,10 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UAParser } from 'ua-parser-js';
-import * as geoip from 'geoip-lite';
+import {
+  normalizeClientIp,
+  resolveIpLocationSync,
+} from '../common/ip/ip-geolocation.util';
 
 @Injectable()
 export class PlatformSettingsService {
@@ -96,15 +99,9 @@ export class PlatformSettingsService {
         ? `${ua.device.vendor || ''} ${ua.device.model}`
         : 'Desktop';
 
-      let location = 'Unknown Location';
-      if (context.ip && context.ip !== '127.0.0.1' && context.ip !== '::1') {
-        const geo = geoip.lookup(context.ip);
-        if (geo) {
-          location = [geo.city, geo.region, geo.country]
-            .filter(Boolean)
-            .join(', ');
-        }
-      }
+      const cleanIp = normalizeClientIp(context.ip);
+      const location =
+        resolveIpLocationSync(cleanIp, 'en') || 'Unknown Location';
 
       enriched = {
         ip: context.ip,
