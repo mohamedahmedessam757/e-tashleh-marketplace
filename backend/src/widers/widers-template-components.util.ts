@@ -122,10 +122,49 @@ function componentKey(components?: WidersTemplateComponent[]): string {
     return JSON.stringify(components ?? null);
 }
 
+function attemptKey(attempt: TemplateSendAttempt): string {
+    return `${attempt.label}:${componentKey(attempt.components)}:${JSON.stringify(attempt.bodyParameters ?? null)}`;
+}
+
+/** Detect Meta/Widers errors embedded in HTTP-200 responses. */
+export function extractWidersTemplateSendError(
+    parsed: { success?: boolean; error?: string; message?: string; data?: unknown },
+    rawText?: string,
+): string | undefined {
+    const dataError =
+        parsed.data && typeof parsed.data === 'object'
+            ? (() => {
+                  const d = parsed.data as Record<string, unknown>;
+                  const nested = [d.error, d.message, d.status, d.details]
+                      .filter((v) => typeof v === 'string')
+                      .join(' ');
+                  return nested || undefined;
+              })()
+            : typeof parsed.data === 'string'
+              ? parsed.data
+              : undefined;
+
+    const combined = [parsed.error, parsed.message, dataError, rawText]
+        .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+        .join(' ');
+
+    if (parsed.success === false) {
+        return parsed.error ?? parsed.message ?? (combined || 'Widers send failed');
+    }
+
+    if (isWhatsAppInvalidParameterError(combined)) {
+        return combined;
+    }
+
+    return undefined;
+}
+
 export interface TemplateSendAttempt {
-    components?: WidersTemplateComponent[];
-    contactName?: string;
     label: string;
+    components?: WidersTemplateComponent[];
+    /** Positional {{1}}…{{n}} — wpbox `parameters` / `variables` arrays */
+    bodyParameters?: string[];
+    parameterFormat?: 'parameters' | 'variables';
 }
 
 /**
@@ -138,7 +177,7 @@ export function buildTemplateComponentVariants(
     const seen = new Set<string>();
 
     const push = (attempt: TemplateSendAttempt) => {
-        const key = `${attempt.label}:${componentKey(attempt.components)}:${attempt.contactName ?? ''}`;
+        const key = attemptKey(attempt);
         if (seen.has(key)) return;
         seen.add(key);
         attempts.push(attempt);
@@ -201,8 +240,8 @@ export function buildTemplateComponentVariants(
 }
 
 /**
- * Welcome: exactly one body param ({{1}}). Never mix root `name` with body components —
- * Widers/Meta counts both and returns (#132000).
+ * Welcome templates: exactly one body variable {{1}}.
+ * Never use contact-only (0 params → #132000 when {{1}} is not mapped in Widers UI).
  */
 export function buildWelcomeSendAttempts(
     options: BuildTemplateComponentsOptions & { contactName: string },
@@ -211,26 +250,32 @@ export function buildWelcomeSendAttempts(
     const seen = new Set<string>();
 
     const push = (attempt: TemplateSendAttempt) => {
-        const key = `${attempt.label}:${componentKey(attempt.components)}:${attempt.contactName ?? ''}`;
+        const key = attemptKey(attempt);
         if (seen.has(key)) return;
         seen.add(key);
         attempts.push(attempt);
     };
 
-    const base = {
-        bodyTexts: options.bodyTexts,
-        bodyFields: options.bodyFields,
-    };
+    const nameValue = options.bodyTexts[0] ?? options.contactName;
 
-    // When {{1}} is mapped to «اسم جهة الاتصال» in Widers, API body params double-count → #132000
     push({
-        label: 'contact-only',
-        contactName: options.contactName,
+        label: 'components-body',
+        components: buildTemplateComponents({
+            bodyTexts: [nameValue],
+            bodyFields: options.bodyFields,
+        }),
     });
 
     push({
-        label: 'body-positional',
-        components: buildTemplateComponents(base),
+        label: 'parameters-array',
+        bodyParameters: [nameValue],
+        parameterFormat: 'parameters',
+    });
+
+    push({
+        label: 'variables-array',
+        bodyParameters: [nameValue],
+        parameterFormat: 'variables',
     });
 
     return attempts;

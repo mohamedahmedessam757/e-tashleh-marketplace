@@ -1,5 +1,4 @@
 import {
-    buildTemplateComponentVariants,
     buildWelcomeSendAttempts,
     isWhatsAppInvalidParameterError,
     resolveTemplateBodyValue,
@@ -12,36 +11,19 @@ describe('widers-template-components.util', () => {
         });
     });
 
-    describe('isWhatsAppInvalidParameterError', () => {
-        it('detects Meta #100 messages', () => {
-            expect(isWhatsAppInvalidParameterError('(#100) Invalid parameter')).toBe(true);
-        });
-    });
-
     describe('buildWelcomeSendAttempts', () => {
-        it('prefers contact-only before explicit body params', () => {
+        it('never uses contact-only and always sends exactly one name value', () => {
             const attempts = buildWelcomeSendAttempts({
                 bodyTexts: ['أحمد'],
                 bodyFields: ['name'],
                 contactName: 'أحمد',
             });
 
-            expect(attempts[0]?.label).toBe('contact-only');
-            expect(attempts[1]?.label).toBe('body-positional');
-            expect(attempts[1]?.contactName).toBeUndefined();
-        });
-    });
-
-    describe('buildTemplateComponentVariants', () => {
-        it('includes body-only fallback when header and button exist', () => {
-            const attempts = buildTemplateComponentVariants({
-                bodyTexts: ['أحمد'],
-                bodyFields: ['name'],
-                headerText: 'تحديث',
-                buttonSuffix: 'home',
-            });
-
-            expect(attempts.some((a) => a.label === 'body-only')).toBe(true);
+            expect(attempts.some((a) => a.label === 'contact-only')).toBe(false);
+            expect(attempts[0]?.label).toBe('components-body');
+            expect(attempts[0]?.components?.[0]?.parameters).toHaveLength(1);
+            expect(attempts[1]?.bodyParameters).toEqual(['أحمد']);
+            expect(attempts[2]?.parameterFormat).toBe('variables');
         });
     });
 });

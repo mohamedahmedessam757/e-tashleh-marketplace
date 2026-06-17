@@ -112,13 +112,13 @@ export class WhatsAppChannelService {
         templateLanguage: string,
         attempt?: TemplateSendAttempt,
     ) {
-        const hasComponents = Boolean(attempt?.components?.length);
         return this.widers.sendTemplateMessage({
             phone,
             templateName,
             templateLanguage,
             components: attempt?.components,
-            contactName: hasComponents ? undefined : attempt?.contactName,
+            bodyParameters: attempt?.bodyParameters,
+            parameterFormat: attempt?.parameterFormat,
         });
     }
 

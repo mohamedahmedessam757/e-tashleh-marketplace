@@ -25,8 +25,10 @@ export interface SendTemplateMessagePayload {
     templateName: string;
     templateLanguage: WidersTemplateLanguage | string;
     components?: WidersTemplateComponent[];
-    /** Contact display name — Widers resolves {{1}} when mapped to «اسم جهة الاتصال» */
-    contactName?: string;
+    /** wpbox positional values — alternative to `components` (exactly matches {{1}}…{{n}}) */
+    bodyParameters?: string[];
+    /** When set with bodyParameters, sends `variables` instead of `parameters` */
+    parameterFormat?: 'parameters' | 'variables';
 }
 
 export interface MakeContactPayload {

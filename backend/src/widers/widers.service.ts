@@ -7,7 +7,10 @@ import type {
     WidersTemplateComponent,
 } from './widers.types';
 import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
-import { buildTemplateComponents } from './widers-template-components.util';
+import {
+    buildTemplateComponents,
+    extractWidersTemplateSendError,
+} from './widers-template-components.util';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -154,22 +157,72 @@ export class WidersService {
             template_language: payload.templateLanguage,
         };
 
-        if (payload.contactName?.trim() && !payload.components?.length) {
-            body.name = payload.contactName.trim();
-        }
-
         if (payload.components?.length) {
             body.components = payload.components;
+        } else if (payload.bodyParameters?.length) {
+            const key =
+                payload.parameterFormat === 'variables' ? 'variables' : 'parameters';
+            body[key] = payload.bodyParameters;
         }
 
+        const formatLabel = payload.components?.length
+            ? `components×${payload.components.length}`
+            : `${payload.parameterFormat ?? 'parameters'}×${payload.bodyParameters?.length ?? 0}`;
+
         this.logger.log(
-            `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone}` +
-                (payload.components?.length
-                    ? ` [${payload.components.length} component(s)]`
-                    : ' [contact-backed]'),
+            `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone} [${formatLabel}]`,
         );
 
-        return this.post('sendtemplatemessage', body);
+        const token = this.widersConfig.apiToken;
+        if (!token) {
+            return { success: false, error: 'WIDERS_API_TOKEN not configured' };
+        }
+
+        const url = this.widersConfig.apiPath('sendtemplatemessage');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ ...body, token }),
+                signal: controller.signal,
+            });
+
+            const text = await response.text();
+            let parsed: WidersApiResponse = {};
+            try {
+                parsed = text ? (JSON.parse(text) as WidersApiResponse) : {};
+            } catch {
+                parsed = { success: false, error: text || response.statusText };
+            }
+
+            if (!response.ok) {
+                const error = parsed.error ?? parsed.message ?? `HTTP ${response.status}`;
+                this.logger.warn(`Widers sendtemplatemessage HTTP ${response.status}: ${error}`);
+                return { ...parsed, success: false, error };
+            }
+
+            const embeddedError = extractWidersTemplateSendError(
+                { ...parsed, success: parsed.success !== false },
+                text,
+            );
+            if (embeddedError) {
+                this.logger.warn(
+                    `Widers sendtemplatemessage rejected ${payload.templateName}: ${embeddedError}`,
+                );
+                return { ...parsed, success: false, error: embeddedError };
+            }
+
+            return { ...parsed, success: parsed.success !== false };
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown Widers error';
+            this.logger.error(`Widers sendtemplatemessage failed: ${message}`);
+            return { success: false, error: message };
+        } finally {
+            clearTimeout(timeout);
+        }
     }
 
     async makeContact(payload: MakeContactPayload): Promise<WidersApiResponse> {
