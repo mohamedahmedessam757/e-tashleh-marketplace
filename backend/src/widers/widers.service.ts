@@ -7,7 +7,7 @@ import type {
     WidersTemplateComponent,
 } from './widers.types';
 import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
-import { truncateWhatsAppParam } from './template-registry';
+import { buildTemplateComponents } from './widers-template-components.util';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -130,35 +130,11 @@ export class WidersService {
             buttonSuffix?: string;
         },
     ): WidersTemplateComponent[] {
-        const components: WidersTemplateComponent[] = [];
-
-        if (options?.headerText) {
-            components.push({
-                type: 'header',
-                parameters: [{ type: 'text', text: truncateWhatsAppParam(options.headerText, 60) }],
-            });
-        }
-
-        if (bodyTexts.length > 0) {
-            components.push({
-                type: 'body',
-                parameters: bodyTexts.map((t) => ({
-                    type: 'text' as const,
-                    text: truncateWhatsAppParam(t),
-                })),
-            });
-        }
-
-        if (options?.buttonSuffix) {
-            components.push({
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: options.buttonSuffix }],
-            });
-        }
-
-        return components;
+        return buildTemplateComponents({
+            bodyTexts,
+            headerText: options?.headerText,
+            buttonSuffix: options?.buttonSuffix,
+        });
     }
 
     async sendTemplateMessage(

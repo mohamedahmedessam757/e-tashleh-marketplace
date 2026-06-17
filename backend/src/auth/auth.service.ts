@@ -236,17 +236,29 @@ export class AuthService {
             );
         }
         const user = await this.usersService.create(createUserDto);
-        void this.contactSync.syncRegisteredUser(user.id).catch((err) =>
+        void this.deliverPostRegistrationWhatsApp(user).catch((err) =>
             this.logger.warn(
-                `Widers contact sync after register failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
-            ),
-        );
-        void this.sendWelcomeWhatsApp(user).catch((err) =>
-            this.logger.warn(
-                `Welcome WhatsApp after register failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
+                `Post-registration WhatsApp flow failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
             ),
         );
         return user;
+    }
+
+    /** Sync Widers contact first so template variables (name) resolve, then send welcome. */
+    private async deliverPostRegistrationWhatsApp(user: {
+        id: string;
+        phone: string | null;
+        countryCode: string | null;
+        name: string;
+        role: string;
+        whatsappOptIn?: boolean;
+    }): Promise<void> {
+        await this.contactSync.syncRegisteredUser(user.id).catch((err) => {
+            this.logger.warn(
+                `Widers contact sync after register failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
+            );
+        });
+        await this.sendWelcomeWhatsApp(user);
     }
 
     private async sendWelcomeWhatsApp(user: {
@@ -268,12 +280,17 @@ export class AuthService {
         if (!family) return;
 
         const phone = normalizeGulfPhone(user.phone, user.countryCode);
-        await this.whatsappChannel.sendByFamily(family, {
+        const result = await this.whatsappChannel.sendByFamily(family, {
             phone,
             language: 'ar',
             fields: { name: user.name?.trim() || 'مستخدم' },
             logContext: { recipientUserId: user.id },
         });
+        if (!result.sent) {
+            this.logger.warn(
+                `Welcome WhatsApp failed for ${user.id} (${family}): ${result.error ?? 'unknown error'}`,
+            );
+        }
     }
 
     async initRegistration(

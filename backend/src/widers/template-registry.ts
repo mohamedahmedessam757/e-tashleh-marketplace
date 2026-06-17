@@ -157,14 +157,16 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonSuffixPattern: suffix.orderMerchant,
     }),
 
-    // Optional marketing (created in Widers — not wired in Phase 5 initially)
+    // Optional marketing — header matches Widers dashboard static header when configured
     def('welcome_customer', 'ar', 'customer', ['name'], {
         category: 'MARKETING',
+        headerText: 'ترحيب',
         buttonLabel: 'ابدأ الآن',
         buttonSuffixPattern: suffix.storeHome,
     }),
     def('welcome_vendor', 'ar', 'vendor', ['name'], {
         category: 'MARKETING',
+        headerText: 'ترحيب',
         buttonLabel: 'ابدأ الآن',
         buttonSuffixPattern: suffix.storeHome,
     }),
