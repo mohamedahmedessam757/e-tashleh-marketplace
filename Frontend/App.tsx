@@ -118,6 +118,7 @@ const AdminLogin = lazy(() => import('./components/auth/AdminLogin').then(module
 const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword').then(module => ({ default: module.ForgotPassword })));
 const ResetPassword = lazy(() => import('./components/auth/ResetPassword').then(module => ({ default: module.ResetPassword })));
 const TermsView = lazy(() => import('./components/auth/TermsView').then(module => ({ default: module.TermsView })));
+const WalletLoyaltyTermsView = lazy(() => import('./components/legal/WalletLoyaltyTermsView').then(module => ({ default: module.WalletLoyaltyTermsView })));
 const AccountRecoveryWizard = lazy(() => import('./components/auth/AccountRecoveryWizard').then(module => ({ default: module.AccountRecoveryWizard })));
 import { EarnIncomeLanding } from './components/EarnIncomeLanding';
 import { VerifyLinkPage } from './components/verify/VerifyLinkPage';
@@ -136,6 +137,7 @@ type ViewState =
   | 'reset-password'
   | 'account-recovery'
   | 'terms'
+  | 'wallet-loyalty-terms'
   | 'dashboard'
   | 'role-selection'
   | 'wholesale'
@@ -474,8 +476,13 @@ function AppContent() {
     pushView('terms');
   };
 
-  const handleNavigateToLegal = (section: 'terms' | 'privacy') => {
+  const handleNavigateToLegal = (section: 'terms' | 'privacy' | 'wallet-loyalty') => {
     setPreviousView(currentView);
+    if (section === 'wallet-loyalty') {
+      setCurrentView('wallet-loyalty-terms');
+      pushView('wallet-loyalty-terms');
+      return;
+    }
     setLegalInitialSection(section);
     setCurrentView('terms');
     pushView('terms');
@@ -570,6 +577,7 @@ function AppContent() {
       case 'reset-password': return 'Reset';
       case 'account-recovery': return 'Account Recovery';
       case 'terms': return 'Terms & Conditions';
+      case 'wallet-loyalty-terms': return language === 'ar' ? 'شروط الأرباح والولاء' : 'Wallet & Loyalty Terms';
       default: return 'Auth';
     }
   };
@@ -990,9 +998,9 @@ function AppContent() {
                 className="will-change-transform"
               >
                 <AuthLayout
-                  onBack={currentView === 'terms' ? handleBackFromTerms : (currentView === 'customer-register' || currentView === 'forgot-password' || currentView === 'reset-password' || currentView === 'account-recovery' ? handleBackToLogin : handleBackToHome)}
+                  onBack={currentView === 'terms' || currentView === 'wallet-loyalty-terms' ? handleBackFromTerms : (currentView === 'customer-register' || currentView === 'forgot-password' || currentView === 'reset-password' || currentView === 'account-recovery' ? handleBackToLogin : handleBackToHome)}
                   title={getTitle()}
-                  wide={currentView === 'vendor-register' || currentView === 'terms'}
+                  wide={currentView === 'vendor-register' || currentView === 'terms' || currentView === 'wallet-loyalty-terms'}
                 >
                   <Suspense fallback={<AuthLoader />}>
                     {currentView === 'login' && (
@@ -1073,6 +1081,10 @@ function AppContent() {
 
                     {currentView === 'terms' && (
                       <TermsView initialSection={legalInitialSection} />
+                    )}
+
+                    {currentView === 'wallet-loyalty-terms' && (
+                      <WalletLoyaltyTermsView />
                     )}
                   </Suspense>
                 </AuthLayout>

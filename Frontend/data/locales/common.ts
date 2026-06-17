@@ -190,6 +190,7 @@ export const common = {
     footer: {
       privacy: 'سياسة الخصوصية',
       terms: 'شروط الاستخدام',
+      walletLoyaltyTerms: 'شروط الأرباح والولاء والإحالات',
       contact: 'تواصل معنا',
       about: 'من نحن',
       howWeWork: 'كيف نعمل',
@@ -416,6 +417,7 @@ export const common = {
     footer: {
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
+      walletLoyaltyTerms: 'Wallet, Loyalty & Referral Terms',
       contact: 'Contact Us',
       about: 'About Us',
       howWeWork: 'How We Work',

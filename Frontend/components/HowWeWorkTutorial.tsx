@@ -10,7 +10,7 @@ interface HowWeWorkTutorialProps {
     onBack: () => void;     // Back to previous
     onOpenSupport: () => void;
     onAdminClick: () => void;
-    onNavigateToLegal: (section: 'terms' | 'privacy') => void;
+    onNavigateToLegal: (section: 'terms' | 'privacy' | 'wallet-loyalty') => void;
     onNavigateToLandingSection: (section: string) => void;
     onNavigateToLicense?: () => void;
 }

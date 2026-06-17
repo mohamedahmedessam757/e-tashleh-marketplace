@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from './ui/Container';
 import { NomoBadge } from './ui/NomoBadge';
-import { HelpCircle, MapPin, Building2, FileText, Phone, Shield, Info, Cog, Mail } from 'lucide-react';
+import { HelpCircle, MapPin, Building2, FileText, Phone, Shield, Info, Cog, Mail, Wallet } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANDING_WHATSAPP_NUMBER } from '../config/site';
 // import { Link } from 'react-router-dom'; // Assuming standard routing or just anchor tags if external/modal
@@ -9,7 +9,7 @@ import { LANDING_WHATSAPP_NUMBER } from '../config/site';
 interface LandingFooterProps {
     onOpenSupport: () => void;
     onAdminClick: () => void;
-    onNavigateToLegal: (section: 'terms' | 'privacy') => void;
+    onNavigateToLegal: (section: 'terms' | 'privacy' | 'wallet-loyalty') => void;
     onNavigateToLandingSection: (section: string) => void;
     onNavigateToLicense?: () => void;
 }
@@ -30,6 +30,12 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
             href: '#',
             icon: <FileText size={16} />,
             onClick: (e: React.MouseEvent) => { e.preventDefault(); onNavigateToLegal('terms'); }
+        },
+        {
+            label: t.common.footer.walletLoyaltyTerms,
+            href: '#',
+            icon: <Wallet size={16} />,
+            onClick: (e: React.MouseEvent) => { e.preventDefault(); onNavigateToLegal('wallet-loyalty'); }
         },
         {
             label: t.common.footer.contact,

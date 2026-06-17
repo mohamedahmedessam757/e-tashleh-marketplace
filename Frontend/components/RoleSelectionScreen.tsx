@@ -12,7 +12,7 @@ interface RoleSelectionScreenProps {
     onHowWeWorkClick: () => void;
     onOpenSupport: () => void;
     onAdminClick: () => void;
-    onNavigateToLegal: (section: 'terms' | 'privacy') => void;
+    onNavigateToLegal: (section: 'terms' | 'privacy' | 'wallet-loyalty') => void;
     onNavigateToLandingSection: (section: string) => void;
     onEarnIncomeClick: () => void;
     onNavigateToLicense?: () => void;
