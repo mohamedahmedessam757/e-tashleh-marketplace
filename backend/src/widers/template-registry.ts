@@ -27,6 +27,8 @@ export interface TemplateDefinition {
     buttonLabel?: string;
     /** Path after `/dashboard/` — may include `{orderId}`, `{offerId}` placeholders */
     buttonSuffixPattern?: string;
+    /** False when Widers button URL is fully static (no {{1}} suffix) */
+    buttonUrlDynamic?: boolean;
 }
 
 const suffix = {
@@ -157,16 +159,16 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonSuffixPattern: suffix.orderMerchant,
     }),
 
-    // Marketing welcome — no header in Widers dashboard (body + optional URL button only)
+    // Marketing welcome — body {{1}} only; button URL is static in Widers (no API suffix)
     def('welcome_customer', 'ar', 'customer', ['name'], {
         category: 'MARKETING',
         buttonLabel: 'ابدأ الآن',
-        buttonSuffixPattern: suffix.storeHome,
+        buttonUrlDynamic: false,
     }),
     def('welcome_vendor', 'ar', 'vendor', ['name'], {
         category: 'MARKETING',
         buttonLabel: 'ابدأ الآن',
-        buttonSuffixPattern: suffix.storeHome,
+        buttonUrlDynamic: false,
     }),
 ];
 

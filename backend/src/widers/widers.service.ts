@@ -154,7 +154,7 @@ export class WidersService {
             template_language: payload.templateLanguage,
         };
 
-        if (payload.contactName?.trim()) {
+        if (payload.contactName?.trim() && !payload.components?.length) {
             body.name = payload.contactName.trim();
         }
 

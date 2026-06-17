@@ -74,18 +74,12 @@ export class WhatsAppChannelService {
         attempts: TemplateSendAttempt[],
         retryAllOnFailure: boolean,
     ) {
-        const languages =
-            templateLanguage === 'ar'
-                ? ['ar', 'ar_SA', 'ar_AE']
-                : [templateLanguage];
-
-        let lastResult = await this.widers.sendTemplateMessage({
+        let lastResult = await this.sendTemplateAttempt(
             phone,
             templateName,
-            templateLanguage: languages[0],
-            components: attempts[0]?.components,
-            contactName: attempts[0]?.contactName,
-        });
+            templateLanguage,
+            attempts[0],
+        );
 
         const shouldRetry = (result: typeof lastResult) =>
             retryAllOnFailure ||
@@ -95,13 +89,12 @@ export class WhatsAppChannelService {
             if (!shouldRetry(lastResult)) break;
 
             const attempt = attempts[i];
-            lastResult = await this.widers.sendTemplateMessage({
+            lastResult = await this.sendTemplateAttempt(
                 phone,
                 templateName,
-                templateLanguage: languages[0],
-                components: attempt.components,
-                contactName: attempt.contactName,
-            });
+                templateLanguage,
+                attempt,
+            );
 
             if (lastResult.success) {
                 this.logger.warn(
@@ -110,30 +103,23 @@ export class WhatsAppChannelService {
             }
         }
 
-        if (!lastResult.success && languages.length > 1) {
-            for (const lang of languages.slice(1)) {
-                if (!shouldRetry(lastResult)) break;
-
-                for (const attempt of attempts) {
-                    const retry = await this.widers.sendTemplateMessage({
-                        phone,
-                        templateName,
-                        templateLanguage: lang,
-                        components: attempt.components,
-                        contactName: attempt.contactName,
-                    });
-                    lastResult = retry;
-                    if (retry.success) {
-                        this.logger.warn(
-                            `WhatsApp template ${templateName} recovered with language ${lang} (${attempt.label})`,
-                        );
-                        return lastResult;
-                    }
-                }
-            }
-        }
-
         return lastResult;
+    }
+
+    private sendTemplateAttempt(
+        phone: string,
+        templateName: string,
+        templateLanguage: string,
+        attempt?: TemplateSendAttempt,
+    ) {
+        const hasComponents = Boolean(attempt?.components?.length);
+        return this.widers.sendTemplateMessage({
+            phone,
+            templateName,
+            templateLanguage,
+            components: attempt?.components,
+            contactName: hasComponents ? undefined : attempt?.contactName,
+        });
     }
 
     async sendByFamily(
@@ -157,9 +143,10 @@ export class WhatsAppChannelService {
             resolveTemplateBodyValue(field, ctx.fields[field]),
         );
 
-        const buttonSuffix = definition.buttonSuffixPattern
-            ? this.buildCtaSuffix(definition.buttonSuffixPattern, ctx.orderId, ctx.offerId)
-            : undefined;
+        const buttonSuffix =
+            definition.buttonSuffixPattern && definition.buttonUrlDynamic !== false
+                ? this.buildCtaSuffix(definition.buttonSuffixPattern, ctx.orderId, ctx.offerId)
+                : undefined;
 
         const contactName =
             ctx.fields.name?.trim() ||

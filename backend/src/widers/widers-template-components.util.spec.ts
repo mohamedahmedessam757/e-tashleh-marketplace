@@ -19,20 +19,16 @@ describe('widers-template-components.util', () => {
     });
 
     describe('buildWelcomeSendAttempts', () => {
-        it('starts with contact-only then body variants', () => {
+        it('prefers contact-only before explicit body params', () => {
             const attempts = buildWelcomeSendAttempts({
                 bodyTexts: ['أحمد'],
                 bodyFields: ['name'],
-                buttonSuffix: 'home',
                 contactName: 'أحمد',
             });
 
-            expect(attempts[0]).toEqual({
-                label: 'contact-only',
-                contactName: 'أحمد',
-            });
-            expect(attempts.some((a) => a.label === 'body-positional')).toBe(true);
-            expect(attempts.some((a) => a.label === 'body-named')).toBe(true);
+            expect(attempts[0]?.label).toBe('contact-only');
+            expect(attempts[1]?.label).toBe('body-positional');
+            expect(attempts[1]?.contactName).toBeUndefined();
         });
     });
 

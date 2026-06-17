@@ -48,7 +48,17 @@ export function isWhatsAppInvalidParameterError(error?: string | null): boolean 
         normalized.includes('error 100') ||
         normalized.includes('132000') ||
         normalized.includes('132001') ||
+        normalized.includes('number of parameters') ||
         normalized.includes('parameter name')
+    );
+}
+
+export function isParameterCountMismatchError(error?: string | null): boolean {
+    if (!error) return false;
+    const normalized = error.toLowerCase();
+    return (
+        normalized.includes('132000') ||
+        normalized.includes('number of parameters')
     );
 }
 
@@ -191,8 +201,8 @@ export function buildTemplateComponentVariants(
 }
 
 /**
- * Welcome templates in Widers: body {{1}} only (no header). Prefer contact-backed
- * resolution, then positional body, then named body, then optional URL button.
+ * Welcome: exactly one body param ({{1}}). Never mix root `name` with body components —
+ * Widers/Meta counts both and returns (#132000).
  */
 export function buildWelcomeSendAttempts(
     options: BuildTemplateComponentsOptions & { contactName: string },
@@ -212,7 +222,7 @@ export function buildWelcomeSendAttempts(
         bodyFields: options.bodyFields,
     };
 
-    // Widers «إعداد القالب»: {{1}} → اسم جهة الاتصال (resolved from contact)
+    // When {{1}} is mapped to «اسم جهة الاتصال» in Widers, API body params double-count → #132000
     push({
         label: 'contact-only',
         contactName: options.contactName,
@@ -220,29 +230,8 @@ export function buildWelcomeSendAttempts(
 
     push({
         label: 'body-positional',
-        contactName: options.contactName,
         components: buildTemplateComponents(base),
     });
-
-    push({
-        label: 'body-named',
-        contactName: options.contactName,
-        components: buildTemplateComponents({
-            ...base,
-            useNamedBodyParameters: true,
-        }),
-    });
-
-    if (options.buttonSuffix) {
-        push({
-            label: 'body-button-positional',
-            contactName: options.contactName,
-            components: buildTemplateComponents({
-                ...base,
-                buttonSuffix: options.buttonSuffix,
-            }),
-        });
-    }
 
     return attempts;
 }
