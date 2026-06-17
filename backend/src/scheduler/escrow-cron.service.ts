@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EscrowService } from '../payments/escrow.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import {
+    escrowReleaseWindowEnd,
+    isOrderEligibleForEscrowAutoRelease,
+} from '../payments/escrow-release-eligibility.util';
 
 @Injectable()
 export class EscrowCronService {
@@ -10,40 +13,49 @@ export class EscrowCronService {
 
     constructor(
         private prisma: PrismaService,
-        private escrowService: EscrowService
+        private escrowService: EscrowService,
     ) {}
 
-    // Runs every hour to check for orders completed > 24 hours ago
     @Cron(CronExpression.EVERY_HOUR)
     async handleAutoRelease() {
-        this.logger.log('Running Escrow Auto-Release Cron job (24h after COMPLETED)...');
-        // ... (previous logic)
-        const timeframe = new Date();
-        timeframe.setHours(timeframe.getHours() - 24);
+        this.logger.log('Running Escrow Auto-Release Cron (24h after delivery/completion)...');
+        const windowEnd = escrowReleaseWindowEnd();
 
         try {
             const heldEscrows = await this.prisma.escrowTransaction.findMany({
-                where: { status: 'HELD' }
+                where: { status: 'HELD' },
             });
 
             for (const escrow of heldEscrows) {
                 const order = await this.prisma.order.findUnique({
                     where: { id: escrow.orderId },
-                    select: { status: true, updatedAt: true }
+                    select: { status: true, deliveredAt: true, updatedAt: true },
                 });
 
-                if (order?.status === 'COMPLETED' && order.updatedAt <= timeframe) {
-                    this.logger.log(`Auto-releasing funds for completed order ${escrow.orderId} (payment ${escrow.paymentId})...`);
+                if (!order || !isOrderEligibleForEscrowAutoRelease(order, windowEnd)) {
+                    continue;
+                }
+
+                try {
+                    this.logger.log(
+                        `Auto-releasing escrow for order ${escrow.orderId} (payment ${escrow.paymentId})...`,
+                    );
                     await this.escrowService.releaseFunds(
                         escrow.orderId,
                         'AUTO_48H',
                         undefined,
                         escrow.paymentId,
                     );
+                } catch (err) {
+                    const message = err instanceof Error ? err.message : String(err);
+                    this.logger.warn(
+                        `Escrow release skipped for payment ${escrow.paymentId}: ${message}`,
+                    );
                 }
             }
-        } catch (error: any) {
-            this.logger.error('Error during auto-release cron processing:', error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error during auto-release cron: ${message}`);
         }
     }
 }

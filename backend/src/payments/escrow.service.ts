@@ -147,37 +147,42 @@ export class EscrowService {
             throw new BadRequestException(`Store missing for offer`);
         }
 
-        if (!store.stripeAccountId) {
-            throw new BadRequestException('Store has no connected Stripe account. Cannot release funds to Stripe.');
-        }
-
         await this.prisma.escrowTransaction.update({
             where: { id: escrow.id },
             data: { status: 'RELEASING' },
         });
 
-        const transferAmount = Number(escrow.merchantAmount) + Number(escrow.shippingAmount);
-        let transferResponse: { id: string };
+        const useStripeConnect = Boolean(store.stripeAccountId?.trim());
+        let transferReferenceId: string;
 
-        try {
-            if (payment.stripeTransferId) {
-                transferResponse = { id: payment.stripeTransferId };
-            } else {
-                transferResponse = await this.stripeService.createTransfer(
-                    transferAmount.toString(),
-                    'AED',
-                    store.stripeAccountId,
-                    orderId,
-                    { orderId, paymentId: payment.id, type: releaseCondition },
-                    `escrow_release_${payment.id}`,
-                );
+        if (useStripeConnect) {
+            const transferAmount = Number(escrow.merchantAmount) + Number(escrow.shippingAmount);
+            try {
+                if (payment.stripeTransferId) {
+                    transferReferenceId = payment.stripeTransferId;
+                } else {
+                    const transferResponse = await this.stripeService.createTransfer(
+                        transferAmount.toString(),
+                        'AED',
+                        store.stripeAccountId!,
+                        orderId,
+                        { orderId, paymentId: payment.id, type: releaseCondition },
+                        `escrow_release_${payment.id}`,
+                    );
+                    transferReferenceId = transferResponse.id;
+                }
+            } catch (err) {
+                await this.prisma.escrowTransaction.update({
+                    where: { id: escrow.id },
+                    data: { status: 'HELD' },
+                });
+                throw err;
             }
-        } catch (err) {
-            await this.prisma.escrowTransaction.update({
-                where: { id: escrow.id },
-                data: { status: 'HELD' },
-            });
-            throw err;
+        } else {
+            transferReferenceId = payment.stripeTransferId ?? `internal_release_${payment.id}`;
+            this.logger.log(
+                `Internal escrow release (no Stripe Connect) for payment ${payment.id}, store ${store.id}`,
+            );
         }
 
         await this.prisma.$transaction(async (tx) => {
@@ -201,7 +206,7 @@ export class EscrowService {
             await tx.paymentTransaction.update({
                 where: { id: payment.id },
                 data: {
-                    stripeTransferId: transferResponse.id,
+                    stripeTransferId: transferReferenceId,
                     escrowStatus: 'RELEASED',
                 },
             });
@@ -243,8 +248,9 @@ export class EscrowService {
                 metadata: {
                     releaseCondition,
                     amount: escrow.merchantAmount,
-                    stripeTransferId: transferResponse.id,
+                    stripeTransferId: transferReferenceId,
                     paymentId: payment.id,
+                    releaseMode: useStripeConnect ? 'stripe_connect' : 'internal_bank',
                 },
             });
         });

@@ -3,6 +3,7 @@ import React from 'react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ShieldCheck } from 'lucide-react';
 import { AccountRecoveries } from './AccountRecoveries';
+import { ProfileChangeRequests } from './ProfileChangeRequests';
 
 export const SecurityAudit: React.FC = () => {
     const { t } = useLanguage();
@@ -16,8 +17,8 @@ export const SecurityAudit: React.FC = () => {
                 </h1>
             </div>
 
-            {/* Default to Account Recoveries only as per user request */}
             <AccountRecoveries />
+            <ProfileChangeRequests />
         </div>
     );
 };

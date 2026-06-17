@@ -38,6 +38,8 @@ import { WidersModule } from './widers/widers.module';
 import { EmailModule } from './email/email.module';
 import { PublicDocumentsModule } from './public-documents/public-documents.module';
 
+import { ProfileChangesModule } from './profile-changes/profile-changes.module';
+
 @Module({
     imports: [
         AuthorizationModule,
@@ -80,6 +82,7 @@ import { PublicDocumentsModule } from './public-documents/public-documents.modul
         VehicleCatalogModule,
         AdminPermissionsModule,
         VerificationTasksModule,
+        ProfileChangesModule,
     ],
     controllers: [AppController],
     providers: [

@@ -172,16 +172,16 @@ export function computePendingLoyaltyFromOrders(
 }
 
 export function computePendingReferralFromOrders(
-  pendingOrders: Array<{ payments: Array<{ unitPrice?: unknown }> }>,
+  pendingOrders: Array<{ payments: Array<{ commission?: unknown }> }>,
 ): number {
   return Number(
     pendingOrders
       .reduce((sum, order) => {
-        const subtotal = order.payments.reduce(
-          (s, p) => s + Number(p.unitPrice || 0),
+        const totalCommission = order.payments.reduce(
+          (s, p) => s + Number(p.commission || 0),
           0,
         );
-        return sum + (subtotal > 0 ? subtotal * REFERRAL_RATE : 0);
+        return sum + (totalCommission > 0 ? totalCommission * REFERRAL_RATE : 0);
       }, 0)
       .toFixed(2),
   );

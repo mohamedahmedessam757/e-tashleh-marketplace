@@ -145,6 +145,11 @@ export type OrderChatMessage = Prisma.OrderChatMessageModel
  */
 export type AccountRecoveryRequest = Prisma.AccountRecoveryRequestModel
 /**
+ * Model ProfileChangeRequest
+ * 
+ */
+export type ProfileChangeRequest = Prisma.ProfileChangeRequestModel
+/**
  * Model SecurityLog
  * 
  */

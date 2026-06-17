@@ -239,6 +239,7 @@ model User {
   widersSyncedAt  DateTime? @map("widers_synced_at") @db.Timestamptz
 
   accountRecoveryRequests AccountRecoveryRequest[]
+  profileChangeRequests   ProfileChangeRequest[]
   securityLogs            SecurityLog[]
   payments                PaymentTransaction[]
   cards                   UserCard[]
@@ -1048,6 +1049,26 @@ model AccountRecoveryRequest {
   @@index([status])
   @@index([userId])
   @@map("account_recovery_requests")
+}
+
+model ProfileChangeRequest {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  field           String
+  oldValue        String?   @map("old_value")
+  newValue        String    @map("new_value")
+  status          String    @default("PENDING_REVIEW")
+  requestedAt     DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz
+  resolvedBy      String?   @map("resolved_by") @db.Uuid
+  rejectionReason String?   @map("rejection_reason")
+  metadata        Json?     @default("{}")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([userId])
+  @@map("profile_change_requests")
 }
 
 model SecurityLog {

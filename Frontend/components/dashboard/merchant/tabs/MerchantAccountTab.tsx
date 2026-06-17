@@ -51,31 +51,112 @@ export const MerchantAccountTab: React.FC = () => {
         fetchVendorProfile, 
         updateAccount, 
         updateVendorProfile, 
-        uploadLogo 
+        uploadLogo,
+        pendingProfileChanges,
+        fetchPendingProfileChanges,
+        requestProfileChangeOtp,
+        submitProfileChangeRequest,
     } = useVendorStore();
     const { t, language } = useLanguage();
     const [success, setSuccess] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [savedContact, setSavedContact] = useState({ email: '', phone: '' });
 
     // Edit Locks (Cyber Security Pattern)
     const [isEmailUnlocked, setIsEmailUnlocked] = useState(false);
     const [isPhoneUnlocked, setIsPhoneUnlocked] = useState(false);
     const [warningModal, setWarningModal] = useState<{ isOpen: boolean; field: 'email' | 'phone' | null }>({ isOpen: false, field: null });
+    const [otpModal, setOtpModal] = useState<{ isOpen: boolean; field: 'email' | 'phone' | null; newValue: string }>({
+        isOpen: false,
+        field: null,
+        newValue: '',
+    });
+    const [otpCode, setOtpCode] = useState('');
+    const [otpSending, setOtpSending] = useState(false);
+    const [otpSent, setOtpSent] = useState(false);
+    const [saveQueue, setSaveQueue] = useState<Array<'email' | 'phone'>>([]);
 
     useEffect(() => {
         fetchVendorProfile();
+        fetchPendingProfileChanges();
     }, []);
+
+    useEffect(() => {
+        if (account.email || account.phone) {
+            setSavedContact({ email: account.email, phone: account.phone });
+        }
+    }, [account.email, account.phone]);
+
+    const emailPending = pendingProfileChanges.find((r) => r.field === 'email');
+    const phonePending = pendingProfileChanges.find((r) => r.field === 'phone');
+
+    const openOtpModal = async (field: 'email' | 'phone', newValue: string) => {
+        setOtpModal({ isOpen: true, field, newValue });
+        setOtpCode('');
+        setOtpSent(false);
+        setOtpSending(true);
+        try {
+            await requestProfileChangeOtp(field);
+            setOtpSent(true);
+        } catch (err) {
+            console.error('[MerchantAccountTab] OTP request failed:', err);
+        } finally {
+            setOtpSending(false);
+        }
+    };
+
+    const processNextInQueue = async (queue: Array<'email' | 'phone'>) => {
+        if (queue.length === 0) {
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
+            return;
+        }
+        const [next, ...rest] = queue;
+        setSaveQueue(rest);
+        const newValue = next === 'email' ? account.email : account.phone;
+        await openOtpModal(next, newValue);
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // updateVendorProfile handles the PATCH /stores/me
             await updateVendorProfile();
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
+
+            const changes: Array<'email' | 'phone'> = [];
+            if (account.email.trim() !== savedContact.email.trim()) changes.push('email');
+            if (account.phone.trim() !== savedContact.phone.trim()) changes.push('phone');
+
+            if (changes.length > 0) {
+                setSaveQueue(changes.slice(1));
+                await openOtpModal(changes[0], changes[0] === 'email' ? account.email : account.phone);
+            } else {
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            }
         } catch (error) {
             console.error('[MerchantAccountTab] Save failed:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSubmitOtp = async () => {
+        if (!otpModal.field || !otpCode.trim()) return;
+        setIsSaving(true);
+        try {
+            await submitProfileChangeRequest(otpModal.field, otpModal.newValue, otpCode.trim());
+            setOtpModal({ isOpen: false, field: null, newValue: '' });
+            setIsEmailUnlocked(false);
+            setIsPhoneUnlocked(false);
+            if (otpModal.field === 'email') {
+                setSavedContact((prev) => ({ ...prev, email: savedContact.email }));
+            } else {
+                setSavedContact((prev) => ({ ...prev, phone: savedContact.phone }));
+            }
+            await processNextInQueue(saveQueue);
+        } catch (error) {
+            console.error('[MerchantAccountTab] Profile change submit failed:', error);
         } finally {
             setIsSaving(false);
         }
@@ -163,16 +244,30 @@ export const MerchantAccountTab: React.FC = () => {
                     label={t.dashboard.profile.info.email}
                     value={account.email}
                     onChange={(e) => updateAccount('email', e.target.value)}
-                    disabled={!isEmailUnlocked}
-                    onEditRequest={!isEmailUnlocked ? () => setWarningModal({ isOpen: true, field: 'email' }) : null}
+                    disabled={!isEmailUnlocked || !!emailPending}
+                    onEditRequest={!isEmailUnlocked && !emailPending ? () => setWarningModal({ isOpen: true, field: 'email' }) : null}
                 />
+                {emailPending && (
+                    <p className="text-amber-400 text-xs -mt-4 md:col-span-2">
+                        {language === 'ar'
+                            ? `قيد المراجعة: ${emailPending.newValue}`
+                            : `Pending review: ${emailPending.newValue}`}
+                    </p>
+                )}
                 <InputGroup
                     label={t.dashboard.profile.info.phone}
                     value={account.phone}
                     onChange={(e) => updateAccount('phone', e.target.value)}
-                    disabled={!isPhoneUnlocked}
-                    onEditRequest={!isPhoneUnlocked ? () => setWarningModal({ isOpen: true, field: 'phone' }) : null}
+                    disabled={!isPhoneUnlocked || !!phonePending}
+                    onEditRequest={!isPhoneUnlocked && !phonePending ? () => setWarningModal({ isOpen: true, field: 'phone' }) : null}
                 />
+                {phonePending && (
+                    <p className="text-amber-400 text-xs -mt-4 md:col-span-2">
+                        {language === 'ar'
+                            ? `قيد المراجعة: ${phonePending.newValue}`
+                            : `Pending review: ${phonePending.newValue}`}
+                    </p>
+                )}
             </div>
 
             {/* Security Warning Modal */}
@@ -216,6 +311,55 @@ export const MerchantAccountTab: React.FC = () => {
                                         {language === 'ar' ? 'أوافق ومسؤول' : 'I Understand'}
                                     </button>
                                 </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* OTP Modal for profile change */}
+            <AnimatePresence>
+                {otpModal.isOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#1A1814] w-full max-w-md rounded-2xl border border-gold-500/20 overflow-hidden shadow-2xl p-6"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-2">
+                                {language === 'ar' ? 'تأكيد التغيير' : 'Confirm Change'}
+                            </h3>
+                            <p className="text-white/60 text-sm mb-4">
+                                {language === 'ar'
+                                    ? `أدخل رمز التحقق المرسل إلى ${otpModal.field === 'email' ? 'بريدك الحالي' : 'جوالك الحالي'}`
+                                    : `Enter the verification code sent to your current ${otpModal.field}`}
+                            </p>
+                            <input
+                                type="text"
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value)}
+                                placeholder="123456"
+                                className="w-full bg-[#151310] border border-white/10 rounded-xl px-4 py-3 text-white mb-4 outline-none focus:border-gold-500"
+                            />
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setOtpModal({ isOpen: false, field: null, newValue: '' })}
+                                    className="flex-1 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5"
+                                >
+                                    {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                                </button>
+                                <button
+                                    onClick={handleSubmitOtp}
+                                    disabled={isSaving || !otpCode.trim() || otpSending}
+                                    className="flex-1 py-3 rounded-xl bg-gold-500 text-black font-bold disabled:opacity-50"
+                                >
+                                    {otpSending
+                                        ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
+                                        : otpSent
+                                          ? (language === 'ar' ? 'إرسال الطلب' : 'Submit Request')
+                                          : (language === 'ar' ? 'إرسال الرمز' : 'Send Code')}
+                                </button>
                             </div>
                         </motion.div>
                     </div>

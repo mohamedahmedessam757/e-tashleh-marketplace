@@ -337,7 +337,7 @@ export class LoyaltyService {
   /**
    * 2026 REFERRAL ENGINE v2 — Triggered when an order transitions to COMPLETED.
    * Rules:
-   *   - Pays 1% of the item subtotal (sum of PaymentTransaction.unitPrice) to the referrer
+   *   - Pays 1% of platform commission (sum of PaymentTransaction.commission) to the referrer
    *   - Only if the referred user is still inside their 6-month window (180 days from referralStartsAt)
    *   - Applies on EVERY successful (COMPLETED, no dispute, no return) order during the window
    *   - Idempotent: a single (referrer, orderId) pair can only be rewarded once
@@ -401,13 +401,13 @@ export class LoyaltyService {
       return;
     }
 
-    // Compute reward = 1% × sum of unitPrice (item subtotal only — no commission/VAT/shipping)
-    const itemSubtotal = order.payments.reduce((sum, p) => sum + Number(p.unitPrice || 0), 0);
-    if (itemSubtotal <= 0) {
-      this.logger.log(`[Referral] Order ${orderId} has zero item subtotal. Skipping.`);
+    // Compute reward = 1% × sum of platform commission
+    const totalCommission = order.payments.reduce((sum, p) => sum + Number(p.commission || 0), 0);
+    if (totalCommission <= 0) {
+      this.logger.log(`[Referral] Order ${orderId} has zero platform commission. Skipping.`);
       return;
     }
-    const rewardAmount = Number((itemSubtotal * REFERRAL_RATE).toFixed(2));
+    const rewardAmount = Number((totalCommission * REFERRAL_RATE).toFixed(2));
     if (rewardAmount <= 0) return;
 
     const referredById = order.customer.referredById;
@@ -435,7 +435,7 @@ export class LoyaltyService {
             orderId: order.id,
             orderNumber: order.orderNumber,
             referredUserId: order.customer.id,
-            itemSubtotal,
+            totalCommission,
             rate: REFERRAL_RATE,
             windowStartsAt: new Date(startsAt).toISOString(),
             windowExpiresAt: expiresAt.toISOString()

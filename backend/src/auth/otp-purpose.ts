@@ -3,6 +3,7 @@ export enum OtpPurpose {
     LOGIN = 'LOGIN',
     RECOVERY_STEP1 = 'RECOVERY_STEP1',
     RECOVERY_PHONE = 'RECOVERY_PHONE',
+    PROFILE_CHANGE = 'PROFILE_CHANGE',
 }
 
 export type OtpChannel = 'email' | 'whatsapp';

@@ -280,10 +280,16 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const [stripeSuccess, setStripeSuccess] = useState(false);
 
     const merchantAvailable = isLoading ? null : Number(stats?.available ?? 0);
+    const maxWithdrawable = isLoading
+        ? null
+        : Number(stats?.maxWithdrawableAmount ?? stats?.available ?? 0);
+    const withdrawalRestrictionMessage = isAr
+        ? stats?.withdrawalRestrictionMessageAr
+        : stats?.withdrawalRestrictionMessageEn;
     const canWithdraw =
         !withdrawalsFrozen &&
-        merchantAvailable !== null &&
-        merchantAvailable >= withdrawalLimits.min;
+        maxWithdrawable !== null &&
+        maxWithdrawable >= withdrawalLimits.min;
 
     const [performanceSnap, setPerformanceSnap] = useState<{
         progressToNext?: {
@@ -499,8 +505,11 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             return;
         }
 
-        if (amountNum > stats.available) {
-            setWithdrawError(isAr ? 'رصيد غير كافٍ' : 'Insufficient balance');
+        if (amountNum > (maxWithdrawable ?? stats.available)) {
+            setWithdrawError(
+                withdrawalRestrictionMessage ||
+                    (isAr ? 'المبلغ يتجاوز الحد المسموح للسحب' : 'Amount exceeds your maximum withdrawable balance'),
+            );
             return;
         }
 
@@ -1041,6 +1050,17 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                         )}
 
                         <div className={`p-6 sm:p-8 transition-all duration-500 ${withdrawalsFrozen ? 'filter blur-sm opacity-50 grayscale select-none pointer-events-none' : ''}`}>
+                            {stats?.hasOpenReturnOrDispute && withdrawalRestrictionMessage && (
+                                <div className="mb-6 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
+                                    <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                        <p className="text-amber-300 text-xs font-black uppercase tracking-wider mb-1">
+                                            {w.withdrawalRestrictionTitle}
+                                        </p>
+                                        <p className="text-white/70 text-xs leading-relaxed">{withdrawalRestrictionMessage}</p>
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                                 <div>
                                     <h3 className="text-lg font-bold text-white flex items-center gap-3">
@@ -1077,6 +1097,9 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                         </div>
                                         <input
                                             type="number"
+                                            min={withdrawalLimits.min}
+                                            max={maxWithdrawable ?? undefined}
+                                            step="0.01"
                                             value={withdrawAmount}
                                             onChange={(e) => setWithdrawAmount(e.target.value)}
                                             placeholder="0.00"
@@ -1086,6 +1109,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                     </div>
                                     <div className="flex justify-between text-[10px] font-bold">
                                         <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available:'} <span className="text-gold-500 font-black">{isLoading ? '…' : `${(stats.available || 0).toLocaleString()} AED`}</span></span>
+                                        <span className="text-white/30">{isAr ? 'الحد الأقصى للسحب:' : 'Max withdraw:'} <span className="text-white/80">{(maxWithdrawable ?? 0).toLocaleString()} AED</span></span>
                                         <span className="text-white/30">{isAr ? 'حد أدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
                                     {!canWithdraw && !isLoading && !withdrawalsFrozen && (
@@ -1308,6 +1332,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                 <div className="px-3 py-1 bg-gold-500/10 border border-gold-500/20 rounded-full inline-block">
                                     <span className="text-[10px] font-black text-gold-500 uppercase tracking-tighter">{isAr ? 'إجمالي الإحالات:' : 'Total Refs:'} {stats.referralCount}</span>
                                 </div>
+                                <p className="text-[10px] text-white/40 mt-2 leading-relaxed">{w.referralCommissionNote}</p>
                             </div>
                             <div className="space-y-4">
                                 <div className="relative group/input">

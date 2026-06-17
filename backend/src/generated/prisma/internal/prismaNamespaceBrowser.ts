@@ -72,6 +72,7 @@ export const ModelName = {
   OrderChat: 'OrderChat',
   OrderChatMessage: 'OrderChatMessage',
   AccountRecoveryRequest: 'AccountRecoveryRequest',
+  ProfileChangeRequest: 'ProfileChangeRequest',
   SecurityLog: 'SecurityLog',
   Session: 'Session',
   OrderShippingAddress: 'OrderShippingAddress',
@@ -705,6 +706,23 @@ export const AccountRecoveryRequestScalarFieldEnum = {
 } as const
 
 export type AccountRecoveryRequestScalarFieldEnum = (typeof AccountRecoveryRequestScalarFieldEnum)[keyof typeof AccountRecoveryRequestScalarFieldEnum]
+
+
+export const ProfileChangeRequestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  field: 'field',
+  oldValue: 'oldValue',
+  newValue: 'newValue',
+  status: 'status',
+  requestedAt: 'requestedAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  rejectionReason: 'rejectionReason',
+  metadata: 'metadata'
+} as const
+
+export type ProfileChangeRequestScalarFieldEnum = (typeof ProfileChangeRequestScalarFieldEnum)[keyof typeof ProfileChangeRequestScalarFieldEnum]
 
 
 export const SecurityLogScalarFieldEnum = {

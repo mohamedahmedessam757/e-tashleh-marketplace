@@ -636,6 +636,7 @@ export type UserWhereInput = {
   orderChats?: Prisma.OrderChatListRelationFilter
   settings?: Prisma.XOR<Prisma.UserSettingsNullableScalarRelationFilter, Prisma.UserSettingsWhereInput> | null
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestListRelationFilter
+  profileChangeRequests?: Prisma.ProfileChangeRequestListRelationFilter
   securityLogs?: Prisma.SecurityLogListRelationFilter
   payments?: Prisma.PaymentTransactionListRelationFilter
   cards?: Prisma.UserCardListRelationFilter
@@ -737,6 +738,7 @@ export type UserOrderByWithRelationInput = {
   orderChats?: Prisma.OrderChatOrderByRelationAggregateInput
   settings?: Prisma.UserSettingsOrderByWithRelationInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestOrderByRelationAggregateInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestOrderByRelationAggregateInput
   securityLogs?: Prisma.SecurityLogOrderByRelationAggregateInput
   payments?: Prisma.PaymentTransactionOrderByRelationAggregateInput
   cards?: Prisma.UserCardOrderByRelationAggregateInput
@@ -841,6 +843,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   orderChats?: Prisma.OrderChatListRelationFilter
   settings?: Prisma.XOR<Prisma.UserSettingsNullableScalarRelationFilter, Prisma.UserSettingsWhereInput> | null
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestListRelationFilter
+  profileChangeRequests?: Prisma.ProfileChangeRequestListRelationFilter
   securityLogs?: Prisma.SecurityLogListRelationFilter
   payments?: Prisma.PaymentTransactionListRelationFilter
   cards?: Prisma.UserCardListRelationFilter
@@ -1059,6 +1062,7 @@ export type UserCreateInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -1160,6 +1164,7 @@ export type UserUncheckedCreateInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -1259,6 +1264,7 @@ export type UserUpdateInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -1360,6 +1366,7 @@ export type UserUncheckedUpdateInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -2016,6 +2023,20 @@ export type UserUpdateOneRequiredWithoutAccountRecoveryRequestsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAccountRecoveryRequestsInput, Prisma.UserUpdateWithoutAccountRecoveryRequestsInput>, Prisma.UserUncheckedUpdateWithoutAccountRecoveryRequestsInput>
 }
 
+export type UserCreateNestedOneWithoutProfileChangeRequestsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedCreateWithoutProfileChangeRequestsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProfileChangeRequestsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutProfileChangeRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedCreateWithoutProfileChangeRequestsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProfileChangeRequestsInput
+  upsert?: Prisma.UserUpsertWithoutProfileChangeRequestsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProfileChangeRequestsInput, Prisma.UserUpdateWithoutProfileChangeRequestsInput>, Prisma.UserUncheckedUpdateWithoutProfileChangeRequestsInput>
+}
+
 export type UserCreateNestedOneWithoutSecurityLogsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutSecurityLogsInput, Prisma.UserUncheckedCreateWithoutSecurityLogsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutSecurityLogsInput
@@ -2578,6 +2599,7 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -2678,6 +2700,7 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -2792,6 +2815,7 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -2892,6 +2916,7 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -2990,6 +3015,7 @@ export type UserCreateWithoutReferredUsersInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3090,6 +3116,7 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3193,6 +3220,7 @@ export type UserCreateWithoutReferredByInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3292,6 +3320,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3412,6 +3441,7 @@ export type UserUpdateWithoutReferredUsersInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -3512,6 +3542,7 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -3683,6 +3714,7 @@ export type UserCreateWithoutSettingsInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3783,6 +3815,7 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3897,6 +3930,7 @@ export type UserUpdateWithoutSettingsInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -3997,6 +4031,7 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4095,6 +4130,7 @@ export type UserCreateWithoutStoreInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -4195,6 +4231,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -4309,6 +4346,7 @@ export type UserUpdateWithoutStoreInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -4409,6 +4447,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4507,6 +4546,7 @@ export type UserCreateWithoutOrdersInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -4607,6 +4647,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -4721,6 +4762,7 @@ export type UserUpdateWithoutOrdersInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -4821,6 +4863,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4920,6 +4963,7 @@ export type UserCreateWithoutVerificationReviewsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5020,6 +5064,7 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -5134,6 +5179,7 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -5234,6 +5280,7 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -5331,6 +5378,7 @@ export type UserCreateWithoutNotificationsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5431,6 +5479,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -5545,6 +5594,7 @@ export type UserUpdateWithoutNotificationsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -5645,6 +5695,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -5743,6 +5794,7 @@ export type UserCreateWithoutReturnsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5843,6 +5895,7 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -5957,6 +6010,7 @@ export type UserUpdateWithoutReturnsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6057,6 +6111,7 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -6155,6 +6210,7 @@ export type UserCreateWithoutDisputesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -6255,6 +6311,7 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -6369,6 +6426,7 @@ export type UserUpdateWithoutDisputesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6469,6 +6527,7 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -6568,6 +6627,7 @@ export type UserCreateWithoutCaseMessagesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -6668,6 +6728,7 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -6782,6 +6843,7 @@ export type UserUpdateWithoutCaseMessagesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6882,6 +6944,7 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -6979,6 +7042,7 @@ export type UserCreateWithoutOrderChatsInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -7079,6 +7143,7 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -7193,6 +7258,7 @@ export type UserUpdateWithoutOrderChatsInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -7293,6 +7359,7 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -7391,6 +7458,7 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -7491,6 +7559,7 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -7605,6 +7674,7 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -7705,6 +7775,423 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutProfileChangeRequestsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutProfileChangeRequestsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedCreateWithoutProfileChangeRequestsInput>
+}
+
+export type UserUpsertWithoutProfileChangeRequestsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedUpdateWithoutProfileChangeRequestsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedCreateWithoutProfileChangeRequestsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutProfileChangeRequestsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutProfileChangeRequestsInput, Prisma.UserUncheckedUpdateWithoutProfileChangeRequestsInput>
+}
+
+export type UserUpdateWithoutProfileChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -7804,6 +8291,7 @@ export type UserCreateWithoutSecurityLogsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -7904,6 +8392,7 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -8018,6 +8507,7 @@ export type UserUpdateWithoutSecurityLogsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -8118,6 +8608,7 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -8216,6 +8707,7 @@ export type UserCreateWithoutSessionInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -8316,6 +8808,7 @@ export type UserUncheckedCreateWithoutSessionInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -8430,6 +8923,7 @@ export type UserUpdateWithoutSessionInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -8530,6 +9024,7 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -8628,6 +9123,7 @@ export type UserCreateWithoutPaymentsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -8728,6 +9224,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -8842,6 +9339,7 @@ export type UserUpdateWithoutPaymentsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -8942,6 +9440,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -9040,6 +9539,7 @@ export type UserCreateWithoutWalletTransactionsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -9140,6 +9640,7 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -9254,6 +9755,7 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -9354,6 +9856,7 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -9452,6 +9955,7 @@ export type UserCreateWithoutInvoicesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -9552,6 +10056,7 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -9666,6 +10171,7 @@ export type UserUpdateWithoutInvoicesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -9766,6 +10272,7 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -9864,6 +10371,7 @@ export type UserCreateWithoutCardsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -9964,6 +10472,7 @@ export type UserUncheckedCreateWithoutCardsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -10078,6 +10587,7 @@ export type UserUpdateWithoutCardsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -10178,6 +10688,7 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -10276,6 +10787,7 @@ export type UserCreateWithoutCreatedContractsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -10376,6 +10888,7 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -10490,6 +11003,7 @@ export type UserUpdateWithoutCreatedContractsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -10590,6 +11104,7 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -10688,6 +11203,7 @@ export type UserCreateWithoutShippingWaybillsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -10788,6 +11304,7 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -10902,6 +11419,7 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11002,6 +11520,7 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -11100,6 +11619,7 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -11200,6 +11720,7 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -11314,6 +11835,7 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11414,6 +11936,7 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -11512,6 +12035,7 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -11612,6 +12136,7 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -11726,6 +12251,7 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11826,6 +12352,7 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -11924,6 +12451,7 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12024,6 +12552,7 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -12138,6 +12667,7 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -12238,6 +12768,7 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -12336,6 +12867,7 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12436,6 +12968,7 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -12550,6 +13083,7 @@ export type UserUpdateWithoutWithdrawalRequestsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -12650,6 +13184,7 @@ export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -12748,6 +13283,7 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12848,6 +13384,7 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -12962,6 +13499,7 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -13062,6 +13600,7 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -13160,6 +13699,7 @@ export type UserCreateWithoutViolationsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -13260,6 +13800,7 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -13363,6 +13904,7 @@ export type UserCreateWithoutIssuedViolationsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -13463,6 +14005,7 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -13577,6 +14120,7 @@ export type UserUpdateWithoutViolationsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -13677,6 +14221,7 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -13786,6 +14331,7 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -13886,6 +14432,7 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -13984,6 +14531,7 @@ export type UserCreateWithoutViolationAppealsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14084,6 +14632,7 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -14187,6 +14736,7 @@ export type UserCreateWithoutReviewedAppealsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14287,6 +14837,7 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -14401,6 +14952,7 @@ export type UserUpdateWithoutViolationAppealsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -14501,6 +15053,7 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -14610,6 +15163,7 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -14710,6 +15264,7 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -14808,6 +15363,7 @@ export type UserCreateWithoutPenaltyActionsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14908,6 +15464,7 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -15011,6 +15568,7 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -15111,6 +15669,7 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -15225,6 +15784,7 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15325,6 +15885,7 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -15434,6 +15995,7 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15534,6 +16096,7 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -15632,6 +16195,7 @@ export type UserCreateWithoutScoreLogsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -15732,6 +16296,7 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -15846,6 +16411,7 @@ export type UserUpdateWithoutScoreLogsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15946,6 +16512,7 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -16044,6 +16611,7 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -16144,6 +16712,7 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -16258,6 +16827,7 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -16358,6 +16928,7 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -16456,6 +17027,7 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -16556,6 +17128,7 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -16659,6 +17232,7 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -16759,6 +17333,7 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -16873,6 +17448,7 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -16973,6 +17549,7 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17082,6 +17659,7 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -17182,6 +17760,7 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17280,6 +17859,7 @@ export type UserCreateWithoutRiskAlertsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -17380,6 +17960,7 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -17483,6 +18064,7 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -17583,6 +18165,7 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -17697,6 +18280,7 @@ export type UserUpdateWithoutRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -17797,6 +18381,7 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17906,6 +18491,7 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -18006,6 +18592,7 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -18104,6 +18691,7 @@ export type UserCreateWithoutAdminPermissionInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18204,6 +18792,7 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18307,6 +18896,7 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18407,6 +18997,7 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18510,6 +19101,7 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18610,6 +19202,7 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18724,6 +19317,7 @@ export type UserUpdateWithoutAdminPermissionInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -18824,6 +19418,7 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -18933,6 +19528,7 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19033,6 +19629,7 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19142,6 +19739,7 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19242,6 +19840,7 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19340,6 +19939,7 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -19440,6 +20040,7 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -19543,6 +20144,7 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -19643,6 +20245,7 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -19757,6 +20360,7 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19857,6 +20461,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19966,6 +20571,7 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -20066,6 +20672,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -20164,6 +20771,7 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -20264,6 +20872,7 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -20378,6 +20987,7 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -20478,6 +21088,7 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -20576,6 +21187,7 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -20676,6 +21288,7 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -20790,6 +21403,7 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -20890,6 +21504,7 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -20988,6 +21603,7 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -21088,6 +21704,7 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -21202,6 +21819,7 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -21302,6 +21920,7 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -21454,6 +22073,7 @@ export type UserUpdateWithoutReferredByInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -21553,6 +22173,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -21658,6 +22279,7 @@ export type UserCountOutputType = {
   disputes: number
   orderChats: number
   accountRecoveryRequests: number
+  profileChangeRequests: number
   securityLogs: number
   payments: number
   cards: number
@@ -21703,6 +22325,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   disputes?: boolean | UserCountOutputTypeCountDisputesArgs
   orderChats?: boolean | UserCountOutputTypeCountOrderChatsArgs
   accountRecoveryRequests?: boolean | UserCountOutputTypeCountAccountRecoveryRequestsArgs
+  profileChangeRequests?: boolean | UserCountOutputTypeCountProfileChangeRequestsArgs
   securityLogs?: boolean | UserCountOutputTypeCountSecurityLogsArgs
   payments?: boolean | UserCountOutputTypeCountPaymentsArgs
   cards?: boolean | UserCountOutputTypeCountCardsArgs
@@ -21791,6 +22414,13 @@ export type UserCountOutputTypeCountOrderChatsArgs<ExtArgs extends runtime.Types
  */
 export type UserCountOutputTypeCountAccountRecoveryRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AccountRecoveryRequestWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountProfileChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProfileChangeRequestWhereInput
 }
 
 /**
@@ -22107,6 +22737,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   orderChats?: boolean | Prisma.User$orderChatsArgs<ExtArgs>
   settings?: boolean | Prisma.User$settingsArgs<ExtArgs>
   accountRecoveryRequests?: boolean | Prisma.User$accountRecoveryRequestsArgs<ExtArgs>
+  profileChangeRequests?: boolean | Prisma.User$profileChangeRequestsArgs<ExtArgs>
   securityLogs?: boolean | Prisma.User$securityLogsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   cards?: boolean | Prisma.User$cardsArgs<ExtArgs>
@@ -22325,6 +22956,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   orderChats?: boolean | Prisma.User$orderChatsArgs<ExtArgs>
   settings?: boolean | Prisma.User$settingsArgs<ExtArgs>
   accountRecoveryRequests?: boolean | Prisma.User$accountRecoveryRequestsArgs<ExtArgs>
+  profileChangeRequests?: boolean | Prisma.User$profileChangeRequestsArgs<ExtArgs>
   securityLogs?: boolean | Prisma.User$securityLogsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   cards?: boolean | Prisma.User$cardsArgs<ExtArgs>
@@ -22383,6 +23015,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     orderChats: Prisma.$OrderChatPayload<ExtArgs>[]
     settings: Prisma.$UserSettingsPayload<ExtArgs> | null
     accountRecoveryRequests: Prisma.$AccountRecoveryRequestPayload<ExtArgs>[]
+    profileChangeRequests: Prisma.$ProfileChangeRequestPayload<ExtArgs>[]
     securityLogs: Prisma.$SecurityLogPayload<ExtArgs>[]
     payments: Prisma.$PaymentTransactionPayload<ExtArgs>[]
     cards: Prisma.$UserCardPayload<ExtArgs>[]
@@ -22877,6 +23510,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   orderChats<T extends Prisma.User$orderChatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$orderChatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   settings<T extends Prisma.User$settingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$settingsArgs<ExtArgs>>): Prisma.Prisma__UserSettingsClient<runtime.Types.Result.GetResult<Prisma.$UserSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   accountRecoveryRequests<T extends Prisma.User$accountRecoveryRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountRecoveryRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountRecoveryRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  profileChangeRequests<T extends Prisma.User$profileChangeRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileChangeRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProfileChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   securityLogs<T extends Prisma.User$securityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$securityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SecurityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   cards<T extends Prisma.User$cardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$cardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -23576,6 +24210,30 @@ export type User$accountRecoveryRequestsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.AccountRecoveryRequestScalarFieldEnum | Prisma.AccountRecoveryRequestScalarFieldEnum[]
+}
+
+/**
+ * User.profileChangeRequests
+ */
+export type User$profileChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProfileChangeRequest
+   */
+  select?: Prisma.ProfileChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProfileChangeRequest
+   */
+  omit?: Prisma.ProfileChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProfileChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ProfileChangeRequestWhereInput
+  orderBy?: Prisma.ProfileChangeRequestOrderByWithRelationInput | Prisma.ProfileChangeRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ProfileChangeRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProfileChangeRequestScalarFieldEnum | Prisma.ProfileChangeRequestScalarFieldEnum[]
 }
 
 /**

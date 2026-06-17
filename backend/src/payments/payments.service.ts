@@ -18,6 +18,10 @@ import {
     reconcileStoreWalletFromEscrow,
 } from './merchant-wallet-metrics.util';
 import {
+    buildWithdrawalGovernance,
+    countOpenMerchantCases,
+} from './merchant-withdrawal-governance.util';
+import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
     computeCustomerTotalPurchases,
@@ -1813,7 +1817,7 @@ export class PaymentsService {
         stats.monthlyRewards = Number(monthlyAggr._sum.amount || 0);
 
         // ═══════════════════════════════════════════════════════
-        // 6. True Pending Referral Rewards (v2: 1% of unitPrice + 6-month window)
+        // 6. True Pending Referral Rewards (1% of platform commission + 6-month window)
         //    Active orders from referred users still inside their referral window
         // ═══════════════════════════════════════════════════════
         const REFERRAL_WINDOW_MS = 180 * 24 * 60 * 60 * 1000;
@@ -1830,17 +1834,9 @@ export class PaymentsService {
             include: { payments: { where: { status: 'SUCCESS' } } }
         });
 
-        let truePendingRewards = 0;
-        for (const order of pendingReferrals) {
-            const payments = (order as any).payments || [];
-            const itemSubtotal = payments.reduce(
-                (sum: number, p: any) => sum + Number(p.unitPrice || 0), 0
-            );
-            if (itemSubtotal > 0) {
-                truePendingRewards += itemSubtotal * 0.01; // 1% on item subtotal only
-            }
-        }
-        stats.pendingRewards = Number(truePendingRewards.toFixed(2));
+        stats.pendingRewards = computePendingReferralFromOrders(
+            pendingReferrals as Array<{ payments: Array<{ commission?: unknown }> }>,
+        );
 
         // ═══════════════════════════════════════════════════════
         // 7. Notifications
@@ -1850,6 +1846,9 @@ export class PaymentsService {
             orderBy: { createdAt: 'desc' },
             take: 5
         });
+
+        const openCases = await countOpenMerchantCases(this.prisma, store.id);
+        const withdrawalGovernance = buildWithdrawalGovernance(stats.available, openCases);
 
         return {
             stats: {
@@ -1890,6 +1889,7 @@ export class PaymentsService {
                 orderLimit: store.owner.orderLimit,
                 restrictionAlertMessage: store.owner.restrictionAlertMessage,
                 referralCustomerBalance: Number(store.owner.customerBalance || 0),
+                ...withdrawalGovernance,
             },
             notifications,
             transactions: walletActions // Wallet actions has exactly all sales, cancellations, and referrals
@@ -2232,6 +2232,15 @@ export class PaymentsService {
         // Check balance
         if (Number(store.balance) < amount) {
             throw new BadRequestException('Insufficient balance');
+        }
+
+        const openCases = await countOpenMerchantCases(this.prisma, store.id);
+        const governance = buildWithdrawalGovernance(Number(store.balance), openCases);
+        if (amount > governance.maxWithdrawableAmount) {
+            throw new BadRequestException(
+                governance.withdrawalRestrictionMessageEn ||
+                    'Withdrawal amount exceeds the maximum allowed for your account',
+            );
         }
 
         return this.prisma.$transaction(async (tx) => {

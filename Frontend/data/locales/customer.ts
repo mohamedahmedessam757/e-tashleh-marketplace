@@ -547,7 +547,7 @@ export const customer = {
         referral: {
           title: 'نظام الإحالات',
           totalLabel: 'إجمالي إحالاتك:',
-          commissionNote: 'شارك رابطك الخاص واحصل على عمولة 1% من ثمن كل منتج يشتريه صديقك خلال 6 شهور من تاريخ تسجيله.',
+          commissionNote: 'شارك رابطك الخاص واحصل على 1% من عمولة المنصة على كل طلب مكتمل يقوم به صديقك خلال 6 شهور من تاريخ تسجيله.',
           windowNote: 'مدة صلاحية الرابط: 6 شهور تبدأ من تاريخ تسجيل كل صديق'
         }
       }
@@ -940,7 +940,7 @@ export const customer = {
       },
     rewards: {
       pageTitle: 'مركز الإحالات',
-      pageSubtitle: 'شارك رابطك الخاص مع أصدقائك واحصل على عمولة 1% من ثمن كل منتج يشتريه صديقك خلال 6 شهور من تاريخ تسجيله.',
+      pageSubtitle: 'شارك رابطك الخاص مع أصدقائك واحصل على 1% من عمولة المنصة على كل طلب مكتمل يقوم به صديقك خلال 6 شهور من تاريخ تسجيله.',
       tierProgressTitle: 'تطور مستوى العضوية',
       referralHubTitle: 'مركز الإحالة',
       referralCodeLabel: 'كود الإحالة الشخصي',
@@ -952,7 +952,7 @@ export const customer = {
         title: 'سجل الإحالات',
         subtitle: 'كل صديق دعوته خلال آخر 6 شهور',
         empty: 'لا توجد إحالات بعد',
-        emptyDesc: 'كن أول من يشارك رابطك! ابدأ الآن واحصل على عمولة 1% من كل منتج يشتريه أصدقاؤك خلال 6 شهور.',
+        emptyDesc: 'كن أول من يشارك رابطك! ابدأ الآن واحصل على 1% من عمولة المنصة على كل طلب مكتمل للمحال خلال 6 أشهر.',
         emptyBadge: 'الفرصة في انتظارك',
         totalReferrals: 'إجمالي الإحالات',
         totalEarned: 'إجمالي ما كسبته',
@@ -1526,7 +1526,7 @@ export const customer = {
         referral: {
           title: 'Referral System',
           totalLabel: 'Total Referrals:',
-          commissionNote: 'Share your personal link and earn 1% commission on each item your friend buys, for 6 months from their signup date.',
+          commissionNote: 'Share your personal link and earn 1% of platform commission on each completed order your friend places, for 6 months from their signup date.',
           windowNote: 'Link validity: 6 months starting from each friend\'s signup date'
         }
       }
@@ -1921,7 +1921,7 @@ export const customer = {
     },
     rewards: {
       pageTitle: 'Referral Center',
-      pageSubtitle: 'Share your personal link with friends and earn 1% commission on every item they buy for 6 months from their signup.',
+      pageSubtitle: 'Share your personal link with friends and earn 1% of platform commission on each completed order they place for 6 months from their signup.',
       tierProgressTitle: 'Membership Tier Progression',
       referralHubTitle: 'Referral Hub',
       referralCodeLabel: 'Personal Referral Code',
@@ -1933,7 +1933,7 @@ export const customer = {
         title: 'Referral History',
         subtitle: 'Every friend you invited in the last 6 months',
         empty: 'No referrals yet',
-        emptyDesc: 'Be the first to share your link! Start now and earn 1% from every item your friends buy for 6 months.',
+        emptyDesc: 'Be the first to share your link! Start now and earn 1% of platform commission on each completed referred order for 6 months.',
         emptyBadge: 'Opportunity awaits',
         totalReferrals: 'Total Referrals',
         totalEarned: 'Total Earned',

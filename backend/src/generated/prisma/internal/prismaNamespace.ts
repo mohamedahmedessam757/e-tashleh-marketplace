@@ -405,6 +405,7 @@ export const ModelName = {
   OrderChat: 'OrderChat',
   OrderChatMessage: 'OrderChatMessage',
   AccountRecoveryRequest: 'AccountRecoveryRequest',
+  ProfileChangeRequest: 'ProfileChangeRequest',
   SecurityLog: 'SecurityLog',
   Session: 'Session',
   OrderShippingAddress: 'OrderShippingAddress',
@@ -454,7 +455,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog"
+    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2009,6 +2010,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AccountRecoveryRequestCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AccountRecoveryRequestCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProfileChangeRequest: {
+      payload: Prisma.$ProfileChangeRequestPayload<ExtArgs>
+      fields: Prisma.ProfileChangeRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProfileChangeRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProfileChangeRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.ProfileChangeRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProfileChangeRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        findMany: {
+          args: Prisma.ProfileChangeRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>[]
+        }
+        create: {
+          args: Prisma.ProfileChangeRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        createMany: {
+          args: Prisma.ProfileChangeRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProfileChangeRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.ProfileChangeRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        update: {
+          args: Prisma.ProfileChangeRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProfileChangeRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProfileChangeRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProfileChangeRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProfileChangeRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProfileChangeRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.ProfileChangeRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProfileChangeRequest>
+        }
+        groupBy: {
+          args: Prisma.ProfileChangeRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProfileChangeRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProfileChangeRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProfileChangeRequestCountAggregateOutputType> | number
         }
       }
     }
@@ -5150,6 +5225,23 @@ export const AccountRecoveryRequestScalarFieldEnum = {
 export type AccountRecoveryRequestScalarFieldEnum = (typeof AccountRecoveryRequestScalarFieldEnum)[keyof typeof AccountRecoveryRequestScalarFieldEnum]
 
 
+export const ProfileChangeRequestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  field: 'field',
+  oldValue: 'oldValue',
+  newValue: 'newValue',
+  status: 'status',
+  requestedAt: 'requestedAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  rejectionReason: 'rejectionReason',
+  metadata: 'metadata'
+} as const
+
+export type ProfileChangeRequestScalarFieldEnum = (typeof ProfileChangeRequestScalarFieldEnum)[keyof typeof ProfileChangeRequestScalarFieldEnum]
+
+
 export const SecurityLogScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -6380,6 +6472,7 @@ export type GlobalOmitConfig = {
   orderChat?: Prisma.OrderChatOmit
   orderChatMessage?: Prisma.OrderChatMessageOmit
   accountRecoveryRequest?: Prisma.AccountRecoveryRequestOmit
+  profileChangeRequest?: Prisma.ProfileChangeRequestOmit
   securityLog?: Prisma.SecurityLogOmit
   session?: Prisma.SessionOmit
   orderShippingAddress?: Prisma.OrderShippingAddressOmit

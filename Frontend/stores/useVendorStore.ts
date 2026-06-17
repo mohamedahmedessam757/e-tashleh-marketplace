@@ -181,6 +181,10 @@ export interface VendorState {
   fetchDashboardStats: () => Promise<void>;
   fetchVendorProfile: () => Promise<void>;
   updateVendorProfile: () => Promise<void>;
+  pendingProfileChanges: Array<{ id: string; field: string; newValue: string; status: string }>;
+  fetchPendingProfileChanges: () => Promise<void>;
+  requestProfileChangeOtp: (field: 'email' | 'phone') => Promise<{ sent: boolean; expiresInMinutes: number }>;
+  submitProfileChangeRequest: (field: 'email' | 'phone', newValue: string, otp: string) => Promise<void>;
   checkLicenseStatus: () => void;
   adminApproveVendor: (id: string) => Promise<void>;
   adminRejectVendor: (id: string, reason: string) => Promise<void>;
@@ -263,6 +267,8 @@ export const useVendorStore = create<VendorState>()(
     authLetter: { ...initialDocState }
   },
   contractAcceptance: null,
+
+  pendingProfileChanges: [],
 
   setStep: (step) => set({ step }),
   setVendorStatus: (status) => set({ vendorStatus: status }),
@@ -587,6 +593,35 @@ export const useVendorStore = create<VendorState>()(
       });
       throw error;
     }
+  },
+
+  fetchPendingProfileChanges: async () => {
+    try {
+      const { client } = await import('../services/api/client');
+      const response = await client.get('/users/profile/change-requests/pending');
+      set({ pendingProfileChanges: response.data || [] });
+    } catch (error) {
+      console.error('Failed to fetch pending profile changes:', error);
+    }
+  },
+
+  requestProfileChangeOtp: async (field) => {
+    const { client } = await import('../services/api/client');
+    const response = await client.post('/users/profile/change-request/otp', { field });
+    return response.data;
+  },
+
+  submitProfileChangeRequest: async (field, newValue, otp) => {
+    const { client } = await import('../services/api/client');
+    await client.post('/users/profile/change-request', { field, newValue, otp });
+    await get().fetchPendingProfileChanges();
+    useNotificationStore.getState().addNotification({
+      type: 'success',
+      titleEn: 'Request Submitted',
+      titleAr: 'تم إرسال الطلب',
+      message: 'Your change request is pending admin review',
+      priority: 'normal',
+    });
   },
 
   // --- THE LICENSE WATCHDOG LOGIC ---

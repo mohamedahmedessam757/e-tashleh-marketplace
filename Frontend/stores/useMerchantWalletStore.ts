@@ -60,6 +60,12 @@ interface MerchantWalletState {
     nextTierBenefits: { ar: string; en: string }[];
     stripeOnboarded: boolean;
     stripeAccountId?: string;
+    withdrawalCapPercent?: number;
+    maxWithdrawableAmount?: number;
+    hasOpenReturnOrDispute?: boolean;
+    openCasesCount?: number;
+    withdrawalRestrictionMessageAr?: string | null;
+    withdrawalRestrictionMessageEn?: string | null;
   };
   withdrawalRequests: any[];
   withdrawalLimits: { min: number; max: number };

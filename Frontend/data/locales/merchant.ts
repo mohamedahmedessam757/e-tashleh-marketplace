@@ -76,6 +76,8 @@ export const merchant = {
       referralEscrowNote: 'أرباح الإحالات في رصيدك الشخصي، وليس رصيد المتجر',
       viewTierDetails: 'عرض تفاصيل المستوى',
       referralProfits: 'أرباح الإحالات',
+      referralCommissionNote: '1% من عمولة المنصة على كل طلب مكتمل للمحال خلال 6 أشهر',
+      withdrawalRestrictionTitle: 'قيد السحب بسبب قضايا مفتوحة',
       searchOrderPlaceholder: 'بحث برقم الطلب...',
       walletSubtitle: 'إدارة الرصيد والسحب والإحالات',
       tierProgressionTitle: 'تطور مستوى المتجر',
@@ -652,7 +654,7 @@ export const merchant = {
       }
     },
     violationsPage: {
-      title: 'سجل الالتزام والمخالفات للصانع',
+      title: 'سجل الالتزام والمخالفات',
       subtitle: 'تتبع نقاط التزام متجرك، وتعرف على المخالفات المسجلة والطعون.',
       scoreCard: {
           title: 'مؤشر التزام المتجر',
@@ -805,6 +807,8 @@ export const merchant = {
       referralEscrowNote: 'Referral earnings go to your personal balance, not store escrow',
       viewTierDetails: 'View tier details',
       referralProfits: 'Referral Profits',
+      referralCommissionNote: '1% of platform commission on each completed referred order for 6 months',
+      withdrawalRestrictionTitle: 'Withdrawal limited due to open cases',
       searchOrderPlaceholder: 'Search Order Number...',
       walletSubtitle: 'Manage balance, withdrawals, and referrals',
       tierProgressionTitle: 'Store Tier Progression',

@@ -57,6 +57,12 @@ export const ChatList: React.FC = () => {
         );
     });
 
+    const isCustomer = user?.role === 'CUSTOMER';
+    const orderTabLabelAr = isCustomer ? 'التجار' : 'العملاء';
+    const orderTabLabelEn = isCustomer ? 'Merchants' : 'Customers';
+    const orderTabEmptyAr = isCustomer ? 'لا توجد محادثات مع التجار' : 'لا توجد محادثات مع العملاء';
+    const orderTabEmptyEn = isCustomer ? 'No merchant conversations' : 'No customer conversations';
+
     return (
         <div className="h-full flex flex-col border-r border-white/5 bg-[#151310]/50 backdrop-blur-sm">
             {/* Header */}
@@ -73,7 +79,7 @@ export const ChatList: React.FC = () => {
                             }`}
                     >
                         <Store size={13} />
-                        {language === 'ar' ? 'التجار' : 'Merchants'}
+                        {language === 'ar' ? orderTabLabelAr : orderTabLabelEn}
                         {merchantUnread > 0 && (
                             <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold ml-1">
                                 {merchantUnread}
@@ -121,7 +127,7 @@ export const ChatList: React.FC = () => {
                         <MessageCircle size={32} className="mx-auto mb-3 text-white/20" />
                         <p className="text-white/40 text-sm">
                             {activeTab === 'merchants'
-                                ? (language === 'ar' ? 'لا توجد محادثات مع التجار' : 'No merchant conversations')
+                                ? (language === 'ar' ? orderTabEmptyAr : orderTabEmptyEn)
                                 : (language === 'ar' ? 'لا توجد محادثات دعم' : 'No support conversations')
                             }
                         </p>
