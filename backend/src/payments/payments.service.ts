@@ -18,9 +18,14 @@ import {
     reconcileStoreWalletFromEscrow,
 } from './merchant-wallet-metrics.util';
 import {
+    escrowReleaseWindowEnd,
+    isOrderEligibleForEscrowAutoRelease,
+} from './escrow-release-eligibility.util';
+import {
     buildWithdrawalGovernance,
     countOpenMerchantCases,
 } from './merchant-withdrawal-governance.util';
+import { buildPayoutBankDetailsResponse } from './payout-account.util';
 import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
@@ -1735,6 +1740,18 @@ export class PaymentsService {
 
         const ACTIVE_STATUSES = ['PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'DELAYED_PREPARATION', 'NON_MATCHING'];
 
+        // Release eligible escrow (same rules as cron) + repair missing rows for completed orders
+        await this.syncMerchantEscrowReleases(store.id);
+        const refreshedStore = await this.prisma.store.findUnique({
+            where: { id: store.id },
+            select: { balance: true, pendingBalance: true, frozenBalance: true },
+        });
+        if (refreshedStore) {
+            store.balance = refreshedStore.balance;
+            store.pendingBalance = refreshedStore.pendingBalance;
+            store.frozenBalance = refreshedStore.frozenBalance;
+        }
+
         // ═══════════════════════════════════════════════════════
         // 3. KPI cards — always all-time (never date-filtered)
         // ═══════════════════════════════════════════════════════
@@ -1849,6 +1866,7 @@ export class PaymentsService {
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
         const withdrawalGovernance = buildWithdrawalGovernance(stats.available, openCases);
+        const withdrawalLimits = await this.getWithdrawalLimits();
 
         return {
             stats: {
@@ -1891,6 +1909,7 @@ export class PaymentsService {
                 referralCustomerBalance: Number(store.owner.customerBalance || 0),
                 ...withdrawalGovernance,
             },
+            withdrawalLimits,
             notifications,
             transactions: walletActions // Wallet actions has exactly all sales, cancellations, and referrals
         };
@@ -2108,7 +2127,19 @@ export class PaymentsService {
             }
         });
 
-        return { success: true, message: 'Bank details saved successfully. Pending admin verification.' };
+        return {
+            success: true,
+            message: 'Bank details saved successfully. Pending admin verification.',
+            bankDetails: buildPayoutBankDetailsResponse({
+                bankName: details.bankName,
+                bankAccountHolder: details.accountHolder,
+                bankIban: iban,
+                bankSwift: details.swift || null,
+                bankDetailsVerified: false,
+                stripeOnboarded: store.stripeOnboarded,
+                stripeAccountId: store.stripeAccountId,
+            }),
+        };
     }
 
     async saveCustomerBankDetails(userId: string, details: { bankName: string; accountHolder: string; iban: string; swift?: string }) {
@@ -2128,7 +2159,24 @@ export class PaymentsService {
             }
         });
 
-        return { success: true, message: 'Bank details saved successfully. Pending admin verification.' };
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { stripeOnboarded: true, stripeAccountId: true },
+        });
+
+        return {
+            success: true,
+            message: 'Bank details saved successfully. Pending admin verification.',
+            bankDetails: buildPayoutBankDetailsResponse({
+                bankName: details.bankName,
+                bankAccountHolder: details.accountHolder,
+                bankIban: iban,
+                bankSwift: details.swift || null,
+                bankDetailsVerified: false,
+                stripeOnboarded: user?.stripeOnboarded,
+                stripeAccountId: user?.stripeAccountId,
+            }),
+        };
     }
 
     async getCustomerBankDetails(userId: string) {
@@ -2146,15 +2194,15 @@ export class PaymentsService {
         });
         if (!user) throw new NotFoundException('User not found');
 
-        return {
+        return buildPayoutBankDetailsResponse({
             bankName: user.bankName,
-            accountHolder: user.bankAccountHolder,
-            iban: user.bankIban,
-            swift: user.bankSwift,
-            verified: user.bankDetailsVerified,
+            bankAccountHolder: user.bankAccountHolder,
+            bankIban: user.bankIban,
+            bankSwift: user.bankSwift,
+            bankDetailsVerified: user.bankDetailsVerified,
             stripeOnboarded: user.stripeOnboarded,
-            stripeAccountId: user.stripeAccountId
-        };
+            stripeAccountId: user.stripeAccountId,
+        });
     }
 
     async getBankDetails(userId: string) {
@@ -2162,15 +2210,15 @@ export class PaymentsService {
         if (!store) throw new NotFoundException('Store not found');
 
         const s = store as any;
-        return {
+        return buildPayoutBankDetailsResponse({
             bankName: s.bankName,
-            accountHolder: s.bankAccountHolder,
-            iban: s.bankIban,
-            swift: s.bankSwift,
-            verified: s.bankDetailsVerified,
+            bankAccountHolder: s.bankAccountHolder,
+            bankIban: s.bankIban,
+            bankSwift: s.bankSwift,
+            bankDetailsVerified: s.bankDetailsVerified,
             stripeOnboarded: store.stripeOnboarded,
-            stripeAccountId: store.stripeAccountId
-        };
+            stripeAccountId: store.stripeAccountId,
+        });
     }
 
     async adminVerifyBankDetails(adminId: string, targetId: string, role: 'CUSTOMER' | 'VENDOR') {
@@ -2659,6 +2707,130 @@ export class PaymentsService {
 
         if (!settings) return { min: 50, max: 10000 };
         return settings.settingValue as any;
+    }
+
+    /**
+     * Auto-release HELD escrow for completed/delivered orders (24h window).
+     * Also repairs SUCCESS payments that never created escrow rows (legacy/test data).
+     */
+    private async syncMerchantEscrowReleases(storeId: string): Promise<void> {
+        const windowEnd = escrowReleaseWindowEnd();
+
+        const heldEscrows = await this.prisma.escrowTransaction.findMany({
+            where: {
+                status: 'HELD',
+                payment: { offer: { storeId } },
+            },
+            select: { orderId: true, paymentId: true },
+        });
+
+        for (const escrow of heldEscrows) {
+            const order = await this.prisma.order.findUnique({
+                where: { id: escrow.orderId },
+                select: { status: true, deliveredAt: true, updatedAt: true },
+            });
+            if (!order || !isOrderEligibleForEscrowAutoRelease(order, windowEnd)) {
+                continue;
+            }
+            try {
+                await this.escrowService.releaseFunds(
+                    escrow.orderId,
+                    'AUTO_48H',
+                    undefined,
+                    escrow.paymentId,
+                );
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                this.logger.warn(
+                    `Escrow auto-release skipped for payment ${escrow.paymentId}: ${message}`,
+                );
+            }
+        }
+
+        const paymentsWithoutEscrow = await this.prisma.paymentTransaction.findMany({
+            where: {
+                status: 'SUCCESS',
+                offer: { storeId },
+                escrow: null,
+            },
+            include: {
+                order: { select: { status: true, deliveredAt: true, updatedAt: true } },
+                offer: { select: { storeId: true, store: { select: { ownerId: true } } } },
+            },
+        });
+
+        for (const payment of paymentsWithoutEscrow) {
+            if (!payment.order || !payment.offer?.storeId) continue;
+            if (!isOrderEligibleForEscrowAutoRelease(payment.order, windowEnd)) continue;
+
+            try {
+                const unitPrice = Number(payment.unitPrice || 0);
+                const shippingCost = Number(payment.shippingCost || 0);
+                const commission = Number(payment.commission || 0);
+                if (unitPrice <= 0) continue;
+
+                await this.escrowService.holdFunds(
+                    payment.id,
+                    payment.orderId,
+                    payment.offer.storeId,
+                    {
+                        merchantAmount: unitPrice,
+                        shippingAmount: shippingCost,
+                        commissionAmount: commission,
+                        gatewayFee: 0,
+                    },
+                );
+                await this.escrowService.releaseFunds(
+                    payment.orderId,
+                    'AUTO_48H',
+                    undefined,
+                    payment.id,
+                );
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                this.logger.warn(
+                    `Legacy escrow repair skipped for payment ${payment.id}: ${message}`,
+                );
+            }
+        }
+
+        const store = await this.prisma.store.findUnique({
+            where: { id: storeId },
+            select: { ownerId: true },
+        });
+        if (!store) return;
+
+        const [releasedSum, withdrawalDebits] = await Promise.all([
+            this.prisma.escrowTransaction.aggregate({
+                where: { status: 'RELEASED', payment: { offer: { storeId } } },
+                _sum: { merchantAmount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: {
+                    userId: store.ownerId,
+                    role: 'VENDOR',
+                    type: 'DEBIT',
+                    transactionType: 'WITHDRAWAL',
+                },
+                _sum: { amount: true },
+            }),
+        ]);
+
+        const released = Number(releasedSum._sum.merchantAmount || 0);
+        const withdrawn = Number(withdrawalDebits._sum.amount || 0);
+        const expectedBalance = Math.max(0, Number((released - withdrawn).toFixed(2)));
+        const currentStore = await this.prisma.store.findUnique({
+            where: { id: storeId },
+            select: { balance: true },
+        });
+        const currentBalance = Number(currentStore?.balance || 0);
+
+        if (released > 0 && expectedBalance > currentBalance + 0.01) {
+            await this.prisma.store.update({
+                where: { id: storeId },
+                data: { balance: expectedBalance },
+            });
+        }
     }
 
     async updateWithdrawalLimits(adminId: string, limits: { min: number, max: number }) {

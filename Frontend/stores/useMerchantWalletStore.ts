@@ -22,12 +22,17 @@ export interface Transaction {
   };
 }
 
+import type { StripeConnectDisplay } from '../types/payout-account';
+
 interface BankDetails {
-  bankName: string;
-  accountHolder: string;
-  iban: string;
-  swift: string;
+  bankName: string | null;
+  accountHolder: string | null;
+  iban: string | null;
+  maskedIban?: string | null;
+  swift?: string | null;
   verified: boolean;
+  isLinked?: boolean;
+  verificationStatus?: 'NOT_LINKED' | 'PENDING_REVIEW' | 'VERIFIED';
   stripeOnboarded: boolean;
   stripeAccountId: string | null;
 }
@@ -70,6 +75,7 @@ interface MerchantWalletState {
   withdrawalRequests: any[];
   withdrawalLimits: { min: number; max: number };
   bankDetails: BankDetails | null;
+  stripeConnectInfo: StripeConnectDisplay | null;
   transactions: Transaction[];
   notifications: any[];
   isLoading: boolean;
@@ -81,7 +87,7 @@ interface MerchantWalletState {
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
-  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean }>;
+  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null }>;
 }
 
 export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => ({
@@ -115,6 +121,7 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
   withdrawalRequests: [],
   withdrawalLimits: { min: 50, max: 10000 },
   bankDetails: null,
+  stripeConnectInfo: null,
   transactions: [],
   notifications: [],
   isLoading: true,
@@ -130,12 +137,13 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
       if (params.toString()) url += `?${params.toString()}`;
 
       const response = await client.get(url);
-      const { stats, transactions, notifications } = response.data;
+      const { stats, transactions, notifications, withdrawalLimits } = response.data;
 
       set({
         stats: stats,
         transactions: transactions,
         notifications: notifications || [],
+        ...(withdrawalLimits ? { withdrawalLimits } : {}),
         isLoading: false
       });
     } catch (error) {
@@ -149,7 +157,7 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         const { client } = await import('../services/api/client');
         const [reqRes, limitsRes] = await Promise.all([
             client.get('/payments/withdrawals'),
-            client.get('/payments/admin/withdrawal-settings')
+            client.get('/payments/merchant/withdrawal-limits'),
         ]);
         set({ 
             withdrawalRequests: reqRes.data,
@@ -163,8 +171,24 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
   fetchBankDetails: async () => {
     try {
         const { client } = await import('../services/api/client');
-        const response = await client.get('/payments/merchant/bank-details');
-        set({ bankDetails: response.data });
+        const [bankRes, stripeRes] = await Promise.all([
+            client.get('/payments/merchant/bank-details'),
+            client.get('/stripe/status').catch(() => ({ data: {} })),
+        ]);
+        set({
+            bankDetails: bankRes.data,
+            stripeConnectInfo: stripeRes.data?.stripeDisplay ?? get().stripeConnectInfo,
+        });
+        if (stripeRes.data?.stripeOnboarded) {
+            const currentStats = get().stats;
+            set({
+                stats: {
+                    ...currentStats,
+                    stripeOnboarded: true,
+                    stripeAccountId: stripeRes.data.stripeAccountId ?? currentStats.stripeAccountId,
+                },
+            });
+        }
     } catch (error) {
         console.error('Failed to fetch bank details', error);
     }
@@ -174,8 +198,11 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
     try {
         const { client } = await import('../services/api/client');
         const response = await client.post('/payments/merchant/bank-details', details);
-        // Refresh bank details after save
-        useMerchantWalletStore.getState().fetchBankDetails();
+        if (response.data?.bankDetails) {
+            set({ bankDetails: response.data.bankDetails });
+        } else {
+            useMerchantWalletStore.getState().fetchBankDetails();
+        }
         return { success: true, message: response.data.message || 'Bank details saved!' };
     } catch (error: any) {
         return { success: false, message: error.response?.data?.message || 'Failed to save bank details' };
@@ -210,27 +237,36 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         const { client } = await import('../services/api/client');
         const response = await client.get('/stripe/status');
         const onboarded = response.data.stripeOnboarded;
+        const stripeDisplay = response.data.stripeDisplay ?? null;
         
         if (onboarded) {
           const currentStats = get().stats;
-          set({ stats: { ...currentStats, stripeOnboarded: true } });
+          set({
+            stats: {
+              ...currentStats,
+              stripeOnboarded: true,
+              stripeAccountId: response.data.stripeAccountId ?? currentStats.stripeAccountId,
+            },
+            stripeConnectInfo: stripeDisplay,
+          });
           
           const currentBank = get().bankDetails;
           if (currentBank) {
-            set({ bankDetails: { ...currentBank, stripeOnboarded: true } });
+            set({ bankDetails: { ...currentBank, stripeOnboarded: true, stripeAccountId: response.data.stripeAccountId } });
           }
 
-          // Refetch in background without blocking the success response
           Promise.all([
             get().fetchWallet(),
             get().fetchBankDetails()
           ]).catch(err => console.error('Background refetch failed', err));
+        } else {
+          set({ stripeConnectInfo: stripeDisplay });
         }
         
-        return { success: true, onboarded };
+        return { success: true, onboarded, stripeDisplay };
     } catch (error) {
         console.error('Failed to refresh stripe status', error);
-        return { success: false, onboarded: false };
+        return { success: false, onboarded: false, stripeDisplay: null };
     }
   }
 }));

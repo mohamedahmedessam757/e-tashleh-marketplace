@@ -187,21 +187,26 @@ export class StripeController {
         });
 
         if (store) {
-            if (store.stripeAccountId && !store.stripeOnboarded) {
+            let stripeDisplay = null;
+            if (store.stripeAccountId) {
                 try {
                     const account = await this.stripeService.retrieveAccountOrNull(
                         store.stripeAccountId,
                     );
-                    if (account?.details_submitted) {
-                        await this.prisma.store.update({
-                            where: { id: store.id },
-                            data: { stripeOnboarded: true },
-                        });
-                        return {
-                            stripeAccountId: store.stripeAccountId,
-                            stripeOnboarded: true,
-                            payoutSchedule: store.payoutSchedule,
-                        };
+                    if (account) {
+                        stripeDisplay = this.stripeService.buildConnectAccountDisplay(account);
+                        if (account?.details_submitted && !store.stripeOnboarded) {
+                            await this.prisma.store.update({
+                                where: { id: store.id },
+                                data: { stripeOnboarded: true },
+                            });
+                            return {
+                                stripeAccountId: store.stripeAccountId,
+                                stripeOnboarded: true,
+                                payoutSchedule: store.payoutSchedule,
+                                stripeDisplay,
+                            };
+                        }
                     }
                 } catch (error) {
                     this.logger.warn(`Stripe status check failed for store ${store.id}: ${error}`);
@@ -211,6 +216,7 @@ export class StripeController {
                 stripeAccountId: store.stripeAccountId,
                 stripeOnboarded: store.stripeOnboarded,
                 payoutSchedule: store.payoutSchedule,
+                stripeDisplay,
             };
         }
 
@@ -220,20 +226,25 @@ export class StripeController {
         });
 
         if (user) {
-            if (user.stripeAccountId && !user.stripeOnboarded) {
+            let stripeDisplay = null;
+            if (user.stripeAccountId) {
                 try {
                     const account = await this.stripeService.retrieveAccountOrNull(
                         user.stripeAccountId,
                     );
-                    if (account?.details_submitted) {
-                        await this.prisma.user.update({
-                            where: { id: userId },
-                            data: { stripeOnboarded: true },
-                        });
-                        return {
-                            stripeAccountId: user.stripeAccountId,
-                            stripeOnboarded: true,
-                        };
+                    if (account) {
+                        stripeDisplay = this.stripeService.buildConnectAccountDisplay(account);
+                        if (account?.details_submitted && !user.stripeOnboarded) {
+                            await this.prisma.user.update({
+                                where: { id: userId },
+                                data: { stripeOnboarded: true },
+                            });
+                            return {
+                                stripeAccountId: user.stripeAccountId,
+                                stripeOnboarded: true,
+                                stripeDisplay,
+                            };
+                        }
                     }
                 } catch (error) {
                     this.logger.warn(`Stripe status check failed for user ${userId}: ${error}`);
@@ -242,9 +253,10 @@ export class StripeController {
             return {
                 stripeAccountId: user.stripeAccountId,
                 stripeOnboarded: user.stripeOnboarded,
+                stripeDisplay,
             };
         }
 
-        return { stripeOnboarded: false };
+        return { stripeOnboarded: false, stripeDisplay: null };
     }
 }

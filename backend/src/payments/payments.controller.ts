@@ -147,6 +147,11 @@ export class PaymentsController {
         return this.paymentsService.getBankDetails(req.user.id);
     }
 
+    @Get('merchant/withdrawal-limits')
+    getMerchantWithdrawalLimits() {
+        return this.paymentsService.getWithdrawalLimits();
+    }
+
     @Post('merchant/withdraw')
     requestWithdrawal(@Request() req, @Body() body: { amount: number; payoutMethod?: string }) {
         return this.paymentsService.requestWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER');

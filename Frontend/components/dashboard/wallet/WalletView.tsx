@@ -48,166 +48,12 @@ import {
 } from 'lucide-react';
 
 import { RestrictionAlertBanner } from '../shared/RestrictionAlertBanner';
+import { PayoutMethodPanel } from './PayoutMethodPanel';
+import { BankDetailsModal } from './BankDetailsModal';
 
 interface WalletViewProps {
     onNavigate?: (path: string, id?: any) => void;
 }
-
-// ═══════════════════════════════════════════════════════
-// NEW: Bank Details Modal (Center Overlay 2026 Style)
-// ═══════════════════════════════════════════════════════
-const BankDetailsModal = ({ 
-    isOpen, 
-    onClose, 
-    form, 
-    onChange, 
-    onSave, 
-    isLoading,
-    isAr 
-}: { 
-    isOpen: boolean, 
-    onClose: () => void, 
-    form: any, 
-    onChange: (data: any) => void, 
-    onSave: () => void,
-    isLoading: boolean,
-    isAr: boolean
-}) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 overflow-y-auto">
-            <motion.div 
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-[#1A1814] border border-gold-500/20 rounded-[2.5rem] w-full max-w-lg shadow-[0_0_50px_rgba(212,175,55,0.1)] overflow-hidden relative"
-            >
-                {/* Header */}
-                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-gold-500/5 to-transparent">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gold-500 rounded-2xl flex items-center justify-center shadow-lg shadow-gold-500/20">
-                            <Settings className="text-black" size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                                {isAr ? 'بيانات الحساب البنكي' : 'Bank Account Details'}
-                            </h3>
-                            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                                {isAr ? 'أدخل معلومات التحويل بدقة' : 'Enter transfer details carefully'}
-                            </p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={onClose}
-                        className="p-3 bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-500 rounded-2xl transition-all"
-                    >
-                        <RotateCcw size={20} />
-                    </button>
-                </div>
-
-                {/* Form Fields */}
-                <div className="p-8 space-y-6">
-                    <div className="grid grid-cols-1 gap-6">
-                        {/* Bank Name */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">
-                                {isAr ? 'اسم البنك' : 'Bank Name'}
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <ShoppingBag size={18} className="text-gold-500/30 group-focus-within:text-gold-500 transition-colors" />
-                                </div>
-                                <input 
-                                    type="text"
-                                    value={form.bankName}
-                                    onChange={(e) => onChange({ ...form, bankName: e.target.value })}
-                                    placeholder={isAr ? 'مثال: مصرف الراجحي' : 'e.g. Al Rajhi Bank'}
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-bold outline-none focus:border-gold-500/50 transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Account Holder */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">
-                                {isAr ? 'اسم صاحب الحساب' : 'Account Holder Name'}
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <CreditCard size={18} className="text-gold-500/30 group-focus-within:text-gold-500 transition-colors" />
-                                </div>
-                                <input 
-                                    type="text"
-                                    value={form.accountHolder}
-                                    onChange={(e) => onChange({ ...form, accountHolder: e.target.value })}
-                                    placeholder={isAr ? 'الاسم كما هو في البنك' : 'Full Name as per Bank'}
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-bold outline-none focus:border-gold-500/50 transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* IBAN */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">
-                                IBAN
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gold-500/30 font-black text-[10px] group-focus-within:text-gold-500 transition-colors">
-                                    SA
-                                </div>
-                                <input 
-                                    type="text"
-                                    value={form.iban}
-                                    onChange={(e) => onChange({ ...form, iban: e.target.value })}
-                                    placeholder="00 0000 0000 0000 0000 0000"
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-mono font-bold outline-none focus:border-gold-500/50 transition-all uppercase"
-                                />
-                            </div>
-                        </div>
-
-                        {/* SWIFT (Optional) */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">
-                                SWIFT / BIC ({isAr ? 'اختياري' : 'Optional'})
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <ShieldCheck size={18} className="text-gold-500/30 group-focus-within:text-gold-500 transition-colors" />
-                                </div>
-                                <input 
-                                    type="text"
-                                    value={form.swift}
-                                    onChange={(e) => onChange({ ...form, swift: e.target.value })}
-                                    placeholder="BANKSA22XXX"
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-mono font-bold outline-none focus:border-gold-500/50 transition-all uppercase"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4">
-                    <button 
-                        onClick={onClose}
-                        className="flex-1 py-4 px-6 rounded-2xl border border-white/10 text-white/60 font-black uppercase tracking-widest hover:bg-white/5 transition-all text-xs"
-                    >
-                        {isAr ? 'إلغاء' : 'Cancel'}
-                    </button>
-                    <button 
-                        onClick={onSave}
-                        disabled={isLoading || !form.bankName || !form.iban}
-                        className="flex-1 py-4 px-6 rounded-2xl bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-black font-black uppercase tracking-[2px] transition-all shadow-xl shadow-gold-500/10 flex items-center justify-center gap-2 text-xs"
-                    >
-                        {isLoading ? <RotateCcw size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                        {isAr ? 'حفظ البيانات' : 'Save Details'}
-                    </button>
-                </div>
-            </motion.div>
-        </div>
-    );
-};
 
 export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const { language, t } = useLanguage();
@@ -219,6 +65,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         withdrawalRequests,
         withdrawalLimits,
         bankDetails,
+        stripeConnectInfo,
         isLoading, 
         fetchWalletData,
         fetchWithdrawals,
@@ -241,6 +88,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [isOnboarding, setIsOnboarding] = useState(false);
     const [stripeSuccess, setStripeSuccess] = useState(false);
+    const [bankLinkSuccess, setBankLinkSuccess] = useState(false);
     const [payoutMethod, setPayoutMethod] = useState<'BANK_TRANSFER' | 'STRIPE'>('BANK_TRANSFER');
     
     // Bank Details Form State
@@ -381,6 +229,8 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
 
         if (result.success) {
             setShowBankForm(false);
+            setBankLinkSuccess(true);
+            setTimeout(() => setBankLinkSuccess(false), 10000);
             useNotificationStore.getState().addNotification({
                 type: 'PAYMENT',
                 titleAr: 'تم حفظ البيانات البنكية',
@@ -1254,74 +1104,17 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    {payoutMethod === 'STRIPE' ? (
-                                        <GlassCard className="p-6 border-[#635BFF]/20 bg-[#635BFF]/5 h-full flex flex-col justify-center items-center text-center">
-                                            <div className="w-16 h-16 bg-[#635BFF] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-[#635BFF]/20 rotate-3 group-hover:rotate-0 transition-transform">
-                                                <CreditCard className="text-white" size={32} />
-                                            </div>
-                                            <h4 className="text-white font-bold mb-2">{isAr ? 'سحب عبر Stripe Connect' : 'Payout via Stripe Connect'}</h4>
-                                            <p className="text-white/50 text-xs mb-6 px-4">
-                                                {isAr ? 'احصل على أموالك بشكل فوري بمجرد الموافقة' : 'Get your funds instantly once approved by the admin.'}
-                                            </p>
-                                            
-                                            {(bankDetails?.stripeOnboarded || stats?.stripeOnboarded) ? (
-                                                <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full border border-emerald-500/20 text-[10px] font-black uppercase">
-                                                    <ShieldCheck size={14} /> {isAr ? 'مرتبط وجاهز' : 'Connected & Ready'}
-                                                </div>
-                                            ) : (
-                                                <button 
-                                                    type="button"
-                                                    onClick={handleStripeConnect}
-                                                    disabled={isOnboarding}
-                                                    className="px-6 py-3 bg-[#635BFF] hover:bg-[#7a73ff] text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 transition-all"
-                                                >
-                                                    {isOnboarding ? <RotateCcw size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-                                                    {isAr ? 'ربط الحساب الآن' : 'Connect Stripe Account'}
-                                                </button>
-                                            )}
-                                        </GlassCard>
-                                    ) : (
-                                        <div className="h-full flex flex-col">
-                                            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1 relative overflow-hidden group">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="space-y-1">
-                                                        <h4 className="text-white font-bold text-sm">{isAr ? 'الحساب البنكي' : 'Bank Account'}</h4>
-                                                        {bankDetails?.iban ? (
-                                                            <div className="font-mono text-emerald-400 text-xs tracking-widest mt-2">
-                                                                **** **** **** {bankDetails.iban.slice(-4)}
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-white/30 text-[10px] italic">{isAr ? 'لم يتم إضافة حساب بنكي بعد' : 'No bank account added yet'}</p>
-                                                        )}
-                                                    </div>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => setShowBankForm(!showBankForm)}
-                                                        className="px-4 py-2 bg-gold-500/10 hover:bg-gold-500/20 text-gold-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-gold-500/20 transition-all flex items-center gap-2"
-                                                    >
-                                                        <Settings size={14} />
-                                                        {isAr ? 'إضافة / تعديل الحساب البنكي' : 'Add/Edit Bank Details'}
-                                                    </button>
-                                                </div>
-
-                                                {bankDetails?.iban && (
-                                                    <div className="flex items-center gap-3 mt-4 text-xs">
-                                                        <div className="flex-1">
-                                                            <p className="text-white/20 text-[8px] uppercase font-black">{isAr ? 'المصرف' : 'Bank'}</p>
-                                                            <p className="text-white/80 font-bold">{bankDetails.bankName}</p>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-white/20 text-[8px] uppercase font-black">{isAr ? 'الصحابة' : 'Holder'}</p>
-                                                            <p className="text-white/80 font-bold">{bankDetails.accountHolder}</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                
-                                                
-                                                {/* Bank Form Moved to Modal Overlay */}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <PayoutMethodPanel
+                                        mode={payoutMethod}
+                                        isAr={isAr}
+                                        bankDetails={bankDetails}
+                                        stripeOnboarded={Boolean(bankDetails?.stripeOnboarded || stats?.stripeOnboarded)}
+                                        stripeDisplay={stripeConnectInfo}
+                                        isOnboarding={isOnboarding}
+                                        bankLinkSuccess={bankLinkSuccess}
+                                        onStripeConnect={handleStripeConnect}
+                                        onEditBank={() => setShowBankForm(true)}
+                                    />
                                 </div>
                             </form>
                         </div>
@@ -1600,6 +1393,8 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                     onSave={handleSaveBankDetails}
                     isLoading={isSavingBank}
                     isAr={isAr}
+                    isUpdate={Boolean(bankDetails?.isLinked ?? bankDetails?.iban)}
+                    maskedExistingIban={bankDetails?.maskedIban}
                 />
             </AnimatePresence>
 
@@ -1633,10 +1428,26 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                             <h2 className="text-3xl font-black text-white mb-4 leading-tight">
                                 {isAr ? 'تهانينا! تم الربط بنجاح' : 'Congratulations! Connected Successfully'}
                             </h2>
-                            <p className="text-white/50 mb-10 leading-relaxed font-bold">
+                            <p className="text-white/50 mb-6 leading-relaxed font-bold">
                                 {isAr 
                                     ? 'تم تفعيل مدفوعات Stripe الفورية لحسابك. يمكنك الآن استلام أرباحك مباشرة وبكل سهولة.' 
                                     : 'Stripe instant payouts are now enabled for your account. You can now receive your earnings directly and easily.'}
+                            </p>
+                            {stripeConnectInfo && (
+                                <div className="mb-8 p-4 rounded-2xl border border-white/10 bg-black/30 text-left text-xs space-y-2">
+                                    {stripeConnectInfo.businessName && (
+                                        <p className="text-white/80"><span className="text-white/40">{isAr ? 'الاسم: ' : 'Name: '}</span>{stripeConnectInfo.businessName}</p>
+                                    )}
+                                    {stripeConnectInfo.email && (
+                                        <p className="text-white/80 font-mono"><span className="text-white/40">{isAr ? 'البريد: ' : 'Email: '}</span>{stripeConnectInfo.email}</p>
+                                    )}
+                                    {stripeConnectInfo.maskedAccountId && (
+                                        <p className="text-emerald-400 font-mono"><span className="text-white/40">{isAr ? 'الحساب: ' : 'Account: '}</span>{stripeConnectInfo.maskedAccountId}</p>
+                                    )}
+                                </div>
+                            )}
+                            <p className="text-[10px] text-white/30 mb-6">
+                                {isAr ? 'لا حاجة لربط حسابات إضافية.' : 'No need to connect additional accounts.'}
                             </p>
                             
                             <button

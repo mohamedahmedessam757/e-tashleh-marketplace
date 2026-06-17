@@ -78,6 +78,26 @@ export class StripeService {
         }
     }
 
+    buildConnectAccountDisplay(account: Record<string, unknown> | null | undefined) {
+        if (!account) {
+            return null;
+        }
+        const id = String(account.id || '');
+        const email = typeof account.email === 'string' ? account.email : null;
+        const businessProfile = account.business_profile as { name?: string } | undefined;
+        const company = account.company as { name?: string } | undefined;
+        const businessName = businessProfile?.name || company?.name || null;
+
+        return {
+            maskedAccountId: id.length > 10 ? `${id.slice(0, 5)}••••${id.slice(-4)}` : id || null,
+            email,
+            businessName,
+            payoutsEnabled: Boolean(account.payouts_enabled),
+            chargesEnabled: Boolean(account.charges_enabled),
+            detailsSubmitted: Boolean(account.details_submitted),
+        };
+    }
+
     /**
      * Creates a new connected Express account
      */

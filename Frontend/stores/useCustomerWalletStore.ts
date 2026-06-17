@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { StripeConnectDisplay } from '../types/payout-account';
 
 export interface WalletTransaction {
   id: string;
@@ -54,11 +55,14 @@ export interface WalletStats {
 }
 
 export interface BankDetails {
-  bankName: string;
-  accountHolder: string;
-  iban: string;
-  swift: string;
+  bankName: string | null;
+  accountHolder: string | null;
+  iban: string | null;
+  maskedIban?: string | null;
+  swift?: string | null;
   verified: boolean;
+  isLinked?: boolean;
+  verificationStatus?: 'NOT_LINKED' | 'PENDING_REVIEW' | 'VERIFIED';
   stripeOnboarded: boolean;
   stripeAccountId: string | null;
 }
@@ -80,6 +84,7 @@ interface CustomerWalletState {
   withdrawalRequests: WithdrawalRequest[];
   withdrawalLimits: { min: number; max: number };
   bankDetails: BankDetails | null;
+  stripeConnectInfo: StripeConnectDisplay | null;
   isLoading: boolean;
   fetchWalletData: (silent?: boolean) => Promise<void>;
   fetchWithdrawals: () => Promise<void>;
@@ -87,7 +92,7 @@ interface CustomerWalletState {
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
-  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean }>;
+  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null }>;
   updateStatsLocally: (updates: Partial<WalletStats>) => void;
   addTransactionLocally: (tx: WalletTransaction) => void;
   updateWithdrawalLocally: (request: WithdrawalRequest) => void;
@@ -99,6 +104,7 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
   withdrawalRequests: [],
   withdrawalLimits: { min: 50, max: 10000 },
   bankDetails: null,
+  stripeConnectInfo: null,
   isLoading: true,
 
   fetchWalletData: async (silent = false) => {
@@ -143,8 +149,23 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
   fetchBankDetails: async () => {
     try {
         const { client } = await import('../services/api/client');
-        const response = await client.get('/payments/customer/bank-details');
-        set({ bankDetails: response.data });
+        const [bankRes, stripeRes] = await Promise.all([
+            client.get('/payments/customer/bank-details'),
+            client.get('/stripe/status').catch(() => ({ data: {} })),
+        ]);
+        set({
+            bankDetails: bankRes.data,
+            stripeConnectInfo: stripeRes.data?.stripeDisplay ?? get().stripeConnectInfo,
+        });
+        if (stripeRes.data?.stripeOnboarded && get().stats) {
+            set({
+                stats: {
+                    ...get().stats!,
+                    stripeOnboarded: true,
+                    stripeAccountId: stripeRes.data.stripeAccountId ?? get().stats?.stripeAccountId,
+                },
+            });
+        }
     } catch (error) {
         console.error('Failed to fetch bank details', error);
     }
@@ -154,7 +175,11 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
     try {
         const { client } = await import('../services/api/client');
         const response = await client.post('/payments/customer/bank-details', details);
-        get().fetchBankDetails();
+        if (response.data?.bankDetails) {
+            set({ bankDetails: response.data.bankDetails });
+        } else {
+            get().fetchBankDetails();
+        }
         return { success: true, message: response.data.message || 'Bank details saved!' };
     } catch (error: any) {
         return { success: false, message: error.response?.data?.message || 'Failed to save bank details' };
@@ -189,19 +214,21 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
         const { client } = await import('../services/api/client');
         const response = await client.get('/stripe/status');
         const onboarded = response.data.stripeOnboarded;
+        const stripeDisplay = response.data.stripeDisplay ?? null;
         
+        set({ stripeConnectInfo: stripeDisplay });
+
         if (onboarded) {
-          // Force refetch to sync all metadata
           await Promise.all([
             get().fetchWalletData(true),
             get().fetchBankDetails()
           ]);
         }
         
-        return { success: true, onboarded };
+        return { success: true, onboarded, stripeDisplay };
     } catch (error) {
         console.error('Failed to refresh stripe status', error);
-        return { success: false, onboarded: false };
+        return { success: false, onboarded: false, stripeDisplay: null };
     }
   },
 
