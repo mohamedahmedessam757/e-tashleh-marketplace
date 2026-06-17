@@ -278,19 +278,6 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const [isSavingBank, setIsSavingBank] = useState(false);
     const [showBankForm, setShowBankForm] = useState(false);
     const [stripeSuccess, setStripeSuccess] = useState(false);
-
-    const merchantAvailable = isLoading ? null : Number(stats?.available ?? 0);
-    const maxWithdrawable = isLoading
-        ? null
-        : Number(stats?.maxWithdrawableAmount ?? stats?.available ?? 0);
-    const withdrawalRestrictionMessage = isAr
-        ? stats?.withdrawalRestrictionMessageAr
-        : stats?.withdrawalRestrictionMessageEn;
-    const canWithdraw =
-        !withdrawalsFrozen &&
-        maxWithdrawable !== null &&
-        maxWithdrawable >= withdrawalLimits.min;
-
     const [performanceSnap, setPerformanceSnap] = useState<{
         progressToNext?: {
             nextTier: string | null;
@@ -304,6 +291,19 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
 
     const isAr = language === 'ar';
     const w = t.dashboard.merchant.wallet;
+
+    const merchantAvailable = isLoading ? null : Number(stats?.available ?? 0);
+    const maxWithdrawable = isLoading
+        ? null
+        : Number(stats?.maxWithdrawableAmount ?? stats?.available ?? 0);
+    const withdrawalRestrictionMessage = isAr
+        ? stats?.withdrawalRestrictionMessageAr
+        : stats?.withdrawalRestrictionMessageEn;
+    const canWithdraw =
+        !withdrawalsFrozen &&
+        maxWithdrawable !== null &&
+        maxWithdrawable >= withdrawalLimits.min;
+
     const currentUser = getCurrentUser();
 
     useEffect(() => {
