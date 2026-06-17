@@ -152,7 +152,9 @@ export class EscrowService {
             data: { status: 'RELEASING' },
         });
 
-        const useStripeConnect = Boolean(store.stripeAccountId?.trim());
+        const useStripeConnect = Boolean(
+            store.stripeAccountId?.trim() && store.stripeOnboarded,
+        );
         let transferReferenceId: string;
 
         if (useStripeConnect) {

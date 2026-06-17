@@ -20,6 +20,7 @@ import {
 import {
     escrowReleaseWindowEnd,
     isOrderEligibleForEscrowAutoRelease,
+    isEscrowPaymentEligibleForAutoRelease,
 } from './escrow-release-eligibility.util';
 import {
     buildWithdrawalGovernance,
@@ -2721,7 +2722,20 @@ export class PaymentsService {
                 status: 'HELD',
                 payment: { offer: { storeId } },
             },
-            select: { orderId: true, paymentId: true },
+            select: {
+                orderId: true,
+                paymentId: true,
+                payment: {
+                    select: {
+                        offer: {
+                            select: {
+                                fulfillmentStatus: true,
+                                deliveredAt: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         for (const escrow of heldEscrows) {
@@ -2729,7 +2743,11 @@ export class PaymentsService {
                 where: { id: escrow.orderId },
                 select: { status: true, deliveredAt: true, updatedAt: true },
             });
-            if (!order || !isOrderEligibleForEscrowAutoRelease(order, windowEnd)) {
+            const offer = escrow.payment?.offer;
+            if (
+                !order ||
+                !isEscrowPaymentEligibleForAutoRelease(order, offer, windowEnd)
+            ) {
                 continue;
             }
             try {
@@ -2755,13 +2773,28 @@ export class PaymentsService {
             },
             include: {
                 order: { select: { status: true, deliveredAt: true, updatedAt: true } },
-                offer: { select: { storeId: true, store: { select: { ownerId: true } } } },
+                offer: {
+                    select: {
+                        fulfillmentStatus: true,
+                        deliveredAt: true,
+                        storeId: true,
+                        store: { select: { ownerId: true } },
+                    },
+                },
             },
         });
 
         for (const payment of paymentsWithoutEscrow) {
             if (!payment.order || !payment.offer?.storeId) continue;
-            if (!isOrderEligibleForEscrowAutoRelease(payment.order, windowEnd)) continue;
+            if (
+                !isEscrowPaymentEligibleForAutoRelease(
+                    payment.order,
+                    payment.offer,
+                    windowEnd,
+                )
+            ) {
+                continue;
+            }
 
             try {
                 const unitPrice = Number(payment.unitPrice || 0);
@@ -2825,7 +2858,7 @@ export class PaymentsService {
         });
         const currentBalance = Number(currentStore?.balance || 0);
 
-        if (released > 0 && expectedBalance > currentBalance + 0.01) {
+        if (released > 0 && Math.abs(expectedBalance - currentBalance) > 0.01) {
             await this.prisma.store.update({
                 where: { id: storeId },
                 data: { balance: expectedBalance },

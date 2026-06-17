@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EscrowService } from '../payments/escrow.service';
 import {
     escrowReleaseWindowEnd,
-    isOrderEligibleForEscrowAutoRelease,
+    isEscrowPaymentEligibleForAutoRelease,
 } from '../payments/escrow-release-eligibility.util';
 
 @Injectable()
@@ -24,6 +24,20 @@ export class EscrowCronService {
         try {
             const heldEscrows = await this.prisma.escrowTransaction.findMany({
                 where: { status: 'HELD' },
+                select: {
+                    orderId: true,
+                    paymentId: true,
+                    payment: {
+                        select: {
+                            offer: {
+                                select: {
+                                    fulfillmentStatus: true,
+                                    deliveredAt: true,
+                                },
+                            },
+                        },
+                    },
+                },
             });
 
             for (const escrow of heldEscrows) {
@@ -32,7 +46,14 @@ export class EscrowCronService {
                     select: { status: true, deliveredAt: true, updatedAt: true },
                 });
 
-                if (!order || !isOrderEligibleForEscrowAutoRelease(order, windowEnd)) {
+                if (
+                    !order ||
+                    !isEscrowPaymentEligibleForAutoRelease(
+                        order,
+                        escrow.payment?.offer,
+                        windowEnd,
+                    )
+                ) {
                     continue;
                 }
 

@@ -16,6 +16,7 @@ import { WaybillsService } from '../waybills/waybills.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
+import { EscrowService } from '../payments/escrow.service';
 
 @Injectable()
 export class OrdersService {
@@ -34,6 +35,8 @@ export class OrdersService {
         private offerFulfillment: OfferFulfillmentService,
         @Inject(forwardRef(() => VerificationTasksService))
         private verificationTasks: VerificationTasksService,
+        @Inject(forwardRef(() => EscrowService))
+        private escrowService: EscrowService,
     ) { }
 
     /** Backward-compatible singular `review` field for API consumers (first review). */
@@ -601,6 +604,19 @@ export class OrdersService {
 
             return updatedOrder;
         }, { timeout: 15000 });
+
+        if (
+            result.status === OrderStatus.COMPLETED ||
+            result.status === OrderStatus.WARRANTY_ACTIVE
+        ) {
+            void this.releaseHeldEscrowForOrder(orderId).catch((err) => {
+                this.logger.warn(
+                    `Escrow release after order completion failed for ${orderId}: ${
+                        err instanceof Error ? err.message : String(err)
+                    }`,
+                );
+            });
+        }
 
         // 3. Notification: Notify Customer & Merchant (Async)
         try {
@@ -2719,5 +2735,32 @@ export class OrdersService {
         }
         
         return date;
+    }
+
+    private async releaseHeldEscrowForOrder(orderId: string): Promise<void> {
+        const heldPayments = await this.prisma.paymentTransaction.findMany({
+            where: {
+                orderId,
+                status: 'SUCCESS',
+                escrow: { status: 'HELD' },
+            },
+            select: { id: true },
+        });
+
+        for (const payment of heldPayments) {
+            try {
+                await this.escrowService.releaseFunds(
+                    orderId,
+                    'AUTO_48H',
+                    undefined,
+                    payment.id,
+                );
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                this.logger.warn(
+                    `Escrow release skipped for payment ${payment.id} on order ${orderId}: ${message}`,
+                );
+            }
+        }
     }
 }
