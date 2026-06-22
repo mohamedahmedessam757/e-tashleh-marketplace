@@ -1,8 +1,37 @@
-# Phase 0 — دليل إعداد Widers (E-Tshaleh) خطوة بخطوة
+# Phase 0 — دليل إعداد Widers (E-TASHLEH) خطوة بخطوة — **نسخة v2**
 
-> **الهدف:** تجهيز لوحة Widers قبل أي كود في NestJS.  
+> **الهدف:** إعادة إنشاء **15 قالب** في Widers بعد الحذف الكامل — أسماء تقنية `*_ar_v2`.  
 > **المنصة:** https://apps.widers.net  
+> **الموقع:** https://e-tashleh.net  
+> **العلامة:** **إي-تشليح | E-TASHLEH** (Footer ثابت — لا تكرر في Body)  
 > **الوثائق:** https://documenter.getpostman.com/view/8538142/2s9Ykn8gvj
+
+---
+
+## ⚠️ إعادة البناء v2 — لوحة Widers فارغة
+
+| البند | التفاصيل |
+|-------|----------|
+| الوضع | **0 قالب** — حُذفت كل الأسماء القديمة (`*_ar` بدون v2) |
+| قفل Meta | لا تعيد إنشاء `welcome_customer_ar_v2` أو أي اسم قديم — **استخدم `_ar_v2` دائماً** |
+| خطأ Widers | *"لا يمكن إضافة محتوى جديد باللغة Arabic أثناء حذف المحتوى..."* → الحل: أسماء `_v2` |
+| الكود | NestJS يرسل تلقائياً `{family}_ar_v2` (انظر `template-registry.ts`) |
+| OTP | **Utility** + `WIDERS_OTP_MODE=utility` + متغير **`otp_code`** |
+
+### ترتيب الإنشاء في Widers (بعد موافقة Meta لكل واحد)
+
+1. `auth_otp_customer_ar_v2` + `auth_otp_vendor_ar_v2`
+2. `welcome_customer_ar_v2` + `welcome_vendor_ar_v2`
+3. `txn_order_customer_ar_v2` + `txn_order_merchant_ar_v2`
+4. باقي `txn_*_ar_v2` (شحن، فاتورة، بوليصة، مستندات، توثيق)
+
+### اسم العرض على واتساب (Meta — خارج الكود)
+
+إذا ظهر **E-TASHLEH WhatsApp** بدل **E-TASHLEH**:
+
+1. [Meta Business Suite](https://business.facebook.com) → **WhatsApp Manager**
+2. **Phone numbers** → **Profile** → **Display name** → **`E-TASHLEH`**
+3. انتظر مراجعة Meta (1–3 أيام). طابق الاسم في **Widers → مدير واتساب** إن وُجد.
 
 ---
 
@@ -10,17 +39,16 @@
 
 | # | المطلوب |
 |---|---------|
-| 1 | حساب Widers مفعّل + رقم WhatsApp Business موثّق في Meta |
+| 1 | حساب Widers مفعّل + رقم WhatsApp Business موثّق في Meta + **فوترة** مفعّلة |
 | 2 | صلاحية إنشاء قوالب ومجموعات |
-| 3 | **دومين المنصة** (لأزرار الروابط): مثال `https://etshaleh.com` أو staging — اكتبه هنا: `________________` |
-| 4 | رقم واتساب للاختبار (سعودي +966): `________________` |
-| 5 | 2–5 أيام صبر لموافقة Meta على القوالب |
+| 3 | **دومين المنصة:** `https://e-tashleh.net` |
+| 4 | رقم واتساب للاختبار (GCC +966…): `________________` |
+| 5 | 2–5 أيام صبر لموافقة Meta على كل قالب `_v2` |
 
-**استراتيجية الإطلاق الموصى بها:**  
-ابدأ بـ **العربي فقط (14 قالب)** → بعد الموافقة أضف **الإنجليزي (14 قالب)**.  
-لا تنشئ 28 قالب دفعة واحدة إلا إذا فريق Widers/Meta سريع.
+**استراتيجية الإطلاق:**  
+ابدأ بـ **15 قالب عربي `_v2`** → بعد الاستقرار أضف الإنجليزي لاحقاً.
 
-> **محتوى كامل:** الأقسام أ–ز أدناه + **الملاحق أ–ح في آخر الملف** (نصوص Body، 14 قالب EN، ربط الأحداث، قائمة المتغيرات، تدقيق الاكتمال).
+> **محتوى كامل:** الأقسام أ–ز + الملاحق. **جدول الـ 15 اسم `_v2`** في [WIDERS_EVENT_MAP.md](WIDERS_EVENT_MAP.md).
 
 ---
 
@@ -60,8 +88,8 @@
 
 | اسم المجموعة (بالإنجليزي في النظام) | الاستخدام |
 |-------------------------------------|-----------|
-| `marketplace_customers` | كل عملاء E-Tshaleh |
-| `marketplace_vendors` | كل تجار E-Tshaleh |
+| `marketplace_customers` | كل عملاء E-TASHLEH |
+| `marketplace_vendors` | كل تجار E-TASHLEH |
 
 **مهم:** الاسم بالإنجليزي و underscore كما هو — الكود سيرسل `groups: "marketplace_customers"`.
 
@@ -99,6 +127,7 @@
 | `cta_path` | مسار الرابط بعد /dashboard/ |
 | `part_name` | اسم القطعة (عروض/شحن — اختياري) |
 | `rejection_reason` | سبب الرفض (يُدمج غالباً في status_detail) |
+| `otp_code` | رمز OTP (Utility — قوالب auth_otp_*_v2) |
 
 > **ملاحظة:** في **قوالب Meta** المتغيرات في النص غالباً `{{1}}`, `{{2}}`, `{{3}}` بالترتيب — ليس أسماء الحقول. الجدول أعلاه لجهات الاتصال والتسويق. التفاصيل الكاملة في **ملحق و** أسفل الملف.
 
@@ -108,18 +137,16 @@
 
 ## قواعد Meta/Widers (اقرأها مرة)
 
-1. **اسم القالب:** إنجليزي + `_` فقط — مثل `txn_order_customer_ar`
-2. **Footer:** ثابت في كل قالب: `E-Tshaleh | أي تشليح` — **لا تكرره في Body**
+1. **اسم القالب:** إنجليزي + `_` + **`_v2`** — مثل `txn_order_customer_ar_v2`
+2. **Footer:** ثابت في كل قالب: `إي-تشليح | E-TASHLEH` — **لا تكرره في Body**
 3. **ترتيب المتغيرات في Body:** ثابت — الكود يرسل بنفس الترتيب دائماً
 4. **زر URL:** في إعداد القالب تضع Base URL ثابت، والجزء الديناميكي يأتي من API
 5. **نسبة النص للمتغيرات (Meta):** كلما زاد عدد `{{n}}` لازم **جمل عربية ثابتة أطول** حولها — لا تضع متغيراً في سطر فارغ لوحده
 
 ### Base URL لأزرار القوالب (انسخه)
 
-استبدل `YOUR_DOMAIN` بدومينك الحقيقي:
-
 ```
-https://YOUR_DOMAIN/dashboard/
+https://e-tashleh.net/dashboard/
 ```
 
 **مثال suffix ديناميكي (يُرسل من الكود):**
@@ -136,36 +163,36 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 | # | اسم القالب في لوحة Widers (حقل **الاسم**) | اسم القالب التقني (Meta/API) | الجمهور | Header |
 |---|------------------------------------------|------------------------------|---------|--------|
-| 1 | رمز التحقق — عميل | `auth_otp_customer_ar` | عميل | `رمز التحقق` |
-| 2 | رمز التحقق — تاجر | `auth_otp_vendor_ar` | تاجر | `رمز التحقق` |
-| 3 | **تحديث حالة الطلب للعميل** | `txn_order_customer_ar` | عميل | `تحديث طلب` |
-| 4 | تحديث حالة الطلب للتاجر | `txn_order_merchant_ar` | تاجر | `تحديث طلب` |
-| 5 | تحديث الشحن للعميل | `txn_shipment_customer_ar` | عميل | `تحديث الشحن` |
-| 6 | تحديث الشحن للتاجر | `txn_shipment_merchant_ar` | تاجر | `تحديث شحن الطلب` |
-| 7 | فاتورة جاهزة للعميل | `txn_invoice_customer_ar` | عميل | `فاتورة جاهزة` |
-| 8 | فاتورة جديدة للتاجر | `txn_invoice_merchant_ar` | تاجر | `فاتورة جديدة` |
-| 9 | بوليصة الشحن للعميل | `txn_waybill_customer_ar` | عميل | `بوليصة الشحن` |
-| 10 | بوليصة الشحن للتاجر | `txn_waybill_merchant_ar` | تاجر | `بوليصة الشحن` |
-| 11 | مستندات المتجر | `txn_document_vendor_ar` | تاجر | `مستندات المتجر` |
-| 12 | توثيق الطلب للعميل | `txn_verification_customer_ar` | عميل | `توثيق الطلب` |
-| 13 | توثيق الطلب للتاجر | `txn_verification_vendor_ar` | تاجر | `توثيق الطلب` |
-| 14 | ترحيب بالعميل *(اختياري)* | `welcome_customer_ar` | عميل | — |
-| 15 | ترحيب بالتاجر *(اختياري)* | `welcome_vendor_ar` | تاجر | — |
+| 1 | رمز التحقق — عميل | `auth_otp_customer_ar_v2` | عميل | `رمز التحقق` |
+| 2 | رمز التحقق — تاجر | `auth_otp_vendor_ar_v2` | تاجر | `رمز التحقق` |
+| 3 | **تحديث حالة الطلب للعميل** | `txn_order_customer_ar_v2` | عميل | `تحديث حالة الطلب` |
+| 4 | تحديث حالة الطلب للتاجر | `txn_order_merchant_ar_v2` | تاجر | `تحديث حالة الطلب` |
+| 5 | تحديث الشحن للعميل | `txn_shipment_customer_ar_v2` | عميل | `تحديث الشحن` |
+| 6 | تحديث الشحن للتاجر | `txn_shipment_merchant_ar_v2` | تاجر | `تحديث شحن الطلب` |
+| 7 | فاتورة جاهزة للعميل | `txn_invoice_customer_ar_v2` | عميل | `فاتورة جاهزة` |
+| 8 | فاتورة جديدة للتاجر | `txn_invoice_merchant_ar_v2` | تاجر | `فاتورة جديدة` |
+| 9 | بوليصة الشحن للعميل | `txn_waybill_customer_ar_v2` | عميل | `بوليصة الشحن` |
+| 10 | بوليصة الشحن للتاجر | `txn_waybill_merchant_ar_v2` | تاجر | `بوليصة الشحن` |
+| 11 | مستندات المتجر | `txn_document_vendor_ar_v2` | تاجر | `مستندات المتجر` |
+| 12 | توثيق الطلب للعميل | `txn_verification_customer_ar_v2` | عميل | `توثيق الطلب` |
+| 13 | توثيق الطلب للتاجر | `txn_verification_vendor_ar_v2` | تاجر | `توثيق الطلب` |
+| 14 | ترحيب بالعميل *(اختياري)* | `welcome_customer_ar_v2` | عميل | — |
+| 15 | ترحيب بالتاجر *(اختياري)* | `welcome_vendor_ar_v2` | تاجر | — |
 
 ### جداول ربط المتغيرات — انسخها في «إعداد القالب»
 
-#### `auth_otp_customer_ar` / `auth_otp_vendor_ar` (Utility حتى موافقة Authentication)
+#### `auth_otp_customer_ar_v2` / `auth_otp_vendor_ar_v2` (Utility)
 
 | المتغير في القالب | اختر في Widers | حقل الكود (NestJS) |
 |-------------------|----------------|---------------------|
 | `{{1}}` | **اسم جهة الاتصال** | `name` |
 | `{{2}}` | *(OTP — يُمرَّر من API)* | `otp_code` |
 
-> إن استخدمت فئة **Authentication** من Meta: لا Body يدوي — Meta يولّد OTP تلقائياً.
+> **Utility OTP فقط** — لا تستخدم فئة Authentication في v2.
 
 ---
 
-#### `txn_order_customer_ar` — مثل لقطة الشاشة
+#### `txn_order_customer_ar_v2` — مثل لقطة الشاشة
 
 | المتغير في القالب | اختر في Widers | حقل الكود (NestJS) |
 |-------------------|----------------|---------------------|
@@ -177,7 +204,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_order_merchant_ar`
+#### `txn_order_merchant_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -189,7 +216,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_shipment_customer_ar` / `txn_shipment_merchant_ar`
+#### `txn_shipment_customer_ar_v2` / `txn_shipment_merchant_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -203,7 +230,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_invoice_customer_ar` / `txn_invoice_merchant_ar`
+#### `txn_invoice_customer_ar_v2` / `txn_invoice_merchant_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -218,7 +245,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_waybill_customer_ar` / `txn_waybill_merchant_ar`
+#### `txn_waybill_customer_ar_v2` / `txn_waybill_merchant_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -231,7 +258,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_document_vendor_ar`
+#### `txn_document_vendor_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -243,7 +270,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `txn_verification_customer_ar` / `txn_verification_vendor_ar`
+#### `txn_verification_customer_ar_v2` / `txn_verification_vendor_ar_v2`
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
@@ -256,13 +283,13 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ---
 
-#### `welcome_customer_ar` / `welcome_vendor_ar` *(اختياري)*
+#### `welcome_customer_ar_v2` / `welcome_vendor_ar_v2` *(اختياري)*
 
 | المتغير | اختر في Widers | حقل الكود |
 |---------|----------------|-----------|
 | `{{1}}` | اسم جهة الاتصال | `name` |
 
-**زر:** `ابدأ الآن` → suffix: `home`
+**زر:** `ابدأ الآن` → رابط **ثابت** `https://e-tashleh.net/dashboard/home` (بدون suffix من API)
 
 ---
 
@@ -273,26 +300,34 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `رمز التحقق — عميل` |
-| **اسم القالب التقني (Meta/API)** | `auth_otp_customer_ar` |
-| **الفئة** | المصادقة (Authentication) — أو Utility مؤقتاً |
-| **النوع** | رمز المرور لمرة واحدة (OTP) |
-| **اللغة** | Arabic |
-| **تنويه أمان** | ON |
-| **تحذير الانتهاء** | OFF (أو ON حسب رغبتك) |
+| **اسم القالب التقني (Meta/API)** | `auth_otp_cust_ar_v2` |
+| **الفئة** | **Utility** (أداة مساعدة) — **ليس** Authentication |
+| **Header** | `رمز التحقق` |
 
-**لا تكتب OTP يدوياً في Body** — Meta يولّد الكود تلقائياً.  
-**زر:** نسخ الكود (Copy Code) — يظهر تلقائياً في قوالب Authentication.
+**Body (Utility — انسخ):**
+```
+مرحباً {{1}}،
 
-**Footer:** `E-Tshaleh | أي تشليح`
+رمز التحقق الخاص بك على E-TASHLEH:
 
-→ **إنشاء القالب** → انتظر الموافقة.
+{{2}}
+
+لا تشارك هذا الرمز مع أي شخص.
+```
+
+**Footer:** `إي-تشليح | E-TASHLEH`  
+**لا زر URL** في قالب OTP Utility.
+
+→ **إنشاء القالب** → بعد الموافقة: **إعداد القالب** → `{{1}}` اسم جهة الاتصال | `{{2}}` **otp_code** → **حفظ**.
+
+**Backend:** `WIDERS_OTP_MODE=utility`
 
 **كرر للتاجر:**
 
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `رمز التحقق — تاجر` |
-| **اسم القالب التقني** | `auth_otp_vendor_ar` |
+| **اسم القالب التقني** | `auth_otp_vendor_ar_v2` |
 
 **إعداد المتغيرات (Utility OTP):** `{{1}}` → اسم جهة الاتصال | `{{2}}` → otp_code
 
@@ -303,20 +338,20 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `تحديث حالة الطلب للعميل` |
-| **اسم القالب التقني (Meta/API)** | `txn_order_customer_ar` |
+| **اسم القالب التقني (Meta/API)** | `txn_order_customer_ar_v2` |
 | **الفئة** | أداة مساعدة (Utility) |
 | **اللغة** | Arabic |
 
 ### رأس الرسالة (Header)
 - النوع: **نص**
-- النص الثابت: `تحديث طلب`
+- النص الثابت: `تحديث حالة الطلب`
 
 ### محتوى القالب (Body) — انسخ بالضبط:
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث جديد على طلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد على طلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل الحالة والخطوة التالية: {{3}}
 
@@ -331,13 +366,13 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 ### تذييل (Footer)
 ```
-E-Tshaleh | أي تشليح
+إي-تشليح | E-TASHLEH
 ```
 
 ### زر (Button)
 - النوع: **رابط (URL)**
 - نص الزر: `عرض الطلب`
-- **عنوان URL الثابت:** `https://YOUR_DOMAIN/dashboard/`
+- **عنوان URL الثابت:** `https://e-tashleh.net/dashboard/`
 - **المتغير الديناميكي (suffix):** سيُرسل من API مثل:
   `order-details/abc-123-uuid`
 
@@ -350,22 +385,22 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `تحديث حالة الطلب للتاجر` |
-| **اسم القالب التقني** | `txn_order_merchant_ar` |
-| **Header** | `تحديث طلب` |
+| **اسم القالب التقني** | `txn_order_merchant_ar_v2` |
+| **Header** | `تحديث حالة الطلب` |
 
 ### Body:
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث جديد على الطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد على الطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل الحالة والإجراء المطلوب: {{3}}
 
 شكراً لتعاونك معنا.
 ```
 
-**Footer:** `E-Tshaleh | أي تشليح`
+**Footer:** `إي-تشليح | E-TASHLEH`
 
 | متغير | اختر في Widers | حقل الكود |
 |-------|----------------|-----------|
@@ -375,7 +410,7 @@ E-Tshaleh | أي تشليح
 
 ### زر URL
 - نص الزر: `فتح الطلب`
-- Base: `https://YOUR_DOMAIN/dashboard/`
+- Base: `https://e-tashleh.net/dashboard/`
 - suffix مثال: `explore-offer/00000000-0000-0000-0000-000000000000`
 
 ---
@@ -385,7 +420,7 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `تحديث الشحن للعميل` |
-| **اسم القالب التقني** | `txn_shipment_customer_ar` |
+| **اسم القالب التقني** | `txn_shipment_customer_ar_v2` |
 | **Header** | `تحديث الشحن` |
 
 > **خطأ Meta شائع:** «عدد كبير جداً من المتغيرات مقارنةً بطول الرسالة» — مع 4 متغيرات لازم نص عربي **أطول** (انظر Body أدناه). لا تضع `{{3}}` في سطر لوحده.
@@ -395,7 +430,7 @@ E-Tshaleh | أي تشليح
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث حالة الشحن لطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث حالة الشحن لطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل التحديث التالي: {{3}}
 
@@ -411,7 +446,7 @@ E-Tshaleh | أي تشليح
 | `{{3}}` | status_detail | `status_detail` |
 | `{{4}}` | tracking_number | `tracking_number` |
 
-**Footer:** `E-Tshaleh | أي تشليح` (لا تكرر الاسم في Body)
+**Footer:** `إي-تشليح | E-TASHLEH` (لا تكرر الاسم في Body)
 
 ### زر: `تتبع الشحنة` → suffix: `order-details/UUID`
 
@@ -422,7 +457,7 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `تحديث الشحن للتاجر` |
-| **اسم القالب التقني** | `txn_shipment_merchant_ar` |
+| **اسم القالب التقني** | `txn_shipment_merchant_ar_v2` |
 | **Header** | `تحديث شحن الطلب` |  
 
 **Body:**
@@ -430,7 +465,7 @@ E-Tshaleh | أي تشليح
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث حالة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث حالة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل التحديث التالي: {{3}}
 
@@ -446,7 +481,7 @@ E-Tshaleh | أي تشليح
 | `{{3}}` | status_detail | `status_detail` |
 | `{{4}}` | tracking_number | `tracking_number` |
 
-**Footer:** `E-Tshaleh | أي تشليح`  
+**Footer:** `إي-تشليح | E-TASHLEH`  
 زر: `فتح الطلب` — suffix: `explore-offer/UUID`
 
 ---
@@ -456,7 +491,7 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `فاتورة جاهزة للعميل` |
-| **اسم القالب التقني** | `txn_invoice_customer_ar` |
+| **اسم القالب التقني** | `txn_invoice_customer_ar_v2` |
 | **Header** | `فاتورة جاهزة` |
 
 ### Body (5 متغيرات — نص أطول لتجنب رفض Meta):
@@ -464,7 +499,7 @@ E-Tshaleh | أي تشليح
 ```
 مرحباً {{1}}،
 
-يسعدنا إعلامك بإصدار فاتورة جديدة مرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+يسعدنا إعلامك بإصدار فاتورة جديدة مرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 رقم الفاتورة: {{3}}
 المبلغ الإجمالي: {{4}}
@@ -482,11 +517,11 @@ E-Tshaleh | أي تشليح
 | `{{4}}` | amount | `amount` |
 | `{{5}}` | status_detail / ملخص | `summary` |
 
-**Footer:** `E-Tshaleh | أي تشليح`
+**Footer:** `إي-تشليح | E-TASHLEH`
 
 ### زر
 - نص: `عرض الفاتورة`
-- Base: `https://YOUR_DOMAIN/dashboard/`
+- Base: `https://e-tashleh.net/dashboard/`
 - suffix مثال: `order-details/ORDER_UUID?tab=invoices&offerId=OFFER_UUID`
 
 ---
@@ -496,7 +531,7 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `فاتورة جديدة للتاجر` |
-| **اسم القالب التقني** | `txn_invoice_merchant_ar` |
+| **اسم القالب التقني** | `txn_invoice_merchant_ar_v2` |
 | **Header** | `فاتورة جديدة` |
 
 ### Body:
@@ -504,7 +539,7 @@ E-Tshaleh | أي تشليح
 ```
 مرحباً {{1}}،
 
-يسعدنا إعلامك بإصدار فاتورة جديدة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+يسعدنا إعلامك بإصدار فاتورة جديدة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 رقم الفاتورة: {{3}}
 المبلغ الإجمالي: {{4}}
@@ -522,7 +557,7 @@ E-Tshaleh | أي تشليح
 | `{{4}}` | amount | `amount` |
 | `{{5}}` | status_detail / ملخص | `summary` |
 
-**Footer:** `E-Tshaleh | أي تشليح`  
+**Footer:** `إي-تشليح | E-TASHLEH`  
 زر `عرض الفاتورة` — suffix:  
 `explore-offer/ORDER_UUID?tab=invoices&offerId=OFFER_UUID`
 
@@ -533,16 +568,16 @@ E-Tshaleh | أي تشليح
 | الحقل | عميل | تاجر |
 |-------|------|------|
 | **الاسم في لوحة Widers** | `بوليصة الشحن للعميل` | `بوليصة الشحن للتاجر` |
-| **اسم القالب التقني** | `txn_waybill_customer_ar` | `txn_waybill_merchant_ar` |
+| **اسم القالب التقني** | `txn_waybill_customer_ar_v2` | `txn_waybill_merchant_ar_v2` |
 
 **Header:** `بوليصة الشحن`
 
-### Body — عميل (`txn_waybill_customer_ar`):
+### Body — عميل (`txn_waybill_customer_ar_v2`):
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم إنشأ بوليصة الشحن المرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بأنه تم إنشأ بوليصة الشحن المرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل البوليصة والحالة الحالية: {{3}}
 
@@ -551,12 +586,12 @@ E-Tshaleh | أي تشليح
 شكراً لثقتك بنا.
 ```
 
-### Body — تاجر (`txn_waybill_merchant_ar`):
+### Body — تاجر (`txn_waybill_merchant_ar_v2`):
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث بوليصة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث بوليصة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل البوليصة والحالة الحالية: {{3}}
 
@@ -571,7 +606,7 @@ E-Tshaleh | أي تشليح
 | `{{2}}` | order_number | `order_number` |
 | `{{3}}` | status_detail | `status_detail` |
 
-**Footer:** `E-Tshaleh | أي تشليح`
+**Footer:** `إي-تشليح | E-TASHLEH`
 
 ### زر
 - نص: `عرض البوليصة`
@@ -585,7 +620,7 @@ E-Tshaleh | أي تشليح
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `مستندات المتجر` |
-| **اسم القالب التقني** | `txn_document_vendor_ar` |
+| **اسم القالب التقني** | `txn_document_vendor_ar_v2` |
 | **Header** | `مستندات المتجر` |
 
 ### Body:
@@ -593,7 +628,7 @@ E-Tshaleh | أي تشليح
 ```
 مرحباً،
 
-نود إعلامك بوجود تحديث جديد يخص مستندات متجرك المسجّل على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد يخص مستندات متجرك المسجّل على منصة E-TASHLEH.
 
 اسم المتجر: {{1}}
 نوع المستند المعني: {{2}}
@@ -611,7 +646,7 @@ E-Tshaleh | أي تشليح
 | `{{2}}` | doc_type | `doc_type` |
 | `{{3}}` | status_detail | `status_detail` |
 
-**Footer:** `E-Tshaleh | أي تشليح`
+**Footer:** `إي-تشليح | E-TASHLEH`
 
 ### زر: `فتح لوحة المتجر` → suffix: `home` أو مسار إعدادات المتجر عندكم
 
@@ -622,16 +657,16 @@ E-Tshaleh | أي تشليح
 | الحقل | عميل | تاجر |
 |-------|------|------|
 | **الاسم في لوحة Widers** | `توثيق الطلب للعميل` | `توثيق الطلب للتاجر` |
-| **اسم القالب التقني** | `txn_verification_customer_ar` | `txn_verification_vendor_ar` |
+| **اسم القالب التقني** | `txn_verification_customer_ar_v2` | `txn_verification_vendor_ar_v2` |
 
 **Header:** `توثيق الطلب`
 
-### Body — عميل (`txn_verification_customer_ar`):
+### Body — عميل (`txn_verification_customer_ar_v2`):
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث على حالة توثيق القطعة المرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث على حالة توثيق القطعة المرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل التوثيق والحالة الحالية: {{3}}
 
@@ -640,12 +675,12 @@ E-Tshaleh | أي تشليح
 شكراً لثقتك بنا.
 ```
 
-### Body — تاجر (`txn_verification_vendor_ar`):
+### Body — تاجر (`txn_verification_vendor_ar_v2`):
 
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث على حالة توثيق القطعة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث على حالة توثيق القطعة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل التوثيق والإجراء المطلوب: {{3}}
 
@@ -660,7 +695,7 @@ E-Tshaleh | أي تشليح
 | `{{2}}` | order_number | `order_number` |
 | `{{3}}` | status_detail | `status_detail` |
 
-**Footer:** `E-Tshaleh | أي تشليح`
+**Footer:** `إي-تشليح | E-TASHLEH`
 
 ### زر
 - عميل: `عرض الطلب` → `order-details/UUID`
@@ -695,9 +730,9 @@ Your order {{2}}
 
 {{3}}
 
-Thank you — E-Tshaleh
+Thank you — E-TASHLEH
 ```
-| Footer | `E-Tshaleh` |
+| Footer | `E-TASHLEH` |
 | Button | `View order` |
 
 ---
@@ -708,24 +743,24 @@ Thank you — E-Tshaleh
 
 | اسم Widers (عربي) | template_name | status | lang | {{1}} Widers | {{2}} | {{3}} | {{4}} | {{5}} | button suffix |
 |-------------------|---------------|--------|------|--------------|-------|-------|-------|-------|---------------|
-| رمز التحقق — عميل | auth_otp_customer_ar | | ar | اسم جهة الاتصال | otp_code | | | | — |
-| رمز التحقق — تاجر | auth_otp_vendor_ar | | ar | اسم جهة الاتصال | otp_code | | | | — |
-| تحديث حالة الطلب للعميل | txn_order_customer_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
-| تحديث حالة الطلب للتاجر | txn_order_merchant_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
-| تحديث الشحن للعميل | txn_shipment_customer_ar | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | order-details/{orderId} |
-| تحديث الشحن للتاجر | txn_shipment_merchant_ar | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | explore-offer/{orderId} |
-| فاتورة جاهزة للعميل | txn_invoice_customer_ar | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | order-details/{id}?tab=invoices&offerId={offerId} |
-| فاتورة جديدة للتاجر | txn_invoice_merchant_ar | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | explore-offer/{id}?tab=invoices&offerId={offerId} |
-| بوليصة الشحن للعميل | txn_waybill_customer_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{id}?tab=waybills |
-| بوليصة الشحن للتاجر | txn_waybill_merchant_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{id}?tab=waybills |
-| مستندات المتجر | txn_document_vendor_ar | | ar | store_name | doc_type | status_detail | | | home |
-| توثيق الطلب للعميل | txn_verification_customer_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
-| توثيق الطلب للتاجر | txn_verification_vendor_ar | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
+| رمز التحقق — عميل | auth_otp_customer_ar_v2 | | ar | اسم جهة الاتصال | otp_code | | | | — |
+| رمز التحقق — تاجر | auth_otp_vendor_ar_v2 | | ar | اسم جهة الاتصال | otp_code | | | | — |
+| تحديث حالة الطلب للعميل | txn_order_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
+| تحديث حالة الطلب للتاجر | txn_order_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
+| تحديث الشحن للعميل | txn_shipment_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | order-details/{orderId} |
+| تحديث الشحن للتاجر | txn_shipment_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | explore-offer/{orderId} |
+| فاتورة جاهزة للعميل | txn_invoice_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | order-details/{id}?tab=invoices&offerId={offerId} |
+| فاتورة جديدة للتاجر | txn_invoice_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | explore-offer/{id}?tab=invoices&offerId={offerId} |
+| بوليصة الشحن للعميل | txn_waybill_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{id}?tab=waybills |
+| بوليصة الشحن للتاجر | txn_waybill_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{id}?tab=waybills |
+| مستندات المتجر | txn_document_vendor_ar_v2 | | ar | store_name | doc_type | status_detail | | | home |
+| توثيق الطلب للعميل | txn_verification_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
+| توثيق الطلب للتاجر | txn_verification_vendor_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
 
 ## معلومات إلزامية
 
 ```
-FRONTEND_URL=https://.....
+FRONTEND_URL=https://e-tashleh.net
 WIDERS_API_TOKEN=(موجود في .env فقط — لا ترسل في الشات)
 TEST_PHONE=+9665xxxxxxxx
 ```
@@ -750,7 +785,7 @@ TEST_PHONE=+9665xxxxxxxx
 # أسئلة شائعة
 
 **س: Meta رفض القالب؟**  
-ج: قلّل علامات تعجب، لا وعود تسويقية، Utility للتشغيل فقط، Authentication للـ OTP فقط.
+ج: قلّل علامات تعجب، لا وعود تسويقية. OTP = **Utility** فقط (`otp_code` في Body).
 
 **س: هل أكتب الرمز {{1}} في Widers؟**  
 ج: نعم في محتوى Body — بالترتيب. عند الإرسال من API نمرّر القيم بنفس الترتيب.
@@ -790,26 +825,26 @@ TEST_PHONE=+9665xxxxxxxx
 
 Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو التكرار:
 
-- **إما** تضع `E-Tshaleh | أي تشليح` في **Footer فقط** وتزيل السطر الأخير من Body
+- **إما** تضع `إي-تشليح | E-TASHLEH` في **Footer فقط** وتزيل السطر الأخير من Body
 - **إما** تبقيه في Body فقط وتترك Footer فارغاً
 
-**الموصى به:** Footer = `E-Tshaleh | أي تشليح` — و**احذف** السطر الأخير من Body في كل القوالب أدناه (النسخ المحدّثة في الملحق ج).
+**الموصى به:** Footer = `إي-تشليح | E-TASHLEH` — و**احذف** السطر الأخير من Body في كل القوالب أدناه (النسخ المحدّثة في الملحق ج).
 
 ---
 
 # ملحق ب — OTP تاجر (تفصيل كامل)
 
-## `auth_otp_vendor_ar`
+## `auth_otp_vendor_ar_v2`
 
 | الحقل | القيمة |
 |-------|--------|
 | الفئة | المصادقة |
 | النوع | OTP |
-| الاسم | `auth_otp_vendor_ar` |
+| الاسم | `auth_otp_vendor_ar_v2` |
 | اللغة | Arabic |
-| Footer | `E-Tshaleh | أي تشليح` |
+| Footer | `إي-تشليح | E-TASHLEH` |
 
-نفس إعدادات `auth_otp_customer_ar` — لا Body يدوي.
+نفس إعدادات `auth_otp_customer_ar_v2` — لا Body يدوي.
 
 **إنجليزي:** `auth_otp_vendor_en` — Language: English.
 
@@ -819,11 +854,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 > استخدم **Footer منفصل** كما فوق. الأرقام `{{1}}`… بالترتيب.
 
-### `txn_order_customer_ar`
+### `txn_order_customer_ar_v2`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث جديد على طلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد على طلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل الحالة والخطوة التالية: {{3}}
 
@@ -831,11 +866,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 ```
 - زر: `عرض الطلب` → `order-details/{orderId}`
 
-### `txn_order_merchant_ar`
+### `txn_order_merchant_ar_v2`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث جديد على الطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد على الطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل الحالة والإجراء المطلوب: {{3}}
 
@@ -843,11 +878,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 ```
 - زر: `فتح الطلب` → `explore-offer/{orderId}`
 
-### `txn_shipment_customer_ar` — Header: `تحديث الشحن`
+### `txn_shipment_customer_ar_v2` — Header: `تحديث الشحن`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث حالة الشحن لطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث حالة الشحن لطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل التحديث التالي: {{3}}
 
@@ -856,11 +891,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لثقتك بنا.
 ```
 
-### `txn_shipment_merchant_ar` — Header: `تحديث شحن الطلب`
+### `txn_shipment_merchant_ar_v2` — Header: `تحديث شحن الطلب`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث حالة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث حالة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل التحديث التالي: {{3}}
 
@@ -869,11 +904,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لتعاونك معنا.
 ```
 
-### `txn_invoice_customer_ar` — Header: `فاتورة جاهزة`
+### `txn_invoice_customer_ar_v2` — Header: `فاتورة جاهزة`
 ```
 مرحباً {{1}}،
 
-يسعدنا إعلامك بإصدار فاتورة جديدة مرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+يسعدنا إعلامك بإصدار فاتورة جديدة مرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 رقم الفاتورة: {{3}}
 المبلغ الإجمالي: {{4}}
@@ -883,11 +918,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لاستخدامك منصتنا.
 ```
 
-### `txn_invoice_merchant_ar` — Header: `فاتورة جديدة`
+### `txn_invoice_merchant_ar_v2` — Header: `فاتورة جديدة`
 ```
 مرحباً {{1}}،
 
-يسعدنا إعلامك بإصدار فاتورة جديدة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+يسعدنا إعلامك بإصدار فاتورة جديدة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 رقم الفاتورة: {{3}}
 المبلغ الإجمالي: {{4}}
@@ -897,11 +932,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لتعاونك معنا.
 ```
 
-### `txn_waybill_customer_ar` — Header: `بوليصة الشحن`
+### `txn_waybill_customer_ar_v2` — Header: `بوليصة الشحن`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث بوليصة الشحن المرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث بوليصة الشحن المرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل البوليصة والحالة الحالية: {{3}}
 
@@ -910,11 +945,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لثقتك بنا.
 ```
 
-### `txn_waybill_merchant_ar` — Header: `بوليصة الشحن`
+### `txn_waybill_merchant_ar_v2` — Header: `بوليصة الشحن`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بأنه تم تحديث بوليصة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بأنه تم تحديث بوليصة الشحن للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل البوليصة والحالة الحالية: {{3}}
 
@@ -923,11 +958,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لتعاونك معنا.
 ```
 
-### `txn_document_vendor_ar` — Header: `مستندات المتجر`
+### `txn_document_vendor_ar_v2` — Header: `مستندات المتجر`
 ```
 مرحباً،
 
-نود إعلامك بوجود تحديث جديد يخص مستندات متجرك المسجّل على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث جديد يخص مستندات متجرك المسجّل على منصة E-TASHLEH.
 
 اسم المتجر: {{1}}
 نوع المستند المعني: {{2}}
@@ -944,11 +979,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 - زر: `فتح المتجر` → suffix: `home` (أو مسار إعدادات المتجر عندكم)
 
-### `txn_verification_customer_ar` — Header: `توثيق الطلب`
+### `txn_verification_customer_ar_v2` — Header: `توثيق الطلب`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث على حالة توثيق القطعة المرتبطة بطلبك رقم {{2}} على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث على حالة توثيق القطعة المرتبطة بطلبك رقم {{2}} على منصة E-TASHLEH.
 
 تفاصيل التوثيق والحالة الحالية: {{3}}
 
@@ -957,11 +992,11 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 شكراً لثقتك بنا.
 ```
 
-### `txn_verification_vendor_ar` — Header: `توثيق الطلب`
+### `txn_verification_vendor_ar_v2` — Header: `توثيق الطلب`
 ```
 مرحباً {{1}}،
 
-نود إعلامك بوجود تحديث على حالة توثيق القطعة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-Tshaleh.
+نود إعلامك بوجود تحديث على حالة توثيق القطعة للطلب رقم {{2}} المرتبط بمتجرك على منصة E-TASHLEH.
 
 تفاصيل التوثيق والإجراء المطلوب: {{3}}
 
@@ -978,19 +1013,19 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 |---------------|--------|-------------|--------|
 | `auth_otp_customer_en` | — | (Meta OTP) | Copy code |
 | `auth_otp_vendor_en` | — | (Meta OTP) | Copy code |
-| `txn_order_customer_en` | Order update | `Hello {{1}},\n\nWe would like to inform you about an update on your order {{2}} on E-Tshaleh.\n\nStatus details: {{3}}\n\nThank you for using our platform.` | View order |
-| `txn_order_merchant_en` | Order update | `Hello {{1}},\n\nThere is an update on order {{2}} linked to your store on E-Tshaleh.\n\nStatus details: {{3}}\n\nThank you for your cooperation.` | Open order |
-| `txn_shipment_customer_en` | Shipment update | `Hello {{1}},\n\nYour shipment status for order {{2}} on E-Tshaleh has been updated.\n\nUpdate details: {{3}}\n\nTracking number: {{4}}\n\nThank you for your trust.` | Track |
-| `txn_shipment_merchant_en` | Shipment update | `Hello {{1}},\n\nShipment status for order {{2}} linked to your store on E-Tshaleh has been updated.\n\nUpdate details: {{3}}\n\nTracking number: {{4}}\n\nThank you for your cooperation.` | Open order |
-| `txn_invoice_customer_en` | Invoice ready | `Hello {{1}},\n\nA new invoice has been issued for your order {{2}} on E-Tshaleh.\n\nInvoice number: {{3}}\nTotal amount: {{4}}\n\nInvoice summary: {{5}}\n\nThank you for using our platform.` | View invoice |
-| `txn_invoice_merchant_en` | New invoice | `Hello {{1}},\n\nA new invoice has been issued for order {{2}} linked to your store on E-Tshaleh.\n\nInvoice number: {{3}}\nTotal amount: {{4}}\n\nInvoice summary: {{5}}\n\nThank you for your cooperation.` | View invoice |
-| `txn_waybill_customer_en` | Waybill ready | `Hello {{1}},\n\nThe shipping waybill for your order {{2}} on E-Tshaleh has been updated.\n\nWaybill details: {{3}}\n\nYou can view and print the waybill using the button below.\n\nThank you for your trust.` | View waybill |
-| `txn_waybill_merchant_en` | Waybill ready | `Hello {{1}},\n\nThe shipping waybill for order {{2}} linked to your store on E-Tshaleh has been updated.\n\nWaybill details: {{3}}\n\nPlease review the waybill and complete any required actions.\n\nThank you for your cooperation.` | View waybill |
-| `txn_document_vendor_en` | Store documents | `Hello,\n\nThere is a new update regarding your store documents on E-Tshaleh.\n\nStore name: {{1}}\nDocument type: {{2}}\n\nStatus and required action: {{3}}\n\nPlease review your dashboard and complete any required steps.\n\nThank you for your cooperation.` | Open store |
-| `txn_verification_customer_en` | Verification | `Hello {{1}},\n\nThere is an update on part verification for your order {{2}} on E-Tshaleh.\n\nVerification details: {{3}}\n\nPlease review your order using the button below.\n\nThank you for your trust.` | View order |
-| `txn_verification_vendor_en` | Verification | `Hello {{1}},\n\nThere is an update on part verification for order {{2}} linked to your store on E-Tshaleh.\n\nVerification details: {{3}}\n\nPlease review the order and complete any required steps.\n\nThank you for your cooperation.` | Open order |
+| `txn_order_customer_en` | Order update | `Hello {{1}},\n\nWe would like to inform you about an update on your order {{2}} on E-TASHLEH.\n\nStatus details: {{3}}\n\nThank you for using our platform.` | View order |
+| `txn_order_merchant_en` | Order update | `Hello {{1}},\n\nThere is an update on order {{2}} linked to your store on E-TASHLEH.\n\nStatus details: {{3}}\n\nThank you for your cooperation.` | Open order |
+| `txn_shipment_customer_en` | Shipment update | `Hello {{1}},\n\nYour shipment status for order {{2}} on E-TASHLEH has been updated.\n\nUpdate details: {{3}}\n\nTracking number: {{4}}\n\nThank you for your trust.` | Track |
+| `txn_shipment_merchant_en` | Shipment update | `Hello {{1}},\n\nShipment status for order {{2}} linked to your store on E-TASHLEH has been updated.\n\nUpdate details: {{3}}\n\nTracking number: {{4}}\n\nThank you for your cooperation.` | Open order |
+| `txn_invoice_customer_en` | Invoice ready | `Hello {{1}},\n\nA new invoice has been issued for your order {{2}} on E-TASHLEH.\n\nInvoice number: {{3}}\nTotal amount: {{4}}\n\nInvoice summary: {{5}}\n\nThank you for using our platform.` | View invoice |
+| `txn_invoice_merchant_en` | New invoice | `Hello {{1}},\n\nA new invoice has been issued for order {{2}} linked to your store on E-TASHLEH.\n\nInvoice number: {{3}}\nTotal amount: {{4}}\n\nInvoice summary: {{5}}\n\nThank you for your cooperation.` | View invoice |
+| `txn_waybill_customer_en` | Waybill ready | `Hello {{1}},\n\nThe shipping waybill for your order {{2}} on E-TASHLEH has been updated.\n\nWaybill details: {{3}}\n\nYou can view and print the waybill using the button below.\n\nThank you for your trust.` | View waybill |
+| `txn_waybill_merchant_en` | Waybill ready | `Hello {{1}},\n\nThe shipping waybill for order {{2}} linked to your store on E-TASHLEH has been updated.\n\nWaybill details: {{3}}\n\nPlease review the waybill and complete any required actions.\n\nThank you for your cooperation.` | View waybill |
+| `txn_document_vendor_en` | Store documents | `Hello,\n\nThere is a new update regarding your store documents on E-TASHLEH.\n\nStore name: {{1}}\nDocument type: {{2}}\n\nStatus and required action: {{3}}\n\nPlease review your dashboard and complete any required steps.\n\nThank you for your cooperation.` | Open store |
+| `txn_verification_customer_en` | Verification | `Hello {{1}},\n\nThere is an update on part verification for your order {{2}} on E-TASHLEH.\n\nVerification details: {{3}}\n\nPlease review your order using the button below.\n\nThank you for your trust.` | View order |
+| `txn_verification_vendor_en` | Verification | `Hello {{1}},\n\nThere is an update on part verification for order {{2}} linked to your store on E-TASHLEH.\n\nVerification details: {{3}}\n\nPlease review the order and complete any required steps.\n\nThank you for your cooperation.` | Open order |
 
-**Footer كل القوالب EN:** `E-Tshaleh`  
+**Footer كل القوالب EN:** `E-TASHLEH`  
 **Suffix أزرار EN:** نفس العربي (المسار لا يتغير).
 
 ---
@@ -999,14 +1034,14 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 | الاسم | متى |
 |------|-----|
-| `welcome_customer_ar` | بعد أول تسجيل ناجح |
-| `welcome_vendor_ar` | بعد تفعيل المتجر |
+| `welcome_customer_ar_v2` | بعد أول تسجيل ناجح |
+| `welcome_vendor_ar_v2` | بعد تفعيل المتجر |
 
-### `welcome_customer_ar`
+### `welcome_customer_ar_v2`
 ```
 مرحباً {{1}}،
 
-شكراً لتسجيلك في E-Tshaleh | أي تشليح.
+شكراً لتسجيلك في إي-تشليح | E-TASHLEH.
 
 يمكنك الآن إنشاء طلبات قطع الغيار ومتابعتها من لوحة التحكم.
 ```
@@ -1055,7 +1090,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 > **لا تحتاج قالب لكل حالة** — النظام يمرّر النص الجاهز في `status_detail`.
 
-| نوع الحدث في E-Tshaleh | قالب WhatsApp | عميل | تاجر |
+| نوع الحدث في E-TASHLEH | قالب WhatsApp | عميل | تاجر |
 |------------------------|---------------|------|------|
 | OTP تسجيل / دخول / استرجاع | `auth_otp_*` | نعم | نعم |
 | تغيير حالة طلب (كل OrderStatus) | `txn_order_*` | نعم | نعم |
@@ -1083,11 +1118,34 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 ---
 
-# Checklist اكتمال Phase 0 (النسخة المحدّثة)
+# Checklist اكتمال Phase 0 v2 (15 قالب)
 
-- [ ] 14 قالب عربي — كلها APPROVED
-- [ ] جدول Mapping مملوء
-- [ ] Footer موحّد بدون تكرار في Body
-- [ ] Base URL صحيح في كل أزرار URL
-- [ ] (لاحقاً) 14 قالب إنجليزي
-- [ ] FRONTEND_URL + TEST_PHONE مُرسَل للمطور
+- [ ] **15 قالب `_ar_v2`** — كلها APPROVED في Meta
+- [ ] **إعداد القالب** لكل واحد — ربط المتغيرات + **حفظ**
+- [ ] Footer موحّد: `إي-تشليح | E-TASHLEH`
+- [ ] Base URL: `https://e-tashleh.net/dashboard/`
+- [ ] `FRONTEND_URL=https://e-tashleh.net` + `WIDERS_OTP_MODE=utility`
+- [ ] Display name في Meta: **E-TASHLEH**
+- [ ] `node backend/scripts/widers-template-audit.mjs` → OK
+- [ ] `POST /widers/test/otp` + `POST /widers/test/template/:family` لكل عائلة
+- [ ] تسجيل حقيقي (OTP + welcome) + إشعار طلب تجريبي
+
+### جدول الـ 15 اسم تقني
+
+| # | template_name |
+|---|---------------|
+| 1 | `auth_otp_customer_ar_v2` |
+| 2 | `auth_otp_vendor_ar_v2` |
+| 3 | `txn_order_customer_ar_v2` |
+| 4 | `txn_order_merchant_ar_v2` |
+| 5 | `txn_shipment_customer_ar_v2` |
+| 6 | `txn_shipment_merchant_ar_v2` |
+| 7 | `txn_invoice_customer_ar_v2` |
+| 8 | `txn_invoice_merchant_ar_v2` |
+| 9 | `txn_waybill_customer_ar_v2` |
+| 10 | `txn_waybill_merchant_ar_v2` |
+| 11 | `txn_document_vendor_ar_v2` |
+| 12 | `txn_verification_customer_ar_v2` |
+| 13 | `txn_verification_merchant_ar_v2` |
+| 14 | `welcome_customer_ar_v2` |
+| 15 | `welcome_vendor_ar_v2` |

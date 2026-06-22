@@ -10,6 +10,7 @@ import {
     type TemplateBodyField,
 } from './template-registry';
 import {
+    buildOtpSendAttempts,
     buildTemplateComponentVariants,
     buildWelcomeSendAttempts,
     isWhatsAppInvalidParameterError,
@@ -243,14 +244,39 @@ export class WhatsAppChannelService {
             };
         }
 
-        return this.sendByFamily(family, {
-            phone,
-            language: lang,
-            fields: {
-                name: truncateWhatsAppParam(name || 'مستخدم', 60),
-                otp_code: otpCode,
-            },
+        return this.sendUtilityOtp(family, phone, name, otpCode, lang);
+    }
+
+    /** Utility OTP with dedicated component fallbacks (2 body params). */
+    private async sendUtilityOtp(
+        family: string,
+        phone: string,
+        name: string,
+        otpCode: string,
+        language: WidersTemplateLanguage,
+    ): Promise<{ sent: boolean; error?: string }> {
+        const templateName = resolveTemplateName(family, language);
+        const definition = getTemplateDefinition(templateName);
+        const displayName = truncateWhatsAppParam(name || 'مستخدم', 60);
+
+        const attempts = buildOtpSendAttempts({
+            name: displayName,
+            otpCode,
+            headerText: definition?.headerText,
         });
+
+        const result = await this.dispatchTemplateAttempts(
+            templateName,
+            language,
+            phone,
+            attempts,
+            true,
+        );
+
+        return {
+            sent: Boolean(result.success),
+            error: result.error ?? result.message,
+        };
     }
 
     /**

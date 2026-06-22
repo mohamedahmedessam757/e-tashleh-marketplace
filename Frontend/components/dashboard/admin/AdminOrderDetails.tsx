@@ -32,6 +32,7 @@ import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
+import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
 import { computeShipmentDeliverySummary } from '../../../utils/offerFulfillmentHelpers';
 

@@ -280,3 +280,57 @@ export function buildWelcomeSendAttempts(
 
     return attempts;
 }
+
+/**
+ * Utility OTP: exactly two body params (name + otp_code). Header optional fallback.
+ */
+export function buildOtpSendAttempts(options: {
+    name: string;
+    otpCode: string;
+    headerText?: string;
+}): TemplateSendAttempt[] {
+    const attempts: TemplateSendAttempt[] = [];
+    const seen = new Set<string>();
+
+    const push = (attempt: TemplateSendAttempt) => {
+        const key = attemptKey(attempt);
+        if (seen.has(key)) return;
+        seen.add(key);
+        attempts.push(attempt);
+    };
+
+    const bodyFields: TemplateBodyField[] = ['name', 'otp_code'];
+    const bodyTexts = [options.name, options.otpCode];
+    const headerText = options.headerText ?? 'رمز التحقق';
+
+    push({
+        label: 'components-header-body',
+        components: buildTemplateComponents({
+            bodyTexts,
+            bodyFields,
+            headerText,
+        }),
+    });
+
+    push({
+        label: 'components-body-only',
+        components: buildTemplateComponents({
+            bodyTexts,
+            bodyFields,
+        }),
+    });
+
+    push({
+        label: 'parameters-array',
+        bodyParameters: bodyTexts,
+        parameterFormat: 'parameters',
+    });
+
+    push({
+        label: 'variables-array',
+        bodyParameters: bodyTexts,
+        parameterFormat: 'variables',
+    });
+
+    return attempts;
+}

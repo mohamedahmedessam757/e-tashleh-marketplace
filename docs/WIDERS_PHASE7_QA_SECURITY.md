@@ -138,16 +138,18 @@ https://e-tshaleh.net/widers/webhook?token=etshaleh_widers_wh_2026_Xk9mP2vL7nQ4
 
 ## 9) Go-Live Checklist (أنت)
 
-- [ ] كل قوالب `txn_*` + `auth_otp_*` → **APPROVED** في Meta
-- [ ] قوالب OTP Utility (`auth_otp_customer_ar`, `auth_otp_vendor_ar`) منشأة
-- [ ] Base URL أزرار القوالب = `https://e-tshaleh.net/dashboard/`
+- [ ] **15 قالب `*_ar_v2`** → APPROVED في Meta
+- [ ] إعداد القالب في Widers لكل واحد (ربط متغيرات + حفظ)
+- [ ] OTP Utility: `auth_otp_customer_ar_v2`, `auth_otp_vendor_ar_v2` + `otp_code`
+- [ ] Base URL أزرار القوالب = `https://e-tashleh.net/dashboard/`
+- [ ] Footer = `إي-تشليح | E-TASHLEH`
+- [ ] Display name Meta = **E-TASHLEH**
+- [ ] `node backend/scripts/widers-template-audit.mjs` → OK
 - [ ] Groups: `marketplace_customers`, `marketplace_vendors`
 - [ ] `GET /widers/health` → `apiReachable: true`
-- [ ] `GET /widers/readiness` → `readyForProduction: true`
-- [ ] Webhook sender محفوظ في Widers
-- [ ] `WIDERS_ENABLED=true` على سيرفر الإنتاج
-- [ ] اختبار OTP على `WIDERS_TEST_PHONE`
-- [ ] اختبار إشعار طلب/شحن/فاتورة حقيقي
+- [ ] `WIDERS_ENABLED=true` + `WIDERS_OTP_MODE=utility` + `FRONTEND_URL=https://e-tashleh.net`
+- [ ] `POST /widers/test/otp` + test/template لكل family
+- [ ] تسجيل حقيقي (OTP + welcome) + إشعار طلب/شحن/فاتورة
 
 ---
 

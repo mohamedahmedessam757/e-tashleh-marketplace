@@ -49,7 +49,7 @@ function def(
     opts: Partial<Omit<TemplateDefinition, 'name' | 'language' | 'audience' | 'bodyFields'>> = {},
 ): TemplateDefinition {
     return {
-        name: `${baseName}_${language}`,
+        name: `${baseName}_${language}_v2`,
         language,
         audience,
         category: opts.category ?? 'UTILITY',
@@ -64,20 +64,22 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     def('auth_otp_customer', 'ar', 'customer', ['name', 'otp_code'], {
         category: 'UTILITY',
         headerText: 'رمز التحقق',
+        buttonUrlDynamic: false,
     }),
     def('auth_otp_vendor', 'ar', 'vendor', ['name', 'otp_code'], {
         category: 'UTILITY',
         headerText: 'رمز التحقق',
+        buttonUrlDynamic: false,
     }),
 
     // Orders
     def('txn_order_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
-        headerText: 'تحديث طلب',
+        headerText: 'تحديث حالة الطلب',
         buttonLabel: 'عرض الطلب',
         buttonSuffixPattern: suffix.orderCustomer,
     }),
     def('txn_order_merchant', 'ar', 'merchant', ['name', 'order_number', 'status_detail'], {
-        headerText: 'تحديث طلب',
+        headerText: 'تحديث حالة الطلب',
         buttonLabel: 'فتح الطلب',
         buttonSuffixPattern: suffix.orderMerchant,
     }),
@@ -145,6 +147,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'مستندات المتجر',
         buttonLabel: 'فتح لوحة المتجر',
         buttonSuffixPattern: suffix.storeHome,
+        buttonUrlDynamic: false,
     }),
 
     // Part verification
@@ -180,11 +183,14 @@ export function getTemplateDefinition(name: string): TemplateDefinition | undefi
     return registryByName.get(name);
 }
 
+/** Widers/Meta template suffix after full Arabic rebuild (June 2026). */
+export const TEMPLATE_NAME_VERSION_SUFFIX = '_v2';
+
 export function resolveTemplateName(
     familyBase: string,
     language: WidersTemplateLanguage,
 ): string {
-    return `${familyBase}_${language}`;
+    return `${familyBase}_${language}${TEMPLATE_NAME_VERSION_SUFFIX}`;
 }
 
 /** Meta/WhatsApp per-variable body limit (safe default) */

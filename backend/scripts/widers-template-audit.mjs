@@ -10,21 +10,21 @@ const baseUrl = (
 const token = process.env.WIDERS_API_TOKEN?.trim();
 
 const REGISTRY_NAMES = [
-    'auth_otp_customer_ar',
-    'auth_otp_vendor_ar',
-    'txn_order_customer_ar',
-    'txn_order_merchant_ar',
-    'txn_shipment_customer_ar',
-    'txn_shipment_merchant_ar',
-    'txn_invoice_customer_ar',
-    'txn_invoice_merchant_ar',
-    'txn_waybill_customer_ar',
-    'txn_waybill_merchant_ar',
-    'txn_document_vendor_ar',
-    'txn_verification_customer_ar',
-    'txn_verification_merchant_ar',
-    'welcome_customer_ar',
-    'welcome_vendor_ar',
+    'auth_otp_customer_ar_v2',
+    'auth_otp_vendor_ar_v2',
+    'txn_order_customer_ar_v2',
+    'txn_order_merchant_ar_v2',
+    'txn_shipment_customer_ar_v2',
+    'txn_shipment_merchant_ar_v2',
+    'txn_invoice_customer_ar_v2',
+    'txn_invoice_merchant_ar_v2',
+    'txn_waybill_customer_ar_v2',
+    'txn_waybill_merchant_ar_v2',
+    'txn_document_vendor_ar_v2',
+    'txn_verification_customer_ar_v2',
+    'txn_verification_merchant_ar_v2',
+    'welcome_customer_ar_v2',
+    'welcome_vendor_ar_v2',
 ];
 
 async function main() {
@@ -62,11 +62,11 @@ async function main() {
 
     const missing = REGISTRY_NAMES.filter((name) => {
         const lower = name.toLowerCase();
-        const base = lower.replace(/_ar$/, '');
+        const base = lower.replace(/_ar_v2$/, '');
         return !apiNames.has(lower) && ![...apiNames].some((a) => a.includes(base));
     });
 
-    console.log(`Registry: ${REGISTRY_NAMES.length} templates`);
+    console.log(`Registry: ${REGISTRY_NAMES.length} templates (v2)`);
     console.log(`Widers API: ${apiNames.size} templates`);
     if (missing.length === 0) {
         console.log('OK — all registry templates found in Widers API');

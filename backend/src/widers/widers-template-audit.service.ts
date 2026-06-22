@@ -43,7 +43,7 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
 };
 
 function familyBaseFromTemplateName(name: string): string {
-    return name.replace(/_ar$|_en$/, '');
+    return name.replace(/_ar_v2$|_en_v2$|_ar$|_en$/, '');
 }
 
 function extractApiTemplateNames(data: unknown): string[] {
