@@ -1,10 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../utils/auth';
-import { AdminLogin } from '../auth/AdminLogin';
 import { VerificationSessionCountdown } from '../dashboard/admin/verification/VerificationSessionCountdown';
+
+const AdminLogin = lazy(() =>
+  import('../auth/AdminLogin').then((m) => ({ default: m.AdminLogin })),
+);
+
+const loginFallback = (
+  <div className="flex justify-center py-6">
+    <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+  </div>
+);
 
 interface VerifyLinkPageProps {
   token: string;
@@ -166,7 +175,9 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
         <p className="text-xs text-white/50 mb-4">
           {isAr ? 'سجّل الدخول ثم أكمل OTP للوصول للمهمة فقط.' : 'Sign in and complete OTP for task access only.'}
         </p>
-        <AdminLogin onLoginSuccess={() => setNeedsLogin(false)} />
+        <Suspense fallback={loginFallback}>
+          <AdminLogin onLoginSuccess={() => setNeedsLogin(false)} />
+        </Suspense>
       </PageShell>
     );
   }

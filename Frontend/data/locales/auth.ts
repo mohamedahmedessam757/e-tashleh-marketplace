@@ -1,6 +1,4 @@
-import { customerTermsAr, customerTermsEn } from '../customerTerms';
-
-
+/** termsContent loads on demand via loadTermsContent() — not in guest bundle */
 export const auth = {
   ar: {
     nav: {
@@ -211,7 +209,7 @@ export const auth = {
           ]
         }
       ],
-      termsContent: customerTermsAr,
+      termsContent: [],
     },
     authSection: {
       tabs: { customer: 'عميل', merchant: 'تاجر' },
@@ -553,7 +551,7 @@ export const auth = {
           ]
         }
       ],
-      termsContent: customerTermsEn,
+      termsContent: [],
     },
     authSection: {
       tabs: { customer: 'Customer', merchant: 'Merchant' },

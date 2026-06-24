@@ -239,14 +239,33 @@ pm2 logs e-tashleh-api --lines 50
 
 ## تحديثات بعد النشر (git pull)
 
+إذا ظهر `error: Your local changes ... package-lock.json would be overwritten`:
+
 ```bash
 cd /var/www/e-tashleh
-git pull
+git checkout -- Frontend/package-lock.json
+# أو: git restore Frontend/package-lock.json
+```
+
+ثم:
+
+```bash
+git pull origin main
+git log -1 --oneline
+
 cd backend && npm install --legacy-peer-deps && npm run build
-cd ../Frontend && npm install --legacy-peer-deps && npm run build
+cd ../Frontend && npm ci --legacy-peer-deps && npm run build
+
 sudo cp deploy/nginx/e-tashleh.conf /etc/nginx/sites-available/e-tashleh
 sudo nginx -t && sudo systemctl reload nginx
 pm2 restart e-tashleh-api
+```
+
+**تحقق من الـ cache بعد النشر:**
+
+```bash
+curl -sI https://e-tashleh.net/assets/ | head -5
+curl -sI https://e-tashleh.net/index.html | grep -i cache-control
 ```
 
 **backend `.env` (OTP logo):** احذف `RESEND_LOGO_URL` إن كان يشير لـ Google Drive — الشعار يُضمَّن تلقائياً من `backend/assets/logo-email.png`.

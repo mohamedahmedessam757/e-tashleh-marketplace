@@ -6,7 +6,7 @@ import {
   type TranslationTree,
   type Language,
 } from '../data/translations';
-import { useProfileStore } from '../stores/useProfileStore';
+import { loadTermsContent } from '../data/loadTermsContent';
 import { getCurrentUserId } from '../utils/auth';
 
 const GUEST_LANGUAGE_KEY = 'preferred_language';
@@ -18,6 +18,7 @@ interface LanguageContextType {
   t: TranslationTree;
   dir: 'rtl' | 'ltr';
   ensureDashboardTranslations: () => Promise<void>;
+  ensureLegalTerms: () => Promise<void>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -37,6 +38,12 @@ function isDashboardPath(): boolean {
   return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
 }
 
+async function persistLanguageToProfile(lang: Language): Promise<void> {
+  if (!getCurrentUserId()) return;
+  const { useProfileStore } = await import('../stores/useProfileStore');
+  useProfileStore.getState().updateSettings({ language: lang });
+}
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => readGuestLanguage() ?? 'ar');
   const [t, setT] = useState<TranslationTree>(() => ({
@@ -47,14 +54,25 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const persistLanguage = useCallback((lang: Language) => {
     writeGuestLanguage(lang);
-    if (!getCurrentUserId()) return;
-    useProfileStore.getState().updateSettings({ language: lang });
+    void persistLanguageToProfile(lang);
   }, []);
 
   const ensureDashboardTranslations = useCallback(async () => {
     const full = await loadDashboardTranslations(language);
     setT(full);
   }, [language]);
+
+  const ensureLegalTerms = useCallback(async () => {
+    if (t.legal?.termsContent?.length) return;
+    const termsContent = await loadTermsContent(language);
+    setT((prev) => ({
+      ...prev,
+      legal: {
+        ...prev.legal,
+        termsContent,
+      },
+    }));
+  }, [language, t.legal?.termsContent?.length]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
@@ -65,9 +83,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguageState((prev) => {
       const next = prev === 'ar' ? 'en' : 'ar';
       writeGuestLanguage(next);
-      if (getCurrentUserId()) {
-        useProfileStore.getState().updateSettings({ language: next });
-      }
+      void persistLanguageToProfile(next);
       return next;
     });
   }, []);
@@ -92,27 +108,36 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [language, ensureDashboardTranslations]);
 
   useEffect(() => {
-    const syncFromProfile = (settings: { language?: Language }) => {
-      if (settings.language === 'ar' || settings.language === 'en') {
-        setLanguageState(settings.language);
-        writeGuestLanguage(settings.language);
-      }
-    };
+    const userId = getCurrentUserId();
+    if (!userId) return;
 
-    syncFromProfile(useProfileStore.getState().settings);
+    let unsub: (() => void) | undefined;
 
-    const unsub = useProfileStore.subscribe((state, prev) => {
-      if (state.settings.language !== prev.settings.language) {
-        syncFromProfile(state.settings);
-      }
-    });
+    void (async () => {
+      const { useProfileStore } = await import('../stores/useProfileStore');
 
-    return unsub;
+      const syncFromProfile = (settings: { language?: Language }) => {
+        if (settings.language === 'ar' || settings.language === 'en') {
+          setLanguageState(settings.language);
+          writeGuestLanguage(settings.language);
+        }
+      };
+
+      syncFromProfile(useProfileStore.getState().settings);
+
+      unsub = useProfileStore.subscribe((state, prev) => {
+        if (state.settings.language !== prev.settings.language) {
+          syncFromProfile(state.settings);
+        }
+      });
+    })();
+
+    return () => unsub?.();
   }, []);
 
   return (
     <LanguageContext.Provider
-      value={{ language, toggleLanguage, setLanguage, t, dir, ensureDashboardTranslations }}
+      value={{ language, toggleLanguage, setLanguage, t, dir, ensureDashboardTranslations, ensureLegalTerms }}
     >
       {children}
     </LanguageContext.Provider>

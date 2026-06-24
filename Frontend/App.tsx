@@ -5,26 +5,55 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { usePublicSystemStatus } from './hooks/usePublicSystemStatus';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoleSelectionScreen } from './components/RoleSelectionScreen';
-import { WholesaleScreen } from './components/WholesaleScreen';
-import { HowWeWorkScreen } from './components/HowWeWorkScreen';
-import { HowWeWorkTutorial } from './components/HowWeWorkTutorial';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Footer } from './components/Footer';
 import { SITE_CONTACT_EMAIL } from './config/site';
+import { AuthLayout } from './components/auth/AuthLayout';
 
-import { LegalDocs } from './components/sections/LegalDocs';
-import { SupportModal } from './components/modals/SupportModal';
-
-// Sections
-import { TrustStats } from './components/sections/TrustStats';
-import { AboutCompany } from './components/sections/AboutCompany';
-import { Guarantees } from './components/sections/Guarantees';
-import { HowItWorks } from './components/sections/HowItWorks';
-import { MerchantCallout } from './components/sections/MerchantCallout';
+const SupportModal = lazy(() =>
+  import('./components/modals/SupportModal').then((m) => ({ default: m.SupportModal })),
+);
+const WholesaleScreen = lazy(() =>
+  import('./components/WholesaleScreen').then((m) => ({ default: m.WholesaleScreen })),
+);
+const HowWeWorkScreen = lazy(() =>
+  import('./components/HowWeWorkScreen').then((m) => ({ default: m.HowWeWorkScreen })),
+);
+const HowWeWorkTutorial = lazy(() =>
+  import('./components/HowWeWorkTutorial').then((m) => ({ default: m.HowWeWorkTutorial })),
+);
+const TrustStats = lazy(() =>
+  import('./components/sections/TrustStats').then((m) => ({ default: m.TrustStats })),
+);
+const AboutCompany = lazy(() =>
+  import('./components/sections/AboutCompany').then((m) => ({ default: m.AboutCompany })),
+);
+const Guarantees = lazy(() =>
+  import('./components/sections/Guarantees').then((m) => ({ default: m.Guarantees })),
+);
+const HowItWorks = lazy(() =>
+  import('./components/sections/HowItWorks').then((m) => ({ default: m.HowItWorks })),
+);
+const MerchantCallout = lazy(() =>
+  import('./components/sections/MerchantCallout').then((m) => ({ default: m.MerchantCallout })),
+);
+const LegalDocs = lazy(() =>
+  import('./components/sections/LegalDocs').then((m) => ({ default: m.LegalDocs })),
+);
+const VerifyLinkPage = lazy(() =>
+  import('./components/verify/VerifyLinkPage').then((m) => ({ default: m.VerifyLinkPage })),
+);
 
 // API Configuration
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+const BOOT_SKIP_KEY = 'etashleh_booted';
+
+function shouldSkipBootLoader(): boolean {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem(BOOT_SKIP_KEY) === '1';
+}
 
 const DashboardShell = lazy(() => import('./routes/DashboardShell'));
 const EarnIncomeLanding = lazy(() =>
@@ -36,10 +65,6 @@ const BusinessLicensePage = lazy(() =>
 const RegistryPdfViewer = lazy(() =>
   import('./components/legal/RegistryPdfViewer').then((m) => ({ default: m.RegistryPdfViewer })),
 );
-
-// Store — vendor profile only on dashboard; admin store deferred via maintenance fetch
-import { useVendorStore } from './stores/useVendorStore';
-import { useProfileStore } from './stores/useProfileStore';
 
 // Navigation
 import { useNavigationHistory, parseUrlToState } from './utils/useNavigationHistory';
@@ -69,7 +94,6 @@ function buildPendingRedirect(
 import { getCurrentUser, mapBackendRoleToFrontend } from './utils/auth';
 
 // Auth Components
-import { AuthLayout } from './components/auth/AuthLayout';
 const LoginPage = lazy(() => import('./components/auth/LoginPage').then(module => ({ default: module.LoginPage })));
 const VendorRegister = lazy(() => import('./components/auth/VendorRegister').then(module => ({ default: module.VendorRegister })));
 const CustomerRegister = lazy(() => import('./components/auth/CustomerRegister').then(module => ({ default: module.CustomerRegister })));
@@ -79,7 +103,6 @@ const ResetPassword = lazy(() => import('./components/auth/ResetPassword').then(
 const TermsView = lazy(() => import('./components/auth/TermsView').then(module => ({ default: module.TermsView })));
 const WalletLoyaltyTermsView = lazy(() => import('./components/legal/WalletLoyaltyTermsView').then(module => ({ default: module.WalletLoyaltyTermsView })));
 const AccountRecoveryWizard = lazy(() => import('./components/auth/AccountRecoveryWizard').then(module => ({ default: module.AccountRecoveryWizard })));
-import { VerifyLinkPage } from './components/verify/VerifyLinkPage';
 
 const routeFallback = (
   <div className="fixed inset-0 bg-[#0F0E0C] flex items-center justify-center z-50">
@@ -113,7 +136,7 @@ type UserRole = 'customer' | 'merchant' | 'admin' | null;
 
 function AppContent() {
   const { language, ensureDashboardTranslations } = useLanguage();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !shouldSkipBootLoader());
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [legalInitialSection, setLegalInitialSection] = useState<'terms' | 'privacy'>('terms');
   const [landingInitialSection, setLandingInitialSection] = useState<string | null>(null);
@@ -252,24 +275,24 @@ function AppContent() {
     }
   }, [currentView, ensureDashboardTranslations]);
 
-  // --- LICENSE WATCHDOG ---
-  const { checkLicenseStatus, vendorStatus } = useVendorStore();
-
+  // --- LICENSE WATCHDOG (merchant only — deferred import) ---
   useEffect(() => {
-    // Check immediately if user is merchant
-    if (userRole === 'merchant') {
+    if (userRole !== 'merchant') return;
+
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    void import('./stores/useVendorStore').then(({ useVendorStore }) => {
+      const { checkLicenseStatus } = useVendorStore.getState();
       checkLicenseStatus();
-    }
+      interval = setInterval(() => {
+        useVendorStore.getState().checkLicenseStatus();
+      }, 60000);
+    });
 
-    // Periodic Check (Redundant if Automation Engine works, but good as fallback)
-    const interval = setInterval(() => {
-      if (userRole === 'merchant') {
-        checkLicenseStatus();
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [userRole, checkLicenseStatus]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [userRole]);
 
   // Handle Custom Events for Admin Navigation bubbling up
   useEffect(() => {
@@ -311,6 +334,9 @@ function AppContent() {
   };
 
   const handleLoadingComplete = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(BOOT_SKIP_KEY, '1');
+    }
     setLoading(false);
 
     // Safety: ensure final state is synced
@@ -451,12 +477,13 @@ function AppContent() {
     pushView(previousView);
   };
 
-  const handleLoginSuccess = (role: UserRole) => {
-    // SECURITY: Clear stale state from previous sessions/roles before entering dashboard
+  const handleLoginSuccess = async (role: UserRole) => {
+    const [{ useVendorStore }, { useProfileStore }] = await Promise.all([
+      import('./stores/useVendorStore'),
+      import('./stores/useProfileStore'),
+    ]);
     useVendorStore.getState().reset();
     useProfileStore.getState().clearProfile();
-    // useOrderStore.getState().clearOrders(); // If implemented, or use resetForRole below in layout
-
     setUserRole(role);
 
     // Redirect Flow: Check if there's a pending URL the user wanted to visit
@@ -679,27 +706,33 @@ function AppContent() {
           )}
         </AnimatePresence>
 
-        <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
+        {isSupportOpen && (
+          <Suspense fallback={null}>
+            <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
+          </Suspense>
+        )}
 
         {!loading && (
           <AnimatePresence mode="wait">
 
             {currentView === 'verify-link' && verifyToken ? (
               <motion.div key="verify-link" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <VerifyLinkPage
-                  token={verifyToken}
-                  onNavigateToTask={(taskId) => {
-                    const user = getCurrentUser();
-                    if (user) {
-                      setUserRole(mapBackendRoleToFrontend(user.role) as UserRole);
-                    }
-                    setCurrentView('dashboard');
-                    setDashboardPath('verification-task-details');
-                    setViewId(taskId);
-                    pushView('dashboard', 'verification-task-details', taskId);
-                  }}
-                  onNavigateLogin={() => handleNavigate('admin-login')}
-                />
+                <Suspense fallback={routeFallback}>
+                  <VerifyLinkPage
+                    token={verifyToken}
+                    onNavigateToTask={(taskId) => {
+                      const user = getCurrentUser();
+                      if (user) {
+                        setUserRole(mapBackendRoleToFrontend(user.role) as UserRole);
+                      }
+                      setCurrentView('dashboard');
+                      setDashboardPath('verification-task-details');
+                      setViewId(taskId);
+                      pushView('dashboard', 'verification-task-details', taskId);
+                    }}
+                    onNavigateLogin={() => handleNavigate('admin-login')}
+                  />
+                </Suspense>
               </motion.div>
             ) : currentView === 'dashboard' ? (
               <motion.div
@@ -747,7 +780,9 @@ function AppContent() {
                 />
               </Suspense>
             ) : currentView === 'wholesale' ? (
-              <WholesaleScreen onBack={() => handleNavigate('role-selection')} />
+              <Suspense fallback={routeFallback}>
+                <WholesaleScreen onBack={() => handleNavigate('role-selection')} />
+              </Suspense>
             ) : currentView === 'business-license' ? (
               <Suspense fallback={routeFallback}>
                 <BusinessLicensePage
@@ -760,29 +795,33 @@ function AppContent() {
                 <RegistryPdfViewer onBack={() => handleHistoryBack('business-license')} />
               </Suspense>
             ) : currentView === 'how-we-work' ? (
-              <HowWeWorkScreen
-                onComplete={() => {
-                  handleNavigate('customer-login');
-                }}
-                onTutorial={() => handleNavigate('how-we-work-tutorial')}
-                onBack={() => handleNavigate('role-selection')}
-                onTermsClick={() => handleNavigateToLegal('terms')}
-                onOpenSupport={() => setIsSupportOpen(true)}
-                onAdminClick={() => handleNavigate('admin-login')}
-                onNavigateToLegal={handleNavigateToLegal}
-                onNavigateToLandingSection={handleNavigateToLandingSection}
-                onNavigateToLicense={handleNavigateToLicense}
-              />
+              <Suspense fallback={routeFallback}>
+                <HowWeWorkScreen
+                  onComplete={() => {
+                    handleNavigate('customer-login');
+                  }}
+                  onTutorial={() => handleNavigate('how-we-work-tutorial')}
+                  onBack={() => handleNavigate('role-selection')}
+                  onTermsClick={() => handleNavigateToLegal('terms')}
+                  onOpenSupport={() => setIsSupportOpen(true)}
+                  onAdminClick={() => handleNavigate('admin-login')}
+                  onNavigateToLegal={handleNavigateToLegal}
+                  onNavigateToLandingSection={handleNavigateToLandingSection}
+                  onNavigateToLicense={handleNavigateToLicense}
+                />
+              </Suspense>
             ) : currentView === 'how-we-work-tutorial' ? (
-              <HowWeWorkTutorial
-                onComplete={() => handleNavigate('customer-login')}
-                onBack={() => handleNavigate('how-we-work')}
-                onOpenSupport={() => setIsSupportOpen(true)}
-                onAdminClick={() => handleNavigate('admin-login')}
-                onNavigateToLegal={handleNavigateToLegal}
-                onNavigateToLandingSection={handleNavigateToLandingSection}
-                onNavigateToLicense={handleNavigateToLicense}
-              />
+              <Suspense fallback={routeFallback}>
+                <HowWeWorkTutorial
+                  onComplete={() => handleNavigate('customer-login')}
+                  onBack={() => handleNavigate('how-we-work')}
+                  onOpenSupport={() => setIsSupportOpen(true)}
+                  onAdminClick={() => handleNavigate('admin-login')}
+                  onNavigateToLegal={handleNavigateToLegal}
+                  onNavigateToLandingSection={handleNavigateToLandingSection}
+                  onNavigateToLicense={handleNavigateToLicense}
+                />
+              </Suspense>
             ) : currentView === 'landing' ? (
 
               /* 2. LANDING VIEW */
@@ -802,12 +841,14 @@ function AppContent() {
                   onLogin={() => handleNavigate('login')}
                   onRequestNow={() => handleNavigate('role-selection')}
                 />
-                <TrustStats />
-                <AboutCompany />
-                <Guarantees />
-                <HowItWorks />
-                <MerchantCallout onRegister={() => handleNavigate('vendor-register')} />
-                <LegalDocs />
+                <Suspense fallback={null}>
+                  <TrustStats />
+                  <AboutCompany />
+                  <Guarantees />
+                  <HowItWorks />
+                  <MerchantCallout onRegister={() => handleNavigate('vendor-register')} />
+                  <LegalDocs />
+                </Suspense>
                 <Footer
                   onOpenSupport={() => setIsSupportOpen(true)}
                   onAdminClick={() => handleNavigate('admin-login')}

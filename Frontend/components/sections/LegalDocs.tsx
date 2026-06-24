@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '../ui/Container';
 import { GlassCard } from '../ui/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +10,13 @@ type Tab = 'privacy' | 'terms';
 export const LegalDocs: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('privacy');
     const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
-    const { t, language } = useLanguage();
+    const { t, language, ensureLegalTerms } = useLanguage();
+
+    useEffect(() => {
+        if (activeTab === 'terms') {
+            void ensureLegalTerms();
+        }
+    }, [activeTab, ensureLegalTerms]);
 
     const toggleAccordion = (index: number) => {
         setExpandedIndex(expandedIndex === index ? null : index);

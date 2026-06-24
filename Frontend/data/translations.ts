@@ -1,5 +1,6 @@
 import { common } from './locales/common';
 import { auth } from './locales/auth';
+import { loadTermsContent } from './loadTermsContent';
 import type { admin as adminLocales } from './locales/admin';
 import type { customer as customerLocales } from './locales/customer';
 import type { merchant as merchantLocales } from './locales/merchant';
@@ -34,14 +35,20 @@ const dashboardCache: Partial<Record<Language, TranslationTree>> = {};
 export async function loadDashboardTranslations(lang: Language): Promise<TranslationTree> {
   if (dashboardCache[lang]) return dashboardCache[lang]!;
 
-  const [adminMod, customerMod, merchantMod] = await Promise.all([
+  const [adminMod, customerMod, merchantMod, termsContent] = await Promise.all([
     import('./locales/admin'),
     import('./locales/customer'),
     import('./locales/merchant'),
+    loadTermsContent(lang),
   ]);
 
+  const guest = buildGuest(lang);
   const full = {
-    ...buildGuest(lang),
+    ...guest,
+    legal: {
+      ...guest.legal,
+      termsContent,
+    },
     admin: adminMod.admin[lang],
     dashboard: {
       ...customerMod.customer[lang],

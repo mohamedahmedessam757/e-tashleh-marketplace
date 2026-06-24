@@ -3,6 +3,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+const DEFERRED_PRELOAD_CHUNKS = [
+  'vendor-export',
+  'vendor-pdf',
+  'vendor-socket',
+  'vendor-supabase',
+  'DashboardShell',
+  'OTPVerification',
+  'vendor-stripe',
+];
+
 export default defineConfig(({ mode }) => {
   const analyze = mode === 'analyze';
 
@@ -29,6 +39,14 @@ export default defineConfig(({ mode }) => {
     build: {
       sourcemap: false,
       chunkSizeWarningLimit: 1000,
+      modulePreload: {
+        resolveDependencies(_filename, deps, { hostId }) {
+          if (hostId.includes('DashboardShell')) return deps;
+          return deps.filter(
+            (dep) => !DEFERRED_PRELOAD_CHUNKS.some((chunk) => dep.includes(chunk)),
+          );
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {

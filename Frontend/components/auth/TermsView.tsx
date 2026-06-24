@@ -4,12 +4,16 @@ import { FileText, Shield, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal?: boolean }> = ({ initialSection = 'terms', isModal = false }) => {
-    const { t, language } = useLanguage();
+    const { t, language, ensureLegalTerms } = useLanguage();
     // Default to first item if terms, or first privacy item if privacy.
     // Logic below will handle valid setting.
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const privacyRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        void ensureLegalTerms();
+    }, [ensureLegalTerms]);
 
     React.useEffect(() => {
         if (initialSection === 'privacy') {
