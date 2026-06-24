@@ -8,8 +8,6 @@ import {
     Activity, Clock, MapPin, Hash, Package, Shield, ShieldCheck,
     Headphones // Added for Phase 3 support icon
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { escapeHtml } from '../../../../utils/htmlSanitize';
@@ -206,7 +204,11 @@ export const AdminChatContext: React.FC = () => {
             // 4. ESSENTIAL: Wait for rendering & font application
             await new Promise(resolve => setTimeout(resolve, 800));
 
-            // 5. High-Resolution Capture using Native Browser Rendering (Supports Arabic Perfectly)
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import('html2canvas'),
+                import('jspdf'),
+            ]);
+
             const canvas = await html2canvas(reportNode, {
                 scale: 2,
                 logging: false,

@@ -72,10 +72,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         <div className="relative mb-8">
           <div className="absolute inset-0 bg-gold-500 blur-3xl opacity-20 rounded-full" />
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl p-6 relative z-10">
-            <picture>
-              <source srcSet="/logo.webp" type="image/webp" />
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="E-TASHLEH"
                 width={160}
                 height={160}
@@ -83,7 +81,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 decoding="async"
                 className="w-full h-full object-contain drop-shadow-lg brightness-0 invert"
               />
-            </picture>
           </div>
         </div>
 

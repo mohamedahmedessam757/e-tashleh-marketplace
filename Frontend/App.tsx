@@ -140,7 +140,7 @@ function AppContent() {
   const [legalInitialSection, setLegalInitialSection] = useState<'terms' | 'privacy'>('terms');
   const [landingInitialSection, setLandingInitialSection] = useState<string | null>(null);
   const [recoveryRole, setRecoveryRole] = useState<'customer' | 'merchant'>('customer');
-  const { publicSystemStatus } = usePublicSystemStatus();
+  const { publicSystemStatus } = usePublicSystemStatus(30_000, !loading);
 
   // Handle Scrolling to Landing Section
   useEffect(() => {

@@ -63,7 +63,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                             <div className="absolute inset-0 bg-gold-500 blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500" />
                             <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl relative z-10">
                                 <img
-                                    src="/logo.png"
+                                    src="/logo.webp"
                                     alt="E-TASHLEH"
                                     width={112}
                                     height={112}

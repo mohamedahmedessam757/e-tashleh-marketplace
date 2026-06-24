@@ -15,7 +15,6 @@ import { AdminInitiateChatModal } from './AdminInitiateChatModal';
 import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { chatsApi } from '../../../services/api/chats';
-import * as XLSX from 'xlsx';
 
 interface AdminCustomerProfileProps {
     customerId: string;
@@ -165,10 +164,11 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
         }
     };
 
-    const handleExportPaymentsExcel = () => {
+    const handleExportPaymentsExcel = async () => {
         if (!customer) return;
 
         const isAr = language === 'ar';
+        const XLSX = await import('xlsx');
 
         const paymentsData = (customer.payments || []).map((tx: any) => ({
             [isAr ? 'رقم الحركة' : 'Txn Number']: tx.transactionNumber,
@@ -186,10 +186,11 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
         XLSX.writeFile(wb, `Payments_Report_${customer.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
-    const handleExportWithdrawalsExcel = () => {
+    const handleExportWithdrawalsExcel = async () => {
         if (!customer) return;
 
         const isAr = language === 'ar';
+        const XLSX = await import('xlsx');
 
         const withdrawalsData = (customer.withdrawalRequests || []).map((req: any) => ({
             [isAr ? 'التاريخ' : 'Date']: new Date(req.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'),

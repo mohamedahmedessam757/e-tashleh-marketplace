@@ -9,6 +9,7 @@ import {
 import { loadTermsContent } from '../data/loadTermsContent';
 import { loadPrivacyContent } from '../data/loadLegalContent';
 import { getCurrentUserId } from '../utils/auth';
+import { loadExtendedFonts } from '../utils/loadExtendedFonts';
 
 const GUEST_LANGUAGE_KEY = 'preferred_language';
 
@@ -135,6 +136,23 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.dir = dir;
     document.documentElement.lang = language;
   }, [dir, language]);
+
+  useEffect(() => {
+    if (language === 'en') {
+      loadExtendedFonts();
+      return;
+    }
+
+    if (typeof window === 'undefined') return;
+
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => loadExtendedFonts(), { timeout: 5000 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = setTimeout(() => loadExtendedFonts(), 4000);
+    return () => clearTimeout(timeoutId);
+  }, [language]);
 
   useEffect(() => {
     if (isDashboardPath()) {

@@ -9,7 +9,7 @@ export interface PublicSystemStatus {
   maintenanceMsgEn?: string;
 }
 
-export function usePublicSystemStatus(pollMs = 30_000) {
+export function usePublicSystemStatus(pollMs = 30_000, enabled = true) {
   const [publicSystemStatus, setPublicSystemStatus] = useState<PublicSystemStatus | null>(null);
 
   const fetchPublicStatus = useCallback(async () => {
@@ -24,6 +24,8 @@ export function usePublicSystemStatus(pollMs = 30_000) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let interval: ReturnType<typeof setInterval> | undefined;
 
     const startPolling = () => {
@@ -32,19 +34,19 @@ export function usePublicSystemStatus(pollMs = 30_000) {
     };
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(startPolling, { timeout: 3000 });
+      const idleId = window.requestIdleCallback(startPolling, { timeout: 5000 });
       return () => {
         window.cancelIdleCallback(idleId);
         if (interval) clearInterval(interval);
       };
     }
 
-    const timeoutId = setTimeout(startPolling, 1500);
+    const timeoutId = setTimeout(startPolling, 3000);
     return () => {
       clearTimeout(timeoutId);
       if (interval) clearInterval(interval);
     };
-  }, [fetchPublicStatus, pollMs]);
+  }, [fetchPublicStatus, pollMs, enabled]);
 
   return { publicSystemStatus, fetchPublicStatus };
 }

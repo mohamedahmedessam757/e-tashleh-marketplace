@@ -36,6 +36,9 @@ export interface Customer {
   disputes?: any[];
   payments?: any[]; // Enriched with order/offer in Phase 3.1
   invoices?: any[]; // New field from Phase 3.1
+  withdrawalRequests?: any[];
+  returns?: any[];
+  lastLoginIp?: string;
 
   // 2026 Enhanced Fields
   customerBalance?: number;

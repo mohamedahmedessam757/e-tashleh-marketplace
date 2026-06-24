@@ -26,7 +26,6 @@ import { renderToString } from 'react-dom/server';
 import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
-import * as XLSX from 'xlsx';
 
 interface AdminStoreProfileProps {
     vendorId: string;
@@ -322,11 +321,12 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         }
     };
 
-    const handleExportWalletExcel = () => {
+    const handleExportWalletExcel = async () => {
         const vendor = currentStoreProfile;
         if (!vendor) return;
 
         const isAr = language === 'ar';
+        const XLSX = await import('xlsx');
 
         const walletData = (vendor.walletTransactions || []).map((tx: any) => ({
             [isAr ? 'رقم الطلب' : 'Order Ref']: tx.payment?.order?.orderNumber || tx.escrow?.order?.orderNumber || tx.metadata?.orderNumber || (tx.transactionType === 'withdrawal' ? (isAr ? 'سحب رصيد' : 'Withdrawal') : 'N/A'),
@@ -345,11 +345,12 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         XLSX.writeFile(wb, `Wallet_Report_${vendor.storeCode}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
-    const handleExportWithdrawalsExcel = () => {
+    const handleExportWithdrawalsExcel = async () => {
         const vendor = currentStoreProfile;
         if (!vendor) return;
 
         const isAr = language === 'ar';
+        const XLSX = await import('xlsx');
 
         const withdrawalsData = (vendor.withdrawalRequests || []).map((req: any) => ({
             [isAr ? 'التاريخ' : 'Date']: new Date(req.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB'),

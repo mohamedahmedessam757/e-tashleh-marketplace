@@ -328,4 +328,48 @@ curl -sI https://e-tashleh.net/ | grep -i cache-control
 3. زائر جديد موبايل: loader ~120ms
 4. قياس: https://pagespeedinsights.dev/report/https://e-tashleh.net/?strategy=mobile
 
-## المرحلة 5
+## المرحلة 5 — Mobile Lab + Field (هدف Lab ≥78، Field 65+ خلال 28 يوم)
+
+| بند | الملفات |
+|-----|---------|
+| AuthLayout بدون framer-motion/lucide | `Frontend/components/auth/AuthLayout.tsx`, `index.css` |
+| عزل jspdf/xlsx (dynamic import) | `AdminChatContext.tsx`, `AdminStoreProfile.tsx`, `AdminCustomerProfile.tsx` |
+| lazy AdminChat في DashboardShell | `Frontend/routes/DashboardShell.tsx` |
+| CSS guest/dashboard منفصل | `guest.css`, `dashboard.css`, `index.css` |
+| خط عربي 400 فقط + fonts-extended | `index.css`, `public/fonts-extended.css`, `LanguageContext.tsx` |
+| تأجيل `/system/status` بعد loader | `usePublicSystemStatus.ts`, `App.tsx` |
+| logo.webp / logo_nomo.webp | `RoleSelectionScreen`, `Navbar`, `NomoBadge`, `LoadingScreen` |
+| rolldown codeSplitting (لا vendor-motion على `/`) | `Frontend/vite.config.ts` |
+| nginx fonts-extended cache | `deploy/nginx/snippets/e-tashleh-static-cache.conf` |
+
+**نتائج البناء المحلي (المرحلة 5):**
+- `index.css` ~130 KB (كان ~391 KB)
+- `index.js` ~120 KB — يستورد `vendor-react` فقط (لا `vendor-motion`، لا `vendor-export`)
+- `dashboard.css` ~315 KB — يُحمَّل مع `DashboardShell` فقط
+
+**نشر VPS:**
+
+```bash
+cd /var/www/e-tashleh && git pull origin main
+cd Frontend && npm ci --legacy-peer-deps && npm run build
+sudo cp deploy/nginx/e-tashleh.conf /etc/nginx/sites-available/e-tashleh
+sudo cp deploy/nginx/snippets/e-tashleh-*.conf /etc/nginx/snippets/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**تحقق إلزامي بعد النشر:**
+
+```bash
+# gzip + cache على assets
+curl -sI -H "Accept-Encoding: gzip" https://e-tashleh.net/assets/vendor-react-*.js | grep -iE "cache-control|content-encoding"
+
+# Incognito على / — Network: لا vendor-motion، لا vendor-pdf-tools، لا vendor-xlsx
+```
+
+**قياس:** [DebugBear](https://www.debugbear.com/test/website-speed/m3QoatbN/overview) + [PageSpeed Mobile](https://pagespeedinsights.dev/report/https://e-tashleh.net/?strategy=mobile)
+
+**Checklist قبول المرحلة 5:**
+1. FCP Lab < 2.5s، LCP Lab < 2.5s على `/`
+2. Page Weight على `/` < 1.5 MB
+3. DebugBear Lab ≥ 78
+4. Field يبدأ التحسن خلال 28 يوم بعد تفعيل nginx cache

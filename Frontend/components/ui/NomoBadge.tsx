@@ -19,7 +19,7 @@ export const NomoBadge: React.FC<NomoBadgeProps> = ({ onClick }) => {
       <div className="bg-white flex items-center justify-center rounded-full sm:rounded-xl shadow-lg group-hover:shadow-xl transition-shadow w-[56px] h-[56px] sm:w-auto sm:h-auto sm:px-4 sm:py-2 sm:gap-3 shrink-0">
         <div className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center shrink-0">
           <img
-            src="/logo_nomo.png"
+            src="/logo_nomo.webp"
             alt={t.footer.nomoTitle}
             className="w-full h-full object-contain"
           />

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
+import '../dashboard.css';
 import { DashboardLayout } from '../components/dashboard/DashboardLayout';
 import { DashboardHome } from '../components/dashboard/DashboardHome';
 import { MerchantHome } from '../components/dashboard/merchant/MerchantHome';
@@ -18,8 +19,16 @@ import { MerchantResolutionPage } from '../components/dashboard/merchant/Merchan
 import { MerchantReviews } from '../components/dashboard/merchant/MerchantReviews';
 import { MerchantPerformance } from '../components/dashboard/merchant/MerchantPerformance';
 import { AdminHome } from '../components/dashboard/admin/AdminHome';
-import { AdminChatOversight } from '../components/dashboard/admin/chat/AdminChatOversight';
-import { AdminChatMonitoring } from '../components/dashboard/admin/chat/AdminChatMonitoring';
+const AdminChatOversight = lazy(() =>
+  import('../components/dashboard/admin/chat/AdminChatOversight').then((m) => ({
+    default: m.AdminChatOversight,
+  })),
+);
+const AdminChatMonitoring = lazy(() =>
+  import('../components/dashboard/admin/chat/AdminChatMonitoring').then((m) => ({
+    default: m.AdminChatMonitoring,
+  })),
+);
 import { MyOrders } from '../components/dashboard/MyOrders';
 import { OrderDetails } from '../components/dashboard/OrderDetails';
 import { CreateOrderWizard } from '../components/dashboard/create-order/CreateOrderWizard';
@@ -247,8 +256,16 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
       )}
       {dashboardPath === 'security-audit' && <AdminHome subPath="security-audit" />}
       {dashboardPath === 'violations' && <AdminHome subPath="violations" />}
-      {dashboardPath === 'chats' && <AdminChatOversight />}
-      {dashboardPath === 'chat-monitoring' && <AdminChatMonitoring />}
+      {dashboardPath === 'chats' && (
+        <Suspense fallback={null}>
+          <AdminChatOversight />
+        </Suspense>
+      )}
+      {dashboardPath === 'chat-monitoring' && (
+        <Suspense fallback={null}>
+          <AdminChatMonitoring />
+        </Suspense>
+      )}
       {dashboardPath === 'access-control' && <AdminHome subPath="access-control" />}
       {dashboardPath === 'verification-tasks' && (
         <AdminHome subPath="verification-tasks" onNavigate={onNavigate} />

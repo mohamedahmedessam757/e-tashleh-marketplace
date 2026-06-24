@@ -100,18 +100,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
             tabIndex={0}
             aria-label={language === 'ar' ? 'الصفحة الرئيسية' : 'Home'}
           >
-            <picture>
-              <source srcSet="/logo.webp" type="image/webp" />
-              <img
-                src="/logo.png"
-                alt="E-TASHLEH"
-                width={56}
-                height={56}
-                fetchPriority="high"
-                decoding="async"
-                className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-0 invert"
-              />
-            </picture>
+            <img
+              src="/logo.webp"
+              alt="E-TASHLEH"
+              width={56}
+              height={56}
+              fetchPriority="high"
+              decoding="async"
+              className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-0 invert"
+            />
           </div>
 
           <div className="hidden lg:flex items-center gap-1 bg-black/20 rounded-full px-2 py-1 border border-white/5">
@@ -159,18 +156,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
         >
           <div className="flex items-center justify-between p-6 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <picture>
-                <source srcSet="/logo.webp" type="image/webp" />
-                <img
-                  src="/logo.png"
-                  alt="E-Tashleh Logo"
-                  width={40}
-                  height={40}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-10 h-10 object-contain brightness-0 invert"
-                />
-              </picture>
+              <img
+                src="/logo.webp"
+                alt="E-Tashleh Logo"
+                width={40}
+                height={40}
+                loading="lazy"
+                decoding="async"
+                className="w-10 h-10 object-contain brightness-0 invert"
+              />
               <span className="font-bold text-white text-lg">E-Tashleh</span>
             </div>
             <button
