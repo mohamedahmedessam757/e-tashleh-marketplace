@@ -1,6 +1,5 @@
 
-import React, { useState } from 'react';
-import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, LogIn, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageToggle } from './ui/LanguageToggle';
@@ -11,7 +10,6 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
-  const { scrollY } = useScroll();
   const [hidden, setHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -27,24 +25,26 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
     { label: t.nav.merchants, href: '#merchants' },
   ];
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const previous = scrollY.getPrevious() ?? 0;
+  useEffect(() => {
+    let lastY = window.scrollY;
 
-    // Hide on scroll down (if moved more than 10px down and past initial threshold)
-    if (latest > previous + 10 && latest > 150) {
-      setHidden(true);
-    }
-    // Show on scroll up (if moved more than 10px up)
-    else if (previous > latest + 10) {
-      setHidden(false);
-    }
+    const onScroll = () => {
+      const latest = window.scrollY;
+      const previous = lastY;
 
-    if (latest > 50) {
-      setScrolled(true);
-    } else {
-      setScrolled(false);
-    }
-  });
+      if (latest > previous + 10 && latest > 150) {
+        setHidden(true);
+      } else if (previous > latest + 10) {
+        setHidden(false);
+      }
+
+      setScrolled(latest > 50);
+      lastY = latest;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
 
     if (element) {
       setMobileMenuOpen(false);
-      const offset = 100; // Adjust for fixed navbar height
+      const offset = 100;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
@@ -75,15 +75,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
 
   return (
     <>
-      <motion.nav
-        variants={{
-          visible: { y: 0, opacity: 1 },
-          hidden: { y: -100, opacity: 0 },
-        }}
-        initial="visible"
-        animate={hidden ? "hidden" : "visible"}
-        transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-4 md:top-6 left-0 right-0 z-40 flex justify-center px-4 will-change-transform pointer-events-none"
+      <nav
+        className={`fixed top-4 md:top-6 left-0 right-0 z-40 flex justify-center px-4 will-change-transform pointer-events-none ${hidden ? 'navbar-hidden' : 'navbar-visible'}`}
       >
         <div
           className={`
@@ -99,10 +92,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
             }
           `}
         >
-          {/* Logo */}
           <div
             className="flex items-center gap-3 cursor-pointer"
-            onClick={(e) => handleNavClick(e as any, '#home')}
+            onClick={(e) => handleNavClick(e as unknown as React.MouseEvent<HTMLAnchorElement>, '#home')}
             onKeyDown={(e) => e.key === 'Enter' && onHomeClick()}
             role="button"
             tabIndex={0}
@@ -122,7 +114,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
             </picture>
           </div>
 
-          {/* Desktop Links - Pill Container */}
           <div className="hidden lg:flex items-center gap-1 bg-black/20 rounded-full px-2 py-1 border border-white/5">
             {navItems.map((item) => (
               <a
@@ -136,14 +127,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
             ))}
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-2 md:gap-4">
 
             <LanguageToggle compact className="rounded-full" />
 
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block"></div>
 
-            {/* Login Button (Desktop/Tablet) */}
             <button
               onClick={onLoginClick}
               className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-gold-600 to-gold-400 text-white font-bold text-sm shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_4px_25px_rgba(168,139,62,0.5)] hover:scale-105 transition-all"
@@ -152,7 +141,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
               <span>{t.nav.login}</span>
             </button>
 
-            {/* Mobile Menu Toggle */}
             <button
               className="lg:hidden text-white p-2 active:scale-95 transition-transform"
               onClick={() => setMobileMenuOpen(true)}
@@ -162,75 +150,67 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
             </button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: language === 'ar' ? '100%' : '-100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: language === 'ar' ? '100%' : '-100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 bg-[#1A1814]/98 backdrop-blur-xl lg:hidden flex flex-col will-change-transform"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <picture>
-                  <source srcSet="/logo.webp" type="image/webp" />
-                  <img
-                    src="/logo.png"
-                    alt="E-Tashleh Logo"
-                    width={40}
-                    height={40}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-10 h-10 object-contain brightness-0 invert"
-                  />
-                </picture>
-                <span className="font-bold text-white text-lg">E-Tashleh</span>
-              </div>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/60 hover:text-white p-2 bg-white/5 rounded-full"
-                aria-label={language === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-[#1A1814]/98 backdrop-blur-xl lg:hidden flex flex-col will-change-transform mobile-menu-panel"
+          style={{ '--menu-from': language === 'ar' ? '100%' : '-100%' } as React.CSSProperties}
+        >
+          <div className="flex items-center justify-between p-6 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <picture>
+                <source srcSet="/logo.webp" type="image/webp" />
+                <img
+                  src="/logo.png"
+                  alt="E-Tashleh Logo"
+                  width={40}
+                  height={40}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-10 h-10 object-contain brightness-0 invert"
+                />
+              </picture>
+              <span className="font-bold text-white text-lg">E-Tashleh</span>
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-white/60 hover:text-white p-2 bg-white/5 rounded-full"
+              aria-label={language === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-8 px-6 flex flex-col gap-2">
+            {navItems.map((item, idx) => (
+              <a
+                key={item.href}
+                href={item.href}
+                style={{ animationDelay: `${0.1 + idx * 0.05}s` }}
+                className="stagger-item flex items-center justify-between p-4 rounded-xl text-lg font-medium text-white/90 hover:bg-white/5 active:bg-gold-500/10 active:text-gold-400 transition-colors border border-transparent hover:border-white/5"
+                onClick={(e) => handleNavClick(e, item.href)}
               >
-                <X size={24} />
-              </button>
-            </div>
+                <span>{item.label}</span>
+                <ChevronIcon size={18} className="text-white/20" />
+              </a>
+            ))}
+          </div>
 
-            <div className="flex-1 overflow-y-auto py-8 px-6 flex flex-col gap-2">
-              {navItems.map((item, idx) => (
-                <motion.a
-                  key={item.href}
-                  href={item.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 + (idx * 0.05) }}
-                  onClick={(e) => handleNavClick(e, item.href)}
-                  className="flex items-center justify-between p-4 rounded-xl text-lg font-medium text-white/90 hover:bg-white/5 active:bg-gold-500/10 active:text-gold-400 transition-colors border border-transparent hover:border-white/5"
-                >
-                  <span>{item.label}</span>
-                  <ChevronIcon size={18} className="text-white/20" />
-                </motion.a>
-              ))}
+          <div className="p-6 border-t border-white/5 bg-[#151310]">
+            <button
+              onClick={() => { setMobileMenuOpen(false); onLoginClick(); }}
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gold-500 text-white font-bold w-full shadow-lg shadow-gold-500/20 active:scale-[0.98] transition-transform"
+            >
+              <LogIn size={20} />
+              <span>{t.nav.login}</span>
+            </button>
+            <div className="text-center mt-6 text-white/30 text-xs font-mono">
+              ADMIN PANEL V2.0 MOBILE
             </div>
-
-            <div className="p-6 border-t border-white/5 bg-[#151310]">
-              <button
-                onClick={() => { setMobileMenuOpen(false); onLoginClick(); }}
-                className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gold-500 text-white font-bold w-full shadow-lg shadow-gold-500/20 active:scale-[0.98] transition-transform"
-              >
-                <LogIn size={20} />
-                <span>{t.nav.login}</span>
-              </button>
-              <div className="text-center mt-6 text-white/30 text-xs font-mono">
-                ADMIN PANEL V2.0 MOBILE
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 };

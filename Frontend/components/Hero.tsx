@@ -1,7 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { GlassCard } from './ui/GlassCard';
-import { ArrowLeft, ShieldCheck, Zap, BarChart3, ArrowRight, Activity, Search, Users, Settings } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShieldCheck, Zap, BarChart3, Activity, Search, Users, Settings } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeroProps {
@@ -16,25 +15,19 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
     return (
         <section id="home" className="relative min-h-screen pt-24 md:pt-32 pb-12 md:pb-16 flex flex-col justify-center overflow-hidden">
 
-            {/* Background Elements - Hardware Accelerated */}
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-gold-500/10 rounded-full blur-[100px] pointer-events-none transform-gpu" />
             <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px] pointer-events-none transform-gpu" />
 
             <div className="relative z-20 w-full px-4 md:px-8 lg:px-12">
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center my-4 md:my-8">
 
-                    {/* Text Content */}
                     <div className={`${language === 'ar' ? 'text-right' : 'text-left'}`}>
-                        <motion.div
-                            initial={{ opacity: 0, x: language === 'ar' ? 20 : -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
-                        >
+                        <div>
                             <span className="inline-block px-4 py-1.5 rounded-full bg-gold-500/10 border border-gold-500/20 text-gold-300 text-xs md:text-sm font-medium mb-4 md:mb-6 backdrop-blur-sm shadow-sm">
                                 {t.hero.badge}
                             </span>
 
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 md:mb-6 leading-[1.2] md:leading-[1.1] tracking-tight drop-shadow-2xl">
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 md:mb-6 leading-[1.2] md:leading-[1.1] tracking-tight drop-shadow-2xl font-sans">
                                 {t.hero.titleLine1}
                                 <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold-100 to-gold-400">
@@ -61,44 +54,25 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                     {t.hero.discoverBtn}
                                 </button>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
 
-                    {/* VISUAL CONTENT: Advanced Dashboard Preview */}
                     <div className="relative mt-8 lg:mt-0 perspective-1000">
-                        {/* Decorative Background Glow */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent rounded-3xl blur-3xl transform rotate-6 scale-95 opacity-30" />
 
-                        {/* Floating 3D Element (Gear/Engine) */}
-                        <motion.div
-                            animate={{
-                                y: [-10, 10, -10],
-                                rotate: [0, 5, -5, 0]
-                            }}
-                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                            className={`absolute -top-8 md:-top-12 ${language === 'ar' ? '-left-8 md:-left-12' : '-right-8 md:-right-12'} z-30`}
+                        <div
+                            className={`absolute -top-8 md:-top-12 animate-float-y ${language === 'ar' ? '-left-8 md:-left-12' : '-right-8 md:-right-12'} z-30`}
                         >
                             <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-gold-400 to-gold-700 rounded-2xl flex items-center justify-center shadow-[0_10px_40px_rgba(168,139,62,0.4)] border border-white/20 backdrop-blur-md">
                                 <Settings className="w-10 h-10 md:w-12 md:h-12 text-white animate-spin-slow" />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        {/* Main Glass Dashboard */}
                         <GlassCard delay={0.4} className="relative min-h-[350px] md:min-h-[450px] xl:min-h-[500px] border-gold-500/30 bg-[#0F0E0C]/90 backdrop-blur-2xl p-0 overflow-hidden group">
 
-                            {/* 1. SCANNIG EFFECT */}
-                            <motion.div
-                                animate={{ top: ['0%', '100%', '0%'] }}
-                                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                                className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent z-20 opacity-50 shadow-[0_0_15px_#C4A95C]"
-                            />
-                            <motion.div
-                                animate={{ top: ['0%', '100%', '0%'] }}
-                                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                                className="absolute left-0 right-0 h-20 bg-gradient-to-b from-gold-500/5 to-transparent z-10 pointer-events-none"
-                            />
+                            <div className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent z-20 opacity-50 shadow-[0_0_15px_#C4A95C] animate-scan-line" />
+                            <div className="absolute left-0 right-0 h-20 bg-gradient-to-b from-gold-500/5 to-transparent z-10 pointer-events-none animate-scan-line" />
 
-                            {/* Dashboard Header */}
                             <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-white/5">
                                 <div className="flex items-center gap-4">
                                     <div className="flex gap-1.5 direction-ltr">
@@ -121,13 +95,10 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                 </div>
                             </div>
 
-                            {/* Dashboard Body */}
                             <div className="p-4 md:p-6 space-y-6">
 
-                                {/* Live Chart Visual - ENHANCED */}
                                 <div className="relative h-32 md:h-40 w-full bg-gradient-to-b from-[#1A1814] to-black/40 rounded-xl border border-gold-500/20 overflow-hidden flex items-end justify-center p-4 group/chart">
 
-                                    {/* Grid Background */}
                                     <div
                                         className="absolute inset-0 opacity-20 pointer-events-none"
                                         style={{
@@ -143,18 +114,15 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                         <span className="text-xs text-gold-100 font-bold tracking-wide">{t.hero.dashboard.market}</span>
                                     </div>
 
-                                    {/* CSS Graph Animation */}
                                     <div className="flex items-end gap-1.5 h-full w-full pt-10 px-2 relative z-10">
                                         {[40, 65, 50, 75, 60, 85, 70, 95, 80, 55, 70, 90].map((h, i) => (
-                                            <motion.div
+                                            <div
                                                 key={i}
-                                                initial={{ height: '10%' }}
-                                                animate={{ height: [`${h}%`, `${h - 15}%`, `${h}%`] }}
-                                                transition={{ duration: 2.5, delay: i * 0.1, repeat: Infinity, ease: "easeInOut" }}
-                                                className="flex-1 bg-gradient-to-t from-gold-900/30 via-gold-500 to-gold-200 rounded-t-[2px] relative group cursor-crosshair hover:via-gold-400 hover:to-white transition-all duration-300"
                                                 style={{
-                                                    boxShadow: '0 -4px 12px rgba(168, 139, 62, 0.3)'
+                                                    height: `${h}%`,
+                                                    animationDelay: `${i * 0.1}s`,
                                                 }}
+                                                className="flex-1 hero-chart-bar bg-gradient-to-t from-gold-900/30 via-gold-500 to-gold-200 rounded-t-[2px] relative group cursor-crosshair hover:via-gold-400 hover:to-white transition-all duration-300"
                                             >
                                                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200 z-20 pointer-events-none">
                                                     <div className="bg-gold-500 text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap">
@@ -162,12 +130,11 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                                     </div>
                                                     <div className="w-2 h-2 bg-gold-500 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
                                                 </div>
-                                            </motion.div>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Quick Stats */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-[#1A1814] p-4 rounded-xl border border-white/5 hover:border-gold-500/30 transition-all group/stat">
                                         <div className="flex items-start justify-between mb-2">
@@ -191,18 +158,14 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                     </div>
                                 </div>
 
-                                {/* Live Orders Feed */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between text-xs text-white/40 px-1">
                                         <span>{t.hero.dashboard.recent}</span>
                                         <span>{t.hero.dashboard.live}</span>
                                     </div>
                                     {[1, 2].map((i) => (
-                                        <motion.div
+                                        <div
                                             key={i}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 1 + (i * 0.2) }}
                                             className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
@@ -219,23 +182,16 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                                 </div>
                                             </div>
                                             <div className="text-xs font-mono text-gold-400">{i === 1 ? 'SAR 450' : 'SAR 1200'}</div>
-                                        </motion.div>
+                                        </div>
                                     ))}
                                 </div>
 
                             </div>
                         </GlassCard>
 
-                        {/* Floating Security Badge (Bottom) */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
-                            transition={{
-                                opacity: { duration: 0.5, delay: 0.8 },
-                                scale: { duration: 0.5, delay: 0.8 },
-                                y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }
-                            }}
-                            className={`absolute -bottom-4 md:-bottom-6 ${language === 'ar' ? 'right-4 md:-right-6' : 'left-4 md:-left-6'} bg-[#1F1D19] text-white p-3 md:p-4 rounded-xl shadow-xl border border-gold-500/30 flex items-center gap-3 z-30`}
+                        <div
+                            className={`absolute -bottom-4 md:-bottom-6 animate-float-y ${language === 'ar' ? 'right-4 md:-right-6' : 'left-4 md:-left-6'} bg-[#1F1D19] text-white p-3 md:p-4 rounded-xl shadow-xl border border-gold-500/30 flex items-center gap-3 z-30`}
+                            style={{ animationDelay: '0.8s' }}
                         >
                             <div className="relative">
                                 <ShieldCheck size={24} className="text-gold-500" />
@@ -245,12 +201,11 @@ export const Hero: React.FC<HeroProps> = ({ onLogin, onRequestNow }) => {
                                 <div className="text-[10px] opacity-60 uppercase tracking-wider">{t.hero.security}</div>
                                 <div className="font-bold text-xs md:text-sm">{t.hero.dashboard.ssl}</div>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
 
                 </div>
 
-                {/* Features Strip */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-12 md:mt-20 max-w-7xl mx-auto">
                     {[
                         { icon: ShieldCheck, ...t.hero.features.secure },

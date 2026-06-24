@@ -1,5 +1,4 @@
 import React, { forwardRef } from 'react';
-import { motion } from 'framer-motion';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -19,14 +18,12 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
   enableBlur = true
 }, ref) => {
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay }}
       onClick={onClick}
+      style={{ animationDelay: `${delay}s` }}
       className={`
+        animate-fade-in-up
         bg-white/5 
         ${enableBlur ? 'backdrop-blur-xl' : ''} 
         border border-white/10 
@@ -40,7 +37,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
       `}
     >
       {children}
-    </motion.div>
+    </div>
   );
 });
 

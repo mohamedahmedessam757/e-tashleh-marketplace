@@ -15,6 +15,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
+import compression from 'compression';
 import { validateProductionEnv } from './config/env.validation';
 
 function resolveCorsOrigins(): string[] | boolean {
@@ -70,6 +71,7 @@ async function bootstrap() {
     app.useBodyParser('json', { limit: bodyLimit });
     app.useBodyParser('urlencoded', { extended: true, limit: bodyLimit });
 
+    app.use(compression());
     app.use(helmet());
     app.useGlobalFilters(new GlobalHttpExceptionFilter());
 

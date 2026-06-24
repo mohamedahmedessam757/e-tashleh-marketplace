@@ -10,13 +10,15 @@ type Tab = 'privacy' | 'terms';
 export const LegalDocs: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('privacy');
     const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
-    const { t, language, ensureLegalTerms } = useLanguage();
+    const { t, language, ensureLegalTerms, ensureLegalPrivacy } = useLanguage();
 
     useEffect(() => {
         if (activeTab === 'terms') {
             void ensureLegalTerms();
+        } else {
+            void ensureLegalPrivacy();
         }
-    }, [activeTab, ensureLegalTerms]);
+    }, [activeTab, ensureLegalTerms, ensureLegalPrivacy]);
 
     const toggleAccordion = (index: number) => {
         setExpandedIndex(expandedIndex === index ? null : index);

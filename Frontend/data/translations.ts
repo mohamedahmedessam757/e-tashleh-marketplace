@@ -1,6 +1,8 @@
 import { common } from './locales/common';
 import { auth } from './locales/auth';
-import { loadTermsContent } from './loadTermsContent';
+import { guestLanding } from './locales/guest-landing';
+import { loadTermsContent, type TermsSection } from './loadTermsContent';
+import type { LegalSection } from './locales/legal-privacy';
 import type { admin as adminLocales } from './locales/admin';
 import type { customer as customerLocales } from './locales/customer';
 import type { merchant as merchantLocales } from './locales/merchant';
@@ -8,9 +10,15 @@ import type { merchant as merchantLocales } from './locales/merchant';
 export type Language = 'ar' | 'en';
 
 function buildGuest(lang: Language) {
+  const landing = guestLanding[lang];
   return {
     common: common[lang],
-    ...auth[lang],
+    ...landing,
+    legal: {
+      ...landing.legal,
+      privacyContent: [] as LegalSection[],
+      termsContent: [] as TermsSection[],
+    },
     auth: auth[lang].authSection,
   };
 }

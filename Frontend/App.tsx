@@ -1,6 +1,5 @@
 
 import React, { useState, Suspense, lazy, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { usePublicSystemStatus } from './hooks/usePublicSystemStatus';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -599,11 +598,7 @@ function AppContent() {
       <div className="fixed inset-0 z-[9999] bg-[#0F0E0C] flex items-center justify-center p-4 md:p-6 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.3), transparent 70%)' }} />
 
-        <motion.div
-          initial={{ scale: 0.98, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="relative z-10 w-full max-w-xl max-h-[95vh] bg-[#12110F]/80 border border-white/5 p-6 md:p-10 rounded-[3rem] shadow-2xl backdrop-blur-xl space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar"
-        >
+        <div className="relative z-10 view-fade-in w-full max-w-xl max-h-[95vh] bg-[#12110F]/80 border border-white/5 p-6 md:p-10 rounded-[3rem] shadow-2xl backdrop-blur-xl space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar">
           {/* Header Icon */}
           <div className="w-20 h-20 bg-red-500/10 rounded-[1.8rem] mx-auto flex items-center justify-center border border-red-500/20 shadow-xl shadow-red-500/10 relative">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
@@ -666,7 +661,7 @@ function AppContent() {
               {language === 'ar' ? 'تحديث الحالة' : 'Refresh System'}
             </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Hidden Admin Access */}
         <div className="absolute bottom-6 right-6 opacity-20 hover:opacity-100 transition-opacity">
@@ -700,11 +695,9 @@ function AppContent() {
       )}
 
       <div className="relative z-10">
-        <AnimatePresence mode="wait">
-          {loading && (
-            <LoadingScreen key="loader" onComplete={handleLoadingComplete} />
-          )}
-        </AnimatePresence>
+        {loading && (
+          <LoadingScreen onComplete={handleLoadingComplete} />
+        )}
 
         {isSupportOpen && (
           <Suspense fallback={null}>
@@ -713,10 +706,9 @@ function AppContent() {
         )}
 
         {!loading && (
-          <AnimatePresence mode="wait">
-
+          <>
             {currentView === 'verify-link' && verifyToken ? (
-              <motion.div key="verify-link" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="view-fade-in">
                 <Suspense fallback={routeFallback}>
                   <VerifyLinkPage
                     token={verifyToken}
@@ -733,15 +725,9 @@ function AppContent() {
                     onNavigateLogin={() => handleNavigate('admin-login')}
                   />
                 </Suspense>
-              </motion.div>
+              </div>
             ) : currentView === 'dashboard' ? (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="h-full"
-              >
+              <div className="view-fade-in h-full">
                 <Suspense fallback={routeFallback}>
                   <DashboardShell
                     userRole={userRole}
@@ -754,7 +740,7 @@ function AppContent() {
                     maintenanceMode={publicSystemStatus?.maintenanceMode === true}
                   />
                 </Suspense>
-              </motion.div>
+              </div>
             ) : currentView === 'role-selection' ? (
               <RoleSelectionScreen
                 onCustomerClick={() => {
@@ -825,14 +811,7 @@ function AppContent() {
             ) : currentView === 'landing' ? (
 
               /* 2. LANDING VIEW */
-              <motion.main
-                key="landing"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative will-change-opacity"
-              >
+              <main className="relative view-fade-in">
                 <Navbar
                   onLoginClick={() => handleNavigate('role-selection')}
                   onHomeClick={() => handleNavigate('role-selection')}
@@ -854,18 +833,10 @@ function AppContent() {
                   onAdminClick={() => handleNavigate('admin-login')}
                   onNavigateToLicense={handleNavigateToLicense}
                 />
-              </motion.main>
+              </main>
             ) : (
 
-              /* 3. AUTH VIEW */
-              <motion.div
-                key="auth"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="will-change-transform"
-              >
+              <div className="view-fade-in">
                 <AuthLayout
                   onBack={currentView === 'terms' || currentView === 'wallet-loyalty-terms' ? handleBackFromTerms : (currentView === 'customer-register' || currentView === 'forgot-password' || currentView === 'reset-password' || currentView === 'account-recovery' ? handleBackToLogin : handleBackToHome)}
                   title={getTitle()}
@@ -957,9 +928,9 @@ function AppContent() {
                     )}
                   </Suspense>
                 </AuthLayout>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
         )}
       </div>
     </div>

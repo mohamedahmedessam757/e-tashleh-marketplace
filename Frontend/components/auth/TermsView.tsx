@@ -1,10 +1,9 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { FileText, Shield, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal?: boolean }> = ({ initialSection = 'terms', isModal = false }) => {
-    const { t, language, ensureLegalTerms } = useLanguage();
+    const { t, language, ensureLegalContent } = useLanguage();
     // Default to first item if terms, or first privacy item if privacy.
     // Logic below will handle valid setting.
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(0);
@@ -12,8 +11,8 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
     const privacyRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        void ensureLegalTerms();
-    }, [ensureLegalTerms]);
+        void ensureLegalContent();
+    }, [ensureLegalContent]);
 
     React.useEffect(() => {
         if (initialSection === 'privacy') {
@@ -48,11 +47,8 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
             <div ref={containerRef} className={`space-y-4 ${isModal ? '' : 'h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gold-500/30 scrollbar-track-white/5'}`}>
                 {/* Terms Content */}
                 {t.legal.termsContent.map((item, idx) => (
-                    <motion.div
+                    <div
                         key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
                         className="bg-white/5 border border-white/5 rounded-xl overflow-hidden"
                     >
                         <button
@@ -82,7 +78,7 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
                                 )}
                             </div>
                         )}
-                    </motion.div>
+                    </div>
                 ))}
 
                 {/* Privacy Content appended for completeness in this view */}
@@ -92,11 +88,8 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
                         <span>{t.legal.tabs.privacy}</span>
                     </div>
                     {t.legal.privacyContent.map((item, idx) => (
-                        <motion.div
+                        <div
                             key={`p-${idx}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 + (idx * 0.1) }}
                             className="bg-white/5 border border-white/5 rounded-xl overflow-hidden mb-4"
                         >
                             <button
@@ -126,7 +119,7 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
                                     )}
                                 </div>
                             )}
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             </div>

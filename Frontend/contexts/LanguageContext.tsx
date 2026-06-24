@@ -7,6 +7,7 @@ import {
   type Language,
 } from '../data/translations';
 import { loadTermsContent } from '../data/loadTermsContent';
+import { loadPrivacyContent } from '../data/loadLegalContent';
 import { getCurrentUserId } from '../utils/auth';
 
 const GUEST_LANGUAGE_KEY = 'preferred_language';
@@ -19,6 +20,8 @@ interface LanguageContextType {
   dir: 'rtl' | 'ltr';
   ensureDashboardTranslations: () => Promise<void>;
   ensureLegalTerms: () => Promise<void>;
+  ensureLegalContent: () => Promise<void>;
+  ensureLegalPrivacy: () => Promise<void>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -73,6 +76,44 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
     }));
   }, [language, t.legal?.termsContent?.length]);
+
+  const ensureLegalPrivacy = useCallback(async () => {
+    if (t.legal?.privacyContent?.length) return;
+    const privacyContent = await loadPrivacyContent(language);
+    setT((prev) => ({
+      ...prev,
+      legal: {
+        ...prev.legal,
+        privacyContent,
+      },
+    }));
+  }, [language, t.legal?.privacyContent?.length]);
+
+  const ensureLegalContent = useCallback(async () => {
+    const needsPrivacy = !t.legal?.privacyContent?.length;
+    const needsTerms = !t.legal?.termsContent?.length;
+    if (!needsPrivacy && !needsTerms) return;
+
+    const [privacyContent, termsContent] = await Promise.all([
+      needsPrivacy ? loadPrivacyContent(language) : Promise.resolve(t.legal.privacyContent),
+      needsTerms ? loadTermsContent(language) : Promise.resolve(t.legal.termsContent),
+    ]);
+
+    setT((prev) => ({
+      ...prev,
+      legal: {
+        ...prev.legal,
+        privacyContent,
+        termsContent,
+      },
+    }));
+  }, [
+    language,
+    t.legal?.privacyContent?.length,
+    t.legal?.termsContent?.length,
+    t.legal.privacyContent,
+    t.legal.termsContent,
+  ]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
@@ -137,7 +178,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return (
     <LanguageContext.Provider
-      value={{ language, toggleLanguage, setLanguage, t, dir, ensureDashboardTranslations, ensureLegalTerms }}
+      value={{ language, toggleLanguage, setLanguage, t, dir, ensureDashboardTranslations, ensureLegalTerms, ensureLegalContent, ensureLegalPrivacy }}
     >
       {children}
     </LanguageContext.Provider>

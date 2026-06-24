@@ -257,19 +257,42 @@ cd backend && npm install --legacy-peer-deps && npm run build
 cd ../Frontend && npm ci --legacy-peer-deps && npm run build
 
 sudo cp deploy/nginx/e-tashleh.conf /etc/nginx/sites-available/e-tashleh
+sudo cp deploy/nginx/snippets/e-tashleh-static-cache.conf /etc/nginx/snippets/
 sudo nginx -t && sudo systemctl reload nginx
 pm2 restart e-tashleh-api
 ```
 
-**تحقق من الـ cache بعد النشر:**
+**تحقق من الـ cache بعد النشر (المرحلة 3 — HTTPS):**
 
 ```bash
-curl -sI https://e-tashleh.net/assets/ | head -5
-curl -sI https://e-tashleh.net/index.html | grep -i cache-control
+# يجب أن يُرجع: public, max-age=31536000, immutable
+curl -sI https://e-tashleh.net/assets/index-*.js | grep -i cache-control
+curl -sI https://e-tashleh.net/logo.webp | grep -i cache-control
+curl -sI https://e-tashleh.net/fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2 | grep -i cache-control
+# index.html يجب أن يكون no-cache
+curl -sI https://e-tashleh.net/ | grep -i cache-control
 ```
+
+**تحقق من PageSpeed بعد النشر:**
+
+1. Incognito → Network: لا `fonts.googleapis.com`، لا طلبات `vendor-export` / `vendor-supabase` على `/`
+2. زائر جديد: LoadingScreen ثم Hero
+3. زائر عائد: بدون loader (`sessionStorage etashleh_booted`)
+4. أعد القياس: https://pagespeedinsights.dev/report/https://e-tashleh.net/?strategy=mobile
+
+**أهداف المرحلة 3:** Lab Performance 85–92، LCP &lt; 2.0s؛ Field يتحسن تدريجياً خلال 28 يوم (CrUX).
 
 **backend `.env` (OTP logo):** احذف `RESEND_LOGO_URL` إن كان يشير لـ Google Drive — الشعار يُضمَّن تلقائياً من `backend/assets/logo-email.png`.
 
-## المرحلة 3
+## المرحلة 3 — ملخص التحسينات (كود)
 
-اختبارات Go-Live الكاملة (دفع، OTP، chat، cron).
+| بند | الملفات |
+|-----|---------|
+| nginx HTTPS + cache موحّد | `deploy/nginx/e-tashleh.conf`, `deploy/nginx/snippets/e-tashleh-static-cache.conf` |
+| خطوط self-hosted | `Frontend/public/fonts/`, `Frontend/index.css`, `Frontend/index.html` |
+| CSS بدل framer-motion (landing) | `Hero`, `Navbar`, `RoleSelectionScreen`, `LoadingScreen`, `App`, `GlassCard` |
+| i18n guest + legal lazy | `guest-landing.ts`, `legal-privacy.ts`, `loadLegalContent.ts`, `translations.ts` |
+| NestJS compression | `backend/src/main.ts` |
+| CSS code split | `vite.config.ts` → `cssCodeSplit: true` |
+
+## المرحلة 4

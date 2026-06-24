@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       sourcemap: false,
+      cssCodeSplit: true,
       chunkSizeWarningLimit: 1000,
       modulePreload: {
         resolveDependencies(_filename, deps, { hostId }) {
