@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+
+Sitemap: https://e-tashleh.net/sitemap.xml

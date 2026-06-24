@@ -1,10 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { translations } from '../data/translations';
+import {
+  guestTranslations,
+  loadDashboardTranslations,
+  type TranslationTree,
+  type Language,
+} from '../data/translations';
 import { useProfileStore } from '../stores/useProfileStore';
 import { getCurrentUserId } from '../utils/auth';
-
-type Language = 'ar' | 'en';
 
 const GUEST_LANGUAGE_KEY = 'preferred_language';
 
@@ -12,8 +15,9 @@ interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
   setLanguage: (lang: Language) => void;
-  t: typeof translations.ar;
+  t: TranslationTree;
   dir: 'rtl' | 'ltr';
+  ensureDashboardTranslations: () => Promise<void>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -29,14 +33,28 @@ function writeGuestLanguage(lang: Language): void {
   localStorage.setItem(GUEST_LANGUAGE_KEY, lang);
 }
 
+function isDashboardPath(): boolean {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
+}
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => readGuestLanguage() ?? 'ar');
+  const [t, setT] = useState<TranslationTree>(() => ({
+    ...guestTranslations[readGuestLanguage() ?? 'ar'],
+    admin: {} as TranslationTree['admin'],
+    dashboard: {} as TranslationTree['dashboard'],
+  }));
 
   const persistLanguage = useCallback((lang: Language) => {
     writeGuestLanguage(lang);
     if (!getCurrentUserId()) return;
     useProfileStore.getState().updateSettings({ language: lang });
   }, []);
+
+  const ensureDashboardTranslations = useCallback(async () => {
+    const full = await loadDashboardTranslations(language);
+    setT(full);
+  }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
@@ -54,13 +72,24 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
-  const t = translations[language];
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = language;
   }, [dir, language]);
+
+  useEffect(() => {
+    if (isDashboardPath()) {
+      void ensureDashboardTranslations();
+      return;
+    }
+    setT({
+      ...guestTranslations[language],
+      admin: {} as TranslationTree['admin'],
+      dashboard: {} as TranslationTree['dashboard'],
+    });
+  }, [language, ensureDashboardTranslations]);
 
   useEffect(() => {
     const syncFromProfile = (settings: { language?: Language }) => {
@@ -82,7 +111,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, setLanguage, t, dir }}>
+    <LanguageContext.Provider
+      value={{ language, toggleLanguage, setLanguage, t, dir, ensureDashboardTranslations }}
+    >
       {children}
     </LanguageContext.Provider>
   );

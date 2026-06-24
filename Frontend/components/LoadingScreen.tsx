@@ -31,12 +31,11 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
       // Trigger the split animation
       setTimeout(() => {
         setIsSplitting(true);
-      }, 500);
+      }, 150);
 
-      // Trigger the completion callback after the split
       const finishTimer = setTimeout(() => {
         onComplete();
-      }, 1500); // Wait for split animation
+      }, 650);
       return () => clearTimeout(finishTimer);
     }
   }, [progress, onComplete]);
@@ -76,7 +75,11 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl p-6 relative z-10">
             <img
               src="/logo.png"
-              alt="E-Tashleh Logo"
+              alt="E-TASHLEH"
+              width={160}
+              height={160}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-contain drop-shadow-lg brightness-0 invert"
             />
           </div>

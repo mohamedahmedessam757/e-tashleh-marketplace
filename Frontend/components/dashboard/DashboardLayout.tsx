@@ -24,7 +24,7 @@ interface DashboardLayoutProps {
   children?: React.ReactNode;
   onLogout: () => void;
   currentPath?: string;
-  onNavigate: (path: string, id?: number) => void;
+  onNavigate: (path: string, id?: string | number) => void;
   onBack?: () => void;
   role: 'customer' | 'merchant' | 'admin';
 }

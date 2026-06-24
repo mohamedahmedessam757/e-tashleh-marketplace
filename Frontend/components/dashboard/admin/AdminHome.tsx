@@ -29,7 +29,7 @@ import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminShipping } from './AdminShipping';
 import { AdminSettings } from './AdminSettings';
 import { AdminSupport } from './AdminSupport';
-import { SecurityAudit } from './SecurityAudit'; // NEW
+import { SecurityAudit } from './SecurityAudit';
 import { AdminViolations } from './AdminViolations';
 import { AdminAccessControl } from './AdminAccessControl';
 import { FinancialHub } from './FinancialHub';
@@ -289,6 +289,8 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             color: statusConfig[item.status] || '#FFFFFF'
         })).sort((a, b) => b.value - a.value);
 
+        const donutTotal = donutData.reduce((sum, item) => sum + item.value, 0);
+
         const barData = dashboardStats.topStores.map(s => ({
             label: s.name,
             value: s.ordersCount
@@ -299,7 +301,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             value: d.value
         }));
 
-        return { salesTrend, salesLabels, donutData, barData, salesTrendData };
+        return { salesTrend, salesLabels, donutData, donutTotal, barData, salesTrendData };
     }, [dashboardStats, language, t]);
 
     if (subPath === 'billing') {
@@ -316,7 +318,6 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             </PermissionGuard>
         );
     }
-    if (subPath === 'invoice-details' && viewId) return <InvoiceViewer invoiceId={viewId} onBack={() => navigate('billing')} />;
     if (subPath === 'invoice-details' && viewId) return <InvoiceViewer invoiceId={viewId} onBack={() => navigate('billing')} />;
     
     if (subPath === 'resolution') {
@@ -527,9 +528,10 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
                         <div className="w-full grid grid-cols-2 gap-2 mt-6 max-h-[140px] overflow-y-auto custom-scrollbar pr-2">
                             {chartsData.donutData.map((d, i) => {
-                                const total = chartsData.donutData.reduce((acc, curr) => acc + curr.value, 0);
-                                const percent = total > 0 ? Math.round((d.value / total) * 100) : 0;
-                                
+                                const percent = chartsData.donutTotal > 0
+                                    ? Math.round((d.value / chartsData.donutTotal) * 100)
+                                    : 0;
+
                                 return (
                                     <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group">
                                         <div className="flex items-center gap-2 min-w-0">

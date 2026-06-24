@@ -2,6 +2,7 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { usePublicSystemStatus } from './hooks/usePublicSystemStatus';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoleSelectionScreen } from './components/RoleSelectionScreen';
 import { WholesaleScreen } from './components/WholesaleScreen';
@@ -25,62 +26,20 @@ import { MerchantCallout } from './components/sections/MerchantCallout';
 // API Configuration
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Dashboard
-import { DashboardLayout } from './components/dashboard/DashboardLayout';
-import { DashboardHome } from './components/dashboard/DashboardHome';
-import { MerchantHome } from './components/dashboard/merchant/MerchantHome';
-import { MerchantMarketplace } from './components/dashboard/merchant/MerchantMarketplace';
-import { MarketplaceOfferDetails } from './components/dashboard/merchant/MarketplaceOfferDetails'; // NEW
-import { MerchantOffers } from './components/dashboard/merchant/MerchantOffers';
-import { MerchantOrders } from './components/dashboard/merchant/MerchantOrders';
-import { MerchantWallet } from './components/dashboard/merchant/MerchantWallet';
-import { MerchantProfile } from './components/dashboard/merchant/MerchantProfile';
-import { MerchantSettings } from './components/dashboard/merchant/MerchantSettings';
-import { MerchantNotifications } from './components/dashboard/merchant/MerchantNotifications';
-import { MerchantStatusGuard } from './components/dashboard/merchant/MerchantStatusGuard';
-import { MerchantDisputeDetails } from './components/dashboard/merchant/MerchantDisputeDetails';
-import { MerchantShippingCartPage } from './components/dashboard/merchant/MerchantShippingCartPage';
-import { MerchantSupportPage } from './components/dashboard/merchant/support/MerchantSupportPage';
-import { MerchantResolutionPage } from './components/dashboard/merchant/MerchantResolutionPage';
-import { MerchantReviews } from './components/dashboard/merchant/MerchantReviews';
-import { MerchantPerformance } from './components/dashboard/merchant/MerchantPerformance';
+const DashboardShell = lazy(() => import('./routes/DashboardShell'));
+const EarnIncomeLanding = lazy(() =>
+  import('./components/EarnIncomeLanding').then((m) => ({ default: m.EarnIncomeLanding })),
+);
+const BusinessLicensePage = lazy(() =>
+  import('./components/legal/BusinessLicensePage').then((m) => ({ default: m.BusinessLicensePage })),
+);
+const RegistryPdfViewer = lazy(() =>
+  import('./components/legal/RegistryPdfViewer').then((m) => ({ default: m.RegistryPdfViewer })),
+);
 
-
-// Admin Imports
-import { AdminHome } from './components/dashboard/admin/AdminHome';
-import { SecurityAudit } from './components/dashboard/admin/SecurityAudit'; // NEW
-import { AdminChatOversight } from './components/dashboard/admin/chat/AdminChatOversight'; // NEW
-import { AdminChatMonitoring } from './components/dashboard/admin/chat/AdminChatMonitoring'; // NEW
-
-import { MyOrders } from './components/dashboard/MyOrders';
-import { OrderDetails } from './components/dashboard/OrderDetails';
-import { CreateOrderWizard } from './components/dashboard/create-order/CreateOrderWizard';
-import { ChatLayout } from './components/dashboard/chat/ChatLayout';
-import { CheckoutWizard } from './components/dashboard/checkout/CheckoutWizard';
-import { ProfileView } from './components/dashboard/profile/ProfileView';
-import { ResolutionCenter } from './components/dashboard/resolution/ResolutionCenter';
-import { InfoCenter } from './components/dashboard/info/InfoCenter';
-import { WalletView } from './components/dashboard/wallet/WalletView';
-
-// New Customer Dashboard Pages
-import { ShipmentsPage } from './components/dashboard/shipments/ShipmentsPage';
-import { ViolationsPage } from './components/dashboard/ViolationsPage';
-import { ShippingCartPage } from './components/dashboard/shipping-cart/ShippingCartPage';
-import { BillingPage } from './components/dashboard/wallet/BillingPage';
-import { ReturnsExchangePage } from './components/dashboard/resolution/ReturnsExchangePage';
-import { SupportPage } from './components/dashboard/support/SupportPage';
-import { PreferencesPage } from './components/dashboard/preferences/PreferencesPage';
-import { LoyaltyPage } from './components/dashboard/loyalty/LoyaltyPage';
-import { RewardsPage } from './components/dashboard/rewards/RewardsPage';
-import { ShipmentDetailsPage } from './components/dashboard/shipments/ShipmentDetailsPage';
-import { CustomerResolutionCenter } from './components/dashboard/customer/CustomerResolutionCenter';
-import { CustomerDisputeDetails } from './components/dashboard/customer/CustomerDisputeDetails';
-
-// Store
+// Store — vendor profile only on dashboard; admin store deferred via maintenance fetch
 import { useVendorStore } from './stores/useVendorStore';
 import { useProfileStore } from './stores/useProfileStore';
-import { useAdminStore } from './stores/useAdminStore';
-import { useSystemAutomation } from './stores/useSystemAutomation'; // NEW
 
 // Navigation
 import { useNavigationHistory, parseUrlToState } from './utils/useNavigationHistory';
@@ -120,10 +79,13 @@ const ResetPassword = lazy(() => import('./components/auth/ResetPassword').then(
 const TermsView = lazy(() => import('./components/auth/TermsView').then(module => ({ default: module.TermsView })));
 const WalletLoyaltyTermsView = lazy(() => import('./components/legal/WalletLoyaltyTermsView').then(module => ({ default: module.WalletLoyaltyTermsView })));
 const AccountRecoveryWizard = lazy(() => import('./components/auth/AccountRecoveryWizard').then(module => ({ default: module.AccountRecoveryWizard })));
-import { EarnIncomeLanding } from './components/EarnIncomeLanding';
 import { VerifyLinkPage } from './components/verify/VerifyLinkPage';
-import { BusinessLicensePage } from './components/legal/BusinessLicensePage';
-import { RegistryPdfViewer } from './components/legal/RegistryPdfViewer';
+
+const routeFallback = (
+  <div className="fixed inset-0 bg-[#0F0E0C] flex items-center justify-center z-50">
+    <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 type ViewState =
   | 'landing'
@@ -150,14 +112,13 @@ type ViewState =
 type UserRole = 'customer' | 'merchant' | 'admin' | null;
 
 function AppContent() {
-  const { language } = useLanguage();
+  const { language, ensureDashboardTranslations } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [maintenanceChecked, setMaintenanceChecked] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [legalInitialSection, setLegalInitialSection] = useState<'terms' | 'privacy'>('terms');
   const [landingInitialSection, setLandingInitialSection] = useState<string | null>(null);
   const [recoveryRole, setRecoveryRole] = useState<'customer' | 'merchant'>('customer');
-  const { publicSystemStatus, fetchPublicStatus } = useAdminStore();
+  const { publicSystemStatus } = usePublicSystemStatus();
 
   // Handle Scrolling to Landing Section
   useEffect(() => {
@@ -285,32 +246,11 @@ function AppContent() {
     }
   }, []);
 
-  // --- MAINTENANCE MODE WATCHER (Priority Zero — runs before anything renders) ---
   useEffect(() => {
-    // Immediately fetch maintenance status and only then allow rendering
-    const checkAndPoll = async () => {
-      await fetchPublicStatus();
-      setMaintenanceChecked(true);
-    };
-    checkAndPoll();
-    // Poll every 30 seconds to catch live toggles
-    const interval = setInterval(fetchPublicStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // --- AUTOMATION ENGINE ---
-  const { startAutomation, stopAutomation } = useSystemAutomation();
-
-  useEffect(() => {
-    // Silencer: Stop automation if platform is in maintenance
-    if (publicSystemStatus?.maintenanceMode) {
-      stopAutomation();
-      return;
+    if (currentView === 'dashboard') {
+      void ensureDashboardTranslations();
     }
-
-    startAutomation();
-    return () => stopAutomation();
-  }, [publicSystemStatus?.maintenanceMode]);
+  }, [currentView, ensureDashboardTranslations]);
 
   // --- LICENSE WATCHDOG ---
   const { checkLicenseStatus, vendorStatus } = useVendorStore();
@@ -626,19 +566,6 @@ function AppContent() {
     );
   };
 
-  // --- GATE: Block ALL rendering until maintenance status is resolved ---
-  // This prevents the dashboard from flashing before maintenance check completes
-  if (!maintenanceChecked) {
-    return (
-      <div className="fixed inset-0 bg-[#0F0E0C] z-[9999] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/30 text-xs uppercase tracking-widest font-bold">Checking System Status...</p>
-        </div>
-      </div>
-    );
-  }
-
   // --- LUXURY MAINTENANCE LOCKSCREEN (Hard-Block 2026) ---
   if (publicSystemStatus?.maintenanceMode && userRole !== 'admin' && currentView !== 'admin-login') {
     return (
@@ -782,123 +709,18 @@ function AppContent() {
                 exit={{ opacity: 0 }}
                 className="h-full"
               >
-                {/* Session Loading Guard */}
-                {!userRole && (
-                  <div className="fixed inset-0 bg-[#0F0E0C] flex flex-col items-center justify-center z-50">
-                    <div className="w-16 h-16 border-4 border-gold-500/20 border-t-gold-500 rounded-full animate-spin mb-4"></div>
-                    <p className="text-gold-400/60 font-medium animate-pulse">
-                      {language === 'ar' ? 'جاري استعادة الجلسة...' : 'Restoring session...'}
-                    </p>
-                  </div>
-                )}
-
-                {/* A. Customer Routes */}
-                {userRole === 'customer' && (
-                  <DashboardLayout
-                    role="customer"
+                <Suspense fallback={routeFallback}>
+                  <DashboardShell
+                    userRole={userRole}
+                    language={language}
+                    dashboardPath={dashboardPath}
+                    viewId={viewId}
                     onLogout={handleSecureLogout}
-                    currentPath={dashboardPath}
                     onNavigate={handleDashboardNavigate}
                     onBack={handleDashboardBack}
-                  >
-                    {dashboardPath === 'home' && <DashboardHome onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'orders' && <MyOrders onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'order-details' && <OrderDetails orderId={viewId} onBack={() => handleDashboardNavigate('orders')} onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'create-order' && <CreateOrderWizard onComplete={() => handleDashboardNavigate('orders')} onCancel={() => handleDashboardNavigate('orders')} />}
-                    {dashboardPath === 'checkout' && <CheckoutWizard onComplete={() => handleDashboardNavigate('orders')} onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'chats' && <ChatLayout viewId={viewId} onNavigateToCheckout={(orderId) => handleDashboardNavigate('checkout', orderId)} />}
-                    {dashboardPath === 'profile' && <ProfileView />}
-                    {dashboardPath === 'wallet' && <WalletView onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'billing' && <BillingPage />}
-                    {dashboardPath === 'shipments' && <ShipmentsPage onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'shipment-details' && <ShipmentDetailsPage shipmentId={viewId} onBack={() => handleDashboardNavigate('shipments')} role="customer" />}
-                    {dashboardPath === 'shipping-cart' && <ShippingCartPage onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'resolution' && <CustomerResolutionCenter onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'dispute-details' && <CustomerDisputeDetails caseId={viewId} onBack={() => handleDashboardNavigate('resolution')} onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'support' && <SupportPage onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'preferences' && <PreferencesPage onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'loyalty' && <LoyaltyPage />}
-                    {dashboardPath === 'rewards' && <RewardsPage />}
-                    {dashboardPath === 'violations' && <ViolationsPage role="customer" />}
-                    {dashboardPath === 'info-center' && <InfoCenter />}
-                  </DashboardLayout>
-                )}
-
-                {/* B. Merchant Routes - LOCKDOWN AT LAYOUT LEVEL */}
-                {userRole === 'merchant' && (
-                  <MerchantStatusGuard>
-                    <DashboardLayout
-                      role="merchant"
-                      onLogout={handleSecureLogout}
-                      currentPath={dashboardPath}
-                      onNavigate={handleDashboardNavigate}
-                      onBack={handleDashboardBack}
-                    >
-                      {dashboardPath === 'home' && <MerchantHome onNavigate={handleDashboardNavigate} />}
-
-                      {dashboardPath === 'marketplace' && <MerchantMarketplace onNavigate={handleDashboardNavigate} />}
-                      {(dashboardPath === 'explore-offer' || (dashboardPath === 'orders' && viewId)) && <MarketplaceOfferDetails orderId={viewId} onBack={handleDashboardBack} />}
-                      {(dashboardPath === 'active-orders' || (dashboardPath === 'orders' && !viewId)) && <MerchantOrders onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'my-offers' && <MerchantOffers onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'reviews' && <MerchantReviews />}
-                      {dashboardPath === 'profile' && <MerchantProfile />}
-                      {dashboardPath === 'wallet' && <MerchantWallet onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'shipments' && <ShipmentsPage onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'shipment-details' && <ShipmentDetailsPage shipmentId={viewId} onBack={() => handleDashboardNavigate('shipments')} role="merchant" />}
-                      {dashboardPath === 'settings' && <MerchantSettings />}
-                      {dashboardPath === 'support' && <MerchantSupportPage onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'notifications' && <MerchantNotifications onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'chats' && <ChatLayout viewId={viewId} onNavigateToCheckout={() => { }} />}
-                      {dashboardPath === 'shipping-cart' && <MerchantShippingCartPage />}
-                      {dashboardPath === 'billing' && <BillingPage />}
-                      {dashboardPath === 'resolution' && <MerchantResolutionPage onNavigate={handleDashboardNavigate} />}
-                      {dashboardPath === 'dispute-details' && <MerchantDisputeDetails caseId={viewId} onBack={() => handleDashboardNavigate('resolution')} />}
-                      {dashboardPath === 'violations' && <ViolationsPage role="merchant" />}
-                      {dashboardPath === 'performance' && <MerchantPerformance />}
-                      {dashboardPath === 'info-center' && <InfoCenter />}
-                    </DashboardLayout>
-                  </MerchantStatusGuard>
-                )}
-
-                {/* C. Admin Routes */}
-                {userRole === 'admin' && (
-                  <DashboardLayout
-                    role="admin"
-                    onLogout={handleSecureLogout}
-                    currentPath={dashboardPath}
-                    onNavigate={handleDashboardNavigate}
-                    onBack={handleDashboardBack}
-                  >
-                    {dashboardPath === 'home' && <AdminHome />}
-                    {dashboardPath === 'users' && <AdminHome subPath="users" />}
-                    {dashboardPath === 'store-profile' && <AdminHome subPath="store-profile" viewId={viewId} />}
-                    {dashboardPath === 'customers' && <AdminHome subPath="customers" />}
-                    {dashboardPath === 'customer-profile' && <AdminHome subPath="customer-profile" viewId={viewId} />}
-                    {dashboardPath === 'reviews' && <AdminHome subPath="reviews" />}
-                    {dashboardPath === 'orders-control' && <AdminHome subPath="orders-control" />}
-                    {dashboardPath === 'admin-order-details' && <AdminHome subPath="admin-order-details" viewId={viewId} />}
-                    {dashboardPath === 'billing' && <AdminHome subPath="billing" />}
-                    {dashboardPath === 'financials' && <AdminHome subPath="financials" />}
-                    {dashboardPath === 'invoice-details' && <AdminHome subPath="invoice-details" viewId={viewId} />}
-                    {dashboardPath === 'shipping' && <AdminHome subPath="shipping" viewId={viewId} />}
-                    {dashboardPath === 'shipping-carts' && <AdminHome subPath="shipping-carts" />}
-                    {dashboardPath === 'audit-logs' && <AdminHome subPath="audit-logs" />}
-                    {dashboardPath === 'settings' && <AdminHome subPath="settings" />}
-                    {dashboardPath === 'support' && <AdminHome subPath="support" />}
-                    {dashboardPath === 'resolution' && <AdminHome subPath="resolution" />}
-                    {dashboardPath === 'admin-dispute-details' && <AdminHome subPath="admin-dispute-details" viewId={viewId} />}
-                    {dashboardPath === 'security-audit' && <AdminHome subPath="security-audit" />}
-                    {dashboardPath === 'violations' && <AdminHome subPath="violations" />}
-                    {dashboardPath === 'chats' && <AdminChatOversight />}
-                    {dashboardPath === 'chat-monitoring' && <AdminChatMonitoring />}
-                    {dashboardPath === 'access-control' && <AdminHome subPath="access-control" />}
-                    {dashboardPath === 'verification-tasks' && <AdminHome subPath="verification-tasks" onNavigate={handleDashboardNavigate} />}
-                    {dashboardPath === 'verification-task-details' && (
-                      <AdminHome subPath="verification-task-details" viewId={viewId} onNavigate={handleDashboardNavigate} />
-                    )}
-                    {dashboardPath === 'profile' && <ProfileView />}
-                  </DashboardLayout>
-                )}
+                    maintenanceMode={publicSystemStatus?.maintenanceMode === true}
+                  />
+                </Suspense>
               </motion.div>
             ) : currentView === 'role-selection' ? (
               <RoleSelectionScreen
@@ -918,19 +740,25 @@ function AppContent() {
                 onNavigateToLicense={handleNavigateToLicense}
               />
             ) : currentView === 'earn-income' ? (
-              <EarnIncomeLanding
-                onBack={() => handleNavigate('role-selection')}
-                onStart={() => handleNavigate('role-selection')}
-              />
+              <Suspense fallback={routeFallback}>
+                <EarnIncomeLanding
+                  onBack={() => handleNavigate('role-selection')}
+                  onStart={() => handleNavigate('role-selection')}
+                />
+              </Suspense>
             ) : currentView === 'wholesale' ? (
               <WholesaleScreen onBack={() => handleNavigate('role-selection')} />
             ) : currentView === 'business-license' ? (
-              <BusinessLicensePage
-                onBack={() => handleHistoryBack('role-selection')}
-                onVerifyRegistry={handleNavigateToLicenseVerify}
-              />
+              <Suspense fallback={routeFallback}>
+                <BusinessLicensePage
+                  onBack={() => handleHistoryBack('role-selection')}
+                  onVerifyRegistry={handleNavigateToLicenseVerify}
+                />
+              </Suspense>
             ) : currentView === 'business-license-verify' ? (
-              <RegistryPdfViewer onBack={() => handleHistoryBack('business-license')} />
+              <Suspense fallback={routeFallback}>
+                <RegistryPdfViewer onBack={() => handleHistoryBack('business-license')} />
+              </Suspense>
             ) : currentView === 'how-we-work' ? (
               <HowWeWorkScreen
                 onComplete={() => {

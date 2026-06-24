@@ -89,7 +89,11 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                             <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl relative z-10">
                                 <img
                                     src="/logo.png"
-                                    alt="E-Tashleh Logo"
+                                    alt="E-TASHLEH"
+                                    width={112}
+                                    height={112}
+                                    fetchPriority="high"
+                                    decoding="async"
                                     className="w-full h-full object-contain p-4 brightness-0 invert drop-shadow-md"
                                 />
                             </div>

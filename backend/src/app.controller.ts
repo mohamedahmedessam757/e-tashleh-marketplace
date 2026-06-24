@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Header } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { PlatformSettingsService } from './platform-settings/platform-settings.service';
 
@@ -22,6 +22,7 @@ export class AppController {
     }
 
     @Get('system/status')
+    @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
     async getSystemStatus() {
         const statusSetting = await this.prisma.platformSettings.findUnique({
             where: { settingKey: 'system_status' }

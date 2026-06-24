@@ -100,12 +100,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
           `}
         >
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={(e) => handleNavClick(e as any, '#home')}>
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={(e) => handleNavClick(e as any, '#home')}
+            onKeyDown={(e) => e.key === 'Enter' && onHomeClick()}
+            role="button"
+            tabIndex={0}
+            aria-label={language === 'ar' ? 'الصفحة الرئيسية' : 'Home'}
+          >
             <img
               src="/logo.png"
-              alt="E-Tashleh Logo"
-              width="56"
-              height="56"
+              alt="E-TASHLEH"
+              width={56}
+              height={56}
+              fetchPriority="high"
+              decoding="async"
               className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-0 invert"
             />
           </div>
@@ -172,7 +181,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
                 />
                 <span className="font-bold text-white text-lg">E-Tashleh</span>
               </div>
-              <button onClick={() => setMobileMenuOpen(false)} className="text-white/60 hover:text-white p-2 bg-white/5 rounded-full">
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/60 hover:text-white p-2 bg-white/5 rounded-full"
+                aria-label={language === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+              >
                 <X size={24} />
               </button>
             </div>
