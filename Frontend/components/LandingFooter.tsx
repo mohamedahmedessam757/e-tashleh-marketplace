@@ -102,6 +102,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
                                 target="_blank"
                                 rel="noreferrer"
                                 className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:bg-[#1DA851] transition-all transform hover:scale-105 hover:shadow-[#25D366]/40"
+                                aria-label={t.common.footer.whatsappBusiness}
                                 title={t.common.footer.whatsappBusiness}
                             >
                                 <IconPhone size={20} />
@@ -115,10 +116,12 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={onOpenSupport}>
+                        <div className="flex flex-col items-center gap-2 group">
                             <button
                                 type="button"
+                                onClick={onOpenSupport}
                                 className="w-12 h-12 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-lg hover:bg-[#D97706] transition-all transform hover:scale-105 hover:shadow-[#F59E0B]/40"
+                                aria-label={t.common.footer.contact}
                             >
                                 <IconHelpCircle size={20} />
                             </button>
@@ -156,6 +159,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
                             type="button"
                             onClick={onAdminClick}
                             className="absolute right-0 bottom-0 opacity-0 hover:opacity-10 p-2 transition-opacity"
+                            aria-label="Staff portal"
                         >
                             <IconShield size={12} className="text-white" />
                         </button>

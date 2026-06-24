@@ -3,3 +3,5 @@ Allow: /
 Disallow: /dashboard/
 
 Sitemap: https://e-tashleh.net/sitemap.xml
+
+# LLM context: https://e-tashleh.net/llms.txt

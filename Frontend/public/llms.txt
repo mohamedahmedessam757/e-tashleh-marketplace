@@ -1,0 +1,29 @@
+# E-TASHLEH | إي-تشليح
+
+> E-TASHLEH is a Saudi marketplace for buying and selling verified new and used auto parts with escrow payments, shipping, and merchant verification. Public marketing pages are listed below; authenticated dashboards require login.
+
+## Public pages
+
+- [Home](https://e-tashleh.net/): Landing page and role selection (customer, merchant, wholesale)
+- [How we work](https://e-tashleh.net/how-it-works): Platform workflow and buyer/seller journey
+- [Wholesale](https://e-tashleh.net/wholesale): Bulk and wholesale inquiries
+- [Terms of service](https://e-tashleh.net/legal/terms): Customer terms and conditions
+- [Privacy policy](https://e-tashleh.net/legal/privacy): Data handling and privacy
+- [Wallet & loyalty terms](https://e-tashleh.net/legal/wallet-loyalty-terms): Wallet, points, and rewards rules
+- [Business license](https://e-tashleh.net/legal/business-license): Nomo economic registry document
+
+## Contact
+
+- [General inquiries](mailto:shop@e-tashleh.shop): shop@e-tashleh.shop
+- [Customer support](mailto:cs@e-tashleh.shop): cs@e-tashleh.shop
+- [Merchant support](mailto:sl@e-tashleh.shop): sl@e-tashleh.shop
+- [Wholesale](mailto:wh@e-tashleh.shop): wh@e-tashleh.shop
+
+## Crawling
+
+- [Sitemap](https://e-tashleh.net/sitemap.xml): Public URL index
+- [robots.txt](https://e-tashleh.net/robots.txt): Crawl rules (`/dashboard/` requires authentication)
+
+## API
+
+- [Public API](https://api.e-tashleh.net): Backend for the marketplace (authenticated routes only with valid tokens)
