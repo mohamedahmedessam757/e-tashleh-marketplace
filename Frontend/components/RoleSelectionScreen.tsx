@@ -1,5 +1,6 @@
 import React from 'react';
-import { User, Store, ShoppingCart, HelpCircle, ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
+import { IconUser, IconStore, IconShoppingCart, IconTrendingUp, IconArrowLeft, IconArrowRight } from './ui/RoleIcons';
+import { IconHelpCircle } from './ui/FooterIcons';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LandingFooter } from './LandingFooter';
 import { LanguageToggle } from './ui/LanguageToggle';
@@ -33,7 +34,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 }) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
-    const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
+    const ArrowIcon = isAr ? IconArrowLeft : IconArrowRight;
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col relative overflow-x-hidden">
@@ -95,7 +96,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-white">
-                                    <User size={20} />
+                                    <IconUser size={20} />
                                 </div>
                                 <span className="text-lg font-bold text-white">
                                     {t.common.roleSelection?.customerOrders || 'طلبات القطع للعملاء'}
@@ -117,7 +118,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-white">
-                                    <Store size={20} />
+                                    <IconStore size={20} />
                                 </div>
                                 <span className="text-lg font-bold text-white">
                                     {t.common.roleSelection?.storeLogin || 'دخول المتاجر'}
@@ -139,7 +140,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-white">
-                                    <ShoppingCart size={20} />
+                                    <IconShoppingCart size={20} />
                                 </div>
                                 <span className="text-lg font-bold text-white">
                                     {t.common.roleSelection?.wholesaleOrders || 'دخول طلبات الجملة للشركات'}
@@ -162,7 +163,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 
                             <div className="flex items-center gap-4 relative z-10">
                                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white border border-white/30 group-hover:scale-110 transition-transform shadow-inner">
-                                    <TrendingUp size={24} />
+                                    <IconTrendingUp size={24} />
                                 </div>
                                 <div className="flex flex-col items-start">
                                     <span className="text-xl font-black text-white leading-tight tracking-tight uppercase italic font-outfit">
@@ -187,7 +188,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                         style={{ animationDelay: `${STAGGER_DELAYS[6]}s` }}
                         className="stagger-item flex items-center gap-2 group px-6 py-3 rounded-full bg-white/5 border border-white/5 hover:border-gold-500/30 hover:bg-white/10 hover:scale-[1.03] transition-all"
                     >
-                        <HelpCircle size={16} className="text-gold-400 group-hover:text-gold-300" />
+                        <IconHelpCircle size={16} className="text-gold-400 group-hover:text-gold-300" />
                         <span className="text-sm text-white/70 group-hover:text-white transition-colors">
                             {t.common.roleSelection?.howWeWork || 'تعرّف على طريقة عملنا قبل أن تبدأ معنا'}
                         </span>

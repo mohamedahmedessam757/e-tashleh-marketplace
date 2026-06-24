@@ -258,8 +258,24 @@ cd ../Frontend && npm ci --legacy-peer-deps && npm run build
 
 sudo cp deploy/nginx/e-tashleh.conf /etc/nginx/sites-available/e-tashleh
 sudo cp deploy/nginx/snippets/e-tashleh-static-cache.conf /etc/nginx/snippets/
+sudo cp deploy/nginx/snippets/e-tashleh-gzip.conf /etc/nginx/snippets/
 sudo nginx -t && sudo systemctl reload nginx
 pm2 restart e-tashleh-api
+```
+
+**تحقق من gzip + cache (المرحلة 4 — إلزامي):**
+
+```bash
+curl -sI -H "Accept-Encoding: gzip" https://e-tashleh.net/assets/vendor-react-*.js | grep -iE "cache-control|content-encoding"
+# المتوقع: gzip + public, max-age=31536000, immutable
+
+curl -sI https://e-tashleh.net/logo.webp | grep -i cache-control
+```
+
+إن لم يظهر `Content-Encoding: gzip`، أضف داخل `http {}` في `/etc/nginx/nginx.conf`:
+
+```nginx
+include /etc/nginx/snippets/e-tashleh-gzip.conf;
 ```
 
 **تحقق من الـ cache بعد النشر (المرحلة 3 — HTTPS):**
@@ -295,4 +311,21 @@ curl -sI https://e-tashleh.net/ | grep -i cache-control
 | NestJS compression | `backend/src/main.ts` |
 | CSS code split | `vite.config.ts` → `cssCodeSplit: true` |
 
-## المرحلة 4
+## المرحلة 4 — Mobile Field Data (56 → هدف 65+ خلال 28 يوم)
+
+| بند | الملفات |
+|-----|---------|
+| nginx gzip snippet داخل server 443 | `deploy/nginx/snippets/e-tashleh-gzip.conf` |
+| فصل `vendor-motion` / `vendor-icons` | `Frontend/vite.config.ts` |
+| تأجيل `/system/status` | `Frontend/hooks/usePublicSystemStatus.ts` |
+| loader أقصر على الموبايل + critical CSS | `LoadingScreen.tsx`, `index.html` |
+| أيقونات SVG بدون lucide (footer/role) | `FooterIcons.tsx`, `RoleIcons.tsx`, `LandingFooter.tsx` |
+| `logo.webp` مضغوط (~13 KB) | `Frontend/scripts/compress-logo-webp.mjs` |
+
+**Checklist بعد النشر:**
+1. `index.html` يعمل preload لـ `vendor-icons` فقط (لا `vendor-motion`)
+2. Incognito mobile: لا `vendor-motion` في Network على `/`
+3. زائر جديد موبايل: loader ~120ms
+4. قياس: https://pagespeedinsights.dev/report/https://e-tashleh.net/?strategy=mobile
+
+## المرحلة 5

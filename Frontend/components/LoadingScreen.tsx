@@ -1,13 +1,25 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 interface LoadingScreenProps {
   onComplete: () => void;
 }
 
+function getMobileTiming() {
+  if (typeof window === 'undefined') {
+    return { intervalMs: 60, splitDelay: 80, finishDelay: 280, incrementMin: 12, incrementMax: 34 };
+  }
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  if (isMobile) {
+    return { intervalMs: 40, splitDelay: 30, finishDelay: 120, incrementMin: 28, incrementMax: 45 };
+  }
+  return { intervalMs: 60, splitDelay: 80, finishDelay: 280, incrementMin: 12, incrementMax: 34 };
+}
+
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [isSplitting, setIsSplitting] = useState(false);
+  const timing = useMemo(() => getMobileTiming(), []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -16,26 +28,30 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           clearInterval(timer);
           return 100;
         }
-        const increment = Math.random() * 22 + 12;
+        const increment = Math.random() * (timing.incrementMax - timing.incrementMin) + timing.incrementMin;
         return Math.min(prev + increment, 100);
       });
-    }, 60);
+    }, timing.intervalMs);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [timing]);
 
   useEffect(() => {
     if (progress === 100) {
-      setTimeout(() => {
+      const splitTimer = setTimeout(() => {
         setIsSplitting(true);
-      }, 80);
+      }, timing.splitDelay);
 
       const finishTimer = setTimeout(() => {
         onComplete();
-      }, 280);
-      return () => clearTimeout(finishTimer);
+      }, timing.splitDelay + timing.finishDelay);
+
+      return () => {
+        clearTimeout(splitTimer);
+        clearTimeout(finishTimer);
+      };
     }
-  }, [progress, onComplete]);
+  }, [progress, onComplete, timing]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">

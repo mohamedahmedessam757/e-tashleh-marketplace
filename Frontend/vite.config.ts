@@ -8,6 +8,7 @@ const DEFERRED_PRELOAD_CHUNKS = [
   'vendor-pdf',
   'vendor-socket',
   'vendor-supabase',
+  'vendor-motion',
   'DashboardShell',
   'OTPVerification',
   'vendor-stripe',
@@ -53,7 +54,8 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
             if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
-            if (id.includes('framer-motion') || id.includes('lucide-react')) return 'vendor-ui';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('lucide-react')) return 'vendor-icons';
             if (id.includes('@supabase')) return 'vendor-supabase';
             if (id.includes('socket.io')) return 'vendor-socket';
             if (id.includes('@stripe')) return 'vendor-stripe';

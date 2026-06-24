@@ -24,9 +24,26 @@ export function usePublicSystemStatus(pollMs = 30_000) {
   }, []);
 
   useEffect(() => {
-    void fetchPublicStatus();
-    const interval = setInterval(() => void fetchPublicStatus(), pollMs);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const startPolling = () => {
+      void fetchPublicStatus();
+      interval = setInterval(() => void fetchPublicStatus(), pollMs);
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(startPolling, { timeout: 3000 });
+      return () => {
+        window.cancelIdleCallback(idleId);
+        if (interval) clearInterval(interval);
+      };
+    }
+
+    const timeoutId = setTimeout(startPolling, 1500);
+    return () => {
+      clearTimeout(timeoutId);
+      if (interval) clearInterval(interval);
+    };
   }, [fetchPublicStatus, pollMs]);
 
   return { publicSystemStatus, fetchPublicStatus };
