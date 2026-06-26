@@ -7,6 +7,46 @@ import { storesApi } from '../services/api/stores';
 import { API_URL } from '../services/api/config';
 import { useAdminPermissionsStore } from './useAdminPermissionsStore';
 
+let feedRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleDebouncedFeedRefresh(
+  getState: () => Pick<AdminState, 'fetchFinancialFeed' | 'clearNewEventsCount'>,
+  silent = true,
+  delayMs = 700,
+) {
+  if (feedRefreshDebounceTimer) clearTimeout(feedRefreshDebounceTimer);
+  feedRefreshDebounceTimer = setTimeout(() => {
+    getState().fetchFinancialFeed(true, silent);
+    getState().clearNewEventsCount();
+    feedRefreshDebounceTimer = null;
+  }, delayMs);
+}
+
+function clearFinancialRefreshTimers() {
+  if (feedRefreshDebounceTimer) {
+    clearTimeout(feedRefreshDebounceTimer);
+    feedRefreshDebounceTimer = null;
+  }
+  if (financialsRefreshDebounceTimer) {
+    clearTimeout(financialsRefreshDebounceTimer);
+    financialsRefreshDebounceTimer = null;
+  }
+}
+
+function scheduleDebouncedFinancialsRefresh(
+  getState: () => Pick<AdminState, 'fetchAdminFinancials' | 'fetchFinancialFeed' | 'clearNewEventsCount'>,
+  delayMs = 700,
+) {
+  if (financialsRefreshDebounceTimer) clearTimeout(financialsRefreshDebounceTimer);
+  financialsRefreshDebounceTimer = setTimeout(() => {
+    getState().fetchAdminFinancials(undefined, true);
+    getState().fetchFinancialFeed(true, true);
+    getState().clearNewEventsCount();
+    financialsRefreshDebounceTimer = null;
+  }, delayMs);
+}
+
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER';
 
 export interface AdminUser {
@@ -1300,37 +1340,54 @@ export const useAdminStore = create<AdminState>()(
       subscribeToFinancialFeed: () => {
         if (get().financialFeedSubscription) return;
 
+        const bumpNewEvents = () => {
+          set({ newEventsCount: get().newEventsCount + 1 });
+        };
+
+        const scheduleFeedRefresh = () => {
+          scheduleDebouncedFeedRefresh(get, true);
+        };
+
         const channel = supabase.channel('admin-financial-feed')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_transactions' }, (payload) => {
-            get().fetchFinancialFeed(true, true); // Silent refresh
-            set({ newEventsCount: get().newEventsCount + 1 });
+            scheduleFeedRefresh();
+            bumpNewEvents();
             get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT', amount: (payload.new as any).total_amount, status: (payload.new as any).status });
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payment_transactions' }, (payload) => {
-            if ((payload.new as any).status === 'SUCCESS' && (payload.old as any).status !== 'SUCCESS') {
-              get().fetchFinancialFeed(true, true); // Silent refresh
-              set({ newEventsCount: get().newEventsCount + 1 });
-              get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT_SUCCESS', amount: (payload.new as any).total_amount });
+            const newStatus = (payload.new as any).status;
+            const oldStatus = (payload.old as any)?.status;
+            if (
+              (newStatus === 'SUCCESS' && oldStatus !== 'SUCCESS') ||
+              (newStatus === 'FAILED' && oldStatus !== 'FAILED') ||
+              (newStatus === 'REFUNDED' && oldStatus !== 'REFUNDED')
+            ) {
+              scheduleFeedRefresh();
+              bumpNewEvents();
+              if (newStatus === 'SUCCESS') {
+                get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT_SUCCESS', amount: (payload.new as any).total_amount });
+              } else if (newStatus === 'FAILED') {
+                get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT', amount: (payload.new as any).total_amount, status: 'FAILED' });
+              }
             }
           })
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet_transactions' }, (payload) => {
-            get().fetchFinancialFeed(true, true); // Silent refresh
-            if (payload.eventType === 'INSERT') {
-              set({ newEventsCount: get().newEventsCount + 1 });
-              get().addFinancialToast({ id: Date.now().toString(), type: 'WALLET', amount: (payload.new as any).amount, txnType: (payload.new as any).transactionType });
-            }
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wallet_transactions' }, (payload) => {
+            scheduleFeedRefresh();
+            bumpNewEvents();
+            get().addFinancialToast({ id: Date.now().toString(), type: 'WALLET', amount: (payload.new as any).amount, txnType: (payload.new as any).transactionType });
           })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'wallet_transactions' }, scheduleFeedRefresh)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'escrow_transactions' }, (payload) => {
-            get().fetchFinancialFeed(true, true); // Silent refresh
-            if (payload.eventType === 'INSERT' || ((payload.new as any).status !== (payload.old as any).status)) {
-              set({ newEventsCount: get().newEventsCount + 1 });
+            scheduleFeedRefresh();
+            if (payload.eventType === 'INSERT' || ((payload.new as any).status !== (payload.old as any)?.status)) {
+              bumpNewEvents();
               get().addFinancialToast({ id: Date.now().toString(), type: 'ESCROW', amount: (payload.new as any).merchantAmount, status: (payload.new as any).status });
             }
           })
           .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawal_requests' }, (payload) => {
-            get().fetchFinancialFeed(true, true); // Silent refresh
+            scheduleFeedRefresh();
             if (payload.eventType === 'INSERT') {
-              set({ newEventsCount: get().newEventsCount + 1 });
+              bumpNewEvents();
               get().addFinancialToast({ id: Date.now().toString(), type: 'WITHDRAWAL', amount: (payload.new as any).amount, status: (payload.new as any).status });
             }
           })
@@ -1345,6 +1402,7 @@ export const useAdminStore = create<AdminState>()(
           supabase.removeChannel(financialFeedSubscription);
           set({ financialFeedSubscription: null, newEventsCount: 0 });
         }
+        clearFinancialRefreshTimers();
       },
 
       clearNewEventsCount: () => set({ newEventsCount: 0 }),
@@ -1437,18 +1495,21 @@ export const useAdminStore = create<AdminState>()(
       },
 
       markFeedItemAsSeen: (id: string) => {
+        const feed = get().financialFeed;
+        const item = feed.find((i) => i.id === id);
+        if (!item?.isNew) return;
+
         const seenIds = JSON.parse(sessionStorage.getItem('seen_financial_ids') || '[]');
         if (!seenIds.includes(id)) {
           seenIds.push(id);
-          // Keep only last 200 IDs to save storage
           if (seenIds.length > 200) seenIds.shift();
           sessionStorage.setItem('seen_financial_ids', JSON.stringify(seenIds));
         }
 
         set({
-          financialFeed: get().financialFeed.map(item => 
-            item.id === id ? { ...item, isNew: false } : item
-          )
+          financialFeed: feed.map((row) =>
+            row.id === id ? { ...row, isNew: false } : row,
+          ),
         });
       },
 
@@ -1573,8 +1634,7 @@ export const useAdminStore = create<AdminState>()(
         if (financialSubscription) return;
 
         const refreshFinancials = () => {
-          get().fetchAdminFinancials(undefined, true);
-          get().fetchFinancialFeed(true, true);
+          scheduleDebouncedFinancialsRefresh(get);
         };
 
         const channel = supabase.channel('admin-financials-realtime')
@@ -1582,11 +1642,14 @@ export const useAdminStore = create<AdminState>()(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'payment_transactions' },
             (payload) => {
+              const newStatus = (payload.new as any)?.status;
+              const oldStatus = (payload.old as any)?.status;
               if (
                 payload.eventType === 'INSERT' ||
                 (payload.eventType === 'UPDATE' &&
-                  (payload.new as any).status === 'SUCCESS' &&
-                  (payload.old as any)?.status !== 'SUCCESS')
+                  newStatus &&
+                  newStatus !== oldStatus &&
+                  ['SUCCESS', 'FAILED', 'REFUNDED'].includes(newStatus))
               ) {
                 refreshFinancials();
               }
@@ -1618,6 +1681,7 @@ export const useAdminStore = create<AdminState>()(
           supabase.removeChannel(financialSubscription);
           set({ financialSubscription: null });
         }
+        clearFinancialRefreshTimers();
       },
 
       updateStoreRestrictions: async (id, data) => {

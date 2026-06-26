@@ -36,8 +36,16 @@ export interface AdminFinancialKpis {
   customerRewardsInWallets: number;
   opsLast24h: number;
   failedUnsettledCount: number;
+  failedUnsettledAmount: number;
   reconciliationDelta: number;
   todayTransactionsCount: number;
+}
+
+function buildFailedUnsettledWhere(): Prisma.PaymentTransactionWhereInput {
+  return {
+    status: 'FAILED',
+    OR: [{ refundedAmount: 0 }, { refundedAmount: null }],
+  };
 }
 
 export interface SalesTrendPoint {
@@ -127,7 +135,7 @@ export async function computeAdminFinancialKpis(
     customerRewardsAgg,
     loyaltyPaidAgg,
     opsLast24h,
-    failedUnsettledCount,
+    failedUnsettledAgg,
   ] = await Promise.all([
     prisma.paymentTransaction.aggregate({
       where: grossSalesWhere,
@@ -204,12 +212,10 @@ export async function computeAdminFinancialKpis(
       _sum: { amount: true },
     }),
     computeOpsLast24h(prisma),
-    prisma.paymentTransaction.count({
-      where: {
-        status: 'FAILED',
-        refundedAmount: 0,
-        ...(dateFilter ? { createdAt: dateFilter } : {}),
-      },
+    prisma.paymentTransaction.aggregate({
+      where: buildFailedUnsettledWhere(),
+      _count: { id: true },
+      _sum: { totalAmount: true },
     }),
   ]);
 
@@ -267,7 +273,8 @@ export async function computeAdminFinancialKpis(
     loyaltyPointsOutstanding: Number(loyaltyPointsAgg._sum?.loyaltyPoints || 0),
     customerRewardsInWallets: roundMoney(Number(customerRewardsAgg._sum.amount || 0)),
     opsLast24h,
-    failedUnsettledCount,
+    failedUnsettledCount: failedUnsettledAgg._count.id,
+    failedUnsettledAmount: roundMoney(Number(failedUnsettledAgg._sum.totalAmount || 0)),
     reconciliationDelta,
     todayTransactionsCount: opsLast24h,
   };

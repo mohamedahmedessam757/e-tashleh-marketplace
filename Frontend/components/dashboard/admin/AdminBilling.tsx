@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, 
@@ -33,8 +33,6 @@ import {
     Package,
     User,
     X,
-    RotateCcw,
-    AlertTriangle
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { BarChart } from '../../ui/Charts';
@@ -42,12 +40,14 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ManualPayoutModal } from './ManualPayoutModal';
 import { RejectWithdrawalModal } from './RejectWithdrawalModal';
-import { Landmark, History, Eye } from 'lucide-react';
+import { Landmark, History } from 'lucide-react';
 import { OrderFinancialDrawer } from './OrderFinancialDrawer';
 import { FinancialToast } from '../../ui/FinancialToast';
 import TransactionTypeFilter from './TransactionTypeFilter';
 import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
+import { FinancialFeedRow } from './FinancialFeedRow';
+import type { UnifiedFinancialEvent } from '../../../stores/useAdminStore';
 
 interface AdminBillingProps {
     onNavigate?: (path: string, id: any) => void;
@@ -107,17 +107,9 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const [processingRejectId, setProcessingRejectId] = useState<string | null>(null);
     const [isVerifyingBank, setIsVerifyingBank] = useState(false);
     const [expandedFeedIds, setExpandedFeedIds] = useState<Set<string>>(new Set());
+    const [ledgerSearchInput, setLedgerSearchInput] = useState(feedFilters.search || '');
     
     const observerTarget = React.useRef(null);
-
-    const toggleFeedExpand = (id: string) => {
-        setExpandedFeedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
 
     React.useEffect(() => {
         const observer = new IntersectionObserver(
@@ -144,30 +136,11 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const isHighLevelAdmin = currentAdmin?.role === 'SUPER_ADMIN' || currentAdmin?.role === 'ADMIN';
 
     useEffect(() => {
-        // OVERVIEW Stats
         if (adminFinancials === null) {
             fetchAdminFinancials();
-        } else {
-            // Silent refresh of stats in background
-            useAdminStore.getState().fetchAdminFinancials(); 
         }
-
-        // WITHDRAWALS Tab — refetch when tab active or filters change
-        if (activeTab === 'WITHDRAWALS') {
-            fetchWithdrawals(true);
-        }
-        
         subscribeToFinancials();
         subscribeToFinancialFeed();
-
-        // TRANSACTIONS Tab — load / refresh ledger
-        if (activeTab === 'TRANSACTIONS') {
-            if (financialFeed.length === 0) {
-                fetchFinancialFeed(true);
-            } else {
-                fetchFinancialFeed(true, true);
-            }
-        }
 
         const handleClickOutside = (event: MouseEvent) => {
             if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
@@ -183,7 +156,32 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
             unsubscribeFromFinancialFeed();
             document.removeEventListener('mousedown', handleClickOutside);
         };
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'TRANSACTIONS' && financialFeed.length === 0 && !isFeedLoading) {
+            fetchFinancialFeed(true);
+        }
     }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 'WITHDRAWALS') {
+            fetchWithdrawals(true);
+        }
+    }, [activeTab, financialFilters.withdrawalStatus]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (ledgerSearchInput !== (feedFilters.search || '')) {
+                setFeedFilters({ search: ledgerSearchInput });
+            }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [ledgerSearchInput]);
+
+    useEffect(() => {
+        setLedgerSearchInput(feedFilters.search || '');
+    }, [feedFilters.search]);
 
     // Permissions-based Tab filtering
     const visibleTabs = useMemo(() => {
@@ -212,7 +210,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         referralCount: 0, loyaltyCashbackPaid: 0, pendingWithdrawals: 0, pendingWithdrawalsCount: 0,
         frozenFunds: 0, opsLast24h: 0, todayTransactionsCount: 0,
         totalRefunds: 0, gatewayFees: 0, pendingLiabilities: 0,
-        loyaltyPointsOutstanding: 0, failedUnsettledCount: 0, reconciliationDelta: 0,
+        loyaltyPointsOutstanding: 0, failedUnsettledCount: 0, failedUnsettledAmount: 0, reconciliationDelta: 0,
     };
 
     const salesTrendFromApi: { date: string; grossSales: number }[] = adminFinancials?.salesTrend || [];
@@ -229,8 +227,23 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         }));
     }, [salesTrendFromApi, isAr]);
 
-    const showReconciliationWarning =
-        Math.abs(Number(kpis.reconciliationDelta || 0)) > 0.01;
+    const handleFeedRowClick = useCallback((item: UnifiedFinancialEvent) => {
+        markFeedItemAsSeen(item.id);
+        if (item.orderId) setSelectedOrderIdForTimeline(item.orderId);
+    }, [markFeedItemAsSeen]);
+
+    const handleFeedToggleExpand = useCallback((id: string) => {
+        setExpandedFeedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }, []);
+
+    const handleFeedViewAudit = useCallback((orderId: string) => {
+        setSelectedOrderIdForTimeline(orderId);
+    }, []);
 
     const handleSaveCommission = () => {
         setCommissionRate(tempRate);
@@ -373,20 +386,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
             {activeTab === 'OVERVIEW' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-
-                    {showReconciliationWarning && (
-                        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 flex items-start gap-3">
-                            <AlertTriangle size={20} className="text-amber-400 shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-black text-amber-300">
-                                    {t.admin.billing.kpis.reconciliationWarning}
-                                </p>
-                                <p className="text-xs text-amber-200/70 mt-1 font-mono">
-                                    {t.admin.billing.kpis.reconciliationDelta}: {Number(kpis.reconciliationDelta).toLocaleString()} AED
-                                </p>
-                            </div>
-                        </div>
-                    )}
                     
                     {/* 2. KPI Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -434,6 +433,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                         <StatCard 
                             label={t.admin.billing.kpis.escrowLocked}
                             value={`${(kpis.frozenFunds || 0).toLocaleString()} AED`}
+                            subValue={t.admin.billing.kpis.escrowLockedSub}
                             icon={Lock}
                             color="#ef4444"
                         />
@@ -447,15 +447,9 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                         <StatCard 
                             label={t.admin.billing.kpis.userLiabilities}
                             value={`${(kpis.pendingLiabilities || 0).toLocaleString()} AED`}
-                            subValue={`${t.admin.billing.kpis.loyaltyPointsSub}: ${((kpis as any).loyaltyPointsOutstanding || 0).toLocaleString()}`}
+                            subValue={`${t.admin.billing.kpis.netPlatformProfitLabel}: ${(kpis.netPlatformPosition || 0).toLocaleString()} AED`}
                             icon={AlertOctagon}
                             color="#eab308"
-                        />
-                        <StatCard 
-                            label={t.admin.billing.kpis.gatewayFees}
-                            value={`${(kpis.gatewayFees || 0).toLocaleString()} AED`}
-                            icon={CreditCard}
-                            color="#94a3b8"
                         />
                         <StatCard 
                             label={t.admin.billing.kpis.totalRefunds}
@@ -466,7 +460,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                         <StatCard 
                             label={t.admin.billing.kpis.failedUnsettled}
                             value={String(kpis.failedUnsettledCount ?? 0)}
-                            subValue={t.admin.billing.kpis.failedUnsettledSub}
+                            subValue={`${(kpis.failedUnsettledAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.failedUnsettledSub}`}
                             icon={RefreshCw}
                             color="#64748b"
                         />
@@ -651,8 +645,8 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                                     type="text"
                                     placeholder={t.admin.billing.searchPlaceholder}
                                     className={`w-full md:w-64 bg-[#050505] border border-white/10 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-3 text-xs text-white focus:border-gold-500/50 focus:bg-[#080808] outline-none transition-all placeholder:text-white/10 font-bold shadow-inner`}
-                                    value={feedFilters.search || ''}
-                                    onChange={e => setFinancialFilters({ search: e.target.value })}
+                                    value={ledgerSearchInput}
+                                    onChange={e => setLedgerSearchInput(e.target.value)}
                                 />
                             </div>
 
@@ -713,199 +707,19 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                                         <tr><td colSpan={9} className="px-8 py-20 text-center text-white/20 font-black text-xs uppercase animate-pulse">{t.admin.billing.ledger.table.scanning}</td></tr>
                                     ) : financialFeed.length === 0 ? (
                                         <tr><td colSpan={9} className="px-8 py-20 text-center text-white/10 font-bold text-xs uppercase ">{t.admin.billing.ledger.table.noRecords}</td></tr>
-                                    ) : financialFeed.map((item) => {
-                                        const isCredit = item.direction === 'CREDIT' || item.direction === 'RELEASE';
-                                        const isDebit = item.direction === 'DEBIT';
-                                        const isExpanded = expandedFeedIds.has(item.id);
-                                        const breakdownParts: string[] = [];
-                                        if (item.commission != null && item.commission > 0) breakdownParts.push(`C:${item.commission}`);
-                                        if (item.shippingCost != null && item.shippingCost > 0) breakdownParts.push(`S:${item.shippingCost}`);
-                                        if (item.gatewayFee != null && item.gatewayFee > 0) breakdownParts.push(`G:${item.gatewayFee}`);
-                                        if (item.refundedAmount != null && item.refundedAmount > 0) breakdownParts.push(`R:${item.refundedAmount}`);
-                                        if (item.unitPrice != null && item.unitPrice > 0) breakdownParts.push(`U:${item.unitPrice}`);
-                                        
-                                        return (
-                                            <React.Fragment key={item.id}>
-                                            <tr 
-                                                onClick={() => {
-                                                    markFeedItemAsSeen(item.id);
-                                                    if (item.orderId) setSelectedOrderIdForTimeline(item.orderId);
-                                                }}
-                                                className={`
-                                                    hover:bg-white/[0.04] transition-all cursor-pointer group 
-                                                    ${item.isNew ? 'financial-row-new animate-gold-pulse' : ''}
-                                                `}
-                                            >
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-500 ${
-                                                            item.isNew ? 'bg-gold-500/20 border-gold-500/30 shadow-[0_0_15px_rgba(212,175,55,0.2)] scale-110' : 'bg-white/5 border-white/10 group-hover:border-white/20'
-                                                        }`}>
-                                                            {item.eventType.includes('PAYMENT') && <ArrowDownLeft size={18} className="text-emerald-400" />}
-                                                            {item.eventType.includes('WITHDRAWAL') && <ArrowUpRight size={18} className="text-rose-400" />}
-                                                            {item.eventType.includes('COMMISSION') && <Percent size={18} className="text-gold-400" />}
-                                                            {item.eventType.includes('REFUND') && <RotateCcw size={18} className="text-amber-400" />}
-                                                            {item.eventType.includes('PENALTY') && <AlertTriangle size={18} className="text-rose-500" />}
-                                                            {item.eventType.includes('ESCROW') && <ShieldCheck size={18} className="text-blue-400" />}
-                                                            {item.eventType.includes('PROFIT') && <TrendingUp size={18} className="text-emerald-500" />}
-                                                            {(!item.eventType.match(/PAYMENT|WITHDRAWAL|COMMISSION|REFUND|PENALTY|ESCROW|PROFIT/)) && (
-                                                                item.source === 'WALLET' ? <Wallet size={18} className="text-white/40" /> : <Activity size={18} className="text-white/40" />
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-mono text-white font-bold text-sm">
-                                                                {isAr ? item.eventTypeAr : item.eventTypeEn}
-                                                            </div>
-                                                            <div className="text-[10px] text-white/30 font-black uppercase mt-1">
-                                                                {item.source} • #{item.id.slice(-8).toUpperCase()}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex flex-col gap-1">
-                                                        {item.orderNumber && (
-                                                            <div className="text-xs font-black text-white/80 flex items-center gap-2">
-                                                                <span className="text-[9px] text-white/20">ORD</span>
-                                                                {item.orderNumber}
-                                                            </div>
-                                                        )}
-                                                        <div className="text-[10px] text-white/40 font-bold flex items-center gap-2">
-                                                            {item.customerName && (
-                                                                <BlurredSection isBlurred={isSectionBlurred('customer_name')}>
-                                                                    <span className="flex items-center gap-1">
-                                                                        <User size={10} />
-                                                                        {item.customerName}
-                                                                    </span>
-                                                                </BlurredSection>
-                                                            )}
-                                                            {item.storeName && (
-                                                                <BlurredSection isBlurred={isSectionBlurred('customer_name')}>
-                                                                    <span className="flex items-center gap-1 text-gold-500/50">
-                                                                        <Crown size={10} />
-                                                                        {item.storeName}
-                                                                    </span>
-                                                                </BlurredSection>
-                                                            )}
-                                                            {item.userRole && (
-                                                                <span className="text-[9px] text-white/25 uppercase">{item.userRole}</span>
-                                                            )}
-                                                        </div>
-                                                        {item.financialImpact && (
-                                                            <span className="inline-flex mt-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-gold-500/10 text-gold-400 border border-gold-500/20">
-                                                                {t.admin.billing.ledger.financialImpact}: {item.financialImpact}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-6 text-center">
-                                                    <div className={`font-mono text-lg font-black flex items-center justify-center gap-2 ${
-                                                        isCredit ? 'text-emerald-400' : isDebit ? 'text-rose-400' : 'text-white/60'
-                                                    }`}>
-                                                        <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}>
-                                                            <span>{isDebit ? '-' : '+'}{Number(item.amount).toLocaleString()}</span>
-                                                        </BlurredSection>
-                                                        <span className="text-[10px] opacity-30 font-bold uppercase">{item.currency}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-6 text-center">
-                                                    <span className="font-mono text-[10px] text-white/50">
-                                                        {breakdownParts.length > 0 ? breakdownParts.join(' · ') : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-6 text-center font-mono text-xs text-white/50">
-                                                    {item.balanceAfter != null ? Number(item.balanceAfter).toLocaleString() : '—'}
-                                                </td>
-                                                <td className="px-6 py-6 font-mono text-xs text-white/40 text-center">
-                                                    {new Date(item.createdAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { 
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                                                    })}
-                                                </td>
-                                                <td className="px-6 py-6">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${
-                                                            item.status === 'COMPLETED' || item.status === 'SUCCESS' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
-                                                            item.status === 'PENDING' ? 'bg-amber-500 animate-pulse' : 'bg-white/20'
-                                                        }`} />
-                                                        <span className="text-[10px] text-white/60 font-black uppercase">
-                                                            {item.status}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-6 text-center font-mono text-[9px] text-white/30">
-                                                    {item.transactionNumber && <div>TXN:{item.transactionNumber.slice(-8)}</div>}
-                                                    {item.orderNumber && <div>ORD:{item.orderNumber}</div>}
-                                                    {!item.transactionNumber && !item.orderNumber && '—'}
-                                                </td>
-                                                <td className="px-4 py-6 text-left">
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                toggleFeedExpand(item.id);
-                                                            }}
-                                                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                                                            title={isExpanded ? t.admin.billing.ledger.collapseDetails : t.admin.billing.ledger.expandDetails}
-                                                        >
-                                                            <ChevronDown size={16} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (item.orderId) setSelectedOrderIdForTimeline(item.orderId);
-                                                            }}
-                                                            disabled={!item.orderId}
-                                                            className="p-2 rounded-xl bg-white/5 hover:bg-gold-500 hover:text-black transition-all disabled:opacity-20 disabled:cursor-not-allowed group/btn shadow-lg border border-white/5"
-                                                            title={t.admin.billing.ledger.table.viewAudit}
-                                                        >
-                                                            <History size={16} className="group-hover/btn:rotate-[360deg] transition-all duration-700" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {isExpanded && (
-                                                <tr className="bg-white/[0.02]">
-                                                    <td colSpan={9} className="px-8 py-4">
-                                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[10px] font-mono text-white/50">
-                                                            {item.unitPrice != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.invoiceViewer.unitPrice}</span>{Number(item.unitPrice).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.commission != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.ledger.auditDrawer.platformFee}</span>{Number(item.commission).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.shippingCost != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.kpis.logisticsRevenue}</span>{Number(item.shippingCost).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.gatewayFee != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.kpis.gatewayFees}</span>{Number(item.gatewayFee).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.refundedAmount != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.kpis.totalRefunds}</span>{Number(item.refundedAmount).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.balanceAfter != null && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.ledger.table.balanceAfter}</span>{Number(item.balanceAfter).toLocaleString()} AED</div>
-                                                            )}
-                                                            {item.financialImpact && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.ledger.financialImpact}</span>{item.financialImpact}</div>
-                                                            )}
-                                                            {item.transactionNumber && (
-                                                                <div><span className="text-white/25 block uppercase mb-1">TXN</span>{item.transactionNumber}</div>
-                                                            )}
-                                                            {item.metadata && typeof item.metadata === 'object' && Object.keys(item.metadata as object).length > 0 && (
-                                                                <div className="col-span-2 sm:col-span-4">
-                                                                    <span className="text-white/25 block uppercase mb-1">metadata</span>
-                                                                    <pre className="text-[9px] whitespace-pre-wrap break-all">{JSON.stringify(item.metadata, null, 2)}</pre>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                            </React.Fragment>
-                                        );
-                                    })}
+                                    ) : financialFeed.map((item) => (
+                                        <FinancialFeedRow
+                                            key={item.id}
+                                            item={item}
+                                            isAr={isAr}
+                                            isExpanded={expandedFeedIds.has(item.id)}
+                                            isSectionBlurred={isSectionBlurred}
+                                            t={t}
+                                            onRowClick={handleFeedRowClick}
+                                            onToggleExpand={handleFeedToggleExpand}
+                                            onViewAudit={handleFeedViewAudit}
+                                        />
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
