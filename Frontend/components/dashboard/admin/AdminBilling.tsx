@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, 
@@ -41,13 +41,16 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { ManualPayoutModal } from './ManualPayoutModal';
 import { RejectWithdrawalModal } from './RejectWithdrawalModal';
 import { Landmark, History } from 'lucide-react';
-import { OrderFinancialDrawer } from './OrderFinancialDrawer';
 import { FinancialToast } from '../../ui/FinancialToast';
 import TransactionTypeFilter from './TransactionTypeFilter';
 import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { FinancialFeedRow } from './FinancialFeedRow';
 import type { UnifiedFinancialEvent } from '../../../stores/useAdminStore';
+
+const OrderFinancialDrawer = lazy(() =>
+  import('./OrderFinancialDrawer').then((m) => ({ default: m.OrderFinancialDrawer })),
+);
 
 interface AdminBillingProps {
     onNavigate?: (path: string, id: any) => void;
@@ -1041,10 +1044,14 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
             )}
             </BlurredSection>
             {/* Phase 4: Financial Audit Drawer */}
-            <OrderFinancialDrawer 
-                orderId={selectedOrderIdForTimeline} 
-                onClose={() => setSelectedOrderIdForTimeline(null)} 
-            />
+            {selectedOrderIdForTimeline && (
+              <Suspense fallback={null}>
+                <OrderFinancialDrawer
+                  orderId={selectedOrderIdForTimeline}
+                  onClose={() => setSelectedOrderIdForTimeline(null)}
+                />
+              </Suspense>
+            )}
 
             {/* Phase 5: Real-time Notifications */}
             <FinancialToast />

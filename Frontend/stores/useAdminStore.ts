@@ -426,7 +426,9 @@ export interface AdminState {
 
   orderTimeline: any | null;
   orderTimelineLoading: boolean;
-  fetchOrderTimeline: (orderId: string) => Promise<void>;
+  orderTimelineCache: Record<string, any>;
+  orderTimelineActiveId: string | null;
+  fetchOrderTimeline: (orderId: string, silent?: boolean) => Promise<void>;
   clearOrderTimeline: () => void;
 
   // Vehicle Catalog Management (2026)
@@ -502,6 +504,8 @@ export const useAdminStore = create<AdminState>()(
       // Phase 4: Order Financial Timeline
       orderTimeline: null,
       orderTimelineLoading: false,
+      orderTimelineCache: {},
+      orderTimelineActiveId: null,
 
       // Vehicle Catalog
       vehicleMakes: [],
@@ -1513,26 +1517,44 @@ export const useAdminStore = create<AdminState>()(
         });
       },
 
-      fetchOrderTimeline: async (orderId: string) => {
-        set({ orderTimelineLoading: true, orderTimeline: null });
+      fetchOrderTimeline: async (orderId: string, silent = false) => {
+        const cached = get().orderTimelineCache[orderId];
+        if (!silent) {
+          if (cached) {
+            set({ orderTimeline: cached, orderTimelineLoading: false, orderTimelineActiveId: orderId });
+          } else {
+            set({ orderTimelineLoading: true, orderTimeline: null, orderTimelineActiveId: orderId });
+          }
+        } else {
+          set({ orderTimelineActiveId: orderId });
+        }
+
         try {
           const token = localStorage.getItem('access_token');
           const res = await fetch(`${API_URL}/payments/admin/order-financial-timeline/${orderId}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
+          if (get().orderTimelineActiveId !== orderId) return;
+
           if (res.ok) {
             const data = await res.json();
-            set({ orderTimeline: data, orderTimelineLoading: false });
-          } else {
+            set((state) => ({
+              orderTimeline: data,
+              orderTimelineLoading: false,
+              orderTimelineCache: { ...state.orderTimelineCache, [orderId]: data },
+            }));
+          } else if (!silent && !cached) {
             set({ orderTimelineLoading: false });
           }
         } catch (error) {
+          if (get().orderTimelineActiveId !== orderId) return;
           console.error('Failed to fetch order financial timeline', error);
-          set({ orderTimelineLoading: false });
+          if (!silent && !cached) set({ orderTimelineLoading: false });
         }
       },
 
-      clearOrderTimeline: () => set({ orderTimeline: null, orderTimelineLoading: false }),
+      clearOrderTimeline: () =>
+        set({ orderTimeline: null, orderTimelineLoading: false, orderTimelineActiveId: null }),
 
       // silent=true: update data in background without showing loading skeleton (prevents flicker on realtime updates)
       // silent=false (default): show full loading state (used on initial mount or manual filter changes)
@@ -1897,6 +1919,8 @@ export const useAdminStore = create<AdminState>()(
           financialSubscription,
           financialFeedSubscription,
           orderTimeline,
+          orderTimelineCache,
+          orderTimelineActiveId,
           financialToasts,
           activitySubscription,
           catalogSubscription,

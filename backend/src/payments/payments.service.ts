@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -59,6 +59,7 @@ import {
     countUnifiedFeed,
     encodeFeedCursor,
 } from './financial-feed.util';
+import { buildOrderFinancialTimeline } from './order-financial-timeline.util';
 import { CardsService } from '../cards/cards.service';
 
 @Injectable()
@@ -138,7 +139,7 @@ export class PaymentsService {
         const commission = unitPrice > 0 ? Math.max(percentCommission, 100) : 0;
         const totalAmount = unitPrice + shippingCost + commission;
 
-        // 5. Validate card (basic — in production this would be Stripe)
+        // 5. Validate card (basic â€” in production this would be Stripe)
         const cardNumber = card.number.replace(/\s/g, '');
         if (cardNumber.length < 13 || cardNumber.length > 19) {
             throw new BadRequestException('Invalid card number');
@@ -205,7 +206,7 @@ export class PaymentsService {
                             type: 'CREDIT',
                             amount: merchantAmount,
                             currency: 'AED',
-                            description: `Payment for offer #${offer.offerNumber} — Order #${order.orderNumber}`,
+                            description: `Payment for offer #${offer.offerNumber} â€” Order #${order.orderNumber}`,
                             balanceAfter: newStoreBalance,
                         },
                     });
@@ -220,12 +221,12 @@ export class PaymentsService {
                         type: 'CREDIT',
                         amount: commission,
                         currency: 'AED',
-                        description: `Commission for offer #${offer.offerNumber} — Order #${order.orderNumber}`,
-                        balanceAfter: commission, // placeholder — in production track admin balance
+                        description: `Commission for offer #${offer.offerNumber} â€” Order #${order.orderNumber}`,
+                        balanceAfter: commission, // placeholder â€” in production track admin balance
                     },
                 });
 
-                // 7e. Generate invoice (once per payment — same guard as Stripe fulfillment)
+                // 7e. Generate invoice (once per payment â€” same guard as Stripe fulfillment)
                 let invoiceNumber: string;
                 const existingInvoice = await tx.invoice.findFirst({
                     where: { paymentId: payment.id },
@@ -316,10 +317,10 @@ export class PaymentsService {
                 recipientId: customerId,
                 recipientRole: 'CUSTOMER',
                 type: 'payment',
-                titleAr: 'تم الدفع بنجاح! 🎉',
-                titleEn: 'Payment Successful! 🎉',
-                messageAr: `اختيار رائع! 👌 تم دفع ${totalAmount} درهم بنجاح للعرض #${offer.offerNumber}. نحن الآن بصدد البدء في تجهيز طلبك.`,
-                messageEn: `Great choice! 👌 Payment of AED ${totalAmount} successful for offer #${offer.offerNumber}. We are now starting to prepare your order.`,
+                titleAr: 'ØªÙ… Ø§Ù„Ø¯ÙØ¹ Ø¨Ù†Ø¬Ø§Ø­! ðŸŽ‰',
+                titleEn: 'Payment Successful! ðŸŽ‰',
+                messageAr: `Ø§Ø®ØªÙŠØ§Ø± Ø±Ø§Ø¦Ø¹! ðŸ‘Œ ØªÙ… Ø¯ÙØ¹ ${totalAmount} Ø¯Ø±Ù‡Ù… Ø¨Ù†Ø¬Ø§Ø­ Ù„Ù„Ø¹Ø±Ø¶ #${offer.offerNumber}. Ù†Ø­Ù† Ø§Ù„Ø¢Ù† Ø¨ØµØ¯Ø¯ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ ØªØ¬Ù‡ÙŠØ² Ø·Ù„Ø¨Ùƒ.`,
+                messageEn: `Great choice! ðŸ‘Œ Payment of AED ${totalAmount} successful for offer #${offer.offerNumber}. We are now starting to prepare your order.`,
                 link: 'checkout',
                 metadata: {
                     orderId,
@@ -336,9 +337,9 @@ export class PaymentsService {
                     recipientId: offer.store.ownerId,
                     recipientRole: 'VENDOR',
                     type: 'payment',
-                    titleAr: 'مبيعة جديدة! 💰',
-                    titleEn: 'New Sale! 💰',
-                    messageAr: `ممتاز! تم دفع الطلب #${order.orderNumber}. المبلغ المضاف لحسابك: ${unitPrice + shippingCost} درهم. يرجى البدء في التجهيز.`,
+                    titleAr: 'Ù…Ø¨ÙŠØ¹Ø© Ø¬Ø¯ÙŠØ¯Ø©! ðŸ’°',
+                    titleEn: 'New Sale! ðŸ’°',
+                    messageAr: `Ù…Ù…ØªØ§Ø²! ØªÙ… Ø¯ÙØ¹ Ø§Ù„Ø·Ù„Ø¨ #${order.orderNumber}. Ø§Ù„Ù…Ø¨Ù„Øº Ø§Ù„Ù…Ø¶Ø§Ù Ù„Ø­Ø³Ø§Ø¨Ùƒ: ${unitPrice + shippingCost} Ø¯Ø±Ù‡Ù…. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ Ø§Ù„ØªØ¬Ù‡ÙŠØ².`,
                     messageEn: `Excellent! Payment received for Order #${order.orderNumber}. Amount credited: AED ${unitPrice + shippingCost}. Please start preparation.`,
                     link: 'active-orders',
                     metadata: {
@@ -429,7 +430,7 @@ export class PaymentsService {
             offerNumber: offer.offerNumber,
         };
 
-        // 5. Stripe PaymentIntent — reuse open PENDING intent when possible (avoids duplicate intents on retry)
+        // 5. Stripe PaymentIntent â€” reuse open PENDING intent when possible (avoids duplicate intents on retry)
         let intent = await this.resolveOrCreateStripeIntent(
             existingPayment?.stripePaymentId,
             existingPayment?.status,
@@ -440,7 +441,7 @@ export class PaymentsService {
             stripeCustomerId,
         );
 
-        // 6. Record PENDING transaction — atomic upsert (race-safe vs concurrent prefetch + pay clicks)
+        // 6. Record PENDING transaction â€” atomic upsert (race-safe vs concurrent prefetch + pay clicks)
         const isNewPaymentRow = !existingPayment;
         try {
             await this.prisma.$transaction(async (tx) => {
@@ -491,7 +492,7 @@ export class PaymentsService {
             // Safety net: concurrent requests can still race before upsert lands (extremely rare)
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                 this.logger.warn(
-                    `Payment intent race on offer ${offerId} — reconciling with update instead of failing`,
+                    `Payment intent race on offer ${offerId} â€” reconciling with update instead of failing`,
                 );
                 await this.prisma.paymentTransaction.update({
                     where: { offerId },
@@ -691,7 +692,7 @@ export class PaymentsService {
             throw new Error('Stripe payment amount does not match recorded transaction');
         }
 
-        // 2. Atomic Database Transaction — claim PENDING → SUCCESS once (webhook + confirm-intent safe)
+        // 2. Atomic Database Transaction â€” claim PENDING â†’ SUCCESS once (webhook + confirm-intent safe)
         const result = await this.prisma.$transaction(async (tx) => {
             const claim = await tx.paymentTransaction.updateMany({
                 where: { id: payment.id, status: 'PENDING' },
@@ -776,7 +777,7 @@ export class PaymentsService {
                         transactionType: 'PAYMENT',
                         amount: merchantNetShare,
                         currency: 'AED',
-                        description: `Net payout for offer #${payment.offer.offerNumber} (Excludes Admin Commission & Shipping) — Order #${payment.order.orderNumber}`,
+                        description: `Net payout for offer #${payment.offer.offerNumber} (Excludes Admin Commission & Shipping) â€” Order #${payment.order.orderNumber}`,
                         balanceAfter: Number(updatedStore?.pendingBalance ?? payment.offer.store.pendingBalance ?? 0),
                     },
                 });
@@ -811,7 +812,7 @@ export class PaymentsService {
                             transactionType: 'COMMISSION',
                             amount: commission,
                             currency: 'AED',
-                            description: `Platform commission for offer #${payment.offer.offerNumber} — Order #${payment.order.orderNumber}`,
+                            description: `Platform commission for offer #${payment.offer.offerNumber} â€” Order #${payment.order.orderNumber}`,
                             balanceAfter: Number(platformWallet?.commissionBalance ?? commission),
                         },
                     });
@@ -894,18 +895,18 @@ export class PaymentsService {
                 this.notifications.create({
                     recipientId: storeOwnerId,
                     recipientRole: 'VENDOR',
-                    titleAr: 'طلب جديد جاهز للتجهيز! 📦',
-                    titleEn: 'New Order Ready for Preparation! 📦',
-                    messageAr: `تم دفع قيمة الطلب #${orderNumber}. يرجى البدء في تجهيز القطع للشحن.`,
+                    titleAr: 'Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ¬Ù‡ÙŠØ²! ðŸ“¦',
+                    titleEn: 'New Order Ready for Preparation! ðŸ“¦',
+                    messageAr: `ØªÙ… Ø¯ÙØ¹ Ù‚ÙŠÙ…Ø© Ø§Ù„Ø·Ù„Ø¨ #${orderNumber}. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ ØªØ¬Ù‡ÙŠØ² Ø§Ù„Ù‚Ø·Ø¹ Ù„Ù„Ø´Ø­Ù†.`,
                     messageEn: `Payment for Order #${orderNumber} confirmed. Please start preparing parts for shipment.`,
                     type: 'ORDER',
                     link: `/merchant/orders/${orderId}`
                 }).catch(() => {});
 
                 this.notifications.notifyAdmins({
-                    titleAr: 'تم سداد طلب بنجاح 💸',
-                    titleEn: 'Order Payment Successful 💸',
-                    messageAr: `تم سداد مبلغ ${totalAmount} درهم للطلب #${orderNumber}.`,
+                    titleAr: 'ØªÙ… Ø³Ø¯Ø§Ø¯ Ø·Ù„Ø¨ Ø¨Ù†Ø¬Ø§Ø­ ðŸ’¸',
+                    titleEn: 'Order Payment Successful ðŸ’¸',
+                    messageAr: `ØªÙ… Ø³Ø¯Ø§Ø¯ Ù…Ø¨Ù„Øº ${totalAmount} Ø¯Ø±Ù‡Ù… Ù„Ù„Ø·Ù„Ø¨ #${orderNumber}.`,
                     messageEn: `Payment of AED ${totalAmount} confirmed for Order #${orderNumber}.`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${orderId}`,
@@ -918,9 +919,9 @@ export class PaymentsService {
                 recipientId: customerId,
                 recipientRole: 'CUSTOMER',
                 type: 'payment',
-                titleAr: 'تم الدفع بنجاح! 🎉',
-                titleEn: 'Payment Successful! 🎉',
-                messageAr: `تم دفع ${totalAmount} درهم بنجاح للعرض #${offerNumber}. نحن الآن نجهز طلبك.`,
+                titleAr: 'ØªÙ… Ø§Ù„Ø¯ÙØ¹ Ø¨Ù†Ø¬Ø§Ø­! ðŸŽ‰',
+                titleEn: 'Payment Successful! ðŸŽ‰',
+                messageAr: `ØªÙ… Ø¯ÙØ¹ ${totalAmount} Ø¯Ø±Ù‡Ù… Ø¨Ù†Ø¬Ø§Ø­ Ù„Ù„Ø¹Ø±Ø¶ #${offerNumber}. Ù†Ø­Ù† Ø§Ù„Ø¢Ù† Ù†Ø¬Ù‡Ø² Ø·Ù„Ø¨Ùƒ.`,
                 messageEn: `Payment of AED ${totalAmount} successful for offer #${offerNumber}. Preparation started.`,
                 link: 'checkout',
                 metadata: {
@@ -960,9 +961,9 @@ export class PaymentsService {
             recipientId: payment.customerId,
             recipientRole: 'CUSTOMER',
             type: 'payment',
-            titleAr: 'عذراً، فشلت عملية الدفع ❌',
-            titleEn: 'Payment Failed ❌',
-            messageAr: `لم نتمكن من إتمام عملية الدفع للطلب #${payment.order.orderNumber}. يرجى المحاولة مرة أخرى أو استخدام وسيلة دفع مختلفة.`,
+            titleAr: 'Ø¹Ø°Ø±Ø§Ù‹ØŒ ÙØ´Ù„Øª Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø¯ÙØ¹ âŒ',
+            titleEn: 'Payment Failed âŒ',
+            messageAr: `Ù„Ù… Ù†ØªÙ…ÙƒÙ† Ù…Ù† Ø¥ØªÙ…Ø§Ù… Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø¯ÙØ¹ Ù„Ù„Ø·Ù„Ø¨ #${payment.order.orderNumber}. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ø£Ùˆ Ø§Ø³ØªØ®Ø¯Ø§Ù… ÙˆØ³ÙŠÙ„Ø© Ø¯ÙØ¹ Ù…Ø®ØªÙ„ÙØ©.`,
             messageEn: `We couldn't process your payment for Order #${payment.order.orderNumber}. Please try again or use a different payment method.`,
             link: `checkout?orderId=${payment.orderId}`,
             metadata: { orderId: payment.orderId, failureReason: 'STRIPE_FAILURE' }
@@ -1145,7 +1146,7 @@ export class PaymentsService {
                 }
             });
 
-            // 3. Transition Shipment Status to RETURN_STARTED (بدء الارجاع)
+            // 3. Transition Shipment Status to RETURN_STARTED (Ø¨Ø¯Ø¡ Ø§Ù„Ø§Ø±Ø¬Ø§Ø¹)
             const shipment = await tx.shipment.findFirst({
                 where: { orderId: updatedCase.orderId },
                 orderBy: { createdAt: 'desc' }
@@ -1162,16 +1163,16 @@ export class PaymentsService {
                         shipmentId: shipment.id,
                         fromStatus: shipment.status,
                         toStatus: 'RETURN_STARTED' as any,
-                        notes: 'بدء الارجاع - تم سداد تكلفة الشحن عبر Stripe',
+                        notes: 'Ø¨Ø¯Ø¡ Ø§Ù„Ø§Ø±Ø¬Ø§Ø¹ - ØªÙ… Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù† Ø¹Ø¨Ø± Stripe',
                         source: 'API'
                     }
                 });
             }
 
             // 4. Notify all parties
-            const titleAr = 'تم سداد تكلفة الشحن! 🚚';
-            const titleEn = 'Shipping Paid! 🚚';
-            const messageAr = `تم استلام دفعة الشحن للطلب #${updatedCase.orderId}. عملية الإرجاع جارية الآن.`;
+            const titleAr = 'ØªÙ… Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù†! ðŸšš';
+            const titleEn = 'Shipping Paid! ðŸšš';
+            const messageAr = `ØªÙ… Ø§Ø³ØªÙ„Ø§Ù… Ø¯ÙØ¹Ø© Ø§Ù„Ø´Ø­Ù† Ù„Ù„Ø·Ù„Ø¨ #${updatedCase.orderId}. Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø¥Ø±Ø¬Ø§Ø¹ Ø¬Ø§Ø±ÙŠØ© Ø§Ù„Ø¢Ù†.`;
             const messageEn = `Shipping payment received for Order #${updatedCase.orderId}. Return process is now active.`;
 
             await this.notifications.create({
@@ -1196,9 +1197,9 @@ export class PaymentsService {
             }
 
             // 5. Notify ADMIN
-            const adminTitleAr = `سداد شحن: ${caseType === 'return' ? 'طلب إرجاع' : 'نزاع'} #${updatedCase.orderId}`;
+            const adminTitleAr = `Ø³Ø¯Ø§Ø¯ Ø´Ø­Ù†: ${caseType === 'return' ? 'Ø·Ù„Ø¨ Ø¥Ø±Ø¬Ø§Ø¹' : 'Ù†Ø²Ø§Ø¹'} #${updatedCase.orderId}`;
             const adminTitleEn = `Shipping Paid: ${caseType === 'return' ? 'Return' : 'Dispute'} #${updatedCase.orderId}`;
-            const adminMsgAr = `قام ${updatedCase.shippingPayee === 'MERCHANT' ? 'التاجر' : 'العميل'} بسداد تكلفة الشحن بقيمة ${updatedCase.shippingRefund} درهم.`;
+            const adminMsgAr = `Ù‚Ø§Ù… ${updatedCase.shippingPayee === 'MERCHANT' ? 'Ø§Ù„ØªØ§Ø¬Ø±' : 'Ø§Ù„Ø¹Ù…ÙŠÙ„'} Ø¨Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù† Ø¨Ù‚ÙŠÙ…Ø© ${updatedCase.shippingRefund} Ø¯Ø±Ù‡Ù….`;
             const adminMsgEn = `${updatedCase.shippingPayee === 'MERCHANT' ? 'Merchant' : 'Customer'} paid AED ${updatedCase.shippingRefund} for shipping.`;
 
             // Broadcast to all admins (recipientId = null + role = ADMIN often used for broadcast in our system)
@@ -1611,9 +1612,9 @@ export class PaymentsService {
         }
         const hasDateFilter = Object.keys(dateFilter).length > 0;
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // 1. Parallel fetch: KPI aggregates (always all-time) + filtered ledger for table
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const [
             walletActions,
             allTimeVendorTxs,
@@ -1675,9 +1676,9 @@ export class PaymentsService {
         computeCompletedOrdersCount(this.prisma, store.id),
         ]);
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // 2. Variables & FSM Definitions
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const stats = {
             available: 0, 
             pending: 0,   
@@ -1696,37 +1697,37 @@ export class PaymentsService {
             BASIC: { 
                 rate: 0.02, 
                 benefits: [
-                    { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' }
+                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' }
                 ]
             }, 
             SILVER: { 
                 rate: 0.03, 
                 benefits: [
-                    { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
-                    { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' }
+                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
+                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' }
                 ]
             }, 
             GOLD: { 
                 rate: 0.04, 
                 benefits: [
-                    { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
-                    { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' },
+                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
+                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' },
                 ]
             }, 
             VIP: { 
                 rate: 0.05, 
                 benefits: [
-                    { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
-                    { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' },
-                    { ar: 'مدير حساب VIP (24/7)', en: '24/7 VIP Account Manager' }
+                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
+                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' },
+                    { ar: 'Ù…Ø¯ÙŠØ± Ø­Ø³Ø§Ø¨ VIP (24/7)', en: '24/7 VIP Account Manager' }
                 ]
             },
             ELITE: {
                 rate: 0.05,
                 benefits: [
-                    { ar: 'أعلى مستوى — دعوة فقط', en: 'Invite-only top tier' },
-                    { ar: 'مدير حساب VIP (24/7)', en: '24/7 VIP Account Manager' },
-                    { ar: 'أولوية قصوى في الطلبات والظهور', en: 'Maximum order and visibility priority' },
+                    { ar: 'Ø£Ø¹Ù„Ù‰ Ù…Ø³ØªÙˆÙ‰ â€” Ø¯Ø¹ÙˆØ© ÙÙ‚Ø·', en: 'Invite-only top tier' },
+                    { ar: 'Ù…Ø¯ÙŠØ± Ø­Ø³Ø§Ø¨ VIP (24/7)', en: '24/7 VIP Account Manager' },
+                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© Ù‚ØµÙˆÙ‰ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨Ø§Øª ÙˆØ§Ù„Ø¸Ù‡ÙˆØ±', en: 'Maximum order and visibility priority' },
                 ],
             },
         };
@@ -1753,9 +1754,9 @@ export class PaymentsService {
             store.frozenBalance = refreshedStore.frozenBalance;
         }
 
-        // ═══════════════════════════════════════════════════════
-        // 3. KPI cards — always all-time (never date-filtered)
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // 3. KPI cards â€” always all-time (never date-filtered)
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const escrowBalances = await computeMerchantEscrowBalances(
             this.prisma,
             store.id,
@@ -1779,7 +1780,7 @@ export class PaymentsService {
 
         stats.completedOrders = completedOrderCount;
 
-        // Referral profits (all-time) — credits personal customerBalance, role CUSTOMER
+        // Referral profits (all-time) â€” credits personal customerBalance, role CUSTOMER
         stats.earnedReferralProfits = allTimeReferralTxs.reduce(
             (sum, tx) => sum + Number(tx.amount),
             0,
@@ -1788,7 +1789,7 @@ export class PaymentsService {
         const ledgerNetProfit = computeLedgerNetProfit(allTimeVendorTxs);
         const totalWalletBalance =
             stats.available + stats.pending + stats.frozen;
-        // صافي الأرباح = مبيعات/إحالات معترف بها في السجل؛ إجمالي الرصيد = مستحق + معلّق + مجمّد
+        // ØµØ§ÙÙŠ Ø§Ù„Ø£Ø±Ø¨Ø§Ø­ = Ù…Ø¨ÙŠØ¹Ø§Øª/Ø¥Ø­Ø§Ù„Ø§Øª Ù…Ø¹ØªØ±Ù Ø¨Ù‡Ø§ ÙÙŠ Ø§Ù„Ø³Ø¬Ù„Ø› Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø±ØµÙŠØ¯ = Ù…Ø³ØªØ­Ù‚ + Ù…Ø¹Ù„Ù‘Ù‚ + Ù…Ø¬Ù…Ù‘Ø¯
         stats.netEarnings = ledgerNetProfit;
 
         (stats as any).totalWalletBalance = Number(totalWalletBalance.toFixed(2));
@@ -1819,9 +1820,9 @@ export class PaymentsService {
                 .catch(() => undefined);
         }
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // 4. Monthly Context
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         const monthlyAggr = await this.prisma.walletTransaction.aggregate({
             where: {
@@ -1834,10 +1835,10 @@ export class PaymentsService {
         });
         stats.monthlyRewards = Number(monthlyAggr._sum.amount || 0);
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // 6. True Pending Referral Rewards (1% of platform commission + 6-month window)
         //    Active orders from referred users still inside their referral window
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const REFERRAL_WINDOW_MS = 180 * 24 * 60 * 60 * 1000;
         const windowCutoff = new Date(Date.now() - REFERRAL_WINDOW_MS);
 
@@ -1856,9 +1857,9 @@ export class PaymentsService {
             pendingReferrals as Array<{ payments: Array<{ commission?: unknown }> }>,
         );
 
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // 7. Notifications
-        // ═══════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const notifications = await this.prisma.notification.findMany({
             where: { recipientId: userId, recipientRole: 'MERCHANT' },
             orderBy: { createdAt: 'desc' },
@@ -2030,9 +2031,9 @@ export class PaymentsService {
         return { success: true, message: 'Funds released successfully.' };
     }
 
-    // ═══════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // 7. Withdrawal & Stripe Connect Logic
-    // ═══════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     async getStripeOnboardingLink(userId: string) {
         const store = await this.prisma.store.findUnique({
@@ -2103,9 +2104,9 @@ export class PaymentsService {
         return this.stripeService.createOnboardingLink(stripeAccountId, returnUrl, refreshUrl);
     }
 
-    // ═══════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // 7b. Bank Details Management
-    // ═══════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     async saveBankDetails(userId: string, details: { bankName: string; accountHolder: string; iban: string; swift?: string }) {
         const store = await this.prisma.store.findUnique({ where: { ownerId: userId } });
@@ -2312,9 +2313,9 @@ export class PaymentsService {
                 await this.notifications.create({
                     recipientId: admin.id,
                     recipientRole: 'ADMIN',
-                    titleAr: 'طلب سحب جديد',
+                    titleAr: 'Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ø¬Ø¯ÙŠØ¯',
                     titleEn: 'New Withdrawal Request',
-                    messageAr: `قام التاجر ${store.name} بطلب سحب ${amount} AED عبر ${payoutMethod === 'STRIPE' ? 'Stripe' : 'تحويل بنكي'}`,
+                    messageAr: `Ù‚Ø§Ù… Ø§Ù„ØªØ§Ø¬Ø± ${store.name} Ø¨Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${amount} AED Ø¹Ø¨Ø± ${payoutMethod === 'STRIPE' ? 'Stripe' : 'ØªØ­ÙˆÙŠÙ„ Ø¨Ù†ÙƒÙŠ'}`,
                     messageEn: `Merchant ${store.name} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
                     metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, payoutMethod }
@@ -2380,9 +2381,9 @@ export class PaymentsService {
                 await this.notifications.create({
                     recipientId: admin.id,
                     recipientRole: 'ADMIN',
-                    titleAr: 'طلب سحب عميل جديد',
+                    titleAr: 'Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ø¹Ù…ÙŠÙ„ Ø¬Ø¯ÙŠØ¯',
                     titleEn: 'New Customer Withdrawal Request',
-                    messageAr: `قام العميل ${user.name || user.email} بطلب سحب ${amount} AED عبر ${methodLabel}`,
+                    messageAr: `Ù‚Ø§Ù… Ø§Ù„Ø¹Ù…ÙŠÙ„ ${user.name || user.email} Ø¨Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${amount} AED Ø¹Ø¨Ø± ${methodLabel}`,
                     messageEn: `Customer ${user.name || user.email} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
                     metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, role: 'CUSTOMER', payoutMethod }
@@ -2676,9 +2677,9 @@ export class PaymentsService {
                     recipientId: recipientId,
                     recipientRole: recipientRole,
                     type: 'payment',
-                    titleAr: methodToUse === 'STRIPE' ? '✅ تم تحويل مبلغ السحب بنجاح' : '✅ تمت الموافقة على طلب السحب',
-                    titleEn: methodToUse === 'STRIPE' ? '✅ Withdrawal Transferred Successfully' : '✅ Withdrawal Approved',
-                    messageAr: `تمت الموافقة على طلب سحب مبلغ ${request.amount} درهم. سيتم وصول التحويل لحسابك خلال أيام عمل قليلة${adminName ? ' (بواسطة الإدارة: ' + adminName + ')' : ''}. ${notes ? '\\nملاحظة: ' + notes : ''}`,
+                    titleAr: methodToUse === 'STRIPE' ? 'âœ… ØªÙ… ØªØ­ÙˆÙŠÙ„ Ù…Ø¨Ù„Øº Ø§Ù„Ø³Ø­Ø¨ Ø¨Ù†Ø¬Ø§Ø­' : 'âœ… ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø§Ù„Ø³Ø­Ø¨',
+                    titleEn: methodToUse === 'STRIPE' ? 'âœ… Withdrawal Transferred Successfully' : 'âœ… Withdrawal Approved',
+                    messageAr: `ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ù…Ø¨Ù„Øº ${request.amount} Ø¯Ø±Ù‡Ù…. Ø³ÙŠØªÙ… ÙˆØµÙˆÙ„ Ø§Ù„ØªØ­ÙˆÙŠÙ„ Ù„Ø­Ø³Ø§Ø¨Ùƒ Ø®Ù„Ø§Ù„ Ø£ÙŠØ§Ù… Ø¹Ù…Ù„ Ù‚Ù„ÙŠÙ„Ø©${adminName ? ' (Ø¨ÙˆØ§Ø³Ø·Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©: ' + adminName + ')' : ''}. ${notes ? '\\nÙ…Ù„Ø§Ø­Ø¸Ø©: ' + notes : ''}`,
                     messageEn: `Your withdrawal of AED ${request.amount} has been approved. The transfer will complete in a few business days${adminName ? ' (Processed by: ' + adminName + ')' : ''}. ${notes ? '\\nNote: ' + notes : ''}`,
                     metadata: { type: 'WITHDRAWAL_APPROVED', requestId, method: methodToUse }
                 });
@@ -2687,9 +2688,9 @@ export class PaymentsService {
                     recipientId: recipientId,
                     recipientRole: recipientRole,
                     type: 'alert',
-                    titleAr: '⚠️ تم رفض طلب السحب',
-                    titleEn: '⚠️ Withdrawal Request Rejected',
-                    messageAr: `تم رفض طلب سحب ${request.amount} درهم لسبب: ${notes || 'غير محدد'}. ${adminName ? 'الإدارة: ' + adminName : ''}. يُرجى مراجعة التفاصيل والمحاولة مرة أخرى.`,
+                    titleAr: 'âš ï¸ ØªÙ… Ø±ÙØ¶ Ø·Ù„Ø¨ Ø§Ù„Ø³Ø­Ø¨',
+                    titleEn: 'âš ï¸ Withdrawal Request Rejected',
+                    messageAr: `ØªÙ… Ø±ÙØ¶ Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${request.amount} Ø¯Ø±Ù‡Ù… Ù„Ø³Ø¨Ø¨: ${notes || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯'}. ${adminName ? 'Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©: ' + adminName : ''}. ÙŠÙØ±Ø¬Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„ØªÙØ§ØµÙŠÙ„ ÙˆØ§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.`,
                     messageEn: `Your withdrawal of AED ${request.amount} has been rejected. Reason: ${notes || 'Not specified'}. ${adminName ? 'Admin: ' + adminName : ''}. Please check and try again.`,
                     metadata: { type: 'WITHDRAWAL_REJECTED', requestId, reason: notes }
                 });
@@ -3053,9 +3054,9 @@ export class PaymentsService {
 
             this.notifications.create({
                 recipientId: userId,
-                titleAr: 'تم إرسال دفعة مالية',
+                titleAr: 'ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø¯ÙØ¹Ø© Ù…Ø§Ù„ÙŠØ©',
                 titleEn: 'Payout Processed',
-                messageAr: `تم إرسال دفعة بمبلغ ${amount} درهم إلى حسابك.`,
+                messageAr: `ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø¯ÙØ¹Ø© Ø¨Ù…Ø¨Ù„Øº ${amount} Ø¯Ø±Ù‡Ù… Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨Ùƒ.`,
                 messageEn: `A payout of ${amount} AED has been processed to your account.`,
                 type: 'financial',
                 link: '/dashboard/wallet'
@@ -3186,192 +3187,12 @@ export class PaymentsService {
     }
 
     /**
-     * Phase 2: Order Financial Timeline (2026 Audit Trail)
-     * Provides a granular history of money flow for a specific order.
+     * Order Financial Timeline — optimized parallel queries (2026)
      */
     async getOrderFinancialTimeline(orderId: string) {
-        const order = await this.prisma.order.findUnique({
-            where: { id: orderId },
-            include: {
-                customer: { select: { id: true, name: true, avatar: true } },
-                offers: {
-                    where: { status: 'accepted' },
-                    include: { store: { select: { id: true, name: true, logo: true, storeCode: true } } }
-                },
-                payments: {
-                    include: { walletTransactions: true }
-                },
-                escrowTransactions: {
-                    include: { walletTransactions: true }
-                },
-                auditLogs: {
-                    where: { entity: 'FINANCIAL' },
-                    orderBy: { timestamp: 'asc' }
-                },
-                returns: true,
-                disputes: true
-            }
-        });
-
-        if (!order) throw new NotFoundException('Order not found');
-
-        const timeline: any[] = [];
-
-        const merchantById = new Map<string, (typeof order.offers)[number]['store']>();
-        for (const offer of order.offers) {
-            if (offer.store) merchantById.set(offer.store.id, offer.store);
-        }
-
-        // 1. Add Payment Events
-        order.payments.forEach(pt => {
-            timeline.push({
-                id: `payment-${pt.id}`,
-                eventType: 'PAYMENT',
-                timestamp: pt.createdAt,
-                status: pt.status,
-                amount: Number(pt.totalAmount),
-                details: {
-                    txnNumber: pt.transactionNumber,
-                    method: pt.cardBrand,
-                    commission: Number(pt.commission),
-                    shipping: Number(pt.shippingCost)
-                },
-                descriptionEn: `Customer paid ${pt.totalAmount} AED for order`,
-                descriptionAr: `قام العميل بدفع ${pt.totalAmount} درهم للطلب`
-            });
-
-            // Add related wallet transactions (Admin commission etc)
-            pt.walletTransactions.forEach(wt => {
-                timeline.push({
-                    id: `wallet-${wt.id}`,
-                    eventType: 'WALLET',
-                    timestamp: wt.createdAt,
-                    direction: wt.type,
-                    amount: Number(wt.amount),
-                    role: wt.role,
-                    descriptionEn: wt.description || `Wallet ${wt.type} for payment`,
-                    descriptionAr: wt.description || `عملية ${wt.type === 'CREDIT' ? 'إيداع' : 'خصم'} للمحفظة`
-                });
-            });
-        });
-
-        // 2. Add Escrow Events (escrowTransactions is an array, use [0] since orderId is unique)
-        const escrow = order.escrowTransactions?.[0];
-        if (escrow) {
-            timeline.push({
-                id: `escrow-${escrow.id}`,
-                eventType: 'ESCROW',
-                timestamp: escrow.createdAt,
-                status: escrow.status,
-                amount: Number(escrow.merchantAmount),
-                descriptionEn: `Funds held in escrow: ${escrow.merchantAmount} AED`,
-                descriptionAr: `تم حجز مبلغ ${escrow.merchantAmount} درهم في الضمان`
-            });
-
-            if (escrow.status === 'RELEASED') {
-                timeline.push({
-                    id: `escrow-release-${escrow.id}`,
-                    eventType: 'ESCROW_RELEASE',
-                    timestamp: escrow.releasedAt,
-                    status: 'COMPLETED',
-                    amount: Number(escrow.merchantAmount),
-                    descriptionEn: `Funds released to merchant: ${escrow.merchantAmount} AED`,
-                    descriptionAr: `تم تحرير الأموال للمتجر: ${escrow.merchantAmount} درهم`
-                });
-            }
-
-            if (escrow.status === 'FROZEN') {
-                timeline.push({
-                    id: `escrow-freeze-${escrow.id}`,
-                    eventType: 'ESCROW_FREEZE',
-                    timestamp: escrow.updatedAt,
-                    status: 'FROZEN',
-                    amount: Number(escrow.merchantAmount),
-                    descriptionEn: `Funds frozen due to dispute: ${escrow.frozenReason || 'Dispute'}`,
-                    descriptionAr: `تم تجميد الأموال بسبب نزاع: ${escrow.frozenReason || 'نزاع'}`
-                });
-            }
-
-            escrow.walletTransactions.forEach(wt => {
-                if (timeline.some((e) => e.id === `wallet-${wt.id}`)) return;
-                timeline.push({
-                    id: `wallet-${wt.id}`,
-                    eventType: 'WALLET',
-                    timestamp: wt.createdAt,
-                    direction: wt.type,
-                    amount: Number(wt.amount),
-                    role: wt.role,
-                    descriptionEn: wt.description || `Wallet ${wt.type} for escrow release`,
-                    descriptionAr: wt.description || `عملية ${wt.type === 'CREDIT' ? 'إيداع' : 'خصم'} من الضمان`
-                });
-            });
-        }
-
-        // 3. Add Audit Logs
-        order.auditLogs.forEach(log => {
-            timeline.push({
-                id: `audit-${log.id}`,
-                eventType: 'AUDIT',
-                timestamp: log.timestamp,
-                action: log.action,
-                actor: { type: log.actorType, name: log.actorName },
-                descriptionEn: `Action: ${log.action} by ${log.actorName || 'System'}`,
-                descriptionAr: `إجراء: ${log.action} بواسطة ${log.actorName || 'النظام'}`
-            });
-        });
-
-        // 4. Add Returns/Disputes
-        order.returns.forEach(r => {
-            timeline.push({
-                id: `return-${r.id}`,
-                eventType: 'RETURN',
-                timestamp: r.createdAt,
-                status: r.status,
-                amount: r.refundAmount ? Number(r.refundAmount) : undefined,
-                descriptionEn: `Return requested: ${r.reason}`,
-                descriptionAr: `طلب إرجاع: ${r.reason}`
-            });
-        });
-
-        order.disputes.forEach(d => {
-            timeline.push({
-                id: `dispute-${d.id}`,
-                eventType: 'DISPUTE',
-                timestamp: d.createdAt,
-                status: d.status,
-                amount: d.refundAmount ? Number(d.refundAmount) : undefined,
-                descriptionEn: `Dispute opened: ${d.reason}`,
-                descriptionAr: `تم فتح نزاع: ${d.reason}`
-            });
-        });
-
-        // Sort by timestamp
-        const sortedTimeline = timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-
-        return {
-            order: {
-                id: order.id,
-                orderNumber: order.orderNumber,
-                status: order.status,
-                createdAt: order.createdAt
-            },
-            customer: order.customer,
-            merchants: Array.from(merchantById.values()),
-            timeline: sortedTimeline,
-            summary: {
-                totalPaid: order.payments.reduce((sum, pt) => sum + Number(pt.totalAmount), 0),
-                totalCommission: order.payments.reduce((sum, pt) => sum + Number(pt.commission), 0),
-                shippingCosts: order.payments.reduce((sum, pt) => sum + Number(pt.shippingCost), 0),
-                merchantEarnings: order.payments.reduce((sum, pt) => {
-                    // Merchant gets: Total - Commission - Shipping
-                    return sum + (Number(pt.totalAmount) - Number(pt.commission) - Number(pt.shippingCost));
-                }, 0),
-                escrowStatus: escrow?.status || 'N/A',
-                hasDispute: order.disputes.length > 0,
-                hasReturn: order.returns.length > 0
-            }
-        };
+        return buildOrderFinancialTimeline(this.prisma, orderId);
     }
+
 
     private resolveWalletFinancialImpact(txType: string, type: string): UnifiedFinancialEventDto['financialImpact'] {
         const upper = txType.toUpperCase();
