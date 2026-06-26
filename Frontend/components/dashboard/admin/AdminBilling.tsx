@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, 
@@ -232,7 +232,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
     const handleFeedRowClick = useCallback((item: UnifiedFinancialEvent) => {
         markFeedItemAsSeen(item.id);
-        if (item.orderId) setSelectedOrderIdForTimeline(item.orderId);
     }, [markFeedItemAsSeen]);
 
     const handleFeedToggleExpand = useCallback((id: string) => {
@@ -245,7 +244,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     }, []);
 
     const handleFeedViewAudit = useCallback((orderId: string) => {
-        setSelectedOrderIdForTimeline(orderId);
+        startTransition(() => setSelectedOrderIdForTimeline(orderId));
     }, []);
 
     const handleSaveCommission = () => {

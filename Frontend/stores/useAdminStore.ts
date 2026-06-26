@@ -1538,10 +1538,24 @@ export const useAdminStore = create<AdminState>()(
 
           if (res.ok) {
             const data = await res.json();
+            const last = data.timeline?.[data.timeline.length - 1];
+            const fp = [
+              data.timeline?.length ?? 0,
+              last?.id ?? '',
+              last?.timestamp ?? '',
+              data.summary?.totalPaid ?? 0,
+            ].join('|');
+            const prevFp = get().orderTimelineCache[`${orderId}__fp`];
+            if (silent && fp === prevFp) return;
+
             set((state) => ({
               orderTimeline: data,
               orderTimelineLoading: false,
-              orderTimelineCache: { ...state.orderTimelineCache, [orderId]: data },
+              orderTimelineCache: {
+                ...state.orderTimelineCache,
+                [orderId]: data,
+                [`${orderId}__fp`]: fp,
+              },
             }));
           } else if (!silent && !cached) {
             set({ orderTimelineLoading: false });
