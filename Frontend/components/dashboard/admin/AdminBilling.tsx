@@ -247,6 +247,10 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         startTransition(() => setSelectedOrderIdForTimeline(orderId));
     }, []);
 
+    const handleCloseOrderTimeline = useCallback(() => {
+        setSelectedOrderIdForTimeline(null);
+    }, []);
+
     const handleSaveCommission = () => {
         setCommissionRate(tempRate);
         alert(t.admin.billing.alerts.commissionSuccess);
@@ -1047,7 +1051,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
               <Suspense fallback={null}>
                 <OrderFinancialDrawer
                   orderId={selectedOrderIdForTimeline}
-                  onClose={() => setSelectedOrderIdForTimeline(null)}
+                  onClose={handleCloseOrderTimeline}
                 />
               </Suspense>
             )}

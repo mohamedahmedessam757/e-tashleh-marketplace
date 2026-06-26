@@ -53,12 +53,12 @@ export const OrderTimelineVirtualList = React.memo(function OrderTimelineVirtual
   }, [orderId, visibleEvents.length]);
 
   return (
-    <div className="flex flex-col min-h-0">
+    <div className="flex flex-col h-full min-h-0">
       {hiddenOlder > 0 && (
         <button
           type="button"
           onClick={loadOlder}
-          className="mb-3 w-full py-2 text-[10px] font-black uppercase tracking-widest text-gold-500/80 hover:text-gold-400 border border-gold-500/20 rounded-xl bg-gold-500/5"
+          className="mb-3 w-full py-2 text-[10px] font-black uppercase tracking-widest text-gold-500/80 hover:text-gold-400 border border-gold-500/20 rounded-xl bg-gold-500/5 shrink-0"
         >
           {isAr
             ? `عرض ${Math.min(LOAD_BATCH, hiddenOlder)} أحداث أقدم (${hiddenOlder} متبقية)`
@@ -69,7 +69,7 @@ export const OrderTimelineVirtualList = React.memo(function OrderTimelineVirtual
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="relative h-full overflow-y-auto overscroll-contain pl-8 rtl:pl-0 rtl:pr-8 [contain:strict]"
+        className="relative flex-1 min-h-0 overflow-y-auto overscroll-contain pl-8 rtl:pl-0 rtl:pr-8 [contain:strict]"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div

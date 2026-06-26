@@ -47,7 +47,10 @@ function timelineFingerprint(data: OrderFinancialTimelineData): string {
   ].join('|');
 }
 
-async function fetchTimelineFromApi(orderId: string, signal?: AbortSignal): Promise<OrderFinancialTimelineData | null> {
+async function fetchTimelineFromApi(
+  orderId: string,
+  signal?: AbortSignal,
+): Promise<OrderFinancialTimelineData | null> {
   const token = localStorage.getItem('access_token');
   const res = await fetch(`${API_URL}/payments/admin/order-financial-timeline/${orderId}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -132,8 +135,4 @@ export function useOrderFinancialTimeline(orderId: string) {
   }, [load]);
 
   return { data, loading, refreshing, silentRefresh };
-}
-
-export function primeOrderTimelineCache(orderId: string, data: OrderFinancialTimelineData) {
-  memoryCache.set(orderId, data);
 }
