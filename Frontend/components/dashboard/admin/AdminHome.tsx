@@ -158,7 +158,7 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
 
 export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigate }) => {
     const { t, language } = useLanguage();
-    const { currentAdmin, isLoadingStats, commissionRate, fetchDashboardStats, dashboardStats, subscribeToStats, unsubscribeFromStats } = useAdminStore();
+    const { currentAdmin, isLoadingStats, commissionRate, fetchDashboardStats, dashboardStats, dashboardStatsError, subscribeToStats, unsubscribeFromStats } = useAdminStore();
     const { cases } = useResolutionStore();
     const { isRunning } = useSystemAutomation();
 
@@ -394,17 +394,40 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
     if (!dashboardStats) {
         if (!statsRequested || isLoadingStats) return <AdminHomeSkeleton />;
+
+        const isSessionError = dashboardStatsError === 'NO_TOKEN' || dashboardStatsError === 'UNAUTHORIZED';
+        const isNetworkError = dashboardStatsError === 'NETWORK';
+        const errorMessage = isSessionError
+            ? (isAr ? 'انتهت جلسة الدخول. سجّل الدخول مرة أخرى.' : 'Session expired. Please sign in again.')
+            : isNetworkError
+              ? (isAr
+                  ? 'تعذر الاتصال بالخادم. تأكد أن NestJS Backend يعمل على المنفذ 3000.'
+                  : 'Cannot reach the server. Ensure the NestJS backend is running on port 3000.')
+              : (isAr ? 'تعذر تحميل لوحة التحكم من الخادم.' : 'Failed to load dashboard data from the server.');
+
         return (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-white/40">
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-white/40 px-6 text-center">
                 <AlertTriangle size={32} className="text-amber-500" />
-                <p className="text-sm">{isAr ? 'تعذر تحميل لوحة التحكم' : 'Failed to load dashboard'}</p>
-                <button
-                    type="button"
-                    onClick={() => fetchDashboardStats(debouncedRange)}
-                    className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold transition-colors"
-                >
-                    {t.admin.actions.refresh}
-                </button>
+                <p className="text-sm max-w-md">{errorMessage}</p>
+                {isSessionError ? (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.location.href = '/auth/admin-login';
+                        }}
+                        className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold transition-colors"
+                    >
+                        {isAr ? 'تسجيل الدخول' : 'Sign in'}
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => fetchDashboardStats(debouncedRange)}
+                        className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold transition-colors"
+                    >
+                        {t.admin.actions.refresh}
+                    </button>
+                )}
             </div>
         );
     }

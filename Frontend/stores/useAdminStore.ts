@@ -4,8 +4,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { MerchantStatus } from './useVendorStore';
 import { supabase } from '../services/supabase';
 import { storesApi } from '../services/api/stores';
+import { client } from '../services/api/client';
 import { API_URL } from '../services/api/config';
 import { useAdminPermissionsStore } from './useAdminPermissionsStore';
+import {
+  classifyDashboardFetchError,
+  normalizeDashboardStats,
+  type DashboardStatsErrorCode,
+} from '../utils/dashboardStats';
 
 let feedRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -310,6 +316,7 @@ export interface AdminState {
   } | null;
   dashboardStats: DashboardStats | null;
   isLoadingStats: boolean;
+  dashboardStatsError: DashboardStatsErrorCode;
   dashboardFilters: { startDate?: string; endDate?: string };
   stores: any[];
   currentStoreProfile: any | null;
@@ -454,10 +461,32 @@ const DEFAULT_STATUS: SystemStatus = {
   statusMessageEn: 'System is operating normally'
 };
 
+function readInitialAdmin(): AdminUser | null {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      sessionStorage.removeItem('admin');
+      return null;
+    }
+
+    const persisted = sessionStorage.getItem('etashleh-admin-storage');
+    if (persisted) {
+      const parsed = JSON.parse(persisted);
+      if (parsed?.state?.currentAdmin?.id) {
+        return parsed.state.currentAdmin as AdminUser;
+      }
+    }
+
+    return JSON.parse(sessionStorage.getItem('admin') || 'null');
+  } catch {
+    return null;
+  }
+}
+
 export const useAdminStore = create<AdminState>()(
   persist(
     (set, get) => ({
-      currentAdmin: JSON.parse(sessionStorage.getItem('admin') || 'null'),
+      currentAdmin: readInitialAdmin(),
       commissionRate: 25,
       systemStatus: DEFAULT_STATUS,
       adminActivityLogs: [],
@@ -466,6 +495,7 @@ export const useAdminStore = create<AdminState>()(
       vendorsList: [],
       dashboardStats: null,
       isLoadingStats: false,
+      dashboardStatsError: null,
       dashboardFilters: {
         startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0]
@@ -603,7 +633,7 @@ export const useAdminStore = create<AdminState>()(
         sessionStorage.setItem('admin', JSON.stringify(safeUser));
         localStorage.setItem('admin_role', safeUser.role);
         
-        set({ currentAdmin: safeUser });
+        set({ currentAdmin: safeUser, dashboardStatsError: null });
         
         // Update permissions store if provided
         if (permissions) {
@@ -618,7 +648,7 @@ export const useAdminStore = create<AdminState>()(
         sessionStorage.removeItem('admin');
         localStorage.removeItem('admin_role');
         localStorage.removeItem('access_token');
-        set({ currentAdmin: null, dashboardStats: null });
+        set({ currentAdmin: null, dashboardStats: null, dashboardStatsError: null });
         
         // Clear permissions store
         useAdminPermissionsStore.getState().setMyPermissions(null);
@@ -629,19 +659,14 @@ export const useAdminStore = create<AdminState>()(
       silentFetchDashboardStats: async (filters) => {
         try {
           const token = localStorage.getItem('access_token');
-          if (token) {
-            const currentFilters = filters || get().dashboardFilters;
-            const queryParams = new URLSearchParams(currentFilters as any).toString();
-            const res = await fetch(`${API_URL}/dashboard/stats${queryParams ? `?${queryParams}` : ''}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              set({ dashboardStats: data });
-            }
-          }
+          if (!token) return;
+
+          const currentFilters = filters || get().dashboardFilters;
+          const queryParams = new URLSearchParams(currentFilters as any).toString();
+          const res = await client.get(`/dashboard/stats${queryParams ? `?${queryParams}` : ''}`);
+          set({ dashboardStats: normalizeDashboardStats(res.data), dashboardStatsError: null });
         } catch (e) {
-          console.error("Failed to silently fetch stats", e);
+          console.error('Failed to silently fetch stats', e);
         }
       },
 
@@ -863,24 +888,34 @@ export const useAdminStore = create<AdminState>()(
       fetchDashboardStats: async (filters) => {
         const { dashboardStats, dashboardFilters } = get();
         const activeFilters = filters || dashboardFilters;
-        
-        if (!dashboardStats) set({ isLoadingStats: true });
+        const token = localStorage.getItem('access_token');
+
+        if (!token) {
+          set({
+            dashboardStats: null,
+            dashboardStatsError: 'NO_TOKEN',
+            isLoadingStats: false,
+          });
+          return;
+        }
+
+        if (!dashboardStats) set({ isLoadingStats: true, dashboardStatsError: null });
         if (filters) set({ dashboardFilters: filters });
 
         try {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            const queryParams = new URLSearchParams(activeFilters as any).toString();
-            const res = await fetch(`${API_URL}/dashboard/stats${queryParams ? `?${queryParams}` : ''}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              set({ dashboardStats: data });
-            }
-          }
+          const queryParams = new URLSearchParams(activeFilters as any).toString();
+          const res = await client.get(`/dashboard/stats${queryParams ? `?${queryParams}` : ''}`);
+          set({
+            dashboardStats: normalizeDashboardStats(res.data),
+            dashboardStatsError: null,
+          });
         } catch (e) {
-          console.error(e);
+          const errorCode = classifyDashboardFetchError(e);
+          if (errorCode === 'UNAUTHORIZED') {
+            get().logoutAdmin();
+          }
+          set({ dashboardStatsError: errorCode });
+          console.error('Failed to fetch dashboard stats', e);
         } finally {
           set({ isLoadingStats: false });
         }
@@ -1923,6 +1958,20 @@ export const useAdminStore = create<AdminState>()(
     {
       name: 'etashleh-admin-storage',
       storage: createJSONStorage(() => sessionStorage),
+      onRehydrateStorage: () => () => {
+        queueMicrotask(() => {
+          const token = localStorage.getItem('access_token');
+          const state = useAdminStore.getState();
+          if (!token && state.currentAdmin) {
+            useAdminStore.setState({ currentAdmin: null, dashboardStats: null, dashboardStatsError: 'NO_TOKEN' });
+            sessionStorage.removeItem('admin');
+            return;
+          }
+          if (token && state.currentAdmin && !state.dashboardStats && !state.isLoadingStats) {
+            void state.fetchDashboardStats();
+          }
+        });
+      },
       partialize: (state) => {
         // Exclude circular/non-serializable objects from persistence
         const { 
