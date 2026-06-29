@@ -72,22 +72,15 @@ export function buildPaymentDateFilter(range: AdminDateRange): Prisma.DateTimeFi
   return filter;
 }
 
-/** SUCCESS payments on non-cancelled/refunded orders — audit-grade GMV base. */
-export function buildGrossSalesPaymentWhere(
+/** Dashboard date filters use created_at — production DB may not have paid_at until migration 20260629. */
+function buildGrossSalesPaymentWhere(
   range: AdminDateRange,
 ): Prisma.PaymentTransactionWhereInput {
   const dateFilter = buildPaymentDateFilter(range);
   return {
     status: 'SUCCESS',
     order: { status: { notIn: [...EXCLUDED_ORDER_STATUSES_FOR_PURCHASES] } },
-    ...(dateFilter
-      ? {
-          OR: [
-            { paidAt: dateFilter },
-            { paidAt: null, createdAt: dateFilter },
-          ],
-        }
-      : {}),
+    ...(dateFilter ? { createdAt: dateFilter } : {}),
   };
 }
 
@@ -302,26 +295,26 @@ export async function computeSalesTrend(
     startDate && endDate
       ? await prisma.$queryRaw<Array<{ day: Date; gross: unknown; refunds: unknown }>>`
           SELECT
-            DATE(COALESCE(pt."paid_at", pt."created_at")) AS day,
+            DATE(pt."created_at") AS day,
             COALESCE(SUM(pt."total_amount"), 0) AS gross,
             COALESCE(SUM(pt."refunded_amount"), 0) AS refunds
           FROM "payment_transactions" pt
           JOIN "orders" o ON o."id" = pt."order_id"
           WHERE pt."status" = 'SUCCESS'
             AND o."status" NOT IN ('CANCELLED', 'REFUNDED')
-            AND COALESCE(pt."paid_at", pt."created_at") BETWEEN ${startDate} AND ${endDate}
-          GROUP BY DATE(COALESCE(pt."paid_at", pt."created_at"))
+            AND pt."created_at" BETWEEN ${startDate} AND ${endDate}
+          GROUP BY DATE(pt."created_at")
           ORDER BY day ASC`
       : await prisma.$queryRaw<Array<{ day: Date; gross: unknown; refunds: unknown }>>`
           SELECT
-            DATE(COALESCE(pt."paid_at", pt."created_at")) AS day,
+            DATE(pt."created_at") AS day,
             COALESCE(SUM(pt."total_amount"), 0) AS gross,
             COALESCE(SUM(pt."refunded_amount"), 0) AS refunds
           FROM "payment_transactions" pt
           JOIN "orders" o ON o."id" = pt."order_id"
           WHERE pt."status" = 'SUCCESS'
             AND o."status" NOT IN ('CANCELLED', 'REFUNDED')
-          GROUP BY DATE(COALESCE(pt."paid_at", pt."created_at"))
+          GROUP BY DATE(pt."created_at")
           ORDER BY day ASC`;
 
   return rows.map((r) => {
@@ -357,7 +350,7 @@ export async function computeTopSpenders(
           WHERE pt."status" = 'SUCCESS'
             AND pt."customer_id" IS NOT NULL
             AND o."status" NOT IN ('CANCELLED', 'REFUNDED')
-            AND COALESCE(pt."paid_at", pt."created_at") BETWEEN ${startDate} AND ${endDate}
+            AND pt."created_at" BETWEEN ${startDate} AND ${endDate}
           GROUP BY pt."customer_id"
           ORDER BY "totalAmount" DESC
           LIMIT ${limit}`
@@ -417,7 +410,7 @@ export async function computeTopEarners(
           WHERE pt."status" = 'SUCCESS'
             AND off."store_id" IS NOT NULL
             AND o."status" NOT IN ('CANCELLED', 'REFUNDED')
-            AND COALESCE(pt."paid_at", pt."created_at") BETWEEN ${startDate} AND ${endDate}
+            AND pt."created_at" BETWEEN ${startDate} AND ${endDate}
           GROUP BY off."store_id"
           ORDER BY "totalAmount" DESC
           LIMIT ${limit}`

@@ -399,11 +399,15 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         const isNetworkError = dashboardStatsError === 'NETWORK';
         const errorMessage = isSessionError
             ? (isAr ? 'انتهت جلسة الدخول. سجّل الدخول مرة أخرى.' : 'Session expired. Please sign in again.')
-            : isNetworkError
-              ? (isAr
-                  ? 'تعذر الاتصال بالخادم. تأكد أن NestJS Backend يعمل على المنفذ 3000.'
-                  : 'Cannot reach the server. Ensure the NestJS backend is running on port 3000.')
-              : (isAr ? 'تعذر تحميل لوحة التحكم من الخادم.' : 'Failed to load dashboard data from the server.');
+              : isNetworkError
+                ? (isAr
+                    ? 'تعذر الاتصال بالخادم. تأكد أن NestJS Backend يعمل.'
+                    : 'Cannot reach the server. Ensure the NestJS backend is running.')
+                : dashboardStatsError === 'HTTP_ERROR'
+                  ? (isAr
+                      ? 'خطأ في الخادم (500). أعد نشر Backend بعد آخر تحديث.'
+                      : 'Server error (500). Redeploy the backend with the latest fix.')
+                  : (isAr ? 'تعذر تحميل لوحة التحكم من الخادم.' : 'Failed to load dashboard data from the server.');
 
         return (
             <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-white/40 px-6 text-center">

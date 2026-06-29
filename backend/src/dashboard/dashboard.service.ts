@@ -1,5 +1,5 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderStatus, StoreStatus, UserRole } from '@prisma/client';
 import {
@@ -10,8 +10,15 @@ import {
     computeTopEarners,
 } from '../payments/admin-financial-metrics.util';
 
+function toNumber(value: unknown): number {
+    if (value == null) return 0;
+    return Number(value);
+}
+
 @Injectable()
 export class DashboardService {
+    private readonly logger = new Logger(DashboardService.name);
+
     constructor(private prisma: PrismaService) { }
 
     async getStats(startDateStr?: string, endDateStr?: string) {
@@ -227,7 +234,29 @@ export class DashboardService {
             openDisputes,
             salesTrend,
             topStores,
-            recentOrders: lastOrders,
+            recentOrders: lastOrders.map((order) => ({
+                id: order.id,
+                orderNumber: order.orderNumber,
+                status: order.status,
+                createdAt: order.createdAt,
+                totalAmount: order.totalAmount != null ? toNumber(order.totalAmount) : null,
+                customer: order.customer,
+                acceptedOffer: order.acceptedOffer
+                    ? {
+                        unitPrice: toNumber(order.acceptedOffer.unitPrice),
+                        shippingCost: toNumber(order.acceptedOffer.shippingCost),
+                        store: order.acceptedOffer.store,
+                    }
+                    : null,
+                offers: order.offers.map((offer) => ({
+                    id: offer.id,
+                    status: offer.status,
+                    unitPrice: toNumber(offer.unitPrice),
+                    shippingCost: toNumber(offer.shippingCost),
+                    store: offer.store,
+                })),
+                _count: order._count,
+            })),
             statusDistribution: statusDist.map((s) => ({
                 status: s.status,
                 count: s._count.id,
