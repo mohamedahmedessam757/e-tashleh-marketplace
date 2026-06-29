@@ -28,7 +28,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       message = typeof res === 'string' ? res : res;
     } else if (exception instanceof Error) {
       this.logger.error(
-        `${request.method} ${request.url}`,
+        `${request.method} ${request.url} — ${exception.name}: ${exception.message}`,
         exception.stack,
       );
     }
