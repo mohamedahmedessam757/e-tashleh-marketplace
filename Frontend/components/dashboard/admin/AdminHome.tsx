@@ -172,6 +172,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
     // Debounced Date Range (for actual fetching)
     const [debouncedRange, setDebouncedRange] = useState(localDateRange);
+    const [statsRequested, setStatsRequested] = useState(false);
 
     // Sync local range to debounced range with a delay
     React.useEffect(() => {
@@ -183,6 +184,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
     // Fetch Real-time Stats on Mount & on Debounced Filter Change
     React.useEffect(() => {
+        setStatsRequested(true);
         fetchDashboardStats(debouncedRange);
         subscribeToStats();
         
@@ -247,14 +249,14 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             barData: []
         };
 
-        const salesTrend = dashboardStats.salesTrend.map(d => d.value);
-        const salesLabels = dashboardStats.salesTrend.map(d => {
+        const salesTrend = (dashboardStats.salesTrend ?? []).map(d => d.value);
+        const salesLabels = (dashboardStats.salesTrend ?? []).map(d => {
             const date = new Date(d.date);
             // Always use Gregorian (English locales usually do, but let's be explicit)
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
         });
 
-        const sDist = dashboardStats.statusDistribution;
+        const sDist = dashboardStats.statusDistribution ?? [];
         
         // Dynamic mapping of all possible statuses to 2026 premium colors
         const statusConfig: Record<string, string> = {
@@ -291,12 +293,12 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
         const donutTotal = donutData.reduce((sum, item) => sum + item.value, 0);
 
-        const barData = dashboardStats.topStores.map(s => ({
+        const barData = (dashboardStats.topStores ?? []).map(s => ({
             label: s.name,
             value: s.ordersCount
         }));
 
-        const salesTrendData = dashboardStats.salesTrend.map((d, i) => ({
+        const salesTrendData = (dashboardStats.salesTrend ?? []).map((d, i) => ({
             label: salesLabels[i] || '',
             value: d.value
         }));
@@ -390,10 +392,25 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         );
     }
 
-    // Simplified: No global skeleton to prevent flickering
-    if (!dashboardStats && isLoadingStats) {
-        return <AdminHomeSkeleton />;
+    if (!dashboardStats) {
+        if (!statsRequested || isLoadingStats) return <AdminHomeSkeleton />;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-white/40">
+                <AlertTriangle size={32} className="text-amber-500" />
+                <p className="text-sm">{isAr ? 'تعذر تحميل لوحة التحكم' : 'Failed to load dashboard'}</p>
+                <button
+                    type="button"
+                    onClick={() => fetchDashboardStats(debouncedRange)}
+                    className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold transition-colors"
+                >
+                    {t.admin.actions.refresh}
+                </button>
+            </div>
+        );
     }
+
+    const topStores = dashboardStats.topStores ?? [];
+    const recentOrders = dashboardStats.recentOrders ?? [];
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-10">
@@ -564,7 +581,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                     </div>
                     
                     <div className="flex-1 space-y-3">
-                        {dashboardStats.topStores.map((store: any, index: number) => (
+                        {topStores.map((store: any, index: number) => (
                             <div 
                                 key={store.storeId}
                                 onClick={() => navigate('store-profile', store.storeId)}
@@ -616,7 +633,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                             </div>
                         ))}
 
-                        {dashboardStats.topStores.length === 0 && (
+                        {topStores.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-white/20 py-10">
                                 <Activity size={40} strokeWidth={1} className="mb-2 opacity-20" />
                                 <span className="text-xs">{isAr ? 'لا توجد بيانات متاجر حالياً' : 'No store data available'}</span>
@@ -660,7 +677,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                     </div>
 
                     <div className="space-y-2 mt-2">
-                        {dashboardStats.recentOrders.map((order: any) => {
+                        {recentOrders.map((order: any) => {
                             const allAccepted = order.offers?.filter((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())) || [];
                             const calculatedPrice = allAccepted.length > 0 
                                 ? allAccepted.reduce((total: number, of: any) => {
