@@ -199,9 +199,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => 
               <LogIn size={20} />
               <span>{t.nav.login}</span>
             </button>
-            <div className="text-center mt-6 text-white/30 text-xs font-mono">
-              ADMIN PANEL V2.0 MOBILE
-            </div>
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ import {
     Calendar, Clock, ShieldAlert, Crown, Diamond, AlertTriangle, Eye, FileText, MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { Badge } from '../../ui/Badge';
 import { AdminSignatureModal } from './AdminSignatureModal';
 import { AdminInitiateChatModal } from './AdminInitiateChatModal';
@@ -466,6 +467,14 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                             {isAr ? 'حساب محظور' : 'Account Banned'}
                                         </span>
                                     )}
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                                        <CopyableIdBadge
+                                            labelAr={t.admin.ids.customerId}
+                                            labelEn={t.admin.ids.customerId}
+                                            value={customer.id}
+                                            language={language}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">

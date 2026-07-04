@@ -50,8 +50,8 @@ export interface ShipmentStatusLog {
 }
 
 export const shipmentsApi = {
-    getAll: async (): Promise<Shipment[]> => {
-        const response = await api.get('/shipments');
+    getAll: async (params?: { search?: string }): Promise<Shipment[]> => {
+        const response = await api.get('/shipments', { params });
         return response.data;
     },
 

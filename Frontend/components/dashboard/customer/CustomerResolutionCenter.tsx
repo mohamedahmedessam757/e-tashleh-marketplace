@@ -34,6 +34,7 @@ import { useOrderStore, Order } from '../../../stores/useOrderStore';
 import { OrderSelectionModal } from './OrderSelectionModal';
 import { ReturnRequestModal } from '../resolution/ReturnRequestModal';
 import { DisputeModal } from '../resolution/DisputeModal';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../../utils/orderSla';
 import { ordersApi } from '../../../services/api/orders';
 
@@ -444,6 +445,13 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
 
                         <div className="space-y-2 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
+                             <CopyableIdBadge
+                               labelAr={t.admin.ids.caseReference}
+                               labelEn={t.admin.ids.caseReference}
+                               value={item.caseReference || item.id}
+                               language={language}
+                               variant="muted"
+                             />
                              <div className="px-1.5 py-0.5 bg-gold-500/10 border border-gold-500/20 rounded text-[9px] font-black text-gold-500 uppercase">
                                #{item.orderNumber}
                              </div>
@@ -464,7 +472,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
                               <span className="truncate">{item.merchantName}</span>
                             </div>
                             <div className="text-[8px] font-black text-white/10 uppercase font-mono">
-                              CASE: {item.id.substring(0, 8)}
+                              {item.caseReference || item.id.substring(0, 8)}
                             </div>
                           </div>
                         </div>

@@ -7,6 +7,14 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { OrderStatus, ActorType, ViolationTargetType } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
 import { OpenRouterService } from '../llm/openrouter.service';
+import {
+    normalizeSearchQuery,
+    resolveUserIds,
+    resolveStoreIds,
+    resolveOrderIds,
+    isUuid,
+    mergeWhereWithSearch,
+} from '../common/search/admin-entity-search.util';
 
 @Injectable()
 export class ChatService {
@@ -142,13 +150,13 @@ export class ChatService {
         return this.mapChatToDto(chat);
     }
 
-    async getUserChats(userId: string, role: string, type?: string) {
+    async getUserChats(userId: string, role: string, type?: string, search?: string) {
         let chats = [];
         // Resolve the effective sender ID for unread calculation
         let effectiveSenderId = userId;
 
         const baseInclude = {
-            customer: { select: { id: true, name: true, avatar: true } },
+            customer: { select: { id: true, name: true, avatar: true, email: true, phone: true } },
             vendor: { select: { id: true, name: true, logo: true, storeCode: true, ownerId: true } },
             order: { select: { orderNumber: true, partName: true, id: true } },
             messages: { 
@@ -182,8 +190,7 @@ export class ChatService {
                 orderBy: { updatedAt: 'desc' }
             });
         } else if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT') {
-            // Admin/Support sees chats based on type if provided
-            const where: any = { isDeletedByAdmin: false };
+            let where: Record<string, unknown> = { isDeletedByAdmin: false };
             if (type) where.type = type;
 
             // Granular Filtering for SUPPORT role (2026 Governance Standard)
@@ -193,16 +200,53 @@ export class ChatService {
                 });
                 
                 if (adminPerms && adminPerms.supportTicketCategories && adminPerms.supportTicketCategories.length > 0) {
-                    // Filter chats by allowed categories (jsonb array check)
-                    // Note: 'support' type chats have a 'category' field
                     if (type === 'support') {
                         where.category = { in: adminPerms.supportTicketCategories };
                     }
                 }
             }
 
+            const q = normalizeSearchQuery(search);
+            if (q && (type === 'support' || type === 'order')) {
+                const [userIds, storeIds, orderIds] = await Promise.all([
+                    resolveUserIds(this.prisma, q),
+                    resolveStoreIds(this.prisma, q),
+                    resolveOrderIds(this.prisma, q),
+                ]);
+
+                const searchOr: Record<string, unknown>[] = [
+                    { adminInitReason: { contains: q, mode: 'insensitive' } },
+                    { category: { contains: q, mode: 'insensitive' } },
+                    { guestName: { contains: q, mode: 'insensitive' } },
+                    { guestEmail: { contains: q, mode: 'insensitive' } },
+                    { guestPhone: { contains: q, mode: 'insensitive' } },
+                    { order: { orderNumber: { contains: q, mode: 'insensitive' } } },
+                    { order: { partName: { contains: q, mode: 'insensitive' } } },
+                    { customer: { name: { contains: q, mode: 'insensitive' } } },
+                    { customer: { email: { contains: q, mode: 'insensitive' } } },
+                    { customer: { phone: { contains: q, mode: 'insensitive' } } },
+                    { vendor: { name: { contains: q, mode: 'insensitive' } } },
+                    { vendor: { storeCode: { contains: q, mode: 'insensitive' } } },
+                ];
+
+                if (isUuid(q)) {
+                    searchOr.push({ id: q });
+                    searchOr.push({ orderId: q });
+                    searchOr.push({ customerId: q });
+                    searchOr.push({ vendorId: q });
+                }
+                if (userIds.length) {
+                    searchOr.push({ customerId: { in: userIds } });
+                    searchOr.push({ vendor: { ownerId: { in: userIds } } });
+                }
+                if (storeIds.length) searchOr.push({ vendorId: { in: storeIds } });
+                if (orderIds.length) searchOr.push({ orderId: { in: orderIds } });
+
+                where = mergeWhereWithSearch(where, { OR: searchOr });
+            }
+
             chats = await this.prisma.orderChat.findMany({
-                where,
+                where: where as any,
                 include: {
                     ...baseInclude,
                     messages: { 

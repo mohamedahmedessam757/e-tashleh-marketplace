@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, UseGuards, Request, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
 import { StoresService } from './stores.service';
 import { UploadStoreDocumentDto } from './dto/upload-store-document.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -39,8 +39,8 @@ export class StoresController {
     @Get()
     @UseGuards(PermissionsGuard)
     @Permissions('users', 'view')
-    findAll() {
-        return this.storesService.findAll();
+    findAll(@Query('search') search?: string) {
+        return this.storesService.findAll(search);
     }
 
     @Get(':id')

@@ -39,6 +39,7 @@ import { EmailModule } from './email/email.module';
 import { PublicDocumentsModule } from './public-documents/public-documents.module';
 
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
+import { ContractChangesModule } from './contract-changes/contract-changes.module';
 
 @Module({
     imports: [
@@ -83,6 +84,7 @@ import { ProfileChangesModule } from './profile-changes/profile-changes.module';
         AdminPermissionsModule,
         VerificationTasksModule,
         ProfileChangesModule,
+        ContractChangesModule,
     ],
     controllers: [AppController],
     providers: [

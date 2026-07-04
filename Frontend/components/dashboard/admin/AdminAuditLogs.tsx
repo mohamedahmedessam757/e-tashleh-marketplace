@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAuditStore, ActionType } from '../../../stores/useAuditStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Search, Filter, Database, Clock, User, FileText, ChevronRight, ChevronDown, Download, Radio, Shield, HelpCircle, Loader2 } from 'lucide-react';
+import { Filter, Database, Clock, User, FileText, ChevronRight, ChevronDown, Download, Radio, Shield, HelpCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AdminSearchInput } from './AdminSearchInput';
 
 export const AdminAuditLogs: React.FC = () => {
     const { t, language } = useLanguage();
@@ -14,18 +15,24 @@ export const AdminAuditLogs: React.FC = () => {
     const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
     const observerTarget = useRef(null);
 
-    useEffect(() => {
-        fetchLogs();
+  useEffect(() => {
         subscribeToLogs();
         return () => unsubscribeFromLogs();
     }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            fetchLogs(search);
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [search]);
 
     // Phase 4: Infinite Scroll Observer logic
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !isLoading && filterAction === 'ALL' && !search) {
-                    fetchMoreLogs();
+                if (entries[0].isIntersecting && hasMore && !isLoading && filterAction === 'ALL' && !search.trim()) {
+                    fetchMoreLogs(search);
                 }
             },
             { threshold: 0.1, rootMargin: '100px' }
@@ -70,17 +77,7 @@ export const AdminAuditLogs: React.FC = () => {
                              (filterEntity === 'CHAT' && l.entity === 'OrderChat') ||
                              (filterEntity === 'SYSTEM' && (l.entity === 'SYSTEM' || l.actorType === 'SYSTEM'));
 
-        const searchLower = search.toLowerCase();
-        const matchesSearch = 
-            (l.id?.toLowerCase() || "").includes(searchLower) ||
-            (l.actorName?.toLowerCase() || "").includes(searchLower) ||
-            (l.entity?.toLowerCase() || "").includes(searchLower) ||
-            (l.reason?.toLowerCase() || "").includes(searchLower) ||
-            // Search in metadata (store name, etc)
-            Object.values(l.metadata || {}).some(val => String(val).toLowerCase().includes(searchLower)) ||
-            (l.orderId?.toString() || "").includes(search);
-            
-        return matchesAction && matchesEntity && matchesSearch;
+        return matchesAction && matchesEntity;
     });
 
     const getActionLabel = (action: string) => {
@@ -264,16 +261,12 @@ export const AdminAuditLogs: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                    <div className="relative flex-1 lg:flex-none min-w-[280px]">
-                        <Search size={16} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-white/30`} />
-                        <input
-                            type="text"
-                            placeholder={t.admin.auditPage.searchPlaceholder}
-                            className={`w-full bg-white/5 border border-white/10 rounded-2xl ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 text-sm text-white focus:border-gold-500 focus:bg-white/10 transition-all outline-none backdrop-blur-md`}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <AdminSearchInput
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t.admin.auditPage.searchPlaceholder}
+                        className="flex-1 lg:flex-none min-w-[280px]"
+                    />
                     
                     
                     <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">

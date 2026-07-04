@@ -637,6 +637,8 @@ export type UserWhereInput = {
   settings?: Prisma.XOR<Prisma.UserSettingsNullableScalarRelationFilter, Prisma.UserSettingsWhereInput> | null
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestListRelationFilter
   profileChangeRequests?: Prisma.ProfileChangeRequestListRelationFilter
+  contractChangeRequests?: Prisma.ContractChangeRequestListRelationFilter
+  resolvedContractChanges?: Prisma.ContractChangeRequestListRelationFilter
   securityLogs?: Prisma.SecurityLogListRelationFilter
   payments?: Prisma.PaymentTransactionListRelationFilter
   cards?: Prisma.UserCardListRelationFilter
@@ -739,6 +741,8 @@ export type UserOrderByWithRelationInput = {
   settings?: Prisma.UserSettingsOrderByWithRelationInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestOrderByRelationAggregateInput
   profileChangeRequests?: Prisma.ProfileChangeRequestOrderByRelationAggregateInput
+  contractChangeRequests?: Prisma.ContractChangeRequestOrderByRelationAggregateInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestOrderByRelationAggregateInput
   securityLogs?: Prisma.SecurityLogOrderByRelationAggregateInput
   payments?: Prisma.PaymentTransactionOrderByRelationAggregateInput
   cards?: Prisma.UserCardOrderByRelationAggregateInput
@@ -844,6 +848,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   settings?: Prisma.XOR<Prisma.UserSettingsNullableScalarRelationFilter, Prisma.UserSettingsWhereInput> | null
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestListRelationFilter
   profileChangeRequests?: Prisma.ProfileChangeRequestListRelationFilter
+  contractChangeRequests?: Prisma.ContractChangeRequestListRelationFilter
+  resolvedContractChanges?: Prisma.ContractChangeRequestListRelationFilter
   securityLogs?: Prisma.SecurityLogListRelationFilter
   payments?: Prisma.PaymentTransactionListRelationFilter
   cards?: Prisma.UserCardListRelationFilter
@@ -1063,6 +1069,8 @@ export type UserCreateInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -1165,6 +1173,8 @@ export type UserUncheckedCreateInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -1265,6 +1275,8 @@ export type UserUpdateInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -1367,6 +1379,8 @@ export type UserUncheckedUpdateInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -2139,6 +2153,36 @@ export type UserUpdateOneWithoutCreatedContractsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedContractsInput, Prisma.UserUpdateWithoutCreatedContractsInput>, Prisma.UserUncheckedUpdateWithoutCreatedContractsInput>
 }
 
+export type UserCreateNestedOneWithoutContractChangeRequestsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutContractChangeRequestsInput, Prisma.UserUncheckedCreateWithoutContractChangeRequestsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutContractChangeRequestsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutResolvedContractChangesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutResolvedContractChangesInput, Prisma.UserUncheckedCreateWithoutResolvedContractChangesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutResolvedContractChangesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutContractChangeRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutContractChangeRequestsInput, Prisma.UserUncheckedCreateWithoutContractChangeRequestsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutContractChangeRequestsInput
+  upsert?: Prisma.UserUpsertWithoutContractChangeRequestsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutContractChangeRequestsInput, Prisma.UserUpdateWithoutContractChangeRequestsInput>, Prisma.UserUncheckedUpdateWithoutContractChangeRequestsInput>
+}
+
+export type UserUpdateOneWithoutResolvedContractChangesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutResolvedContractChangesInput, Prisma.UserUncheckedCreateWithoutResolvedContractChangesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutResolvedContractChangesInput
+  upsert?: Prisma.UserUpsertWithoutResolvedContractChangesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutResolvedContractChangesInput, Prisma.UserUpdateWithoutResolvedContractChangesInput>, Prisma.UserUncheckedUpdateWithoutResolvedContractChangesInput>
+}
+
 export type UserCreateNestedOneWithoutShippingWaybillsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutShippingWaybillsInput, Prisma.UserUncheckedCreateWithoutShippingWaybillsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutShippingWaybillsInput
@@ -2600,6 +2644,8 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -2701,6 +2747,8 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -2816,6 +2864,8 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -2917,6 +2967,8 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -3016,6 +3068,8 @@ export type UserCreateWithoutReferredUsersInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3117,6 +3171,8 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3221,6 +3277,8 @@ export type UserCreateWithoutReferredByInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3321,6 +3379,8 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3442,6 +3502,8 @@ export type UserUpdateWithoutReferredUsersInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -3543,6 +3605,8 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -3715,6 +3779,8 @@ export type UserCreateWithoutSettingsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -3816,6 +3882,8 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -3931,6 +3999,8 @@ export type UserUpdateWithoutSettingsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -4032,6 +4102,8 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4131,6 +4203,8 @@ export type UserCreateWithoutStoreInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -4232,6 +4306,8 @@ export type UserUncheckedCreateWithoutStoreInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -4347,6 +4423,8 @@ export type UserUpdateWithoutStoreInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -4448,6 +4526,8 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4547,6 +4627,8 @@ export type UserCreateWithoutOrdersInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -4648,6 +4730,8 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -4763,6 +4847,8 @@ export type UserUpdateWithoutOrdersInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -4864,6 +4950,8 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -4964,6 +5052,8 @@ export type UserCreateWithoutVerificationReviewsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5065,6 +5155,8 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -5180,6 +5272,8 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -5281,6 +5375,8 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -5379,6 +5475,8 @@ export type UserCreateWithoutNotificationsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5480,6 +5578,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -5595,6 +5695,8 @@ export type UserUpdateWithoutNotificationsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -5696,6 +5798,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -5795,6 +5899,8 @@ export type UserCreateWithoutReturnsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -5896,6 +6002,8 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -6011,6 +6119,8 @@ export type UserUpdateWithoutReturnsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6112,6 +6222,8 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -6211,6 +6323,8 @@ export type UserCreateWithoutDisputesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -6312,6 +6426,8 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -6427,6 +6543,8 @@ export type UserUpdateWithoutDisputesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6528,6 +6646,8 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -6628,6 +6748,8 @@ export type UserCreateWithoutCaseMessagesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -6729,6 +6851,8 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -6844,6 +6968,8 @@ export type UserUpdateWithoutCaseMessagesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -6945,6 +7071,8 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -7043,6 +7171,8 @@ export type UserCreateWithoutOrderChatsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -7144,6 +7274,8 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -7259,6 +7391,8 @@ export type UserUpdateWithoutOrderChatsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -7360,6 +7494,8 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -7459,6 +7595,8 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -7560,6 +7698,8 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -7675,6 +7815,8 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -7776,6 +7918,8 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -7875,6 +8019,8 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -7976,6 +8122,8 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -8091,6 +8239,8 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -8192,6 +8342,8 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -8292,6 +8444,8 @@ export type UserCreateWithoutSecurityLogsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -8393,6 +8547,8 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -8508,6 +8664,8 @@ export type UserUpdateWithoutSecurityLogsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -8609,6 +8767,8 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -8708,6 +8868,8 @@ export type UserCreateWithoutSessionInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -8809,6 +8971,8 @@ export type UserUncheckedCreateWithoutSessionInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -8924,6 +9088,8 @@ export type UserUpdateWithoutSessionInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -9025,6 +9191,8 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -9124,6 +9292,8 @@ export type UserCreateWithoutPaymentsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -9225,6 +9395,8 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -9340,6 +9512,8 @@ export type UserUpdateWithoutPaymentsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -9441,6 +9615,8 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -9540,6 +9716,8 @@ export type UserCreateWithoutWalletTransactionsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -9641,6 +9819,8 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -9756,6 +9936,8 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -9857,6 +10039,8 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -9956,6 +10140,8 @@ export type UserCreateWithoutInvoicesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -10057,6 +10243,8 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -10172,6 +10360,8 @@ export type UserUpdateWithoutInvoicesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -10273,6 +10463,8 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -10372,6 +10564,8 @@ export type UserCreateWithoutCardsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   Session?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -10473,6 +10667,8 @@ export type UserUncheckedCreateWithoutCardsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -10588,6 +10784,8 @@ export type UserUpdateWithoutCardsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -10689,6 +10887,8 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -10788,6 +10988,8 @@ export type UserCreateWithoutCreatedContractsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -10889,6 +11091,8 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -11004,6 +11208,8 @@ export type UserUpdateWithoutCreatedContractsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11105,10 +11311,860 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
   Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutContractChangeRequestsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutContractChangeRequestsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutContractChangeRequestsInput, Prisma.UserUncheckedCreateWithoutContractChangeRequestsInput>
+}
+
+export type UserCreateWithoutResolvedContractChangesInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutResolvedContractChangesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutResolvedContractChangesInput, Prisma.UserUncheckedCreateWithoutResolvedContractChangesInput>
+}
+
+export type UserUpsertWithoutContractChangeRequestsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutContractChangeRequestsInput, Prisma.UserUncheckedUpdateWithoutContractChangeRequestsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutContractChangeRequestsInput, Prisma.UserUncheckedCreateWithoutContractChangeRequestsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutContractChangeRequestsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutContractChangeRequestsInput, Prisma.UserUncheckedUpdateWithoutContractChangeRequestsInput>
+}
+
+export type UserUpdateWithoutContractChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUpsertWithoutResolvedContractChangesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutResolvedContractChangesInput, Prisma.UserUncheckedUpdateWithoutResolvedContractChangesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutResolvedContractChangesInput, Prisma.UserUncheckedCreateWithoutResolvedContractChangesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutResolvedContractChangesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutResolvedContractChangesInput, Prisma.UserUncheckedUpdateWithoutResolvedContractChangesInput>
+}
+
+export type UserUpdateWithoutResolvedContractChangesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
   verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
   invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
@@ -11204,6 +12260,8 @@ export type UserCreateWithoutShippingWaybillsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -11305,6 +12363,8 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -11420,6 +12480,8 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11521,6 +12583,8 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -11620,6 +12684,8 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -11721,6 +12787,8 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -11836,6 +12904,8 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -11937,6 +13007,8 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -12036,6 +13108,8 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12137,6 +13211,8 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -12252,6 +13328,8 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -12353,6 +13431,8 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -12452,6 +13532,8 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12553,6 +13635,8 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -12668,6 +13752,8 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -12769,6 +13855,8 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -12868,6 +13956,8 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -12969,6 +14059,8 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -13084,6 +14176,8 @@ export type UserUpdateWithoutWithdrawalRequestsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -13185,6 +14279,8 @@ export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -13284,6 +14380,8 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -13385,6 +14483,8 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -13500,6 +14600,8 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -13601,6 +14703,8 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -13700,6 +14804,8 @@ export type UserCreateWithoutViolationsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -13801,6 +14907,8 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -13905,6 +15013,8 @@ export type UserCreateWithoutIssuedViolationsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14006,6 +15116,8 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -14121,6 +15233,8 @@ export type UserUpdateWithoutViolationsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -14222,6 +15336,8 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -14332,6 +15448,8 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -14433,6 +15551,8 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -14532,6 +15652,8 @@ export type UserCreateWithoutViolationAppealsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14633,6 +15755,8 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -14737,6 +15861,8 @@ export type UserCreateWithoutReviewedAppealsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -14838,6 +15964,8 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -14953,6 +16081,8 @@ export type UserUpdateWithoutViolationAppealsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15054,6 +16184,8 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -15164,6 +16296,8 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15265,6 +16399,8 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -15364,6 +16500,8 @@ export type UserCreateWithoutPenaltyActionsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -15465,6 +16603,8 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -15569,6 +16709,8 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -15670,6 +16812,8 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -15785,6 +16929,8 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -15886,6 +17032,8 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -15996,6 +17144,8 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -16097,6 +17247,8 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -16196,6 +17348,8 @@ export type UserCreateWithoutScoreLogsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -16297,6 +17451,8 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -16412,6 +17568,8 @@ export type UserUpdateWithoutScoreLogsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -16513,6 +17671,8 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -16612,6 +17772,8 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -16713,6 +17875,8 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -16828,6 +17992,8 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -16929,6 +18095,8 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17028,6 +18196,8 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -17129,6 +18299,8 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -17233,6 +18405,8 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -17334,6 +18508,8 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -17449,6 +18625,8 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -17550,6 +18728,8 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17660,6 +18840,8 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -17761,6 +18943,8 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -17860,6 +19044,8 @@ export type UserCreateWithoutRiskAlertsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -17961,6 +19147,8 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18065,6 +19253,8 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18166,6 +19356,8 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18281,6 +19473,8 @@ export type UserUpdateWithoutRiskAlertsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -18382,6 +19576,8 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -18492,6 +19688,8 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -18593,6 +19791,8 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -18692,6 +19892,8 @@ export type UserCreateWithoutAdminPermissionInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18793,6 +19995,8 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -18897,6 +20101,8 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -18998,6 +20204,8 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -19102,6 +20310,8 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -19203,6 +20413,8 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -19318,6 +20530,8 @@ export type UserUpdateWithoutAdminPermissionInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19419,6 +20633,8 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19529,6 +20745,8 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19630,6 +20848,8 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19740,6 +20960,8 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -19841,6 +21063,8 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -19940,6 +21164,8 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -20041,6 +21267,8 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -20145,6 +21373,8 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -20246,6 +21476,8 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -20361,6 +21593,8 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -20462,6 +21696,8 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -20572,6 +21808,8 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -20673,6 +21911,8 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -20772,6 +22012,8 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -20873,6 +22115,8 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -20988,6 +22232,8 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -21089,6 +22335,8 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -21188,6 +22436,8 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -21289,6 +22539,8 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -21404,6 +22656,8 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -21505,6 +22759,8 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -21604,6 +22860,8 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
@@ -21705,6 +22963,8 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
   securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
   cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
@@ -21820,6 +23080,8 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -21921,6 +23183,8 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -22074,6 +23338,8 @@ export type UserUpdateWithoutReferredByInput = {
   settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
@@ -22174,6 +23440,8 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
   accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
   profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
   securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
   cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
@@ -22280,6 +23548,8 @@ export type UserCountOutputType = {
   orderChats: number
   accountRecoveryRequests: number
   profileChangeRequests: number
+  contractChangeRequests: number
+  resolvedContractChanges: number
   securityLogs: number
   payments: number
   cards: number
@@ -22326,6 +23596,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   orderChats?: boolean | UserCountOutputTypeCountOrderChatsArgs
   accountRecoveryRequests?: boolean | UserCountOutputTypeCountAccountRecoveryRequestsArgs
   profileChangeRequests?: boolean | UserCountOutputTypeCountProfileChangeRequestsArgs
+  contractChangeRequests?: boolean | UserCountOutputTypeCountContractChangeRequestsArgs
+  resolvedContractChanges?: boolean | UserCountOutputTypeCountResolvedContractChangesArgs
   securityLogs?: boolean | UserCountOutputTypeCountSecurityLogsArgs
   payments?: boolean | UserCountOutputTypeCountPaymentsArgs
   cards?: boolean | UserCountOutputTypeCountCardsArgs
@@ -22421,6 +23693,20 @@ export type UserCountOutputTypeCountAccountRecoveryRequestsArgs<ExtArgs extends 
  */
 export type UserCountOutputTypeCountProfileChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ProfileChangeRequestWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountContractChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContractChangeRequestWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountResolvedContractChangesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContractChangeRequestWhereInput
 }
 
 /**
@@ -22738,6 +24024,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   settings?: boolean | Prisma.User$settingsArgs<ExtArgs>
   accountRecoveryRequests?: boolean | Prisma.User$accountRecoveryRequestsArgs<ExtArgs>
   profileChangeRequests?: boolean | Prisma.User$profileChangeRequestsArgs<ExtArgs>
+  contractChangeRequests?: boolean | Prisma.User$contractChangeRequestsArgs<ExtArgs>
+  resolvedContractChanges?: boolean | Prisma.User$resolvedContractChangesArgs<ExtArgs>
   securityLogs?: boolean | Prisma.User$securityLogsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   cards?: boolean | Prisma.User$cardsArgs<ExtArgs>
@@ -22957,6 +24245,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   settings?: boolean | Prisma.User$settingsArgs<ExtArgs>
   accountRecoveryRequests?: boolean | Prisma.User$accountRecoveryRequestsArgs<ExtArgs>
   profileChangeRequests?: boolean | Prisma.User$profileChangeRequestsArgs<ExtArgs>
+  contractChangeRequests?: boolean | Prisma.User$contractChangeRequestsArgs<ExtArgs>
+  resolvedContractChanges?: boolean | Prisma.User$resolvedContractChangesArgs<ExtArgs>
   securityLogs?: boolean | Prisma.User$securityLogsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   cards?: boolean | Prisma.User$cardsArgs<ExtArgs>
@@ -23016,6 +24306,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     settings: Prisma.$UserSettingsPayload<ExtArgs> | null
     accountRecoveryRequests: Prisma.$AccountRecoveryRequestPayload<ExtArgs>[]
     profileChangeRequests: Prisma.$ProfileChangeRequestPayload<ExtArgs>[]
+    contractChangeRequests: Prisma.$ContractChangeRequestPayload<ExtArgs>[]
+    resolvedContractChanges: Prisma.$ContractChangeRequestPayload<ExtArgs>[]
     securityLogs: Prisma.$SecurityLogPayload<ExtArgs>[]
     payments: Prisma.$PaymentTransactionPayload<ExtArgs>[]
     cards: Prisma.$UserCardPayload<ExtArgs>[]
@@ -23511,6 +24803,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   settings<T extends Prisma.User$settingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$settingsArgs<ExtArgs>>): Prisma.Prisma__UserSettingsClient<runtime.Types.Result.GetResult<Prisma.$UserSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   accountRecoveryRequests<T extends Prisma.User$accountRecoveryRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountRecoveryRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountRecoveryRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   profileChangeRequests<T extends Prisma.User$profileChangeRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileChangeRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProfileChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  contractChangeRequests<T extends Prisma.User$contractChangeRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$contractChangeRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContractChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  resolvedContractChanges<T extends Prisma.User$resolvedContractChangesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$resolvedContractChangesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContractChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   securityLogs<T extends Prisma.User$securityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$securityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SecurityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   cards<T extends Prisma.User$cardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$cardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -24234,6 +25528,54 @@ export type User$profileChangeRequestsArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.ProfileChangeRequestScalarFieldEnum | Prisma.ProfileChangeRequestScalarFieldEnum[]
+}
+
+/**
+ * User.contractChangeRequests
+ */
+export type User$contractChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractChangeRequest
+   */
+  select?: Prisma.ContractChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContractChangeRequest
+   */
+  omit?: Prisma.ContractChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContractChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ContractChangeRequestWhereInput
+  orderBy?: Prisma.ContractChangeRequestOrderByWithRelationInput | Prisma.ContractChangeRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ContractChangeRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContractChangeRequestScalarFieldEnum | Prisma.ContractChangeRequestScalarFieldEnum[]
+}
+
+/**
+ * User.resolvedContractChanges
+ */
+export type User$resolvedContractChangesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractChangeRequest
+   */
+  select?: Prisma.ContractChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContractChangeRequest
+   */
+  omit?: Prisma.ContractChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContractChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ContractChangeRequestWhereInput
+  orderBy?: Prisma.ContractChangeRequestOrderByWithRelationInput | Prisma.ContractChangeRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ContractChangeRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContractChangeRequestScalarFieldEnum | Prisma.ContractChangeRequestScalarFieldEnum[]
 }
 
 /**

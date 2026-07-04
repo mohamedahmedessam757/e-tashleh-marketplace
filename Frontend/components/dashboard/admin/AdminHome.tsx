@@ -41,7 +41,7 @@ import { VerificationTaskDetails } from './VerificationTaskDetails';
 interface AdminHomeProps {
     subPath?: string;
     viewId?: any; // ID passed from routing
-    onNavigate?: (path: string, id?: any) => void;
+    onNavigate?: (path: string, id?: any, search?: string) => void;
 }
 
 // Ultra-Modern 2026 Skeleton Pre-loader (No flashes, extremely fast structural rendering)
@@ -195,9 +195,10 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
         // Listen for internal navigation events
         const handleInternalNav = (e: any) => {
-            const { path, id } = e.detail;
+            const { path, id, tab } = e.detail;
+            const search = tab ? `?tab=${encodeURIComponent(tab)}` : undefined;
             if (onNavigate) {
-                onNavigate(path, id);
+                onNavigate(path, id, search);
             }
         };
         window.addEventListener('admin-nav', handleInternalNav);
@@ -210,11 +211,12 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     }, [debouncedRange, fetchDashboardStats, subscribeToStats, unsubscribeFromStats, currentAdmin?.role]);
 
     // Helper for internal nav bubbling
-    const navigate = (path: string, id?: any) => {
+    const navigate = (path: string, id?: any, tab?: string) => {
+        const search = tab ? `?tab=${encodeURIComponent(tab)}` : undefined;
         if (onNavigate) {
-            onNavigate(path, id);
+            onNavigate(path, id, search);
         } else {
-            window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id } }));
+            window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id, tab } }));
         }
     };
 

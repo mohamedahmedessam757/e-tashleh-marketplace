@@ -13,6 +13,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 interface MerchantDisputeDetailsProps {
   caseId: string;
@@ -198,10 +199,12 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
               )}
            </div>
            <div className="h-8 w-px bg-white/10" />
-           <div className="text-right">
-              <span className="block text-[10px] text-white/40 uppercase tracking-wider">{isAr ? 'رقم القضية' : 'Case ID'}</span>
-              <span className="font-mono font-bold text-gold-400">{dispute.id}</span>
-           </div>
+           <CopyableIdBadge
+             labelAr={t.admin.ids.caseReference}
+             labelEn={t.admin.ids.caseReference}
+             value={dispute.caseReference || dispute.id}
+             language={language}
+           />
         </div>
       </div>
 

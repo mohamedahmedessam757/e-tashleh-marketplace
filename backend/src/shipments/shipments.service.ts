@@ -4,9 +4,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
-import { ShipmentStatus, ActorType } from '@prisma/client';
+import { ShipmentStatus, ActorType, Prisma } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UsersService } from '../users/users.service';
+import {
+  isUuid,
+  mergeWhereWithSearch,
+  normalizeSearchQuery,
+  resolveOrderIds,
+} from '../common/search/admin-entity-search.util';
 
 // Premium Bilingual status labels for notifications (Enthusiastic & Clear)
 const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
@@ -413,8 +419,29 @@ export class ShipmentsService {
         });
     }
 
-    async findAll() {
+    async findAll(search?: string) {
+        let where: Prisma.ShipmentWhereInput = {};
+        const q = normalizeSearchQuery(search);
+        if (q) {
+            const orderIds = await resolveOrderIds(this.prisma, q);
+            const or: Prisma.ShipmentWhereInput[] = [
+                { trackingNumber: { contains: q, mode: 'insensitive' } },
+                { carrierName: { contains: q, mode: 'insensitive' } },
+                { waybill: { waybillNumber: { contains: q, mode: 'insensitive' } } },
+                { order: { orderNumber: { contains: q, mode: 'insensitive' } } },
+            ];
+
+            if (isUuid(q)) {
+                or.push({ id: q });
+                or.push({ orderId: q });
+            }
+            if (orderIds.length) or.push({ orderId: { in: orderIds } });
+
+            where = mergeWhereWithSearch(where, { OR: or });
+        }
+
         const rows = await this.prisma.shipment.findMany({
+            where,
             include: this.adminShipmentInclude(),
             orderBy: { updatedAt: 'desc' },
         });

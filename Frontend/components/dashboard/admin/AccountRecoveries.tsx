@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
-import { ShieldAlert, CheckCircle, XCircle, Search, Eye, User, Store, ExternalLink } from 'lucide-react';
+import { ShieldAlert, CheckCircle, XCircle, Search, User, Store, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { client } from '../../../services/api/client';
 import { supabase } from '../../../services/supabase';
+import { AdminSearchInput } from './AdminSearchInput';
 
 interface RecoveryRequest {
     id: string;
@@ -26,34 +27,11 @@ export const AccountRecoveries: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchRequests();
-
-        // Subscribe to real-time updates for the recovery table
-        const channel = supabase
-            .channel('account-recovery-live')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'account_recovery_requests'
-                },
-                () => {
-                    // Re-fetch from backend to get joined user data and accurate risk summary
-                    fetchRequests();
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async (search?: string) => {
         try {
-            const res = await client.get('/auth/recovery/admin/requests');
+            const res = await client.get('/auth/recovery/admin/requests', {
+                params: search?.trim() ? { search: search.trim() } : undefined,
+            });
             const data = res.data;
 
             const mapped = data.map((r: any) => ({
@@ -75,7 +53,35 @@ export const AccountRecoveries: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('account-recovery-live')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'account_recovery_requests'
+                },
+                () => {
+                    fetchRequests(searchTerm);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchRequests, searchTerm]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            fetchRequests(searchTerm);
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm, fetchRequests]);
 
     const handleAction = async (id: string, action: 'APPROVE' | 'REJECT') => {
         if (!window.confirm(isAr ? 'هل أنت متأكد من هذا الإجراء؟' : 'Are you sure about this action?')) return;
@@ -97,11 +103,7 @@ export const AccountRecoveries: React.FC = () => {
         window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id: userId } }));
     };
 
-    const filteredRequests = requests.filter(req => 
-        req.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.newPhone.includes(searchTerm) ||
-        req.id.includes(searchTerm)
-    );
+    const requestsList = requests;
 
     return (
         <GlassCard className="p-6">
@@ -111,16 +113,12 @@ export const AccountRecoveries: React.FC = () => {
                     {isAr ? 'مراجعات استرجاع الحسابات' : 'Account Recovery Reviews'}
                 </h3>
 
-                <div className="relative">
-                    <Search className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-white/40`} size={16} />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder={isAr ? 'بحث بالاسم، الرقم أو المعرف...' : 'Search name, phone or ID...'}
-                        className={`bg-black/20 border border-white/10 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-sm text-white focus:border-gold-500 outline-none w-72 transition-all shadow-inner font-medium`}
-                    />
-                </div>
+                <AdminSearchInput
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder={isAr ? 'بحث بالاسم، الرقم أو المعرف...' : 'Search name, phone or ID...'}
+                    className="w-72"
+                />
             </div>
 
             <div className="overflow-x-auto">
@@ -146,7 +144,7 @@ export const AccountRecoveries: React.FC = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ) : filteredRequests.length === 0 ? (
+                        ) : requestsList.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className="text-center py-12 text-white/20">
                                     <div className="flex flex-col items-center gap-2">
@@ -157,7 +155,7 @@ export const AccountRecoveries: React.FC = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ) : filteredRequests.map((req) => (
+                        ) : requestsList.map((req) => (
                             <tr key={req.id} className="group hover:bg-white/[0.02] transition-all duration-300 border-b border-white/[0.03] last:border-0 relative overflow-hidden">
                                 <td className="py-6 px-6 font-mono text-[10px] text-gold-500/50 text-start w-[10%]">
                                     <span className="opacity-40">#</span>{req.id.split('-').pop()}

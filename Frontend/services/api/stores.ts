@@ -1,6 +1,11 @@
 import { client } from './client';
 
 export const storesApi = {
+    getAll: async (params?: { search?: string }) => {
+        const response = await client.get('/stores', { params });
+        return response.data;
+    },
+
     updateStatus: async (storeId: string, status: 'ACTIVE' | 'BLOCKED' | 'REJECTED' | 'SUSPENDED', reason?: string, suspendedUntil?: string) => {
         const response = await client.patch(`/stores/${storeId}/status`, { status, reason, suspendedUntil });
         return response.data;

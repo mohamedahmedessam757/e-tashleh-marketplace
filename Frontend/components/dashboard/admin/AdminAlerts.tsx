@@ -48,6 +48,10 @@ export const AdminAlerts: React.FC = () => {
                     title = t.admin.alerts.types.dispute;
                     msg = isAr ? `يوجد ${a.count} حالات نزاع نشطة تتطلب حكماً إدارياً` : `${a.count} Active Cases requiring verdict`;
                     break;
+                case 'CONTRACT_CHANGES_PENDING':
+                    title = t.admin.alerts.types.contract_changes;
+                    msg = isAr ? `يوجد ${a.count} طلبات تعديل بيانات عقد بانتظار المراجعة` : `${a.count} contract amendment requests pending review`;
+                    break;
                 default:
                     title = isAr ? 'تنبيه نظام' : 'System Alert';
                     msg = `Code: ${a.code}`;
@@ -70,6 +74,9 @@ export const AdminAlerts: React.FC = () => {
         switch (code) {
             case 'DISPUTES_OPEN':
                 navigate('resolution');
+                break;
+            case 'CONTRACT_CHANGES_PENDING':
+                navigate('security-audit');
                 break;
             case 'LICENSE_EXPIRED':
             case 'LICENSE_EXPIRING':

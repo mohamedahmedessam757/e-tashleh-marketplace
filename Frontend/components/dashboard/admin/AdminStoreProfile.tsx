@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storesApi } from '../../../services/api/stores';
+import { client } from '../../../services/api/client';
 import { paymentsApi } from '../../../services/api/payments';
 // import { toast } from 'react-hot-toast'; // Removed to avoid dependency issue
 import { DocumentReviewModal } from '../../modals/DocumentReviewModal'; // Import New Modal
@@ -25,6 +26,7 @@ import { printHtml } from '../../../utils/print';
 import { renderToString } from 'react-dom/server';
 import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 
 interface AdminStoreProfileProps {
@@ -75,6 +77,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
 
     // Tab State (Defined early to be used in effects)
     const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'disputes' | 'reviews' | 'financial' | 'sessions' | 'contract' | 'restrictions'>('overview');
+    const [hasPendingContractAmendment, setHasPendingContractAmendment] = useState(false);
 
     // Local state for modal
     const [selectedDoc, setSelectedDoc] = useState<{ type: string; title: string; url: string; status?: string } | null>(null);
@@ -115,15 +118,19 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         }, 150);
     };
 
-    // Auto-switch logic: Only auto-switch if the user has NO allowed tabs at all
-    // If they have locked tabs, let them see the locked state
-    // Auto-switch logic: Pick the first allowed tab on initial load
+    // Auto-switch logic: honor ?tab= URL param, else pick first allowed tab
     React.useEffect(() => {
-        const firstAllowed = visibleTabs.find(t => !t.isLocked);
-        if (firstAllowed) {
-            setActiveTab(firstAllowed.id as any);
+        const tabParam = typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('tab')
+            : null;
+        const requested = visibleTabs.find((t) => t.id === tabParam && !t.isLocked);
+        const firstAllowed = visibleTabs.find((t) => !t.isLocked);
+        if (requested) {
+            setActiveTab(requested.id as typeof activeTab);
+        } else if (firstAllowed) {
+            setActiveTab(firstAllowed.id as typeof activeTab);
         }
-    }, []);
+    }, [visibleTabs]);
 
     const [banType, setBanType] = useState<'BLOCKED' | 'SUSPENDED'>('SUSPENDED');
     const [suspensionDays, setSuspensionDays] = useState(7);
@@ -562,6 +569,18 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
     }, [vendorId]);
 
     React.useEffect(() => {
+        if (!vendorId) return;
+        client.get('/admin/contract-changes', { params: { search: vendorId } })
+            .then((res) => {
+                const pending = (res.data || []).some((r: { storeId: string; status: string }) =>
+                    r.storeId === vendorId && r.status === 'PENDING_REVIEW',
+                );
+                setHasPendingContractAmendment(pending);
+            })
+            .catch(() => setHasPendingContractAmendment(false));
+    }, [vendorId, vendor?.contractAcceptances?.length]);
+
+    React.useEffect(() => {
         if (vendor?.ownerId) {
             fetchFinancialData();
         }
@@ -635,6 +654,12 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
 
     const allDocTypes = ['CR', 'LICENSE', 'ID', 'IBAN', 'AUTH_LETTER'];
     const getDoc = (type: string) => vendor.documents?.find((d: any) => d.docType === type);
+
+    const sortedContractAcceptances = [...(vendor.contractAcceptances || [])].sort((a: any, b: any) => {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        return new Date(b.acceptedAt).getTime() - new Date(a.acceptedAt).getTime();
+    });
 
     const docStatusColor = (status: string) => {
         if (status === 'approved') return 'text-green-400 border-green-500/20 bg-green-500/10';
@@ -1045,6 +1070,21 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                     <p className="text-gold-500/60 font-mono text-sm uppercase tracking-wide flex items-center justify-center md:justify-start gap-2">
                                         <Hash size={14} /> {vendor.storeCode || 'ST-0000'}
                                     </p>
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                                        <CopyableIdBadge
+                                            labelAr={t.admin.ids.merchantUserId}
+                                            labelEn={t.admin.ids.merchantUserId}
+                                            value={vendor.owner?.id}
+                                            language={language}
+                                        />
+                                        <CopyableIdBadge
+                                            labelAr={t.admin.ids.storeId}
+                                            labelEn={t.admin.ids.storeId}
+                                            value={vendor.id}
+                                            language={language}
+                                            variant="muted"
+                                        />
+                                    </div>
                                     {(vendor.status === 'SUSPENDED' || vendor.status === 'BLOCKED') && (
                                         <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
                                             vendor.status === 'BLOCKED'
@@ -1268,6 +1308,11 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     >
                         <tab.icon size={18} />
                         {tab.label}
+                        {tab.id === 'contract' && hasPendingContractAmendment && (
+                            <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${activeTab === tab.id ? 'bg-[#0F0E0D]/20 text-[#0F0E0D]' : 'bg-amber-500/20 text-amber-400'}`}>
+                                {isAr ? 'معلق' : 'Pending'}
+                            </span>
+                        )}
                         {tab.isLocked && <Lock size={12} className={activeTab === tab.id ? 'text-[#0F0E0D]/50' : 'text-red-500/50'} />}
                     </button>
                 ))}
@@ -2453,13 +2498,39 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                             )}
                             {activeTab === 'contract' && (
                                 <div className="space-y-6">
+                                    {hasPendingContractAmendment && (
+                                        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center gap-3">
+                                            <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+                                            <p className="text-sm text-amber-200">
+                                                {isAr
+                                                    ? 'يوجد طلب تعديل عقد معلق بانتظار المراجعة في لوحة التدقيق الأمني.'
+                                                    : 'A contract amendment request is pending review in Security Audit.'}
+                                            </p>
+                                        </div>
+                                    )}
                                     {(!vendor.contractAcceptances || vendor.contractAcceptances.length === 0) ? (
                                         <GlassCard className="p-8 text-center text-white/50">
                                             {isAr ? 'لم يقم هذا المتجر بالموافقة على العقد الإلكتروني (من الممكن أنه متجر قديم).' : 'This store has not accepted the electronic contract (it might be a legacy store).'}
                                         </GlassCard>
                                     ) : (
-                                        vendor.contractAcceptances.map((acceptance: any) => (
+                                        sortedContractAcceptances.map((acceptance: any) => (
                                             <div key={acceptance.id} className="space-y-6">
+                                                <div className="flex items-center gap-3">
+                                                    {acceptance.isActive ? (
+                                                        <span className="text-[10px] font-black uppercase text-green-400 bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
+                                                            {isAr ? 'نشط' : 'Active'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] font-black uppercase text-white/40 bg-white/5 px-2 py-1 rounded border border-white/10">
+                                                            {isAr ? 'مؤرشف' : 'Archived'}
+                                                            {acceptance.archivedAt && (
+                                                                <span className="ml-2 font-normal normal-case text-white/30">
+                                                                    · {new Date(acceptance.archivedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB')}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="grid md:grid-cols-2 gap-6">
                                                     <GlassCard className="p-6">
                                                         <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/5 pb-2">

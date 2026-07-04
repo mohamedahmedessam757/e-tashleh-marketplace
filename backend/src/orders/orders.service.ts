@@ -17,6 +17,14 @@ import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
+import {
+  isUuid,
+  mergeWhereWithSearch,
+  normalizeSearchQuery,
+  resolveOrderIds,
+  resolveStoreIds,
+  resolveUserIds,
+} from '../common/search/admin-entity-search.util';
 
 @Injectable()
 export class OrdersService {
@@ -289,17 +297,33 @@ export class OrdersService {
             }
         }
 
-        // 3. Search Logic (OrderNumber, Part, Car, Customer)
+        // 3. Search Logic (OrderNumber, Part, Car, Customer, IDs)
         if (search) {
-            const searchFilter: Prisma.OrderWhereInput = {
-                OR: [
-                    { orderNumber: { contains: search, mode: 'insensitive' } },
-                    { partName: { contains: search, mode: 'insensitive' } },
-                    { vehicleMake: { contains: search, mode: 'insensitive' } },
-                    { vehicleModel: { contains: search, mode: 'insensitive' } },
-                    { customer: { name: { contains: search, mode: 'insensitive' } } }
-                ]
-            };
+            const q = normalizeSearchQuery(search);
+            const [userIds, storeIds] = await Promise.all([
+                resolveUserIds(this.prisma, q),
+                resolveStoreIds(this.prisma, q),
+            ]);
+
+            const or: Prisma.OrderWhereInput[] = [
+                { orderNumber: { contains: q, mode: 'insensitive' } },
+                { partName: { contains: q, mode: 'insensitive' } },
+                { vehicleMake: { contains: q, mode: 'insensitive' } },
+                { vehicleModel: { contains: q, mode: 'insensitive' } },
+                { customer: { name: { contains: q, mode: 'insensitive' } } },
+            ];
+
+            if (isUuid(q)) or.push({ id: q });
+            if (userIds.length) {
+                or.push({ customerId: { in: userIds } });
+                or.push({ offers: { some: { store: { ownerId: { in: userIds } } } } });
+            }
+            if (storeIds.length) {
+                or.push({ storeId: { in: storeIds } });
+                or.push({ offers: { some: { storeId: { in: storeIds } } } });
+            }
+
+            const searchFilter: Prisma.OrderWhereInput = { OR: or };
 
             if (where.AND) {
                 (where.AND as any).push(searchFilter);
@@ -2625,7 +2649,7 @@ export class OrdersService {
         return updatedOrder;
     }
 
-    async getAdminShippingCarts() {
+    async getAdminShippingCarts(search?: string) {
         const cartOrderStatuses: OrderStatus[] = [
             OrderStatus.PREPARATION,
             OrderStatus.PREPARED,
@@ -2635,11 +2659,22 @@ export class OrdersService {
             OrderStatus.PARTIALLY_SHIPPED,
         ];
 
+        const baseWhere: Prisma.OrderWhereInput = {
+            status: { in: cartOrderStatuses },
+            requestType: 'multiple',
+        };
+
+        const q = normalizeSearchQuery(search);
+        let where = baseWhere;
+        if (q) {
+            const orderIds = await resolveOrderIds(this.prisma, q);
+            where = mergeWhereWithSearch(baseWhere, {
+                id: orderIds.length ? { in: orderIds } : { in: [] },
+            });
+        }
+
         const orders = await this.prisma.order.findMany({
-            where: {
-                status: { in: cartOrderStatuses },
-                requestType: 'multiple',
-            },
+            where,
             include: {
                 customer: { select: { id: true, name: true, email: true, phone: true } },
                 parts: true,

@@ -8,8 +8,9 @@ interface ShipmentState {
     error: string | null;
     subscription: any;
 
-    fetchShipments: () => Promise<void>;
-    silentFetchShipments: () => Promise<void>;
+    adminShipmentsSearch: string;
+    fetchShipments: (params?: { search?: string }) => Promise<void>;
+    silentFetchShipments: (params?: { search?: string }) => Promise<void>;
     startRealtime: () => void;
     stopRealtime: () => void;
     updateShipmentInList: (shipment: Shipment) => void;
@@ -20,14 +21,23 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
     isLoading: false,
     error: null,
     subscription: null,
+    adminShipmentsSearch: '',
 
-    fetchShipments: async () => {
+    fetchShipments: async (params?: { search?: string }) => {
+        const search =
+            params?.search !== undefined ? params.search : get().adminShipmentsSearch;
+        if (params?.search !== undefined) {
+            set({ adminShipmentsSearch: params.search });
+        }
+
         // Only show loading if we don't have data yet to prevent flashes
         const { shipments } = get();
         if (shipments.length === 0) set({ isLoading: true });
         
         try {
-            const data = await shipmentsApi.getAll();
+            const data = await shipmentsApi.getAll(
+                search.trim() ? { search: search.trim() } : undefined,
+            );
             set({ shipments: data, error: null });
         } catch (err: unknown) {
             const status = (err as { response?: { status?: number } })?.response?.status;
@@ -42,9 +52,13 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
         }
     },
 
-    silentFetchShipments: async () => {
+    silentFetchShipments: async (params?: { search?: string }) => {
+        const search =
+            params?.search !== undefined ? params.search : get().adminShipmentsSearch;
         try {
-            const data = await shipmentsApi.getAll();
+            const data = await shipmentsApi.getAll(
+                search.trim() ? { search: search.trim() } : undefined,
+            );
             set({ shipments: data, error: null });
         } catch (err) {
             console.error('Silent shipment fetch failed', err);

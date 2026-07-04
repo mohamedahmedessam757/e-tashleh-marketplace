@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Scale, 
   RotateCcw, 
-  Search, 
   ChevronRight, 
   ChevronLeft, 
   AlertCircle, 
@@ -33,6 +32,8 @@ import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsSto
 import { BlurredSection } from './BlurredSection';
 import { Lock } from 'lucide-react';
 import { useMemo } from 'react';
+import { AdminSearchInput } from './AdminSearchInput';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 interface AdminResolutionPageProps {
   onNavigate?: (path: string, id?: any) => void;
@@ -96,13 +97,19 @@ export const AdminResolutionPage: React.FC<AdminResolutionPageProps> = ({ onNavi
 
   useEffect(() => {
     (window as any).currentViewRole = 'admin';
-    fetchAdminCases();
     subscribeToCases('admin');
 
     return () => {
       unsubscribeFromCases();
     };
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchAdminCases(searchQuery);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   const canViewTab = useAdminPermissionsStore(s => s.canViewTab);
   
@@ -127,16 +134,6 @@ export const AdminResolutionPage: React.FC<AdminResolutionPageProps> = ({ onNavi
   }, [visibleTabs, activeTab]);
 
   const filteredCases = cases.filter(c => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = 
-      c.id.toLowerCase().includes(query) || 
-      String(c.orderId).toLowerCase().includes(query) ||
-      (c.orderNumber && c.orderNumber.toLowerCase().includes(query)) ||
-      c.partName.toLowerCase().includes(query) ||
-      c.customerName.toLowerCase().includes(query) ||
-      c.merchantName.toLowerCase().includes(query);
-    
-    // Add logic for escrow/escalated
     const isEscalated = new Date(c.deadline) < new Date() && (c.status === 'AWAITING_MERCHANT' || c.status === 'OPEN');
 
     const matchesTab = 
@@ -145,7 +142,7 @@ export const AdminResolutionPage: React.FC<AdminResolutionPageProps> = ({ onNavi
       activeTab === 'escalated' ? (c.status === 'AWAITING_ADMIN' || c.status === 'ESCALATED') :
       activeTab === 'resolved' ? (c.status === 'RESOLVED' || c.status === 'REFUNDED' || c.status === 'CLOSED' || !!c.verdictIssuedAt) : true;
 
-    return matchesSearch && matchesTab;
+    return matchesTab;
   });
 
   const stats = [
@@ -190,17 +187,12 @@ export const AdminResolutionPage: React.FC<AdminResolutionPageProps> = ({ onNavi
           </motion.div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-            <div className="relative w-full sm:w-80 group">
-              <div className="absolute inset-0 bg-gold-500/5 rounded-2xl blur group-focus-within:bg-gold-500/10 transition-all" />
-              <Search size={20} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-5' : 'left-5'} text-white/40`} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.admin.disputeManager.searchPlaceholder}
-                className={`relative w-full bg-[#0A0A0A] border border-white/10 rounded-2xl ${isAr ? 'pr-14 pl-5' : 'pl-14 pr-5'} py-4 text-sm text-white focus:border-gold-500/50 outline-none transition-all duration-500 shadow-2xl`}
-              />
-            </div>
+            <AdminSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t.admin.disputeManager.searchPlaceholder}
+              className="w-full sm:w-80"
+            />
           </div>
         </div>
       </div>
@@ -290,9 +282,17 @@ export const AdminResolutionPage: React.FC<AdminResolutionPageProps> = ({ onNavi
                         >
                            {(t.admin.disputeManager.types as any)[(item.type || '').toLowerCase()] || item.type}
                         </span>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end gap-2">
+                          <CopyableIdBadge
+                            labelAr={t.admin.ids.caseReference}
+                            labelEn={t.admin.ids.caseReference}
+                            value={item.caseReference || item.id}
+                            language={language}
+                          />
+                          <div className="flex flex-col items-end">
                            <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1">{t.admin.ordersTable.id}</div>
                            <div className="text-sm font-mono text-gold-500 font-bold">#{item.orderNumber || String(item.orderId).substring(0, 8)}</div>
+                        </div>
                         </div>
                       </div>
                     </div>

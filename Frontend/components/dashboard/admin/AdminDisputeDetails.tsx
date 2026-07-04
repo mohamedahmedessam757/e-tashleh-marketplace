@@ -38,6 +38,7 @@ import { useResolutionStore, ReturnPhase } from '../../../stores/useResolutionSt
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
@@ -333,8 +334,16 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                 </span>
                                 <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">v4.0.2 SECURE | {t.admin.disputeManager.intelligence.verdictProtocol}</span>
                             </div>
+                            <div className="flex flex-wrap items-center gap-3 mb-2">
+                                <CopyableIdBadge
+                                    labelAr={t.admin.ids.caseReference}
+                                    labelEn={t.admin.ids.caseReference}
+                                    value={dispute.caseReference || dispute.id}
+                                    variant="gold"
+                                />
+                            </div>
                             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
-                                {t.admin.disputeManager.caseId} <span className="text-gold-500 font-mono">#{dispute.id.substring(0, 8)}</span>
+                                {t.admin.disputeManager.caseId}
                             </h1>
                             <div className="flex flex-wrap items-center gap-6">
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-xl border border-white/10">

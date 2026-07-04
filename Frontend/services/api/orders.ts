@@ -45,8 +45,8 @@ export const ordersApi = {
     },
 
     // Admin: Get all active shipping carts
-    getAdminShippingCarts: async () => {
-        const response = await client.get('/orders/admin/shipping-carts');
+    getAdminShippingCarts: async (params?: { search?: string }) => {
+        const response = await client.get('/orders/admin/shipping-carts', { params });
         return response.data;
     },
 

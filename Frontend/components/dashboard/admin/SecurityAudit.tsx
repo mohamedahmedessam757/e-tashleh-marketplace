@@ -4,6 +4,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { ShieldCheck } from 'lucide-react';
 import { AccountRecoveries } from './AccountRecoveries';
 import { ProfileChangeRequests } from './ProfileChangeRequests';
+import { ContractChangeRequests } from './ContractChangeRequests';
 
 export const SecurityAudit: React.FC = () => {
     const { t } = useLanguage();
@@ -19,6 +20,7 @@ export const SecurityAudit: React.FC = () => {
 
             <AccountRecoveries />
             <ProfileChangeRequests />
+            <ContractChangeRequests />
         </div>
     );
 };

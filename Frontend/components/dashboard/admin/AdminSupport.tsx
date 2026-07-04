@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminChatStore } from '../../../stores/useAdminChatStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Search, MessageSquare, User, CheckCircle2, Send, ChevronRight, ChevronLeft, Loader2, Download, Video, FileText, Image as ImageIcon, Inbox, X, Globe, Paperclip, ShieldCheck, Info, Layers, Store, Package, RefreshCcw, DollarSign, ShieldAlert, Lock } from 'lucide-react';
+import { MessageSquare, User, CheckCircle2, Send, ChevronRight, ChevronLeft, Loader2, Download, Video, FileText, Image as ImageIcon, Inbox, X, Globe, Paperclip, ShieldCheck, Info, Layers, Store, Package, RefreshCcw, DollarSign, ShieldAlert, Lock } from 'lucide-react';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BlurredSection } from './BlurredSection';
 import { getCurrentUser } from '../../../utils/auth';
 import { client } from '../../../services/api/client';
+import { AdminSearchInput } from './AdminSearchInput';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
   const { t, language } = useLanguage();
@@ -33,15 +35,20 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
   
   useEffect(() => {
     initSocket();
-    fetchChats('support');
 
     if (viewId) {
       fetchChatById(viewId);
     } else {
-      // CRITICAL: Clear any stale activeChat from another page (e.g. Oversight) if no specific viewId
       clearActiveChat();
     }
-  }, [fetchChats, clearActiveChat, initSocket, viewId, fetchChatById]);
+  }, [clearActiveChat, initSocket, viewId, fetchChatById]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchChats('support', search);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [search, fetchChats]);
 
   // Permissions-based Tab filtering for User Types
   const visibleTabs = React.useMemo(() => {
@@ -68,13 +75,6 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
       
       const matchesUserType = userTypeFilter === 'MERCHANT' ? !!chat.vendorId : !chat.vendorId;
 
-      const searchLower = search.toLowerCase();
-      const matchesSearch = 
-        chat.customerName?.toLowerCase().includes(searchLower) || 
-        chat.guestName?.toLowerCase().includes(searchLower) ||
-        chat.lastMessage?.toLowerCase().includes(searchLower);
-      
-      // 2026 Governance: Filter by allowed categories
       const allowedCategories = getTicketCategories();
       const role = getCurrentUser()?.role;
       const isAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN';
@@ -84,7 +84,7 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
                               !allowedCategories.includes('__NONE__') &&
                               allowedCategories.includes(chat.category?.toUpperCase()));
 
-      return matchesFilter && matchesUserType && matchesSearch && matchesCategory;
+      return matchesFilter && matchesUserType && matchesCategory;
   });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,16 +267,12 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
                 {isAr ? 'محلول' : 'Resolved'}
             </button>
           </div>
-          <div className="relative">
-            <Search size={14} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-3' : 'left-3'} text-white/30`} />
-            <input
-              type="text"
-              placeholder={isAr ? 'بحث في التذاكر...' : 'Search tickets...'}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`w-full bg-[#1A1814] border border-white/10 rounded-xl ${isAr ? 'pr-9 pl-4' : 'pl-9 pr-4'} py-2 text-xs text-white focus:border-gold-500/50 outline-none transition-colors`}
-            />
-          </div>
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={isAr ? 'بحث في التذاكر...' : 'Search tickets...'}
+            className="w-full"
+          />
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -290,12 +286,22 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
                 {activeChat?.id === ticket.id && <div className={`absolute top-0 bottom-0 ${isAr ? 'right-0' : 'left-0'} w-1 bg-gold-500`} />}
                 
                 <div className="flex justify-between items-start mb-1.5">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getPriorityColor(ticket.status)}`}>
-                      {ticket.status}
-                  </span>
+                  <CopyableIdBadge
+                    labelAr={t.admin.ids.ticketId}
+                    labelEn={t.admin.ids.ticketId}
+                    value={ticket.id}
+                    language={language}
+                    variant="muted"
+                  />
                   <span className="text-[10px] text-white/20">{ticket.lastMessageTime ? new Date(ticket.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                 </div>
                 <h4 className="text-sm font-bold text-white mb-1 truncate">{ticket.lastMessage || (isAr ? 'بدون محتوى' : 'No Content')}</h4>
+
+                <div className="mb-2">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getPriorityColor(ticket.status)}`}>
+                      {ticket.status}
+                  </span>
+                </div>
                 
                 <div className="flex flex-wrap gap-1.5 mb-2">
                     {ticket.category && (
@@ -386,7 +392,13 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
                       {activeChat.source === 'LANDING' ? activeChat.guestName : activeChat.vendorId ? activeChat.vendorName : activeChat.customerName}
                   </h3>
                   <div className="text-[10px] text-white/40 flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-gold-500 font-mono">TICKET: {activeChat.id?.substring(0,8)}</span>
+                    <CopyableIdBadge
+                      labelAr={t.admin.ids.ticketId}
+                      labelEn={t.admin.ids.ticketId}
+                      value={activeChat.id}
+                      language={language}
+                      variant="muted"
+                    />
                     <span className="w-1 h-1 rounded-full bg-white/10" />
                     {activeChat.source === 'LANDING' ? (
                         <>

@@ -60,6 +60,7 @@ export type DisputeMinAggregateOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string | null
+  caseReference: string | null
   reason: string | null
   description: string | null
   status: string | null
@@ -106,6 +107,7 @@ export type DisputeMaxAggregateOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string | null
+  caseReference: string | null
   reason: string | null
   description: string | null
   status: string | null
@@ -152,6 +154,7 @@ export type DisputeCountAggregateOutputType = {
   orderPartId: number
   offerId: number
   customerId: number
+  caseReference: number
   reason: number
   description: number
   status: number
@@ -231,6 +234,7 @@ export type DisputeMinAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -277,6 +281,7 @@ export type DisputeMaxAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -323,6 +328,7 @@ export type DisputeCountAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -459,6 +465,7 @@ export type DisputeGroupByOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string
+  caseReference: string | null
   reason: string
   description: string | null
   status: string
@@ -531,6 +538,7 @@ export type DisputeWhereInput = {
   orderPartId?: Prisma.UuidNullableFilter<"Dispute"> | string | null
   offerId?: Prisma.UuidNullableFilter<"Dispute"> | string | null
   customerId?: Prisma.UuidFilter<"Dispute"> | string
+  caseReference?: Prisma.StringNullableFilter<"Dispute"> | string | null
   reason?: Prisma.StringFilter<"Dispute"> | string
   description?: Prisma.StringNullableFilter<"Dispute"> | string | null
   status?: Prisma.StringFilter<"Dispute"> | string
@@ -584,6 +592,7 @@ export type DisputeOrderByWithRelationInput = {
   orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   offerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -633,6 +642,7 @@ export type DisputeOrderByWithRelationInput = {
 
 export type DisputeWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  caseReference?: string
   AND?: Prisma.DisputeWhereInput | Prisma.DisputeWhereInput[]
   OR?: Prisma.DisputeWhereInput[]
   NOT?: Prisma.DisputeWhereInput | Prisma.DisputeWhereInput[]
@@ -685,7 +695,7 @@ export type DisputeWhereUniqueInput = Prisma.AtLeast<{
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   store?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   offer?: Prisma.XOR<Prisma.OfferNullableScalarRelationFilter, Prisma.OfferWhereInput> | null
-}, "id">
+}, "id" | "caseReference">
 
 export type DisputeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -693,6 +703,7 @@ export type DisputeOrderByWithAggregationInput = {
   orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   offerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -750,6 +761,7 @@ export type DisputeScalarWhereWithAggregatesInput = {
   orderPartId?: Prisma.UuidNullableWithAggregatesFilter<"Dispute"> | string | null
   offerId?: Prisma.UuidNullableWithAggregatesFilter<"Dispute"> | string | null
   customerId?: Prisma.UuidWithAggregatesFilter<"Dispute"> | string
+  caseReference?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   reason?: Prisma.StringWithAggregatesFilter<"Dispute"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Dispute"> | string
@@ -796,6 +808,7 @@ export type DisputeScalarWhereWithAggregatesInput = {
 export type DisputeCreateInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -848,6 +861,7 @@ export type DisputeUncheckedCreateInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -894,6 +908,7 @@ export type DisputeUncheckedCreateInput = {
 export type DisputeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -946,6 +961,7 @@ export type DisputeUncheckedUpdateInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -995,6 +1011,7 @@ export type DisputeCreateManyInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1041,6 +1058,7 @@ export type DisputeCreateManyInput = {
 export type DisputeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1089,6 +1107,7 @@ export type DisputeUncheckedUpdateManyInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1148,6 +1167,7 @@ export type DisputeCountOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1211,6 +1231,7 @@ export type DisputeMaxOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1257,6 +1278,7 @@ export type DisputeMinOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1482,6 +1504,7 @@ export type DisputeUncheckedUpdateManyWithoutOfferNestedInput = {
 export type DisputeCreateWithoutCustomerInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1532,6 +1555,7 @@ export type DisputeUncheckedCreateWithoutCustomerInput = {
   orderId: string
   orderPartId?: string | null
   offerId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1610,6 +1634,7 @@ export type DisputeScalarWhereInput = {
   orderPartId?: Prisma.UuidNullableFilter<"Dispute"> | string | null
   offerId?: Prisma.UuidNullableFilter<"Dispute"> | string | null
   customerId?: Prisma.UuidFilter<"Dispute"> | string
+  caseReference?: Prisma.StringNullableFilter<"Dispute"> | string | null
   reason?: Prisma.StringFilter<"Dispute"> | string
   description?: Prisma.StringNullableFilter<"Dispute"> | string | null
   status?: Prisma.StringFilter<"Dispute"> | string
@@ -1656,6 +1681,7 @@ export type DisputeScalarWhereInput = {
 export type DisputeCreateWithoutStoreInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1707,6 +1733,7 @@ export type DisputeUncheckedCreateWithoutStoreInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1778,6 +1805,7 @@ export type DisputeUpdateManyWithWhereWithoutStoreInput = {
 export type DisputeCreateWithoutOrderInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1828,6 +1856,7 @@ export type DisputeUncheckedCreateWithoutOrderInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1900,6 +1929,7 @@ export type DisputeUpdateManyWithWhereWithoutOrderInput = {
 export type DisputeCreateWithoutOfferInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1950,6 +1980,7 @@ export type DisputeUncheckedCreateWithoutOfferInput = {
   orderId: string
   orderPartId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2024,6 +2055,7 @@ export type DisputeCreateManyCustomerInput = {
   orderId: string
   orderPartId?: string | null
   offerId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2070,6 +2102,7 @@ export type DisputeCreateManyCustomerInput = {
 export type DisputeUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2120,6 +2153,7 @@ export type DisputeUncheckedUpdateWithoutCustomerInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2168,6 +2202,7 @@ export type DisputeUncheckedUpdateManyWithoutCustomerInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2217,6 +2252,7 @@ export type DisputeCreateManyStoreInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2262,6 +2298,7 @@ export type DisputeCreateManyStoreInput = {
 export type DisputeUpdateWithoutStoreInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2313,6 +2350,7 @@ export type DisputeUncheckedUpdateWithoutStoreInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2361,6 +2399,7 @@ export type DisputeUncheckedUpdateManyWithoutStoreInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2408,6 +2447,7 @@ export type DisputeCreateManyOrderInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2454,6 +2494,7 @@ export type DisputeCreateManyOrderInput = {
 export type DisputeUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2504,6 +2545,7 @@ export type DisputeUncheckedUpdateWithoutOrderInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2552,6 +2594,7 @@ export type DisputeUncheckedUpdateManyWithoutOrderInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2600,6 +2643,7 @@ export type DisputeCreateManyOfferInput = {
   orderId: string
   orderPartId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2646,6 +2690,7 @@ export type DisputeCreateManyOfferInput = {
 export type DisputeUpdateWithoutOfferInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2696,6 +2741,7 @@ export type DisputeUncheckedUpdateWithoutOfferInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2744,6 +2790,7 @@ export type DisputeUncheckedUpdateManyWithoutOfferInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2795,6 +2842,7 @@ export type DisputeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -2848,6 +2896,7 @@ export type DisputeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -2901,6 +2950,7 @@ export type DisputeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -2954,6 +3004,7 @@ export type DisputeSelectScalar = {
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -2997,7 +3048,7 @@ export type DisputeSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DisputeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "storeId" | "invoiceId" | "shipmentId" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "createdAt" | "updatedAt", ExtArgs["result"]["dispute"]>
+export type DisputeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "storeId" | "invoiceId" | "shipmentId" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "createdAt" | "updatedAt", ExtArgs["result"]["dispute"]>
 export type DisputeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -3031,6 +3082,7 @@ export type $DisputePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     orderPartId: string | null
     offerId: string | null
     customerId: string
+    caseReference: string | null
     reason: string
     description: string | null
     status: string
@@ -3504,6 +3556,7 @@ export interface DisputeFieldRefs {
   readonly orderPartId: Prisma.FieldRef<"Dispute", 'String'>
   readonly offerId: Prisma.FieldRef<"Dispute", 'String'>
   readonly customerId: Prisma.FieldRef<"Dispute", 'String'>
+  readonly caseReference: Prisma.FieldRef<"Dispute", 'String'>
   readonly reason: Prisma.FieldRef<"Dispute", 'String'>
   readonly description: Prisma.FieldRef<"Dispute", 'String'>
   readonly status: Prisma.FieldRef<"Dispute", 'String'>

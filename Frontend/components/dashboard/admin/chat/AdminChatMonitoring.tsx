@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { client as api } from '../../../../services/api/client';
-import { ShieldAlert, RefreshCw, AlertTriangle, Eye, Ban, Trash2, Clock, CheckCircle2 } from 'lucide-react';
+import { auditApi } from '../../../../services/api/audit';
+import { ShieldAlert, RefreshCw, AlertTriangle, Ban, Trash2, Clock, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from '../../../ui/GlassCard';
+import { AdminSearchInput } from '../AdminSearchInput';
 
 interface ChatViolationLog {
   id: string;
@@ -26,26 +28,31 @@ export const AdminChatMonitoring: React.FC = () => {
   const [logs, setLogs] = useState<ChatViolationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async (searchQuery?: string) => {
     setLoading(true);
     try {
-      const response = await api.get('/audit-logs/action/CHAT_VIOLATION');
-      setLogs(response.data);
+      const data = await auditApi.getByAction('CHAT_VIOLATION', searchQuery);
+      setLogs(data as ChatViolationLog[]);
     } catch (error) {
       console.error('Failed to fetch chat violation logs:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchLogs();
-    
-    // Auto-refresh every 15 seconds
-    const interval = setInterval(fetchLogs, 15000);
+    const interval = setInterval(() => fetchLogs(search), 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchLogs, search]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchLogs(search);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [search, fetchLogs]);
 
   const handleAdminAction = async (chatId: string | undefined, actionType: 'close' | 'block', targetUserId?: string, logId?: string) => {
     if (!chatId) {
@@ -88,14 +95,22 @@ export const AdminChatMonitoring: React.FC = () => {
               : 'Monitor attempts to exchange contact information or prohibited links in chats and take deterrent actions.'}
           </p>
         </div>
-        <button
-          onClick={fetchLogs}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition-colors disabled:opacity-50"
-        >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          <span>{isAr ? 'تحديث' : 'Refresh'}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={isAr ? 'بحث بالمستخدم أو المحتوى...' : 'Search user or content...'}
+            className="w-72"
+          />
+          <button
+            onClick={() => fetchLogs(search)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <span>{isAr ? 'تحديث' : 'Refresh'}</span>
+          </button>
+        </div>
       </div>
 
       <GlassCard className="p-0 overflow-hidden">

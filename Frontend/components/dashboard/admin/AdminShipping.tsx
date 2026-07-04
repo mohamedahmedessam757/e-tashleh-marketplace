@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Truck, Search, MapPin, Package, ExternalLink, AlertTriangle, CheckCircle2, Factory, ShieldCheck, Box, RefreshCcw, XCircle, FileText, ChevronRight, Save, Settings2, History } from 'lucide-react';
+import { Truck, MapPin, Package, ExternalLink, AlertTriangle, CheckCircle2, Factory, ShieldCheck, Box, RefreshCcw, XCircle, FileText, ChevronRight, Save, Settings2, History } from 'lucide-react';
 import { Badge, StatusType } from '../../ui/Badge';
 import { shipmentsApi, Shipment, ShipmentStatusLog } from '../../../services/api/shipments.api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import { useShipmentStore } from '../../../stores/useShipmentStore';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { OrderCountdown } from '../../ui/OrderCountdown';
 import { ShipmentBatchCard } from '../shared/ShipmentBatchCard';
+import { AdminSearchInput } from './AdminSearchInput';
 
 function shipmentMatchesQuery(s: Shipment, query: string): boolean {
     const q = query.toLowerCase().trim();
@@ -110,7 +111,7 @@ interface AdminShippingProps {
 export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
-    const { shipments, isLoading: storeLoading, silentFetchShipments, updateShipmentInList } = useShipmentStore();
+    const { shipments, isLoading: storeLoading, silentFetchShipments, updateShipmentInList, fetchShipments } = useShipmentStore();
     const { currentAdmin } = useAdminStore();
     const [search, setSearch] = useState(initialSearch || '');
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
@@ -134,10 +135,8 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
     const [view, setView] = useState<'list' | 'detail'>('list');
 
     useEffect(() => {
-        if (shipments.length === 0 || initialSearch) {
-            useShipmentStore.getState().fetchShipments();
-        }
-    }, [shipments.length, initialSearch]);
+        void fetchShipments({ search: search.trim() || undefined });
+    }, [search, fetchShipments]);
 
     // Sync effect: If the selected shipment is updated in the store (via realtime), update the local details view
     useEffect(() => {
@@ -173,7 +172,7 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
     }, [initialSearch, shipments]);
 
     const loadShipments = async () => {
-        await silentFetchShipments();
+        await silentFetchShipments({ search: search.trim() || undefined });
     };
 
     const navigate = (path: string, id?: any) => {
@@ -279,7 +278,7 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
         }
     };
 
-    const filteredShipments = shipments.filter((s) => shipmentMatchesQuery(s, search));
+    const displayedShipments = shipments;
 
     const getStatusIndex = (st: string) => shipmentStatuses.indexOf(st);
 
@@ -614,24 +613,20 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
                     </h1>
                     <p className="text-white/50 text-sm mt-1">{isAr ? 'التحكم في حركة الشحنات للطلبات وإشعارات شركات الشحن' : 'Manage order operations and logistics tracking'}</p>
                 </div>
-                <div className="relative w-full md:w-auto">
-                    <Search size={16} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/30" />
-                    <input 
-                        type="text" 
-                        placeholder={isAr ? "رقم الطلب، رقم التتبع..." : "Order ID, Tracking..."}
-                        className="w-full bg-[#151310] border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none md:w-64 transition-all"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
+                <AdminSearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={isAr ? 'رقم الطلب، رقم التتبع، البوليصة...' : 'Order ID, tracking, waybill...'}
+                    className="w-full md:w-72"
+                />
             </div>
 
-            {initialSearch && filteredShipments.length > 1 && (
+            {initialSearch && displayedShipments.length > 1 && (
                 <GlassCard className="p-4 border-blue-500/25 bg-blue-500/10">
                     <p className="text-sm text-blue-100 font-bold">
                         {isAr
-                            ? `هذا الطلب له ${filteredShipments.length} دفعات شحن منفصلة — اختر الدفعة التي تريد إدارتها:`
-                            : `This order has ${filteredShipments.length} separate shipment batches — select one to manage:`}
+                            ? `هذا الطلب له ${displayedShipments.length} دفعات شحن منفصلة — اختر الدفعة التي تريد إدارتها:`
+                            : `This order has ${displayedShipments.length} separate shipment batches — select one to manage:`}
                     </p>
                 </GlassCard>
             )}
@@ -649,7 +644,7 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
-                        {filteredShipments.map(shipment => (
+                        {displayedShipments.map(shipment => (
                             <tr key={shipment.id} className="hover:bg-white/[0.02] transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -715,11 +710,19 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
                         ))}
                     </tbody>
                 </table>
-                {filteredShipments.length === 0 && (
+                {displayedShipments.length === 0 && (
                     <div className="p-16 text-center flex flex-col items-center">
                         <Truck size={48} className="text-white/10 mb-4" />
                         <h3 className="text-lg font-bold text-white mb-2">{isAr ? 'لا توجد شحنات نشطة' : 'No active shipments'}</h3>
-                        <p className="text-white/40">{isAr ? 'لم يتم العثور على بيانات شحن حالياً.' : 'No shipping data found at the moment.'}</p>
+                        <p className="text-white/40">
+                            {search.trim()
+                                ? isAr
+                                    ? 'لم يتم العثور على شحنات مطابقة.'
+                                    : 'No matching shipments found.'
+                                : isAr
+                                  ? 'لم يتم العثور على بيانات شحن حالياً.'
+                                  : 'No shipping data found at the moment.'}
+                        </p>
                     </div>
                 )}
             </GlassCard>

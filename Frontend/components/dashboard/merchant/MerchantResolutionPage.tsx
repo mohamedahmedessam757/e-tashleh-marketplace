@@ -21,6 +21,7 @@ import { Badge } from '../../ui/Badge';
 import { getCurrentUserId } from '../../../utils/auth';
 import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 interface MerchantResolutionPageProps {
   onNavigate?: (path: string, id?: any) => void;
@@ -289,9 +290,16 @@ export const MerchantResolutionPage: React.FC<MerchantResolutionPageProps> = ({ 
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <CopyableIdBadge
+                          labelAr={t.admin.ids.caseReference}
+                          labelEn={t.admin.ids.caseReference}
+                          value={item.caseReference || item.id}
+                          language={language}
+                          variant="muted"
+                        />
                         <span className="font-mono text-[10px] font-black tracking-widest text-gold-500/60 uppercase">
-                          {item.type === 'dispute' ? (isAr ? 'نزاع' : 'DISPUTE') : (isAr ? 'مرتجع' : 'RETURN')} #{item.id.split('-')[0]}
+                          {item.type === 'dispute' ? (isAr ? 'نزاع' : 'DISPUTE') : (isAr ? 'مرتجع' : 'RETURN')}
                         </span>
                         <div className="w-1 h-1 rounded-full bg-white/20" />
                         <span className="text-[10px] font-bold text-white/40">

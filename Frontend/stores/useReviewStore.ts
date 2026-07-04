@@ -46,7 +46,8 @@ interface ReviewState {
   isSubmitting: boolean;
   error: string | null;
   impactRulesError: string | null;
-  fetchAdminReviews: () => Promise<void>;
+  adminReviewsSearch: string;
+  fetchAdminReviews: (params?: { search?: string }) => Promise<void>;
   fetchMerchantReviews: () => Promise<void>;
   fetchMerchantStats: () => Promise<void>;
   submitReview: (data: {
@@ -92,12 +93,20 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   error: null,
   impactRulesError: null,
   reviewsSubscription: null,
+  adminReviewsSearch: '',
 
-  fetchAdminReviews: async () => {
+  fetchAdminReviews: async (params?: { search?: string }) => {
+    const search =
+      params?.search !== undefined ? params.search : get().adminReviewsSearch;
+    if (params?.search !== undefined) {
+      set({ adminReviewsSearch: params.search });
+    }
+
     set({ isLoading: true });
     try {
-      const { client } = await import('../services/api/client');
-      const { data } = await client.get<Review[]>('/reviews/admin');
+      const data = await reviewsApi.listForAdmin(
+        search.trim() ? { search: search.trim() } : undefined,
+      );
       set({ reviews: data, isLoading: false, error: null });
     } catch (error: unknown) {
       set({

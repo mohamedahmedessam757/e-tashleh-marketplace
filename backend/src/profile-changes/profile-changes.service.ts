@@ -12,7 +12,14 @@ import { OtpPurpose } from '../auth/otp-purpose';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
-import { ActorType } from '@prisma/client';
+import { ActorType, Prisma } from '@prisma/client';
+import {
+    normalizeSearchQuery,
+    normalizePhone,
+    resolveUserIds,
+    isUuid,
+    mergeWhereWithSearch,
+} from '../common/search/admin-entity-search.util';
 
 const MERCHANT_ROLES = ['VENDOR', 'MERCHANT'];
 const MAX_REQUESTS_PER_DAY = 3;
@@ -160,9 +167,42 @@ export class ProfileChangesService {
         });
     }
 
-    async getPendingForAdmin() {
+    async getPendingForAdmin(search?: string) {
+        const q = normalizeSearchQuery(search);
+        let where: Prisma.ProfileChangeRequestWhereInput = { status: 'PENDING_REVIEW' };
+
+        if (q) {
+            const or: Prisma.ProfileChangeRequestWhereInput[] = [
+                { field: { contains: q, mode: 'insensitive' } },
+                { oldValue: { contains: q, mode: 'insensitive' } },
+                { newValue: { contains: q, mode: 'insensitive' } },
+                { user: { name: { contains: q, mode: 'insensitive' } } },
+                { user: { email: { contains: q, mode: 'insensitive' } } },
+                { user: { phone: { contains: q, mode: 'insensitive' } } },
+            ];
+
+            const phoneNorm = normalizePhone(q);
+            if (phoneNorm && phoneNorm !== q) {
+                or.push(
+                    { oldValue: { contains: phoneNorm, mode: 'insensitive' } },
+                    { newValue: { contains: phoneNorm, mode: 'insensitive' } },
+                    { user: { phone: { contains: phoneNorm, mode: 'insensitive' } } },
+                );
+            }
+
+            if (isUuid(q)) {
+                or.push({ id: q });
+                or.push({ userId: q });
+            }
+
+            const userIds = await resolveUserIds(this.prisma, q);
+            if (userIds.length) or.push({ userId: { in: userIds } });
+
+            where = mergeWhereWithSearch(where, { OR: or });
+        }
+
         return this.prisma.profileChangeRequest.findMany({
-            where: { status: 'PENDING_REVIEW' },
+            where,
             include: {
                 user: { select: { id: true, name: true, email: true, phone: true, role: true } },
             },

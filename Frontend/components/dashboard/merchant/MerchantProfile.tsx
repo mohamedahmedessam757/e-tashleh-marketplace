@@ -11,6 +11,8 @@ import { PrintTemplate } from '../admin/PrintTemplate';
 import { printHtml } from '../../../utils/print';
 import { sanitizeHtml } from '../../../utils/htmlSanitize';
 import { renderToString } from 'react-dom/server';
+import { ContractAmendmentModal } from './ContractAmendmentModal';
+import type { SecondPartyData } from '../../../utils/contractBaker';
 
 export const MerchantProfile: React.FC = () => {
     const { t, language } = useLanguage();
@@ -19,7 +21,8 @@ export const MerchantProfile: React.FC = () => {
         updateStoreInfo, fetchVendorProfile, 
         documents, isLoadingProfile, performance, 
         updateVendorProfile, uploadLogo, uploadDocument,
-        contractAcceptance,
+        contractAcceptance, contractAcceptances, pendingContractChanges,
+        fetchPendingContractChanges, submitContractChange,
         connectStripe, openStripeDashboard
     } = useVendorStore();
 
@@ -32,9 +35,15 @@ export const MerchantProfile: React.FC = () => {
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
     const logoInputRef = React.useRef<HTMLInputElement>(null);
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+    const [showAmendmentModal, setShowAmendmentModal] = useState(false);
+
+    const archivedContracts = contractAcceptances.filter((a: any) => a.isActive === false);
+    const hasPendingAmendment = pendingContractChanges.length > 0;
+    const contractT = t.dashboard.merchant.storeProfile.contract;
 
     useEffect(() => {
         fetchVendorProfile();
+        fetchPendingContractChanges();
         fetchImpactRules();
         if (makes.length === 0) {
             fetchCatalog();
@@ -43,7 +52,11 @@ export const MerchantProfile: React.FC = () => {
         return () => {
             unsubscribeFromCatalog();
         };
-    }, [fetchVendorProfile, fetchImpactRules, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
+    }, [fetchVendorProfile, fetchPendingContractChanges, fetchImpactRules, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
+
+    const handleSubmitContractAmendment = async (data: SecondPartyData) => {
+        await submitContractChange(data as Record<string, string>);
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -883,13 +896,13 @@ export const MerchantProfile: React.FC = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
-                        {!contractAcceptance ? (
+                        {!contractAcceptance && contractAcceptances.length === 0 ? (
                             <div className="bg-black/20 p-12 rounded-3xl border border-white/5 backdrop-blur-xl text-center flex flex-col items-center justify-center space-y-4">
                                 <div className="p-6 bg-white/5 rounded-full">
                                     <Archive className="text-white/20" size={64} />
                                 </div>
                                 <h3 className="text-xl font-bold text-white">
-                                    {t.dashboard.merchant.storeProfile.contract?.noContract || 'العقد غير متاح حالياً'}
+                                    {contractT?.noContract || 'العقد غير متاح حالياً'}
                                 </h3>
                                 <p className="text-white/40 max-w-sm">
                                     {language === 'ar' 
@@ -898,6 +911,26 @@ export const MerchantProfile: React.FC = () => {
                                 </p>
                             </div>
                         ) : (
+                            <div className="space-y-6">
+                                {hasPendingAmendment && (
+                                    <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-4">
+                                        <div className="p-2 bg-amber-500/20 rounded-xl shrink-0">
+                                            <AlertTriangle className="text-amber-400" size={22} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-amber-300 font-bold text-sm mb-1">
+                                                {contractT?.amendment?.pendingTitle || (language === 'ar' ? 'طلب تعديل قيد المراجعة' : 'Amendment Pending Review')}
+                                            </h4>
+                                            <p className="text-amber-200/70 text-xs leading-relaxed">
+                                                {contractT?.amendment?.pendingDesc || (language === 'ar'
+                                                    ? 'تم إرسال طلب تعديل بيانات العقد وهو بانتظار موافقة الإدارة.'
+                                                    : 'A contract amendment request is awaiting admin approval.')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {contractAcceptance && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-6">
                                     <div className="bg-black/20 p-6 rounded-3xl border border-white/5 backdrop-blur-xl">
@@ -906,7 +939,7 @@ export const MerchantProfile: React.FC = () => {
                                                 <FileText className="text-gold-500" size={20} />
                                             </div>
                                             <h3 className="text-lg font-bold text-white">
-                                                {t.dashboard.merchant.storeProfile.contract?.snapshot || 'لقطة العقد'}
+                                                {contractT?.snapshot || 'لقطة العقد'}
                                             </h3>
                                         </div>
                                         
@@ -927,37 +960,49 @@ export const MerchantProfile: React.FC = () => {
                                 <div className="space-y-6">
                                     {/* Second Party Data */}
                                     <div className="bg-black/20 p-6 rounded-3xl border border-white/5 backdrop-blur-xl">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="p-2 bg-blue-500/10 rounded-lg">
-                                                <ShieldCheck className="text-blue-400" size={20} />
+                                        <div className="flex items-center justify-between gap-3 mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-500/10 rounded-lg">
+                                                    <ShieldCheck className="text-blue-400" size={20} />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-white">
+                                                    {contractT?.secondParty.title || 'بيانات الطرف الثاني'}
+                                                </h3>
                                             </div>
-                                            <h3 className="text-lg font-bold text-white">
-                                                {t.dashboard.merchant.storeProfile.contract?.secondParty.title || 'بيانات الطرف الثاني'}
-                                            </h3>
+                                            {!hasPendingAmendment && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowAmendmentModal(true)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black border border-gold-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                                >
+                                                    <Edit3 size={14} />
+                                                    {contractT?.amendment?.edit || (language === 'ar' ? 'تعديل البيانات' : 'Edit Data')}
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="space-y-4">
                                             <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{t.dashboard.merchant.storeProfile.contract?.secondParty.company || 'الشركة'}</span>
+                                                <span className="text-white/40">{contractT?.secondParty.company || 'الشركة'}</span>
                                                 <span className="text-white font-medium">{contractAcceptance.secondPartyData?.companyName}</span>
                                             </div>
                                             <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{t.dashboard.merchant.storeProfile.contract?.secondParty.manager || 'المدير المسؤول'}</span>
+                                                <span className="text-white/40">{contractT?.secondParty.manager || 'المدير المسؤول'}</span>
                                                 <span className="text-white font-medium">{contractAcceptance.secondPartyData?.managerName}</span>
                                             </div>
                                             <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{t.dashboard.merchant.storeProfile.contract?.secondParty.crNumber || 'السجل'}</span>
+                                                <span className="text-white/40">{contractT?.secondParty.crNumber || 'السجل'}</span>
                                                 <span className="text-white font-medium">{contractAcceptance.secondPartyData?.crNumber}</span>
                                             </div>
                                             <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{t.dashboard.merchant.storeProfile.contract?.secondParty.license || 'الرخصة / انتهاء الصلاحية'}</span>
+                                                <span className="text-white/40">{contractT?.secondParty.license || 'الرخصة / انتهاء الصلاحية'}</span>
                                                 <span className="text-white font-medium">
-                                                    {contractAcceptance.secondPartyData?.municipalityLicense} 
+                                                    {contractAcceptance.secondPartyData?.licenseNumber || contractAcceptance.secondPartyData?.municipalityLicense}
                                                     {contractAcceptance.secondPartyData?.licenseExpiry && ` / ${contractAcceptance.secondPartyData.licenseExpiry}`}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{t.dashboard.merchant.storeProfile.contract?.secondParty.location || 'الإمارة / الدولة'}</span>
+                                                <span className="text-white/40">{contractT?.secondParty.location || 'الإمارة / الدولة'}</span>
                                                 <span className="text-white font-medium">
                                                     {contractAcceptance.secondPartyData?.emirate} / {contractAcceptance.secondPartyData?.country}
                                                 </span>
@@ -1028,6 +1073,78 @@ export const MerchantProfile: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                                )}
+
+                                {archivedContracts.length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white/5 rounded-lg">
+                                                <Archive className="text-white/40" size={20} />
+                                            </div>
+                                            <h3 className="text-lg font-bold text-white">
+                                                {contractT?.archived?.title || (language === 'ar' ? 'العقود المؤرشفة' : 'Archived Contracts')}
+                                            </h3>
+                                        </div>
+
+                                        <div className="p-4 rounded-2xl border border-white/10 bg-white/5 text-xs text-white/50 leading-relaxed">
+                                            {contractT?.archived?.banner || (language === 'ar'
+                                                ? 'هذه نسخ سابقة من العقد للقراءة فقط. النسخة النشطة أعلاه هي المعتمدة حالياً.'
+                                                : 'These are previous contract versions for reference only. The active version above is currently in effect.')}
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {archivedContracts.map((archived: any) => (
+                                                <div key={archived.id} className="bg-black/20 p-6 rounded-3xl border border-white/5 backdrop-blur-xl opacity-80">
+                                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-white/5">
+                                                        <span className="text-white/40 text-xs font-mono">ID: {archived.id.split('-')[0]}</span>
+                                                        <span className="text-white/60 text-xs">
+                                                            {contractT?.archived?.acceptedAt || (language === 'ar' ? 'تاريخ التوقيع' : 'Signed At')}:{' '}
+                                                            {new Date(archived.acceptedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
+                                                        <div className="flex justify-between p-2 rounded-lg bg-white/5">
+                                                            <span className="text-white/40">{contractT?.secondParty.company}</span>
+                                                            <span className="text-white/70">{archived.secondPartyData?.companyName}</span>
+                                                        </div>
+                                                        <div className="flex justify-between p-2 rounded-lg bg-white/5">
+                                                            <span className="text-white/40">{contractT?.secondParty.manager}</span>
+                                                            <span className="text-white/70">{archived.secondPartyData?.managerName}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-white/5 rounded-2xl border border-white/5 p-4 h-48 overflow-y-auto custom-scrollbar">
+                                                        <div
+                                                            className="prose prose-invert max-w-none text-xs text-white/50 whitespace-pre-wrap leading-relaxed"
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: sanitizeHtml(language === 'ar'
+                                                                    ? archived.contentArSnapshot
+                                                                    : archived.contentEnSnapshot),
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {contractAcceptance && (
+                            <ContractAmendmentModal
+                                isOpen={showAmendmentModal}
+                                onClose={() => setShowAmendmentModal(false)}
+                                initialData={{
+                                    companyName: contractAcceptance.secondPartyData?.companyName || '',
+                                    managerName: contractAcceptance.secondPartyData?.managerName || '',
+                                    crNumber: contractAcceptance.secondPartyData?.crNumber || '',
+                                    licenseNumber: contractAcceptance.secondPartyData?.licenseNumber || contractAcceptance.secondPartyData?.municipalityLicense || '',
+                                    licenseExpiry: contractAcceptance.secondPartyData?.licenseExpiry || '',
+                                    emirate: contractAcceptance.secondPartyData?.emirate || '',
+                                    country: contractAcceptance.secondPartyData?.country || '',
+                                }}
+                                onSubmit={handleSubmitContractAmendment}
+                            />
                         )}
                         </motion.div>
                         )}

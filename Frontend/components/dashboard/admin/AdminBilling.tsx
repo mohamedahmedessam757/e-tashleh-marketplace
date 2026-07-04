@@ -47,6 +47,7 @@ import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { FinancialFeedRow } from './FinancialFeedRow';
 import type { UnifiedFinancialEvent } from '../../../stores/useAdminStore';
+import { AdminSearchInput } from './AdminSearchInput';
 
 const OrderFinancialDrawer = lazy(() =>
   import('./OrderFinancialDrawer').then((m) => ({ default: m.OrderFinancialDrawer })),
@@ -332,13 +333,11 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             />
                         </div>
                         <div className="relative flex-1 lg:flex-none">
-                            <Search size={16} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-white/20`} />
-                            <input
-                                type="text"
-                                placeholder={t.admin.billing.searchPlaceholder}
-                                className={`w-full lg:w-72 bg-black/40 border border-white/10 rounded-2xl ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-4 text-sm text-white focus:border-gold-500/50 outline-none transition-all placeholder:text-white/20 font-bold`}
+                            <AdminSearchInput
                                 value={financialFilters.search || ''}
-                                onChange={e => setFinancialFilters({ search: e.target.value })}
+                                onChange={(value) => setFinancialFilters({ search: value })}
+                                placeholder={t.admin.billing.searchPlaceholder}
+                                className="w-full lg:w-72"
                             />
                         </div>
                         <button 
@@ -645,16 +644,12 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
                         <div className="flex flex-wrap items-center justify-end gap-3 w-full xl:w-auto">
                             {/* Search */}
-                            <div className="relative flex-1 md:flex-none group">
-                                <Search size={16} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-white/20 group-focus-within:text-gold-500 transition-colors`} />
-                                <input
-                                    type="text"
-                                    placeholder={t.admin.billing.searchPlaceholder}
-                                    className={`w-full md:w-64 bg-[#050505] border border-white/10 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-3 text-xs text-white focus:border-gold-500/50 focus:bg-[#080808] outline-none transition-all placeholder:text-white/10 font-bold shadow-inner`}
-                                    value={ledgerSearchInput}
-                                    onChange={e => setLedgerSearchInput(e.target.value)}
-                                />
-                            </div>
+                            <AdminSearchInput
+                                value={ledgerSearchInput}
+                                onChange={setLedgerSearchInput}
+                                placeholder={t.admin.billing.searchPlaceholder}
+                                className="w-full md:w-64"
+                            />
 
                             {/* Export */}
                             <button 
@@ -751,6 +746,14 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
             {activeTab === 'WITHDRAWALS' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <AdminSearchInput
+                            value={financialFilters.search || ''}
+                            onChange={(value) => setFinancialFilters({ search: value })}
+                            placeholder={t.admin.billing.searchPlaceholder}
+                            className="w-full sm:w-80"
+                        />
+                    </div>
                     <div className="flex flex-wrap gap-2">
                         {(['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED', 'ALL'] as const).map((status) => {
                             const active = (financialFilters.withdrawalStatus || 'PENDING') === status;

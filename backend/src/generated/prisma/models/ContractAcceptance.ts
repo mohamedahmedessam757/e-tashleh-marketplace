@@ -44,6 +44,9 @@ export type ContractAcceptanceMinAggregateOutputType = {
   ipAddress: string | null
   userAgent: string | null
   acceptedAt: Date | null
+  isActive: boolean | null
+  archivedAt: Date | null
+  changeRequestId: string | null
 }
 
 export type ContractAcceptanceMaxAggregateOutputType = {
@@ -56,6 +59,9 @@ export type ContractAcceptanceMaxAggregateOutputType = {
   ipAddress: string | null
   userAgent: string | null
   acceptedAt: Date | null
+  isActive: boolean | null
+  archivedAt: Date | null
+  changeRequestId: string | null
 }
 
 export type ContractAcceptanceCountAggregateOutputType = {
@@ -71,6 +77,9 @@ export type ContractAcceptanceCountAggregateOutputType = {
   ipAddress: number
   userAgent: number
   acceptedAt: number
+  isActive: number
+  archivedAt: number
+  changeRequestId: number
   _all: number
 }
 
@@ -93,6 +102,9 @@ export type ContractAcceptanceMinAggregateInputType = {
   ipAddress?: true
   userAgent?: true
   acceptedAt?: true
+  isActive?: true
+  archivedAt?: true
+  changeRequestId?: true
 }
 
 export type ContractAcceptanceMaxAggregateInputType = {
@@ -105,6 +117,9 @@ export type ContractAcceptanceMaxAggregateInputType = {
   ipAddress?: true
   userAgent?: true
   acceptedAt?: true
+  isActive?: true
+  archivedAt?: true
+  changeRequestId?: true
 }
 
 export type ContractAcceptanceCountAggregateInputType = {
@@ -120,6 +135,9 @@ export type ContractAcceptanceCountAggregateInputType = {
   ipAddress?: true
   userAgent?: true
   acceptedAt?: true
+  isActive?: true
+  archivedAt?: true
+  changeRequestId?: true
   _all?: true
 }
 
@@ -222,6 +240,9 @@ export type ContractAcceptanceGroupByOutputType = {
   ipAddress: string | null
   userAgent: string | null
   acceptedAt: Date
+  isActive: boolean
+  archivedAt: Date | null
+  changeRequestId: string | null
   _count: ContractAcceptanceCountAggregateOutputType | null
   _avg: ContractAcceptanceAvgAggregateOutputType | null
   _sum: ContractAcceptanceSumAggregateOutputType | null
@@ -260,8 +281,13 @@ export type ContractAcceptanceWhereInput = {
   ipAddress?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   acceptedAt?: Prisma.DateTimeFilter<"ContractAcceptance"> | Date | string
+  isActive?: Prisma.BoolFilter<"ContractAcceptance"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"ContractAcceptance"> | Date | string | null
+  changeRequestId?: Prisma.UuidNullableFilter<"ContractAcceptance"> | string | null
   store?: Prisma.XOR<Prisma.StoreScalarRelationFilter, Prisma.StoreWhereInput>
   contract?: Prisma.XOR<Prisma.PlatformContractScalarRelationFilter, Prisma.PlatformContractWhereInput>
+  changeRequest?: Prisma.XOR<Prisma.ContractChangeRequestNullableScalarRelationFilter, Prisma.ContractChangeRequestWhereInput> | null
+  targetedByRequests?: Prisma.ContractChangeRequestListRelationFilter
 }
 
 export type ContractAcceptanceOrderByWithRelationInput = {
@@ -277,13 +303,17 @@ export type ContractAcceptanceOrderByWithRelationInput = {
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  changeRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   store?: Prisma.StoreOrderByWithRelationInput
   contract?: Prisma.PlatformContractOrderByWithRelationInput
+  changeRequest?: Prisma.ContractChangeRequestOrderByWithRelationInput
+  targetedByRequests?: Prisma.ContractChangeRequestOrderByRelationAggregateInput
 }
 
 export type ContractAcceptanceWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  storeId_contractId?: Prisma.ContractAcceptanceStoreIdContractIdCompoundUniqueInput
   AND?: Prisma.ContractAcceptanceWhereInput | Prisma.ContractAcceptanceWhereInput[]
   OR?: Prisma.ContractAcceptanceWhereInput[]
   NOT?: Prisma.ContractAcceptanceWhereInput | Prisma.ContractAcceptanceWhereInput[]
@@ -298,9 +328,14 @@ export type ContractAcceptanceWhereUniqueInput = Prisma.AtLeast<{
   ipAddress?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   acceptedAt?: Prisma.DateTimeFilter<"ContractAcceptance"> | Date | string
+  isActive?: Prisma.BoolFilter<"ContractAcceptance"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"ContractAcceptance"> | Date | string | null
+  changeRequestId?: Prisma.UuidNullableFilter<"ContractAcceptance"> | string | null
   store?: Prisma.XOR<Prisma.StoreScalarRelationFilter, Prisma.StoreWhereInput>
   contract?: Prisma.XOR<Prisma.PlatformContractScalarRelationFilter, Prisma.PlatformContractWhereInput>
-}, "id" | "storeId_contractId">
+  changeRequest?: Prisma.XOR<Prisma.ContractChangeRequestNullableScalarRelationFilter, Prisma.ContractChangeRequestWhereInput> | null
+  targetedByRequests?: Prisma.ContractChangeRequestListRelationFilter
+}, "id">
 
 export type ContractAcceptanceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -315,6 +350,9 @@ export type ContractAcceptanceOrderByWithAggregationInput = {
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  changeRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ContractAcceptanceCountOrderByAggregateInput
   _avg?: Prisma.ContractAcceptanceAvgOrderByAggregateInput
   _max?: Prisma.ContractAcceptanceMaxOrderByAggregateInput
@@ -338,6 +376,9 @@ export type ContractAcceptanceScalarWhereWithAggregatesInput = {
   ipAddress?: Prisma.StringNullableWithAggregatesFilter<"ContractAcceptance"> | string | null
   userAgent?: Prisma.StringNullableWithAggregatesFilter<"ContractAcceptance"> | string | null
   acceptedAt?: Prisma.DateTimeWithAggregatesFilter<"ContractAcceptance"> | Date | string
+  isActive?: Prisma.BoolWithAggregatesFilter<"ContractAcceptance"> | boolean
+  archivedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ContractAcceptance"> | Date | string | null
+  changeRequestId?: Prisma.UuidNullableWithAggregatesFilter<"ContractAcceptance"> | string | null
 }
 
 export type ContractAcceptanceCreateInput = {
@@ -351,8 +392,12 @@ export type ContractAcceptanceCreateInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
   store: Prisma.StoreCreateNestedOneWithoutContractAcceptancesInput
   contract: Prisma.PlatformContractCreateNestedOneWithoutContractAcceptancesInput
+  changeRequest?: Prisma.ContractChangeRequestCreateNestedOneWithoutSupersededAcceptancesInput
+  targetedByRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceUncheckedCreateInput = {
@@ -368,6 +413,10 @@ export type ContractAcceptanceUncheckedCreateInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceUpdateInput = {
@@ -381,8 +430,12 @@ export type ContractAcceptanceUpdateInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   store?: Prisma.StoreUpdateOneRequiredWithoutContractAcceptancesNestedInput
   contract?: Prisma.PlatformContractUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  changeRequest?: Prisma.ContractChangeRequestUpdateOneWithoutSupersededAcceptancesNestedInput
+  targetedByRequests?: Prisma.ContractChangeRequestUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceUncheckedUpdateInput = {
@@ -398,6 +451,10 @@ export type ContractAcceptanceUncheckedUpdateInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceCreateManyInput = {
@@ -413,6 +470,9 @@ export type ContractAcceptanceCreateManyInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
 }
 
 export type ContractAcceptanceUpdateManyMutationInput = {
@@ -426,6 +486,8 @@ export type ContractAcceptanceUpdateManyMutationInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type ContractAcceptanceUncheckedUpdateManyInput = {
@@ -441,6 +503,9 @@ export type ContractAcceptanceUncheckedUpdateManyInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ContractAcceptanceListRelationFilter = {
@@ -451,11 +516,6 @@ export type ContractAcceptanceListRelationFilter = {
 
 export type ContractAcceptanceOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type ContractAcceptanceStoreIdContractIdCompoundUniqueInput = {
-  storeId: string
-  contractId: string
 }
 
 export type ContractAcceptanceCountOrderByAggregateInput = {
@@ -471,6 +531,9 @@ export type ContractAcceptanceCountOrderByAggregateInput = {
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
+  changeRequestId?: Prisma.SortOrder
 }
 
 export type ContractAcceptanceAvgOrderByAggregateInput = {
@@ -487,6 +550,9 @@ export type ContractAcceptanceMaxOrderByAggregateInput = {
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
+  changeRequestId?: Prisma.SortOrder
 }
 
 export type ContractAcceptanceMinOrderByAggregateInput = {
@@ -499,10 +565,18 @@ export type ContractAcceptanceMinOrderByAggregateInput = {
   ipAddress?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
+  isActive?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
+  changeRequestId?: Prisma.SortOrder
 }
 
 export type ContractAcceptanceSumOrderByAggregateInput = {
   contractVersion?: Prisma.SortOrder
+}
+
+export type ContractAcceptanceScalarRelationFilter = {
+  is?: Prisma.ContractAcceptanceWhereInput
+  isNot?: Prisma.ContractAcceptanceWhereInput
 }
 
 export type ContractAcceptanceCreateNestedManyWithoutStoreInput = {
@@ -589,6 +663,62 @@ export type ContractAcceptanceUncheckedUpdateManyWithoutContractNestedInput = {
   deleteMany?: Prisma.ContractAcceptanceScalarWhereInput | Prisma.ContractAcceptanceScalarWhereInput[]
 }
 
+export type ContractAcceptanceCreateNestedOneWithoutTargetedByRequestsInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedCreateWithoutTargetedByRequestsInput>
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutTargetedByRequestsInput
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput
+}
+
+export type ContractAcceptanceCreateNestedManyWithoutChangeRequestInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput> | Prisma.ContractAcceptanceCreateWithoutChangeRequestInput[] | Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput[]
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput | Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput[]
+  createMany?: Prisma.ContractAcceptanceCreateManyChangeRequestInputEnvelope
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+}
+
+export type ContractAcceptanceUncheckedCreateNestedManyWithoutChangeRequestInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput> | Prisma.ContractAcceptanceCreateWithoutChangeRequestInput[] | Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput[]
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput | Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput[]
+  createMany?: Prisma.ContractAcceptanceCreateManyChangeRequestInputEnvelope
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+}
+
+export type ContractAcceptanceUpdateOneRequiredWithoutTargetedByRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedCreateWithoutTargetedByRequestsInput>
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutTargetedByRequestsInput
+  upsert?: Prisma.ContractAcceptanceUpsertWithoutTargetedByRequestsInput
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ContractAcceptanceUpdateToOneWithWhereWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUpdateWithoutTargetedByRequestsInput>, Prisma.ContractAcceptanceUncheckedUpdateWithoutTargetedByRequestsInput>
+}
+
+export type ContractAcceptanceUpdateManyWithoutChangeRequestNestedInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput> | Prisma.ContractAcceptanceCreateWithoutChangeRequestInput[] | Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput[]
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput | Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput[]
+  upsert?: Prisma.ContractAcceptanceUpsertWithWhereUniqueWithoutChangeRequestInput | Prisma.ContractAcceptanceUpsertWithWhereUniqueWithoutChangeRequestInput[]
+  createMany?: Prisma.ContractAcceptanceCreateManyChangeRequestInputEnvelope
+  set?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  disconnect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  delete?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  update?: Prisma.ContractAcceptanceUpdateWithWhereUniqueWithoutChangeRequestInput | Prisma.ContractAcceptanceUpdateWithWhereUniqueWithoutChangeRequestInput[]
+  updateMany?: Prisma.ContractAcceptanceUpdateManyWithWhereWithoutChangeRequestInput | Prisma.ContractAcceptanceUpdateManyWithWhereWithoutChangeRequestInput[]
+  deleteMany?: Prisma.ContractAcceptanceScalarWhereInput | Prisma.ContractAcceptanceScalarWhereInput[]
+}
+
+export type ContractAcceptanceUncheckedUpdateManyWithoutChangeRequestNestedInput = {
+  create?: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput> | Prisma.ContractAcceptanceCreateWithoutChangeRequestInput[] | Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput[]
+  connectOrCreate?: Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput | Prisma.ContractAcceptanceCreateOrConnectWithoutChangeRequestInput[]
+  upsert?: Prisma.ContractAcceptanceUpsertWithWhereUniqueWithoutChangeRequestInput | Prisma.ContractAcceptanceUpsertWithWhereUniqueWithoutChangeRequestInput[]
+  createMany?: Prisma.ContractAcceptanceCreateManyChangeRequestInputEnvelope
+  set?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  disconnect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  delete?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  connect?: Prisma.ContractAcceptanceWhereUniqueInput | Prisma.ContractAcceptanceWhereUniqueInput[]
+  update?: Prisma.ContractAcceptanceUpdateWithWhereUniqueWithoutChangeRequestInput | Prisma.ContractAcceptanceUpdateWithWhereUniqueWithoutChangeRequestInput[]
+  updateMany?: Prisma.ContractAcceptanceUpdateManyWithWhereWithoutChangeRequestInput | Prisma.ContractAcceptanceUpdateManyWithWhereWithoutChangeRequestInput[]
+  deleteMany?: Prisma.ContractAcceptanceScalarWhereInput | Prisma.ContractAcceptanceScalarWhereInput[]
+}
+
 export type ContractAcceptanceCreateWithoutStoreInput = {
   id?: string
   contractVersion: number
@@ -600,7 +730,11 @@ export type ContractAcceptanceCreateWithoutStoreInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
   contract: Prisma.PlatformContractCreateNestedOneWithoutContractAcceptancesInput
+  changeRequest?: Prisma.ContractChangeRequestCreateNestedOneWithoutSupersededAcceptancesInput
+  targetedByRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceUncheckedCreateWithoutStoreInput = {
@@ -615,6 +749,10 @@ export type ContractAcceptanceUncheckedCreateWithoutStoreInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceCreateOrConnectWithoutStoreInput = {
@@ -659,6 +797,9 @@ export type ContractAcceptanceScalarWhereInput = {
   ipAddress?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ContractAcceptance"> | string | null
   acceptedAt?: Prisma.DateTimeFilter<"ContractAcceptance"> | Date | string
+  isActive?: Prisma.BoolFilter<"ContractAcceptance"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"ContractAcceptance"> | Date | string | null
+  changeRequestId?: Prisma.UuidNullableFilter<"ContractAcceptance"> | string | null
 }
 
 export type ContractAcceptanceCreateWithoutContractInput = {
@@ -672,7 +813,11 @@ export type ContractAcceptanceCreateWithoutContractInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
   store: Prisma.StoreCreateNestedOneWithoutContractAcceptancesInput
+  changeRequest?: Prisma.ContractChangeRequestCreateNestedOneWithoutSupersededAcceptancesInput
+  targetedByRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceUncheckedCreateWithoutContractInput = {
@@ -687,6 +832,10 @@ export type ContractAcceptanceUncheckedCreateWithoutContractInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutAcceptanceInput
 }
 
 export type ContractAcceptanceCreateOrConnectWithoutContractInput = {
@@ -715,6 +864,156 @@ export type ContractAcceptanceUpdateManyWithWhereWithoutContractInput = {
   data: Prisma.XOR<Prisma.ContractAcceptanceUpdateManyMutationInput, Prisma.ContractAcceptanceUncheckedUpdateManyWithoutContractInput>
 }
 
+export type ContractAcceptanceCreateWithoutTargetedByRequestsInput = {
+  id?: string
+  contractVersion: number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot: string
+  contentEnSnapshot: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  store: Prisma.StoreCreateNestedOneWithoutContractAcceptancesInput
+  contract: Prisma.PlatformContractCreateNestedOneWithoutContractAcceptancesInput
+  changeRequest?: Prisma.ContractChangeRequestCreateNestedOneWithoutSupersededAcceptancesInput
+}
+
+export type ContractAcceptanceUncheckedCreateWithoutTargetedByRequestsInput = {
+  id?: string
+  storeId: string
+  contractId: string
+  contractVersion: number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot: string
+  contentEnSnapshot: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
+}
+
+export type ContractAcceptanceCreateOrConnectWithoutTargetedByRequestsInput = {
+  where: Prisma.ContractAcceptanceWhereUniqueInput
+  create: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedCreateWithoutTargetedByRequestsInput>
+}
+
+export type ContractAcceptanceCreateWithoutChangeRequestInput = {
+  id?: string
+  contractVersion: number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot: string
+  contentEnSnapshot: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  store: Prisma.StoreCreateNestedOneWithoutContractAcceptancesInput
+  contract: Prisma.PlatformContractCreateNestedOneWithoutContractAcceptancesInput
+  targetedByRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutAcceptanceInput
+}
+
+export type ContractAcceptanceUncheckedCreateWithoutChangeRequestInput = {
+  id?: string
+  storeId: string
+  contractId: string
+  contractVersion: number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot: string
+  contentEnSnapshot: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutAcceptanceInput
+}
+
+export type ContractAcceptanceCreateOrConnectWithoutChangeRequestInput = {
+  where: Prisma.ContractAcceptanceWhereUniqueInput
+  create: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput>
+}
+
+export type ContractAcceptanceCreateManyChangeRequestInputEnvelope = {
+  data: Prisma.ContractAcceptanceCreateManyChangeRequestInput | Prisma.ContractAcceptanceCreateManyChangeRequestInput[]
+  skipDuplicates?: boolean
+}
+
+export type ContractAcceptanceUpsertWithoutTargetedByRequestsInput = {
+  update: Prisma.XOR<Prisma.ContractAcceptanceUpdateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedUpdateWithoutTargetedByRequestsInput>
+  create: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedCreateWithoutTargetedByRequestsInput>
+  where?: Prisma.ContractAcceptanceWhereInput
+}
+
+export type ContractAcceptanceUpdateToOneWithWhereWithoutTargetedByRequestsInput = {
+  where?: Prisma.ContractAcceptanceWhereInput
+  data: Prisma.XOR<Prisma.ContractAcceptanceUpdateWithoutTargetedByRequestsInput, Prisma.ContractAcceptanceUncheckedUpdateWithoutTargetedByRequestsInput>
+}
+
+export type ContractAcceptanceUpdateWithoutTargetedByRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  contractVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  contentEnSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  store?: Prisma.StoreUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  contract?: Prisma.PlatformContractUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  changeRequest?: Prisma.ContractChangeRequestUpdateOneWithoutSupersededAcceptancesNestedInput
+}
+
+export type ContractAcceptanceUncheckedUpdateWithoutTargetedByRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  contentEnSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ContractAcceptanceUpsertWithWhereUniqueWithoutChangeRequestInput = {
+  where: Prisma.ContractAcceptanceWhereUniqueInput
+  update: Prisma.XOR<Prisma.ContractAcceptanceUpdateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedUpdateWithoutChangeRequestInput>
+  create: Prisma.XOR<Prisma.ContractAcceptanceCreateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedCreateWithoutChangeRequestInput>
+}
+
+export type ContractAcceptanceUpdateWithWhereUniqueWithoutChangeRequestInput = {
+  where: Prisma.ContractAcceptanceWhereUniqueInput
+  data: Prisma.XOR<Prisma.ContractAcceptanceUpdateWithoutChangeRequestInput, Prisma.ContractAcceptanceUncheckedUpdateWithoutChangeRequestInput>
+}
+
+export type ContractAcceptanceUpdateManyWithWhereWithoutChangeRequestInput = {
+  where: Prisma.ContractAcceptanceScalarWhereInput
+  data: Prisma.XOR<Prisma.ContractAcceptanceUpdateManyMutationInput, Prisma.ContractAcceptanceUncheckedUpdateManyWithoutChangeRequestInput>
+}
+
 export type ContractAcceptanceCreateManyStoreInput = {
   id?: string
   contractId: string
@@ -727,6 +1026,9 @@ export type ContractAcceptanceCreateManyStoreInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
 }
 
 export type ContractAcceptanceUpdateWithoutStoreInput = {
@@ -740,7 +1042,11 @@ export type ContractAcceptanceUpdateWithoutStoreInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   contract?: Prisma.PlatformContractUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  changeRequest?: Prisma.ContractChangeRequestUpdateOneWithoutSupersededAcceptancesNestedInput
+  targetedByRequests?: Prisma.ContractChangeRequestUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceUncheckedUpdateWithoutStoreInput = {
@@ -755,6 +1061,10 @@ export type ContractAcceptanceUncheckedUpdateWithoutStoreInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceUncheckedUpdateManyWithoutStoreInput = {
@@ -769,6 +1079,9 @@ export type ContractAcceptanceUncheckedUpdateManyWithoutStoreInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ContractAcceptanceCreateManyContractInput = {
@@ -783,6 +1096,9 @@ export type ContractAcceptanceCreateManyContractInput = {
   ipAddress?: string | null
   userAgent?: string | null
   acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+  changeRequestId?: string | null
 }
 
 export type ContractAcceptanceUpdateWithoutContractInput = {
@@ -796,7 +1112,11 @@ export type ContractAcceptanceUpdateWithoutContractInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   store?: Prisma.StoreUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  changeRequest?: Prisma.ContractChangeRequestUpdateOneWithoutSupersededAcceptancesNestedInput
+  targetedByRequests?: Prisma.ContractChangeRequestUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceUncheckedUpdateWithoutContractInput = {
@@ -811,6 +1131,10 @@ export type ContractAcceptanceUncheckedUpdateWithoutContractInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutAcceptanceNestedInput
 }
 
 export type ContractAcceptanceUncheckedUpdateManyWithoutContractInput = {
@@ -825,8 +1149,110 @@ export type ContractAcceptanceUncheckedUpdateManyWithoutContractInput = {
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changeRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
+export type ContractAcceptanceCreateManyChangeRequestInput = {
+  id?: string
+  storeId: string
+  contractId: string
+  contractVersion: number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot: string
+  contentEnSnapshot: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  acceptedAt?: Date | string
+  isActive?: boolean
+  archivedAt?: Date | string | null
+}
+
+export type ContractAcceptanceUpdateWithoutChangeRequestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  contractVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  contentEnSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  store?: Prisma.StoreUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  contract?: Prisma.PlatformContractUpdateOneRequiredWithoutContractAcceptancesNestedInput
+  targetedByRequests?: Prisma.ContractChangeRequestUpdateManyWithoutAcceptanceNestedInput
+}
+
+export type ContractAcceptanceUncheckedUpdateWithoutChangeRequestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  contentEnSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  targetedByRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutAcceptanceNestedInput
+}
+
+export type ContractAcceptanceUncheckedUpdateManyWithoutChangeRequestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractId?: Prisma.StringFieldUpdateOperationsInput | string
+  contractVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  secondPartyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  signatureData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  firstPartySnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  contentArSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  contentEnSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  acceptedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+
+/**
+ * Count Type ContractAcceptanceCountOutputType
+ */
+
+export type ContractAcceptanceCountOutputType = {
+  targetedByRequests: number
+}
+
+export type ContractAcceptanceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  targetedByRequests?: boolean | ContractAcceptanceCountOutputTypeCountTargetedByRequestsArgs
+}
+
+/**
+ * ContractAcceptanceCountOutputType without action
+ */
+export type ContractAcceptanceCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractAcceptanceCountOutputType
+   */
+  select?: Prisma.ContractAcceptanceCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ContractAcceptanceCountOutputType without action
+ */
+export type ContractAcceptanceCountOutputTypeCountTargetedByRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContractChangeRequestWhereInput
+}
 
 
 export type ContractAcceptanceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -842,8 +1268,14 @@ export type ContractAcceptanceSelect<ExtArgs extends runtime.Types.Extensions.In
   ipAddress?: boolean
   userAgent?: boolean
   acceptedAt?: boolean
+  isActive?: boolean
+  archivedAt?: boolean
+  changeRequestId?: boolean
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
+  targetedByRequests?: boolean | Prisma.ContractAcceptance$targetedByRequestsArgs<ExtArgs>
+  _count?: boolean | Prisma.ContractAcceptanceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contractAcceptance"]>
 
 export type ContractAcceptanceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -859,8 +1291,12 @@ export type ContractAcceptanceSelectCreateManyAndReturn<ExtArgs extends runtime.
   ipAddress?: boolean
   userAgent?: boolean
   acceptedAt?: boolean
+  isActive?: boolean
+  archivedAt?: boolean
+  changeRequestId?: boolean
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
 }, ExtArgs["result"]["contractAcceptance"]>
 
 export type ContractAcceptanceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -876,8 +1312,12 @@ export type ContractAcceptanceSelectUpdateManyAndReturn<ExtArgs extends runtime.
   ipAddress?: boolean
   userAgent?: boolean
   acceptedAt?: boolean
+  isActive?: boolean
+  archivedAt?: boolean
+  changeRequestId?: boolean
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
 }, ExtArgs["result"]["contractAcceptance"]>
 
 export type ContractAcceptanceSelectScalar = {
@@ -893,20 +1333,28 @@ export type ContractAcceptanceSelectScalar = {
   ipAddress?: boolean
   userAgent?: boolean
   acceptedAt?: boolean
+  isActive?: boolean
+  archivedAt?: boolean
+  changeRequestId?: boolean
 }
 
-export type ContractAcceptanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeId" | "contractId" | "contractVersion" | "secondPartyData" | "signatureData" | "firstPartySnapshot" | "contentArSnapshot" | "contentEnSnapshot" | "ipAddress" | "userAgent" | "acceptedAt", ExtArgs["result"]["contractAcceptance"]>
+export type ContractAcceptanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeId" | "contractId" | "contractVersion" | "secondPartyData" | "signatureData" | "firstPartySnapshot" | "contentArSnapshot" | "contentEnSnapshot" | "ipAddress" | "userAgent" | "acceptedAt" | "isActive" | "archivedAt" | "changeRequestId", ExtArgs["result"]["contractAcceptance"]>
 export type ContractAcceptanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
+  targetedByRequests?: boolean | Prisma.ContractAcceptance$targetedByRequestsArgs<ExtArgs>
+  _count?: boolean | Prisma.ContractAcceptanceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ContractAcceptanceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
 }
 export type ContractAcceptanceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.StoreDefaultArgs<ExtArgs>
   contract?: boolean | Prisma.PlatformContractDefaultArgs<ExtArgs>
+  changeRequest?: boolean | Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>
 }
 
 export type $ContractAcceptancePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -914,6 +1362,8 @@ export type $ContractAcceptancePayload<ExtArgs extends runtime.Types.Extensions.
   objects: {
     store: Prisma.$StorePayload<ExtArgs>
     contract: Prisma.$PlatformContractPayload<ExtArgs>
+    changeRequest: Prisma.$ContractChangeRequestPayload<ExtArgs> | null
+    targetedByRequests: Prisma.$ContractChangeRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -928,6 +1378,9 @@ export type $ContractAcceptancePayload<ExtArgs extends runtime.Types.Extensions.
     ipAddress: string | null
     userAgent: string | null
     acceptedAt: Date
+    isActive: boolean
+    archivedAt: Date | null
+    changeRequestId: string | null
   }, ExtArgs["result"]["contractAcceptance"]>
   composites: {}
 }
@@ -1324,6 +1777,8 @@ export interface Prisma__ContractAcceptanceClient<T, Null = never, ExtArgs exten
   readonly [Symbol.toStringTag]: "PrismaPromise"
   store<T extends Prisma.StoreDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoreDefaultArgs<ExtArgs>>): Prisma.Prisma__StoreClient<runtime.Types.Result.GetResult<Prisma.$StorePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   contract<T extends Prisma.PlatformContractDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlatformContractDefaultArgs<ExtArgs>>): Prisma.Prisma__PlatformContractClient<runtime.Types.Result.GetResult<Prisma.$PlatformContractPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  changeRequest<T extends Prisma.ContractAcceptance$changeRequestArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ContractAcceptance$changeRequestArgs<ExtArgs>>): Prisma.Prisma__ContractChangeRequestClient<runtime.Types.Result.GetResult<Prisma.$ContractChangeRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  targetedByRequests<T extends Prisma.ContractAcceptance$targetedByRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ContractAcceptance$targetedByRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContractChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1365,6 +1820,9 @@ export interface ContractAcceptanceFieldRefs {
   readonly ipAddress: Prisma.FieldRef<"ContractAcceptance", 'String'>
   readonly userAgent: Prisma.FieldRef<"ContractAcceptance", 'String'>
   readonly acceptedAt: Prisma.FieldRef<"ContractAcceptance", 'DateTime'>
+  readonly isActive: Prisma.FieldRef<"ContractAcceptance", 'Boolean'>
+  readonly archivedAt: Prisma.FieldRef<"ContractAcceptance", 'DateTime'>
+  readonly changeRequestId: Prisma.FieldRef<"ContractAcceptance", 'String'>
 }
     
 
@@ -1763,6 +2221,49 @@ export type ContractAcceptanceDeleteManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many ContractAcceptances to delete.
    */
   limit?: number
+}
+
+/**
+ * ContractAcceptance.changeRequest
+ */
+export type ContractAcceptance$changeRequestArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractChangeRequest
+   */
+  select?: Prisma.ContractChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContractChangeRequest
+   */
+  omit?: Prisma.ContractChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContractChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ContractChangeRequestWhereInput
+}
+
+/**
+ * ContractAcceptance.targetedByRequests
+ */
+export type ContractAcceptance$targetedByRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractChangeRequest
+   */
+  select?: Prisma.ContractChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContractChangeRequest
+   */
+  omit?: Prisma.ContractChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContractChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ContractChangeRequestWhereInput
+  orderBy?: Prisma.ContractChangeRequestOrderByWithRelationInput | Prisma.ContractChangeRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ContractChangeRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContractChangeRequestScalarFieldEnum | Prisma.ContractChangeRequestScalarFieldEnum[]
 }
 
 /**

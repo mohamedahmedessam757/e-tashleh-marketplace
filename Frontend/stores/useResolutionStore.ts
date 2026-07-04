@@ -34,6 +34,7 @@ export interface CaseMessage {
 
 export interface ResolutionCase {
     id: string;
+    caseReference?: string | null;
     orderId: string;
     type: CaseType;
     status: CaseStatus;
@@ -125,7 +126,7 @@ interface ResolutionState {
     error: string | null;
 
     fetchMerchantCases: (silent?: boolean) => Promise<void>;
-    fetchAdminCases: (silent?: boolean) => Promise<void>;
+    fetchAdminCases: (searchOrSilent?: string | boolean, silentArg?: boolean) => Promise<void>;
     fetchUserRequests: (silent?: boolean) => Promise<void>;
     fetchCases: (role: 'merchant' | 'admin' | 'customer', silent?: boolean) => Promise<void>;
     
@@ -165,6 +166,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedReturns: ResolutionCase[] = returns.map(r => ({
                 id: r.id,
+                caseReference: r.caseReference ?? null,
                 orderId: String(r.orderId),
                 type: 'return',
                 status: r.status === 'PENDING' ? 'AWAITING_MERCHANT' : r.status,
@@ -230,6 +232,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedDisputes: ResolutionCase[] = disputes.map(d => ({
                 id: d.id,
+                caseReference: d.caseReference ?? null,
                 orderId: String(d.orderId),
                 type: 'dispute',
                 status: d.status === 'OPEN' ? 'AWAITING_MERCHANT' : d.status,
@@ -299,10 +302,19 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
         }
     },
 
-    fetchAdminCases: async (silent = false) => {
+    fetchAdminCases: async (searchOrSilent?: string | boolean, silentArg?: boolean) => {
+        let search: string | undefined;
+        let silent = false;
+        if (typeof searchOrSilent === 'boolean') {
+            silent = searchOrSilent;
+        } else if (typeof searchOrSilent === 'string') {
+            search = searchOrSilent;
+            silent = silentArg ?? false;
+        }
+
         if (!silent) set({ isLoading: true, error: null });
         try {
-            const response = await returnsApi.getAdminCases();
+            const response = await returnsApi.getAdminCases(search);
             const { returns, disputes } = response.data;
 
             const mapPaymentFields = (item: any) => ({
@@ -313,6 +325,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedReturns: ResolutionCase[] = returns.map(r => ({
                 id: r.id,
+                caseReference: r.caseReference ?? null,
                 orderId: String(r.orderId),
                 type: 'return',
                 status: r.status === 'PENDING' ? 'AWAITING_MERCHANT' : r.status,
@@ -379,6 +392,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedDisputes: ResolutionCase[] = disputes.map(d => ({
                 id: d.id,
+                caseReference: d.caseReference ?? null,
                 orderId: String(d.orderId),
                 type: 'dispute',
                 status: d.status === 'OPEN' ? 'AWAITING_MERCHANT' : d.status,
@@ -455,6 +469,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedReturns: ResolutionCase[] = returns.map(r => ({
                 id: r.id,
+                caseReference: r.caseReference ?? null,
                 orderId: parseInt(r.orderId) || 0,
                 type: 'return',
                 status: r.status === 'PENDING' ? 'AWAITING_MERCHANT' : r.status,
@@ -520,6 +535,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
 
             const mappedDisputes: ResolutionCase[] = disputes.map(d => ({
                 id: d.id,
+                caseReference: d.caseReference ?? null,
                 orderId: parseInt(d.orderId) || 0,
                 type: 'dispute',
                 status: d.status === 'OPEN' ? 'AWAITING_MERCHANT' : d.status,

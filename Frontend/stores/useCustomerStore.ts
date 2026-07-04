@@ -73,7 +73,8 @@ interface CustomerState {
   customers: Customer[];
   isLoading: boolean;
   error: string | null;
-  fetchCustomers: () => Promise<void>;
+  fetchCustomers: (options?: { search?: string }) => Promise<void>;
+  customersSearchQuery: string;
   fetchCustomerById: (id: string) => Promise<Customer | null>;
   toggleStatus: (id: string, reason?: string, currentStatus?: Customer['status']) => Promise<void>;
   updateNotes: (id: string, notes: string) => Promise<void>;
@@ -89,17 +90,22 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   customers: [],
   isLoading: false,
   error: null,
+  customersSearchQuery: '',
 
-  fetchCustomers: async () => {
-    set({ isLoading: true, error: null });
+  fetchCustomers: async (options) => {
+    const search = options?.search?.trim() ?? get().customersSearchQuery;
+    set({ isLoading: true, error: null, customersSearchQuery: search });
     try {
       const token = localStorage.getItem('access_token');
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/users/admin/customers`, {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const query = params.toString();
+      const response = await fetch(`${API_URL}/users/admin/customers${query ? `?${query}` : ''}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to fetch customers');
-      const data = await response.ok ? await response.json() : [];
+      const data = await response.json();
       set({ customers: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });

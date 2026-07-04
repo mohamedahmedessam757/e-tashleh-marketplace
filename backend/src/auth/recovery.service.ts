@@ -3,9 +3,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
-import { ActorType } from '@prisma/client';
+import { ActorType, Prisma } from '@prisma/client';
 import { OtpService } from './otp.service';
 import { OtpPurpose } from './otp-purpose';
+import {
+    normalizeSearchQuery,
+    normalizePhone,
+    resolveUserIds,
+    isUuid,
+} from '../common/search/admin-entity-search.util';
 
 @Injectable()
 export class RecoveryService {
@@ -267,8 +273,41 @@ export class RecoveryService {
 
     // --- ADMIN APIs ---
 
-    async getPendingRequests() {
+    async getPendingRequests(search?: string) {
+        const q = normalizeSearchQuery(search);
+        let where: Prisma.AccountRecoveryRequestWhereInput | undefined;
+
+        if (q) {
+            const or: Prisma.AccountRecoveryRequestWhereInput[] = [
+                { oldPhone: { contains: q, mode: 'insensitive' } },
+                { newPhone: { contains: q, mode: 'insensitive' } },
+                { user: { name: { contains: q, mode: 'insensitive' } } },
+                { user: { email: { contains: q, mode: 'insensitive' } } },
+                { user: { phone: { contains: q, mode: 'insensitive' } } },
+            ];
+
+            const phoneNorm = normalizePhone(q);
+            if (phoneNorm && phoneNorm !== q) {
+                or.push(
+                    { oldPhone: { contains: phoneNorm, mode: 'insensitive' } },
+                    { newPhone: { contains: phoneNorm, mode: 'insensitive' } },
+                    { user: { phone: { contains: phoneNorm, mode: 'insensitive' } } },
+                );
+            }
+
+            if (isUuid(q)) {
+                or.push({ id: q });
+                or.push({ userId: q });
+            }
+
+            const userIds = await resolveUserIds(this.prisma, q);
+            if (userIds.length) or.push({ userId: { in: userIds } });
+
+            where = { OR: or };
+        }
+
         const requests = await this.prisma.accountRecoveryRequest.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
             include: {
                 user: {

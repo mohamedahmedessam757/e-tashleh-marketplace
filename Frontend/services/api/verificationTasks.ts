@@ -9,7 +9,8 @@ export const verificationTasksApi = {
   getAdminQueue: () => client.get('/verification-tasks/admin-queue'),
 
   /** Every field verification task (admin dashboard — full history). */
-  listAllForAdmin: () => client.get('/verification-tasks/admin/all'),
+  listAllForAdmin: (params?: { search?: string }) =>
+    client.get('/verification-tasks/admin/all', { params }),
 
   getByOrder: (orderId: string) => client.get(`/verification-tasks/order/${orderId}`),
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ProfileChangesService } from './profile-changes.service';
 import {
@@ -45,8 +45,8 @@ export class ProfileChangesController {
     @Get('admin/profile-changes')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @Permissions('users', 'view')
-    getPendingForAdmin() {
-        return this.profileChangesService.getPendingForAdmin();
+    getPendingForAdmin(@Query('search') search?: string) {
+        return this.profileChangesService.getPendingForAdmin(search);
     }
 
     @Post('admin/profile-changes/:id/resolve')

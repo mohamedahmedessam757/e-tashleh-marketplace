@@ -55,6 +55,7 @@ export class DashboardService {
             expiringLicensesCount,
             expiredLicensesCount,
             stalledVerificationCount,
+            pendingContractChangesCount,
             lastOrders,
         ] = await Promise.all([
             this.prisma.order.count({ where: orderDateFilter }),
@@ -122,6 +123,9 @@ export class DashboardService {
                     status: OrderStatus.VERIFICATION,
                     updatedAt: { lt: oneDayAgo },
                 },
+            }),
+            this.prisma.contractChangeRequest.count({
+                where: { status: 'PENDING_REVIEW' },
             }),
             this.prisma.order.findMany({
                 take: 5,
@@ -219,6 +223,14 @@ export class DashboardService {
                       code: 'DISPUTES_OPEN',
                       count: openDisputes,
                       priority: 'high',
+                  }
+                : null,
+            pendingContractChangesCount > 0
+                ? {
+                      type: 'warning',
+                      code: 'CONTRACT_CHANGES_PENDING',
+                      count: pendingContractChangesCount,
+                      priority: 'medium',
                   }
                 : null,
         ].filter(Boolean);

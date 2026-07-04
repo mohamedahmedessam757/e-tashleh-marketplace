@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -37,8 +38,8 @@ export class ReviewsController {
   @Get('admin')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('reviews', 'view')
-  findAllForAdmin() {
-    return this.reviewsService.findAllForAdmin();
+  findAllForAdmin(@Query('search') search?: string) {
+    return this.reviewsService.findAllForAdmin(search);
   }
 
   // Admin updates review status

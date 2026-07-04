@@ -31,9 +31,17 @@ import {
   LoyaltyReviewStatus,
   LoyaltyReviewTrigger,
   ViolationType,
+  Prisma,
 } from '@prisma/client';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import {
+  isUuid,
+  mergeWhereWithSearch,
+  normalizeSearchQuery,
+  resolveStoreIds,
+  resolveUserIds,
+} from '../common/search/admin-entity-search.util';
 
 /** Resolves a stable violation type by `code` with a small in-memory cache (5 min TTL). */
 type CachedType = { type: ViolationType; expiresAt: number };
@@ -823,8 +831,44 @@ export class ViolationsService {
   // --- QUERY METHODS ---
 
   async getAllViolations(filters: any) {
+    const { search, ...rest } = filters ?? {};
+    const q = normalizeSearchQuery(search);
+
+    let where: Prisma.ViolationWhereInput = { ...rest };
+
+    if (q) {
+      const [userIds, storeIds] = await Promise.all([
+        resolveUserIds(this.prisma, q),
+        resolveStoreIds(this.prisma, q),
+      ]);
+
+      const or: Prisma.ViolationWhereInput[] = [
+        { adminNotes: { contains: q, mode: 'insensitive' } },
+        { uniqueKey: { contains: q, mode: 'insensitive' } },
+        {
+          type: {
+            OR: [
+              { nameEn: { contains: q, mode: 'insensitive' } },
+              { nameAr: { contains: q, mode: 'insensitive' } },
+              { code: { contains: q, mode: 'insensitive' } },
+            ],
+          },
+        },
+        { order: { orderNumber: { contains: q, mode: 'insensitive' } } },
+      ];
+
+      if (isUuid(q)) {
+        or.push({ id: q });
+        or.push({ orderId: q });
+      }
+      if (userIds.length) or.push({ targetUserId: { in: userIds } });
+      if (storeIds.length) or.push({ targetStoreId: { in: storeIds } });
+
+      where = mergeWhereWithSearch(where, { OR: or });
+    }
+
     return this.prisma.violation.findMany({
-      where: filters,
+      where,
       include: { type: true, targetUser: true, targetStore: true, issuer: true },
       orderBy: { createdAt: 'desc' },
     });

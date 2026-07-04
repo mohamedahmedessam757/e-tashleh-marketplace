@@ -1,20 +1,22 @@
 
-import React from 'react';
-import { useAdminChatStore, AdminChat } from '../../../../stores/useAdminChatStore';
+import React, { useEffect } from 'react';
+import { useAdminChatStore } from '../../../../stores/useAdminChatStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { Search, User, Store, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { User, Store, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { AdminSearchInput } from '../AdminSearchInput';
 
 export const AdminChatList: React.FC = () => {
     const { language } = useLanguage();
     const isAr = language === 'ar';
-    const { orderChats, activeChat, fetchChatById } = useAdminChatStore();
+    const { orderChats, activeChat, fetchChatById, fetchChats } = useAdminChatStore();
     const [search, setSearch] = React.useState('');
 
-    const filteredChats = orderChats.filter(chat => 
-        chat.customerName?.toLowerCase().includes(search.toLowerCase()) ||
-        chat.vendorName?.toLowerCase().includes(search.toLowerCase()) ||
-        chat.orderNumber?.toLowerCase().includes(search.toLowerCase())
-    );
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            fetchChats('order', search);
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [search, fetchChats]);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -28,25 +30,20 @@ export const AdminChatList: React.FC = () => {
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-white/5">
-                <div className="relative">
-                    <Search className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-white/40`} size={16} />
-                    <input
-                        type="text"
-                        placeholder={isAr ? 'بحث عن محادثة...' : 'Search chats...'}
-                        className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 ${isAr ? 'pr-10' : 'pl-10'} text-sm text-white focus:outline-none focus:border-gold-500/50 transition-colors`}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
+                <AdminSearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={isAr ? 'بحث عن محادثة...' : 'Search chats...'}
+                />
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {filteredChats.length === 0 ? (
+                {orderChats.length === 0 ? (
                     <div className="p-8 text-center text-white/30 text-sm">
                         {isAr ? 'لا توجد محادثات مطابقة' : 'No matching chats'}
                     </div>
                 ) : (
-                    filteredChats.map((chat) => (
+                    orderChats.map((chat) => (
                         <button
                             key={chat.id}
                             onClick={() => fetchChatById(chat.id)}

@@ -11,6 +11,7 @@ import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Badge } from '../../ui/Badge';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
+import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 interface CustomerDisputeDetailsProps {
   caseId: string;
@@ -159,7 +160,14 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                  <div>
                      <h4 className="text-[10px] font-black text-gold-500 uppercase tracking-tight mb-1">{dispute.type === 'dispute' ? (isAr ? 'نزاع' : 'Dispute') : (isAr ? 'إرجاع' : 'Return')}</h4>
                      <h2 className="text-3xl font-black text-white tracking-tight uppercase leading-tight">{dispute.partName}</h2>
-                     <p className="text-white/40 text-[12px] font-bold flex items-center gap-2 mt-1">
+                     <p className="text-white/40 text-[12px] font-bold flex flex-wrap items-center gap-2 mt-1">
+                       <CopyableIdBadge
+                         labelAr={t.admin.ids.caseReference}
+                         labelEn={t.admin.ids.caseReference}
+                         value={dispute.caseReference || dispute.id}
+                         language={language}
+                         variant="muted"
+                       />
                        {t.dashboard.resolution.details.orderRef}: <span className="text-gold-500/70">#{dispute.orderNumber}</span>
                        <span className="w-1 h-1 rounded-full bg-white/10" />
                        {new Date(dispute.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}

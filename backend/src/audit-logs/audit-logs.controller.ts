@@ -15,12 +15,13 @@ export class AuditLogsController {
         @Query('orderId') orderId?: string,
         @Query('cursor') cursor?: string,
         @Query('limit') limit?: string,
+        @Query('search') search?: string,
     ) {
         if (orderId) {
             return this.auditLogsService.findByOrder(orderId);
         }
         const parsedLimit = limit ? parseInt(limit, 10) : 25;
-        return this.auditLogsService.findAll(cursor, parsedLimit);
+        return this.auditLogsService.findAll(cursor, parsedLimit, search);
     }
 
     @Get('order/:orderId')
@@ -29,7 +30,7 @@ export class AuditLogsController {
     }
 
     @Get('action/:action')
-    findByAction(@Param('action') action: string) {
-        return this.auditLogsService.findByAction(action);
+    findByAction(@Param('action') action: string, @Query('search') search?: string) {
+        return this.auditLogsService.findByAction(action, search);
     }
 }

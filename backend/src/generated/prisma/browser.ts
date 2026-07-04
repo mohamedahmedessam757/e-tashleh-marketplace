@@ -183,6 +183,11 @@ export type PlatformContract = Prisma.PlatformContractModel
  */
 export type ContractAcceptance = Prisma.ContractAcceptanceModel
 /**
+ * Model ContractChangeRequest
+ * 
+ */
+export type ContractChangeRequest = Prisma.ContractChangeRequestModel
+/**
  * Model ShippingWaybill
  * 
  */

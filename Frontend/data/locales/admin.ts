@@ -46,7 +46,24 @@ export const admin = {
       stripe: 'حماية المدفوعات (Stripe)',
       ratelimit: 'معدل الطلبات (Rate Limit)',
       mfa: 'التحقق الثنائي',
-      accountRecoveries: 'مراجعات استرجاع الحسابات'
+      accountRecoveries: 'مراجعات استرجاع الحسابات',
+      contractChanges: {
+        title: 'طلبات تعديل العقد',
+        merchant: 'المتجر',
+        changes: 'التغييرات',
+        date: 'التاريخ',
+        status: 'الحالة',
+        actions: 'إجراءات',
+        loading: 'جاري التحميل...',
+        empty: 'لا توجد طلبات معلقة',
+        pending: 'قيد المراجعة',
+        approved: 'موافق عليه',
+        rejected: 'مرفوض',
+        approve: 'موافقة',
+        reject: 'رفض',
+        pendingAmendment: 'تعديل معلق',
+        search: 'بحث...'
+      }
     },
     support: {
       title: 'الدعم الفني',
@@ -103,7 +120,8 @@ export const admin = {
         license_expiry: 'اقتراب انتهاء رخصة',
         license_expired: 'رخصة منتهية',
         dispute: 'نزاع جديد',
-        unpaid: 'طلب غير مدفوع'
+        unpaid: 'طلب غير مدفوع',
+        contract_changes: 'طلبات تعديل العقد'
       },
       legend: {
         completed: 'مكتمل',
@@ -1095,6 +1113,16 @@ export const admin = {
       maintenanceMsg: 'رسالة الصيانة',
       saveSuccess: 'تم حفظ الإعدادات بنجاح',
       realtimeUpdate: 'تم تحديث الإعدادات لحظياً'
+    },
+    ids: {
+      copy: 'نسخ',
+      copied: 'تم النسخ',
+      customerId: 'معرّف العميل',
+      merchantUserId: 'معرّف التاجر',
+      storeId: 'معرّف المتجر',
+      caseReference: 'رقم القضية',
+      caseReferenceHint: 'استخدم هذا الرقم عند التواصل مع الدعم',
+      ticketId: 'رقم التذكرة'
     }
   },
   en: {
@@ -1142,7 +1170,24 @@ export const admin = {
       stripe: 'Stripe Protection',
       ratelimit: 'Rate Limiting',
       mfa: '2FA Status',
-      accountRecoveries: 'Account Recovery Reviews'
+      accountRecoveries: 'Account Recovery Reviews',
+      contractChanges: {
+        title: 'Contract Amendment Requests',
+        merchant: 'Merchant',
+        changes: 'Changes',
+        date: 'Date',
+        status: 'Status',
+        actions: 'Actions',
+        loading: 'Loading...',
+        empty: 'No pending requests',
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        approve: 'Approve',
+        reject: 'Reject',
+        pendingAmendment: 'Pending Amendment',
+        search: 'Search...'
+      }
     },
     support: {
       title: 'Technical Support',
@@ -1199,7 +1244,8 @@ export const admin = {
         license_expiry: 'License Expiring Soon',
         license_expired: 'License Expired',
         dispute: 'New Dispute',
-        unpaid: 'Unpaid Order'
+        unpaid: 'Unpaid Order',
+        contract_changes: 'Contract Amendments'
       },
       legend: {
         completed: 'Completed',
@@ -2118,6 +2164,16 @@ export const admin = {
       maintenanceMsg: 'Maintenance Message',
       saveSuccess: 'Settings saved successfully',
       realtimeUpdate: 'Settings updated in real-time'
+    },
+    ids: {
+      copy: 'Copy',
+      copied: 'Copied',
+      customerId: 'Customer ID',
+      merchantUserId: 'Merchant User ID',
+      storeId: 'Store ID',
+      caseReference: 'Case Reference',
+      caseReferenceHint: 'Use this number when contacting support',
+      ticketId: 'Ticket ID'
     }
   }
 };

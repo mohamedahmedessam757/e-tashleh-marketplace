@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActorType, Prisma } from '@prisma/client';
+import {
+  normalizeSearchQuery,
+  resolveUserIds,
+  resolveOrderIds,
+  isUuid,
+  mergeWhereWithSearch,
+} from '../common/search/admin-entity-search.util';
 
 export interface CreateAuditLogDto {
   orderId?: string;
@@ -59,15 +66,48 @@ export class AuditLogsService {
     });
   }
 
-  async findAll(cursor?: string, limit: number = 25) {
-    const args: any = {
+  private async buildSearchWhere(
+    rawQuery?: string | null,
+  ): Promise<Prisma.AuditLogWhereInput | undefined> {
+    const q = normalizeSearchQuery(rawQuery);
+    if (!q) return undefined;
+
+    const or: Prisma.AuditLogWhereInput[] = [
+      { action: { contains: q, mode: 'insensitive' } },
+      { entity: { contains: q, mode: 'insensitive' } },
+      { actorName: { contains: q, mode: 'insensitive' } },
+      { reason: { contains: q, mode: 'insensitive' } },
+      { previousState: { contains: q, mode: 'insensitive' } },
+      { newState: { contains: q, mode: 'insensitive' } },
+    ];
+
+    if (isUuid(q)) {
+      or.push({ id: q });
+      or.push({ orderId: q });
+      or.push({ actorId: q });
+    }
+
+    const [userIds, orderIds] = await Promise.all([
+      resolveUserIds(this.prisma, q),
+      resolveOrderIds(this.prisma, q),
+    ]);
+    if (userIds.length) or.push({ actorId: { in: userIds } });
+    if (orderIds.length) or.push({ orderId: { in: orderIds } });
+
+    return { OR: or };
+  }
+
+  async findAll(cursor?: string, limit: number = 25, search?: string) {
+    const searchWhere = await this.buildSearchWhere(search);
+    const args: Prisma.AuditLogFindManyArgs = {
+      where: searchWhere,
       orderBy: { timestamp: 'desc' },
-      take: limit + 1, // Fetch one extra to check if there is more
+      take: limit + 1,
     };
 
     if (cursor) {
       args.cursor = { id: cursor };
-      args.skip = 1; // Skip the cursor element itself
+      args.skip = 1;
     }
 
     const logs = await this.prisma.auditLog.findMany(args);
@@ -92,11 +132,13 @@ export class AuditLogsService {
     });
   }
 
-  async findByAction(action: string) {
+  async findByAction(action: string, search?: string) {
+    const searchWhere = await this.buildSearchWhere(search);
+    const where = mergeWhereWithSearch({ action }, searchWhere ?? {});
     return this.prisma.auditLog.findMany({
-      where: { action },
+      where,
       orderBy: { timestamp: 'desc' },
-      take: 200, // Limit to recent 200 for monitoring
+      take: 200,
     });
   }
 }

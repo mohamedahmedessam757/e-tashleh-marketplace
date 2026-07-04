@@ -84,6 +84,7 @@ export const ModelName = {
   UserCard: 'UserCard',
   PlatformContract: 'PlatformContract',
   ContractAcceptance: 'ContractAcceptance',
+  ContractChangeRequest: 'ContractChangeRequest',
   ShippingWaybill: 'ShippingWaybill',
   Shipment: 'Shipment',
   ShipmentStatusLog: 'ShipmentStatusLog',
@@ -526,6 +527,7 @@ export const ReturnRequestScalarFieldEnum = {
   orderPartId: 'orderPartId',
   offerId: 'offerId',
   customerId: 'customerId',
+  caseReference: 'caseReference',
   reason: 'reason',
   description: 'description',
   status: 'status',
@@ -581,6 +583,7 @@ export const DisputeScalarFieldEnum = {
   orderPartId: 'orderPartId',
   offerId: 'offerId',
   customerId: 'customerId',
+  caseReference: 'caseReference',
   reason: 'reason',
   description: 'description',
   status: 'status',
@@ -915,10 +918,34 @@ export const ContractAcceptanceScalarFieldEnum = {
   contentEnSnapshot: 'contentEnSnapshot',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
-  acceptedAt: 'acceptedAt'
+  acceptedAt: 'acceptedAt',
+  isActive: 'isActive',
+  archivedAt: 'archivedAt',
+  changeRequestId: 'changeRequestId'
 } as const
 
 export type ContractAcceptanceScalarFieldEnum = (typeof ContractAcceptanceScalarFieldEnum)[keyof typeof ContractAcceptanceScalarFieldEnum]
+
+
+export const ContractChangeRequestScalarFieldEnum = {
+  id: 'id',
+  storeId: 'storeId',
+  userId: 'userId',
+  acceptanceId: 'acceptanceId',
+  oldSecondPartyData: 'oldSecondPartyData',
+  newSecondPartyData: 'newSecondPartyData',
+  oldSignatureData: 'oldSignatureData',
+  newSignatureData: 'newSignatureData',
+  status: 'status',
+  requestedAt: 'requestedAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  adminSignature: 'adminSignature',
+  rejectionReason: 'rejectionReason',
+  metadata: 'metadata'
+} as const
+
+export type ContractChangeRequestScalarFieldEnum = (typeof ContractChangeRequestScalarFieldEnum)[keyof typeof ContractChangeRequestScalarFieldEnum]
 
 
 export const ShippingWaybillScalarFieldEnum = {

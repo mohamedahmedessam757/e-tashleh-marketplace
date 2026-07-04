@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
-import { CheckCircle, XCircle, Search, UserCog } from 'lucide-react';
+import { CheckCircle, XCircle, UserCog } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { client } from '../../../services/api/client';
 import { supabase } from '../../../services/supabase';
+import { AdminSearchInput } from './AdminSearchInput';
 
 interface ProfileChangeRequest {
     id: string;
@@ -26,26 +27,11 @@ export const ProfileChangeRequests: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchRequests();
-
-        const channel = supabase
-            .channel('profile-change-live')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'profile_change_requests' },
-                () => fetchRequests(),
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async (search?: string) => {
         try {
-            const res = await client.get('/admin/profile-changes');
+            const res = await client.get('/admin/profile-changes', {
+                params: search?.trim() ? { search: search.trim() } : undefined,
+            });
             const mapped = (res.data || []).map((r: any) => ({
                 id: r.id,
                 userId: r.userId,
@@ -65,7 +51,29 @@ export const ProfileChangeRequests: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('profile-change-live')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'profile_change_requests' },
+                () => fetchRequests(searchTerm),
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchRequests, searchTerm]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            fetchRequests(searchTerm);
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm, fetchRequests]);
 
     const handleAction = async (id: string, action: 'APPROVE' | 'REJECT') => {
         let rejectionReason: string | undefined;
@@ -86,13 +94,6 @@ export const ProfileChangeRequests: React.FC = () => {
         }
     };
 
-    const filteredRequests = requests.filter(
-        (req) =>
-            req.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.newValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.id.includes(searchTerm),
-    );
-
     const fieldLabel = (field: 'email' | 'phone') =>
         field === 'email' ? (isAr ? 'البريد' : 'Email') : isAr ? 'الجوال' : 'Phone';
 
@@ -104,19 +105,12 @@ export const ProfileChangeRequests: React.FC = () => {
                     {isAr ? 'طلبات تغيير بيانات التجار' : 'Merchant Profile Change Requests'}
                 </h3>
 
-                <div className="relative">
-                    <Search
-                        className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-white/40`}
-                        size={16}
-                    />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder={isAr ? 'بحث...' : 'Search...'}
-                        className={`bg-black/20 border border-white/10 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-sm text-white focus:border-gold-500 outline-none w-72`}
-                    />
-                </div>
+                <AdminSearchInput
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder={isAr ? 'بحث...' : 'Search...'}
+                    className="w-72"
+                />
             </div>
 
             <div className="overflow-x-auto">
@@ -138,14 +132,14 @@ export const ProfileChangeRequests: React.FC = () => {
                                     {isAr ? 'جاري التحميل...' : 'Loading...'}
                                 </td>
                             </tr>
-                        ) : filteredRequests.length === 0 ? (
+                        ) : requests.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="text-center py-10 text-white/30">
                                     {isAr ? 'لا توجد طلبات معلقة' : 'No pending requests'}
                                 </td>
                             </tr>
                         ) : (
-                            filteredRequests.map((req) => (
+                            requests.map((req) => (
                                 <tr key={req.id} className="hover:bg-white/[0.02]">
                                     <td className="py-4 px-4">
                                         <div className="text-sm text-white font-bold">{req.userName}</div>

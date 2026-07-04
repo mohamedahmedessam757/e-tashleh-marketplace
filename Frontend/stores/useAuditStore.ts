@@ -28,8 +28,9 @@ interface AuditState {
   subscription: any | null;
   hasMore: boolean;
   nextCursor: string | null;
-  fetchLogs: () => Promise<void>;
-  fetchMoreLogs: () => Promise<void>;
+  searchQuery: string;
+  fetchLogs: (search?: string) => Promise<void>;
+  fetchMoreLogs: (search?: string) => Promise<void>;
   fetchLogsByOrder: (orderId: string) => Promise<AuditLog[]>;
   getLogsByOrderId: (orderId: string) => AuditLog[];
   getLogsByActor: (actorType: ActorType) => AuditLog[];
@@ -46,40 +47,43 @@ export const useAuditStore = create<AuditState>()(
       isLoading: false,
       hasMore: true,
       nextCursor: null,
+      searchQuery: '',
       error: null,
       subscription: null,
 
-      fetchLogs: async () => {
-        set({ isLoading: true, error: null });
+      fetchLogs: async (search?: string) => {
+        const q = search ?? get().searchQuery;
+        set({ isLoading: true, error: null, searchQuery: q });
         try {
-          const result = await auditApi.getAll();
-          set({ 
-            logs: result.data, 
-            hasMore: result.hasMore, 
+          const result = await auditApi.getAll(undefined, 25, q);
+          set({
+            logs: result.data,
+            hasMore: result.hasMore,
             nextCursor: result.nextCursor,
-            isLoading: false 
+            isLoading: false,
           });
         } catch (err) {
-          console.error("Failed to fetch logs:", err);
+          console.error('Failed to fetch logs:', err);
           set({ error: 'Failed to fetch audit logs', isLoading: false });
         }
       },
 
-      fetchMoreLogs: async () => {
-        const { nextCursor, isLoading, hasMore } = get();
+      fetchMoreLogs: async (search?: string) => {
+        const { nextCursor, isLoading, hasMore, searchQuery } = get();
+        const q = search ?? searchQuery;
         if (!hasMore || isLoading || !nextCursor) return;
 
         set({ isLoading: true });
         try {
-          const result = await auditApi.getAll(nextCursor);
-          set((state) => ({ 
-            logs: [...state.logs, ...result.data], 
-            hasMore: result.hasMore, 
+          const result = await auditApi.getAll(nextCursor, 25, q);
+          set((state) => ({
+            logs: [...state.logs, ...result.data],
+            hasMore: result.hasMore,
             nextCursor: result.nextCursor,
-            isLoading: false 
+            isLoading: false,
           }));
         } catch (err) {
-          console.error("Failed to fetch more logs:", err);
+          console.error('Failed to fetch more logs:', err);
           set({ isLoading: false });
         }
       },

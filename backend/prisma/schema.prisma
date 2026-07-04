@@ -240,6 +240,8 @@ model User {
 
   accountRecoveryRequests AccountRecoveryRequest[]
   profileChangeRequests   ProfileChangeRequest[]
+  contractChangeRequests  ContractChangeRequest[]
+  resolvedContractChanges ContractChangeRequest[] @relation("ContractChangeResolver")
   securityLogs            SecurityLog[]
   payments                PaymentTransaction[]
   cards                   UserCard[]
@@ -435,6 +437,7 @@ model Store {
   owner                 User                   @relation(fields: [ownerId], references: [id])
   documents             StoreDocument[]
   contractAcceptances   ContractAcceptance[]
+  contractChangeRequests ContractChangeRequest[]
   orders                Order[]
   offers                Offer[]
   orderChats            OrderChat[]
@@ -796,6 +799,7 @@ model ReturnRequest {
   orderPartId String? @map("order_part_id") @db.Uuid
   offerId     String? @map("offer_id") @db.Uuid
   customerId  String  @map("customer_id") @db.Uuid
+  caseReference String? @unique @map("case_reference") @db.VarChar(20)
 
   reason        String
   description   String?
@@ -869,6 +873,7 @@ model Dispute {
   orderPartId String? @map("order_part_id") @db.Uuid
   offerId     String? @map("offer_id") @db.Uuid
   customerId  String  @map("customer_id") @db.Uuid
+  caseReference String? @unique @map("case_reference") @db.VarChar(20)
 
   reason        String
   description   String?
@@ -1338,12 +1343,48 @@ model ContractAcceptance {
 
   acceptedAt DateTime @default(now()) @map("accepted_at") @db.Timestamptz
 
+  isActive         Boolean   @default(true) @map("is_active")
+  archivedAt       DateTime? @map("archived_at") @db.Timestamptz
+  changeRequestId  String?   @map("change_request_id") @db.Uuid
+
   store    Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
   contract PlatformContract @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  changeRequest ContractChangeRequest? @relation("SupersededByRequest", fields: [changeRequestId], references: [id])
+  targetedByRequests ContractChangeRequest[] @relation("TargetAcceptance")
 
-  @@unique([storeId, contractId])
   @@index([storeId])
+  @@index([storeId, isActive])
   @@map("contract_acceptances")
+}
+
+model ContractChangeRequest {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId      String @map("store_id") @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  acceptanceId String @map("acceptance_id") @db.Uuid
+
+  oldSecondPartyData Json @default("{}") @map("old_second_party_data")
+  newSecondPartyData Json @default("{}") @map("new_second_party_data")
+  oldSignatureData   Json @default("{}") @map("old_signature_data")
+  newSignatureData   Json @default("{}") @map("new_signature_data")
+
+  status          String    @default("PENDING_REVIEW") @db.VarChar(30)
+  requestedAt     DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz
+  resolvedBy      String?   @map("resolved_by") @db.Uuid
+  adminSignature  String?   @map("admin_signature") @db.Text
+  rejectionReason String?   @map("rejection_reason") @db.Text
+  metadata        Json?     @default("{}")
+
+  store      Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  acceptance ContractAcceptance  @relation("TargetAcceptance", fields: [acceptanceId], references: [id])
+  resolvedByUser User?           @relation("ContractChangeResolver", fields: [resolvedBy], references: [id])
+  supersededAcceptances ContractAcceptance[] @relation("SupersededByRequest")
+
+  @@index([status])
+  @@index([storeId])
+  @@map("contract_change_requests")
 }
 
 model ShippingWaybill {

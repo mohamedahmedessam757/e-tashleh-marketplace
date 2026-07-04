@@ -558,6 +558,32 @@ export const merchant = {
               security: 'بصمة الأمان (Security Context)',
               ip: 'عنوان IP',
               userAgent: 'معلومات المتصفح'
+          },
+          amendment: {
+              title: 'طلب تعديل بيانات العقد',
+              subtitle: 'يتطلب موافقة الإدارة',
+              edit: 'تعديل البيانات',
+              notice: 'سيتم مراجعة التعديلات من قبل الإدارة. يمكنك تقديم طلب واحد كل 24 ساعة.',
+              pendingTitle: 'طلب تعديل قيد المراجعة',
+              pendingDesc: 'تم إرسال طلب تعديل بيانات العقد وهو بانتظار موافقة الإدارة. لا يمكن تقديم طلب جديد حتى يتم البت في الطلب الحالي.',
+              submit: 'إرسال للمراجعة',
+              cancel: 'إلغاء',
+              validation: 'الرجاء تعبئة جميع الحقول المطلوبة',
+              rateLimit: 'يمكنك تقديم طلب تعديل واحد كل 24 ساعة',
+              fields: {
+                  companyName: 'إسم الشركة / المؤسسة',
+                  managerName: 'إسم المدير المفوض',
+                  crNumber: 'رقم السجل التجاري',
+                  licenseNumber: 'رقم الرخصة التجارية',
+                  licenseExpiry: 'تاريخ إنتهاء الرخصة',
+                  emirate: 'الإمارة / المنطقة',
+                  country: 'الدولة'
+              }
+          },
+          archived: {
+              title: 'العقود المؤرشفة',
+              banner: 'هذه نسخ سابقة من العقد للقراءة فقط. النسخة النشطة أعلاه هي المعتمدة حالياً.',
+              acceptedAt: 'تاريخ التوقيع'
           }
       }
     },
@@ -1160,6 +1186,32 @@ export const merchant = {
               security: 'Security Context',
               ip: 'IP Address',
               userAgent: 'User Agent'
+          },
+          amendment: {
+              title: 'Contract Amendment Request',
+              subtitle: 'Requires admin approval',
+              edit: 'Edit Contract Data',
+              notice: 'Changes will be reviewed by admin. You may submit one request every 24 hours.',
+              pendingTitle: 'Amendment Pending Review',
+              pendingDesc: 'A contract data amendment request has been submitted and is awaiting admin approval. You cannot submit another request until this one is resolved.',
+              submit: 'Submit for Review',
+              cancel: 'Cancel',
+              validation: 'Please fill all required fields',
+              rateLimit: 'You can submit one contract amendment request every 24 hours',
+              fields: {
+                  companyName: 'Company Name',
+                  managerName: 'Authorized Manager',
+                  crNumber: 'CR Number',
+                  licenseNumber: 'Commercial License Number',
+                  licenseExpiry: 'License Expiry Date',
+                  emirate: 'Emirate / Region',
+                  country: 'Country'
+              }
+          },
+          archived: {
+              title: 'Archived Contracts',
+              banner: 'These are previous contract versions for reference only. The active version above is currently in effect.',
+              acceptedAt: 'Signed At'
           }
       }
     },

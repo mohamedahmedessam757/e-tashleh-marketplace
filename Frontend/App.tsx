@@ -522,10 +522,10 @@ function AppContent() {
     }
   };
 
-  const handleDashboardNavigate = (path: string, id?: any) => {
+  const handleDashboardNavigate = (path: string, id?: any, search?: string) => {
     setDashboardPath(path);
-    setViewId(id || null); // 2026 Navigation Fix: Clear ID if not explicitly provided (e.g. sidebar clicks)
-    pushView('dashboard', path, id);
+    setViewId(id || null);
+    pushView('dashboard', path, id, search);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -830,7 +830,6 @@ function AppContent() {
                 </Suspense>
                 <Footer
                   onOpenSupport={() => setIsSupportOpen(true)}
-                  onAdminClick={() => handleNavigate('admin-login')}
                   onNavigateToLicense={handleNavigateToLicense}
                 />
               </main>

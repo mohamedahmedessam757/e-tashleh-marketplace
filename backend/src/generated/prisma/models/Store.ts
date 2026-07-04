@@ -664,6 +664,7 @@ export type StoreWhereInput = {
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   documents?: Prisma.StoreDocumentListRelationFilter
   contractAcceptances?: Prisma.ContractAcceptanceListRelationFilter
+  contractChangeRequests?: Prisma.ContractChangeRequestListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   offers?: Prisma.OfferListRelationFilter
   orderChats?: Prisma.OrderChatListRelationFilter
@@ -736,6 +737,7 @@ export type StoreOrderByWithRelationInput = {
   owner?: Prisma.UserOrderByWithRelationInput
   documents?: Prisma.StoreDocumentOrderByRelationAggregateInput
   contractAcceptances?: Prisma.ContractAcceptanceOrderByRelationAggregateInput
+  contractChangeRequests?: Prisma.ContractChangeRequestOrderByRelationAggregateInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
   offers?: Prisma.OfferOrderByRelationAggregateInput
   orderChats?: Prisma.OrderChatOrderByRelationAggregateInput
@@ -811,6 +813,7 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   documents?: Prisma.StoreDocumentListRelationFilter
   contractAcceptances?: Prisma.ContractAcceptanceListRelationFilter
+  contractChangeRequests?: Prisma.ContractChangeRequestListRelationFilter
   orders?: Prisma.OrderListRelationFilter
   offers?: Prisma.OfferListRelationFilter
   orderChats?: Prisma.OrderChatListRelationFilter
@@ -1003,6 +1006,7 @@ export type StoreCreateInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -1073,6 +1077,7 @@ export type StoreUncheckedCreateInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -1143,6 +1148,7 @@ export type StoreUpdateInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -1213,6 +1219,7 @@ export type StoreUncheckedUpdateInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -1860,6 +1867,20 @@ export type StoreUpdateOneRequiredWithoutContractAcceptancesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.StoreUpdateToOneWithWhereWithoutContractAcceptancesInput, Prisma.StoreUpdateWithoutContractAcceptancesInput>, Prisma.StoreUncheckedUpdateWithoutContractAcceptancesInput>
 }
 
+export type StoreCreateNestedOneWithoutContractChangeRequestsInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedCreateWithoutContractChangeRequestsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutContractChangeRequestsInput
+  connect?: Prisma.StoreWhereUniqueInput
+}
+
+export type StoreUpdateOneRequiredWithoutContractChangeRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.StoreCreateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedCreateWithoutContractChangeRequestsInput>
+  connectOrCreate?: Prisma.StoreCreateOrConnectWithoutContractChangeRequestsInput
+  upsert?: Prisma.StoreUpsertWithoutContractChangeRequestsInput
+  connect?: Prisma.StoreWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoreUpdateToOneWithWhereWithoutContractChangeRequestsInput, Prisma.StoreUpdateWithoutContractChangeRequestsInput>, Prisma.StoreUncheckedUpdateWithoutContractChangeRequestsInput>
+}
+
 export type StoreCreateNestedOneWithoutShippingWaybillsInput = {
   create?: Prisma.XOR<Prisma.StoreCreateWithoutShippingWaybillsInput, Prisma.StoreUncheckedCreateWithoutShippingWaybillsInput>
   connectOrCreate?: Prisma.StoreCreateOrConnectWithoutShippingWaybillsInput
@@ -1992,6 +2013,7 @@ export type StoreCreateWithoutOwnerInput = {
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -2061,6 +2083,7 @@ export type StoreUncheckedCreateWithoutOwnerInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -2146,6 +2169,7 @@ export type StoreUpdateWithoutOwnerInput = {
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -2215,6 +2239,7 @@ export type StoreUncheckedUpdateWithoutOwnerInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -2284,6 +2309,7 @@ export type StoreCreateWithoutDocumentsInput = {
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -2353,6 +2379,7 @@ export type StoreUncheckedCreateWithoutDocumentsInput = {
   editCount?: number
   withdrawalCount?: number
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -2438,6 +2465,7 @@ export type StoreUpdateWithoutDocumentsInput = {
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -2507,6 +2535,7 @@ export type StoreUncheckedUpdateWithoutDocumentsInput = {
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -2577,6 +2606,7 @@ export type StoreCreateWithoutOrdersInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
   verificationDocuments?: Prisma.VerificationDocumentCreateNestedManyWithoutStoreInput
@@ -2646,6 +2676,7 @@ export type StoreUncheckedCreateWithoutOrdersInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutStoreInput
@@ -2731,6 +2762,7 @@ export type StoreUpdateWithoutOrdersInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUpdateManyWithoutStoreNestedInput
@@ -2800,6 +2832,7 @@ export type StoreUncheckedUpdateWithoutOrdersInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutStoreNestedInput
@@ -2869,6 +2902,7 @@ export type StoreCreateWithoutVerificationDocumentsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -2938,6 +2972,7 @@ export type StoreUncheckedCreateWithoutVerificationDocumentsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -3023,6 +3058,7 @@ export type StoreUpdateWithoutVerificationDocumentsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -3092,6 +3128,7 @@ export type StoreUncheckedUpdateWithoutVerificationDocumentsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -3161,6 +3198,7 @@ export type StoreCreateWithoutOffersInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
   verificationDocuments?: Prisma.VerificationDocumentCreateNestedManyWithoutStoreInput
@@ -3230,6 +3268,7 @@ export type StoreUncheckedCreateWithoutOffersInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutStoreInput
@@ -3315,6 +3354,7 @@ export type StoreUpdateWithoutOffersInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUpdateManyWithoutStoreNestedInput
@@ -3384,6 +3424,7 @@ export type StoreUncheckedUpdateWithoutOffersInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutStoreNestedInput
@@ -3453,6 +3494,7 @@ export type StoreCreateWithoutReturnsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -3522,6 +3564,7 @@ export type StoreUncheckedCreateWithoutReturnsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -3607,6 +3650,7 @@ export type StoreUpdateWithoutReturnsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -3676,6 +3720,7 @@ export type StoreUncheckedUpdateWithoutReturnsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -3745,6 +3790,7 @@ export type StoreCreateWithoutDisputesInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -3814,6 +3860,7 @@ export type StoreUncheckedCreateWithoutDisputesInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -3899,6 +3946,7 @@ export type StoreUpdateWithoutDisputesInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -3968,6 +4016,7 @@ export type StoreUncheckedUpdateWithoutDisputesInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -4037,6 +4086,7 @@ export type StoreCreateWithoutOrderChatsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   verificationDocuments?: Prisma.VerificationDocumentCreateNestedManyWithoutStoreInput
@@ -4106,6 +4156,7 @@ export type StoreUncheckedCreateWithoutOrderChatsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutStoreInput
@@ -4191,6 +4242,7 @@ export type StoreUpdateWithoutOrderChatsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUpdateManyWithoutStoreNestedInput
@@ -4260,6 +4312,7 @@ export type StoreUncheckedUpdateWithoutOrderChatsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   verificationDocuments?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutStoreNestedInput
@@ -4328,6 +4381,7 @@ export type StoreCreateWithoutContractInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -4397,6 +4451,7 @@ export type StoreUncheckedCreateWithoutContractInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -4552,6 +4607,7 @@ export type StoreCreateWithoutContractAcceptancesInput = {
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -4621,6 +4677,7 @@ export type StoreUncheckedCreateWithoutContractAcceptancesInput = {
   editCount?: number
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -4706,6 +4763,7 @@ export type StoreUpdateWithoutContractAcceptancesInput = {
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -4775,6 +4833,303 @@ export type StoreUncheckedUpdateWithoutContractAcceptancesInput = {
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
+  offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
+  verificationDocuments?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutStoreNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutStoreNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutStoreNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutStoreNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetStoreNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetStoreNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutStoreNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreCreateWithoutContractChangeRequestsInput = {
+  id?: string
+  name: string
+  storeCode: string
+  slug?: string | null
+  description?: string | null
+  category?: string | null
+  logo?: string | null
+  status?: $Enums.StoreStatus
+  licenseExpiry?: Date | string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  frozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  payoutSchedule?: string
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  rating?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  rejectionReason?: string | null
+  loyaltyTier?: $Enums.StoreLoyaltyTier
+  performanceScore?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  lifetimeEarnings?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  subscriptionTier?: $Enums.StoreSubscriptionTier
+  subscriptionActive?: boolean
+  subscriptionExpiresAt?: Date | string | null
+  completedOrdersCount?: number
+  avgResponseScore?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  selectedMakes?: Prisma.StoreCreateselectedMakesInput | string[]
+  selectedModels?: Prisma.StoreCreateselectedModelsInput | string[]
+  customMake?: string | null
+  customModel?: string | null
+  contractAcceptedAt?: Date | string | null
+  contractSignature?: string | null
+  address?: string | null
+  lat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  offerLimit?: number
+  dailyOfferCount?: number
+  visibilityRestricted?: boolean
+  visibilityNote?: string | null
+  visibilitySignature?: string | null
+  visibilityRate?: number
+  totalOffersSent?: number
+  editCount?: number
+  withdrawalCount?: number
+  contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
+  owner: Prisma.UserCreateNestedOneWithoutStoreInput
+  documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
+  contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
+  offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
+  verificationDocuments?: Prisma.VerificationDocumentCreateNestedManyWithoutStoreInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutStoreInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutStoreInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutStoreInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetStoreInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetStoreInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutStoreInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutStoreInput
+}
+
+export type StoreUncheckedCreateWithoutContractChangeRequestsInput = {
+  id?: string
+  ownerId: string
+  name: string
+  storeCode: string
+  slug?: string | null
+  description?: string | null
+  category?: string | null
+  logo?: string | null
+  status?: $Enums.StoreStatus
+  licenseExpiry?: Date | string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  frozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  payoutSchedule?: string
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  rating?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  rejectionReason?: string | null
+  loyaltyTier?: $Enums.StoreLoyaltyTier
+  performanceScore?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  lifetimeEarnings?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  subscriptionTier?: $Enums.StoreSubscriptionTier
+  subscriptionActive?: boolean
+  subscriptionExpiresAt?: Date | string | null
+  completedOrdersCount?: number
+  avgResponseScore?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  selectedMakes?: Prisma.StoreCreateselectedMakesInput | string[]
+  selectedModels?: Prisma.StoreCreateselectedModelsInput | string[]
+  customMake?: string | null
+  customModel?: string | null
+  contractId?: string | null
+  contractAcceptedAt?: Date | string | null
+  contractSignature?: string | null
+  address?: string | null
+  lat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  offerLimit?: number
+  dailyOfferCount?: number
+  visibilityRestricted?: boolean
+  visibilityNote?: string | null
+  visibilitySignature?: string | null
+  visibilityRate?: number
+  totalOffersSent?: number
+  editCount?: number
+  withdrawalCount?: number
+  documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
+  contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
+  offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
+  verificationDocuments?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutStoreInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutStoreInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutStoreInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutStoreInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetStoreInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetStoreInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutStoreInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutStoreInput
+}
+
+export type StoreCreateOrConnectWithoutContractChangeRequestsInput = {
+  where: Prisma.StoreWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoreCreateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedCreateWithoutContractChangeRequestsInput>
+}
+
+export type StoreUpsertWithoutContractChangeRequestsInput = {
+  update: Prisma.XOR<Prisma.StoreUpdateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedUpdateWithoutContractChangeRequestsInput>
+  create: Prisma.XOR<Prisma.StoreCreateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedCreateWithoutContractChangeRequestsInput>
+  where?: Prisma.StoreWhereInput
+}
+
+export type StoreUpdateToOneWithWhereWithoutContractChangeRequestsInput = {
+  where?: Prisma.StoreWhereInput
+  data: Prisma.XOR<Prisma.StoreUpdateWithoutContractChangeRequestsInput, Prisma.StoreUncheckedUpdateWithoutContractChangeRequestsInput>
+}
+
+export type StoreUpdateWithoutContractChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  storeCode?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  frozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rating?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loyaltyTier?: Prisma.EnumStoreLoyaltyTierFieldUpdateOperationsInput | $Enums.StoreLoyaltyTier
+  performanceScore?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  lifetimeEarnings?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  subscriptionTier?: Prisma.EnumStoreSubscriptionTierFieldUpdateOperationsInput | $Enums.StoreSubscriptionTier
+  subscriptionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subscriptionExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
+  avgResponseScore?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  selectedMakes?: Prisma.StoreUpdateselectedMakesInput | string[]
+  selectedModels?: Prisma.StoreUpdateselectedModelsInput | string[]
+  customMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contractAcceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contractSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  offerLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOfferCount?: Prisma.IntFieldUpdateOperationsInput | number
+  visibilityRestricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  visibilityNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibilitySignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibilityRate?: Prisma.IntFieldUpdateOperationsInput | number
+  totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
+  editCount?: Prisma.IntFieldUpdateOperationsInput | number
+  withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
+  documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
+  contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
+  offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
+  verificationDocuments?: Prisma.VerificationDocumentUpdateManyWithoutStoreNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutStoreNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutStoreNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutStoreNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetStoreNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetStoreNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutStoreNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutStoreNestedInput
+}
+
+export type StoreUncheckedUpdateWithoutContractChangeRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  storeCode?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  frozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rating?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loyaltyTier?: Prisma.EnumStoreLoyaltyTierFieldUpdateOperationsInput | $Enums.StoreLoyaltyTier
+  performanceScore?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  lifetimeEarnings?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  subscriptionTier?: Prisma.EnumStoreSubscriptionTierFieldUpdateOperationsInput | $Enums.StoreSubscriptionTier
+  subscriptionActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subscriptionExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
+  avgResponseScore?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  selectedMakes?: Prisma.StoreUpdateselectedMakesInput | string[]
+  selectedModels?: Prisma.StoreUpdateselectedModelsInput | string[]
+  customMake?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contractId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contractAcceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contractSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  offerLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOfferCount?: Prisma.IntFieldUpdateOperationsInput | number
+  visibilityRestricted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  visibilityNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibilitySignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibilityRate?: Prisma.IntFieldUpdateOperationsInput | number
+  totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
+  editCount?: Prisma.IntFieldUpdateOperationsInput | number
+  withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
+  contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -4845,6 +5200,7 @@ export type StoreCreateWithoutShippingWaybillsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -4914,6 +5270,7 @@ export type StoreUncheckedCreateWithoutShippingWaybillsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -4999,6 +5356,7 @@ export type StoreUpdateWithoutShippingWaybillsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -5068,6 +5426,7 @@ export type StoreUncheckedUpdateWithoutShippingWaybillsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -5137,6 +5496,7 @@ export type StoreCreateWithoutReviewsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -5206,6 +5566,7 @@ export type StoreUncheckedCreateWithoutReviewsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -5291,6 +5652,7 @@ export type StoreUpdateWithoutReviewsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -5360,6 +5722,7 @@ export type StoreUncheckedUpdateWithoutReviewsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -5429,6 +5792,7 @@ export type StoreCreateWithoutWithdrawalRequestsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -5498,6 +5862,7 @@ export type StoreUncheckedCreateWithoutWithdrawalRequestsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -5583,6 +5948,7 @@ export type StoreUpdateWithoutWithdrawalRequestsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -5652,6 +6018,7 @@ export type StoreUncheckedUpdateWithoutWithdrawalRequestsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -5721,6 +6088,7 @@ export type StoreCreateWithoutViolationsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -5790,6 +6158,7 @@ export type StoreUncheckedCreateWithoutViolationsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -5875,6 +6244,7 @@ export type StoreUpdateWithoutViolationsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -5944,6 +6314,7 @@ export type StoreUncheckedUpdateWithoutViolationsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -6013,6 +6384,7 @@ export type StoreCreateWithoutPenaltyActionsInput = {
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatCreateNestedManyWithoutVendorInput
@@ -6082,6 +6454,7 @@ export type StoreUncheckedCreateWithoutPenaltyActionsInput = {
   withdrawalCount?: number
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutStoreInput
   orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutVendorInput
@@ -6167,6 +6540,7 @@ export type StoreUpdateWithoutPenaltyActionsInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -6236,6 +6610,7 @@ export type StoreUncheckedUpdateWithoutPenaltyActionsInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -6360,6 +6735,7 @@ export type StoreUpdateWithoutContractInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUpdateManyWithoutVendorNestedInput
@@ -6429,6 +6805,7 @@ export type StoreUncheckedUpdateWithoutContractInput = {
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
   offers?: Prisma.OfferUncheckedUpdateManyWithoutStoreNestedInput
   orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutVendorNestedInput
@@ -6506,6 +6883,7 @@ export type StoreUncheckedUpdateManyWithoutContractInput = {
 export type StoreCountOutputType = {
   documents: number
   contractAcceptances: number
+  contractChangeRequests: number
   orders: number
   offers: number
   orderChats: number
@@ -6522,6 +6900,7 @@ export type StoreCountOutputType = {
 export type StoreCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   documents?: boolean | StoreCountOutputTypeCountDocumentsArgs
   contractAcceptances?: boolean | StoreCountOutputTypeCountContractAcceptancesArgs
+  contractChangeRequests?: boolean | StoreCountOutputTypeCountContractChangeRequestsArgs
   orders?: boolean | StoreCountOutputTypeCountOrdersArgs
   offers?: boolean | StoreCountOutputTypeCountOffersArgs
   orderChats?: boolean | StoreCountOutputTypeCountOrderChatsArgs
@@ -6557,6 +6936,13 @@ export type StoreCountOutputTypeCountDocumentsArgs<ExtArgs extends runtime.Types
  */
 export type StoreCountOutputTypeCountContractAcceptancesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ContractAcceptanceWhereInput
+}
+
+/**
+ * StoreCountOutputType without action
+ */
+export type StoreCountOutputTypeCountContractChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContractChangeRequestWhereInput
 }
 
 /**
@@ -6696,6 +7082,7 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   documents?: boolean | Prisma.Store$documentsArgs<ExtArgs>
   contractAcceptances?: boolean | Prisma.Store$contractAcceptancesArgs<ExtArgs>
+  contractChangeRequests?: boolean | Prisma.Store$contractChangeRequestsArgs<ExtArgs>
   orders?: boolean | Prisma.Store$ordersArgs<ExtArgs>
   offers?: boolean | Prisma.Store$offersArgs<ExtArgs>
   orderChats?: boolean | Prisma.Store$orderChatsArgs<ExtArgs>
@@ -6891,6 +7278,7 @@ export type StoreInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   documents?: boolean | Prisma.Store$documentsArgs<ExtArgs>
   contractAcceptances?: boolean | Prisma.Store$contractAcceptancesArgs<ExtArgs>
+  contractChangeRequests?: boolean | Prisma.Store$contractChangeRequestsArgs<ExtArgs>
   orders?: boolean | Prisma.Store$ordersArgs<ExtArgs>
   offers?: boolean | Prisma.Store$offersArgs<ExtArgs>
   orderChats?: boolean | Prisma.Store$orderChatsArgs<ExtArgs>
@@ -6920,6 +7308,7 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     owner: Prisma.$UserPayload<ExtArgs>
     documents: Prisma.$StoreDocumentPayload<ExtArgs>[]
     contractAcceptances: Prisma.$ContractAcceptancePayload<ExtArgs>[]
+    contractChangeRequests: Prisma.$ContractChangeRequestPayload<ExtArgs>[]
     orders: Prisma.$OrderPayload<ExtArgs>[]
     offers: Prisma.$OfferPayload<ExtArgs>[]
     orderChats: Prisma.$OrderChatPayload<ExtArgs>[]
@@ -7385,6 +7774,7 @@ export interface Prisma__StoreClient<T, Null = never, ExtArgs extends runtime.Ty
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   documents<T extends Prisma.Store$documentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$documentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   contractAcceptances<T extends Prisma.Store$contractAcceptancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$contractAcceptancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContractAcceptancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  contractChangeRequests<T extends Prisma.Store$contractChangeRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$contractChangeRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContractChangeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orders<T extends Prisma.Store$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   offers<T extends Prisma.Store$offersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$offersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orderChats<T extends Prisma.Store$orderChatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Store$orderChatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -7944,6 +8334,30 @@ export type Store$contractAcceptancesArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.ContractAcceptanceScalarFieldEnum | Prisma.ContractAcceptanceScalarFieldEnum[]
+}
+
+/**
+ * Store.contractChangeRequests
+ */
+export type Store$contractChangeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContractChangeRequest
+   */
+  select?: Prisma.ContractChangeRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContractChangeRequest
+   */
+  omit?: Prisma.ContractChangeRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContractChangeRequestInclude<ExtArgs> | null
+  where?: Prisma.ContractChangeRequestWhereInput
+  orderBy?: Prisma.ContractChangeRequestOrderByWithRelationInput | Prisma.ContractChangeRequestOrderByWithRelationInput[]
+  cursor?: Prisma.ContractChangeRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContractChangeRequestScalarFieldEnum | Prisma.ContractChangeRequestScalarFieldEnum[]
 }
 
 /**

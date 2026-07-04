@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Truck, Clock, User, Phone, Mail, ChevronRight, Box, Loader2, ShieldAlert } from 'lucide-react';
+import { Clock, User, Phone, Mail, ChevronRight, Box, Loader2, ShieldAlert } from 'lucide-react';
 import { ordersApi } from '../../../services/api/orders';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
+import { AdminSearchInput } from './AdminSearchInput';
 
 export const AdminShippingCarts: React.FC = () => {
     const { language } = useLanguage();
@@ -12,76 +13,141 @@ export const AdminShippingCarts: React.FC = () => {
     const [carts, setCarts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
+
+    const fetchCarts = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await ordersApi.getAdminShippingCarts(
+                search.trim() ? { search: search.trim() } : undefined,
+            );
+            const cartArray = Object.values(data || {});
+            setCarts(cartArray);
+        } catch (err: any) {
+            console.error('Failed to fetch shipping carts', err);
+            setError(err.message || 'Failed to load data');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [search]);
 
     useEffect(() => {
-        const fetchCarts = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await ordersApi.getAdminShippingCarts();
-                const cartArray = Object.values(data || {});
-                setCarts(cartArray);
-            } catch (err: any) {
-                console.error("Failed to fetch shipping carts", err);
-                setError(err.message || "Failed to load data");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchCarts();
-    }, []);
+        void fetchCarts();
+    }, [fetchCarts]);
+
+    const header = (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                    <Box className="text-gold-500" />
+                    {isAr ? 'سلال التجميع والشحن' : 'Assembly & Shipping Carts'}
+                </h2>
+                <p className="text-white/40 text-sm mt-1">
+                    {isAr
+                        ? 'إدارة ومراقبة الطلبات التي تنتظر تجميعها قبل الشحن النهائي.'
+                        : 'Manage and monitor orders awaiting consolidation before final shipping.'}
+                </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <AdminSearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={
+                        isAr
+                            ? 'بحث بالعميل، الهاتف، البريد، أو رقم الطلب...'
+                            : 'Search customer, phone, email, or order...'
+                    }
+                    className="w-full sm:w-72"
+                />
+                {!isLoading && !error && (
+                    <div className="flex items-center gap-3 px-4 py-2 bg-gold-500/10 border border-gold-500/20 rounded-xl shrink-0">
+                        <span className="text-gold-500 font-bold">{carts.length}</span>
+                        <span className="text-[10px] text-gold-500/60 uppercase font-bold tracking-wider">
+                            {isAr ? 'سلة نشطة' : 'Active Carts'}
+                        </span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-40 gap-4">
-                <Loader2 className="w-12 h-12 text-gold-500 animate-spin" />
-                <p className="text-white/40 text-xs font-bold uppercase tracking-widest animate-pulse">
-                    {isAr ? 'جاري فحص سلال التجميع...' : 'Scanning Assembly Carts...'}
-                </p>
+            <div className="space-y-6">
+                {header}
+                <div className="flex flex-col items-center justify-center py-40 gap-4">
+                    <Loader2 className="w-12 h-12 text-gold-500 animate-spin" />
+                    <p className="text-white/40 text-xs font-bold uppercase tracking-widest animate-pulse">
+                        {isAr ? 'جاري فحص سلال التجميع...' : 'Scanning Assembly Carts...'}
+                    </p>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center py-40 text-center">
-                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
-                    <ShieldAlert size={40} className="text-red-500" />
+            <div className="space-y-6">
+                {header}
+                <div className="flex flex-col items-center justify-center py-40 text-center">
+                    <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
+                        <ShieldAlert size={40} className="text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{isAr ? 'خطأ في التحميل' : 'Loading Error'}</h3>
+                    <p className="text-white/40 max-w-sm mb-6">
+                        {isAr
+                            ? 'تعذر جلب بيانات سلال التجميع حالياً. يرجى التأكد من اتصال قاعدة البيانات.'
+                            : 'Could not fetch assembly cart data. Please check database connection.'}
+                    </p>
+                    <button
+                        onClick={() => void fetchCarts()}
+                        className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold rounded-xl transition-all"
+                    >
+                        {isAr ? 'إعادة المحاولة' : 'Try Again'}
+                    </button>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{isAr ? 'خطأ في التحميل' : 'Loading Error'}</h3>
-                <p className="text-white/40 max-w-sm mb-6">{isAr ? 'تعذر جلب بيانات سلال التجميع حالياً. يرجى التأكد من اتصال قاعدة البيانات.' : 'Could not fetch assembly cart data. Please check database connection.'}</p>
-                <button 
-                    onClick={() => window.location.reload()}
-                    className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold rounded-xl transition-all"
-                >
-                    {isAr ? 'إعادة المحاولة' : 'Try Again'}
-                </button>
             </div>
         );
     }
 
     if (carts.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-40 text-center animate-in fade-in zoom-in duration-700">
-                <div className="relative mb-8">
-                    <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 relative z-10">
-                        <Box size={48} className="text-white/10 group-hover:scale-110 transition-transform" />
+            <div className="space-y-6">
+                {header}
+                <div className="flex flex-col items-center justify-center py-40 text-center animate-in fade-in zoom-in duration-700">
+                    <div className="relative mb-8">
+                        <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 relative z-10">
+                            <Box size={48} className="text-white/10 group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div className="absolute inset-0 bg-gold-500/5 blur-3xl rounded-full" />
                     </div>
-                    <div className="absolute inset-0 bg-gold-500/5 blur-3xl rounded-full" />
-                </div>
-                <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter italic">
-                    {isAr ? 'لا توجد سلال تجميع نشطة' : 'No Active Assembly Carts'}
-                </h3>
-                <p className="text-white/30 max-w-sm mx-auto text-sm leading-relaxed font-medium">
-                    {isAr 
-                        ? 'سيظهر هنا العملاء الذين لديهم طلبات جاهزة للشحن ولكنها تنتظر تجميعها قبل إصدار البوليصة النهائية.' 
-                        : 'Customers with orders ready for shipping but awaiting consolidation will appear here for batch processing.'}
-                </p>
-                <div className="mt-10 flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                        {isAr ? 'نظام المراقبة اللحظي نشط' : 'Real-time Monitoring Active'}
-                    </span>
+                    <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter italic">
+                        {search.trim()
+                            ? isAr
+                                ? 'لا توجد نتائج مطابقة'
+                                : 'No matching carts'
+                            : isAr
+                              ? 'لا توجد سلال تجميع نشطة'
+                              : 'No Active Assembly Carts'}
+                    </h3>
+                    <p className="text-white/30 max-w-sm mx-auto text-sm leading-relaxed font-medium">
+                        {search.trim()
+                            ? isAr
+                                ? 'جرّب كلمات بحث مختلفة أو امسح البحث لعرض كل السلال.'
+                                : 'Try different search terms or clear the search to see all carts.'
+                            : isAr
+                              ? 'سيظهر هنا العملاء الذين لديهم طلبات جاهزة للشحن ولكنها تنتظر تجميعها قبل إصدار البوليصة النهائية.'
+                              : 'Customers with orders ready for shipping but awaiting consolidation will appear here for batch processing.'}
+                    </p>
+                    {!search.trim() && (
+                        <div className="mt-10 flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                {isAr ? 'نظام المراقبة اللحظي نشط' : 'Real-time Monitoring Active'}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -89,21 +155,7 @@ export const AdminShippingCarts: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <Box className="text-gold-500" />
-                        {isAr ? 'سلال التجميع والشحن' : 'Assembly & Shipping Carts'}
-                    </h2>
-                    <p className="text-white/40 text-sm mt-1">
-                        {isAr ? 'إدارة ومراقبة الطلبات التي تنتظر تجميعها قبل الشحن النهائي.' : 'Manage and monitor orders awaiting consolidation before final shipping.'}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 px-4 py-2 bg-gold-500/10 border border-gold-500/20 rounded-xl">
-                    <span className="text-gold-500 font-bold">{carts.length}</span>
-                    <span className="text-[10px] text-gold-500/60 uppercase font-bold tracking-wider">{isAr ? 'سلة نشطة' : 'Active Carts'}</span>
-                </div>
-            </div>
+            {header}
 
             <div className="grid grid-cols-1 gap-6">
                 {carts.map((cart: any, idx: number) => (
@@ -173,7 +225,7 @@ export const AdminShippingCarts: React.FC = () => {
                                             onClick={async () => {
                                                  if (confirm(isAr ? 'هل أنت متأكد من شحن جميع القطع المتبقية؟' : 'Are you sure you want to force ship all remaining items?')) {
                                                      await ordersApi.requestShipping(undefined, cart.offers.filter((o: any) => !o.shippedFromCart).map((o: any) => o.id), cart.customerId);
-                                                     window.location.reload();
+                                                     void fetchCarts();
                                                  }
                                             }}
                                             className="px-4 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/20 transition-all"
@@ -227,5 +279,3 @@ export const AdminShippingCarts: React.FC = () => {
         </div>
     );
 };
-
-

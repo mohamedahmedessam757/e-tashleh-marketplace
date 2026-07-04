@@ -1,6 +1,13 @@
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildAdminDateRange } from './admin-financial-metrics.util';
+import {
+  normalizeSearchQuery,
+  resolveUserIds,
+  resolveStoreIds,
+  resolveOrderIds,
+  isUuid,
+} from '../common/search/admin-entity-search.util';
 
 export interface FeedFilters {
   startDate?: string;
@@ -68,6 +75,140 @@ function buildOuterCursorSql(cursor: FeedCursor | null): Prisma.Sql {
   )`;
 }
 
+interface FeedSearchContext {
+  search: string;
+  userIds: string[];
+  storeIds: string[];
+  orderIds: string[];
+}
+
+async function resolveFeedSearchContext(
+  prisma: PrismaService,
+  rawSearch?: string,
+): Promise<FeedSearchContext | null> {
+  const search = normalizeSearchQuery(rawSearch);
+  if (!search) return null;
+
+  const [userIds, storeIds, orderIds] = await Promise.all([
+    resolveUserIds(prisma, search),
+    resolveStoreIds(prisma, search),
+    resolveOrderIds(prisma, search),
+  ]);
+
+  return { search, userIds, storeIds, orderIds };
+}
+
+function buildPaymentSearchSql(ctx: FeedSearchContext | null): Prisma.Sql {
+  if (!ctx) return Prisma.empty;
+
+  const parts: Prisma.Sql[] = [
+    Prisma.sql`pt."transaction_number" ILIKE ${'%' + ctx.search + '%'}`,
+  ];
+  if (ctx.userIds.length) {
+    parts.push(Prisma.sql`pt."customer_id" IN (${Prisma.join(ctx.userIds)})`);
+  }
+  if (ctx.orderIds.length) {
+    parts.push(Prisma.sql`pt."order_id" IN (${Prisma.join(ctx.orderIds)})`);
+  }
+  if (isUuid(ctx.search)) {
+    parts.push(Prisma.sql`pt."id"::text = ${ctx.search}`);
+  }
+
+  return Prisma.sql`AND (${Prisma.join(parts, ' OR ')})`;
+}
+
+function buildWalletSearchSql(ctx: FeedSearchContext | null): Prisma.Sql {
+  if (!ctx) return Prisma.empty;
+
+  const parts: Prisma.Sql[] = [
+    Prisma.sql`wt."description" ILIKE ${'%' + ctx.search + '%'}`,
+    Prisma.sql`wt."transaction_type" ILIKE ${'%' + ctx.search + '%'}`,
+  ];
+  if (ctx.userIds.length) {
+    parts.push(Prisma.sql`wt."user_id" IN (${Prisma.join(ctx.userIds)})`);
+  }
+  if (isUuid(ctx.search)) {
+    parts.push(Prisma.sql`wt."id"::text = ${ctx.search}`);
+  }
+
+  return Prisma.sql`AND (${Prisma.join(parts, ' OR ')})`;
+}
+
+function buildEscrowSearchSql(ctx: FeedSearchContext | null): Prisma.Sql {
+  if (!ctx) return Prisma.empty;
+
+  const parts: Prisma.Sql[] = [];
+  if (ctx.orderIds.length) {
+    parts.push(Prisma.sql`et."order_id" IN (${Prisma.join(ctx.orderIds)})`);
+  }
+  parts.push(
+    Prisma.sql`EXISTS (
+      SELECT 1 FROM "orders" o
+      WHERE o."id" = et."order_id"
+        AND o."order_number" ILIKE ${'%' + ctx.search + '%'}
+    )`,
+  );
+  if (ctx.userIds.length) {
+    parts.push(
+      Prisma.sql`EXISTS (
+        SELECT 1 FROM "orders" o
+        WHERE o."id" = et."order_id"
+          AND o."customer_id" IN (${Prisma.join(ctx.userIds)})
+      )`,
+    );
+  }
+  if (ctx.storeIds.length) {
+    parts.push(
+      Prisma.sql`EXISTS (
+        SELECT 1 FROM "orders" o
+        WHERE o."id" = et."order_id"
+          AND o."store_id" IN (${Prisma.join(ctx.storeIds)})
+      )`,
+    );
+  }
+  if (isUuid(ctx.search)) {
+    parts.push(Prisma.sql`et."id"::text = ${ctx.search}`);
+  }
+
+  return Prisma.sql`AND (${Prisma.join(parts, ' OR ')})`;
+}
+
+function buildWithdrawalSearchSql(ctx: FeedSearchContext | null): Prisma.Sql {
+  if (!ctx) return Prisma.empty;
+
+  const parts: Prisma.Sql[] = [
+    Prisma.sql`CAST(wr."amount" AS TEXT) ILIKE ${'%' + ctx.search + '%'}`,
+    Prisma.sql`EXISTS (
+      SELECT 1 FROM "users" u
+      WHERE u."id" = wr."user_id"
+        AND (
+          u."name" ILIKE ${'%' + ctx.search + '%'}
+          OR u."email" ILIKE ${'%' + ctx.search + '%'}
+          OR u."phone" ILIKE ${'%' + ctx.search + '%'}
+        )
+    )`,
+    Prisma.sql`EXISTS (
+      SELECT 1 FROM "stores" s
+      WHERE s."id" = wr."store_id"
+        AND (
+          s."name" ILIKE ${'%' + ctx.search + '%'}
+          OR s."store_code" ILIKE ${'%' + ctx.search + '%'}
+        )
+    )`,
+  ];
+  if (ctx.userIds.length) {
+    parts.push(Prisma.sql`wr."user_id" IN (${Prisma.join(ctx.userIds)})`);
+  }
+  if (ctx.storeIds.length) {
+    parts.push(Prisma.sql`wr."store_id" IN (${Prisma.join(ctx.storeIds)})`);
+  }
+  if (isUuid(ctx.search)) {
+    parts.push(Prisma.sql`wr."id"::text = ${ctx.search}`);
+  }
+
+  return Prisma.sql`AND (${Prisma.join(parts, ' OR ')})`;
+}
+
 export async function fetchUnifiedFeedIndex(
   prisma: PrismaService,
   filters: FeedFilters,
@@ -75,7 +216,7 @@ export async function fetchUnifiedFeedIndex(
   const range = buildAdminDateRange(filters);
   const limit = Math.min(Math.max(Number(filters.limit) || 50, 1), 100);
   const cursor = decodeFeedCursor(filters.cursor);
-  const search = filters.search?.trim();
+  const searchCtx = await resolveFeedSearchContext(prisma, filters.search);
   const typeFilter = filters.type && filters.type !== 'ALL' ? filters.type : null;
   const roleFilter = filters.role && filters.role !== 'ALL' ? filters.role : null;
 
@@ -99,21 +240,16 @@ export async function fetchUnifiedFeedIndex(
   const includeEscrow = !typeFilter || typeFilter === 'ESCROW';
   const includeWithdrawals = !typeFilter || typeFilter === 'WITHDRAWAL';
 
-  const paymentSearch = search
-    ? Prisma.sql`AND pt."transaction_number" ILIKE ${'%' + search + '%'}`
-    : Prisma.empty;
-  const walletSearch = search
-    ? Prisma.sql`AND (wt."description" ILIKE ${'%' + search + '%'} OR wt."transaction_type" ILIKE ${'%' + search + '%'})`
-    : Prisma.empty;
+  const paymentSearch = buildPaymentSearchSql(searchCtx);
+  const walletSearch = buildWalletSearchSql(searchCtx);
   const walletRole = roleFilter ? Prisma.sql`AND wt."role" = ${roleFilter}` : Prisma.empty;
   const walletType =
     typeFilter && typeFilter !== 'WALLET'
       ? Prisma.sql`AND UPPER(wt."transaction_type") = ${typeFilter.toUpperCase()}`
       : Prisma.empty;
   const withdrawalRole = roleFilter ? Prisma.sql`AND wr."role" = ${roleFilter}` : Prisma.empty;
-  const withdrawalSearch = search
-    ? Prisma.sql`AND CAST(wr."amount" AS TEXT) ILIKE ${'%' + search + '%'}`
-    : Prisma.empty;
+  const withdrawalSearch = buildWithdrawalSearchSql(searchCtx);
+  const escrowSearch = buildEscrowSearchSql(searchCtx);
 
   const unions: Prisma.Sql[] = [];
 
@@ -151,6 +287,7 @@ export async function fetchUnifiedFeedIndex(
       SELECT 'ESCROW'::text AS source, et."id"::text AS id, et."created_at" AS "sortAt"
       FROM "escrow_transactions" et
       WHERE ${buildDateSql(range, 'et."created_at"')}
+        ${escrowSearch}
     `);
   }
 
@@ -190,7 +327,7 @@ export async function countUnifiedFeed(
   filters: FeedFilters,
 ): Promise<number> {
   const range = buildAdminDateRange(filters);
-  const search = filters.search?.trim();
+  const searchCtx = await resolveFeedSearchContext(prisma, filters.search);
   const typeFilter = filters.type && filters.type !== 'ALL' ? filters.type : null;
   const roleFilter = filters.role && filters.role !== 'ALL' ? filters.role : null;
 
@@ -217,9 +354,21 @@ export async function countUnifiedFeed(
   const counts: number[] = [];
 
   if (includePayments) {
-    const paymentSearch = search
-      ? { transactionNumber: { contains: search, mode: 'insensitive' as const } }
-      : {};
+    const paymentOr: Prisma.PaymentTransactionWhereInput[] = [];
+    if (searchCtx) {
+      paymentOr.push(
+        { transactionNumber: { contains: searchCtx.search, mode: 'insensitive' } },
+      );
+      if (searchCtx.userIds.length) {
+        paymentOr.push({ customerId: { in: searchCtx.userIds } });
+      }
+      if (searchCtx.orderIds.length) {
+        paymentOr.push({ orderId: { in: searchCtx.orderIds } });
+      }
+      if (isUuid(searchCtx.search)) {
+        paymentOr.push({ id: searchCtx.search });
+      }
+    }
     const dateFilter =
       range.startDate || range.endDate
         ? {
@@ -243,7 +392,7 @@ export async function countUnifiedFeed(
       await prisma.paymentTransaction.count({
         where: {
           ...(dateFilter ? dateFilter : {}),
-          ...paymentSearch,
+          ...(paymentOr.length ? { OR: paymentOr } : {}),
         },
       }),
     );
@@ -256,6 +405,19 @@ export async function countUnifiedFeed(
           ...(range.endDate ? { lte: range.endDate } : {}),
         }
       : undefined;
+    const walletOr: Prisma.WalletTransactionWhereInput[] = [];
+    if (searchCtx) {
+      walletOr.push(
+        { description: { contains: searchCtx.search, mode: 'insensitive' } },
+        { transactionType: { contains: searchCtx.search, mode: 'insensitive' } },
+      );
+      if (searchCtx.userIds.length) {
+        walletOr.push({ userId: { in: searchCtx.userIds } });
+      }
+      if (isUuid(searchCtx.search)) {
+        walletOr.push({ id: searchCtx.search });
+      }
+    }
     counts.push(
       await prisma.walletTransaction.count({
         where: {
@@ -264,14 +426,7 @@ export async function countUnifiedFeed(
           ...(typeFilter && typeFilter !== 'WALLET'
             ? { transactionType: { equals: typeFilter, mode: 'insensitive' } }
             : {}),
-          ...(search
-            ? {
-                OR: [
-                  { description: { contains: search, mode: 'insensitive' } },
-                  { transactionType: { contains: search, mode: 'insensitive' } },
-                ],
-              }
-            : {}),
+          ...(walletOr.length ? { OR: walletOr } : {}),
         },
       }),
     );
@@ -284,9 +439,30 @@ export async function countUnifiedFeed(
           ...(range.endDate ? { lte: range.endDate } : {}),
         }
       : undefined;
+    const escrowOr: Prisma.EscrowTransactionWhereInput[] = [];
+    if (searchCtx) {
+      if (searchCtx.orderIds.length) {
+        escrowOr.push({ orderId: { in: searchCtx.orderIds } });
+      }
+      escrowOr.push({
+        order: { orderNumber: { contains: searchCtx.search, mode: 'insensitive' } },
+      });
+      if (searchCtx.userIds.length) {
+        escrowOr.push({ order: { customerId: { in: searchCtx.userIds } } });
+      }
+      if (searchCtx.storeIds.length) {
+        escrowOr.push({ order: { storeId: { in: searchCtx.storeIds } } });
+      }
+      if (isUuid(searchCtx.search)) {
+        escrowOr.push({ id: searchCtx.search });
+      }
+    }
     counts.push(
       await prisma.escrowTransaction.count({
-        where: dateFilter ? { createdAt: dateFilter } : {},
+        where: {
+          ...(dateFilter ? { createdAt: dateFilter } : {}),
+          ...(escrowOr.length ? { OR: escrowOr } : {}),
+        },
       }),
     );
   }
@@ -298,11 +474,31 @@ export async function countUnifiedFeed(
           ...(range.endDate ? { lte: range.endDate } : {}),
         }
       : undefined;
+    const withdrawalOr: Prisma.WithdrawalRequestWhereInput[] = [];
+    if (searchCtx) {
+      withdrawalOr.push(
+        { user: { name: { contains: searchCtx.search, mode: 'insensitive' } } },
+        { user: { email: { contains: searchCtx.search, mode: 'insensitive' } } },
+        { user: { phone: { contains: searchCtx.search, mode: 'insensitive' } } },
+        { store: { name: { contains: searchCtx.search, mode: 'insensitive' } } },
+        { store: { storeCode: { contains: searchCtx.search, mode: 'insensitive' } } },
+      );
+      if (searchCtx.userIds.length) {
+        withdrawalOr.push({ userId: { in: searchCtx.userIds } });
+      }
+      if (searchCtx.storeIds.length) {
+        withdrawalOr.push({ storeId: { in: searchCtx.storeIds } });
+      }
+      if (isUuid(searchCtx.search)) {
+        withdrawalOr.push({ id: searchCtx.search });
+      }
+    }
     counts.push(
       await prisma.withdrawalRequest.count({
         where: {
           ...(dateFilter ? { createdAt: dateFilter } : {}),
           ...(roleFilter ? { role: roleFilter } : {}),
+          ...(withdrawalOr.length ? { OR: withdrawalOr } : {}),
         },
       }),
     );

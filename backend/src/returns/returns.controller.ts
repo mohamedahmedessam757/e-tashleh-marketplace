@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseInterceptors, UploadedFiles, UseGuards, Request, Get, BadRequestException, Param } from '@nestjs/common';
+import { Controller, Post, Patch, Body, UseInterceptors, UploadedFiles, UseGuards, Request, Get, BadRequestException, Param, Query } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -163,8 +163,8 @@ export class ReturnsController {
     @Get('admin/cases')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @Permissions('shipping', 'view')
-    async getAdminCases() {
-        return this.returnsService.getAdminCases();
+    async getAdminCases(@Query('search') search?: string) {
+        return this.returnsService.getAdminCases(search);
     }
 
     @Post(':id/verdict')

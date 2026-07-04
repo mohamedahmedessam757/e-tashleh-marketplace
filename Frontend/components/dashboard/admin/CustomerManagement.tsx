@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useCustomerStore } from '../../../stores/useCustomerStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Search, Filter, Eye, Lock, Unlock, User, Mail, Phone, DollarSign, Target, Loader2, Users, Sparkles, ShieldCheck } from 'lucide-react';
+import { AdminSearchInput } from './AdminSearchInput';
+import { Eye, Lock, Unlock, User, Mail, Phone, DollarSign, Target, Loader2, Users, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface CustomerManagementProps {
     onNavigate?: (path: string, id: any) => void;
@@ -18,15 +19,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({ onNaviga
     const isAr = language === 'ar';
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        fetchCustomers({ search });
+    }, [search, fetchCustomers]);
 
     const filteredCustomers = customers.filter(c => {
         const matchesFilter = filter === 'all' || (c.status || '').toLowerCase() === filter;
-        const matchesSearch = (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-            c.phone?.includes(search);
-        return matchesFilter && matchesSearch;
+        return matchesFilter;
     });
 
     return (
@@ -52,17 +50,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({ onNaviga
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                     {/* Glass Search Hub */}
-                    <div className="relative group w-full sm:w-80">
-                        <div className="absolute inset-0 bg-gold-500/5 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-                        <Search size={18} className="absolute top-1/2 -translate-y-1/2 left-4 text-white/20 group-focus-within:text-gold-500 transition-colors z-10" />
-                        <input
-                            type="text"
-                            placeholder={isAr ? 'بحث عن عميل، إيميل، أو رقم...' : 'Search for customer, email, or number...'}
-                            className={`w-full bg-[#0a0a0a]/60 backdrop-blur-md border border-white/10 rounded-2xl pl-12 pr-6 py-4 text-xs font-bold text-white placeholder:text-white/20 focus:border-gold-500/50 outline-none transition-all relative z-10 ${isAr ? 'text-right' : 'text-left'}`}
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <AdminSearchInput
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={isAr ? 'بحث عن عميل، إيميل، أو رقم...' : 'Search customer, email, or ID...'}
+                        className="w-full sm:w-80"
+                    />
 
                     {/* Filter Segment Control */}
                     <div className="flex p-1.5 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 w-full sm:w-auto overflow-x-auto no-scrollbar">

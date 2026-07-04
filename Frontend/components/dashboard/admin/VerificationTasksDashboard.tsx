@@ -15,6 +15,7 @@ import {
 import { Badge } from '../../ui/Badge';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../../utils/auth';
+import { AdminSearchInput } from './AdminSearchInput';
 import {
   AdminVerificationTasksFilter,
   VERIFICATION_TASK_DECISION_LABEL,
@@ -22,6 +23,22 @@ import {
   countVerificationTasksByAdminFilter,
   filterVerificationTasksForAdmin,
 } from './verification/verificationTaskHelpers';
+
+function taskMatchesLocalSearch(task: any, query: string): boolean {
+  const q = query.toLowerCase().trim();
+  if (!q) return true;
+  const orderNumber = String(task.order?.orderNumber ?? '').toLowerCase();
+  const partName = String(task.offer?.orderPart?.name ?? task.order?.partName ?? '').toLowerCase();
+  const officer = String(task.officer?.name ?? task.officer?.email ?? '').toLowerCase();
+  const vehicle = `${task.order?.vehicleMake ?? ''} ${task.order?.vehicleModel ?? ''}`.toLowerCase();
+  return (
+    orderNumber.includes(q) ||
+    partName.includes(q) ||
+    officer.includes(q) ||
+    vehicle.includes(q) ||
+    String(task.id ?? '').toLowerCase().includes(q)
+  );
+}
 
 interface VerificationTasksDashboardProps {
   onNavigate?: (path: string, id?: any) => void;
@@ -41,6 +58,7 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [filter, setFilter] = useState<AdminVerificationTasksFilter>('all');
+  const [search, setSearch] = useState('');
 
   const isAr = language === 'ar';
   const viewerRole = getCurrentUser()?.role ?? '';
@@ -55,8 +73,13 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
       if (isOfficer) {
         const res = await verificationTasksApi.getMyTasks();
         data = normalizeTasksPayload(res.data);
+        if (search.trim()) {
+          data = data.filter((task) => taskMatchesLocalSearch(task, search));
+        }
       } else if (isAdminViewer) {
-        const res = await verificationTasksApi.listAllForAdmin();
+        const res = await verificationTasksApi.listAllForAdmin(
+          search.trim() ? { search: search.trim() } : undefined,
+        );
         data = normalizeTasksPayload(res.data);
       }
       setTasks(Array.isArray(data) ? data : []);
@@ -67,7 +90,7 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
     } finally {
       setLoading(false);
     }
-  }, [isOfficer, isAdminViewer]);
+  }, [isOfficer, isAdminViewer, search]);
 
   useEffect(() => {
     void fetchTasks();
@@ -119,6 +142,17 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
           {isAr ? 'تحديث' : 'Refresh'}
         </button>
       </div>
+
+      <AdminSearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder={
+          isAr
+            ? 'بحث برقم الطلب، القطعة، الموظف، أو المركبة...'
+            : 'Search order, part, officer, or vehicle...'
+        }
+        className="max-w-xl"
+      />
 
       {isAdminViewer && !loading && !fetchError && tasks.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">

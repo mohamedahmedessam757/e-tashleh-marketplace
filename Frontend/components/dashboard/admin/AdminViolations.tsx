@@ -4,10 +4,10 @@ import { useViolationStore, Violation, ViolationType, PenaltyThreshold, Violatio
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useCustomerStore } from '../../../stores/useCustomerStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { AdminSearchInput } from './AdminSearchInput';
 import { EntitySearchInput } from '../../ui/EntitySearchInput';
 import {
     ShieldAlert,
-    Search,
     Filter,
     Eye,
     User,
@@ -184,17 +184,13 @@ export const AdminViolations: React.FC = () => {
         }
     }, [visibleTabs, activeTab]);
 
-    // Local user filtering removed in favor of real-time server-side search
+    useEffect(() => {
+        if (activeTab === 'violations') {
+            fetchViolations({ search: search || undefined });
+        }
+    }, [search, activeTab, fetchViolations]);
 
-    // --- DYNAMIC FILTERING LOGIC ---
-
-    const filteredViolations = useMemo(() => violations.filter(v =>
-        (v.targetUser?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-        (v.targetStore?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-        (v.id || '').toLowerCase().includes(search.toLowerCase()) ||
-        (v.type.nameAr || '').toLowerCase().includes(search.toLowerCase()) ||
-        (v.type.nameEn || '').toLowerCase().includes(search.toLowerCase())
-    ), [violations, search]);
+    // Client-side filtering for tabs without server search support
 
     const filteredAppeals = useMemo(() => pendingAppeals.filter(a =>
         (a.violation.targetUser?.name || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -444,16 +440,12 @@ export const AdminViolations: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                     <GlassCard className="p-2 border-white/5 flex items-center gap-2 bg-white/[0.02]">
-                        <div className="relative group">
-                            <Search size={16} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-3' : 'left-3'} text-white/20 group-focus-within:text-gold-500 transition-colors`} />
-                            <input
-                                type="text"
-                                placeholder={searchPlaceholder}
-                                className={`bg-white/5 border border-white/5 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-xs text-white focus:border-gold-500/50 outline-none w-64 md:w-80 transition-all placeholder:text-white/20 font-medium`}
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                            />
-                        </div>
+                        <AdminSearchInput
+                            value={search}
+                            onChange={setSearch}
+                            placeholder={searchPlaceholder}
+                            className="w-64 md:w-80"
+                        />
                     </GlassCard>
                     <button
                         onClick={() => {
@@ -550,7 +542,7 @@ export const AdminViolations: React.FC = () => {
                         >
                             {activeTab === 'violations' && (
                                 <div className="grid gap-4">
-                                    {filteredViolations.length > 0 ? filteredViolations.map(v => (
+                                    {violations.length > 0 ? violations.map(v => (
                                         <GlassCard key={v.id} className={`p-6 border-white/5 hover:border-red-500/20 group transition-all relative overflow-hidden ${highlightId === v.id ? 'ring-2 ring-gold-500/50 border-gold-500/40' : ''}`}>
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[80px] -z-10 group-hover:bg-red-500/10 transition-colors" />
                                             <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_1fr_0.5fr] items-center gap-8 relative z-10">

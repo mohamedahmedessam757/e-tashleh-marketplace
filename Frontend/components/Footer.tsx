@@ -8,11 +8,10 @@ import { SITE_CUSTOMER_EMAIL, SITE_MERCHANT_EMAIL } from '../config/site';
 
 interface FooterProps {
     onOpenSupport: () => void;
-    onAdminClick: () => void;
     onNavigateToLicense?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenSupport, onAdminClick, onNavigateToLicense }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenSupport, onNavigateToLicense }) => {
     const { t, language } = useLanguage();
 
     return (
@@ -85,12 +84,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSupport, onAdminClick, onN
 
                 <div className="text-center border-t border-white/10 pt-6 text-white/30 text-xs">
                     <p>{t.footer.rights}</p>
-                    <button
-                        onClick={onAdminClick}
-                        className="mt-1 opacity-50 hover:opacity-100 hover:text-gold-400 transition-all cursor-pointer"
-                    >
-                        {t.footer.secureBadge}
-                    </button>
                 </div>
             </Container>
         </footer>

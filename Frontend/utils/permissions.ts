@@ -131,4 +131,9 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
     fields: [],
     actions: ['start', 'complete', 'upload_photos'],
   },
+  'security-audit': {
+    fields: [],
+    actions: ['RESOLVE_PROFILE_CHANGE', 'RESOLVE_CONTRACT_CHANGE', 'RESOLVE_RECOVERY'],
+    tabs: ['RECOVERIES', 'PROFILE_CHANGES', 'CONTRACT_CHANGES'],
+  },
 };

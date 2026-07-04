@@ -11,6 +11,14 @@ import { assertVerificationTaskAccess } from './verification-task-access';
 import { UploadsService, VERIFICATION_FIELD_PHOTOS_BUCKET } from '../uploads/uploads.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import * as crypto from 'crypto';
+import {
+  isUuid,
+  mergeWhereWithSearch,
+  normalizeSearchQuery,
+  resolveOrderIds,
+  resolveStoreIds,
+  resolveUserIds,
+} from '../common/search/admin-entity-search.util';
 
 /** Narrow delegate for `VerificationTaskPhoto` (editor/Prisma client shapes can desync until `npx prisma generate`). */
 type VerificationTaskPhotoRepo = {
@@ -962,9 +970,39 @@ export class VerificationTasksService {
   }
 
   /** Full history for admin dashboard (all statuses, newest first). */
-  async listAllTasksForAdmin(limit = 500) {
+  async listAllTasksForAdmin(limit = 500, search?: string) {
     const safeLimit = Math.min(Math.max(limit, 1), 500);
+
+    let where: Prisma.VerificationTaskWhereInput = {};
+    const q = normalizeSearchQuery(search);
+    if (q) {
+      const [orderIds, userIds, storeIds] = await Promise.all([
+        resolveOrderIds(this.prisma, q),
+        resolveUserIds(this.prisma, q),
+        resolveStoreIds(this.prisma, q),
+      ]);
+
+      const or: Prisma.VerificationTaskWhereInput[] = [
+        { order: { orderNumber: { contains: q, mode: 'insensitive' } } },
+      ];
+
+      if (isUuid(q)) {
+        or.push({ id: q });
+        or.push({ orderId: q });
+      }
+      if (orderIds.length) or.push({ orderId: { in: orderIds } });
+      if (userIds.length) {
+        or.push({ officerId: { in: userIds } });
+        or.push({ order: { customerId: { in: userIds } } });
+        or.push({ offer: { store: { ownerId: { in: userIds } } } });
+      }
+      if (storeIds.length) or.push({ offer: { storeId: { in: storeIds } } });
+
+      where = mergeWhereWithSearch(where, { OR: or });
+    }
+
     return this.prisma.verificationTask.findMany({
+      where,
       include: this.adminTasksListInclude(),
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       take: safeLimit,

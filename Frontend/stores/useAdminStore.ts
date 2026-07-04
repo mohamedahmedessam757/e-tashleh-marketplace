@@ -319,6 +319,7 @@ export interface AdminState {
   dashboardStatsError: DashboardStatsErrorCode;
   dashboardFilters: { startDate?: string; endDate?: string };
   stores: any[];
+  storesSearchQuery: string;
   currentStoreProfile: any | null;
   isLoadingStores: boolean;
   pendingWithdrawals: WithdrawalRequest[];
@@ -428,7 +429,7 @@ export interface AdminState {
   setCommissionRate: (rate: number) => void;
   toggleSystemStatus: () => void;
   updateSystemConfig: (section: keyof SystemConfig, data: any) => void;
-  fetchAllStores: () => Promise<void>;
+  fetchAllStores: (search?: string) => Promise<void>;
   silentFetchStores: () => Promise<void>;
 
   orderTimeline: any | null;
@@ -501,6 +502,7 @@ export const useAdminStore = create<AdminState>()(
         endDate: new Date().toISOString().split('T')[0]
       },
       stores: [],
+      storesSearchQuery: '',
       currentStoreProfile: null,
       pendingWithdrawals: [],
       withdrawalLimits: { min: 100, max: 10000 },
@@ -939,20 +941,14 @@ export const useAdminStore = create<AdminState>()(
         };
       }),
 
-      fetchAllStores: async () => {
+      fetchAllStores: async (search) => {
+        const query = search !== undefined ? search.trim() : get().storesSearchQuery;
         const { stores } = get();
         if (stores.length === 0) set({ isLoadingStores: true });
+        set({ storesSearchQuery: query });
         try {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            const response = await fetch(`${API_URL}/stores`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-              const data = await response.json();
-              set({ stores: data });
-            }
-          }
+          const data = await storesApi.getAll(query ? { search: query } : undefined);
+          set({ stores: data });
         } catch (error) {
           console.error("Failed to fetch stores", error);
         } finally {
@@ -962,16 +958,9 @@ export const useAdminStore = create<AdminState>()(
 
       silentFetchStores: async () => {
         try {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            const response = await fetch(`${API_URL}/stores`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-              const data = await response.json();
-              set({ stores: data });
-            }
-          }
+          const query = get().storesSearchQuery;
+          const data = await storesApi.getAll(query ? { search: query } : undefined);
+          set({ stores: data });
         } catch (error) {
           console.error("Failed to silently fetch stores", error);
         }
@@ -980,16 +969,8 @@ export const useAdminStore = create<AdminState>()(
       fetchStoreProfile: async (id: string) => {
         set({ isLoadingStores: true, currentStoreProfile: null }); 
         try {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            const response = await fetch(`${API_URL}/stores/${id}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-              const data = await response.json();
-              set({ currentStoreProfile: data });
-            }
-          }
+          const { data } = await client.get(`/stores/${id}`);
+          set({ currentStoreProfile: data });
         } catch (error) {
           console.error("Failed to fetch store profile", error);
         } finally {
@@ -999,16 +980,8 @@ export const useAdminStore = create<AdminState>()(
 
       silentFetchStoreProfile: async (id: string) => {
         try {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            const response = await fetch(`${API_URL}/stores/${id}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-              const data = await response.json();
-              set({ currentStoreProfile: data });
-            }
-          }
+          const { data } = await client.get(`/stores/${id}`);
+          set({ currentStoreProfile: data });
         } catch (error) {
           console.error("Failed to silently fetch store profile", error);
         }

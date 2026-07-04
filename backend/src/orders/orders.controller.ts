@@ -47,8 +47,8 @@ export class OrdersController {
     @Get('admin/shipping-carts')
     @UseGuards(PermissionsGuard)
     @Permissions('shipping-carts', 'view')
-    getAdminShippingCarts(@Request() req) {
-        return this.ordersService.getAdminShippingCarts();
+    getAdminShippingCarts(@Query('search') search?: string) {
+        return this.ordersService.getAdminShippingCarts(search);
     }
 
     @Get('assembly-cart')

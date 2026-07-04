@@ -1,7 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadStoreDocumentDto } from './dto/upload-store-document.dto';
-import { StoreStatus, OrderStatus, StoreSubscriptionTier } from '@prisma/client';
+import { Prisma, StoreStatus, OrderStatus, StoreSubscriptionTier } from '@prisma/client';
+import { normalizeSearchQuery, resolveStoreIds } from '../common/search/admin-entity-search.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
@@ -37,7 +38,7 @@ export class StoresService {
                 documents: true,
                 contractAcceptances: {
                     orderBy: { acceptedAt: 'desc' },
-                    take: 1
+                    take: 20
                 }
             },
         });
@@ -76,7 +77,7 @@ export class StoresService {
                     documents: true,
                     contractAcceptances: {
                         orderBy: { acceptedAt: 'desc' },
-                        take: 1
+                        take: 20
                     }
                 },
             });
@@ -242,8 +243,17 @@ export class StoresService {
     }
     // --- ADMIN METHODS ---
 
-    async findAll() {
+    async findAll(search?: string) {
+        const q = normalizeSearchQuery(search);
+        const where: Prisma.StoreWhereInput = {};
+
+        if (q) {
+            const storeIds = await resolveStoreIds(this.prisma, q);
+            where.id = storeIds.length ? { in: storeIds } : { in: [] };
+        }
+
         return this.prisma.store.findMany({
+            where,
             include: {
                 owner: { select: { email: true, name: true } },
                 documents: true,

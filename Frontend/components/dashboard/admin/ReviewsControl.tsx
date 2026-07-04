@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { useReviewStore } from '../../../stores/useReviewStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Star, CheckCircle2, XCircle, Search, Loader2, MessageSquare, User, Store, Calendar, Zap, Plus, Trash2, Edit3, Settings2, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
+import { Star, CheckCircle2, XCircle, Loader2, MessageSquare, User, Store, Calendar, Zap, Plus, Trash2, Edit3, Settings2, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { BlurredSection } from './BlurredSection';
+import { AdminSearchInput } from './AdminSearchInput';
 
 export const ReviewsControl: React.FC = () => {
     const { t, language } = useLanguage();
@@ -27,17 +28,7 @@ export const ReviewsControl: React.FC = () => {
     const [tab, setTab] = useState<'PENDING' | 'PUBLISHED' | 'REJECTED' | 'IMPACT'>('PENDING');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredReviews = reviews.filter(r => {
-        const matchesTab = r.adminStatus === tab;
-        if (!matchesTab) return false;
-
-        const search = searchTerm.toLowerCase();
-        return (
-            (r.store?.storeName || r.store?.name || '').toLowerCase().includes(search) ||
-            (r.customer?.name || '').toLowerCase().includes(search) ||
-            (r.comment || '').toLowerCase().includes(search)
-        );
-    });
+    const filteredReviews = reviews.filter((r) => r.adminStatus === tab);
 
     // Rule Management State
     const [isRuleModalOpen, setIsRuleModalOpen] = useState(false);
@@ -53,7 +44,10 @@ export const ReviewsControl: React.FC = () => {
     });
 
     useEffect(() => {
-        fetchAdminReviews();
+        void fetchAdminReviews({ search: searchTerm });
+    }, [searchTerm, fetchAdminReviews]);
+
+    useEffect(() => {
         fetchImpactRules();
         subscribeToAdminReviews();
 
@@ -137,7 +131,7 @@ export const ReviewsControl: React.FC = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => fetchAdminReviews()}
+                    onClick={() => void fetchAdminReviews({ search: searchTerm })}
                     disabled={isLoading}
                     className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-white/60 hover:text-white"
                 >
@@ -219,27 +213,17 @@ export const ReviewsControl: React.FC = () => {
                     </button>
                 ))}
             </div>
-            {/* Search Bar - Restored functionality */}
-            <div className="relative max-w-xl group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/20 group-focus-within:text-gold-500 transition-colors">
-                    <Search size={18} />
-                </div>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={language === 'ar' ? 'البحث في المراجعات، المتاجر، أو العملاء...' : 'Search reviews, stores, or customers...'}
-                    className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-white text-sm outline-none focus:border-gold-500/30 transition-all placeholder:text-white/10"
-                />
-                {searchTerm && (
-                    <button
-                        onClick={() => setSearchTerm('')}
-                        className="absolute inset-y-0 right-4 flex items-center text-white/20 hover:text-white transition-colors"
-                    >
-                        <XCircle size={18} />
-                    </button>
-                )}
-            </div>
+            {/* Search Bar */}
+            <AdminSearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder={
+                    language === 'ar'
+                        ? 'البحث في المراجعات، المتاجر، أو العملاء...'
+                        : 'Search reviews, stores, or customers...'
+                }
+                className="max-w-xl"
+            />
 
             {/* Content Rendering */}
             <div className="relative">
@@ -457,7 +441,13 @@ export const ReviewsControl: React.FC = () => {
                                     <div className="py-32 text-center bg-white/[0.02] border border-dashed border-white/5 rounded-[40px]">
                                         <MessageSquare size={64} className="mx-auto mb-6 text-white/5" />
                                         <h3 className="text-white/40 font-black uppercase tracking-[0.2em] text-sm">
-                                            {language === 'ar' ? `لا توجد مراجعات ${tab.toLowerCase()} حالياً` : `No ${tab.toLowerCase()} reviews yet.`}
+                                            {searchTerm.trim()
+                                                ? language === 'ar'
+                                                    ? 'لا توجد نتائج مطابقة'
+                                                    : 'No matching reviews'
+                                                : language === 'ar'
+                                                  ? `لا توجد مراجعات ${tab.toLowerCase()} حالياً`
+                                                  : `No ${tab.toLowerCase()} reviews yet.`}
                                         </h3>
                                     </div>
                                 )}

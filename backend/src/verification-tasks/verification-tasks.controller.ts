@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Req, Res, ForbiddenException, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Req, Res, ForbiddenException, UseInterceptors, UploadedFiles, BadRequestException, Query } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { VerificationTasksService } from './verification-tasks.service';
@@ -39,11 +39,11 @@ export class VerificationTasksController {
   }
 
   @Get('admin/all')
-  async listAllTasksForAdmin(@Req() req: any) {
+  async listAllTasksForAdmin(@Req() req: any, @Query('search') search?: string) {
     if (!['ADMIN', 'SUPER_ADMIN', 'SUPPORT'].includes(req.user.role)) {
       throw new ForbiddenException('Insufficient permissions');
     }
-    return this.tasksService.listAllTasksForAdmin();
+    return this.tasksService.listAllTasksForAdmin(500, search);
   }
 
   @Get('order/:orderId')

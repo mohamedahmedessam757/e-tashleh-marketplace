@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
@@ -14,8 +14,8 @@ export class ShipmentsController {
     @UseGuards(PermissionsGuard)
     @Permissions('shipping', 'view')
     @Get()
-    findAll() {
-        return this.shipmentsService.findAll();
+    findAll(@Query('search') search?: string) {
+        return this.shipmentsService.findAll(search);
     }
 
     @Get('my')

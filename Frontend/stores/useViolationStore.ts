@@ -142,9 +142,10 @@ export interface ViolationState {
   myViolations: Violation[];
   myScore: number | null;
   isLoading: boolean;
+  violationFilters: Record<string, unknown>;
   
   // Actions
-  fetchViolations: (filters?: any) => Promise<void>;
+  fetchViolations: (filters?: Record<string, unknown>) => Promise<void>;
   fetchViolationTypes: (targetType?: string) => Promise<void>;
   fetchThresholds: (targetType?: string) => Promise<void>;
   fetchPendingAppeals: () => Promise<void>;
@@ -187,11 +188,13 @@ export const useViolationStore = create<ViolationState>((set, get) => ({
   myViolations: [],
   myScore: null,
   isLoading: false,
+  violationFilters: {},
 
   fetchViolations: async (filters) => {
-    set({ isLoading: true });
+    const merged = { ...get().violationFilters, ...(filters ?? {}) };
+    set({ isLoading: true, violationFilters: merged });
     try {
-      const data = await violationsApi.getAll(filters);
+      const data = await violationsApi.getAll(merged);
       set({ violations: data });
     } catch (e) {
       console.error(e);

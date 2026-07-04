@@ -153,6 +153,8 @@ export interface VendorState {
     authLetter: DocState;
   };
   contractAcceptance: any | null;
+  contractAcceptances: any[];
+  pendingContractChanges: any[];
 
   isLoadingProfile: boolean;
   
@@ -185,6 +187,8 @@ export interface VendorState {
   fetchPendingProfileChanges: () => Promise<void>;
   requestProfileChangeOtp: (field: 'email' | 'phone') => Promise<{ sent: boolean; expiresInMinutes: number }>;
   submitProfileChangeRequest: (field: 'email' | 'phone', newValue: string, otp: string) => Promise<void>;
+  fetchPendingContractChanges: () => Promise<void>;
+  submitContractChange: (newSecondPartyData: Record<string, string>) => Promise<void>;
   checkLicenseStatus: () => void;
   adminApproveVendor: (id: string) => Promise<void>;
   adminRejectVendor: (id: string, reason: string) => Promise<void>;
@@ -267,6 +271,8 @@ export const useVendorStore = create<VendorState>()(
     authLetter: { ...initialDocState }
   },
   contractAcceptance: null,
+  contractAcceptances: [],
+  pendingContractChanges: [],
 
   pendingProfileChanges: [],
 
@@ -543,7 +549,8 @@ export const useVendorStore = create<VendorState>()(
           visibilityRate: data.visibilityRate || 100,
           visibilityNote: data.visibilityNote || '',
           restrictionAlertMessage: data.restrictionAlertMessage || '',
-          contractAcceptance: data.contractAcceptances?.[0] || null,
+          contractAcceptances: data.contractAcceptances || [],
+          contractAcceptance: (data.contractAcceptances || []).find((a: any) => a.isActive !== false) ?? null,
           isLoadingProfile: false
         });
       }
@@ -620,6 +627,29 @@ export const useVendorStore = create<VendorState>()(
       titleEn: 'Request Submitted',
       titleAr: 'تم إرسال الطلب',
       message: 'Your change request is pending admin review',
+      priority: 'normal',
+    });
+  },
+
+  fetchPendingContractChanges: async () => {
+    try {
+      const { client } = await import('../services/api/client');
+      const response = await client.get('/stores/me/contract-change-requests/pending');
+      set({ pendingContractChanges: response.data || [] });
+    } catch (error) {
+      console.error('Failed to fetch pending contract changes:', error);
+    }
+  },
+
+  submitContractChange: async (newSecondPartyData) => {
+    const { client } = await import('../services/api/client');
+    await client.post('/stores/me/contract-change-request', { newSecondPartyData });
+    await get().fetchPendingContractChanges();
+    useNotificationStore.getState().addNotification({
+      type: 'success',
+      titleEn: 'Amendment Submitted',
+      titleAr: 'تم إرسال طلب التعديل',
+      message: 'Your contract amendment request is pending admin review',
       priority: 'normal',
     });
   },

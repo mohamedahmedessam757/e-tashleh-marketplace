@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, Ip, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Req, Ip, Get, UseGuards, Query } from '@nestjs/common';
 import { RecoveryService } from './recovery.service';
 import { RequestEmailOtpDto, VerifyEmailOtpDto, RequestPhoneOtpDto, SubmitRecoveryDto } from './dto/recovery.dto';
 import { Request } from 'express';
@@ -39,8 +39,8 @@ export class RecoveryController {
     @Get('admin/requests')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @Permissions('users', 'view')
-    async getPendingRequests() {
-        return this.recoveryService.getPendingRequests();
+    async getPendingRequests(@Query('search') search?: string) {
+        return this.recoveryService.getPendingRequests(search);
     }
 
     @Post('admin/resolve')

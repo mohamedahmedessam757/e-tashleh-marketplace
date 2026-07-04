@@ -417,6 +417,7 @@ export const ModelName = {
   UserCard: 'UserCard',
   PlatformContract: 'PlatformContract',
   ContractAcceptance: 'ContractAcceptance',
+  ContractChangeRequest: 'ContractChangeRequest',
   ShippingWaybill: 'ShippingWaybill',
   Shipment: 'Shipment',
   ShipmentStatusLog: 'ShipmentStatusLog',
@@ -455,7 +456,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog"
+    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2901,6 +2902,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ContractChangeRequest: {
+      payload: Prisma.$ContractChangeRequestPayload<ExtArgs>
+      fields: Prisma.ContractChangeRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ContractChangeRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ContractChangeRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.ContractChangeRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ContractChangeRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        findMany: {
+          args: Prisma.ContractChangeRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>[]
+        }
+        create: {
+          args: Prisma.ContractChangeRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        createMany: {
+          args: Prisma.ContractChangeRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ContractChangeRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.ContractChangeRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        update: {
+          args: Prisma.ContractChangeRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.ContractChangeRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ContractChangeRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ContractChangeRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.ContractChangeRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContractChangeRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.ContractChangeRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateContractChangeRequest>
+        }
+        groupBy: {
+          args: Prisma.ContractChangeRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContractChangeRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ContractChangeRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContractChangeRequestCountAggregateOutputType> | number
+        }
+      }
+    }
     ShippingWaybill: {
       payload: Prisma.$ShippingWaybillPayload<ExtArgs>
       fields: Prisma.ShippingWaybillFieldRefs
@@ -5043,6 +5118,7 @@ export const ReturnRequestScalarFieldEnum = {
   orderPartId: 'orderPartId',
   offerId: 'offerId',
   customerId: 'customerId',
+  caseReference: 'caseReference',
   reason: 'reason',
   description: 'description',
   status: 'status',
@@ -5098,6 +5174,7 @@ export const DisputeScalarFieldEnum = {
   orderPartId: 'orderPartId',
   offerId: 'offerId',
   customerId: 'customerId',
+  caseReference: 'caseReference',
   reason: 'reason',
   description: 'description',
   status: 'status',
@@ -5432,10 +5509,34 @@ export const ContractAcceptanceScalarFieldEnum = {
   contentEnSnapshot: 'contentEnSnapshot',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
-  acceptedAt: 'acceptedAt'
+  acceptedAt: 'acceptedAt',
+  isActive: 'isActive',
+  archivedAt: 'archivedAt',
+  changeRequestId: 'changeRequestId'
 } as const
 
 export type ContractAcceptanceScalarFieldEnum = (typeof ContractAcceptanceScalarFieldEnum)[keyof typeof ContractAcceptanceScalarFieldEnum]
+
+
+export const ContractChangeRequestScalarFieldEnum = {
+  id: 'id',
+  storeId: 'storeId',
+  userId: 'userId',
+  acceptanceId: 'acceptanceId',
+  oldSecondPartyData: 'oldSecondPartyData',
+  newSecondPartyData: 'newSecondPartyData',
+  oldSignatureData: 'oldSignatureData',
+  newSignatureData: 'newSignatureData',
+  status: 'status',
+  requestedAt: 'requestedAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  adminSignature: 'adminSignature',
+  rejectionReason: 'rejectionReason',
+  metadata: 'metadata'
+} as const
+
+export type ContractChangeRequestScalarFieldEnum = (typeof ContractChangeRequestScalarFieldEnum)[keyof typeof ContractChangeRequestScalarFieldEnum]
 
 
 export const ShippingWaybillScalarFieldEnum = {
@@ -6484,6 +6585,7 @@ export type GlobalOmitConfig = {
   userCard?: Prisma.UserCardOmit
   platformContract?: Prisma.PlatformContractOmit
   contractAcceptance?: Prisma.ContractAcceptanceOmit
+  contractChangeRequest?: Prisma.ContractChangeRequestOmit
   shippingWaybill?: Prisma.ShippingWaybillOmit
   shipment?: Prisma.ShipmentOmit
   shipmentStatusLog?: Prisma.ShipmentStatusLogOmit

@@ -145,7 +145,7 @@ export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => vo
                         <Search size={16} className="absolute top-1/2 -translate-y-1/2 left-4 text-white/20 group-focus-within:text-gold-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder={isAr ? 'بحث سريع...' : 'Quick search...'}
+                            placeholder={isAr ? 'ابحث عن طلب، عميل، أو رقم تعريفي...' : 'Search order, customer, or ID...'}
                             className="w-full md:w-64 bg-[#050505] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-xs text-white focus:border-gold-500/50 focus:bg-[#080808] outline-none transition-all placeholder:text-white/10 font-bold shadow-inner"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

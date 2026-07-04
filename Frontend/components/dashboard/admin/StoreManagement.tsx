@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
-import { useAdminStore, Vendor } from '../../../stores/useAdminStore';
+import { useAdminStore } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { ShieldAlert, Store, Search, Filter, Eye, User, Mail, Calendar, ChevronRight, Hash } from 'lucide-react';
+import { AdminSearchInput } from './AdminSearchInput';
+import { Store, Filter, Eye, User, Mail, Calendar, ChevronRight, Hash } from 'lucide-react';
 
 interface StoreManagementProps {
     onNavigate?: (path: string, id: any) => void;
@@ -11,24 +12,24 @@ interface StoreManagementProps {
 
 export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
-    const { stores, subscribeToStores, unsubscribeFromStores, isLoadingStores } = useAdminStore();
+    const { stores, subscribeToStores, unsubscribeFromStores, isLoadingStores, fetchAllStores } = useAdminStore();
     const [filter, setFilter] = useState<'all' | 'pending'>('all');
     const [search, setSearch] = useState('');
 
     const isAr = language === 'ar';
 
-    React.useEffect(() => {
+    useEffect(() => {
         subscribeToStores();
         return () => unsubscribeFromStores();
     }, []);
 
+    useEffect(() => {
+        fetchAllStores(search);
+    }, [search, fetchAllStores]);
+
     const filteredStores = stores.filter(store => {
         const matchesFilter = filter === 'all' || (filter === 'pending' && (store.status === 'PENDING_REVIEW' || store.status === 'PENDING_DOCUMENTS'));
-        // Search by Name or Owner Name
-        const matchesSearch =
-            (store.name || '').toLowerCase().includes(search.toLowerCase()) ||
-            (store.owner?.name || '').toLowerCase().includes(search.toLowerCase());
-        return matchesFilter && matchesSearch;
+        return matchesFilter;
     });
 
     const getStatusBadge = (status: string) => {
@@ -62,16 +63,12 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
 
                 {/* --- Search & Filters Hub --- */}
                 <GlassCard className="p-2 border-white/5 flex flex-wrap md:flex-nowrap items-center gap-2 bg-white/[0.02]">
-                    <div className="relative group">
-                        <Search size={16} className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-3' : 'left-3'} text-white/20 group-focus-within:text-gold-500 transition-colors`} />
-                        <input
-                            type="text"
-                            placeholder={isAr ? 'ابحث عن متجر، مالك، أو رقم تعريفي...' : 'Search store, owner, or ID...'}
-                            className={`bg-white/5 border border-white/5 rounded-xl ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-xs text-white focus:border-gold-500/50 outline-none w-64 md:w-80 transition-all placeholder:text-white/20 font-medium`}
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <AdminSearchInput
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={isAr ? 'ابحث عن متجر، مالك، أو رقم تعريفي...' : 'Search store, owner, or ID...'}
+                        className="w-64 md:w-80"
+                    />
                     <div className="h-6 w-[1px] bg-white/10 mx-2 hidden md:block" />
                     <div className="flex gap-1 p-1 bg-black/20 rounded-xl border border-white/5">
                         <button 

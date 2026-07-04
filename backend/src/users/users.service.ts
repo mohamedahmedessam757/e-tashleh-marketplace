@@ -2,7 +2,8 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
+import { normalizeSearchQuery, resolveUserIds } from '../common/search/admin-entity-search.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
@@ -332,9 +333,17 @@ export class UsersService {
 
   // --- Administrative Methods (v2026 Ready) ---
 
-  async adminFindAllCustomers() {
+  async adminFindAllCustomers(search?: string) {
+    const q = normalizeSearchQuery(search);
+    const where: Prisma.UserWhereInput = { role: 'CUSTOMER' };
+
+    if (q) {
+      const userIds = await resolveUserIds(this.prisma, q);
+      where.id = userIds.length ? { in: userIds } : { in: [] };
+    }
+
     const customers = await this.prisma.user.findMany({
-      where: { role: 'CUSTOMER' },
+      where,
       include: {
         orders: true,
         payments: {

@@ -14,6 +14,14 @@ import {
 } from './adjudication-financial.util';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
+import {
+    normalizeSearchQuery,
+    resolveUserIds,
+    resolveStoreIds,
+    resolveOrderIds,
+    isUuid,
+} from '../common/search/admin-entity-search.util';
+import { generateCaseReference, isCaseReference } from '../common/case-reference.util';
 
 @Injectable()
 export class ReturnsService {
@@ -377,6 +385,7 @@ export class ReturnsService {
 
             const nextStatus = shouldAutoApprove ? 'APPROVED' : 'PENDING';
             const handoverDeadline = shouldAutoApprove ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null;
+            const caseReference = await generateCaseReference(tx);
 
             // Create Return
             const returnRecord = await tx.returnRequest.create({
@@ -394,7 +403,8 @@ export class ReturnsService {
                     returnType: returnType,
                     evidenceFiles: evidenceUrls,
                     status: nextStatus,
-                    handoverDeadline: handoverDeadline
+                    handoverDeadline: handoverDeadline,
+                    caseReference,
                 }
             });
 
@@ -589,6 +599,8 @@ export class ReturnsService {
                 ? await tx.shipment.findFirst({ where: { id: acceptedOffer.cartShipmentId } })
                 : await tx.shipment.findFirst({ where: { orderId: orderId } });
 
+            const caseReference = await generateCaseReference(tx);
+
             // Create Dispute
             const disputeRecord = await tx.dispute.create({
                 data: {
@@ -603,7 +615,8 @@ export class ReturnsService {
                     description: cleanDescription,
                     usageCondition: usageCondition,
                     evidenceFiles: evidenceUrls,
-                    status: 'OPEN'
+                    status: 'OPEN',
+                    caseReference,
                 }
             });
 
@@ -1134,9 +1147,45 @@ export class ReturnsService {
 
     // --- Admin Methods ---
 
-    async getAdminCases() {
+    private async buildCaseSearchWhere(
+        rawQuery?: string | null,
+    ): Promise<Prisma.ReturnRequestWhereInput | undefined> {
+        const q = normalizeSearchQuery(rawQuery);
+        if (!q) return undefined;
+
+        const or: Prisma.ReturnRequestWhereInput[] = [];
+
+        if (isCaseReference(q)) {
+            or.push({ caseReference: { equals: q, mode: 'insensitive' } });
+        } else {
+            or.push({ caseReference: { contains: q, mode: 'insensitive' } });
+        }
+
+        if (isUuid(q)) {
+            or.push({ id: q });
+        }
+
+        or.push({ order: { orderNumber: { contains: q, mode: 'insensitive' } } });
+
+        const [userIds, storeIds, orderIds] = await Promise.all([
+            resolveUserIds(this.prisma, q),
+            resolveStoreIds(this.prisma, q),
+            resolveOrderIds(this.prisma, q),
+        ]);
+
+        if (userIds.length) or.push({ customerId: { in: userIds } });
+        if (storeIds.length) or.push({ storeId: { in: storeIds } });
+        if (orderIds.length) or.push({ orderId: { in: orderIds } });
+
+        return { OR: or };
+    }
+
+    async getAdminCases(search?: string) {
+        const searchWhere = await this.buildCaseSearchWhere(search);
+
         const [returns, disputes] = await Promise.all([
             this.prisma.returnRequest.findMany({
+                where: searchWhere,
                 include: {
                     store: true,
                     order: { 
@@ -1163,6 +1212,7 @@ export class ReturnsService {
                 orderBy: { createdAt: 'desc' }
             }),
             this.prisma.dispute.findMany({
+                where: searchWhere as Prisma.DisputeWhereInput | undefined,
                 include: {
                     store: true,
                     order: { 

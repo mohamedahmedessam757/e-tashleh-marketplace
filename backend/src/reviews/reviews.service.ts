@@ -7,6 +7,15 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
+import { Prisma } from '@prisma/client';
+import {
+  isUuid,
+  mergeWhereWithSearch,
+  normalizeSearchQuery,
+  resolveOrderIds,
+  resolveStoreIds,
+  resolveUserIds,
+} from '../common/search/admin-entity-search.util';
 
 @Injectable()
 export class ReviewsService {
@@ -160,8 +169,30 @@ export class ReviewsService {
     return review;
   }
 
-  async findAllForAdmin() {
+  async findAllForAdmin(search?: string) {
+    let where: Prisma.ReviewWhereInput = {};
+    const q = normalizeSearchQuery(search);
+    if (q) {
+      const [userIds, storeIds, orderIds] = await Promise.all([
+        resolveUserIds(this.prisma, q),
+        resolveStoreIds(this.prisma, q),
+        resolveOrderIds(this.prisma, q),
+      ]);
+
+      const or: Prisma.ReviewWhereInput[] = [
+        { order: { orderNumber: { contains: q, mode: 'insensitive' } } },
+      ];
+
+      if (isUuid(q)) or.push({ id: q });
+      if (userIds.length) or.push({ customerId: { in: userIds } });
+      if (storeIds.length) or.push({ storeId: { in: storeIds } });
+      if (orderIds.length) or.push({ orderId: { in: orderIds } });
+
+      where = mergeWhereWithSearch(where, { OR: or });
+    }
+
     const reviews = await this.prisma.review.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         customer: { select: { id: true, name: true, email: true, avatar: true } },

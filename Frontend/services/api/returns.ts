@@ -65,7 +65,10 @@ export const returnsApi = {
     },
 
     // Admin
-    getAdminCases: () => client.get<MerchantResolutionResponse>('/returns/admin/cases'),
+    getAdminCases: (search?: string) =>
+        client.get<MerchantResolutionResponse>('/returns/admin/cases', {
+            params: search ? { search } : undefined,
+        }),
 
     issueVerdict: (id: string, type: 'return' | 'dispute', verdict: 'REFUND' | 'RELEASE_FUNDS' | 'DENY', notes: string, extra?: any) => 
         client.post(`/returns/${id}/verdict`, { type, verdict, notes, extra }),

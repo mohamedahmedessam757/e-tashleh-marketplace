@@ -64,7 +64,7 @@ interface AdminChatState {
     _hasLoadedOrder: boolean;
     _hasLoadedSupport: boolean;
 
-    fetchChats: (type?: string) => Promise<void>;
+    fetchChats: (type?: string, search?: string) => Promise<void>;
     fetchChatById: (id: string) => Promise<void>;
     adminAction: (chatId: string, action: string, payload?: any) => Promise<any>;
     sendMessage: (chatId: string, text: string, mediaUrl?: string, mediaType?: string, mediaName?: string) => Promise<void>;
@@ -156,18 +156,16 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
         set({ activeChat: null });
     },
 
-    fetchChats: async (type?: string) => {
+    fetchChats: async (type?: string, search?: string) => {
         const effectiveType = (type as 'order' | 'support') || 'order';
         const stateKey = effectiveType === 'support' ? 'supportChats' : 'orderChats';
         const loadedKey = effectiveType === 'support' ? '_hasLoadedSupport' : '_hasLoadedOrder';
         const hasLoaded = get()[loadedKey];
 
-        // CRITICAL FIX 1: When switching type, clear activeChat so old data doesn't leak
         if (get().currentType !== null && get().currentType !== effectiveType) {
             set({ activeChat: null });
         }
 
-        // CRITICAL FIX 2: Only show loading on the very first fetch per type, never on polls
         if (!hasLoaded) {
             set({ isLoading: true });
         }
@@ -178,7 +176,10 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
             const token = localStorage.getItem('access_token');
             const response = await axios.get(`${API_URL}/chats`, {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { type: effectiveType }
+                params: {
+                    type: effectiveType,
+                    ...(search?.trim() ? { search: search.trim() } : {}),
+                },
             });
             set({
                 [stateKey]: response.data,

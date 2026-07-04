@@ -24,8 +24,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('customers', 'view')
   @Get('admin/customers')
-  async getAllCustomers() {
-    return this.usersService.adminFindAllCustomers();
+  async getAllCustomers(@Query('search') search?: string) {
+    return this.usersService.adminFindAllCustomers(search);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)

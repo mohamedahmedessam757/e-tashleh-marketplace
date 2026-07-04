@@ -61,6 +61,14 @@ import {
 } from './financial-feed.util';
 import { buildOrderFinancialTimeline } from './order-financial-timeline.util';
 import { CardsService } from '../cards/cards.service';
+import {
+    normalizeSearchQuery,
+    normalizePhone,
+    resolveUserIds,
+    resolveStoreIds,
+    resolveOrderIds,
+    isUuid,
+} from '../common/search/admin-entity-search.util';
 
 @Injectable()
 export class PaymentsService {
@@ -2434,11 +2442,48 @@ export class PaymentsService {
             where.role = filters.role;
         }
         if (filters?.search) {
-            const search = filters.search;
-            where.OR = [
-                { user: { name: { contains: search, mode: 'insensitive' } } },
-                { store: { name: { contains: search, mode: 'insensitive' } } },
+            const q = normalizeSearchQuery(filters.search);
+            const [userIds, storeIds, orderIds] = await Promise.all([
+                resolveUserIds(this.prisma, q),
+                resolveStoreIds(this.prisma, q),
+                resolveOrderIds(this.prisma, q),
+            ]);
+
+            const or: Prisma.WithdrawalRequestWhereInput[] = [
+                { user: { name: { contains: q, mode: 'insensitive' } } },
+                { user: { email: { contains: q, mode: 'insensitive' } } },
+                { user: { phone: { contains: q, mode: 'insensitive' } } },
+                { store: { name: { contains: q, mode: 'insensitive' } } },
+                { store: { storeCode: { contains: q, mode: 'insensitive' } } },
             ];
+
+            const phoneNorm = normalizePhone(q);
+            if (phoneNorm && phoneNorm !== q) {
+                or.push({ user: { phone: { contains: phoneNorm, mode: 'insensitive' } } });
+            }
+
+            if (isUuid(q)) {
+                or.push({ id: q });
+                or.push({ userId: q });
+                or.push({ storeId: q });
+            }
+            if (userIds.length) or.push({ userId: { in: userIds } });
+            if (storeIds.length) or.push({ storeId: { in: storeIds } });
+
+            if (orderIds.length) {
+                const orders = await this.prisma.order.findMany({
+                    where: { id: { in: orderIds } },
+                    select: { customerId: true, storeId: true },
+                });
+                const customerIds = [...new Set(orders.map((o) => o.customerId))];
+                const orderStoreIds = [
+                    ...new Set(orders.map((o) => o.storeId).filter(Boolean)),
+                ] as string[];
+                if (customerIds.length) or.push({ userId: { in: customerIds } });
+                if (orderStoreIds.length) or.push({ storeId: { in: orderStoreIds } });
+            }
+
+            where.OR = or;
         }
 
         const requests = await this.prisma.withdrawalRequest.findMany({

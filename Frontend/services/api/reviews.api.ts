@@ -26,4 +26,7 @@ export const reviewsApi = {
 
   listImpactRules: () =>
     client.get('/reviews/impact-rules').then((r) => r.data),
+
+  listForAdmin: (params?: { search?: string }) =>
+    client.get('/reviews/admin', { params }).then((r) => r.data),
 };

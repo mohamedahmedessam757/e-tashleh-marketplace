@@ -19,9 +19,10 @@ export class ChatController {
     @Get()
     async getUserChats(
         @Request() req,
-        @Query('type') type?: string
+        @Query('type') type?: string,
+        @Query('search') search?: string,
     ) {
-        return this.chatService.getUserChats(req.user.id, req.user.role, type);
+        return this.chatService.getUserChats(req.user.id, req.user.role, type, search);
     }
 
     @Post('init')

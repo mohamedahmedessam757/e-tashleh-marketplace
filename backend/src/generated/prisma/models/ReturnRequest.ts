@@ -60,6 +60,7 @@ export type ReturnRequestMinAggregateOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string | null
+  caseReference: string | null
   reason: string | null
   description: string | null
   status: string | null
@@ -109,6 +110,7 @@ export type ReturnRequestMaxAggregateOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string | null
+  caseReference: string | null
   reason: string | null
   description: string | null
   status: string | null
@@ -158,6 +160,7 @@ export type ReturnRequestCountAggregateOutputType = {
   orderPartId: number
   offerId: number
   customerId: number
+  caseReference: number
   reason: number
   description: number
   status: number
@@ -240,6 +243,7 @@ export type ReturnRequestMinAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -289,6 +293,7 @@ export type ReturnRequestMaxAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -338,6 +343,7 @@ export type ReturnRequestCountAggregateInputType = {
   orderPartId?: true
   offerId?: true
   customerId?: true
+  caseReference?: true
   reason?: true
   description?: true
   status?: true
@@ -477,6 +483,7 @@ export type ReturnRequestGroupByOutputType = {
   orderPartId: string | null
   offerId: string | null
   customerId: string
+  caseReference: string | null
   reason: string
   description: string | null
   status: string
@@ -552,6 +559,7 @@ export type ReturnRequestWhereInput = {
   orderPartId?: Prisma.UuidNullableFilter<"ReturnRequest"> | string | null
   offerId?: Prisma.UuidNullableFilter<"ReturnRequest"> | string | null
   customerId?: Prisma.UuidFilter<"ReturnRequest"> | string
+  caseReference?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   reason?: Prisma.StringFilter<"ReturnRequest"> | string
   description?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   status?: Prisma.StringFilter<"ReturnRequest"> | string
@@ -608,6 +616,7 @@ export type ReturnRequestOrderByWithRelationInput = {
   orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   offerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -660,6 +669,7 @@ export type ReturnRequestOrderByWithRelationInput = {
 
 export type ReturnRequestWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  caseReference?: string
   AND?: Prisma.ReturnRequestWhereInput | Prisma.ReturnRequestWhereInput[]
   OR?: Prisma.ReturnRequestWhereInput[]
   NOT?: Prisma.ReturnRequestWhereInput | Prisma.ReturnRequestWhereInput[]
@@ -715,7 +725,7 @@ export type ReturnRequestWhereUniqueInput = Prisma.AtLeast<{
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   store?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   offer?: Prisma.XOR<Prisma.OfferNullableScalarRelationFilter, Prisma.OfferWhereInput> | null
-}, "id">
+}, "id" | "caseReference">
 
 export type ReturnRequestOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -723,6 +733,7 @@ export type ReturnRequestOrderByWithAggregationInput = {
   orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   offerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -783,6 +794,7 @@ export type ReturnRequestScalarWhereWithAggregatesInput = {
   orderPartId?: Prisma.UuidNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   offerId?: Prisma.UuidNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   customerId?: Prisma.UuidWithAggregatesFilter<"ReturnRequest"> | string
+  caseReference?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   reason?: Prisma.StringWithAggregatesFilter<"ReturnRequest"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"ReturnRequest"> | string
@@ -832,6 +844,7 @@ export type ReturnRequestScalarWhereWithAggregatesInput = {
 export type ReturnRequestCreateInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -887,6 +900,7 @@ export type ReturnRequestUncheckedCreateInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -936,6 +950,7 @@ export type ReturnRequestUncheckedCreateInput = {
 export type ReturnRequestUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -991,6 +1006,7 @@ export type ReturnRequestUncheckedUpdateInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1043,6 +1059,7 @@ export type ReturnRequestCreateManyInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1092,6 +1109,7 @@ export type ReturnRequestCreateManyInput = {
 export type ReturnRequestUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1143,6 +1161,7 @@ export type ReturnRequestUncheckedUpdateManyInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1205,6 +1224,7 @@ export type ReturnRequestCountOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1271,6 +1291,7 @@ export type ReturnRequestMaxOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1320,6 +1341,7 @@ export type ReturnRequestMinOrderByAggregateInput = {
   orderPartId?: Prisma.SortOrder
   offerId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  caseReference?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -1548,6 +1570,7 @@ export type ReturnRequestUncheckedUpdateManyWithoutOfferNestedInput = {
 export type ReturnRequestCreateWithoutCustomerInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1601,6 +1624,7 @@ export type ReturnRequestUncheckedCreateWithoutCustomerInput = {
   orderId: string
   orderPartId?: string | null
   offerId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1682,6 +1706,7 @@ export type ReturnRequestScalarWhereInput = {
   orderPartId?: Prisma.UuidNullableFilter<"ReturnRequest"> | string | null
   offerId?: Prisma.UuidNullableFilter<"ReturnRequest"> | string | null
   customerId?: Prisma.UuidFilter<"ReturnRequest"> | string
+  caseReference?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   reason?: Prisma.StringFilter<"ReturnRequest"> | string
   description?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   status?: Prisma.StringFilter<"ReturnRequest"> | string
@@ -1731,6 +1756,7 @@ export type ReturnRequestScalarWhereInput = {
 export type ReturnRequestCreateWithoutStoreInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1785,6 +1811,7 @@ export type ReturnRequestUncheckedCreateWithoutStoreInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1859,6 +1886,7 @@ export type ReturnRequestUpdateManyWithWhereWithoutStoreInput = {
 export type ReturnRequestCreateWithoutOrderInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1912,6 +1940,7 @@ export type ReturnRequestUncheckedCreateWithoutOrderInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -1987,6 +2016,7 @@ export type ReturnRequestUpdateManyWithWhereWithoutOrderInput = {
 export type ReturnRequestCreateWithoutOfferInput = {
   id?: string
   orderPartId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2040,6 +2070,7 @@ export type ReturnRequestUncheckedCreateWithoutOfferInput = {
   orderId: string
   orderPartId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2117,6 +2148,7 @@ export type ReturnRequestCreateManyCustomerInput = {
   orderId: string
   orderPartId?: string | null
   offerId?: string | null
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2166,6 +2198,7 @@ export type ReturnRequestCreateManyCustomerInput = {
 export type ReturnRequestUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2219,6 +2252,7 @@ export type ReturnRequestUncheckedUpdateWithoutCustomerInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2270,6 +2304,7 @@ export type ReturnRequestUncheckedUpdateManyWithoutCustomerInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2322,6 +2357,7 @@ export type ReturnRequestCreateManyStoreInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2370,6 +2406,7 @@ export type ReturnRequestCreateManyStoreInput = {
 export type ReturnRequestUpdateWithoutStoreInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2424,6 +2461,7 @@ export type ReturnRequestUncheckedUpdateWithoutStoreInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2475,6 +2513,7 @@ export type ReturnRequestUncheckedUpdateManyWithoutStoreInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2525,6 +2564,7 @@ export type ReturnRequestCreateManyOrderInput = {
   orderPartId?: string | null
   offerId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2574,6 +2614,7 @@ export type ReturnRequestCreateManyOrderInput = {
 export type ReturnRequestUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2627,6 +2668,7 @@ export type ReturnRequestUncheckedUpdateWithoutOrderInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2678,6 +2720,7 @@ export type ReturnRequestUncheckedUpdateManyWithoutOrderInput = {
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   offerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2729,6 +2772,7 @@ export type ReturnRequestCreateManyOfferInput = {
   orderId: string
   orderPartId?: string | null
   customerId: string
+  caseReference?: string | null
   reason: string
   description?: string | null
   status?: string
@@ -2778,6 +2822,7 @@ export type ReturnRequestCreateManyOfferInput = {
 export type ReturnRequestUpdateWithoutOfferInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2831,6 +2876,7 @@ export type ReturnRequestUncheckedUpdateWithoutOfferInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2882,6 +2928,7 @@ export type ReturnRequestUncheckedUpdateManyWithoutOfferInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseReference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2936,6 +2983,7 @@ export type ReturnRequestSelect<ExtArgs extends runtime.Types.Extensions.Interna
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -2992,6 +3040,7 @@ export type ReturnRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -3048,6 +3097,7 @@ export type ReturnRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -3104,6 +3154,7 @@ export type ReturnRequestSelectScalar = {
   orderPartId?: boolean
   offerId?: boolean
   customerId?: boolean
+  caseReference?: boolean
   reason?: boolean
   description?: boolean
   status?: boolean
@@ -3150,7 +3201,7 @@ export type ReturnRequestSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
+export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
 export type ReturnRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -3184,6 +3235,7 @@ export type $ReturnRequestPayload<ExtArgs extends runtime.Types.Extensions.Inter
     orderPartId: string | null
     offerId: string | null
     customerId: string
+    caseReference: string | null
     reason: string
     description: string | null
     status: string
@@ -3660,6 +3712,7 @@ export interface ReturnRequestFieldRefs {
   readonly orderPartId: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly offerId: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly customerId: Prisma.FieldRef<"ReturnRequest", 'String'>
+  readonly caseReference: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly reason: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly description: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly status: Prisma.FieldRef<"ReturnRequest", 'String'>
