@@ -73,7 +73,7 @@ interface MerchantWalletState {
     withdrawalRestrictionMessageEn?: string | null;
   };
   withdrawalRequests: any[];
-  withdrawalLimits: { min: number; max: number };
+  withdrawalLimits: { min: number; max: number; tier?: string; stripeConnectEnabled?: boolean; payoutMethods?: string[] };
   bankDetails: BankDetails | null;
   stripeConnectInfo: StripeConnectDisplay | null;
   transactions: Transaction[];
@@ -86,6 +86,7 @@ interface MerchantWalletState {
   fetchBankDetails: () => Promise<void>;
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
+  cancelWithdrawal: (requestId: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
   refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null }>;
 }
@@ -218,6 +219,18 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         return { success: true, message: 'Request submitted successfully' };
     } catch (error: any) {
         return { success: false, message: error.response?.data?.message || 'Failed to submit request' };
+    }
+  },
+
+  cancelWithdrawal: async (requestId) => {
+    try {
+        const { client } = await import('../services/api/client');
+        await client.post(`/payments/merchant/withdrawals/${requestId}/cancel`);
+        useMerchantWalletStore.getState().fetchWithdrawalData();
+        useMerchantWalletStore.getState().fetchWallet();
+        return { success: true, message: 'Request cancelled' };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Failed to cancel request' };
     }
   },
 

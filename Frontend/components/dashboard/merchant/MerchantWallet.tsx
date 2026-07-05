@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Wallet,
@@ -108,6 +108,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
         fetchBankDetails,
         saveBankDetails,
         requestWithdrawal,
+        cancelWithdrawal,
         getStripeOnboardingUrl,
         refreshStripeStatus,
         isLoading
@@ -161,8 +162,12 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const payoutMethodReady = isPayoutMethodReady(payoutMethod, payoutReadiness);
     const hasEnoughBalance =
         maxWithdrawable !== null && maxWithdrawable >= withdrawalLimits.min;
+    const activeWithdrawal = withdrawalRequests.some((r) =>
+        ['PENDING', 'PROCESSING'].includes(r.status),
+    );
+    const stripeConnectEnabled = withdrawalLimits.stripeConnectEnabled !== false;
     const canWithdraw =
-        !withdrawalsFrozen && hasEnoughBalance && payoutMethodReady;
+        !withdrawalsFrozen && hasEnoughBalance && payoutMethodReady && !activeWithdrawal;
 
     const currentUser = getCurrentUser();
 
@@ -940,12 +945,14 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                     >
                                         {isAr ? 'تحويل بنكي' : 'Bank Transfer'}
                                     </button>
+                                    {stripeConnectEnabled && (
                                     <button
                                         onClick={() => setPayoutMethod('STRIPE')}
                                         className={`px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${payoutMethod === 'STRIPE' ? 'bg-[#635BFF] text-white' : 'text-white/40'}`}
                                     >
                                         Stripe
                                     </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -1062,12 +1069,13 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                         <th className="px-4 py-3">{isAr ? 'الطريقة' : 'Method'}</th>
                                         <th className="px-4 py-3">{isAr ? 'تاريخ المراجعة' : 'Review Date'}</th>
                                         <th className="px-4 py-3">{isAr ? 'التاريخ' : 'Date'}</th>
+                                        <th className="px-4 py-3">{isAr ? 'إجراء' : 'Action'}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {withdrawalRequests.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="py-16 text-center">
+                                            <td colSpan={6} className="py-16 text-center">
                                                 <div className="flex flex-col items-center gap-3 opacity-20">
                                                     <ClipboardCheck size={28} />
                                                     <p className="text-[10px] font-black uppercase tracking-[3px]">{isAr ? 'لا يوجد سجل سحب' : 'No withdrawal records found'}</p>
@@ -1082,12 +1090,18 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                                     <span className="text-[9px] text-gold-500/50 ml-1">AED</span>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className={`inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase ${req.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                    <div className={`inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase ${
+                                                        req.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                        req.status === 'PROCESSING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                         req.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                        req.status === 'CANCELLED' ? 'bg-white/5 text-white/50 border-white/10' :
                                                             'bg-red-500/10 text-red-400 border-red-500/20'
                                                         }`}>
-                                                        <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${req.status === 'COMPLETED' ? 'bg-emerald-400' : req.status === 'PENDING' ? 'bg-amber-400 animate-pulse' : 'bg-red-400'}`} />
-                                                        {isAr ? (req.status === 'COMPLETED' ? 'تم التحويل' : req.status === 'PENDING' ? 'قيد المراجعة' : 'مرفوض') : req.status}
+                                                        {req.status === 'COMPLETED' ? (isAr ? 'مكتمل' : 'Completed') :
+                                                         req.status === 'PROCESSING' ? (isAr ? 'جارٍ التنفيذ' : 'Processing') :
+                                                         req.status === 'PENDING' ? (isAr ? 'بانتظار المراجعة' : 'Pending') :
+                                                         req.status === 'CANCELLED' ? (isAr ? 'ملغى' : 'Cancelled') :
+                                                         (isAr ? 'مرفوض' : 'Rejected')}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4">
@@ -1107,6 +1121,17 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                                 <td className="px-4 py-4">
                                                     <p className="text-[11px] font-bold text-white/80">{new Date(req.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}</p>
                                                     <p className="text-[8px] text-white/20 font-black uppercase">{new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    {req.status === 'PENDING' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => cancelWithdrawal(req.id)}
+                                                            className="text-[9px] font-black uppercase text-rose-400"
+                                                        >
+                                                            {isAr ? 'إلغاء' : 'Cancel'}
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))

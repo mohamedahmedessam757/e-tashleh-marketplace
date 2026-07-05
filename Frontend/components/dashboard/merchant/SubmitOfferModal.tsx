@@ -225,9 +225,8 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
     );
 
     useEffect(() => {
-        if (shipmentTypes.length > 0) return;
         fetchPublicConfig();
-    }, [shipmentTypes.length, fetchPublicConfig]);
+    }, [fetchPublicConfig]);
 
     // Initialize: auto-select single part or reset for multi-part
     // If existingOffers exist, pre-fill form data from them

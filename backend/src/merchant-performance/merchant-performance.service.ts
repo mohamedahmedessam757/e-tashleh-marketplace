@@ -7,6 +7,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { LoyaltyGateway } from '../loyalty/loyalty.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  FinancialConfigService,
+  StoreLoyaltyTierConfig,
+} from '../common/financial-config.service';
 
 const TIER_ORDER: Record<StoreLoyaltyTier, number> = {
   BASIC: 1,
@@ -16,54 +20,37 @@ const TIER_ORDER: Record<StoreLoyaltyTier, number> = {
   ELITE: 5,
 };
 
-const GOLD_MIN_COMPLETED_ORDERS = 10;
-const GOLD_MIN_ACCOUNT_AGE_DAYS = 30;
-const VIP_MIN_COMPLETED_ORDERS = 50;
-
 export type MerchantPerformanceBenefit = { ar: string; en: string };
+
+const STATIC_TIER_BENEFITS: Record<StoreLoyaltyTier, MerchantPerformanceBenefit[]> = {
+  BASIC: [{ ar: 'ظهور عادي وعدد عروض محدود', en: 'Standard visibility, limited offers' }],
+  SILVER: [{ ar: 'ظهور أفضل وزيادة في عدد العروض', en: 'Better visibility and more offers' }],
+  GOLD: [{ ar: 'أولوية الظهور وشارة موثوق', en: 'Search priority and trusted badge' }],
+  VIP: [
+    { ar: 'أعلى أولوية ظهور', en: 'Highest search priority' },
+    { ar: 'شارة خاصة وأولوية في الطلبات', en: 'Special badge and order priority' },
+    { ar: 'مدير حساب مميز', en: 'Dedicated account manager' },
+  ],
+  ELITE: [
+    { ar: 'أعلى مستوى — دعوة فقط', en: 'Top tier — invite only' },
+    { ar: 'مزايا VIP بالإضافة إلى دعم مخصص', en: 'All VIP benefits plus bespoke support' },
+  ],
+};
 
 @Injectable()
 export class MerchantPerformanceService {
   private readonly logger = new Logger(MerchantPerformanceService.name);
 
-  /** Wallet / commission alignment — keep in sync with payments.service tierConfig rates where needed */
+  /** Legacy accessor — rates come from financial config at runtime */
   readonly tierBenefits: Record<
     StoreLoyaltyTier,
     { rate: number; benefits: MerchantPerformanceBenefit[] }
   > = {
-    BASIC: {
-      rate: 0.02,
-      benefits: [
-        { ar: 'ظهور عادي وعدد عروض محدود', en: 'Standard visibility, limited offers' },
-      ],
-    },
-    SILVER: {
-      rate: 0.03,
-      benefits: [
-        { ar: 'ظهور أفضل وزيادة في عدد العروض', en: 'Better visibility and more offers' },
-      ],
-    },
-    GOLD: {
-      rate: 0.04,
-      benefits: [
-        { ar: 'أولوية الظهور وشارة موثوق', en: 'Search priority and trusted badge' },
-      ],
-    },
-    VIP: {
-      rate: 0.05,
-      benefits: [
-        { ar: 'أعلى أولوية ظهور', en: 'Highest search priority' },
-        { ar: 'شارة خاصة وأولوية في الطلبات', en: 'Special badge and order priority' },
-        { ar: 'مدير حساب مميز', en: 'Dedicated account manager' },
-      ],
-    },
-    ELITE: {
-      rate: 0.05,
-      benefits: [
-        { ar: 'أعلى مستوى — دعوة فقط', en: 'Top tier — invite only' },
-        { ar: 'مزايا VIP بالإضافة إلى دعم مخصص', en: 'All VIP benefits plus bespoke support' },
-      ],
-    },
+    BASIC: { rate: 0.02, benefits: STATIC_TIER_BENEFITS.BASIC },
+    SILVER: { rate: 0.03, benefits: STATIC_TIER_BENEFITS.SILVER },
+    GOLD: { rate: 0.04, benefits: STATIC_TIER_BENEFITS.GOLD },
+    VIP: { rate: 0.05, benefits: STATIC_TIER_BENEFITS.VIP },
+    ELITE: { rate: 0.05, benefits: STATIC_TIER_BENEFITS.ELITE },
   };
 
   constructor(
@@ -71,7 +58,24 @@ export class MerchantPerformanceService {
     @Inject(forwardRef(() => LoyaltyGateway))
     private readonly loyaltyGateway: LoyaltyGateway,
     private readonly notifications: NotificationsService,
+    private readonly financialConfig: FinancialConfigService,
   ) {}
+
+  private async getStoreTierRules(): Promise<Record<string, StoreLoyaltyTierConfig>> {
+    const config = await this.financialConfig.getConfig();
+    return config.storeLoyaltyTiers;
+  }
+
+  tierBenefitsFor(
+    tier: StoreLoyaltyTier,
+    rules: Record<string, StoreLoyaltyTierConfig>,
+  ): { rate: number; benefits: MerchantPerformanceBenefit[] } {
+    const rule = rules[tier] ?? rules.BASIC;
+    return {
+      rate: rule?.rate ?? 0.02,
+      benefits: STATIC_TIER_BENEFITS[tier] ?? STATIC_TIER_BENEFITS.BASIC,
+    };
+  }
 
   tierRank(tier: StoreLoyaltyTier): number {
     return TIER_ORDER[tier] ?? 1;
@@ -104,7 +108,8 @@ export class MerchantPerformanceService {
     return true;
   }
 
-  computeAutoTier(input: {
+  computeAutoTier(
+    input: {
     rating: number;
     violationPoints: number;
     subscriptionTier: StoreSubscriptionTier;
@@ -112,7 +117,9 @@ export class MerchantPerformanceService {
     subscriptionExpiresAt: Date | null;
     completedOrders: number;
     storeCreatedAt: Date;
-  }): StoreLoyaltyTier {
+  },
+    rules: Record<string, StoreLoyaltyTierConfig>,
+  ): StoreLoyaltyTier {
     const subOk = this.subscriptionEffective(
       input.subscriptionActive,
       input.subscriptionTier,
@@ -130,24 +137,28 @@ export class MerchantPerformanceService {
       input.subscriptionTier === StoreSubscriptionTier.STANDARD ||
       input.subscriptionTier === StoreSubscriptionTier.PREMIUM;
 
+    const vip = rules.VIP;
+    const gold = rules.GOLD;
+    const silver = rules.SILVER;
+
     if (
-      r >= 4.5 &&
-      v < 10 &&
+      r >= vip.minRating &&
+      v < vip.maxViolations &&
       input.subscriptionTier === StoreSubscriptionTier.PREMIUM &&
-      o >= VIP_MIN_COMPLETED_ORDERS
+      o >= vip.minOrders
     ) {
       return StoreLoyaltyTier.VIP;
     }
     if (
-      r >= 4.0 &&
-      v < 25 &&
+      r >= gold.minRating &&
+      v < gold.maxViolations &&
       isStdOrPrem &&
-      o >= GOLD_MIN_COMPLETED_ORDERS &&
-      ageDays >= GOLD_MIN_ACCOUNT_AGE_DAYS
+      o >= gold.minOrders &&
+      ageDays >= gold.minAgeDays
     ) {
       return StoreLoyaltyTier.GOLD;
     }
-    if (r >= 3.5 && v < 40 && isStdOrPrem) {
+    if (r >= silver.minRating && v < silver.maxViolations && isStdOrPrem) {
       return StoreLoyaltyTier.SILVER;
     }
     return StoreLoyaltyTier.BASIC;
@@ -183,6 +194,7 @@ export class MerchantPerformanceService {
       return null;
     }
 
+    const rules = await this.getStoreTierRules();
     const preserveElite = store.loyaltyTier === StoreLoyaltyTier.ELITE;
     const autoTier = this.computeAutoTier({
       rating: Number(store.rating),
@@ -192,7 +204,7 @@ export class MerchantPerformanceService {
       subscriptionExpiresAt: store.subscriptionExpiresAt,
       completedOrders: store.completedOrdersCount,
       storeCreatedAt: store.createdAt,
-    });
+    }, rules);
 
     const nextTier = preserveElite ? StoreLoyaltyTier.ELITE : autoTier;
     const rankingScore = this.computeRankingScore(
@@ -274,6 +286,7 @@ export class MerchantPerformanceService {
       store.subscriptionExpiresAt,
     );
 
+    const rules = await this.getStoreTierRules();
     const autoTier = this.computeAutoTier({
       rating: Number(store.rating),
       violationPoints: store.owner.violationScore,
@@ -282,7 +295,7 @@ export class MerchantPerformanceService {
       subscriptionExpiresAt: store.subscriptionExpiresAt,
       completedOrders: store.completedOrdersCount,
       storeCreatedAt: store.createdAt,
-    });
+    }, rules);
 
     const nextTierUp = this.nextTier(store.loyaltyTier);
     const progress = this.buildProgressSnapshot({
@@ -294,16 +307,24 @@ export class MerchantPerformanceService {
       storeCreatedAt: store.createdAt,
       subscriptionTier: store.subscriptionTier,
       subscriptionEffective: subEffective,
-    });
+    }, rules);
 
-    const tierRow = this.tierBenefits[store.loyaltyTier];
+    const tierRow = this.tierBenefitsFor(store.loyaltyTier, rules);
     const benefitsTable = (
       ['BASIC', 'SILVER', 'GOLD', 'VIP', 'ELITE'] as StoreLoyaltyTier[]
-    ).map((tier) => ({
-      tier,
-      benefits: this.tierBenefits[tier].benefits,
-      rate: this.tierBenefits[tier].rate,
-    }));
+    ).map((tier) => {
+      const row = this.tierBenefitsFor(tier, rules);
+      return {
+        tier,
+        benefits: row.benefits,
+        rate: row.rate,
+        pointsRequired: rules[tier]?.pointsRequired ?? 0,
+      };
+    });
+
+    const silver = rules.SILVER;
+    const gold = rules.GOLD;
+    const vip = rules.VIP;
 
     return {
       storeId: store.id,
@@ -334,21 +355,29 @@ export class MerchantPerformanceService {
       currentTierBenefits: tierRow.benefits,
       profitRate: tierRow.rate,
       benefitsByTier: benefitsTable,
+      storeLoyaltyTiers: rules,
       progressToNext: progress,
       thresholds: {
-        silver: { minRating: 3.5, maxViolationPoints: 39, needsPaidSubscription: true },
+        silver: {
+          minRating: silver.minRating,
+          maxViolationPoints: silver.maxViolations - 1,
+          needsPaidSubscription: true,
+          pointsRequired: silver.pointsRequired,
+        },
         gold: {
-          minRating: 4.0,
-          maxViolationPoints: 24,
-          minCompletedOrders: GOLD_MIN_COMPLETED_ORDERS,
-          minAccountAgeDays: GOLD_MIN_ACCOUNT_AGE_DAYS,
+          minRating: gold.minRating,
+          maxViolationPoints: gold.maxViolations - 1,
+          minCompletedOrders: gold.minOrders,
+          minAccountAgeDays: gold.minAgeDays,
           minSubscriptionTier: StoreSubscriptionTier.STANDARD,
+          pointsRequired: gold.pointsRequired,
         },
         vip: {
-          minRating: 4.5,
-          maxViolationPoints: 9,
-          minCompletedOrders: VIP_MIN_COMPLETED_ORDERS,
+          minRating: vip.minRating,
+          maxViolationPoints: vip.maxViolations - 1,
+          minCompletedOrders: vip.minOrders,
           minSubscriptionTier: StoreSubscriptionTier.PREMIUM,
+          pointsRequired: vip.pointsRequired,
         },
       },
     };
@@ -382,7 +411,8 @@ export class MerchantPerformanceService {
     return Math.round(raw * 100);
   }
 
-  private buildProgressSnapshot(p: {
+  private buildProgressSnapshot(
+    p: {
     currentTier: StoreLoyaltyTier;
     nextTier: StoreLoyaltyTier | null;
     rating: number;
@@ -391,7 +421,13 @@ export class MerchantPerformanceService {
     storeCreatedAt: Date;
     subscriptionTier: StoreSubscriptionTier;
     subscriptionEffective: boolean;
-  }) {
+  },
+    rules: Record<string, StoreLoyaltyTierConfig>,
+  ) {
+    const silver = rules.SILVER;
+    const gold = rules.GOLD;
+    const vip = rules.VIP;
+
     if (!p.nextTier) {
       return {
         nextTier: null,
@@ -418,14 +454,14 @@ export class MerchantPerformanceService {
     if (noActivity) {
       remaining.ratingGap =
         p.nextTier === StoreLoyaltyTier.SILVER
-          ? Math.max(0, 3.5 - p.rating)
+          ? Math.max(0, silver.minRating - p.rating)
           : p.nextTier === StoreLoyaltyTier.GOLD
-            ? Math.max(0, 4.0 - p.rating)
-            : Math.max(0, 4.5 - p.rating);
+            ? Math.max(0, gold.minRating - p.rating)
+            : Math.max(0, vip.minRating - p.rating);
       if (p.nextTier === StoreLoyaltyTier.GOLD) {
-        remaining.ordersToGold = GOLD_MIN_COMPLETED_ORDERS;
+        remaining.ordersToGold = gold.minOrders;
       } else if (p.nextTier === StoreLoyaltyTier.VIP) {
-        remaining.ordersToVip = VIP_MIN_COMPLETED_ORDERS;
+        remaining.ordersToVip = vip.minOrders;
       }
       return {
         nextTier: p.nextTier,
@@ -439,7 +475,7 @@ export class MerchantPerformanceService {
     let percent = 0;
 
     if (p.nextTier === StoreLoyaltyTier.SILVER) {
-      if (p.violationPoints >= 40) {
+      if (p.violationPoints >= silver.maxViolations) {
         return {
           nextTier: p.nextTier,
           percent: 0,
@@ -448,14 +484,14 @@ export class MerchantPerformanceService {
           remaining: { violationHeadroom: 0 },
         };
       }
-      remaining.ratingGap = Math.max(0, 3.5 - p.rating);
-      remaining.violationHeadroom = Math.max(0, 40 - p.violationPoints);
+      remaining.ratingGap = Math.max(0, silver.minRating - p.rating);
+      remaining.violationHeadroom = Math.max(0, silver.maxViolations - p.violationPoints);
       percent = this.weightedPercent([
-        { ratio: this.ratioToward(p.rating, 3.5), weight: 65 },
+        { ratio: this.ratioToward(p.rating, silver.minRating), weight: 65 },
         { ratio: p.subscriptionEffective ? 1 : 0, weight: 35 },
       ]);
     } else if (p.nextTier === StoreLoyaltyTier.GOLD) {
-      if (p.violationPoints >= 25) {
+      if (p.violationPoints >= gold.maxViolations) {
         return {
           nextTier: p.nextTier,
           percent: 0,
@@ -469,18 +505,18 @@ export class MerchantPerformanceService {
       const hasPaidSub =
         p.subscriptionTier === StoreSubscriptionTier.STANDARD ||
         p.subscriptionTier === StoreSubscriptionTier.PREMIUM;
-      remaining.ordersToGold = Math.max(0, GOLD_MIN_COMPLETED_ORDERS - p.completedOrders);
-      remaining.daysToGoldAge = Math.max(0, GOLD_MIN_ACCOUNT_AGE_DAYS - ageDays);
-      remaining.ratingGap = Math.max(0, 4.0 - p.rating);
+      remaining.ordersToGold = Math.max(0, gold.minOrders - p.completedOrders);
+      remaining.daysToGoldAge = Math.max(0, gold.minAgeDays - ageDays);
+      remaining.ratingGap = Math.max(0, gold.minRating - p.rating);
       percent = this.weightedPercent([
-        { ratio: this.ratioToward(p.rating, 4.0), weight: 25 },
-        { ratio: this.ratioToward(p.completedOrders, GOLD_MIN_COMPLETED_ORDERS), weight: 25 },
-        { ratio: this.ratioToward(ageDays, GOLD_MIN_ACCOUNT_AGE_DAYS), weight: 15 },
+        { ratio: this.ratioToward(p.rating, gold.minRating), weight: 25 },
+        { ratio: this.ratioToward(p.completedOrders, gold.minOrders), weight: 25 },
+        { ratio: this.ratioToward(ageDays, gold.minAgeDays), weight: 15 },
         { ratio: hasPaidSub ? 1 : 0, weight: 17.5 },
         { ratio: p.subscriptionEffective ? 1 : 0, weight: 17.5 },
       ]);
     } else if (p.nextTier === StoreLoyaltyTier.VIP) {
-      if (p.violationPoints >= 10) {
+      if (p.violationPoints >= vip.maxViolations) {
         return {
           nextTier: p.nextTier,
           percent: 0,
@@ -489,11 +525,11 @@ export class MerchantPerformanceService {
           remaining: { violationHeadroom: 0 },
         };
       }
-      remaining.ordersToVip = Math.max(0, VIP_MIN_COMPLETED_ORDERS - p.completedOrders);
-      remaining.ratingGap = Math.max(0, 4.5 - p.rating);
+      remaining.ordersToVip = Math.max(0, vip.minOrders - p.completedOrders);
+      remaining.ratingGap = Math.max(0, vip.minRating - p.rating);
       percent = this.weightedPercent([
-        { ratio: this.ratioToward(p.rating, 4.5), weight: 35 },
-        { ratio: this.ratioToward(p.completedOrders, VIP_MIN_COMPLETED_ORDERS), weight: 35 },
+        { ratio: this.ratioToward(p.rating, vip.minRating), weight: 35 },
+        { ratio: this.ratioToward(p.completedOrders, vip.minOrders), weight: 35 },
         { ratio: p.subscriptionTier === StoreSubscriptionTier.PREMIUM ? 1 : 0, weight: 15 },
         { ratio: p.subscriptionEffective ? 1 : 0, weight: 15 },
       ]);

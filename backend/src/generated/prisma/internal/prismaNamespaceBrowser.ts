@@ -107,7 +107,9 @@ export const ModelName = {
   VerificationTask: 'VerificationTask',
   VerificationTaskPhoto: 'VerificationTaskPhoto',
   VerificationLink: 'VerificationLink',
-  VerificationActivityLog: 'VerificationActivityLog'
+  VerificationActivityLog: 'VerificationActivityLog',
+  FinancialSettlement: 'FinancialSettlement',
+  FinancialAdjustment: 'FinancialAdjustment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -215,6 +217,7 @@ export const UserScalarFieldEnum = {
   stripeOnboarded: 'stripeOnboarded',
   stripeCustomerId: 'stripeCustomerId',
   customerBalance: 'customerBalance',
+  customerFrozenBalance: 'customerFrozenBalance',
   loyaltyTier: 'loyaltyTier',
   pointsLastResetAt: 'pointsLastResetAt',
   totalSpent: 'totalSpent',
@@ -786,6 +789,8 @@ export const PaymentTransactionScalarFieldEnum = {
   commission: 'commission',
   totalAmount: 'totalAmount',
   currency: 'currency',
+  displayCurrency: 'displayCurrency',
+  fxRate: 'fxRate',
   cardLast4: 'cardLast4',
   cardBrand: 'cardBrand',
   cardHolder: 'cardHolder',
@@ -1064,6 +1069,18 @@ export const WithdrawalRequestScalarFieldEnum = {
   payoutMethod: 'payoutMethod',
   stripeTransferId: 'stripeTransferId',
   adminNotes: 'adminNotes',
+  rejectionReason: 'rejectionReason',
+  processedBy: 'processedBy',
+  adminSignature: 'adminSignature',
+  approvedAt: 'approvedAt',
+  completedAt: 'completedAt',
+  cancelledAt: 'cancelledAt',
+  cancelledBy: 'cancelledBy',
+  transferCompletedAt: 'transferCompletedAt',
+  ibanSnapshot: 'ibanSnapshot',
+  stripeAccountSnapshot: 'stripeAccountSnapshot',
+  stripeIdempotencyKey: 'stripeIdempotencyKey',
+  balanceHeldAtRequest: 'balanceHeldAtRequest',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1369,6 +1386,41 @@ export const VerificationActivityLogScalarFieldEnum = {
 } as const
 
 export type VerificationActivityLogScalarFieldEnum = (typeof VerificationActivityLogScalarFieldEnum)[keyof typeof VerificationActivityLogScalarFieldEnum]
+
+
+export const FinancialSettlementScalarFieldEnum = {
+  id: 'id',
+  stripeBalance: 'stripeBalance',
+  escrowHeld: 'escrowHeld',
+  transferableAmount: 'transferableAmount',
+  transferredAmount: 'transferredAmount',
+  reconciliationDelta: 'reconciliationDelta',
+  dbSnapshot: 'dbSnapshot',
+  runById: 'runById',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type FinancialSettlementScalarFieldEnum = (typeof FinancialSettlementScalarFieldEnum)[keyof typeof FinancialSettlementScalarFieldEnum]
+
+
+export const FinancialAdjustmentScalarFieldEnum = {
+  id: 'id',
+  adjustmentNumber: 'adjustmentNumber',
+  invoiceId: 'invoiceId',
+  orderId: 'orderId',
+  targetUserId: 'targetUserId',
+  targetStoreId: 'targetStoreId',
+  type: 'type',
+  amount: 'amount',
+  currency: 'currency',
+  reason: 'reason',
+  createdById: 'createdById',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type FinancialAdjustmentScalarFieldEnum = (typeof FinancialAdjustmentScalarFieldEnum)[keyof typeof FinancialAdjustmentScalarFieldEnum]
 
 
 export const SortOrder = {

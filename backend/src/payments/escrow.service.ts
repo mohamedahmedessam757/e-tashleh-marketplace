@@ -759,9 +759,11 @@ export class EscrowService {
             }
 
             try {
+                const refundIdempotencyKey = `refund_${payment.id}_${amountToRefund.toFixed(2)}`;
                 refundResponse = await this.stripeService.createRefund(
                     payment.stripePaymentId!,
                     amountToRefund.toFixed(2),
+                    refundIdempotencyKey,
                 );
             } catch (err: any) {
                 throw new BadRequestException(

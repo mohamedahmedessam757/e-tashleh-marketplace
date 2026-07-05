@@ -253,7 +253,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { id: 'resolution', icon: Scale, label: t.admin.disputes, allowed: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] }, // Support View Only
 
     // Billing & Audit
-    { id: 'billing', icon: BadgeDollarSign, label: t.admin.billing.title, allowed: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'billing', icon: BadgeDollarSign, label: t.admin.billing.title, allowed: ['SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT'] },
+    { id: 'invoices', icon: Receipt, label: (t.admin as any).invoicesHub?.title || (language === 'ar' ? 'الفوترة' : 'Billing'), allowed: ['SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT'] },
     { id: 'audit-logs', icon: Database, label: t.admin.auditLogs, allowed: ['SUPER_ADMIN', 'ADMIN'] },
     { id: 'security-audit', icon: ShieldCheck, label: t.admin.security.title, allowed: ['SUPER_ADMIN'] },
 

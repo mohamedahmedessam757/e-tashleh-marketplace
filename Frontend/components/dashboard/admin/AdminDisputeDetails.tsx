@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { API_URL } from '../../../services/api/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, 
@@ -76,7 +77,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const [shippingRefund, setShippingRefund] = useState<number>(0);
     
     // 2026 Phase 5: Financial Adjudication States
-    const [gatewayFeePct, setGatewayFeePct] = useState<number>(3.00);
+    const [gatewayFeePct, setGatewayFeePct] = useState<number>(2.9);
     const [refundFeePct, setRefundFeePct] = useState<number>(1.50);
     const [shippingRoundtrip, setShippingRoundtrip] = useState<number>(0);
     const [penaltyType, setPenaltyType] = useState<'FRAUD' | 'NEGLIGENCE' | null>(null);
@@ -87,6 +88,25 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
 
     const dispute = getCaseById(caseId);
     const order = dispute ? getOrder(String(dispute.orderId)) : undefined;
+
+    useEffect(() => {
+        const loadGatewayFee = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const pct = Number(data.financial?.gatewayFeePercent);
+                    if (Number.isFinite(pct) && pct >= 0) setGatewayFeePct(pct);
+                }
+            } catch {
+                /* keep default */
+            }
+        };
+        loadGatewayFee();
+    }, []);
 
     const isAr = language === 'ar';
     const NextIcon = isAr ? ChevronLeft : ChevronRight;

@@ -19,7 +19,7 @@ let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleDebouncedFeedRefresh(
   getState: () => Pick<AdminState, 'fetchFinancialFeed' | 'clearNewEventsCount'>,
   silent = true,
-  delayMs = 700,
+  delayMs = 1500,
 ) {
   if (feedRefreshDebounceTimer) clearTimeout(feedRefreshDebounceTimer);
   feedRefreshDebounceTimer = setTimeout(() => {
@@ -278,7 +278,24 @@ export interface UnifiedFinancialEvent {
   createdAt: string;
   updatedAt?: string;
   isNew?: boolean;
+  executor?: string;
+  executorName?: string;
+  debit?: number;
+  credit?: number;
 }
+
+export type AdminFinancialReportId =
+  | 'sales-summary'
+  | 'commission-summary'
+  | 'gateway-fees'
+  | 'shipping-collected'
+  | 'refunds-summary'
+  | 'withdrawals-summary'
+  | 'escrow-holdings'
+  | 'seller-balances'
+  | 'customer-balances'
+  | 'penalties-summary'
+  | 'platform-reconciliation';
 
 export interface VehicleModel {
   id: string;
@@ -359,6 +376,10 @@ export interface AdminState {
   // Withdrawal Management
   fetchWithdrawals: (silent?: boolean) => Promise<void>;
   processWithdrawal: (id: string, action: 'approve' | 'reject', notes?: string, method?: string, signature?: string, adminName?: string, adminEmail?: string) => Promise<{ success: boolean; message: string }>;
+  approveWithdrawal: (id: string, notes?: string, adminName?: string, adminEmail?: string) => Promise<{ success: boolean; message: string }>;
+  rejectWithdrawal: (id: string, notes: string, signature: string, adminName?: string, adminEmail?: string) => Promise<{ success: boolean; message: string }>;
+  completeWithdrawal: (id: string, notes: string, signature: string, adminName?: string, adminEmail?: string) => Promise<{ success: boolean; message: string }>;
+  releaseWithdrawal: (id: string, notes: string, signature: string, adminName?: string, adminEmail?: string) => Promise<{ success: boolean; message: string }>;
   verifyBankDetails: (targetId: string, role: 'CUSTOMER' | 'VENDOR') => Promise<{ success: boolean }>;
   fetchWithdrawalLimits: () => Promise<void>;
   updateWithdrawalLimits: (limits: WithdrawalLimits) => Promise<boolean>;
@@ -421,6 +442,42 @@ export interface AdminState {
   financialSubscription: any;
   subscribeToFinancials: () => void;
   unsubscribeFromFinancials: () => void;
+
+  adminCustomerInvoices: any[];
+  adminStoreInvoices: any[];
+  adminCustomerInvoicesMeta: { page: number; totalPages: number; total: number } | null;
+  adminStoreInvoicesMeta: { page: number; totalPages: number; total: number } | null;
+  sellerAccounts: any[];
+  customerAccounts: any[];
+  financialRefunds: any[];
+  settlementSummary: any | null;
+  settlementHistory: any[];
+  financialPenalties: any[];
+  financialAuditLogs: any[];
+  financialReportData: any | null;
+  isLoadingCustomerInvoices: boolean;
+  isLoadingStoreInvoices: boolean;
+  isLoadingSellerAccounts: boolean;
+  isLoadingCustomerAccounts: boolean;
+  isLoadingFinancialRefunds: boolean;
+  isLoadingSettlement: boolean;
+  isLoadingFinancialPenalties: boolean;
+  isLoadingFinancialAudit: boolean;
+  isLoadingFinancialReport: boolean;
+  fetchAdminCustomerInvoices: (params?: { search?: string; status?: string; page?: number; entityType?: string }) => Promise<void>;
+  fetchAdminStoreInvoices: (params?: { search?: string; page?: number; entityType?: string }) => Promise<void>;
+  fetchSellerAccounts: (search?: string) => Promise<void>;
+  fetchCustomerAccounts: (search?: string) => Promise<void>;
+  fetchFinancialRefunds: (search?: string) => Promise<void>;
+  fetchSettlementSummary: () => Promise<void>;
+  runFinancialSettlement: (payload: { reason: string; adminName: string; adminSignature: string; notes?: string }) => Promise<{ success: boolean; message?: string }>;
+  fetchSettlementHistory: () => Promise<void>;
+  fetchFinancialPenalties: (search?: string) => Promise<void>;
+  fetchFinancialAudit: (params?: { search?: string; page?: number }) => Promise<void>;
+  fetchFinancialReport: (reportId: AdminFinancialReportId, params?: Record<string, string>) => Promise<void>;
+  exportFinancialReport: (reportId: AdminFinancialReportId, format: 'csv' | 'pdf' | 'xlsx', params?: Record<string, string>) => Promise<void>;
+  fetchAdminInvoiceById: (id: string) => Promise<any | null>;
+  resendAdminInvoice: (id: string) => Promise<{ success: boolean; message?: string }>;
   
   // Backward compatibility / UI state
   loginAdmin: (user: AdminUser, permissions?: any) => void;
@@ -512,6 +569,27 @@ export const useAdminStore = create<AdminState>()(
 
       adminFinancials: null,
       isLoadingFinancials: false,
+      adminCustomerInvoices: [],
+      adminStoreInvoices: [],
+      adminCustomerInvoicesMeta: null,
+      adminStoreInvoicesMeta: null,
+      sellerAccounts: [],
+      customerAccounts: [],
+      financialRefunds: [],
+      settlementSummary: null,
+      settlementHistory: [],
+      financialPenalties: [],
+      financialAuditLogs: [],
+      financialReportData: null,
+      isLoadingCustomerInvoices: false,
+      isLoadingStoreInvoices: false,
+      isLoadingSellerAccounts: false,
+      isLoadingCustomerAccounts: false,
+      isLoadingFinancialRefunds: false,
+      isLoadingSettlement: false,
+      isLoadingFinancialPenalties: false,
+      isLoadingFinancialAudit: false,
+      isLoadingFinancialReport: false,
 
       // Unified Financial Feed Initial State
       financialFeed: [],
@@ -1088,16 +1166,17 @@ export const useAdminStore = create<AdminState>()(
       processWithdrawal: async (id, action, notes, method, signature, adminName, adminEmail) => {
         try {
           const token = localStorage.getItem('access_token');
-          const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/process`, {
+          const endpoint = action === 'reject'
+            ? `${API_URL}/payments/admin/withdrawals/${id}/reject`
+            : `${API_URL}/payments/admin/withdrawals/${id}/approve`;
+          const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify({ 
-              action: action.toUpperCase(), 
               notes,
-              method,
               adminSignature: signature,
               adminName,
               adminEmail
@@ -1111,6 +1190,94 @@ export const useAdminStore = create<AdminState>()(
           }
           return { success: false, message: result.message || 'Processing failed' };
         } catch (error) {
+          return { success: false, message: 'An unexpected error occurred' };
+        }
+      },
+
+      approveWithdrawal: async (id, notes, adminName, adminEmail) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ notes, adminName, adminEmail }),
+          });
+          const result = await res.json();
+          if (res.ok) {
+            get().fetchWithdrawals();
+            return { success: true, message: result.message || 'Approved' };
+          }
+          return { success: false, message: result.message || 'Approval failed' };
+        } catch {
+          return { success: false, message: 'An unexpected error occurred' };
+        }
+      },
+
+      rejectWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ notes, adminSignature: signature, adminName, adminEmail }),
+          });
+          const result = await res.json();
+          if (res.ok) {
+            get().fetchWithdrawals();
+            return { success: true, message: result.message || 'Rejected' };
+          }
+          return { success: false, message: result.message || 'Rejection failed' };
+        } catch {
+          return { success: false, message: 'An unexpected error occurred' };
+        }
+      },
+
+      completeWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              notes,
+              adminSignature: signature,
+              adminName,
+              adminEmail,
+              idempotencyKey: `complete_${id}_${Date.now()}`,
+            }),
+          });
+          const result = await res.json();
+          if (res.ok) {
+            get().fetchWithdrawals();
+            return { success: true, message: result.message || 'Completed' };
+          }
+          return { success: false, message: result.message || 'Completion failed' };
+        } catch {
+          return { success: false, message: 'An unexpected error occurred' };
+        }
+      },
+
+      releaseWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/release`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              notes,
+              adminSignature: signature,
+              adminName,
+              adminEmail,
+              idempotencyKey: `release_${id}_${Date.now()}`,
+            }),
+          });
+          const result = await res.json();
+          if (res.ok) {
+            get().fetchWithdrawals();
+            return { success: true, message: result.message || 'Released' };
+          }
+          return { success: false, message: result.message || 'Release failed' };
+        } catch {
           return { success: false, message: 'An unexpected error occurred' };
         }
       },
@@ -1352,57 +1519,17 @@ export const useAdminStore = create<AdminState>()(
       subscribeToFinancialFeed: () => {
         if (get().financialFeedSubscription) return;
 
-        const bumpNewEvents = () => {
-          set({ newEventsCount: get().newEventsCount + 1 });
-        };
-
         const scheduleFeedRefresh = () => {
-          scheduleDebouncedFeedRefresh(get, true);
+          scheduleDebouncedFeedRefresh(get, true, 1500);
         };
 
         const channel = supabase.channel('admin-financial-feed')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_transactions' }, (payload) => {
-            scheduleFeedRefresh();
-            bumpNewEvents();
-            get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT', amount: (payload.new as any).total_amount, status: (payload.new as any).status });
-          })
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payment_transactions' }, (payload) => {
-            const newStatus = (payload.new as any).status;
-            const oldStatus = (payload.old as any)?.status;
-            if (
-              (newStatus === 'SUCCESS' && oldStatus !== 'SUCCESS') ||
-              (newStatus === 'FAILED' && oldStatus !== 'FAILED') ||
-              (newStatus === 'REFUNDED' && oldStatus !== 'REFUNDED')
-            ) {
-              scheduleFeedRefresh();
-              bumpNewEvents();
-              if (newStatus === 'SUCCESS') {
-                get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT_SUCCESS', amount: (payload.new as any).total_amount });
-              } else if (newStatus === 'FAILED') {
-                get().addFinancialToast({ id: Date.now().toString(), type: 'PAYMENT', amount: (payload.new as any).total_amount, status: 'FAILED' });
-              }
-            }
-          })
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wallet_transactions' }, (payload) => {
-            scheduleFeedRefresh();
-            bumpNewEvents();
-            get().addFinancialToast({ id: Date.now().toString(), type: 'WALLET', amount: (payload.new as any).amount, txnType: (payload.new as any).transactionType });
-          })
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_transactions' }, scheduleFeedRefresh)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payment_transactions' }, scheduleFeedRefresh)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wallet_transactions' }, scheduleFeedRefresh)
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'wallet_transactions' }, scheduleFeedRefresh)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'escrow_transactions' }, (payload) => {
-            scheduleFeedRefresh();
-            if (payload.eventType === 'INSERT' || ((payload.new as any).status !== (payload.old as any)?.status)) {
-              bumpNewEvents();
-              get().addFinancialToast({ id: Date.now().toString(), type: 'ESCROW', amount: (payload.new as any).merchantAmount, status: (payload.new as any).status });
-            }
-          })
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawal_requests' }, (payload) => {
-            scheduleFeedRefresh();
-            if (payload.eventType === 'INSERT') {
-              bumpNewEvents();
-              get().addFinancialToast({ id: Date.now().toString(), type: 'WITHDRAWAL', amount: (payload.new as any).amount, status: (payload.new as any).status });
-            }
-          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'escrow_transactions' }, scheduleFeedRefresh)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawal_requests' }, scheduleFeedRefresh)
           .subscribe();
 
         set({ financialFeedSubscription: channel });
@@ -1482,14 +1609,7 @@ export const useAdminStore = create<AdminState>()(
 
           if (res.ok) {
             const { data, hasMore, nextCursor } = await res.json();
-
-            const seenIds = JSON.parse(sessionStorage.getItem('seen_financial_ids') || '[]');
-            const enrichedData = data.map((item: UnifiedFinancialEvent) => ({
-              ...item,
-              isNew: !seenIds.includes(item.id),
-            }));
-
-            const newFeed = reset ? enrichedData : [...financialFeed, ...enrichedData];
+            const newFeed = reset ? data : [...financialFeed, ...data];
 
             set({
               financialFeed: newFeed,
@@ -1506,23 +1626,8 @@ export const useAdminStore = create<AdminState>()(
         }
       },
 
-      markFeedItemAsSeen: (id: string) => {
-        const feed = get().financialFeed;
-        const item = feed.find((i) => i.id === id);
-        if (!item?.isNew) return;
-
-        const seenIds = JSON.parse(sessionStorage.getItem('seen_financial_ids') || '[]');
-        if (!seenIds.includes(id)) {
-          seenIds.push(id);
-          if (seenIds.length > 200) seenIds.shift();
-          sessionStorage.setItem('seen_financial_ids', JSON.stringify(seenIds));
-        }
-
-        set({
-          financialFeed: feed.map((row) =>
-            row.id === id ? { ...row, isNew: false } : row,
-          ),
-        });
+      markFeedItemAsSeen: (_id: string) => {
+        /* no-op: row highlight removed for performance */
       },
 
       fetchOrderTimeline: async (orderId: string, silent = false) => {
@@ -1726,6 +1831,304 @@ export const useAdminStore = create<AdminState>()(
           set({ financialSubscription: null });
         }
         clearFinancialRefreshTimers();
+      },
+
+      fetchAdminCustomerInvoices: async (params) => {
+        set({ isLoadingCustomerInvoices: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const query = new URLSearchParams();
+          if (params?.search) query.set('search', params.search);
+          if (params?.entityType) query.set('entityType', params.entityType);
+          if (params?.status) query.set('status', params.status);
+          if (params?.page) query.set('page', String(params.page));
+          query.set('limit', '50');
+          const res = await fetch(`${API_URL}/invoices/admin/customers?${query}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({
+              adminCustomerInvoices: Array.isArray(data) ? data : data.items ?? data.data ?? [],
+              adminCustomerInvoicesMeta: data.meta ?? null,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to fetch admin customer invoices', error);
+        } finally {
+          set({ isLoadingCustomerInvoices: false });
+        }
+      },
+
+      fetchAdminStoreInvoices: async (params) => {
+        set({ isLoadingStoreInvoices: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const query = new URLSearchParams();
+          if (params?.search) query.set('search', params.search);
+          if (params?.entityType) query.set('entityType', params.entityType);
+          if (params?.page) query.set('page', String(params.page));
+          query.set('limit', '50');
+          const res = await fetch(`${API_URL}/invoices/admin/stores?${query}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({
+              adminStoreInvoices: Array.isArray(data) ? data : data.items ?? data.data ?? [],
+              adminStoreInvoicesMeta: data.meta ?? null,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to fetch admin store invoices', error);
+        } finally {
+          set({ isLoadingStoreInvoices: false });
+        }
+      },
+
+      fetchSellerAccounts: async (search) => {
+        set({ isLoadingSellerAccounts: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const q = search ?? get().financialFilters.search ?? '';
+          const res = await fetch(`${API_URL}/payments/admin/seller-accounts?search=${encodeURIComponent(q)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ sellerAccounts: Array.isArray(data) ? data : data.items ?? data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch seller accounts', error);
+        } finally {
+          set({ isLoadingSellerAccounts: false });
+        }
+      },
+
+      fetchCustomerAccounts: async (search) => {
+        set({ isLoadingCustomerAccounts: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const q = search ?? get().financialFilters.search ?? '';
+          const res = await fetch(`${API_URL}/payments/admin/customer-accounts?search=${encodeURIComponent(q)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ customerAccounts: Array.isArray(data) ? data : data.items ?? data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch customer accounts', error);
+        } finally {
+          set({ isLoadingCustomerAccounts: false });
+        }
+      },
+
+      fetchFinancialRefunds: async (search) => {
+        set({ isLoadingFinancialRefunds: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const q = search ?? get().financialFilters.search ?? '';
+          const res = await fetch(`${API_URL}/payments/admin/financial-refunds?search=${encodeURIComponent(q)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ financialRefunds: Array.isArray(data) ? data : data.items ?? data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch financial refunds', error);
+        } finally {
+          set({ isLoadingFinancialRefunds: false });
+        }
+      },
+
+      fetchSettlementSummary: async () => {
+        set({ isLoadingSettlement: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/settlement/summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            set({ settlementSummary: await res.json() });
+          }
+        } catch (error) {
+          console.error('Failed to fetch settlement summary', error);
+        } finally {
+          set({ isLoadingSettlement: false });
+        }
+      },
+
+      runFinancialSettlement: async (payload) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/settlement/run`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) {
+            await get().fetchSettlementSummary();
+            await get().fetchSettlementHistory();
+            return { success: true, message: data.message || 'Settlement recorded' };
+          }
+          return { success: false, message: data.message || data.error || 'Settlement run failed' };
+        } catch {
+          return { success: false, message: 'An unexpected error occurred' };
+        }
+      },
+
+      fetchSettlementHistory: async () => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/payments/admin/settlement/history?limit=5`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ settlementHistory: data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch settlement history', error);
+        }
+      },
+
+      fetchFinancialPenalties: async (search) => {
+        set({ isLoadingFinancialPenalties: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const q = search ?? get().financialFilters.search ?? '';
+          const res = await fetch(`${API_URL}/payments/admin/financial-penalties?search=${encodeURIComponent(q)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ financialPenalties: Array.isArray(data) ? data : data.items ?? data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch financial penalties', error);
+        } finally {
+          set({ isLoadingFinancialPenalties: false });
+        }
+      },
+
+      fetchFinancialAudit: async (params) => {
+        set({ isLoadingFinancialAudit: true });
+        try {
+          const token = localStorage.getItem('access_token');
+          const query = new URLSearchParams();
+          if (params?.search) query.set('search', params.search);
+          if (params?.page) query.set('page', String(params.page));
+          query.set('limit', '50');
+          const res = await fetch(`${API_URL}/payments/admin/financial-audit?${query}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ financialAuditLogs: Array.isArray(data) ? data : data.items ?? data.data ?? [] });
+          }
+        } catch (error) {
+          console.error('Failed to fetch financial audit logs', error);
+        } finally {
+          set({ isLoadingFinancialAudit: false });
+        }
+      },
+
+      fetchFinancialReport: async (reportId, params) => {
+        set({ isLoadingFinancialReport: true, financialReportData: null });
+        try {
+          const token = localStorage.getItem('access_token');
+          const { financialFilters } = get();
+          const query = new URLSearchParams({
+            startDate: params?.startDate ?? financialFilters.startDate ?? '',
+            endDate: params?.endDate ?? financialFilters.endDate ?? '',
+          });
+          const res = await fetch(`${API_URL}/payments/admin/financial-reports/${reportId}?${query}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            set({ financialReportData: await res.json() });
+            return;
+          }
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || errBody.error || `Report failed (${res.status})`);
+        } catch (error) {
+          console.error('Failed to fetch financial report', error);
+          throw error;
+        } finally {
+          set({ isLoadingFinancialReport: false });
+        }
+      },
+
+      exportFinancialReport: async (reportId, format, params) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const { financialFilters } = get();
+          const query = new URLSearchParams({
+            format,
+            startDate: params?.startDate ?? financialFilters.startDate ?? '',
+            endDate: params?.endDate ?? financialFilters.endDate ?? '',
+          });
+          const res = await fetch(`${API_URL}/payments/admin/financial-reports/${reportId}?${query}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return;
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) return;
+            const headers = Object.keys(data[0]).join(',');
+            const csvRows = data.map((row: Record<string, unknown>) =>
+              Object.values(row).map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','),
+            );
+            const blob = new Blob(['\ufeff' + [headers, ...csvRows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${reportId}_${Date.now()}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            return;
+          }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${reportId}_${Date.now()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+          link.click();
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Failed to export financial report', error);
+        }
+      },
+
+      fetchAdminInvoiceById: async (id) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/invoices/admin/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) return res.json();
+        } catch (error) {
+          console.error('Failed to fetch admin invoice', error);
+        }
+        return null;
+      },
+
+      resendAdminInvoice: async (id) => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`${API_URL}/invoices/admin/${id}/resend`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json().catch(() => ({}));
+          return { success: res.ok, message: data.message };
+        } catch {
+          return { success: false, message: 'Failed to resend invoice' };
+        }
       },
 
       updateStoreRestrictions: async (id, data) => {

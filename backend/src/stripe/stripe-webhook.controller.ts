@@ -99,6 +99,15 @@ export class StripeWebhookController {
                     const charge = event.data.object;
                     await this.paymentsService.handleStripeChargeRefunded(charge);
                     break;
+                case 'transfer.created':
+                case 'transfer.paid':
+                case 'transfer.failed':
+                case 'transfer.reversed':
+                    await this.paymentsService.handleStripeTransferEvent(
+                        event.data.object,
+                        event.type,
+                    );
+                    break;
                 default:
                     this.logger.log(`Unhandled event type ${event.type}`);
             }

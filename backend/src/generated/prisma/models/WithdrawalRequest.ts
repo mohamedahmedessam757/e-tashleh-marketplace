@@ -28,10 +28,12 @@ export type AggregateWithdrawalRequest = {
 
 export type WithdrawalRequestAvgAggregateOutputType = {
   amount: runtime.Decimal | null
+  balanceHeldAtRequest: runtime.Decimal | null
 }
 
 export type WithdrawalRequestSumAggregateOutputType = {
   amount: runtime.Decimal | null
+  balanceHeldAtRequest: runtime.Decimal | null
 }
 
 export type WithdrawalRequestMinAggregateOutputType = {
@@ -45,6 +47,18 @@ export type WithdrawalRequestMinAggregateOutputType = {
   payoutMethod: string | null
   stripeTransferId: string | null
   adminNotes: string | null
+  rejectionReason: string | null
+  processedBy: string | null
+  adminSignature: string | null
+  approvedAt: Date | null
+  completedAt: Date | null
+  cancelledAt: Date | null
+  cancelledBy: string | null
+  transferCompletedAt: Date | null
+  ibanSnapshot: string | null
+  stripeAccountSnapshot: string | null
+  stripeIdempotencyKey: string | null
+  balanceHeldAtRequest: runtime.Decimal | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -60,6 +74,18 @@ export type WithdrawalRequestMaxAggregateOutputType = {
   payoutMethod: string | null
   stripeTransferId: string | null
   adminNotes: string | null
+  rejectionReason: string | null
+  processedBy: string | null
+  adminSignature: string | null
+  approvedAt: Date | null
+  completedAt: Date | null
+  cancelledAt: Date | null
+  cancelledBy: string | null
+  transferCompletedAt: Date | null
+  ibanSnapshot: string | null
+  stripeAccountSnapshot: string | null
+  stripeIdempotencyKey: string | null
+  balanceHeldAtRequest: runtime.Decimal | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -75,6 +101,18 @@ export type WithdrawalRequestCountAggregateOutputType = {
   payoutMethod: number
   stripeTransferId: number
   adminNotes: number
+  rejectionReason: number
+  processedBy: number
+  adminSignature: number
+  approvedAt: number
+  completedAt: number
+  cancelledAt: number
+  cancelledBy: number
+  transferCompletedAt: number
+  ibanSnapshot: number
+  stripeAccountSnapshot: number
+  stripeIdempotencyKey: number
+  balanceHeldAtRequest: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -83,10 +121,12 @@ export type WithdrawalRequestCountAggregateOutputType = {
 
 export type WithdrawalRequestAvgAggregateInputType = {
   amount?: true
+  balanceHeldAtRequest?: true
 }
 
 export type WithdrawalRequestSumAggregateInputType = {
   amount?: true
+  balanceHeldAtRequest?: true
 }
 
 export type WithdrawalRequestMinAggregateInputType = {
@@ -100,6 +140,18 @@ export type WithdrawalRequestMinAggregateInputType = {
   payoutMethod?: true
   stripeTransferId?: true
   adminNotes?: true
+  rejectionReason?: true
+  processedBy?: true
+  adminSignature?: true
+  approvedAt?: true
+  completedAt?: true
+  cancelledAt?: true
+  cancelledBy?: true
+  transferCompletedAt?: true
+  ibanSnapshot?: true
+  stripeAccountSnapshot?: true
+  stripeIdempotencyKey?: true
+  balanceHeldAtRequest?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -115,6 +167,18 @@ export type WithdrawalRequestMaxAggregateInputType = {
   payoutMethod?: true
   stripeTransferId?: true
   adminNotes?: true
+  rejectionReason?: true
+  processedBy?: true
+  adminSignature?: true
+  approvedAt?: true
+  completedAt?: true
+  cancelledAt?: true
+  cancelledBy?: true
+  transferCompletedAt?: true
+  ibanSnapshot?: true
+  stripeAccountSnapshot?: true
+  stripeIdempotencyKey?: true
+  balanceHeldAtRequest?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -130,6 +194,18 @@ export type WithdrawalRequestCountAggregateInputType = {
   payoutMethod?: true
   stripeTransferId?: true
   adminNotes?: true
+  rejectionReason?: true
+  processedBy?: true
+  adminSignature?: true
+  approvedAt?: true
+  completedAt?: true
+  cancelledAt?: true
+  cancelledBy?: true
+  transferCompletedAt?: true
+  ibanSnapshot?: true
+  stripeAccountSnapshot?: true
+  stripeIdempotencyKey?: true
+  balanceHeldAtRequest?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -232,6 +308,18 @@ export type WithdrawalRequestGroupByOutputType = {
   payoutMethod: string
   stripeTransferId: string | null
   adminNotes: string | null
+  rejectionReason: string | null
+  processedBy: string | null
+  adminSignature: string | null
+  approvedAt: Date | null
+  completedAt: Date | null
+  cancelledAt: Date | null
+  cancelledBy: string | null
+  transferCompletedAt: Date | null
+  ibanSnapshot: string | null
+  stripeAccountSnapshot: string | null
+  stripeIdempotencyKey: string | null
+  balanceHeldAtRequest: runtime.Decimal | null
   createdAt: Date
   updatedAt: Date
   _count: WithdrawalRequestCountAggregateOutputType | null
@@ -270,10 +358,23 @@ export type WithdrawalRequestWhereInput = {
   payoutMethod?: Prisma.StringFilter<"WithdrawalRequest"> | string
   stripeTransferId?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
   adminNotes?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  processedBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  adminSignature?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  transferCompletedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  ibanSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeAccountSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeIdempotencyKey?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  balanceHeldAtRequest?: Prisma.DecimalNullableFilter<"WithdrawalRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
   store?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  processor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type WithdrawalRequestOrderByWithRelationInput = {
@@ -287,10 +388,23 @@ export type WithdrawalRequestOrderByWithRelationInput = {
   payoutMethod?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  processedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSignature?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  transferCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  ibanSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeAccountSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeIdempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   store?: Prisma.StoreOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
+  processor?: Prisma.UserOrderByWithRelationInput
 }
 
 export type WithdrawalRequestWhereUniqueInput = Prisma.AtLeast<{
@@ -307,10 +421,23 @@ export type WithdrawalRequestWhereUniqueInput = Prisma.AtLeast<{
   payoutMethod?: Prisma.StringFilter<"WithdrawalRequest"> | string
   stripeTransferId?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
   adminNotes?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  processedBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  adminSignature?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  transferCompletedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  ibanSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeAccountSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeIdempotencyKey?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  balanceHeldAtRequest?: Prisma.DecimalNullableFilter<"WithdrawalRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
   store?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  processor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id">
 
 export type WithdrawalRequestOrderByWithAggregationInput = {
@@ -324,6 +451,18 @@ export type WithdrawalRequestOrderByWithAggregationInput = {
   payoutMethod?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrderInput | Prisma.SortOrder
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  processedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminSignature?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  transferCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  ibanSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeAccountSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeIdempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WithdrawalRequestCountOrderByAggregateInput
@@ -347,6 +486,18 @@ export type WithdrawalRequestScalarWhereWithAggregatesInput = {
   payoutMethod?: Prisma.StringWithAggregatesFilter<"WithdrawalRequest"> | string
   stripeTransferId?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
   adminNotes?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  processedBy?: Prisma.UuidNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  adminSignature?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WithdrawalRequest"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledBy?: Prisma.UuidNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  transferCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WithdrawalRequest"> | Date | string | null
+  ibanSnapshot?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  stripeAccountSnapshot?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  stripeIdempotencyKey?: Prisma.StringNullableWithAggregatesFilter<"WithdrawalRequest"> | string | null
+  balanceHeldAtRequest?: Prisma.DecimalNullableWithAggregatesFilter<"WithdrawalRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WithdrawalRequest"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WithdrawalRequest"> | Date | string
 }
@@ -360,10 +511,22 @@ export type WithdrawalRequestCreateInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   store?: Prisma.StoreCreateNestedOneWithoutWithdrawalRequestsInput
   user?: Prisma.UserCreateNestedOneWithoutWithdrawalRequestsInput
+  processor?: Prisma.UserCreateNestedOneWithoutProcessedWithdrawalsInput
 }
 
 export type WithdrawalRequestUncheckedCreateInput = {
@@ -377,6 +540,18 @@ export type WithdrawalRequestUncheckedCreateInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -390,10 +565,22 @@ export type WithdrawalRequestUpdateInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   store?: Prisma.StoreUpdateOneWithoutWithdrawalRequestsNestedInput
   user?: Prisma.UserUpdateOneWithoutWithdrawalRequestsNestedInput
+  processor?: Prisma.UserUpdateOneWithoutProcessedWithdrawalsNestedInput
 }
 
 export type WithdrawalRequestUncheckedUpdateInput = {
@@ -407,6 +594,18 @@ export type WithdrawalRequestUncheckedUpdateInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -422,6 +621,18 @@ export type WithdrawalRequestCreateManyInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -435,6 +646,17 @@ export type WithdrawalRequestUpdateManyMutationInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -450,6 +672,18 @@ export type WithdrawalRequestUncheckedUpdateManyInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -475,12 +709,25 @@ export type WithdrawalRequestCountOrderByAggregateInput = {
   payoutMethod?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  processedBy?: Prisma.SortOrder
+  adminSignature?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelledBy?: Prisma.SortOrder
+  transferCompletedAt?: Prisma.SortOrder
+  ibanSnapshot?: Prisma.SortOrder
+  stripeAccountSnapshot?: Prisma.SortOrder
+  stripeIdempotencyKey?: Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type WithdrawalRequestAvgOrderByAggregateInput = {
   amount?: Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrder
 }
 
 export type WithdrawalRequestMaxOrderByAggregateInput = {
@@ -494,6 +741,18 @@ export type WithdrawalRequestMaxOrderByAggregateInput = {
   payoutMethod?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  processedBy?: Prisma.SortOrder
+  adminSignature?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelledBy?: Prisma.SortOrder
+  transferCompletedAt?: Prisma.SortOrder
+  ibanSnapshot?: Prisma.SortOrder
+  stripeAccountSnapshot?: Prisma.SortOrder
+  stripeIdempotencyKey?: Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -509,12 +768,25 @@ export type WithdrawalRequestMinOrderByAggregateInput = {
   payoutMethod?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   adminNotes?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  processedBy?: Prisma.SortOrder
+  adminSignature?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelledBy?: Prisma.SortOrder
+  transferCompletedAt?: Prisma.SortOrder
+  ibanSnapshot?: Prisma.SortOrder
+  stripeAccountSnapshot?: Prisma.SortOrder
+  stripeIdempotencyKey?: Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type WithdrawalRequestSumOrderByAggregateInput = {
   amount?: Prisma.SortOrder
+  balanceHeldAtRequest?: Prisma.SortOrder
 }
 
 export type WithdrawalRequestCreateNestedManyWithoutUserInput = {
@@ -524,10 +796,24 @@ export type WithdrawalRequestCreateNestedManyWithoutUserInput = {
   connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
 }
 
+export type WithdrawalRequestCreateNestedManyWithoutProcessorInput = {
+  create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput> | Prisma.WithdrawalRequestCreateWithoutProcessorInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput[]
+  connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput | Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput[]
+  createMany?: Prisma.WithdrawalRequestCreateManyProcessorInputEnvelope
+  connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+}
+
 export type WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput = {
   create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutUserInput, Prisma.WithdrawalRequestUncheckedCreateWithoutUserInput> | Prisma.WithdrawalRequestCreateWithoutUserInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutUserInput | Prisma.WithdrawalRequestCreateOrConnectWithoutUserInput[]
   createMany?: Prisma.WithdrawalRequestCreateManyUserInputEnvelope
+  connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+}
+
+export type WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput = {
+  create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput> | Prisma.WithdrawalRequestCreateWithoutProcessorInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput[]
+  connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput | Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput[]
+  createMany?: Prisma.WithdrawalRequestCreateManyProcessorInputEnvelope
   connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
 }
 
@@ -545,6 +831,20 @@ export type WithdrawalRequestUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.WithdrawalRequestScalarWhereInput | Prisma.WithdrawalRequestScalarWhereInput[]
 }
 
+export type WithdrawalRequestUpdateManyWithoutProcessorNestedInput = {
+  create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput> | Prisma.WithdrawalRequestCreateWithoutProcessorInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput[]
+  connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput | Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput[]
+  upsert?: Prisma.WithdrawalRequestUpsertWithWhereUniqueWithoutProcessorInput | Prisma.WithdrawalRequestUpsertWithWhereUniqueWithoutProcessorInput[]
+  createMany?: Prisma.WithdrawalRequestCreateManyProcessorInputEnvelope
+  set?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  disconnect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  delete?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  update?: Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutProcessorInput | Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutProcessorInput[]
+  updateMany?: Prisma.WithdrawalRequestUpdateManyWithWhereWithoutProcessorInput | Prisma.WithdrawalRequestUpdateManyWithWhereWithoutProcessorInput[]
+  deleteMany?: Prisma.WithdrawalRequestScalarWhereInput | Prisma.WithdrawalRequestScalarWhereInput[]
+}
+
 export type WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput = {
   create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutUserInput, Prisma.WithdrawalRequestUncheckedCreateWithoutUserInput> | Prisma.WithdrawalRequestCreateWithoutUserInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutUserInput | Prisma.WithdrawalRequestCreateOrConnectWithoutUserInput[]
@@ -556,6 +856,20 @@ export type WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput = {
   connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
   update?: Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutUserInput | Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutUserInput[]
   updateMany?: Prisma.WithdrawalRequestUpdateManyWithWhereWithoutUserInput | Prisma.WithdrawalRequestUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.WithdrawalRequestScalarWhereInput | Prisma.WithdrawalRequestScalarWhereInput[]
+}
+
+export type WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput = {
+  create?: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput> | Prisma.WithdrawalRequestCreateWithoutProcessorInput[] | Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput[]
+  connectOrCreate?: Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput | Prisma.WithdrawalRequestCreateOrConnectWithoutProcessorInput[]
+  upsert?: Prisma.WithdrawalRequestUpsertWithWhereUniqueWithoutProcessorInput | Prisma.WithdrawalRequestUpsertWithWhereUniqueWithoutProcessorInput[]
+  createMany?: Prisma.WithdrawalRequestCreateManyProcessorInputEnvelope
+  set?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  disconnect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  delete?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  connect?: Prisma.WithdrawalRequestWhereUniqueInput | Prisma.WithdrawalRequestWhereUniqueInput[]
+  update?: Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutProcessorInput | Prisma.WithdrawalRequestUpdateWithWhereUniqueWithoutProcessorInput[]
+  updateMany?: Prisma.WithdrawalRequestUpdateManyWithWhereWithoutProcessorInput | Prisma.WithdrawalRequestUpdateManyWithWhereWithoutProcessorInput[]
   deleteMany?: Prisma.WithdrawalRequestScalarWhereInput | Prisma.WithdrawalRequestScalarWhereInput[]
 }
 
@@ -610,9 +924,21 @@ export type WithdrawalRequestCreateWithoutUserInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   store?: Prisma.StoreCreateNestedOneWithoutWithdrawalRequestsInput
+  processor?: Prisma.UserCreateNestedOneWithoutProcessedWithdrawalsInput
 }
 
 export type WithdrawalRequestUncheckedCreateWithoutUserInput = {
@@ -625,6 +951,18 @@ export type WithdrawalRequestUncheckedCreateWithoutUserInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -636,6 +974,68 @@ export type WithdrawalRequestCreateOrConnectWithoutUserInput = {
 
 export type WithdrawalRequestCreateManyUserInputEnvelope = {
   data: Prisma.WithdrawalRequestCreateManyUserInput | Prisma.WithdrawalRequestCreateManyUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type WithdrawalRequestCreateWithoutProcessorInput = {
+  id?: string
+  role?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: string
+  status?: string
+  payoutMethod?: string
+  stripeTransferId?: string | null
+  adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  store?: Prisma.StoreCreateNestedOneWithoutWithdrawalRequestsInput
+  user?: Prisma.UserCreateNestedOneWithoutWithdrawalRequestsInput
+}
+
+export type WithdrawalRequestUncheckedCreateWithoutProcessorInput = {
+  id?: string
+  storeId?: string | null
+  userId?: string | null
+  role?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: string
+  status?: string
+  payoutMethod?: string
+  stripeTransferId?: string | null
+  adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type WithdrawalRequestCreateOrConnectWithoutProcessorInput = {
+  where: Prisma.WithdrawalRequestWhereUniqueInput
+  create: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput>
+}
+
+export type WithdrawalRequestCreateManyProcessorInputEnvelope = {
+  data: Prisma.WithdrawalRequestCreateManyProcessorInput | Prisma.WithdrawalRequestCreateManyProcessorInput[]
   skipDuplicates?: boolean
 }
 
@@ -669,8 +1069,36 @@ export type WithdrawalRequestScalarWhereInput = {
   payoutMethod?: Prisma.StringFilter<"WithdrawalRequest"> | string
   stripeTransferId?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
   adminNotes?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  processedBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  adminSignature?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  cancelledBy?: Prisma.UuidNullableFilter<"WithdrawalRequest"> | string | null
+  transferCompletedAt?: Prisma.DateTimeNullableFilter<"WithdrawalRequest"> | Date | string | null
+  ibanSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeAccountSnapshot?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  stripeIdempotencyKey?: Prisma.StringNullableFilter<"WithdrawalRequest"> | string | null
+  balanceHeldAtRequest?: Prisma.DecimalNullableFilter<"WithdrawalRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WithdrawalRequest"> | Date | string
+}
+
+export type WithdrawalRequestUpsertWithWhereUniqueWithoutProcessorInput = {
+  where: Prisma.WithdrawalRequestWhereUniqueInput
+  update: Prisma.XOR<Prisma.WithdrawalRequestUpdateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedUpdateWithoutProcessorInput>
+  create: Prisma.XOR<Prisma.WithdrawalRequestCreateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedCreateWithoutProcessorInput>
+}
+
+export type WithdrawalRequestUpdateWithWhereUniqueWithoutProcessorInput = {
+  where: Prisma.WithdrawalRequestWhereUniqueInput
+  data: Prisma.XOR<Prisma.WithdrawalRequestUpdateWithoutProcessorInput, Prisma.WithdrawalRequestUncheckedUpdateWithoutProcessorInput>
+}
+
+export type WithdrawalRequestUpdateManyWithWhereWithoutProcessorInput = {
+  where: Prisma.WithdrawalRequestScalarWhereInput
+  data: Prisma.XOR<Prisma.WithdrawalRequestUpdateManyMutationInput, Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorInput>
 }
 
 export type WithdrawalRequestCreateWithoutStoreInput = {
@@ -682,9 +1110,21 @@ export type WithdrawalRequestCreateWithoutStoreInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutWithdrawalRequestsInput
+  processor?: Prisma.UserCreateNestedOneWithoutProcessedWithdrawalsInput
 }
 
 export type WithdrawalRequestUncheckedCreateWithoutStoreInput = {
@@ -697,6 +1137,18 @@ export type WithdrawalRequestUncheckedCreateWithoutStoreInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -737,6 +1189,44 @@ export type WithdrawalRequestCreateManyUserInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type WithdrawalRequestCreateManyProcessorInput = {
+  id?: string
+  storeId?: string | null
+  userId?: string | null
+  role?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: string
+  status?: string
+  payoutMethod?: string
+  stripeTransferId?: string | null
+  adminNotes?: string | null
+  rejectionReason?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -750,9 +1240,21 @@ export type WithdrawalRequestUpdateWithoutUserInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   store?: Prisma.StoreUpdateOneWithoutWithdrawalRequestsNestedInput
+  processor?: Prisma.UserUpdateOneWithoutProcessedWithdrawalsNestedInput
 }
 
 export type WithdrawalRequestUncheckedUpdateWithoutUserInput = {
@@ -765,6 +1267,18 @@ export type WithdrawalRequestUncheckedUpdateWithoutUserInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -779,6 +1293,96 @@ export type WithdrawalRequestUncheckedUpdateManyWithoutUserInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type WithdrawalRequestUpdateWithoutProcessorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
+  stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  store?: Prisma.StoreUpdateOneWithoutWithdrawalRequestsNestedInput
+  user?: Prisma.UserUpdateOneWithoutWithdrawalRequestsNestedInput
+}
+
+export type WithdrawalRequestUncheckedUpdateWithoutProcessorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
+  stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type WithdrawalRequestUncheckedUpdateManyWithoutProcessorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
+  stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -793,6 +1397,18 @@ export type WithdrawalRequestCreateManyStoreInput = {
   payoutMethod?: string
   stripeTransferId?: string | null
   adminNotes?: string | null
+  rejectionReason?: string | null
+  processedBy?: string | null
+  adminSignature?: string | null
+  approvedAt?: Date | string | null
+  completedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancelledBy?: string | null
+  transferCompletedAt?: Date | string | null
+  ibanSnapshot?: string | null
+  stripeAccountSnapshot?: string | null
+  stripeIdempotencyKey?: string | null
+  balanceHeldAtRequest?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -806,9 +1422,21 @@ export type WithdrawalRequestUpdateWithoutStoreInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutWithdrawalRequestsNestedInput
+  processor?: Prisma.UserUpdateOneWithoutProcessedWithdrawalsNestedInput
 }
 
 export type WithdrawalRequestUncheckedUpdateWithoutStoreInput = {
@@ -821,6 +1449,18 @@ export type WithdrawalRequestUncheckedUpdateWithoutStoreInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -835,6 +1475,18 @@ export type WithdrawalRequestUncheckedUpdateManyWithoutStoreInput = {
   payoutMethod?: Prisma.StringFieldUpdateOperationsInput | string
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  processedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  ibanSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeAccountSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeIdempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balanceHeldAtRequest?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -852,10 +1504,23 @@ export type WithdrawalRequestSelect<ExtArgs extends runtime.Types.Extensions.Int
   payoutMethod?: boolean
   stripeTransferId?: boolean
   adminNotes?: boolean
+  rejectionReason?: boolean
+  processedBy?: boolean
+  adminSignature?: boolean
+  approvedAt?: boolean
+  completedAt?: boolean
+  cancelledAt?: boolean
+  cancelledBy?: boolean
+  transferCompletedAt?: boolean
+  ibanSnapshot?: boolean
+  stripeAccountSnapshot?: boolean
+  stripeIdempotencyKey?: boolean
+  balanceHeldAtRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }, ExtArgs["result"]["withdrawalRequest"]>
 
 export type WithdrawalRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -869,10 +1534,23 @@ export type WithdrawalRequestSelectCreateManyAndReturn<ExtArgs extends runtime.T
   payoutMethod?: boolean
   stripeTransferId?: boolean
   adminNotes?: boolean
+  rejectionReason?: boolean
+  processedBy?: boolean
+  adminSignature?: boolean
+  approvedAt?: boolean
+  completedAt?: boolean
+  cancelledAt?: boolean
+  cancelledBy?: boolean
+  transferCompletedAt?: boolean
+  ibanSnapshot?: boolean
+  stripeAccountSnapshot?: boolean
+  stripeIdempotencyKey?: boolean
+  balanceHeldAtRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }, ExtArgs["result"]["withdrawalRequest"]>
 
 export type WithdrawalRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -886,10 +1564,23 @@ export type WithdrawalRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   payoutMethod?: boolean
   stripeTransferId?: boolean
   adminNotes?: boolean
+  rejectionReason?: boolean
+  processedBy?: boolean
+  adminSignature?: boolean
+  approvedAt?: boolean
+  completedAt?: boolean
+  cancelledAt?: boolean
+  cancelledBy?: boolean
+  transferCompletedAt?: boolean
+  ibanSnapshot?: boolean
+  stripeAccountSnapshot?: boolean
+  stripeIdempotencyKey?: boolean
+  balanceHeldAtRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }, ExtArgs["result"]["withdrawalRequest"]>
 
 export type WithdrawalRequestSelectScalar = {
@@ -903,22 +1594,37 @@ export type WithdrawalRequestSelectScalar = {
   payoutMethod?: boolean
   stripeTransferId?: boolean
   adminNotes?: boolean
+  rejectionReason?: boolean
+  processedBy?: boolean
+  adminSignature?: boolean
+  approvedAt?: boolean
+  completedAt?: boolean
+  cancelledAt?: boolean
+  cancelledBy?: boolean
+  transferCompletedAt?: boolean
+  ibanSnapshot?: boolean
+  stripeAccountSnapshot?: boolean
+  stripeIdempotencyKey?: boolean
+  balanceHeldAtRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WithdrawalRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeId" | "userId" | "role" | "amount" | "currency" | "status" | "payoutMethod" | "stripeTransferId" | "adminNotes" | "createdAt" | "updatedAt", ExtArgs["result"]["withdrawalRequest"]>
+export type WithdrawalRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storeId" | "userId" | "role" | "amount" | "currency" | "status" | "payoutMethod" | "stripeTransferId" | "adminNotes" | "rejectionReason" | "processedBy" | "adminSignature" | "approvedAt" | "completedAt" | "cancelledAt" | "cancelledBy" | "transferCompletedAt" | "ibanSnapshot" | "stripeAccountSnapshot" | "stripeIdempotencyKey" | "balanceHeldAtRequest" | "createdAt" | "updatedAt", ExtArgs["result"]["withdrawalRequest"]>
 export type WithdrawalRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }
 export type WithdrawalRequestIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }
 export type WithdrawalRequestIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.WithdrawalRequest$storeArgs<ExtArgs>
   user?: boolean | Prisma.WithdrawalRequest$userArgs<ExtArgs>
+  processor?: boolean | Prisma.WithdrawalRequest$processorArgs<ExtArgs>
 }
 
 export type $WithdrawalRequestPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -926,6 +1632,7 @@ export type $WithdrawalRequestPayload<ExtArgs extends runtime.Types.Extensions.I
   objects: {
     store: Prisma.$StorePayload<ExtArgs> | null
     user: Prisma.$UserPayload<ExtArgs> | null
+    processor: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -938,6 +1645,18 @@ export type $WithdrawalRequestPayload<ExtArgs extends runtime.Types.Extensions.I
     payoutMethod: string
     stripeTransferId: string | null
     adminNotes: string | null
+    rejectionReason: string | null
+    processedBy: string | null
+    adminSignature: string | null
+    approvedAt: Date | null
+    completedAt: Date | null
+    cancelledAt: Date | null
+    cancelledBy: string | null
+    transferCompletedAt: Date | null
+    ibanSnapshot: string | null
+    stripeAccountSnapshot: string | null
+    stripeIdempotencyKey: string | null
+    balanceHeldAtRequest: runtime.Decimal | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["withdrawalRequest"]>
@@ -1336,6 +2055,7 @@ export interface Prisma__WithdrawalRequestClient<T, Null = never, ExtArgs extend
   readonly [Symbol.toStringTag]: "PrismaPromise"
   store<T extends Prisma.WithdrawalRequest$storeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WithdrawalRequest$storeArgs<ExtArgs>>): Prisma.Prisma__StoreClient<runtime.Types.Result.GetResult<Prisma.$StorePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.WithdrawalRequest$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WithdrawalRequest$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  processor<T extends Prisma.WithdrawalRequest$processorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WithdrawalRequest$processorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1375,6 +2095,18 @@ export interface WithdrawalRequestFieldRefs {
   readonly payoutMethod: Prisma.FieldRef<"WithdrawalRequest", 'String'>
   readonly stripeTransferId: Prisma.FieldRef<"WithdrawalRequest", 'String'>
   readonly adminNotes: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly rejectionReason: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly processedBy: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly adminSignature: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly approvedAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
+  readonly completedAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
+  readonly cancelledAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
+  readonly cancelledBy: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly transferCompletedAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
+  readonly ibanSnapshot: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly stripeAccountSnapshot: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly stripeIdempotencyKey: Prisma.FieldRef<"WithdrawalRequest", 'String'>
+  readonly balanceHeldAtRequest: Prisma.FieldRef<"WithdrawalRequest", 'Decimal'>
   readonly createdAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WithdrawalRequest", 'DateTime'>
 }
@@ -1800,6 +2532,25 @@ export type WithdrawalRequest$storeArgs<ExtArgs extends runtime.Types.Extensions
  * WithdrawalRequest.user
  */
 export type WithdrawalRequest$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * WithdrawalRequest.processor
+ */
+export type WithdrawalRequest$processorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */

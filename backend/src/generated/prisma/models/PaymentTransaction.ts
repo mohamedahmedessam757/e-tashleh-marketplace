@@ -31,6 +31,7 @@ export type PaymentTransactionAvgAggregateOutputType = {
   shippingCost: runtime.Decimal | null
   commission: runtime.Decimal | null
   totalAmount: runtime.Decimal | null
+  fxRate: runtime.Decimal | null
   gatewayFee: runtime.Decimal | null
   refundedAmount: runtime.Decimal | null
 }
@@ -40,6 +41,7 @@ export type PaymentTransactionSumAggregateOutputType = {
   shippingCost: runtime.Decimal | null
   commission: runtime.Decimal | null
   totalAmount: runtime.Decimal | null
+  fxRate: runtime.Decimal | null
   gatewayFee: runtime.Decimal | null
   refundedAmount: runtime.Decimal | null
 }
@@ -55,6 +57,8 @@ export type PaymentTransactionMinAggregateOutputType = {
   commission: runtime.Decimal | null
   totalAmount: runtime.Decimal | null
   currency: string | null
+  displayCurrency: string | null
+  fxRate: runtime.Decimal | null
   cardLast4: string | null
   cardBrand: string | null
   cardHolder: string | null
@@ -82,6 +86,8 @@ export type PaymentTransactionMaxAggregateOutputType = {
   commission: runtime.Decimal | null
   totalAmount: runtime.Decimal | null
   currency: string | null
+  displayCurrency: string | null
+  fxRate: runtime.Decimal | null
   cardLast4: string | null
   cardBrand: string | null
   cardHolder: string | null
@@ -109,6 +115,8 @@ export type PaymentTransactionCountAggregateOutputType = {
   commission: number
   totalAmount: number
   currency: number
+  displayCurrency: number
+  fxRate: number
   cardLast4: number
   cardBrand: number
   cardHolder: number
@@ -132,6 +140,7 @@ export type PaymentTransactionAvgAggregateInputType = {
   shippingCost?: true
   commission?: true
   totalAmount?: true
+  fxRate?: true
   gatewayFee?: true
   refundedAmount?: true
 }
@@ -141,6 +150,7 @@ export type PaymentTransactionSumAggregateInputType = {
   shippingCost?: true
   commission?: true
   totalAmount?: true
+  fxRate?: true
   gatewayFee?: true
   refundedAmount?: true
 }
@@ -156,6 +166,8 @@ export type PaymentTransactionMinAggregateInputType = {
   commission?: true
   totalAmount?: true
   currency?: true
+  displayCurrency?: true
+  fxRate?: true
   cardLast4?: true
   cardBrand?: true
   cardHolder?: true
@@ -183,6 +195,8 @@ export type PaymentTransactionMaxAggregateInputType = {
   commission?: true
   totalAmount?: true
   currency?: true
+  displayCurrency?: true
+  fxRate?: true
   cardLast4?: true
   cardBrand?: true
   cardHolder?: true
@@ -210,6 +224,8 @@ export type PaymentTransactionCountAggregateInputType = {
   commission?: true
   totalAmount?: true
   currency?: true
+  displayCurrency?: true
+  fxRate?: true
   cardLast4?: true
   cardBrand?: true
   cardHolder?: true
@@ -324,6 +340,8 @@ export type PaymentTransactionGroupByOutputType = {
   commission: runtime.Decimal
   totalAmount: runtime.Decimal
   currency: string
+  displayCurrency: string | null
+  fxRate: runtime.Decimal | null
   cardLast4: string | null
   cardBrand: string | null
   cardHolder: string | null
@@ -374,6 +392,8 @@ export type PaymentTransactionWhereInput = {
   commission?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PaymentTransaction"> | string
+  displayCurrency?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  fxRate?: Prisma.DecimalNullableFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardBrand?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardHolder?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
@@ -407,6 +427,8 @@ export type PaymentTransactionOrderByWithRelationInput = {
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  displayCurrency?: Prisma.SortOrderInput | Prisma.SortOrder
+  fxRate?: Prisma.SortOrderInput | Prisma.SortOrder
   cardLast4?: Prisma.SortOrderInput | Prisma.SortOrder
   cardBrand?: Prisma.SortOrderInput | Prisma.SortOrder
   cardHolder?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -443,6 +465,8 @@ export type PaymentTransactionWhereUniqueInput = Prisma.AtLeast<{
   commission?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PaymentTransaction"> | string
+  displayCurrency?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  fxRate?: Prisma.DecimalNullableFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardBrand?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardHolder?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
@@ -476,6 +500,8 @@ export type PaymentTransactionOrderByWithAggregationInput = {
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  displayCurrency?: Prisma.SortOrderInput | Prisma.SortOrder
+  fxRate?: Prisma.SortOrderInput | Prisma.SortOrder
   cardLast4?: Prisma.SortOrderInput | Prisma.SortOrder
   cardBrand?: Prisma.SortOrderInput | Prisma.SortOrder
   cardHolder?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -511,6 +537,8 @@ export type PaymentTransactionScalarWhereWithAggregatesInput = {
   commission?: Prisma.DecimalWithAggregatesFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalWithAggregatesFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringWithAggregatesFilter<"PaymentTransaction"> | string
+  displayCurrency?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
+  fxRate?: Prisma.DecimalNullableWithAggregatesFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   cardBrand?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   cardHolder?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
@@ -535,6 +563,8 @@ export type PaymentTransactionCreateInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -568,6 +598,8 @@ export type PaymentTransactionUncheckedCreateInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -595,6 +627,8 @@ export type PaymentTransactionUpdateInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -628,6 +662,8 @@ export type PaymentTransactionUncheckedUpdateInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -658,6 +694,8 @@ export type PaymentTransactionCreateManyInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -682,6 +720,8 @@ export type PaymentTransactionUpdateManyMutationInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -709,6 +749,8 @@ export type PaymentTransactionUncheckedUpdateManyInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -746,6 +788,8 @@ export type PaymentTransactionCountOrderByAggregateInput = {
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  displayCurrency?: Prisma.SortOrder
+  fxRate?: Prisma.SortOrder
   cardLast4?: Prisma.SortOrder
   cardBrand?: Prisma.SortOrder
   cardHolder?: Prisma.SortOrder
@@ -767,6 +811,7 @@ export type PaymentTransactionAvgOrderByAggregateInput = {
   shippingCost?: Prisma.SortOrder
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  fxRate?: Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
 }
@@ -782,6 +827,8 @@ export type PaymentTransactionMaxOrderByAggregateInput = {
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  displayCurrency?: Prisma.SortOrder
+  fxRate?: Prisma.SortOrder
   cardLast4?: Prisma.SortOrder
   cardBrand?: Prisma.SortOrder
   cardHolder?: Prisma.SortOrder
@@ -809,6 +856,8 @@ export type PaymentTransactionMinOrderByAggregateInput = {
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  displayCurrency?: Prisma.SortOrder
+  fxRate?: Prisma.SortOrder
   cardLast4?: Prisma.SortOrder
   cardBrand?: Prisma.SortOrder
   cardHolder?: Prisma.SortOrder
@@ -830,6 +879,7 @@ export type PaymentTransactionSumOrderByAggregateInput = {
   shippingCost?: Prisma.SortOrder
   commission?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  fxRate?: Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
 }
@@ -1022,6 +1072,8 @@ export type PaymentTransactionCreateWithoutCustomerInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1053,6 +1105,8 @@ export type PaymentTransactionUncheckedCreateWithoutCustomerInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1112,6 +1166,8 @@ export type PaymentTransactionScalarWhereInput = {
   commission?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"PaymentTransaction"> | string
+  displayCurrency?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  fxRate?: Prisma.DecimalNullableFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardBrand?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardHolder?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
@@ -1136,6 +1192,8 @@ export type PaymentTransactionCreateWithoutOrderInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1167,6 +1225,8 @@ export type PaymentTransactionUncheckedCreateWithoutOrderInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1220,6 +1280,8 @@ export type PaymentTransactionCreateWithoutOfferInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1251,6 +1313,8 @@ export type PaymentTransactionUncheckedCreateWithoutOfferInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1304,6 +1368,8 @@ export type PaymentTransactionCreateWithoutWalletTransactionsInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1336,6 +1402,8 @@ export type PaymentTransactionUncheckedCreateWithoutWalletTransactionsInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1378,6 +1446,8 @@ export type PaymentTransactionUpdateWithoutWalletTransactionsInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1410,6 +1480,8 @@ export type PaymentTransactionUncheckedUpdateWithoutWalletTransactionsInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1436,6 +1508,8 @@ export type PaymentTransactionCreateWithoutEscrowInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1468,6 +1542,8 @@ export type PaymentTransactionUncheckedCreateWithoutEscrowInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1510,6 +1586,8 @@ export type PaymentTransactionUpdateWithoutEscrowInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1542,6 +1620,8 @@ export type PaymentTransactionUncheckedUpdateWithoutEscrowInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1568,6 +1648,8 @@ export type PaymentTransactionCreateWithoutInvoicesInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1600,6 +1682,8 @@ export type PaymentTransactionUncheckedCreateWithoutInvoicesInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1642,6 +1726,8 @@ export type PaymentTransactionUpdateWithoutInvoicesInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1674,6 +1760,8 @@ export type PaymentTransactionUncheckedUpdateWithoutInvoicesInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1702,6 +1790,8 @@ export type PaymentTransactionCreateManyCustomerInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1726,6 +1816,8 @@ export type PaymentTransactionUpdateWithoutCustomerInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1757,6 +1849,8 @@ export type PaymentTransactionUncheckedUpdateWithoutCustomerInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1786,6 +1880,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutCustomerInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1812,6 +1908,8 @@ export type PaymentTransactionCreateManyOrderInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1836,6 +1934,8 @@ export type PaymentTransactionUpdateWithoutOrderInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1867,6 +1967,8 @@ export type PaymentTransactionUncheckedUpdateWithoutOrderInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1896,6 +1998,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutOrderInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1922,6 +2026,8 @@ export type PaymentTransactionCreateManyOfferInput = {
   commission?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
+  displayCurrency?: string | null
+  fxRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: string | null
   cardBrand?: string | null
   cardHolder?: string | null
@@ -1946,6 +2052,8 @@ export type PaymentTransactionUpdateWithoutOfferInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1977,6 +2085,8 @@ export type PaymentTransactionUncheckedUpdateWithoutOfferInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2006,6 +2116,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutOfferInput = {
   commission?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
+  displayCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fxRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   cardLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardBrand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2073,6 +2185,8 @@ export type PaymentTransactionSelect<ExtArgs extends runtime.Types.Extensions.In
   commission?: boolean
   totalAmount?: boolean
   currency?: boolean
+  displayCurrency?: boolean
+  fxRate?: boolean
   cardLast4?: boolean
   cardBrand?: boolean
   cardHolder?: boolean
@@ -2107,6 +2221,8 @@ export type PaymentTransactionSelectCreateManyAndReturn<ExtArgs extends runtime.
   commission?: boolean
   totalAmount?: boolean
   currency?: boolean
+  displayCurrency?: boolean
+  fxRate?: boolean
   cardLast4?: boolean
   cardBrand?: boolean
   cardHolder?: boolean
@@ -2137,6 +2253,8 @@ export type PaymentTransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   commission?: boolean
   totalAmount?: boolean
   currency?: boolean
+  displayCurrency?: boolean
+  fxRate?: boolean
   cardLast4?: boolean
   cardBrand?: boolean
   cardHolder?: boolean
@@ -2167,6 +2285,8 @@ export type PaymentTransactionSelectScalar = {
   commission?: boolean
   totalAmount?: boolean
   currency?: boolean
+  displayCurrency?: boolean
+  fxRate?: boolean
   cardLast4?: boolean
   cardBrand?: boolean
   cardHolder?: boolean
@@ -2183,7 +2303,7 @@ export type PaymentTransactionSelectScalar = {
   createdAt?: boolean
 }
 
-export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "transactionNumber" | "orderId" | "offerId" | "customerId" | "unitPrice" | "shippingCost" | "commission" | "totalAmount" | "currency" | "cardLast4" | "cardBrand" | "cardHolder" | "status" | "failureReason" | "stripePaymentId" | "stripeTransferId" | "gatewayFee" | "refundedAmount" | "refundedAt" | "refundReason" | "escrowStatus" | "paidAt" | "createdAt", ExtArgs["result"]["paymentTransaction"]>
+export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "transactionNumber" | "orderId" | "offerId" | "customerId" | "unitPrice" | "shippingCost" | "commission" | "totalAmount" | "currency" | "displayCurrency" | "fxRate" | "cardLast4" | "cardBrand" | "cardHolder" | "status" | "failureReason" | "stripePaymentId" | "stripeTransferId" | "gatewayFee" | "refundedAmount" | "refundedAt" | "refundReason" | "escrowStatus" | "paidAt" | "createdAt", ExtArgs["result"]["paymentTransaction"]>
 export type PaymentTransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   offer?: boolean | Prisma.OfferDefaultArgs<ExtArgs>
@@ -2225,6 +2345,8 @@ export type $PaymentTransactionPayload<ExtArgs extends runtime.Types.Extensions.
     commission: runtime.Decimal
     totalAmount: runtime.Decimal
     currency: string
+    displayCurrency: string | null
+    fxRate: runtime.Decimal | null
     cardLast4: string | null
     cardBrand: string | null
     cardHolder: string | null
@@ -2678,6 +2800,8 @@ export interface PaymentTransactionFieldRefs {
   readonly commission: Prisma.FieldRef<"PaymentTransaction", 'Decimal'>
   readonly totalAmount: Prisma.FieldRef<"PaymentTransaction", 'Decimal'>
   readonly currency: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly displayCurrency: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly fxRate: Prisma.FieldRef<"PaymentTransaction", 'Decimal'>
   readonly cardLast4: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly cardBrand: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly cardHolder: Prisma.FieldRef<"PaymentTransaction", 'String'>

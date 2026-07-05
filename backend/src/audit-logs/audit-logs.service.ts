@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActorType, Prisma } from '@prisma/client';
 import {
@@ -22,9 +22,23 @@ export interface CreateAuditLogDto {
   metadata?: any;
 }
 
+export interface FinancialAuditLogDto extends CreateAuditLogDto {
+  reason: string;
+  metadata?: Record<string, unknown>;
+}
+
 @Injectable()
 export class AuditLogsService {
   constructor(private prisma: PrismaService) { }
+
+  /** Requires explicit reason for human financial actors (ADMIN / ACCOUNTANT). */
+  async logFinancialAction(data: FinancialAuditLogDto, tx?: Prisma.TransactionClient) {
+    const reason = data.reason?.trim();
+    if (!reason || reason.length < 10) {
+      throw new BadRequestException('Financial audit reason is required (min 10 characters)');
+    }
+    return this.logAction({ ...data, reason }, tx);
+  }
 
   async logAction(data: CreateAuditLogDto, tx?: Prisma.TransactionClient) {
     const prisma = tx || this.prisma;

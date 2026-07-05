@@ -4,8 +4,9 @@ import { LoyaltyController } from './loyalty.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoyaltyGateway } from './loyalty.gateway';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { MerchantPerformanceModule } from '../merchant-performance/merchant-performance.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { MerchantPerformanceModule } from '../merchant-performance/merchant-performance.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { JwtAuthSharedModule } from '../auth/jwt-auth-shared.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { JwtAuthSharedModule } from '../auth/jwt-auth-shared.module';
     PrismaModule,
     NotificationsModule,
     AuditLogsModule,
+    PaymentsModule,
     forwardRef(() => MerchantPerformanceModule),
   ],
   controllers: [LoyaltyController],

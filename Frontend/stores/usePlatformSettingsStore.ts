@@ -82,6 +82,10 @@ export const usePlatformSettingsStore = create<PlatformSettingsState>((set) => (
                         set({ isAttachmentsEnabled: boolValue });
                     } else if (setting_key === 'ALLOW_CUSTOMER_ACCOUNT_DELETION') {
                         set({ isAccountDeletionEnabled: boolValue });
+                    } else if (setting_key === 'system_config') {
+                        void import('../stores/useAdminStore').then(({ useAdminStore }) => {
+                            useAdminStore.getState().fetchPublicConfig();
+                        });
                     }
                 }
             )

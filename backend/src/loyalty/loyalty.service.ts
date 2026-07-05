@@ -5,6 +5,7 @@ import { LoyaltyGateway } from './loyalty.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { FinancialConfigService, LoyaltyTierConfig } from '../common/financial-config.service';
 import { sumMerchantShareByStore } from '../payments/merchant-wallet-metrics.util';
 
 @Injectable()
@@ -19,7 +20,13 @@ export class LoyaltyService {
     @Inject(forwardRef(() => MerchantPerformanceService))
     private readonly merchantPerformance: MerchantPerformanceService,
     private readonly auditLogs: AuditLogsService,
+    private readonly financialConfig: FinancialConfigService,
   ) {}
+
+  private async getTierConfigMap(): Promise<Record<string, LoyaltyTierConfig>> {
+    const config = await this.financialConfig.getConfig();
+    return config.loyaltyTiers;
+  }
 
   /**
    * 2026 LOYALTY GOVERNANCE: Cancel ALL loyalty rewards for a user.
@@ -166,16 +173,11 @@ export class LoyaltyService {
       return;
     }
 
-    // 4. SMART CAPS & TIER CONFIG (v2026 Core Specs)
-    const tierConfig: Record<LoyaltyTier, { percent: number; monthlyCap: number }> = {
-      BASIC:   { percent: 0.02, monthlyCap: 2000 },
-      SILVER:  { percent: 0.03, monthlyCap: 2000 },
-      GOLD:    { percent: 0.04, monthlyCap: 2000 },
-      VIP:     { percent: 0.05, monthlyCap: 5000 },
-      PARTNER: { percent: 0.06, monthlyCap: -1 }, // -1 indicates special dynamic logic (10% of spent)
-    };
+    // 4. SMART CAPS & TIER CONFIG (v2026 Core Specs — from platform financial settings)
+    const tierConfig = await this.getTierConfigMap();
+    const defaultTier = tierConfig.BASIC || { percent: 0.02, monthlyCap: 2000 };
 
-    const config = tierConfig[order.customer.loyaltyTier] || tierConfig.BASIC;
+    const config = tierConfig[order.customer.loyaltyTier] || defaultTier;
     
     // 5. Compute Profit with Smart Order-Level Caps
     const EARNED_RAW = totalCommission * config.percent;
@@ -243,7 +245,7 @@ export class LoyaltyService {
     const currentTotalSpent = Number(order.customer.totalSpent);
     const newTotalSpent = currentTotalSpent + orderTotalAmount;
     const oldTier = order.customer.loyaltyTier;
-    const newTier = this.calculateTier(newTotalSpent);
+    const newTier = await this.calculateTier(newTotalSpent);
 
     const result = await this.prisma.$transaction(async (tx) => {
       // a. Synchronize User Stats
@@ -590,11 +592,13 @@ export class LoyaltyService {
     return store;
   }
 
-  calculateTier(totalSpent: number): LoyaltyTier {
-    if (totalSpent >= 20000) return 'PARTNER';
-    if (totalSpent >= 10000) return 'VIP';
-    if (totalSpent >= 3000) return 'GOLD';
-    if (totalSpent >= 1000) return 'SILVER';
+  async calculateTier(totalSpent: number): Promise<LoyaltyTier> {
+    const config = await this.financialConfig.getConfig();
+    const t = config.customerTierThresholds;
+    if (totalSpent >= t.PARTNER) return 'PARTNER';
+    if (totalSpent >= t.VIP) return 'VIP';
+    if (totalSpent >= t.GOLD) return 'GOLD';
+    if (totalSpent >= t.SILVER) return 'SILVER';
     return 'BASIC';
   }
 

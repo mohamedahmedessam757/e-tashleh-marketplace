@@ -82,7 +82,7 @@ interface CustomerWalletState {
   stats: WalletStats | null;
   transactions: WalletTransaction[];
   withdrawalRequests: WithdrawalRequest[];
-  withdrawalLimits: { min: number; max: number };
+  withdrawalLimits: { min: number; max: number; tier?: string; stripeConnectEnabled?: boolean; payoutMethods?: string[] };
   bankDetails: BankDetails | null;
   stripeConnectInfo: StripeConnectDisplay | null;
   isLoading: boolean;
@@ -91,6 +91,7 @@ interface CustomerWalletState {
   fetchBankDetails: () => Promise<void>;
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
+  cancelWithdrawal: (requestId: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
   refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null }>;
   updateStatsLocally: (updates: Partial<WalletStats>) => void;
@@ -117,6 +118,7 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
       set({
         stats: res.data.stats,
         transactions: res.data.transactions,
+        withdrawalLimits: res.data.withdrawalLimits || get().withdrawalLimits,
         isLoading: false
       });
     } catch (error) {
@@ -136,10 +138,10 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
 
         // Fetch limits separately — silently fail if not authorized (e.g. CUSTOMER role)
         try {
-            const limitsRes = await client.get('/payments/admin/withdrawal-settings');
+            const limitsRes = await client.get('/payments/customer/withdrawal-limits');
             set({ withdrawalLimits: limitsRes.data });
         } catch {
-            // Customer role gets 403 here — use safe default limits
+            // use defaults
         }
     } catch (error) {
         console.error('Failed to fetch withdrawal data', error);
@@ -195,6 +197,18 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
         return { success: true, message: 'Request submitted successfully' };
     } catch (error: any) {
         return { success: false, message: error.response?.data?.message || 'Failed to submit request' };
+    }
+  },
+
+  cancelWithdrawal: async (requestId) => {
+    try {
+        const { client } = await import('../services/api/client');
+        await client.post(`/payments/customer/withdrawals/${requestId}/cancel`);
+        get().fetchWithdrawals();
+        get().fetchWalletData(true);
+        return { success: true, message: 'Request cancelled' };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Failed to cancel request' };
     }
   },
 

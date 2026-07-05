@@ -35,6 +35,7 @@ export const PERMISSION_PAGES = {
   ORDERS: 'orders-control',
   SHIPPING_CARTS: 'shipping-carts',
   BILLING: 'billing',
+  INVOICES: 'invoices',
   AUDIT: 'audit-logs',
   SECURITY: 'security-audit',
   SETTINGS: 'settings',
@@ -88,7 +89,23 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
   'billing': {
     fields: ['BANK_DETAILS', 'TAX_RECORDS', 'PROFIT_STATS', 'PAYOUT_QUEUE'],
     actions: ['APPROVE_WITHDRAWAL', 'REJECT_WITHDRAWAL', 'GENERATE_INVOICE', 'EXPORT_FINANCIALS'],
-    tabs: ['OVERVIEW', 'TRANSACTIONS', 'WITHDRAWALS', 'REVENUE', 'COMMISSION', 'ESCROW']
+    tabs: [
+      'OVERVIEW',
+      'CUSTOMER_ACCOUNTS',
+      'SELLER_ACCOUNTS',
+      'CUSTOMER_WITHDRAWALS',
+      'MERCHANT_WITHDRAWALS',
+      'TRANSACTIONS',
+      'REFUNDS',
+      'SETTLEMENT',
+      'PENALTIES',
+      'REPORTS',
+    ]
+  },
+  'invoices': {
+    fields: ['BANK_DETAILS', 'TAX_RECORDS'],
+    actions: ['GENERATE_INVOICE', 'EXPORT_FINANCIALS'],
+    tabs: ['CUSTOMERS', 'STORES'],
   },
   'shipping': {
     fields: ['WAYBILL_COST', 'CARRIER_FEES', 'SENSITIVE_DATA', 'COURIER_DETAILS'],

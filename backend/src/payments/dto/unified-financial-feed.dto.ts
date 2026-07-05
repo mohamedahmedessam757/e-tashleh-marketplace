@@ -45,6 +45,10 @@ export interface UnifiedFinancialEventDto {
   amount: number;
   currency: string;
   direction: FinancialDirection;
+  debit?: number;
+  credit?: number;
+  executorName?: string;
+  reference?: string;
 
   unitPrice?: number;
   shippingCost?: number;

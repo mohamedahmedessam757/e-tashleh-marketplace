@@ -241,9 +241,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
         <AdminHome subPath="admin-order-details" viewId={viewId} />
       )}
       {dashboardPath === 'billing' && <AdminHome subPath="billing" />}
-      {dashboardPath === 'financials' && <AdminHome subPath="financials" />}
-      {dashboardPath === 'invoice-details' && (
-        <AdminHome subPath="invoice-details" viewId={viewId} />
+      {dashboardPath === 'invoices' && <AdminHome subPath="invoices" />}
+      {dashboardPath === 'admin-order-invoice' && (
+        <AdminHome subPath="admin-order-invoice" viewId={viewId} />
       )}
       {dashboardPath === 'shipping' && <AdminHome subPath="shipping" viewId={viewId} />}
       {dashboardPath === 'shipping-carts' && <AdminHome subPath="shipping-carts" />}

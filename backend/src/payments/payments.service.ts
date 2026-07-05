@@ -26,7 +26,7 @@ import {
     buildWithdrawalGovernance,
     countOpenMerchantCases,
 } from './merchant-withdrawal-governance.util';
-import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPayoutMethodReady } from './payout-account.util';
+import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPayoutMethodReady, maskIban } from './payout-account.util';
 import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
@@ -36,7 +36,6 @@ import {
     computePendingReferralFromOrders,
     computeRefundedAmount,
     CUSTOMER_PENDING_ORDER_STATUSES,
-    CUSTOMER_TIER_CASHBACK,
     reconcileUserTotalSpent,
     REFERRAL_WINDOW_DAYS,
     splitRewardAggregates,
@@ -69,6 +68,8 @@ import {
     resolveOrderIds,
     isUuid,
 } from '../common/search/admin-entity-search.util';
+import { FinancialConfigService } from '../common/financial-config.service';
+import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 
 @Injectable()
 export class PaymentsService {
@@ -84,6 +85,8 @@ export class PaymentsService {
         @Inject(forwardRef(() => OfferFulfillmentService))
         private readonly offerFulfillment: OfferFulfillmentService,
         private readonly cardsService: CardsService,
+        private readonly financialConfig: FinancialConfigService,
+        private readonly withdrawalWorkflow: WithdrawalWorkflowService,
     ) { }
 
     /**
@@ -143,9 +146,10 @@ export class PaymentsService {
         // 4. Calculate amounts
         const unitPrice = Number(offer.unitPrice);
         const shippingCost = Number(offer.shippingCost);
-        const percentCommission = Math.round(unitPrice * 0.25);
-        const commission = unitPrice > 0 ? Math.max(percentCommission, 100) : 0;
+        const commission = await this.financialConfig.computeCommissionForPrice(unitPrice);
         const totalAmount = unitPrice + shippingCost + commission;
+        const finConfig = await this.financialConfig.getConfig();
+        const displayCurrency = finConfig.supportedCurrencies[0] || 'AED';
 
         // 5. Validate card (basic â€” in production this would be Stripe)
         const cardNumber = card.number.replace(/\s/g, '');
@@ -176,7 +180,9 @@ export class PaymentsService {
                         shippingCost,
                         commission,
                         totalAmount,
-                        currency: 'AED',
+                        currency: displayCurrency,
+                        displayCurrency,
+                        fxRate: 1,
                         cardLast4,
                         cardBrand,
                         cardHolder: card.holder.toUpperCase(),
@@ -416,8 +422,7 @@ export class PaymentsService {
         // 3. Calculate amounts (Simplified: Offer Price is ALL-INCLUSIVE)
         const unitPrice = Number(offer.unitPrice);
         const shippingCost = Number(offer.shippingCost);
-        const percentCommission = Math.round(unitPrice * 0.25);
-        const commission = unitPrice > 0 ? Math.max(percentCommission, 100) : 0;
+        const commission = await this.financialConfig.computeCommissionForPrice(unitPrice);
         
         // Total amount charged to customer = unitPrice + shippingCost + commission (Full price from OfferCard)
         const totalAmount = unitPrice + shippingCost + commission;
@@ -1488,8 +1493,11 @@ export class PaymentsService {
 
         if (!user) throw new NotFoundException('User not found');
 
-        const tierCashbackRate =
-            CUSTOMER_TIER_CASHBACK[user.loyaltyTier] ?? CUSTOMER_TIER_CASHBACK.BASIC;
+        const finConfig = await this.financialConfig.getConfig();
+        const tierCashbackRate = this.financialConfig.getCustomerCashbackRate(
+            user.loyaltyTier,
+            finConfig,
+        );
         const rewardSplits = splitRewardAggregates(rewardTxs, startOfMonth);
         const pendingLoyaltyRewards = computePendingLoyaltyFromOrders(
             pendingOwnOrders,
@@ -1540,8 +1548,13 @@ export class PaymentsService {
                 profitPercentage: tierCashbackRate * 100,
                 referralRate: 0.01,
                 referralWindowDays: REFERRAL_WINDOW_DAYS,
+                loyaltyConfig: {
+                    tiers: finConfig.loyaltyTiers,
+                    thresholds: finConfig.customerTierThresholds,
+                },
             },
             transactions,
+            withdrawalLimits: await this.financialConfig.getWithdrawalLimitsForUser(userId),
         };
     }
 
@@ -1701,44 +1714,36 @@ export class PaymentsService {
             earnedReferralProfits: 0 
         };
 
-        const tierConfig: Record<string, { rate: number; benefits: { ar: string; en: string }[] }> = { 
-            BASIC: { 
-                rate: 0.02, 
-                benefits: [
-                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' }
-                ]
-            }, 
-            SILVER: { 
-                rate: 0.03, 
-                benefits: [
-                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
-                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' }
-                ]
-            }, 
-            GOLD: { 
-                rate: 0.04, 
-                benefits: [
-                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
-                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' },
-                ]
-            }, 
-            VIP: { 
-                rate: 0.05, 
-                benefits: [
-                    { ar: 'Ø´Ø§Ø±Ø© Ø¨Ø§Ø¦Ø¹ Ù…ÙˆØ«ÙˆÙ‚', en: 'Verified Seller Badge' },
-                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© ÙÙŠ Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ø¨Ø­Ø«', en: 'Search Result Priority' },
-                    { ar: 'Ù…Ø¯ÙŠØ± Ø­Ø³Ø§Ø¨ VIP (24/7)', en: '24/7 VIP Account Manager' }
-                ]
-            },
-            ELITE: {
-                rate: 0.05,
-                benefits: [
-                    { ar: 'Ø£Ø¹Ù„Ù‰ Ù…Ø³ØªÙˆÙ‰ â€” Ø¯Ø¹ÙˆØ© ÙÙ‚Ø·', en: 'Invite-only top tier' },
-                    { ar: 'Ù…Ø¯ÙŠØ± Ø­Ø³Ø§Ø¨ VIP (24/7)', en: '24/7 VIP Account Manager' },
-                    { ar: 'Ø£ÙˆÙ„ÙˆÙŠØ© Ù‚ØµÙˆÙ‰ ÙÙŠ Ø§Ù„Ø·Ù„Ø¨Ø§Øª ÙˆØ§Ù„Ø¸Ù‡ÙˆØ±', en: 'Maximum order and visibility priority' },
-                ],
-            },
+        const tierConfig: Record<string, { rate: number; benefits: { ar: string; en: string }[] }> = {};
+        const finConfig = await this.financialConfig.getConfig();
+        const storeRules = finConfig.storeLoyaltyTiers;
+        const staticBenefits: Record<string, { ar: string; en: string }[]> = {
+            BASIC: [{ ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' }],
+            SILVER: [
+                { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
+                { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' },
+            ],
+            GOLD: [
+                { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
+                { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' },
+            ],
+            VIP: [
+                { ar: 'شارة بائع موثوق', en: 'Verified Seller Badge' },
+                { ar: 'أولوية في نتائج البحث', en: 'Search Result Priority' },
+                { ar: 'مدير حساب VIP (24/7)', en: '24/7 VIP Account Manager' },
+            ],
+            ELITE: [
+                { ar: 'أعلى مستوى — دعوة فقط', en: 'Invite-only top tier' },
+                { ar: 'مدير حساب VIP (24/7)', en: '24/7 VIP Account Manager' },
+                { ar: 'أولوية قصوى في الطلبات والظهور', en: 'Maximum order and visibility priority' },
+            ],
         };
+        for (const tier of ['BASIC', 'SILVER', 'GOLD', 'VIP', 'ELITE']) {
+            tierConfig[tier] = {
+                rate: storeRules[tier]?.rate ?? 0.02,
+                benefits: staticBenefits[tier] ?? staticBenefits.BASIC,
+            };
+        }
         
         const currentTierData = tierConfig[store.loyaltyTier] || tierConfig.BASIC;
         const userRate = currentTierData.rate;
@@ -1876,7 +1881,7 @@ export class PaymentsService {
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
         const withdrawalGovernance = buildWithdrawalGovernance(stats.available, openCases);
-        const withdrawalLimits = await this.getWithdrawalLimits();
+        const withdrawalLimits = await this.financialConfig.getWithdrawalLimitsForStore(store.id);
 
         return {
             stats: {
@@ -2044,6 +2049,7 @@ export class PaymentsService {
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     async getStripeOnboardingLink(userId: string) {
+        await this.withdrawalWorkflow.assertStripeConnectEnabled();
         const store = await this.prisma.store.findUnique({
             where: { ownerId: userId },
             include: { owner: true }
@@ -2078,6 +2084,7 @@ export class PaymentsService {
     }
 
     async getCustomerStripeOnboardingLink(userId: string) {
+        await this.withdrawalWorkflow.assertStripeConnectEnabled();
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
         });
@@ -2257,7 +2264,9 @@ export class PaymentsService {
         return { success: true, message: 'Bank details verified successfully' };
     }
 
-    async requestWithdrawal(userId: string, amount: number, payoutMethod: string = 'BANK_TRANSFER') {
+    async requestWithdrawal(userId: string, amount: number, payoutMethod: string = 'BANK_TRANSFER', ip?: string | null) {
+        await this.withdrawalWorkflow.enforceCreateRateLimit(userId);
+
         const store = await this.prisma.store.findUnique({
             where: { ownerId: userId },
             include: { owner: true }
@@ -2274,6 +2283,10 @@ export class PaymentsService {
         }
         // ------------------------------------------------------
 
+        if (payoutMethod === 'STRIPE') {
+            await this.withdrawalWorkflow.assertStripeConnectEnabled();
+        }
+
         // Validate payout method prerequisites
         const payoutReadiness = getPayoutReadiness({
             bankIban: store.bankIban,
@@ -2281,14 +2294,34 @@ export class PaymentsService {
         });
         assertWithdrawalPayoutMethodReady(payoutMethod, payoutReadiness);
 
-        // Check against global limits
-        const limits = await this.getWithdrawalLimits();
+        await this.withdrawalWorkflow.assertNoActiveWithdrawal({ storeId: store.id });
+
+        const limits = await this.financialConfig.getWithdrawalLimitsForStore(store.id);
         if (amount < limits.min) throw new BadRequestException(`Minimum withdrawal is ${limits.min} AED`);
         if (amount > limits.max) throw new BadRequestException(`Maximum withdrawal is ${limits.max} AED`);
 
         // Check balance
         if (Number(store.balance) < amount) {
             throw new BadRequestException('Insufficient balance');
+        }
+
+        const finConfig = await this.financialConfig.getConfig();
+        if (finConfig.payoutDelayDaysMerchant > 0) {
+            const recentCredit = await this.prisma.walletTransaction.findFirst({
+                where: { userId: store.ownerId, role: 'VENDOR', type: 'CREDIT' },
+                orderBy: { createdAt: 'desc' },
+            });
+            if (recentCredit) {
+                const eligibleAt = new Date(
+                    recentCredit.createdAt.getTime() +
+                        finConfig.payoutDelayDaysMerchant * 24 * 60 * 60 * 1000,
+                );
+                if (eligibleAt > new Date()) {
+                    throw new BadRequestException(
+                        `Withdrawals are available ${finConfig.payoutDelayDaysMerchant} day(s) after funds are credited`,
+                    );
+                }
+            }
         }
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
@@ -2301,17 +2334,37 @@ export class PaymentsService {
         }
 
         return this.prisma.$transaction(async (tx) => {
-            // 1. Create request
-            const request = await (tx.withdrawalRequest.create as any)({
+            await tx.$executeRaw`SELECT id FROM stores WHERE id = ${store.id}::uuid FOR UPDATE`;
+
+            await tx.store.update({
+                where: { id: store.id },
+                data: {
+                    balance: { decrement: amount },
+                    frozenBalance: { increment: amount },
+                },
+            });
+
+            const request = await tx.withdrawalRequest.create({
                 data: {
                     storeId: store.id,
                     amount,
                     payoutMethod,
-                    status: 'PENDING'
-                }
+                    status: 'PENDING',
+                    role: 'VENDOR',
+                    balanceHeldAtRequest: amount,
+                    ibanSnapshot: store.bankIban || null,
+                    stripeAccountSnapshot: store.stripeAccountId || null,
+                },
             });
 
-            // 2. Notify Admins
+            await this.auditLogs.logAction({
+                entity: 'FINANCIAL',
+                action: 'WITHDRAWAL_REQUEST_CREATED',
+                actorType: ActorType.VENDOR,
+                actorId: userId,
+                metadata: { requestId: request.id, amount, payoutMethod, role: 'VENDOR', ip: ip ?? null },
+            }, tx);
+
             const admins = await tx.user.findMany({
                 where: { role: { in: ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'] } }
             });
@@ -2321,9 +2374,9 @@ export class PaymentsService {
                 await this.notifications.create({
                     recipientId: admin.id,
                     recipientRole: 'ADMIN',
-                    titleAr: 'Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ø¬Ø¯ÙŠØ¯',
+                    titleAr: 'طلب سحب جديد',
                     titleEn: 'New Withdrawal Request',
-                    messageAr: `Ù‚Ø§Ù… Ø§Ù„ØªØ§Ø¬Ø± ${store.name} Ø¨Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${amount} AED Ø¹Ø¨Ø± ${payoutMethod === 'STRIPE' ? 'Stripe' : 'ØªØ­ÙˆÙŠÙ„ Ø¨Ù†ÙƒÙŠ'}`,
+                    messageAr: `قام التاجر ${store.name} بطلب سحب ${amount} AED عبر ${payoutMethod === 'STRIPE' ? 'Stripe' : 'تحويل بنكي'}`,
                     messageEn: `Merchant ${store.name} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
                     metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, payoutMethod }
@@ -2334,7 +2387,9 @@ export class PaymentsService {
         });
     }
 
-    async requestCustomerWithdrawal(userId: string, amount: number, payoutMethod: string = 'BANK_TRANSFER') {
+    async requestCustomerWithdrawal(userId: string, amount: number, payoutMethod: string = 'BANK_TRANSFER', ip?: string | null) {
+        await this.withdrawalWorkflow.enforceCreateRateLimit(userId);
+
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
         });
@@ -2350,36 +2405,77 @@ export class PaymentsService {
         }
         // ------------------------------------------------------
 
-        // Validate payout method prerequisites
+        if (payoutMethod === 'STRIPE') {
+            await this.withdrawalWorkflow.assertStripeConnectEnabled();
+        }
+
         const payoutReadiness = getPayoutReadiness({
             bankIban: user.bankIban,
             stripeOnboarded: user.stripeOnboarded,
         });
         assertWithdrawalPayoutMethodReady(payoutMethod, payoutReadiness);
 
-        // Check against global limits
-        const limits = await this.getWithdrawalLimits();
+        await this.withdrawalWorkflow.assertNoActiveWithdrawal({ userId: user.id });
+
+        const limits = await this.financialConfig.getWithdrawalLimitsForUser(user.id);
         if (amount < limits.min) throw new BadRequestException(`Minimum withdrawal is ${limits.min} AED`);
         if (amount > limits.max) throw new BadRequestException(`Maximum withdrawal is ${limits.max} AED`);
 
-        // Check balance (customerBalance instead of store balance)
         if (Number(user.customerBalance) < amount) {
             throw new BadRequestException('Insufficient balance in your rewards wallet');
         }
 
+        const finConfig = await this.financialConfig.getConfig();
+        if (finConfig.payoutDelayDaysCustomer > 0) {
+            const recentCredit = await this.prisma.walletTransaction.findFirst({
+                where: { userId: user.id, role: 'CUSTOMER', type: 'CREDIT' },
+                orderBy: { createdAt: 'desc' },
+            });
+            if (recentCredit) {
+                const eligibleAt = new Date(
+                    recentCredit.createdAt.getTime() +
+                        finConfig.payoutDelayDaysCustomer * 24 * 60 * 60 * 1000,
+                );
+                if (eligibleAt > new Date()) {
+                    throw new BadRequestException(
+                        `Withdrawals are available ${finConfig.payoutDelayDaysCustomer} day(s) after rewards are credited`,
+                    );
+                }
+            }
+        }
+
         return this.prisma.$transaction(async (tx) => {
-            // 1. Create request with role 'CUSTOMER'
+            await tx.$executeRaw`SELECT id FROM users WHERE id = ${user.id}::uuid FOR UPDATE`;
+
+            await tx.user.update({
+                where: { id: user.id },
+                data: {
+                    customerBalance: { decrement: amount },
+                    customerFrozenBalance: { increment: amount },
+                },
+            });
+
             const request = await tx.withdrawalRequest.create({
                 data: {
                     userId: user.id,
                     amount,
                     payoutMethod,
                     role: 'CUSTOMER',
-                    status: 'PENDING'
-                }
+                    status: 'PENDING',
+                    balanceHeldAtRequest: amount,
+                    ibanSnapshot: user.bankIban || null,
+                    stripeAccountSnapshot: user.stripeAccountId || null,
+                },
             });
 
-            // 2. Notify Admins
+            await this.auditLogs.logAction({
+                entity: 'FINANCIAL',
+                action: 'WITHDRAWAL_REQUEST_CREATED',
+                actorType: ActorType.CUSTOMER,
+                actorId: userId,
+                metadata: { requestId: request.id, amount, payoutMethod, role: 'CUSTOMER', ip: ip ?? null },
+            }, tx);
+
             const admins = await tx.user.findMany({
                 where: { role: { in: ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'] } }
             });
@@ -2389,9 +2485,9 @@ export class PaymentsService {
                 await this.notifications.create({
                     recipientId: admin.id,
                     recipientRole: 'ADMIN',
-                    titleAr: 'Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ø¹Ù…ÙŠÙ„ Ø¬Ø¯ÙŠØ¯',
+                    titleAr: 'طلب سحب عميل جديد',
                     titleEn: 'New Customer Withdrawal Request',
-                    messageAr: `Ù‚Ø§Ù… Ø§Ù„Ø¹Ù…ÙŠÙ„ ${user.name || user.email} Ø¨Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${amount} AED Ø¹Ø¨Ø± ${methodLabel}`,
+                    messageAr: `قام العميل ${user.name || user.email} بطلب سحب ${amount} AED عبر ${methodLabel}`,
                     messageEn: `Customer ${user.name || user.email} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
                     metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, role: 'CUSTOMER', payoutMethod }
@@ -2403,7 +2499,7 @@ export class PaymentsService {
     }
 
     async getWithdrawalRequests(userId: string, role: string, filters?: any) {
-        if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT') {
+        if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT' || role === 'ACCOUNTANT') {
             return this.getAdminWithdrawals(filters);
         }
 
@@ -2514,6 +2610,7 @@ export class PaymentsService {
                         bankDetailsVerified: true,
                     },
                 },
+                processor: { select: { id: true, name: true, email: true } },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -2561,10 +2658,52 @@ export class PaymentsService {
                 balanceAtRequest,
                 linkedWalletTxId: linked?.id || null,
                 adminNotes: req.adminNotes || null,
+                rejectionReason: req.rejectionReason || null,
                 stripeTransferId: req.stripeTransferId || null,
-                processedAt: req.status !== 'PENDING' ? req.updatedAt : null,
+                processedAt: req.status !== 'PENDING' ? (req.completedAt || req.approvedAt || req.updatedAt) : null,
+                store: req.store
+                    ? {
+                          ...req.store,
+                          bankIban: maskIban(req.store.bankIban),
+                      }
+                    : null,
+                user: req.user
+                    ? {
+                          ...req.user,
+                          bankIban: maskIban(req.user.bankIban),
+                      }
+                    : null,
             };
         });
+    }
+
+    async approveWithdrawal(adminId: string, requestId: string, ctx: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; ip?: string | null }) {
+        return this.withdrawalWorkflow.approveWithdrawal(requestId, { adminId, ...ctx });
+    }
+
+    async rejectWithdrawal(adminId: string, requestId: string, ctx: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; ip?: string | null }) {
+        return this.withdrawalWorkflow.rejectWithdrawal(requestId, { adminId, ...ctx });
+    }
+
+    async completeWithdrawal(adminId: string, requestId: string, ctx: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; ip?: string | null; idempotencyKey?: string }) {
+        return this.withdrawalWorkflow.completeWithdrawal(requestId, { adminId, ...ctx });
+    }
+
+    async releaseWithdrawalFunds(adminId: string, requestId: string, ctx: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; ip?: string | null; idempotencyKey?: string }) {
+        return this.withdrawalWorkflow.releaseWithdrawalFunds(requestId, { adminId, ...ctx });
+    }
+
+    async cancelWithdrawalRequest(userId: string, requestId: string, ip?: string | null) {
+        return this.withdrawalWorkflow.cancelWithdrawalRequest(userId, requestId, ip);
+    }
+
+    async getUserWithdrawalLimits(userId: string, role: 'CUSTOMER' | 'VENDOR') {
+        if (role === 'VENDOR') {
+            const store = await this.prisma.store.findUnique({ where: { ownerId: userId }, select: { id: true } });
+            if (!store) throw new NotFoundException('Store not found');
+            return this.financialConfig.getWithdrawalLimitsForStore(store.id);
+        }
+        return this.financialConfig.getWithdrawalLimitsForUser(userId);
     }
 
     async processWithdrawalRequest(
@@ -2575,183 +2714,63 @@ export class PaymentsService {
         adminSignature?: string,
         adminName?: string,
         adminEmail?: string,
-        overrideMethod?: string
+        overrideMethod?: string,
+        ip?: string | null,
     ) {
-        const request = await this.prisma.withdrawalRequest.findUnique({
-            where: { id: requestId },
-            include: { store: true }
-        });
-
-        if (!request) throw new NotFoundException('Request not found');
-        if (request.status !== 'PENDING') throw new BadRequestException('Request already processed');
-
+        const ctx = { notes, adminSignature, adminName, adminEmail, ip };
         if (action === 'REJECT') {
-            return this.prisma.withdrawalRequest.update({
-                where: { id: requestId },
-                data: { status: 'REJECTED', adminNotes: notes }
-            });
+            return this.rejectWithdrawal(adminId, requestId, ctx);
         }
+        return this.approveWithdrawal(adminId, requestId, ctx);
+    }
 
-        // APPROVAL FLOW
-        return await this.prisma.$transaction(async (tx) => {
-            let balanceAfter = 0;
-            let stripeId = null;
-            let finalStatus = 'COMPLETED';
-            const methodToUse = overrideMethod || request.payoutMethod;
+    async handleStripeTransferEvent(transfer: { id: string; metadata?: Record<string, string> }, eventType: string) {
+        return this.withdrawalWorkflow.handleStripeTransferEvent(transfer, eventType);
+    }
 
-            if (request.role === 'CUSTOMER') {
-                // 1. Re-check customer balance
-                const user = await tx.user.findUnique({ where: { id: request.userId } });
-                if (Number(user.customerBalance) < Number(request.amount)) {
-                    throw new BadRequestException('Customer balance is now insufficient');
-                }
-
-                // 2. Deduct from customer balance
-                await tx.user.update({
-                    where: { id: request.userId },
-                    data: { customerBalance: { decrement: request.amount } }
-                });
-
-                balanceAfter = Number(user.customerBalance) - Number(request.amount);
-                stripeId = user.stripeAccountId;
-            } else {
-                // 1. Re-check store balance
-                const store = await tx.store.findUnique({ where: { id: request.storeId } });
-                if (Number(store.balance) < Number(request.amount)) {
-                    throw new BadRequestException('Store balance is now insufficient');
-                }
-
-                // 2. Deduct from store balance
-                await tx.store.update({
-                    where: { id: request.storeId },
-                    data: { balance: { decrement: request.amount } }
-                });
-
-                balanceAfter = Number(store.balance) - Number(request.amount);
-                stripeId = store.stripeAccountId;
-            }
-
-            // 3. Create Debit Wallet Transaction for audit
-            await tx.walletTransaction.create({
-                data: {
-                    userId: request.role === 'CUSTOMER' ? request.userId : request.store.ownerId,
-                    role: request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR',
-                    type: 'DEBIT',
-                    transactionType: 'withdrawal',
-                    amount: request.amount,
-                    description: `Withdrawal via ${methodToUse}: ${request.id}`,
-                    balanceAfter: balanceAfter,
-                    metadata: { requestId: request.id, payoutMethod: methodToUse }
-                }
-            });
-
-            // 4. Process based on payout method
-            let transferId = null;
-
-            if (methodToUse === 'STRIPE') {
-                if (!stripeId) throw new BadRequestException('User does not have a Stripe Connect account');
-                // Stripe Transfer Flow
-                try {
-                    const transfer = await this.stripeService.createTransfer(
-                        request.amount.toString(),
-                        request.currency,
-                        stripeId,
-                        `WITHDRAWAL_${request.id}`,
-                        { requestId: request.id, role: request.role }
-                    );
-                    transferId = transfer.id;
-                } catch (err: any) {
-                    this.logger.error(`Stripe Transfer failed for request ${request.id}: ${err.message}`);
-                    // Critical Bug Fix: Throw to rollback Prisma transaction instead of setting FAILED
-                    throw new BadRequestException(`Stripe Transfer failed: ${err.message}`);
-                }
-            } else {
-                // Bank Transfer Flow
-                let bankDetailsValid = false;
-                if (request.role === 'CUSTOMER') {
-                    const user = await tx.user.findUnique({ where: { id: request.userId } });
-                    if (user?.bankIban && user?.bankName) bankDetailsValid = true;
-                } else {
-                    const store = await tx.store.findUnique({ where: { id: request.storeId } });
-                    if (store?.bankIban && store?.bankName) bankDetailsValid = true;
-                }
-
-                if (!bankDetailsValid) {
-                    throw new BadRequestException('Bank details (IBAN, Bank Name) are missing for this user/store. Cannot process manual bank transfer.');
-                }
-
-                // Mark as COMPLETED (admin transfers manually)
-                finalStatus = 'COMPLETED';
-                this.logger.log(`Bank Transfer approved for request ${request.id} for ${request.role}`);
-            }
-
-            await this.auditLogs.logAction({
-                entity: 'FINANCIAL',
-                action: 'WITHDRAWAL_APPROVAL',
-                actorType: ActorType.ADMIN,
-                actorId: adminId,
-                actorName: adminName,
-                metadata: {
-                    requestId: request.id,
-                    amount: request.amount,
-                    method: methodToUse,
-                    note: notes,
-                    adminEmail,
-                    adminSignature: adminSignature || null,
-                    stripeTransferId: transferId
-                }
-            }, tx);
-
-            // 6. Update Request
-            const updatedRequest = await tx.withdrawalRequest.update({
-                where: { id: requestId },
-                data: { 
-                    status: finalStatus,
-                    payoutMethod: methodToUse, // Reflect the override
-                    stripeTransferId: transferId,
-                    adminNotes: notes || `Processed via ${methodToUse}`
-                }
-            });
-
-            // 7. Send Notifications to User/Merchant
-            const recipientId = request.role === 'CUSTOMER' ? request.userId : request.store.ownerId;
-            const recipientRole = request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
-
-            if (action === 'APPROVE') {
-                await this.notifications.create({
-                    recipientId: recipientId,
-                    recipientRole: recipientRole,
-                    type: 'payment',
-                    titleAr: methodToUse === 'STRIPE' ? 'âœ… ØªÙ… ØªØ­ÙˆÙŠÙ„ Ù…Ø¨Ù„Øº Ø§Ù„Ø³Ø­Ø¨ Ø¨Ù†Ø¬Ø§Ø­' : 'âœ… ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø§Ù„Ø³Ø­Ø¨',
-                    titleEn: methodToUse === 'STRIPE' ? 'âœ… Withdrawal Transferred Successfully' : 'âœ… Withdrawal Approved',
-                    messageAr: `ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø³Ø­Ø¨ Ù…Ø¨Ù„Øº ${request.amount} Ø¯Ø±Ù‡Ù…. Ø³ÙŠØªÙ… ÙˆØµÙˆÙ„ Ø§Ù„ØªØ­ÙˆÙŠÙ„ Ù„Ø­Ø³Ø§Ø¨Ùƒ Ø®Ù„Ø§Ù„ Ø£ÙŠØ§Ù… Ø¹Ù…Ù„ Ù‚Ù„ÙŠÙ„Ø©${adminName ? ' (Ø¨ÙˆØ§Ø³Ø·Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©: ' + adminName + ')' : ''}. ${notes ? '\\nÙ…Ù„Ø§Ø­Ø¸Ø©: ' + notes : ''}`,
-                    messageEn: `Your withdrawal of AED ${request.amount} has been approved. The transfer will complete in a few business days${adminName ? ' (Processed by: ' + adminName + ')' : ''}. ${notes ? '\\nNote: ' + notes : ''}`,
-                    metadata: { type: 'WITHDRAWAL_APPROVED', requestId, method: methodToUse }
-                });
-            } else if (action === 'REJECT') {
-                await this.notifications.create({
-                    recipientId: recipientId,
-                    recipientRole: recipientRole,
-                    type: 'alert',
-                    titleAr: 'âš ï¸ ØªÙ… Ø±ÙØ¶ Ø·Ù„Ø¨ Ø§Ù„Ø³Ø­Ø¨',
-                    titleEn: 'âš ï¸ Withdrawal Request Rejected',
-                    messageAr: `ØªÙ… Ø±ÙØ¶ Ø·Ù„Ø¨ Ø³Ø­Ø¨ ${request.amount} Ø¯Ø±Ù‡Ù… Ù„Ø³Ø¨Ø¨: ${notes || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯'}. ${adminName ? 'Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©: ' + adminName : ''}. ÙŠÙØ±Ø¬Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„ØªÙØ§ØµÙŠÙ„ ÙˆØ§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.`,
-                    messageEn: `Your withdrawal of AED ${request.amount} has been rejected. Reason: ${notes || 'Not specified'}. ${adminName ? 'Admin: ' + adminName : ''}. Please check and try again.`,
-                    metadata: { type: 'WITHDRAWAL_REJECTED', requestId, reason: notes }
-                });
-            }
-
-            return updatedRequest;
-        });
+    async getWithdrawalStripeStatus(requestId: string) {
+        const request = await this.prisma.withdrawalRequest.findUnique({ where: { id: requestId } });
+        if (!request) throw new NotFoundException('Request not found');
+        if (!request.stripeTransferId) {
+            return { requestId, status: request.status, stripeVerified: false, message: 'No Stripe transfer ID' };
+        }
+        try {
+            const transfer = await this.stripeService.retrieveTransfer(request.stripeTransferId);
+            return {
+                requestId,
+                status: request.status,
+                stripeTransferId: request.stripeTransferId,
+                stripeVerified: true,
+                stripeStatus: transfer.reversed ? 'reversed' : 'completed',
+                amount: transfer.amount / 100,
+                currency: transfer.currency,
+            };
+        } catch (err: any) {
+            return { requestId, status: request.status, stripeVerified: false, error: err.message };
+        }
     }
 
     async getWithdrawalLimits() {
-        const settings = await this.prisma.platformSettings.findUnique({
-            where: { settingKey: 'withdrawal_limits' }
-        });
+        const [settings, finConfig] = await Promise.all([
+            this.prisma.platformSettings.findUnique({
+                where: { settingKey: 'withdrawal_limits' },
+            }),
+            this.financialConfig.getConfig(),
+        ]);
 
-        if (!settings) return { min: 50, max: 10000 };
-        return settings.settingValue as any;
+        const stored = (settings?.settingValue as Record<string, unknown>) ?? {};
+        const customerMin = Number(stored.customerMin ?? stored.min ?? finConfig.minWithdrawalCustomer);
+        const merchantMin = Number(stored.merchantMin ?? finConfig.minWithdrawalMerchant);
+        const max = Number(stored.max ?? 10000);
+
+        return {
+            ...stored,
+            min: customerMin,
+            max,
+            customerMin,
+            merchantMin,
+            stripeConnectEnabled: finConfig.stripeConnectEnabled,
+        };
     }
 
     /**
@@ -2759,7 +2778,8 @@ export class PaymentsService {
      * Also repairs SUCCESS payments that never created escrow rows (legacy/test data).
      */
     private async syncMerchantEscrowReleases(storeId: string): Promise<void> {
-        const windowEnd = escrowReleaseWindowEnd();
+        const config = await this.financialConfig.getConfig();
+        const windowEnd = escrowReleaseWindowEnd(new Date(), config.escrowHoldHoursMerchant);
 
         const heldEscrows = await this.prisma.escrowTransaction.findMany({
             where: {
@@ -3072,7 +3092,8 @@ export class PaymentsService {
                         'AED',
                         stripeId,
                         `MANUAL_PAYOUT_${walletTx.id}`,
-                        { adminId, note }
+                        { adminId, note },
+                        `manual_payout_${walletTx.id}`,
                     );
                     transferId = transfer.id;
                 } catch (err: any) {
@@ -3196,6 +3217,7 @@ export class PaymentsService {
                       include: {
                           user: { select: { id: true, name: true, avatar: true } },
                           store: { select: { id: true, name: true, logo: true, storeCode: true } },
+                          processor: { select: { id: true, name: true } },
                       },
                   })
                 : [],
@@ -3248,11 +3270,16 @@ export class PaymentsService {
     }
 
     private mapPaymentToUnified(p: any): UnifiedFinancialEventDto {
+        const amount = Number(p.totalAmount);
         return {
             id: p.id,
             source: FinancialEventSource.PAYMENT,
             orderId: p.orderId,
             orderNumber: p.order?.orderNumber,
+            reference: p.order?.orderNumber || p.id,
+            debit: amount,
+            credit: undefined,
+            executorName: undefined,
             customerId: p.customerId,
             customerName: p.customer?.name,
             customerAvatar: p.customer?.avatar,
@@ -3260,7 +3287,7 @@ export class PaymentsService {
             storeName: p.offer?.store?.name,
             storeLogo: p.offer?.store?.logo,
             storeCode: p.offer?.store?.storeCode,
-            amount: Number(p.totalAmount),
+            amount,
             currency: p.currency,
             direction: FinancialDirection.DEBIT,
             unitPrice: Number(p.unitPrice),
@@ -3284,11 +3311,17 @@ export class PaymentsService {
     private mapWalletToUnified(w: any): UnifiedFinancialEventDto {
         const isCredit = w.type === 'CREDIT';
         const txType = String(w.transactionType || '').toUpperCase();
+        const amount = Number(w.amount);
+        const meta = (w.metadata as Record<string, unknown>) || {};
         return {
             id: w.id,
             source: FinancialEventSource.WALLET,
             orderId: w.payment?.order?.id,
             orderNumber: w.payment?.order?.orderNumber,
+            reference: (meta.requestId as string) || w.payment?.order?.orderNumber || w.id,
+            debit: isCredit ? undefined : amount,
+            credit: isCredit ? amount : undefined,
+            executorName: (meta.adminName as string) || undefined,
             customerId: w.role === 'CUSTOMER' ? w.userId : undefined,
             customerName: w.role === 'CUSTOMER' ? w.user?.name : undefined,
             customerAvatar: w.role === 'CUSTOMER' ? w.user?.avatar : undefined,
@@ -3296,7 +3329,7 @@ export class PaymentsService {
             storeName: w.role === 'VENDOR' ? w.user?.store?.name : undefined,
             storeLogo: w.role === 'VENDOR' ? w.user?.store?.logo : undefined,
             storeCode: w.role === 'VENDOR' ? w.user?.store?.storeCode : undefined,
-            amount: Number(w.amount),
+            amount,
             currency: w.currency,
             direction: isCredit ? FinancialDirection.CREDIT : FinancialDirection.DEBIT,
             balanceAfter: Number(w.balanceAfter),
@@ -3311,16 +3344,21 @@ export class PaymentsService {
             description: w.description,
             createdAt: w.createdAt,
             updatedAt: w.createdAt,
-            metadata: (w.metadata as Record<string, unknown>) || {},
+            metadata: meta,
         };
     }
 
     private mapEscrowToUnified(e: any): UnifiedFinancialEventDto {
+        const amount = Number(e.merchantAmount);
         return {
             id: e.id,
             source: FinancialEventSource.ESCROW,
             orderId: e.orderId,
             orderNumber: e.order?.orderNumber,
+            reference: e.order?.orderNumber || e.orderId,
+            debit: e.status === 'RELEASED' ? amount : undefined,
+            credit: e.status === 'HELD' || e.status === 'FROZEN' ? amount : undefined,
+            executorName: undefined,
             customerId: e.order?.customer?.id,
             customerName: e.order?.customer?.name,
             storeId: e.order?.store?.id,
@@ -3347,9 +3385,14 @@ export class PaymentsService {
     }
 
     private mapWithdrawalToUnified(wd: any): UnifiedFinancialEventDto {
+        const amount = Number(wd.amount);
         return {
             id: wd.id,
             source: FinancialEventSource.WITHDRAWAL,
+            reference: wd.id,
+            debit: amount,
+            credit: undefined,
+            executorName: wd.processor?.name || undefined,
             customerId: wd.role === 'CUSTOMER' ? wd.userId : undefined,
             customerName: wd.role === 'CUSTOMER' ? wd.user?.name : undefined,
             customerAvatar: wd.role === 'CUSTOMER' ? wd.user?.avatar : undefined,
@@ -3357,13 +3400,13 @@ export class PaymentsService {
             storeName: wd.role === 'VENDOR' ? wd.store?.name : undefined,
             storeLogo: wd.role === 'VENDOR' ? wd.store?.logo : undefined,
             storeCode: wd.role === 'VENDOR' ? wd.store?.storeCode : undefined,
-            amount: Number(wd.amount),
+            amount,
             currency: wd.currency,
             direction: FinancialDirection.DEBIT,
             payoutMethod: wd.payoutMethod,
             adminNotes: wd.adminNotes || undefined,
             stripeTransferId: wd.stripeTransferId || undefined,
-            processedAt: wd.status !== 'PENDING' ? wd.updatedAt : undefined,
+            processedAt: wd.transferCompletedAt || (wd.status !== 'PENDING' ? wd.updatedAt : undefined),
             userRole: wd.role,
             financialImpact: 'USER_LIABILITY',
             eventType: `WITHDRAWAL_${wd.status}`,

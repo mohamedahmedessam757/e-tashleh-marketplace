@@ -13,6 +13,9 @@ import { VehicleCatalogManager } from './VehicleCatalogManager';
 import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { BlurredSection } from './BlurredSection';
+import { FinancialAuditModal } from './FinancialAuditModal';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const AdminSettings: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -34,6 +37,7 @@ export const AdminSettings: React.FC = () => {
   } = usePlatformSettingsStore();
 
   const [activeTab, setActiveTab] = useState<'general' | 'financial' | 'logistics' | 'content' | 'security' | 'catalog'>('general');
+  const [showFinancialAudit, setShowFinancialAudit] = useState(false);
   const [activeShipmentTypeId, setActiveShipmentTypeId] = useState<string>('standard');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,7 +123,38 @@ export const AdminSettings: React.FC = () => {
     setAttachmentsDraft(isAttachmentsEnabled);
   }, [isAttachmentsEnabled]);
 
+  useEffect(() => {
+    if (activeTab !== 'financial') return;
+    const loadFinancial = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.financial) {
+          setFormData((prev: any) => ({
+            ...prev,
+            financial: { ...(prev.financial || {}), ...data.financial },
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load financial settings', err);
+      }
+    };
+    loadFinancial();
+  }, [activeTab]);
+
   const handleSaveSection = async (section: string) => {
+    if (section === 'financial') {
+      setShowFinancialAudit(true);
+      return;
+    }
+    await persistSection(section);
+  };
+
+  const persistSection = async (section: string) => {
     setIsSaving(true);
     let success = false;
     const reason = isAr ? `تحديث إعدادات ${section} من لوحة الإدارة` : `Administrative update for ${section}`;
@@ -130,11 +165,8 @@ export const AdminSettings: React.FC = () => {
       } else if (section === 'content') {
         success = await saveVendorContract(contractDraft);
       } else {
-        // 2026 FIX: Save the standalone flags FIRST (before system_config triggers a re-fetch race)
-        // Send as boolean to match Supabase jsonb column.
         await saveSystemSetting('ALLOW_CUSTOMER_ACCOUNT_DELETION', deletionDraft, reason);
         await saveSystemSetting('CHAT_ATTACHMENTS_ENABLED', attachmentsDraft, reason);
-
         success = await saveSystemSetting('system_config', formData, reason);
       }
 
@@ -142,10 +174,32 @@ export const AdminSettings: React.FC = () => {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         await fetchSystemSettings();
-        await fetchSettings(); // Sync standalone settings store after save
+        await fetchSettings();
       }
     } catch (err) {
       console.error("Critical Save Error:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveFinancialSettings = async (audit: { reason: string; adminName: string; adminSignature: string }) => {
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData.financial, reason: audit.reason, adminName: audit.adminName, adminSignature: audit.adminSignature }),
+      });
+      if (res.ok) {
+        setShowFinancialAudit(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        await fetchSystemSettings();
+      }
+    } catch (err) {
+      console.error('Financial settings save failed', err);
     } finally {
       setIsSaving(false);
     }
@@ -219,6 +273,7 @@ export const AdminSettings: React.FC = () => {
 
 
   return (
+    <>
     <div className="max-w-[1600px] mx-auto space-y-10 px-4 pb-20">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gradient-to-br from-[#1A1814] to-black p-8 rounded-3xl border border-white/5 relative overflow-hidden shadow-2xl">
@@ -432,6 +487,7 @@ export const AdminSettings: React.FC = () => {
 
                 {/* 2. FINANCIAL TAB */}
                 {activeTab === 'financial' && (
+                  <div className="space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                     <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem] shadow-inner space-y-8">
                       <div className="flex justify-between items-center">
@@ -486,6 +542,228 @@ export const AdminSettings: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {[
+                      { key: 'gatewayFeePercent', labelAr: 'رسوم بوابة الدفع %', labelEn: 'Gateway Fee %', max: 10 },
+                      { key: 'escrowHoldHoursCustomer', labelAr: 'ساعات ضمان العميل', labelEn: 'Customer Escrow Hours', max: 168 },
+                      { key: 'escrowHoldHoursMerchant', labelAr: 'ساعات ضمان التاجر', labelEn: 'Merchant Escrow Hours', max: 168 },
+                      { key: 'payoutDelayDaysMerchant', labelAr: 'تأخير سحب التاجر (أيام)', labelEn: 'Merchant Payout Delay (days)', max: 30 },
+                      { key: 'payoutDelayDaysCustomer', labelAr: 'تأخير سحب العميل (أيام)', labelEn: 'Customer Payout Delay (days)', max: 30 },
+                      { key: 'loyaltyPointsRate', labelAr: 'نسبة نقاط الولاء %', labelEn: 'Loyalty Points Rate %', max: 20 },
+                      { key: 'minWithdrawalCustomer', labelAr: 'الحد الأدنى للسحب — عميل (AED)', labelEn: 'Min Withdrawal — Customer (AED)', max: 10000 },
+                      { key: 'minWithdrawalMerchant', labelAr: 'الحد الأدنى للسحب — تاجر (AED)', labelEn: 'Min Withdrawal — Merchant (AED)', max: 10000 },
+                    ].map((field) => (
+                      <div key={field.key} className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+                        <p className="text-[10px] font-black text-white/30 uppercase mb-3">{isAr ? field.labelAr : field.labelEn}</p>
+                        <input
+                          type="number"
+                          min={0}
+                          max={field.max}
+                          value={formData.financial?.[field.key] ?? 0}
+                          onChange={(e) => updateField('financial', field.key, parseInt(e.target.value) || 0)}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white outline-none focus:border-gold-500/50"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
+                      {isAr ? 'Stripe Connect' : 'Stripe Connect'}
+                    </h3>
+                    <p className="text-[11px] text-white/30 mb-4">
+                      {isAr ? 'تفعيل خيار السحب عبر Stripe Connect للعملاء والتجار' : 'Enable Stripe Connect payout option for customers and merchants'}
+                    </p>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(formData.financial?.stripeConnectEnabled)}
+                        onChange={(e) => updateField('financial', 'stripeConnectEnabled', e.target.checked)}
+                        className="w-5 h-5 rounded border-white/20"
+                      />
+                      <span className="text-sm font-bold text-white">
+                        {isAr ? 'تفعيل Stripe Connect' : 'Enable Stripe Connect'}
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
+                    <p className="text-[11px] text-white/30 mb-6">{isAr ? 'نسبة استرداد النقاط والحد الشهري لكل مستوى عميل' : 'Cashback percent and monthly cap per customer tier'}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {['BASIC', 'SILVER', 'GOLD', 'VIP', 'PARTNER', 'ELITE'].map((tier) => {
+                        const tierData = formData.financial?.loyaltyTiers?.[tier] || { percent: 0.02, monthlyCap: 2000 };
+                        return (
+                          <div key={tier} className="p-4 rounded-2xl bg-black/30 border border-white/5">
+                            <p className="text-[10px] font-black text-gold-500 uppercase mb-3">{tier}</p>
+                            <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'النسبة %' : 'Percent'}</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              max={1}
+                              value={tierData.percent ?? 0}
+                              onChange={(e) => {
+                                const tiers = { ...(formData.financial?.loyaltyTiers || {}) };
+                                tiers[tier] = { ...tierData, percent: parseFloat(e.target.value) || 0 };
+                                updateField('financial', 'loyaltyTiers', tiers);
+                              }}
+                              className="w-full mb-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                            />
+                            <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'الحد الشهري' : 'Monthly cap'}</label>
+                            <input
+                              type="number"
+                              value={tierData.monthlyCap ?? 0}
+                              onChange={(e) => {
+                                const tiers = { ...(formData.financial?.loyaltyTiers || {}) };
+                                tiers[tier] = { ...tierData, monthlyCap: parseInt(e.target.value) || 0 };
+                                updateField('financial', 'loyaltyTiers', tiers);
+                              }}
+                              className="w-full mb-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                            />
+                            <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأدنى' : 'Withdrawal min'}</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={tierData.withdrawalMin ?? 100}
+                              onChange={(e) => {
+                                const tiers = { ...(formData.financial?.loyaltyTiers || {}) };
+                                tiers[tier] = { ...tierData, withdrawalMin: parseInt(e.target.value) || 0 };
+                                updateField('financial', 'loyaltyTiers', tiers);
+                              }}
+                              className="w-full mb-3 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                            />
+                            <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأقصى' : 'Withdrawal max'}</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={tierData.withdrawalMax ?? 10000}
+                              onChange={(e) => {
+                                const tiers = { ...(formData.financial?.loyaltyTiers || {}) };
+                                tiers[tier] = { ...tierData, withdrawalMax: parseInt(e.target.value) || 0 };
+                                updateField('financial', 'loyaltyTiers', tiers);
+                              }}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">{isAr ? 'ولاء العميل — حدود الإنفاق (AED)' : 'Customer loyalty — spend thresholds (AED)'}</h3>
+                    <p className="text-[11px] text-white/30 mb-6">{isAr ? 'الحد الأدنى للإنفاق للترقية بين مستويات العميل' : 'Minimum spend to reach each customer tier'}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        { key: 'SILVER', labelAr: 'فضي', labelEn: 'Silver' },
+                        { key: 'GOLD', labelAr: 'ذهبي', labelEn: 'Gold' },
+                        { key: 'VIP', labelAr: 'VIP', labelEn: 'VIP' },
+                        { key: 'PARTNER', labelAr: 'شريك', labelEn: 'Partner' },
+                      ].map((tier) => (
+                        <div key={tier.key} className="p-4 rounded-2xl bg-black/30 border border-white/5">
+                          <p className="text-[10px] font-black text-blue-400 uppercase mb-3">{isAr ? tier.labelAr : tier.labelEn}</p>
+                          <input
+                            type="number"
+                            min={0}
+                            value={formData.financial?.customerTierThresholds?.[tier.key] ?? 0}
+                            onChange={(e) => {
+                              const thresholds = { ...(formData.financial?.customerTierThresholds || {}) };
+                              thresholds[tier.key] = parseInt(e.target.value) || 0;
+                              updateField('financial', 'customerTierThresholds', thresholds);
+                            }}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">{isAr ? 'ولاء التاجر — المستويات والنقاط' : 'Merchant loyalty — tiers & points'}</h3>
+                    <p className="text-[11px] text-white/30 mb-6">{isAr ? 'نسبة المكافأة ونقاط الأداء ومعايير الترقية لكل مستوى تاجر' : 'Reward rate, performance points, and upgrade criteria per merchant tier'}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {['BASIC', 'SILVER', 'GOLD', 'VIP', 'ELITE'].map((tier) => {
+                        const tierData = formData.financial?.storeLoyaltyTiers?.[tier] || {
+                          rate: 0.02,
+                          pointsRequired: 0,
+                          minRating: 0,
+                          maxViolations: 999,
+                          minOrders: 0,
+                          minAgeDays: 0,
+                        };
+                        const updateStoreTier = (field: string, value: number) => {
+                          const tiers = { ...(formData.financial?.storeLoyaltyTiers || {}) };
+                          tiers[tier] = { ...tierData, [field]: value };
+                          updateField('financial', 'storeLoyaltyTiers', tiers);
+                        };
+                        return (
+                          <div key={tier} className="p-4 rounded-2xl bg-black/30 border border-white/5 space-y-2">
+                            <p className="text-[10px] font-black text-purple-400 uppercase mb-1">{tier}</p>
+                            {[
+                              { key: 'rate', labelAr: 'نسبة المكافأة', labelEn: 'Reward rate', step: 0.01, max: 1 },
+                              { key: 'pointsRequired', labelAr: 'نقاط الأداء', labelEn: 'Performance pts', step: 1, max: 1000 },
+                              { key: 'minRating', labelAr: 'الحد الأدنى للتقييم', labelEn: 'Min rating', step: 0.1, max: 5 },
+                              { key: 'maxViolations', labelAr: 'حد المخالفات', labelEn: 'Max violations', step: 1, max: 999 },
+                              { key: 'minOrders', labelAr: 'الحد الأدنى للطلبات', labelEn: 'Min orders', step: 1, max: 1000 },
+                              { key: 'minAgeDays', labelAr: 'عمر الحساب (أيام)', labelEn: 'Account age (days)', step: 1, max: 365 },
+                            ].map((field) => (
+                              <div key={field.key}>
+                                <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? field.labelAr : field.labelEn}</label>
+                                <input
+                                  type="number"
+                                  step={field.step}
+                                  min={0}
+                                  max={field.max}
+                                  value={tierData[field.key] ?? 0}
+                                  onChange={(e) => updateStoreTier(field.key, parseFloat(e.target.value) || 0)}
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50"
+                                />
+                              </div>
+                            ))}
+                            <div>
+                              <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأدنى' : 'Withdrawal min'}</label>
+                              <input type="number" min={0} value={tierData.withdrawalMin ?? 100} onChange={(e) => updateStoreTier('withdrawalMin', parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50" />
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأقصى' : 'Withdrawal max'}</label>
+                              <input type="number" min={0} value={tierData.withdrawalMax ?? 10000} onChange={(e) => updateStoreTier('withdrawalMax', parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">{isAr ? 'العملات المدعومة' : 'Supported Currencies'}</h3>
+                    <p className="text-[11px] text-white/30 mb-6">{isAr ? 'AED افتراضي — اختر عملات إضافية للعرض والتسجيل' : 'AED default — select additional currencies for display and recording'}</p>
+                    <div className="flex flex-wrap gap-3">
+                      {['AED', 'USD', 'EUR', 'SAR'].map((code) => {
+                        const selected = (formData.financial?.supportedCurrencies || ['AED']).includes(code);
+                        return (
+                          <button
+                            key={code}
+                            type="button"
+                            disabled={code === 'AED'}
+                            onClick={() => {
+                              const current: string[] = formData.financial?.supportedCurrencies || ['AED'];
+                              const next = selected
+                                ? current.filter((c: string) => c !== code)
+                                : [...current, code];
+                              updateField('financial', 'supportedCurrencies', next.length ? next : ['AED']);
+                            }}
+                            className={`px-5 py-3 rounded-xl text-xs font-black uppercase border transition-all ${
+                              selected ? 'bg-gold-500 text-black border-gold-500' : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20'
+                            } ${code === 'AED' ? 'opacity-80 cursor-default' : ''}`}
+                          >
+                            {code}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   </div>
                 )}
 
@@ -990,5 +1268,13 @@ export const AdminSettings: React.FC = () => {
         </motion.div>
       </AnimatePresence>
     </div>
+      <FinancialAuditModal
+        isOpen={showFinancialAudit}
+        onClose={() => setShowFinancialAudit(false)}
+        onConfirm={saveFinancialSettings}
+        title={isAr ? 'تدقيق مالي — حفظ الإعدادات' : 'Financial audit — save settings'}
+        subtitle={isAr ? 'سبب التعديل والتوقيع مطلوبان' : 'Reason and signature are required'}
+      />
+    </>
   );
 };

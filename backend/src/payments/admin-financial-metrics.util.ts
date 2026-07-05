@@ -39,6 +39,14 @@ export interface AdminFinancialKpis {
   failedUnsettledAmount: number;
   reconciliationDelta: number;
   todayTransactionsCount: number;
+  totalReleasedToMerchants: number;
+  completedWithdrawals: number;
+  completedWithdrawalsCount: number;
+  financialDisputesCount: number;
+  financialDisputesAmount: number;
+  totalPenalties: number;
+  dailyTxCount: number;
+  monthlyTxCount: number;
 }
 
 function buildFailedUnsettledWhere(): Prisma.PaymentTransactionWhereInput {
@@ -112,6 +120,33 @@ export function roundMoney(value: number): number {
   return Number(value.toFixed(2));
 }
 
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfMonth(): Date {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function countFinancialTransactionsSince(
+  prisma: PrismaService,
+  since: Date,
+): Promise<number> {
+  const dateWhere = { createdAt: { gte: since } };
+  const [payments, wallet, escrow, withdrawals] = await Promise.all([
+    prisma.paymentTransaction.count({ where: dateWhere }),
+    prisma.walletTransaction.count({ where: dateWhere }),
+    prisma.escrowTransaction.count({ where: dateWhere }),
+    prisma.withdrawalRequest.count({ where: dateWhere }),
+  ]);
+  return payments + wallet + escrow + withdrawals;
+}
+
 export async function computeAdminFinancialKpis(
   prisma: PrismaService,
   range: AdminDateRange,
@@ -138,6 +173,14 @@ export async function computeAdminFinancialKpis(
     loyaltyPaidAgg,
     opsLast24h,
     failedUnsettledAgg,
+    walletReleasedAgg,
+    escrowReleasedAgg,
+    completedWithdrawalsAgg,
+    penaltiesAgg,
+    disputedOrdersAgg,
+    openDisputesAgg,
+    dailyTxCount,
+    monthlyTxCount,
   ] = await Promise.all([
     prisma.paymentTransaction.aggregate({
       where: grossSalesWhere,
@@ -219,6 +262,51 @@ export async function computeAdminFinancialKpis(
       _count: { id: true },
       _sum: { totalAmount: true },
     }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        role: 'VENDOR',
+        type: 'CREDIT',
+        transactionType: { in: ['ORDER_PROFIT', 'ESCROW_RELEASE', 'PAYMENT', 'SALE'] },
+        ...walletDate,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.escrowTransaction.aggregate({
+      where: {
+        status: 'RELEASED',
+        ...(dateFilter ? { releasedAt: dateFilter } : {}),
+      },
+      _sum: { merchantAmount: true },
+    }),
+    prisma.withdrawalRequest.aggregate({
+      where: {
+        status: { in: ['TRANSFERRED', 'COMPLETED'] },
+        ...(dateFilter ? { updatedAt: dateFilter } : {}),
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+    }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        transactionType: { equals: 'penalty', mode: 'insensitive' },
+        ...walletDate,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.order.aggregate({
+      where: {
+        status: { in: ['DISPUTED', 'RETURN_REQUESTED'] },
+        ...(dateFilter ? { updatedAt: dateFilter } : {}),
+      },
+      _count: { id: true },
+      _sum: { totalAmount: true },
+    }),
+    prisma.dispute.aggregate({
+      where: dateFilter ? { createdAt: dateFilter } : {},
+      _count: { id: true },
+    }),
+    countFinancialTransactionsSince(prisma, startOfToday()),
+    countFinancialTransactionsSince(prisma, startOfMonth()),
   ]);
 
   const grossSales = Number(grossSalesAgg._sum.totalAmount || 0);
@@ -246,6 +334,18 @@ export async function computeAdminFinancialKpis(
   const userWalletLiabilitiesAed =
     Number(customerBalanceAgg._sum.customerBalance || 0) +
     Number(merchantStoreAgg._sum.balance || 0);
+
+  const walletReleased = Number(walletReleasedAgg._sum.amount || 0);
+  const escrowReleased = Number(escrowReleasedAgg._sum.merchantAmount || 0);
+  const totalReleasedToMerchants = roundMoney(
+    escrowReleased > 0 ? escrowReleased : walletReleased,
+  );
+
+  const financialDisputesCount =
+    disputedOrdersAgg._count.id + openDisputesAgg._count.id;
+  const financialDisputesAmount = roundMoney(
+    Number(disputedOrdersAgg._sum.totalAmount || 0),
+  );
 
   return {
     grossSales: roundMoney(grossSales),
@@ -279,6 +379,14 @@ export async function computeAdminFinancialKpis(
     failedUnsettledAmount: roundMoney(Number(failedUnsettledAgg._sum.totalAmount || 0)),
     reconciliationDelta,
     todayTransactionsCount: opsLast24h,
+    totalReleasedToMerchants,
+    completedWithdrawals: roundMoney(Number(completedWithdrawalsAgg._sum.amount || 0)),
+    completedWithdrawalsCount: completedWithdrawalsAgg._count.id,
+    financialDisputesCount,
+    financialDisputesAmount,
+    totalPenalties: roundMoney(Number(penaltiesAgg._sum.amount || 0)),
+    dailyTxCount,
+    monthlyTxCount,
   };
 }
 

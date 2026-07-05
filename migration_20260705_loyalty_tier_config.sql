@@ -1,0 +1,15 @@
+-- Loyalty tier percents stored in platform_settings.system_config.financial.loyaltyTiers
+-- Example structure (merge into existing system_config JSON):
+-- {
+--   "financial": {
+--     "loyaltyTiers": {
+--       "BASIC":   { "percent": 0.02, "monthlyCap": 2000 },
+--       "SILVER":  { "percent": 0.03, "monthlyCap": 2000 },
+--       "GOLD":    { "percent": 0.04, "monthlyCap": 2000 },
+--       "VIP":     { "percent": 0.05, "monthlyCap": 5000 },
+--       "PARTNER": { "percent": 0.06, "monthlyCap": -1 },
+--       "ELITE":   { "percent": 0.06, "monthlyCap": 5000 }
+--     }
+--   }
+-- }
+-- No DDL required when using JSON in platform_settings.setting_value.

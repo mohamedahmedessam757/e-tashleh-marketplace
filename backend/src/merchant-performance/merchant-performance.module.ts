@@ -4,11 +4,13 @@ import { MerchantPerformanceController } from './merchant-performance.controller
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
   imports: [
     PrismaModule,
     NotificationsModule,
+    PaymentsModule,
     forwardRef(() => LoyaltyModule),
   ],
   controllers: [MerchantPerformanceController],

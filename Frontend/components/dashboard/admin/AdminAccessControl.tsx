@@ -83,7 +83,7 @@ export const AdminAccessControl: React.FC = () => {
     country: 'Saudi Arabia',
     password: '',
     confirmPassword: '',
-    role: 'ADMIN' as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER',
+    role: 'ADMIN' as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER' | 'ACCOUNTANT',
     permissions: {} as any,
     supportCategories: [] as string[],
     blurredSections: [] as string[]
@@ -131,6 +131,21 @@ export const AdminAccessControl: React.FC = () => {
         };
       });
     }
+    if (role === 'ACCOUNTANT') {
+      const financialPages = ['billing', 'invoices'];
+      financialPages.forEach((page) => {
+        perms[page] = {
+          ...(perms[page] || { view: false, edit: false, actions: {}, fields: {}, tabs: {} }),
+          view: true,
+          edit: page === 'billing',
+        };
+      });
+      if (perms.billing?.tabs) {
+        Object.keys(perms.billing.tabs).forEach((tab) => {
+          perms.billing.tabs[tab] = !['FIN_AUDIT', 'CUSTOMER_INVOICES', 'STORE_INVOICES'].includes(tab);
+        });
+      }
+    }
     return perms;
   };
 
@@ -170,7 +185,7 @@ export const AdminAccessControl: React.FC = () => {
         };
       });
 
-      const role = (admin.role as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER') || 'ADMIN';
+      const role = (admin.role as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER' | 'ACCOUNTANT') || 'ADMIN';
       const parsedPhone = parseStoredPhone(admin.phone, admin.countryCode, admin.country);
 
       setEditingAdmin(admin);
@@ -554,6 +569,7 @@ export const AdminAccessControl: React.FC = () => {
                         admin.role === 'SUPER_ADMIN' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                         admin.role === 'ADMIN' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                         admin.role === 'VERIFICATION_OFFICER' ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' :
+                        admin.role === 'ACCOUNTANT' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                         'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                       }`}>
                         {admin.role}
@@ -817,7 +833,8 @@ export const AdminAccessControl: React.FC = () => {
                           {[
                             { id: 'ADMIN', labelAr: 'مسؤول نظام (ADMIN)', descAr: 'وصول شامل لجميع الأدوات الإدارية مع صلاحيات تعديل واسعة.', labelEn: 'Admin', descEn: 'Full access to administrative tools with extensive edit capabilities.' },
                             { id: 'SUPPORT', labelAr: 'دعم فني (SUPPORT)', descAr: 'مخصص لمعالجة الطلبات، التذاكر، والدردشات بصلاحيات محدودة.', labelEn: 'Support', descEn: 'Dedicated to handling orders, tickets, and chats with limited scope.' },
-                            { id: 'VERIFICATION_OFFICER', labelAr: 'موظف مطابقة (VERIFICATION_OFFICER)', descAr: 'مخصص لمطابقة القطع بالمستندات ميدانياً.', labelEn: 'Verification Officer', descEn: 'Dedicated to verifying parts against documents on the field.' }
+                            { id: 'VERIFICATION_OFFICER', labelAr: 'موظف مطابقة (VERIFICATION_OFFICER)', descAr: 'مخصص لمطابقة القطع بالمستندات ميدانياً.', labelEn: 'Verification Officer', descEn: 'Dedicated to verifying parts against documents on the field.' },
+                            { id: 'ACCOUNTANT', labelAr: 'محاسب (ACCOUNTANT)', descAr: 'وصول مخصص لمركز المالية: فواتير، سحوبات، تقارير، تسويات — بدون صلاحيات تشغيل عامة.', labelEn: 'Accountant (ACCOUNTANT)', descEn: 'Dedicated financial access: billing, invoices, withdrawals, reports, settlement.' }
                           ].map(role => (
                             <button
                               key={role.id}
@@ -825,7 +842,7 @@ export const AdminAccessControl: React.FC = () => {
                               onClick={() =>
                                 setFormData({
                                   ...formData,
-                                  role: role.id as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER',
+                                  role: role.id as 'ADMIN' | 'SUPPORT' | 'VERIFICATION_OFFICER' | 'ACCOUNTANT',
                                   permissions: applyRoleDefaults(role.id, formData.permissions),
                                 })
                               }

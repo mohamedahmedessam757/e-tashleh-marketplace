@@ -91,6 +91,7 @@ export function isOrderEligibleForEscrowAutoRelease(
     return isEscrowPaymentEligibleForAutoRelease(order, null, windowEnd);
 }
 
-export function escrowReleaseWindowEnd(now = new Date()): Date {
-    return new Date(now.getTime() - MS_24H);
+export function escrowReleaseWindowEnd(now = new Date(), holdHours = 24): Date {
+    const ms = holdHours * 60 * 60 * 1000;
+    return new Date(now.getTime() - ms);
 }

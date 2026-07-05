@@ -6,6 +6,7 @@ const ASSIGNABLE_ADMIN_ROLES = [
   UserRole.ADMIN,
   UserRole.SUPPORT,
   UserRole.VERIFICATION_OFFICER,
+  UserRole.ACCOUNTANT,
 ] as const;
 
 const UPDATABLE_ADMIN_ROLES = [
@@ -13,6 +14,7 @@ const UPDATABLE_ADMIN_ROLES = [
   UserRole.SUPPORT,
   UserRole.SUPER_ADMIN,
   UserRole.VERIFICATION_OFFICER,
+  UserRole.ACCOUNTANT,
 ] as const;
 
 export class PermissionActionDto {

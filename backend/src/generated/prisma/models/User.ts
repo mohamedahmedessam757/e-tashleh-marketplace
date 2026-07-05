@@ -28,6 +28,7 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   customerBalance: runtime.Decimal | null
+  customerFrozenBalance: runtime.Decimal | null
   totalSpent: runtime.Decimal | null
   loyaltyPoints: number | null
   referralCount: number | null
@@ -41,6 +42,7 @@ export type UserAvgAggregateOutputType = {
 
 export type UserSumAggregateOutputType = {
   customerBalance: runtime.Decimal | null
+  customerFrozenBalance: runtime.Decimal | null
   totalSpent: runtime.Decimal | null
   loyaltyPoints: number | null
   referralCount: number | null
@@ -87,6 +89,7 @@ export type UserMinAggregateOutputType = {
   stripeOnboarded: boolean | null
   stripeCustomerId: string | null
   customerBalance: runtime.Decimal | null
+  customerFrozenBalance: runtime.Decimal | null
   loyaltyTier: $Enums.LoyaltyTier | null
   pointsLastResetAt: Date | null
   totalSpent: runtime.Decimal | null
@@ -142,6 +145,7 @@ export type UserMaxAggregateOutputType = {
   stripeOnboarded: boolean | null
   stripeCustomerId: string | null
   customerBalance: runtime.Decimal | null
+  customerFrozenBalance: runtime.Decimal | null
   loyaltyTier: $Enums.LoyaltyTier | null
   pointsLastResetAt: Date | null
   totalSpent: runtime.Decimal | null
@@ -197,6 +201,7 @@ export type UserCountAggregateOutputType = {
   stripeOnboarded: number
   stripeCustomerId: number
   customerBalance: number
+  customerFrozenBalance: number
   loyaltyTier: number
   pointsLastResetAt: number
   totalSpent: number
@@ -221,6 +226,7 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   customerBalance?: true
+  customerFrozenBalance?: true
   totalSpent?: true
   loyaltyPoints?: true
   referralCount?: true
@@ -234,6 +240,7 @@ export type UserAvgAggregateInputType = {
 
 export type UserSumAggregateInputType = {
   customerBalance?: true
+  customerFrozenBalance?: true
   totalSpent?: true
   loyaltyPoints?: true
   referralCount?: true
@@ -280,6 +287,7 @@ export type UserMinAggregateInputType = {
   stripeOnboarded?: true
   stripeCustomerId?: true
   customerBalance?: true
+  customerFrozenBalance?: true
   loyaltyTier?: true
   pointsLastResetAt?: true
   totalSpent?: true
@@ -335,6 +343,7 @@ export type UserMaxAggregateInputType = {
   stripeOnboarded?: true
   stripeCustomerId?: true
   customerBalance?: true
+  customerFrozenBalance?: true
   loyaltyTier?: true
   pointsLastResetAt?: true
   totalSpent?: true
@@ -390,6 +399,7 @@ export type UserCountAggregateInputType = {
   stripeOnboarded?: true
   stripeCustomerId?: true
   customerBalance?: true
+  customerFrozenBalance?: true
   loyaltyTier?: true
   pointsLastResetAt?: true
   totalSpent?: true
@@ -532,6 +542,7 @@ export type UserGroupByOutputType = {
   stripeOnboarded: boolean
   stripeCustomerId: string | null
   customerBalance: runtime.Decimal
+  customerFrozenBalance: runtime.Decimal
   loyaltyTier: $Enums.LoyaltyTier
   pointsLastResetAt: Date | null
   totalSpent: runtime.Decimal
@@ -610,6 +621,7 @@ export type UserWhereInput = {
   stripeOnboarded?: Prisma.BoolFilter<"User"> | boolean
   stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   customerBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFilter<"User"> | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   totalSpent?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -659,6 +671,7 @@ export type UserWhereInput = {
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referredUsers?: Prisma.UserListRelationFilter
   withdrawalRequests?: Prisma.WithdrawalRequestListRelationFilter
+  processedWithdrawals?: Prisma.WithdrawalRequestListRelationFilter
   walletTransactions?: Prisma.WalletTransactionListRelationFilter
   submittedReviews?: Prisma.ReviewListRelationFilter
   updatedShipments?: Prisma.ShipmentListRelationFilter
@@ -673,6 +686,8 @@ export type UserWhereInput = {
   createdViolationTypes?: Prisma.ViolationTypeListRelationFilter
   caseMessages?: Prisma.CaseMessageListRelationFilter
   adminActivityLogs?: Prisma.AdminActivityLogListRelationFilter
+  financialSettlements?: Prisma.FinancialSettlementListRelationFilter
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentListRelationFilter
   riskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertListRelationFilter
@@ -714,6 +729,7 @@ export type UserOrderByWithRelationInput = {
   stripeOnboarded?: Prisma.SortOrder
   stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   loyaltyTier?: Prisma.SortOrder
   pointsLastResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
@@ -763,6 +779,7 @@ export type UserOrderByWithRelationInput = {
   referredBy?: Prisma.UserOrderByWithRelationInput
   referredUsers?: Prisma.UserOrderByRelationAggregateInput
   withdrawalRequests?: Prisma.WithdrawalRequestOrderByRelationAggregateInput
+  processedWithdrawals?: Prisma.WithdrawalRequestOrderByRelationAggregateInput
   walletTransactions?: Prisma.WalletTransactionOrderByRelationAggregateInput
   submittedReviews?: Prisma.ReviewOrderByRelationAggregateInput
   updatedShipments?: Prisma.ShipmentOrderByRelationAggregateInput
@@ -777,6 +794,8 @@ export type UserOrderByWithRelationInput = {
   createdViolationTypes?: Prisma.ViolationTypeOrderByRelationAggregateInput
   caseMessages?: Prisma.CaseMessageOrderByRelationAggregateInput
   adminActivityLogs?: Prisma.AdminActivityLogOrderByRelationAggregateInput
+  financialSettlements?: Prisma.FinancialSettlementOrderByRelationAggregateInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentOrderByRelationAggregateInput
   riskAlerts?: Prisma.CustomerRiskAlertOrderByRelationAggregateInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertOrderByRelationAggregateInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertOrderByRelationAggregateInput
@@ -822,6 +841,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   stripeOnboarded?: Prisma.BoolFilter<"User"> | boolean
   stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   customerBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFilter<"User"> | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   totalSpent?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -870,6 +890,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referredUsers?: Prisma.UserListRelationFilter
   withdrawalRequests?: Prisma.WithdrawalRequestListRelationFilter
+  processedWithdrawals?: Prisma.WithdrawalRequestListRelationFilter
   walletTransactions?: Prisma.WalletTransactionListRelationFilter
   submittedReviews?: Prisma.ReviewListRelationFilter
   updatedShipments?: Prisma.ShipmentListRelationFilter
@@ -884,6 +905,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdViolationTypes?: Prisma.ViolationTypeListRelationFilter
   caseMessages?: Prisma.CaseMessageListRelationFilter
   adminActivityLogs?: Prisma.AdminActivityLogListRelationFilter
+  financialSettlements?: Prisma.FinancialSettlementListRelationFilter
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentListRelationFilter
   riskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertListRelationFilter
@@ -925,6 +948,7 @@ export type UserOrderByWithAggregationInput = {
   stripeOnboarded?: Prisma.SortOrder
   stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   loyaltyTier?: Prisma.SortOrder
   pointsLastResetAt?: Prisma.SortOrderInput | Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
@@ -988,6 +1012,7 @@ export type UserScalarWhereWithAggregatesInput = {
   stripeOnboarded?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   stripeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   customerBalance?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierWithAggregatesFilter<"User"> | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   totalSpent?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1043,6 +1068,7 @@ export type UserCreateInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1091,6 +1117,7 @@ export type UserCreateInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -1105,6 +1132,8 @@ export type UserCreateInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -1146,6 +1175,7 @@ export type UserUncheckedCreateInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1194,6 +1224,7 @@ export type UserUncheckedCreateInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -1208,6 +1239,8 @@ export type UserUncheckedCreateInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -1249,6 +1282,7 @@ export type UserUpdateInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1297,6 +1331,7 @@ export type UserUpdateInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -1311,6 +1346,8 @@ export type UserUpdateInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -1352,6 +1389,7 @@ export type UserUncheckedUpdateInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1400,6 +1438,7 @@ export type UserUncheckedUpdateInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -1414,6 +1453,8 @@ export type UserUncheckedUpdateInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -1455,6 +1496,7 @@ export type UserCreateManyInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1510,6 +1552,7 @@ export type UserUpdateManyMutationInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1564,6 +1607,7 @@ export type UserUncheckedUpdateManyInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1634,6 +1678,7 @@ export type UserCountOrderByAggregateInput = {
   stripeOnboarded?: Prisma.SortOrder
   stripeCustomerId?: Prisma.SortOrder
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   loyaltyTier?: Prisma.SortOrder
   pointsLastResetAt?: Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
@@ -1656,6 +1701,7 @@ export type UserCountOrderByAggregateInput = {
 
 export type UserAvgOrderByAggregateInput = {
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
   loyaltyPoints?: Prisma.SortOrder
   referralCount?: Prisma.SortOrder
@@ -1702,6 +1748,7 @@ export type UserMaxOrderByAggregateInput = {
   stripeOnboarded?: Prisma.SortOrder
   stripeCustomerId?: Prisma.SortOrder
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   loyaltyTier?: Prisma.SortOrder
   pointsLastResetAt?: Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
@@ -1757,6 +1804,7 @@ export type UserMinOrderByAggregateInput = {
   stripeOnboarded?: Prisma.SortOrder
   stripeCustomerId?: Prisma.SortOrder
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   loyaltyTier?: Prisma.SortOrder
   pointsLastResetAt?: Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
@@ -1779,6 +1827,7 @@ export type UserMinOrderByAggregateInput = {
 
 export type UserSumOrderByAggregateInput = {
   customerBalance?: Prisma.SortOrder
+  customerFrozenBalance?: Prisma.SortOrder
   totalSpent?: Prisma.SortOrder
   loyaltyPoints?: Prisma.SortOrder
   referralCount?: Prisma.SortOrder
@@ -2251,6 +2300,12 @@ export type UserCreateNestedOneWithoutWithdrawalRequestsInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
+export type UserCreateNestedOneWithoutProcessedWithdrawalsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedCreateWithoutProcessedWithdrawalsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProcessedWithdrawalsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
 export type UserUpdateOneWithoutWithdrawalRequestsNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedCreateWithoutWithdrawalRequestsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutWithdrawalRequestsInput
@@ -2259,6 +2314,16 @@ export type UserUpdateOneWithoutWithdrawalRequestsNestedInput = {
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWithdrawalRequestsInput, Prisma.UserUpdateWithoutWithdrawalRequestsInput>, Prisma.UserUncheckedUpdateWithoutWithdrawalRequestsInput>
+}
+
+export type UserUpdateOneWithoutProcessedWithdrawalsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedCreateWithoutProcessedWithdrawalsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProcessedWithdrawalsInput
+  upsert?: Prisma.UserUpsertWithoutProcessedWithdrawalsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProcessedWithdrawalsInput, Prisma.UserUpdateWithoutProcessedWithdrawalsInput>, Prisma.UserUncheckedUpdateWithoutProcessedWithdrawalsInput>
 }
 
 export type UserCreateNestedOneWithoutCreatedViolationTypesInput = {
@@ -2583,6 +2648,38 @@ export type UserUpdateOneWithoutVerificationActivityLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutVerificationActivityLogsInput, Prisma.UserUpdateWithoutVerificationActivityLogsInput>, Prisma.UserUncheckedUpdateWithoutVerificationActivityLogsInput>
 }
 
+export type UserCreateNestedOneWithoutFinancialSettlementsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFinancialSettlementsInput, Prisma.UserUncheckedCreateWithoutFinancialSettlementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFinancialSettlementsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutFinancialSettlementsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFinancialSettlementsInput, Prisma.UserUncheckedCreateWithoutFinancialSettlementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFinancialSettlementsInput
+  upsert?: Prisma.UserUpsertWithoutFinancialSettlementsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFinancialSettlementsInput, Prisma.UserUpdateWithoutFinancialSettlementsInput>, Prisma.UserUncheckedUpdateWithoutFinancialSettlementsInput>
+}
+
+export type UserCreateNestedOneWithoutFinancialAdjustmentsCreatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFinancialAdjustmentsCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutFinancialAdjustmentsCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFinancialAdjustmentsCreatedInput
+  upsert?: Prisma.UserUpsertWithoutFinancialAdjustmentsCreatedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUpdateWithoutFinancialAdjustmentsCreatedInput>, Prisma.UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput>
+}
+
 export type UserCreateWithoutWhatsAppMessageLogsInput = {
   id?: string
   email: string
@@ -2618,6 +2715,7 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2665,6 +2763,7 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -2679,6 +2778,8 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -2720,6 +2821,7 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2767,6 +2869,7 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -2781,6 +2884,8 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -2838,6 +2943,7 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2885,6 +2991,7 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -2899,6 +3006,8 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -2940,6 +3049,7 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2987,6 +3097,7 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -3001,6 +3112,8 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -3042,6 +3155,7 @@ export type UserCreateWithoutReferredUsersInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3089,6 +3203,7 @@ export type UserCreateWithoutReferredUsersInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -3103,6 +3218,8 @@ export type UserCreateWithoutReferredUsersInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3144,6 +3261,7 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3191,6 +3309,7 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -3205,6 +3324,8 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3251,6 +3372,7 @@ export type UserCreateWithoutReferredByInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3298,6 +3420,7 @@ export type UserCreateWithoutReferredByInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -3312,6 +3435,8 @@ export type UserCreateWithoutReferredByInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3353,6 +3478,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3400,6 +3526,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -3414,6 +3541,8 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3476,6 +3605,7 @@ export type UserUpdateWithoutReferredUsersInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3523,6 +3653,7 @@ export type UserUpdateWithoutReferredUsersInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -3537,6 +3668,8 @@ export type UserUpdateWithoutReferredUsersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -3578,6 +3711,7 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3625,6 +3759,7 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -3639,6 +3774,8 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -3699,6 +3836,7 @@ export type UserScalarWhereInput = {
   stripeOnboarded?: Prisma.BoolFilter<"User"> | boolean
   stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   customerBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFilter<"User"> | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   totalSpent?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3754,6 +3892,7 @@ export type UserCreateWithoutSettingsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3801,6 +3940,7 @@ export type UserCreateWithoutSettingsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -3815,6 +3955,8 @@ export type UserCreateWithoutSettingsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3856,6 +3998,7 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -3903,6 +4046,7 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -3917,6 +4061,8 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3974,6 +4120,7 @@ export type UserUpdateWithoutSettingsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4021,6 +4168,7 @@ export type UserUpdateWithoutSettingsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -4035,6 +4183,8 @@ export type UserUpdateWithoutSettingsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -4076,6 +4226,7 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4123,6 +4274,7 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -4137,6 +4289,8 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -4178,6 +4332,7 @@ export type UserCreateWithoutStoreInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4225,6 +4380,7 @@ export type UserCreateWithoutStoreInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -4239,6 +4395,8 @@ export type UserCreateWithoutStoreInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -4280,6 +4438,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4327,6 +4486,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -4341,6 +4501,8 @@ export type UserUncheckedCreateWithoutStoreInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -4398,6 +4560,7 @@ export type UserUpdateWithoutStoreInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4445,6 +4608,7 @@ export type UserUpdateWithoutStoreInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -4459,6 +4623,8 @@ export type UserUpdateWithoutStoreInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -4500,6 +4666,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4547,6 +4714,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -4561,6 +4729,8 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -4602,6 +4772,7 @@ export type UserCreateWithoutOrdersInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4649,6 +4820,7 @@ export type UserCreateWithoutOrdersInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -4663,6 +4835,8 @@ export type UserCreateWithoutOrdersInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -4704,6 +4878,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4751,6 +4926,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -4765,6 +4941,8 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -4822,6 +5000,7 @@ export type UserUpdateWithoutOrdersInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4869,6 +5048,7 @@ export type UserUpdateWithoutOrdersInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -4883,6 +5063,8 @@ export type UserUpdateWithoutOrdersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -4924,6 +5106,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -4971,6 +5154,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -4985,6 +5169,8 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5026,6 +5212,7 @@ export type UserCreateWithoutVerificationReviewsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5073,6 +5260,7 @@ export type UserCreateWithoutVerificationReviewsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -5087,6 +5275,8 @@ export type UserCreateWithoutVerificationReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -5128,6 +5318,7 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5175,6 +5366,7 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -5189,6 +5381,8 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -5246,6 +5440,7 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5293,6 +5488,7 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -5307,6 +5503,8 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -5348,6 +5546,7 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5395,6 +5594,7 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -5409,6 +5609,8 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5450,6 +5652,7 @@ export type UserCreateWithoutNotificationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5497,6 +5700,7 @@ export type UserCreateWithoutNotificationsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -5511,6 +5715,8 @@ export type UserCreateWithoutNotificationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -5552,6 +5758,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5599,6 +5806,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -5613,6 +5821,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -5670,6 +5880,7 @@ export type UserUpdateWithoutNotificationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5717,6 +5928,7 @@ export type UserUpdateWithoutNotificationsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -5731,6 +5943,8 @@ export type UserUpdateWithoutNotificationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -5772,6 +5986,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5819,6 +6034,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -5833,6 +6049,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5874,6 +6092,7 @@ export type UserCreateWithoutReturnsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -5921,6 +6140,7 @@ export type UserCreateWithoutReturnsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -5935,6 +6155,8 @@ export type UserCreateWithoutReturnsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -5976,6 +6198,7 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6023,6 +6246,7 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -6037,6 +6261,8 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -6094,6 +6320,7 @@ export type UserUpdateWithoutReturnsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6141,6 +6368,7 @@ export type UserUpdateWithoutReturnsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -6155,6 +6383,8 @@ export type UserUpdateWithoutReturnsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -6196,6 +6426,7 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6243,6 +6474,7 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -6257,6 +6489,8 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -6298,6 +6532,7 @@ export type UserCreateWithoutDisputesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6345,6 +6580,7 @@ export type UserCreateWithoutDisputesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -6359,6 +6595,8 @@ export type UserCreateWithoutDisputesInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -6400,6 +6638,7 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6447,6 +6686,7 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -6461,6 +6701,8 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -6518,6 +6760,7 @@ export type UserUpdateWithoutDisputesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6565,6 +6808,7 @@ export type UserUpdateWithoutDisputesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -6579,6 +6823,8 @@ export type UserUpdateWithoutDisputesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -6620,6 +6866,7 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6667,6 +6914,7 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -6681,6 +6929,8 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -6722,6 +6972,7 @@ export type UserCreateWithoutCaseMessagesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6770,6 +7021,7 @@ export type UserCreateWithoutCaseMessagesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -6783,6 +7035,8 @@ export type UserCreateWithoutCaseMessagesInput = {
   scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -6824,6 +7078,7 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6872,6 +7127,7 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -6885,6 +7141,8 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -6942,6 +7200,7 @@ export type UserUpdateWithoutCaseMessagesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -6990,6 +7249,7 @@ export type UserUpdateWithoutCaseMessagesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -7003,6 +7263,8 @@ export type UserUpdateWithoutCaseMessagesInput = {
   scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -7044,6 +7306,7 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7092,6 +7355,7 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -7105,6 +7369,8 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -7146,6 +7412,7 @@ export type UserCreateWithoutOrderChatsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7193,6 +7460,7 @@ export type UserCreateWithoutOrderChatsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -7207,6 +7475,8 @@ export type UserCreateWithoutOrderChatsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -7248,6 +7518,7 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7295,6 +7566,7 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -7309,6 +7581,8 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -7366,6 +7640,7 @@ export type UserUpdateWithoutOrderChatsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7413,6 +7688,7 @@ export type UserUpdateWithoutOrderChatsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -7427,6 +7703,8 @@ export type UserUpdateWithoutOrderChatsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -7468,6 +7746,7 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7515,6 +7794,7 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -7529,6 +7809,8 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -7570,6 +7852,7 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7617,6 +7900,7 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -7631,6 +7915,8 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -7672,6 +7958,7 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7719,6 +8006,7 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -7733,6 +8021,8 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -7790,6 +8080,7 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7837,6 +8128,7 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -7851,6 +8143,8 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -7892,6 +8186,7 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -7939,6 +8234,7 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -7953,6 +8249,8 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -7994,6 +8292,7 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8041,6 +8340,7 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -8055,6 +8355,8 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -8096,6 +8398,7 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8143,6 +8446,7 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -8157,6 +8461,8 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -8214,6 +8520,7 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8261,6 +8568,7 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -8275,6 +8583,8 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -8316,6 +8626,7 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8363,6 +8674,7 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -8377,6 +8689,8 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -8418,6 +8732,7 @@ export type UserCreateWithoutSecurityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8465,6 +8780,7 @@ export type UserCreateWithoutSecurityLogsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -8479,6 +8795,8 @@ export type UserCreateWithoutSecurityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -8520,6 +8838,7 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8567,6 +8886,7 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -8581,6 +8901,8 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -8638,6 +8960,7 @@ export type UserUpdateWithoutSecurityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8685,6 +9008,7 @@ export type UserUpdateWithoutSecurityLogsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -8699,6 +9023,8 @@ export type UserUpdateWithoutSecurityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -8740,6 +9066,7 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8787,6 +9114,7 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -8801,6 +9129,8 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -8842,6 +9172,7 @@ export type UserCreateWithoutSessionInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8889,6 +9220,7 @@ export type UserCreateWithoutSessionInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -8903,6 +9235,8 @@ export type UserCreateWithoutSessionInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -8944,6 +9278,7 @@ export type UserUncheckedCreateWithoutSessionInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -8991,6 +9326,7 @@ export type UserUncheckedCreateWithoutSessionInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -9005,6 +9341,8 @@ export type UserUncheckedCreateWithoutSessionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -9062,6 +9400,7 @@ export type UserUpdateWithoutSessionInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9109,6 +9448,7 @@ export type UserUpdateWithoutSessionInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -9123,6 +9463,8 @@ export type UserUpdateWithoutSessionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -9164,6 +9506,7 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9211,6 +9554,7 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -9225,6 +9569,8 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -9266,6 +9612,7 @@ export type UserCreateWithoutPaymentsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9313,6 +9660,7 @@ export type UserCreateWithoutPaymentsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -9327,6 +9675,8 @@ export type UserCreateWithoutPaymentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -9368,6 +9718,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9415,6 +9766,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -9429,6 +9781,8 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -9486,6 +9840,7 @@ export type UserUpdateWithoutPaymentsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9533,6 +9888,7 @@ export type UserUpdateWithoutPaymentsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -9547,6 +9903,8 @@ export type UserUpdateWithoutPaymentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -9588,6 +9946,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9635,6 +9994,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -9649,6 +10009,8 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -9690,6 +10052,7 @@ export type UserCreateWithoutWalletTransactionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9738,6 +10101,7 @@ export type UserCreateWithoutWalletTransactionsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
@@ -9751,6 +10115,8 @@ export type UserCreateWithoutWalletTransactionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -9792,6 +10158,7 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9840,6 +10207,7 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
@@ -9853,6 +10221,8 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -9910,6 +10280,7 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -9958,6 +10329,7 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
@@ -9971,6 +10343,8 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -10012,6 +10386,7 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10060,6 +10435,7 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
@@ -10073,6 +10449,8 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -10114,6 +10492,7 @@ export type UserCreateWithoutInvoicesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10161,6 +10540,7 @@ export type UserCreateWithoutInvoicesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -10175,6 +10555,8 @@ export type UserCreateWithoutInvoicesInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -10216,6 +10598,7 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10263,6 +10646,7 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -10277,6 +10661,8 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -10334,6 +10720,7 @@ export type UserUpdateWithoutInvoicesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10381,6 +10768,7 @@ export type UserUpdateWithoutInvoicesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -10395,6 +10783,8 @@ export type UserUpdateWithoutInvoicesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -10436,6 +10826,7 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10483,6 +10874,7 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -10497,6 +10889,8 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -10538,6 +10932,7 @@ export type UserCreateWithoutCardsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10585,6 +10980,7 @@ export type UserCreateWithoutCardsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -10599,6 +10995,8 @@ export type UserCreateWithoutCardsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -10640,6 +11038,7 @@ export type UserUncheckedCreateWithoutCardsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10687,6 +11086,7 @@ export type UserUncheckedCreateWithoutCardsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -10701,6 +11101,8 @@ export type UserUncheckedCreateWithoutCardsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -10758,6 +11160,7 @@ export type UserUpdateWithoutCardsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10805,6 +11208,7 @@ export type UserUpdateWithoutCardsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -10819,6 +11223,8 @@ export type UserUpdateWithoutCardsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -10860,6 +11266,7 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -10907,6 +11314,7 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -10921,6 +11329,8 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -10962,6 +11372,7 @@ export type UserCreateWithoutCreatedContractsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11009,6 +11420,7 @@ export type UserCreateWithoutCreatedContractsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -11023,6 +11435,8 @@ export type UserCreateWithoutCreatedContractsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -11064,6 +11478,7 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11111,6 +11526,7 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -11125,6 +11541,8 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -11182,6 +11600,7 @@ export type UserUpdateWithoutCreatedContractsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11229,6 +11648,7 @@ export type UserUpdateWithoutCreatedContractsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -11243,6 +11663,8 @@ export type UserUpdateWithoutCreatedContractsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -11284,6 +11706,7 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11331,6 +11754,7 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -11345,6 +11769,8 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -11386,6 +11812,7 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11433,6 +11860,7 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -11447,6 +11875,8 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -11488,6 +11918,7 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11535,6 +11966,7 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -11549,6 +11981,8 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -11595,6 +12029,7 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11642,6 +12077,7 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -11656,6 +12092,8 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -11697,6 +12135,7 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11744,6 +12183,7 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -11758,6 +12198,8 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -11815,6 +12257,7 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11862,6 +12305,7 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -11876,6 +12320,8 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -11917,6 +12363,7 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -11964,6 +12411,7 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -11978,6 +12426,8 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -12030,6 +12480,7 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12077,6 +12528,7 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -12091,6 +12543,8 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -12132,6 +12586,7 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12179,6 +12634,7 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -12193,6 +12649,8 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -12234,6 +12692,7 @@ export type UserCreateWithoutShippingWaybillsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12281,6 +12740,7 @@ export type UserCreateWithoutShippingWaybillsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -12295,6 +12755,8 @@ export type UserCreateWithoutShippingWaybillsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -12336,6 +12798,7 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12383,6 +12846,7 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -12397,6 +12861,8 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -12454,6 +12920,7 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12501,6 +12968,7 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -12515,6 +12983,8 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -12556,6 +13026,7 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12603,6 +13074,7 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -12617,6 +13089,8 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -12658,6 +13132,7 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12706,6 +13181,7 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
@@ -12719,6 +13195,8 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -12760,6 +13238,7 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12808,6 +13287,7 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
@@ -12821,6 +13301,8 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -12878,6 +13360,7 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -12926,6 +13409,7 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
@@ -12939,6 +13423,8 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -12980,6 +13466,7 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13028,6 +13515,7 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
@@ -13041,6 +13529,8 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -13082,6 +13572,7 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13130,6 +13621,7 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -13143,6 +13635,8 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -13184,6 +13678,7 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13232,6 +13727,7 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -13245,6 +13741,8 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -13302,6 +13800,7 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13350,6 +13849,7 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -13363,6 +13863,8 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -13404,6 +13906,7 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13452,6 +13955,7 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -13465,6 +13969,8 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -13506,6 +14012,7 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13554,6 +14061,7 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
@@ -13567,6 +14075,8 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -13608,6 +14118,7 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13656,6 +14167,7 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
@@ -13669,6 +14181,8 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -13726,6 +14240,7 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13774,6 +14289,7 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
@@ -13787,6 +14303,8 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -13828,6 +14346,7 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13876,6 +14395,7 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
   changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
@@ -13889,6 +14409,8 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -13930,6 +14452,7 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -13977,6 +14500,7 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -13991,6 +14515,8 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -14032,6 +14558,7 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14079,6 +14606,7 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -14093,6 +14621,8 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -14104,222 +14634,7 @@ export type UserCreateOrConnectWithoutWithdrawalRequestsInput = {
   create: Prisma.XOR<Prisma.UserCreateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedCreateWithoutWithdrawalRequestsInput>
 }
 
-export type UserUpsertWithoutWithdrawalRequestsInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedUpdateWithoutWithdrawalRequestsInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedCreateWithoutWithdrawalRequestsInput>
-  where?: Prisma.UserWhereInput
-}
-
-export type UserUpdateToOneWithWhereWithoutWithdrawalRequestsInput = {
-  where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedUpdateWithoutWithdrawalRequestsInput>
-}
-
-export type UserUpdateWithoutWithdrawalRequestsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
-  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
-  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
-  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
-  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
-  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
-  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
-  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
-  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
-  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
-  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
-  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
-  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
-  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
-  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
-  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
-  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
-  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
-  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
-  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
-  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
-  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
-  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
-  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
-  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
-  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
-  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
-  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
-  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
-  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
-  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
-  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
-  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
-  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
-  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
-  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
-  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
-  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
-  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
-  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
-  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
-  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
-  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
-  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
-  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
-  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
-  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
-  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
-  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
-  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
-  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
-  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
-  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
-  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
-}
-
-export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
-  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
-  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
-  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
-  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
-  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
-  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
-  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
-  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
-  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
-  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
-  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
-  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
-  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
-  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
-  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
-  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
-  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
-  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
-  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
-  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
-  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
-  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
-  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
-  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
-  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
-  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
-  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
-  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
-  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
-  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
-  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
-  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
-  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
-  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
-  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
-  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
-  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
-  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
-  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
-  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
-  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
-  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
-  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
-  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
-  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
-  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
-  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
-  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
-  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
-  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
-  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
-}
-
-export type UserCreateWithoutCreatedViolationTypesInput = {
+export type UserCreateWithoutProcessedWithdrawalsInput = {
   id?: string
   email: string
   phone?: string | null
@@ -14354,6 +14669,7 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14413,15 +14729,18 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
   approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
   scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
 }
 
-export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
+export type UserUncheckedCreateWithoutProcessedWithdrawalsInput = {
   id?: string
   email: string
   phone?: string | null
@@ -14456,6 +14775,7 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14515,8 +14835,674 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
   approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
   scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutProcessedWithdrawalsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedCreateWithoutProcessedWithdrawalsInput>
+}
+
+export type UserUpsertWithoutWithdrawalRequestsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedUpdateWithoutWithdrawalRequestsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedCreateWithoutWithdrawalRequestsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWithdrawalRequestsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWithdrawalRequestsInput, Prisma.UserUncheckedUpdateWithoutWithdrawalRequestsInput>
+}
+
+export type UserUpdateWithoutWithdrawalRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUpsertWithoutProcessedWithdrawalsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedUpdateWithoutProcessedWithdrawalsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedCreateWithoutProcessedWithdrawalsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutProcessedWithdrawalsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutProcessedWithdrawalsInput, Prisma.UserUncheckedUpdateWithoutProcessedWithdrawalsInput>
+}
+
+export type UserUpdateWithoutProcessedWithdrawalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutProcessedWithdrawalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutCreatedViolationTypesInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -14574,6 +15560,7 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14622,6 +15609,7 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -14635,6 +15623,8 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -14676,6 +15666,7 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14724,6 +15715,7 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -14737,6 +15729,8 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -14778,6 +15772,7 @@ export type UserCreateWithoutViolationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14826,6 +15821,7 @@ export type UserCreateWithoutViolationsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -14839,6 +15835,8 @@ export type UserCreateWithoutViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -14880,6 +15878,7 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -14928,6 +15927,7 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -14941,6 +15941,8 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -14987,6 +15989,7 @@ export type UserCreateWithoutIssuedViolationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15035,6 +16038,7 @@ export type UserCreateWithoutIssuedViolationsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -15048,6 +16052,8 @@ export type UserCreateWithoutIssuedViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -15089,6 +16095,7 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15137,6 +16144,7 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -15150,6 +16158,8 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -15207,6 +16217,7 @@ export type UserUpdateWithoutViolationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15255,6 +16266,7 @@ export type UserUpdateWithoutViolationsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -15268,6 +16280,8 @@ export type UserUpdateWithoutViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -15309,6 +16323,7 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15357,6 +16372,7 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -15370,6 +16386,8 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -15422,6 +16440,7 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15470,6 +16489,7 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -15483,6 +16503,8 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -15524,6 +16546,7 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15572,6 +16595,7 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -15585,6 +16609,8 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -15626,6 +16652,7 @@ export type UserCreateWithoutViolationAppealsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15674,6 +16701,7 @@ export type UserCreateWithoutViolationAppealsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -15687,6 +16715,8 @@ export type UserCreateWithoutViolationAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -15728,6 +16758,7 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15776,6 +16807,7 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -15789,6 +16821,8 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -15835,6 +16869,7 @@ export type UserCreateWithoutReviewedAppealsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15883,6 +16918,7 @@ export type UserCreateWithoutReviewedAppealsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -15896,6 +16932,8 @@ export type UserCreateWithoutReviewedAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -15937,6 +16975,7 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -15985,6 +17024,7 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -15998,6 +17038,8 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -16055,6 +17097,7 @@ export type UserUpdateWithoutViolationAppealsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16103,6 +17146,7 @@ export type UserUpdateWithoutViolationAppealsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -16116,6 +17160,8 @@ export type UserUpdateWithoutViolationAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -16157,6 +17203,7 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16205,6 +17252,7 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -16218,6 +17266,8 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -16270,6 +17320,7 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16318,6 +17369,7 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -16331,6 +17383,8 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -16372,6 +17426,7 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16420,6 +17475,7 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -16433,6 +17489,8 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -16474,6 +17532,7 @@ export type UserCreateWithoutPenaltyActionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16522,6 +17581,7 @@ export type UserCreateWithoutPenaltyActionsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -16535,6 +17595,8 @@ export type UserCreateWithoutPenaltyActionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -16576,6 +17638,7 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16624,6 +17687,7 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -16637,6 +17701,8 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -16683,6 +17749,7 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16731,6 +17798,7 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -16744,6 +17812,8 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -16785,6 +17855,7 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16833,6 +17904,7 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -16846,6 +17918,8 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -16903,6 +17977,7 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -16951,6 +18026,7 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -16964,6 +18040,8 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -17005,6 +18083,7 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17053,6 +18132,7 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -17066,6 +18146,8 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17118,6 +18200,7 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17166,6 +18249,7 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -17179,6 +18263,8 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -17220,6 +18306,7 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17268,6 +18355,7 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -17281,6 +18369,8 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17322,6 +18412,7 @@ export type UserCreateWithoutScoreLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17370,6 +18461,7 @@ export type UserCreateWithoutScoreLogsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -17383,6 +18475,8 @@ export type UserCreateWithoutScoreLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -17424,6 +18518,7 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17472,6 +18567,7 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -17485,6 +18581,8 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -17542,6 +18640,7 @@ export type UserUpdateWithoutScoreLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17590,6 +18689,7 @@ export type UserUpdateWithoutScoreLogsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -17603,6 +18703,8 @@ export type UserUpdateWithoutScoreLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -17644,6 +18746,7 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17692,6 +18795,7 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -17705,6 +18809,8 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17746,6 +18852,7 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17794,6 +18901,7 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -17807,6 +18915,8 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -17848,6 +18958,7 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -17896,6 +19007,7 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -17909,6 +19021,8 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -17966,6 +19080,7 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18014,6 +19129,7 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -18027,6 +19143,8 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -18068,6 +19186,7 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18116,6 +19235,7 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -18129,6 +19249,8 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -18170,6 +19292,7 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18218,6 +19341,7 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -18232,6 +19356,8 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -18272,6 +19398,7 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18320,6 +19447,7 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -18334,6 +19462,8 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -18379,6 +19509,7 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18427,6 +19558,7 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -18441,6 +19573,8 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -18481,6 +19615,7 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18529,6 +19664,7 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -18543,6 +19679,8 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -18599,6 +19737,7 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18647,6 +19786,7 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -18661,6 +19801,8 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -18701,6 +19843,7 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18749,6 +19892,7 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -18763,6 +19907,8 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -18814,6 +19960,7 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18862,6 +20009,7 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -18876,6 +20024,8 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -18916,6 +20066,7 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -18964,6 +20115,7 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -18978,6 +20130,8 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -19018,6 +20172,7 @@ export type UserCreateWithoutRiskAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19066,6 +20221,7 @@ export type UserCreateWithoutRiskAlertsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -19080,6 +20236,8 @@ export type UserCreateWithoutRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -19120,6 +20278,7 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19168,6 +20327,7 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -19182,6 +20342,8 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -19227,6 +20389,7 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19275,6 +20438,7 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -19289,6 +20453,8 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -19329,6 +20495,7 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19377,6 +20544,7 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -19391,6 +20559,8 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -19447,6 +20617,7 @@ export type UserUpdateWithoutRiskAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19495,6 +20666,7 @@ export type UserUpdateWithoutRiskAlertsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -19509,6 +20681,8 @@ export type UserUpdateWithoutRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -19549,6 +20723,7 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19597,6 +20772,7 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -19611,6 +20787,8 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -19662,6 +20840,7 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19710,6 +20889,7 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -19724,6 +20904,8 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -19764,6 +20946,7 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19812,6 +20995,7 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -19826,6 +21010,8 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -19866,6 +21052,7 @@ export type UserCreateWithoutAdminPermissionInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -19913,6 +21100,7 @@ export type UserCreateWithoutAdminPermissionInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -19927,6 +21115,8 @@ export type UserCreateWithoutAdminPermissionInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -19968,6 +21158,7 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20015,6 +21206,7 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -20029,6 +21221,8 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -20075,6 +21269,7 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20122,6 +21317,7 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -20136,6 +21332,8 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -20177,6 +21375,7 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20224,6 +21423,7 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -20238,6 +21438,8 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -20284,6 +21486,7 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20331,6 +21534,7 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -20345,6 +21549,8 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -20386,6 +21592,7 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20433,6 +21640,7 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -20447,6 +21655,8 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -20504,6 +21714,7 @@ export type UserUpdateWithoutAdminPermissionInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20551,6 +21762,7 @@ export type UserUpdateWithoutAdminPermissionInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -20565,6 +21777,8 @@ export type UserUpdateWithoutAdminPermissionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -20606,6 +21820,7 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20653,6 +21868,7 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -20667,6 +21883,8 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -20719,6 +21937,7 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20766,6 +21985,7 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -20780,6 +22000,8 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -20821,6 +22043,7 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20868,6 +22091,7 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -20882,6 +22106,8 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -20934,6 +22160,7 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -20981,6 +22208,7 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -20995,6 +22223,8 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21036,6 +22266,7 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21083,6 +22314,7 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -21097,6 +22329,8 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -21138,6 +22372,7 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21185,6 +22420,7 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -21199,6 +22435,8 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -21240,6 +22478,7 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21287,6 +22526,7 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -21301,6 +22541,8 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -21347,6 +22589,7 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21394,6 +22637,7 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -21408,6 +22652,8 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -21449,6 +22695,7 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21496,6 +22743,7 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -21510,6 +22758,8 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -21567,6 +22817,7 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21614,6 +22865,7 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -21628,6 +22880,8 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21669,6 +22923,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21716,6 +22971,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -21730,6 +22986,8 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -21782,6 +23040,7 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21829,6 +23088,7 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -21843,6 +23103,8 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21884,6 +23146,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -21931,6 +23194,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -21945,6 +23209,8 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -21986,6 +23252,7 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22033,6 +23300,7 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -22047,6 +23315,8 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -22088,6 +23358,7 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22135,6 +23406,7 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -22149,6 +23421,8 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -22206,6 +23480,7 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22253,6 +23528,7 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -22267,6 +23543,8 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -22308,6 +23586,7 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22355,6 +23634,7 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -22369,6 +23649,8 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -22410,6 +23692,7 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22457,6 +23740,7 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -22471,6 +23755,8 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -22512,6 +23798,7 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22559,6 +23846,7 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -22573,6 +23861,8 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -22630,6 +23920,7 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22677,6 +23968,7 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -22691,6 +23983,8 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -22732,6 +24026,7 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22779,6 +24074,7 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -22793,6 +24089,8 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -22834,6 +24132,7 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22881,6 +24180,7 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
@@ -22895,6 +24195,8 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -22936,6 +24238,7 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -22983,6 +24286,7 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
   submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
   updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
@@ -22997,6 +24301,8 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -23054,6 +24360,7 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23101,6 +24408,7 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -23115,6 +24423,8 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -23156,6 +24466,7 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23203,6 +24514,7 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -23217,6 +24529,888 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutFinancialSettlementsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutFinancialSettlementsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutFinancialSettlementsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFinancialSettlementsInput, Prisma.UserUncheckedCreateWithoutFinancialSettlementsInput>
+}
+
+export type UserUpsertWithoutFinancialSettlementsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFinancialSettlementsInput, Prisma.UserUncheckedUpdateWithoutFinancialSettlementsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFinancialSettlementsInput, Prisma.UserUncheckedCreateWithoutFinancialSettlementsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFinancialSettlementsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFinancialSettlementsInput, Prisma.UserUncheckedUpdateWithoutFinancialSettlementsInput>
+}
+
+export type UserUpdateWithoutFinancialSettlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFinancialSettlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutFinancialAdjustmentsCreatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutFinancialAdjustmentsCreatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput>
+}
+
+export type UserUpsertWithoutFinancialAdjustmentsCreatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFinancialAdjustmentsCreatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput>
+}
+
+export type UserUpdateWithoutFinancialAdjustmentsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -23258,6 +25452,7 @@ export type UserCreateManyReferredByInput = {
   stripeOnboarded?: boolean
   stripeCustomerId?: string | null
   customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: $Enums.LoyaltyTier
   pointsLastResetAt?: Date | string | null
   totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23312,6 +25507,7 @@ export type UserUpdateWithoutReferredByInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23359,6 +25555,7 @@ export type UserUpdateWithoutReferredByInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
@@ -23373,6 +25570,8 @@ export type UserUpdateWithoutReferredByInput = {
   createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -23414,6 +25613,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23461,6 +25661,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -23475,6 +25676,8 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -23516,6 +25719,7 @@ export type UserUncheckedUpdateManyWithoutReferredByInput = {
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
   pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -23568,6 +25772,7 @@ export type UserCountOutputType = {
   updatedAdminPermissions: number
   referredUsers: number
   withdrawalRequests: number
+  processedWithdrawals: number
   walletTransactions: number
   submittedReviews: number
   updatedShipments: number
@@ -23582,6 +25787,8 @@ export type UserCountOutputType = {
   createdViolationTypes: number
   caseMessages: number
   adminActivityLogs: number
+  financialSettlements: number
+  financialAdjustmentsCreated: number
   riskAlerts: number
   reviewedRiskAlerts: number
   loyaltyReviewAlerts: number
@@ -23616,6 +25823,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   updatedAdminPermissions?: boolean | UserCountOutputTypeCountUpdatedAdminPermissionsArgs
   referredUsers?: boolean | UserCountOutputTypeCountReferredUsersArgs
   withdrawalRequests?: boolean | UserCountOutputTypeCountWithdrawalRequestsArgs
+  processedWithdrawals?: boolean | UserCountOutputTypeCountProcessedWithdrawalsArgs
   walletTransactions?: boolean | UserCountOutputTypeCountWalletTransactionsArgs
   submittedReviews?: boolean | UserCountOutputTypeCountSubmittedReviewsArgs
   updatedShipments?: boolean | UserCountOutputTypeCountUpdatedShipmentsArgs
@@ -23630,6 +25838,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   createdViolationTypes?: boolean | UserCountOutputTypeCountCreatedViolationTypesArgs
   caseMessages?: boolean | UserCountOutputTypeCountCaseMessagesArgs
   adminActivityLogs?: boolean | UserCountOutputTypeCountAdminActivityLogsArgs
+  financialSettlements?: boolean | UserCountOutputTypeCountFinancialSettlementsArgs
+  financialAdjustmentsCreated?: boolean | UserCountOutputTypeCountFinancialAdjustmentsCreatedArgs
   riskAlerts?: boolean | UserCountOutputTypeCountRiskAlertsArgs
   reviewedRiskAlerts?: boolean | UserCountOutputTypeCountReviewedRiskAlertsArgs
   loyaltyReviewAlerts?: boolean | UserCountOutputTypeCountLoyaltyReviewAlertsArgs
@@ -23838,6 +26048,13 @@ export type UserCountOutputTypeCountWithdrawalRequestsArgs<ExtArgs extends runti
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountProcessedWithdrawalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WithdrawalRequestWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountWalletTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.WalletTransactionWhereInput
 }
@@ -23936,6 +26153,20 @@ export type UserCountOutputTypeCountAdminActivityLogsArgs<ExtArgs extends runtim
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountFinancialSettlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FinancialSettlementWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFinancialAdjustmentsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FinancialAdjustmentWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountRiskAlertsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CustomerRiskAlertWhereInput
 }
@@ -23997,6 +26228,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   stripeOnboarded?: boolean
   stripeCustomerId?: boolean
   customerBalance?: boolean
+  customerFrozenBalance?: boolean
   loyaltyTier?: boolean
   pointsLastResetAt?: boolean
   totalSpent?: boolean
@@ -24046,6 +26278,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referredUsers?: boolean | Prisma.User$referredUsersArgs<ExtArgs>
   withdrawalRequests?: boolean | Prisma.User$withdrawalRequestsArgs<ExtArgs>
+  processedWithdrawals?: boolean | Prisma.User$processedWithdrawalsArgs<ExtArgs>
   walletTransactions?: boolean | Prisma.User$walletTransactionsArgs<ExtArgs>
   submittedReviews?: boolean | Prisma.User$submittedReviewsArgs<ExtArgs>
   updatedShipments?: boolean | Prisma.User$updatedShipmentsArgs<ExtArgs>
@@ -24060,6 +26293,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdViolationTypes?: boolean | Prisma.User$createdViolationTypesArgs<ExtArgs>
   caseMessages?: boolean | Prisma.User$caseMessagesArgs<ExtArgs>
   adminActivityLogs?: boolean | Prisma.User$adminActivityLogsArgs<ExtArgs>
+  financialSettlements?: boolean | Prisma.User$financialSettlementsArgs<ExtArgs>
+  financialAdjustmentsCreated?: boolean | Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>
   riskAlerts?: boolean | Prisma.User$riskAlertsArgs<ExtArgs>
   reviewedRiskAlerts?: boolean | Prisma.User$reviewedRiskAlertsArgs<ExtArgs>
   loyaltyReviewAlerts?: boolean | Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>
@@ -24102,6 +26337,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   stripeOnboarded?: boolean
   stripeCustomerId?: boolean
   customerBalance?: boolean
+  customerFrozenBalance?: boolean
   loyaltyTier?: boolean
   pointsLastResetAt?: boolean
   totalSpent?: boolean
@@ -24158,6 +26394,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   stripeOnboarded?: boolean
   stripeCustomerId?: boolean
   customerBalance?: boolean
+  customerFrozenBalance?: boolean
   loyaltyTier?: boolean
   pointsLastResetAt?: boolean
   totalSpent?: boolean
@@ -24214,6 +26451,7 @@ export type UserSelectScalar = {
   stripeOnboarded?: boolean
   stripeCustomerId?: boolean
   customerBalance?: boolean
+  customerFrozenBalance?: boolean
   loyaltyTier?: boolean
   pointsLastResetAt?: boolean
   totalSpent?: boolean
@@ -24234,7 +26472,7 @@ export type UserSelectScalar = {
   restrictionAlertMessage?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "phone" | "passwordHash" | "countryCode" | "country" | "role" | "status" | "name" | "emailVerifiedAt" | "otpCode" | "otpExpiresAt" | "createdAt" | "updatedAt" | "avatar" | "recoveryStatus" | "withdrawalsFrozenUntil" | "lastLoginIp" | "lastLoginDevice" | "widersContactId" | "whatsappOptIn" | "widersSyncedAt" | "adminNotes" | "suspendedUntil" | "suspendReason" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "stripeAccountId" | "stripeOnboarded" | "stripeCustomerId" | "customerBalance" | "loyaltyTier" | "pointsLastResetAt" | "totalSpent" | "loyaltyPoints" | "referralCount" | "referralCode" | "referredById" | "referralStartsAt" | "violationScore" | "totalDeliveredOrders" | "totalReturnDisputeOrders" | "cachedReturnRate" | "withdrawalsFrozen" | "withdrawalFreezeNote" | "withdrawalFreezeSignature" | "orderLimit" | "dailyOrderCount" | "restrictionAlertMessage", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "phone" | "passwordHash" | "countryCode" | "country" | "role" | "status" | "name" | "emailVerifiedAt" | "otpCode" | "otpExpiresAt" | "createdAt" | "updatedAt" | "avatar" | "recoveryStatus" | "withdrawalsFrozenUntil" | "lastLoginIp" | "lastLoginDevice" | "widersContactId" | "whatsappOptIn" | "widersSyncedAt" | "adminNotes" | "suspendedUntil" | "suspendReason" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "stripeAccountId" | "stripeOnboarded" | "stripeCustomerId" | "customerBalance" | "customerFrozenBalance" | "loyaltyTier" | "pointsLastResetAt" | "totalSpent" | "loyaltyPoints" | "referralCount" | "referralCode" | "referredById" | "referralStartsAt" | "violationScore" | "totalDeliveredOrders" | "totalReturnDisputeOrders" | "cachedReturnRate" | "withdrawalsFrozen" | "withdrawalFreezeNote" | "withdrawalFreezeSignature" | "orderLimit" | "dailyOrderCount" | "restrictionAlertMessage", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   store?: boolean | Prisma.User$storeArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
@@ -24267,6 +26505,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referredUsers?: boolean | Prisma.User$referredUsersArgs<ExtArgs>
   withdrawalRequests?: boolean | Prisma.User$withdrawalRequestsArgs<ExtArgs>
+  processedWithdrawals?: boolean | Prisma.User$processedWithdrawalsArgs<ExtArgs>
   walletTransactions?: boolean | Prisma.User$walletTransactionsArgs<ExtArgs>
   submittedReviews?: boolean | Prisma.User$submittedReviewsArgs<ExtArgs>
   updatedShipments?: boolean | Prisma.User$updatedShipmentsArgs<ExtArgs>
@@ -24281,6 +26520,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   createdViolationTypes?: boolean | Prisma.User$createdViolationTypesArgs<ExtArgs>
   caseMessages?: boolean | Prisma.User$caseMessagesArgs<ExtArgs>
   adminActivityLogs?: boolean | Prisma.User$adminActivityLogsArgs<ExtArgs>
+  financialSettlements?: boolean | Prisma.User$financialSettlementsArgs<ExtArgs>
+  financialAdjustmentsCreated?: boolean | Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>
   riskAlerts?: boolean | Prisma.User$riskAlertsArgs<ExtArgs>
   reviewedRiskAlerts?: boolean | Prisma.User$reviewedRiskAlertsArgs<ExtArgs>
   loyaltyReviewAlerts?: boolean | Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>
@@ -24328,6 +26569,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     referredBy: Prisma.$UserPayload<ExtArgs> | null
     referredUsers: Prisma.$UserPayload<ExtArgs>[]
     withdrawalRequests: Prisma.$WithdrawalRequestPayload<ExtArgs>[]
+    processedWithdrawals: Prisma.$WithdrawalRequestPayload<ExtArgs>[]
     walletTransactions: Prisma.$WalletTransactionPayload<ExtArgs>[]
     submittedReviews: Prisma.$ReviewPayload<ExtArgs>[]
     updatedShipments: Prisma.$ShipmentPayload<ExtArgs>[]
@@ -24342,6 +26584,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     createdViolationTypes: Prisma.$ViolationTypePayload<ExtArgs>[]
     caseMessages: Prisma.$CaseMessagePayload<ExtArgs>[]
     adminActivityLogs: Prisma.$AdminActivityLogPayload<ExtArgs>[]
+    financialSettlements: Prisma.$FinancialSettlementPayload<ExtArgs>[]
+    financialAdjustmentsCreated: Prisma.$FinancialAdjustmentPayload<ExtArgs>[]
     riskAlerts: Prisma.$CustomerRiskAlertPayload<ExtArgs>[]
     reviewedRiskAlerts: Prisma.$CustomerRiskAlertPayload<ExtArgs>[]
     loyaltyReviewAlerts: Prisma.$LoyaltyReviewAlertPayload<ExtArgs>[]
@@ -24382,6 +26626,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     stripeOnboarded: boolean
     stripeCustomerId: string | null
     customerBalance: runtime.Decimal
+    customerFrozenBalance: runtime.Decimal
     loyaltyTier: $Enums.LoyaltyTier
     pointsLastResetAt: Date | null
     totalSpent: runtime.Decimal
@@ -24825,6 +27070,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   referredBy<T extends Prisma.User$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   referredUsers<T extends Prisma.User$referredUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   withdrawalRequests<T extends Prisma.User$withdrawalRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$withdrawalRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WithdrawalRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  processedWithdrawals<T extends Prisma.User$processedWithdrawalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$processedWithdrawalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WithdrawalRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   walletTransactions<T extends Prisma.User$walletTransactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$walletTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WalletTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   submittedReviews<T extends Prisma.User$submittedReviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$submittedReviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   updatedShipments<T extends Prisma.User$updatedShipmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$updatedShipmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -24839,6 +27085,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   createdViolationTypes<T extends Prisma.User$createdViolationTypesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdViolationTypesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   caseMessages<T extends Prisma.User$caseMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$caseMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CaseMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   adminActivityLogs<T extends Prisma.User$adminActivityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActivityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  financialSettlements<T extends Prisma.User$financialSettlementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$financialSettlementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FinancialSettlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  financialAdjustmentsCreated<T extends Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FinancialAdjustmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   riskAlerts<T extends Prisma.User$riskAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$riskAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerRiskAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviewedRiskAlerts<T extends Prisma.User$reviewedRiskAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewedRiskAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerRiskAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   loyaltyReviewAlerts<T extends Prisma.User$loyaltyReviewAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoyaltyReviewAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -24906,6 +27154,7 @@ export interface UserFieldRefs {
   readonly stripeOnboarded: Prisma.FieldRef<"User", 'Boolean'>
   readonly stripeCustomerId: Prisma.FieldRef<"User", 'String'>
   readonly customerBalance: Prisma.FieldRef<"User", 'Decimal'>
+  readonly customerFrozenBalance: Prisma.FieldRef<"User", 'Decimal'>
   readonly loyaltyTier: Prisma.FieldRef<"User", 'LoyaltyTier'>
   readonly pointsLastResetAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly totalSpent: Prisma.FieldRef<"User", 'Decimal'>
@@ -26049,6 +28298,30 @@ export type User$withdrawalRequestsArgs<ExtArgs extends runtime.Types.Extensions
 }
 
 /**
+ * User.processedWithdrawals
+ */
+export type User$processedWithdrawalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WithdrawalRequest
+   */
+  select?: Prisma.WithdrawalRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WithdrawalRequest
+   */
+  omit?: Prisma.WithdrawalRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WithdrawalRequestInclude<ExtArgs> | null
+  where?: Prisma.WithdrawalRequestWhereInput
+  orderBy?: Prisma.WithdrawalRequestOrderByWithRelationInput | Prisma.WithdrawalRequestOrderByWithRelationInput[]
+  cursor?: Prisma.WithdrawalRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WithdrawalRequestScalarFieldEnum | Prisma.WithdrawalRequestScalarFieldEnum[]
+}
+
+/**
  * User.walletTransactions
  */
 export type User$walletTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -26382,6 +28655,54 @@ export type User$adminActivityLogsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.AdminActivityLogScalarFieldEnum | Prisma.AdminActivityLogScalarFieldEnum[]
+}
+
+/**
+ * User.financialSettlements
+ */
+export type User$financialSettlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FinancialSettlement
+   */
+  select?: Prisma.FinancialSettlementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FinancialSettlement
+   */
+  omit?: Prisma.FinancialSettlementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FinancialSettlementInclude<ExtArgs> | null
+  where?: Prisma.FinancialSettlementWhereInput
+  orderBy?: Prisma.FinancialSettlementOrderByWithRelationInput | Prisma.FinancialSettlementOrderByWithRelationInput[]
+  cursor?: Prisma.FinancialSettlementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FinancialSettlementScalarFieldEnum | Prisma.FinancialSettlementScalarFieldEnum[]
+}
+
+/**
+ * User.financialAdjustmentsCreated
+ */
+export type User$financialAdjustmentsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FinancialAdjustment
+   */
+  select?: Prisma.FinancialAdjustmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FinancialAdjustment
+   */
+  omit?: Prisma.FinancialAdjustmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FinancialAdjustmentInclude<ExtArgs> | null
+  where?: Prisma.FinancialAdjustmentWhereInput
+  orderBy?: Prisma.FinancialAdjustmentOrderByWithRelationInput | Prisma.FinancialAdjustmentOrderByWithRelationInput[]
+  cursor?: Prisma.FinancialAdjustmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FinancialAdjustmentScalarFieldEnum | Prisma.FinancialAdjustmentScalarFieldEnum[]
 }
 
 /**

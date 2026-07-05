@@ -24,7 +24,8 @@ import { ReviewsControl } from './ReviewsControl';
 import { AdminResolutionPage } from './AdminResolutionPage';
 import { AdminDisputeDetails } from './AdminDisputeDetails';
 import { AdminBilling } from './AdminBilling';
-import { InvoiceViewer } from './InvoiceViewer';
+import { AdminInvoicesHub } from './AdminInvoicesHub';
+import { AdminOrderInvoicePage } from './AdminOrderInvoicePage';
 import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminShipping } from './AdminShipping';
 import { AdminSettings } from './AdminSettings';
@@ -32,7 +33,6 @@ import { AdminSupport } from './AdminSupport';
 import { SecurityAudit } from './SecurityAudit';
 import { AdminViolations } from './AdminViolations';
 import { AdminAccessControl } from './AdminAccessControl';
-import { FinancialHub } from './FinancialHub';
 import { PermissionGuard } from './PermissionGuard';
 import { AdminShippingCarts } from './AdminShippingCarts';
 import { VerificationTasksDashboard } from './VerificationTasksDashboard';
@@ -315,14 +315,24 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             </PermissionGuard>
         );
     }
-    if (subPath === 'financials') {
+    if (subPath === 'invoices') {
         return (
-            <PermissionGuard page="billing" action="view">
-                <FinancialHub />
+            <PermissionGuard page="invoices" action="view">
+                <AdminInvoicesHub onNavigate={navigate} />
             </PermissionGuard>
         );
     }
-    if (subPath === 'invoice-details' && viewId) return <InvoiceViewer invoiceId={viewId} onBack={() => navigate('billing')} />;
+    if (subPath === 'admin-order-invoice' && viewId) {
+        return (
+            <PermissionGuard page="invoices" action="view">
+                <AdminOrderInvoicePage
+                    orderId={viewId}
+                    onNavigate={navigate}
+                    onBack={() => navigate('invoices')}
+                />
+            </PermissionGuard>
+        );
+    }
     
     if (subPath === 'resolution') {
         return <PermissionGuard page="resolution" action="view"><AdminResolutionPage onNavigate={navigate} /></PermissionGuard>;

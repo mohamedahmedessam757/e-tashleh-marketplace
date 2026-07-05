@@ -132,26 +132,28 @@ export const useAdminPermissionsStore = create<AdminPermissionsState>((set, get)
 
   canView: (page) => {
     const role = get()._getRole();
+    const pageKey = page.toLowerCase();
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') return true;
     if (role === 'VERIFICATION_OFFICER') {
-      return page === 'verification-tasks' || page === 'verification-task-details' || page === 'profile';
+      return pageKey === 'verification-tasks' || pageKey === 'verification-task-details' || pageKey === 'profile';
     }
 
     const { myPermissions } = get();
     if (!myPermissions) return false;
-    return myPermissions.permissions[page]?.view || false;
+    return myPermissions.permissions[pageKey]?.view || false;
   },
 
   canEdit: (page) => {
     const role = get()._getRole();
+    const pageKey = page.toLowerCase();
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') return true;
     if (role === 'VERIFICATION_OFFICER') {
-      return page === 'verification-tasks' || page === 'verification-task-details';
+      return pageKey === 'verification-tasks' || pageKey === 'verification-task-details';
     }
 
     const { myPermissions } = get();
     if (!myPermissions) return false;
-    return myPermissions.permissions[page]?.edit || false;
+    return myPermissions.permissions[pageKey]?.edit || false;
   },
 
   canPerform: (page, action) => {
@@ -161,7 +163,7 @@ export const useAdminPermissionsStore = create<AdminPermissionsState>((set, get)
     const { myPermissions } = get();
     if (!myPermissions) return false;
     
-    const pagePerms = myPermissions.permissions[page];
+    const pagePerms = myPermissions.permissions[page.toLowerCase()];
     if (typeof pagePerms?.actions === 'object') {
         return pagePerms.actions[action] === true;
     }
@@ -175,7 +177,7 @@ export const useAdminPermissionsStore = create<AdminPermissionsState>((set, get)
     const { myPermissions } = get();
     if (!myPermissions) return false;
 
-    const pagePerms = myPermissions.permissions[page];
+    const pagePerms = myPermissions.permissions[page.toLowerCase()];
     if (typeof pagePerms?.fields === 'object') {
         return pagePerms.fields[field] === true;
     }
@@ -184,12 +186,13 @@ export const useAdminPermissionsStore = create<AdminPermissionsState>((set, get)
 
   canViewTab: (page, tabId) => {
     const role = get()._getRole();
+    const pageKey = page.toLowerCase();
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') return true;
     
     const { myPermissions } = get();
     if (!myPermissions) return false;
 
-    const pagePerms = myPermissions.permissions[page];
+    const pagePerms = myPermissions.permissions[pageKey];
     if (pagePerms && typeof pagePerms.tabs === 'object' && pagePerms.tabs !== null) {
         return pagePerms.tabs[tabId] === true;
     }

@@ -440,7 +440,9 @@ export const ModelName = {
   VerificationTask: 'VerificationTask',
   VerificationTaskPhoto: 'VerificationTaskPhoto',
   VerificationLink: 'VerificationLink',
-  VerificationActivityLog: 'VerificationActivityLog'
+  VerificationActivityLog: 'VerificationActivityLog',
+  FinancialSettlement: 'FinancialSettlement',
+  FinancialAdjustment: 'FinancialAdjustment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -456,7 +458,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog"
+    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog" | "financialSettlement" | "financialAdjustment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4678,6 +4680,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FinancialSettlement: {
+      payload: Prisma.$FinancialSettlementPayload<ExtArgs>
+      fields: Prisma.FinancialSettlementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FinancialSettlementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FinancialSettlementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        findFirst: {
+          args: Prisma.FinancialSettlementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FinancialSettlementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        findMany: {
+          args: Prisma.FinancialSettlementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>[]
+        }
+        create: {
+          args: Prisma.FinancialSettlementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        createMany: {
+          args: Prisma.FinancialSettlementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FinancialSettlementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>[]
+        }
+        delete: {
+          args: Prisma.FinancialSettlementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        update: {
+          args: Prisma.FinancialSettlementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        deleteMany: {
+          args: Prisma.FinancialSettlementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FinancialSettlementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FinancialSettlementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>[]
+        }
+        upsert: {
+          args: Prisma.FinancialSettlementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialSettlementPayload>
+        }
+        aggregate: {
+          args: Prisma.FinancialSettlementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFinancialSettlement>
+        }
+        groupBy: {
+          args: Prisma.FinancialSettlementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FinancialSettlementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FinancialSettlementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FinancialSettlementCountAggregateOutputType> | number
+        }
+      }
+    }
+    FinancialAdjustment: {
+      payload: Prisma.$FinancialAdjustmentPayload<ExtArgs>
+      fields: Prisma.FinancialAdjustmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FinancialAdjustmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FinancialAdjustmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        findFirst: {
+          args: Prisma.FinancialAdjustmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FinancialAdjustmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        findMany: {
+          args: Prisma.FinancialAdjustmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>[]
+        }
+        create: {
+          args: Prisma.FinancialAdjustmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        createMany: {
+          args: Prisma.FinancialAdjustmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FinancialAdjustmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>[]
+        }
+        delete: {
+          args: Prisma.FinancialAdjustmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        update: {
+          args: Prisma.FinancialAdjustmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.FinancialAdjustmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FinancialAdjustmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FinancialAdjustmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.FinancialAdjustmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FinancialAdjustmentPayload>
+        }
+        aggregate: {
+          args: Prisma.FinancialAdjustmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFinancialAdjustment>
+        }
+        groupBy: {
+          args: Prisma.FinancialAdjustmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FinancialAdjustmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FinancialAdjustmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FinancialAdjustmentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4806,6 +4956,7 @@ export const UserScalarFieldEnum = {
   stripeOnboarded: 'stripeOnboarded',
   stripeCustomerId: 'stripeCustomerId',
   customerBalance: 'customerBalance',
+  customerFrozenBalance: 'customerFrozenBalance',
   loyaltyTier: 'loyaltyTier',
   pointsLastResetAt: 'pointsLastResetAt',
   totalSpent: 'totalSpent',
@@ -5377,6 +5528,8 @@ export const PaymentTransactionScalarFieldEnum = {
   commission: 'commission',
   totalAmount: 'totalAmount',
   currency: 'currency',
+  displayCurrency: 'displayCurrency',
+  fxRate: 'fxRate',
   cardLast4: 'cardLast4',
   cardBrand: 'cardBrand',
   cardHolder: 'cardHolder',
@@ -5655,6 +5808,18 @@ export const WithdrawalRequestScalarFieldEnum = {
   payoutMethod: 'payoutMethod',
   stripeTransferId: 'stripeTransferId',
   adminNotes: 'adminNotes',
+  rejectionReason: 'rejectionReason',
+  processedBy: 'processedBy',
+  adminSignature: 'adminSignature',
+  approvedAt: 'approvedAt',
+  completedAt: 'completedAt',
+  cancelledAt: 'cancelledAt',
+  cancelledBy: 'cancelledBy',
+  transferCompletedAt: 'transferCompletedAt',
+  ibanSnapshot: 'ibanSnapshot',
+  stripeAccountSnapshot: 'stripeAccountSnapshot',
+  stripeIdempotencyKey: 'stripeIdempotencyKey',
+  balanceHeldAtRequest: 'balanceHeldAtRequest',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5960,6 +6125,41 @@ export const VerificationActivityLogScalarFieldEnum = {
 } as const
 
 export type VerificationActivityLogScalarFieldEnum = (typeof VerificationActivityLogScalarFieldEnum)[keyof typeof VerificationActivityLogScalarFieldEnum]
+
+
+export const FinancialSettlementScalarFieldEnum = {
+  id: 'id',
+  stripeBalance: 'stripeBalance',
+  escrowHeld: 'escrowHeld',
+  transferableAmount: 'transferableAmount',
+  transferredAmount: 'transferredAmount',
+  reconciliationDelta: 'reconciliationDelta',
+  dbSnapshot: 'dbSnapshot',
+  runById: 'runById',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type FinancialSettlementScalarFieldEnum = (typeof FinancialSettlementScalarFieldEnum)[keyof typeof FinancialSettlementScalarFieldEnum]
+
+
+export const FinancialAdjustmentScalarFieldEnum = {
+  id: 'id',
+  adjustmentNumber: 'adjustmentNumber',
+  invoiceId: 'invoiceId',
+  orderId: 'orderId',
+  targetUserId: 'targetUserId',
+  targetStoreId: 'targetStoreId',
+  type: 'type',
+  amount: 'amount',
+  currency: 'currency',
+  reason: 'reason',
+  createdById: 'createdById',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type FinancialAdjustmentScalarFieldEnum = (typeof FinancialAdjustmentScalarFieldEnum)[keyof typeof FinancialAdjustmentScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -6609,6 +6809,8 @@ export type GlobalOmitConfig = {
   verificationTaskPhoto?: Prisma.VerificationTaskPhotoOmit
   verificationLink?: Prisma.VerificationLinkOmit
   verificationActivityLog?: Prisma.VerificationActivityLogOmit
+  financialSettlement?: Prisma.FinancialSettlementOmit
+  financialAdjustment?: Prisma.FinancialAdjustmentOmit
 }
 
 /* Types for Logging */

@@ -6,6 +6,7 @@ import {
   normalizeClientIp,
   resolveIpLocationSync,
 } from '../common/ip/ip-geolocation.util';
+import { FinancialConfigService } from '../common/financial-config.service';
 
 @Injectable()
 export class PlatformSettingsService {
@@ -22,6 +23,7 @@ export class PlatformSettingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogs: AuditLogsService,
+    private readonly financialConfig: FinancialConfigService,
   ) {}
 
   /**
@@ -136,6 +138,26 @@ export class PlatformSettingsService {
     );
 
     this.logger.log(`Setting "${key}" updated by user ${userId}`);
+
+    if (key === PlatformSettingsService.KEYS.SYSTEM_CONFIG) {
+      this.financialConfig.invalidateCache();
+      const financial = (value as Record<string, unknown>)?.financial;
+      if (financial) {
+        await this.auditLogs.logAction({
+          actorId: userId,
+          actorType: 'ADMIN',
+          action: 'UPDATE_FINANCIAL_SETTINGS',
+          entity: 'FINANCIAL',
+          metadata: {
+            beforeData: (oldSetting?.settingValue as Record<string, unknown>)?.financial ?? null,
+            afterData: financial,
+            ip: context?.ip ?? null,
+          },
+          reason: reason || 'Updated financial settings via platform config',
+        });
+      }
+    }
+
     return updated.settingValue;
   }
 

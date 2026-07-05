@@ -26,6 +26,26 @@ export class StripeService {
         return Boolean(key?.trim());
     }
 
+    async getPlatformBalance(): Promise<number | null> {
+        if (!this.isConfigured()) return null;
+        try {
+            const balance = await this.stripe.balance.retrieve();
+            if (!balance?.available?.length) return 0;
+            return Number(
+                (
+                    balance.available.reduce(
+                        (sum, b) => sum + (b.amount || 0) / 100,
+                        0,
+                    )
+                ).toFixed(2),
+            );
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            this.logger.warn(`Failed to retrieve Stripe balance: ${err?.message || error}`);
+            return null;
+        }
+    }
+
     private assertConfigured(): void {
         if (!this.isConfigured()) {
             throw new BadRequestException(
@@ -354,17 +374,29 @@ export class StripeService {
         return Math.max(0, Math.round((received - refunded) * 100) / 100);
     }
 
+    async retrieveTransfer(transferId: string): Promise<any> {
+        this.assertConfigured();
+        try {
+            return await this.stripe.transfers.retrieve(transferId);
+        } catch (error: unknown) {
+            throw this.mapStripeError(error);
+        }
+    }
+
     /**
      * Refund a PaymentIntent (full or partial)
      */
-    async createRefund(paymentIntentId: string, amountStr?: string): Promise<any> {
+    async createRefund(paymentIntentId: string, amountStr?: string, idempotencyKey?: string): Promise<any> {
         const params: any = {
             payment_intent: paymentIntentId,
         };
         if (amountStr) {
             params.amount = Math.round(parseFloat(amountStr) * 100);
         }
-        return await this.stripe.refunds.create(params);
+        return await this.stripe.refunds.create(
+            params,
+            idempotencyKey ? { idempotencyKey } : undefined,
+        );
     }
 
     constructWebhookEvent(body: Buffer, sig: string): any {

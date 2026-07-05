@@ -115,6 +115,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     const [isExporting, setIsExporting] = useState<string | null>(null);
     const [highlightedInvoiceId, setHighlightedInvoiceId] = useState<string | null>(null);
     const invoiceRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isMerchant = role === 'MERCHANT';
     const isCustomer = role === 'CUSTOMER';
@@ -154,18 +155,33 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             .on(
                 'postgres_changes',
                 {
-                    event: '*', // Listen to INSERT/UPDATE/DELETE
+                    event: '*',
                     schema: 'public',
                     table: 'invoices',
                     filter: `order_id=eq.${orderId}`
                 },
                 () => {
-                    fetchInvoices();
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
+                    debounceRef.current = setTimeout(() => fetchInvoices(), 600);
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'payment_transactions',
+                    filter: `order_id=eq.${orderId}`
+                },
+                () => {
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
+                    debounceRef.current = setTimeout(() => fetchInvoices(), 600);
                 }
             )
             .subscribe();
 
         return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
             supabase.removeChannel(channel);
         };
     }, [orderId]);
@@ -382,9 +398,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         <p className="text-[20px] font-black text-gray-800 uppercase tracking-widest inv-value mb-1">
                             {isMerchant
                                 ? (isAr ? 'بيان مستحقات التاجر' : 'MERCHANT ENTITLEMENT STATEMENT')
-                                : (isAr ? 'فاتورة ضريبية' : 'TAX INVOICE')}
+                                : (isAr ? 'فاتورة الطلب' : 'ORDER INVOICE')}
                         </p>
-                        {!isMerchant && <p className="text-gray-500 font-mono text-sm inv-label">TRN: 10045678900003</p>}
                     </div>
                 </div>
 

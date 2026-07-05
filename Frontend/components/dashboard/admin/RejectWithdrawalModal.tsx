@@ -12,6 +12,7 @@ interface RejectWithdrawalModalProps {
 export const RejectWithdrawalModal: React.FC<RejectWithdrawalModalProps> = ({ isOpen, onClose, request }) => {
     const { t, isAr } = useLanguage();
     const processWithdrawal = useAdminStore(s => s.processWithdrawal);
+    const rejectWithdrawal = useAdminStore(s => s.rejectWithdrawal);
     const currentAdmin = useAdminStore(s => s.currentAdmin);
 
     const [reason, setReason] = useState('');
@@ -31,6 +32,10 @@ export const RejectWithdrawalModal: React.FC<RejectWithdrawalModalProps> = ({ is
             setError(isAr ? 'يجب إدخال سبب الرفض' : 'Rejection reason is required');
             return;
         }
+        if (reason.trim().length < 10) {
+            setError(t.admin.billing.withdrawals.modals.reasonMin);
+            return;
+        }
 
         if (!signature.trim()) {
             setError(isAr ? 'التوقيع الإلكتروني مطلوب' : 'Digital signature is required');
@@ -39,11 +44,9 @@ export const RejectWithdrawalModal: React.FC<RejectWithdrawalModalProps> = ({ is
 
         setIsProcessing(true);
         try {
-            const res = await processWithdrawal(
+            const res = await rejectWithdrawal(
                 request.id, 
-                'reject', 
                 reason, 
-                undefined, // method
                 signature, 
                 currentAdmin?.name, 
                 currentAdmin?.email

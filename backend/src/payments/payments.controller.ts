@@ -1,16 +1,22 @@
 import { Controller, Get, Post, Body, UseGuards, Request, Query, Param, Put, ForbiddenException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { PaymentsService } from './payments.service';
+import { AdminFinancialService } from './admin-financial.service';
 import { ProcessPaymentDto } from './dto/process-payment.dto';
 import { CreateIntentDto } from './dto/create-intent.dto';
 import { AdminManualPayoutDto } from './dto/admin-payout.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { getAuditContext } from '../common/audit-context.util';
 
 @Controller('payments')
 @UseGuards(JwtAuthGuard)
 export class PaymentsController {
-    constructor (private readonly paymentsService: PaymentsService) { }
+    constructor (
+        private readonly paymentsService: PaymentsService,
+        private readonly adminFinancialService: AdminFinancialService,
+    ) { }
 
     @Post('process')
     processPayment(@Request() req, @Body() dto: ProcessPaymentDto) {
@@ -86,8 +92,21 @@ export class PaymentsController {
     }
 
     @Post('customer/withdraw')
+    @Throttle({ default: { limit: 3, ttl: 3600000 } })
     requestCustomerWithdrawal(@Request() req, @Body() body: { amount: number; payoutMethod?: string }) {
-        return this.paymentsService.requestCustomerWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER');
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.requestCustomerWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER', ip);
+    }
+
+    @Get('customer/withdrawal-limits')
+    getCustomerWithdrawalLimits(@Request() req) {
+        return this.paymentsService.getUserWithdrawalLimits(req.user.id, 'CUSTOMER');
+    }
+
+    @Post('customer/withdrawals/:id/cancel')
+    cancelCustomerWithdrawal(@Request() req, @Param('id') id: string) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.cancelWithdrawalRequest(req.user.id, id, ip);
     }
 
     @Get('merchant/dashboard')
@@ -148,18 +167,33 @@ export class PaymentsController {
     }
 
     @Get('merchant/withdrawal-limits')
-    getMerchantWithdrawalLimits() {
-        return this.paymentsService.getWithdrawalLimits();
+    getMerchantWithdrawalLimits(@Request() req) {
+        return this.paymentsService.getUserWithdrawalLimits(req.user.id, 'VENDOR');
     }
 
     @Post('merchant/withdraw')
+    @Throttle({ default: { limit: 3, ttl: 3600000 } })
     requestWithdrawal(@Request() req, @Body() body: { amount: number; payoutMethod?: string }) {
-        return this.paymentsService.requestWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER');
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.requestWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER', ip);
+    }
+
+    @Post('merchant/withdrawals/:id/cancel')
+    cancelMerchantWithdrawal(@Request() req, @Param('id') id: string) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.cancelWithdrawalRequest(req.user.id, id, ip);
     }
 
     @Get('withdrawals')
     getWithdrawals(@Request() req, @Query() filters: any) {
         return this.paymentsService.getWithdrawalRequests(req.user.id, req.user.role, filters);
+    }
+
+    @Get('admin/withdrawals/:id/stripe-status')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getWithdrawalStripeStatus(@Param('id') id: string) {
+        return this.paymentsService.getWithdrawalStripeStatus(id);
     }
 
     @Post('admin/withdrawals/:id/process')
@@ -170,7 +204,7 @@ export class PaymentsController {
         @Param('id') id: string,
         @Body() body: { action: 'APPROVE' | 'REJECT'; notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; method?: string }
     ) {
-        // Role check should be enforced by a Guard
+        const { ip } = getAuditContext(req);
         return this.paymentsService.processWithdrawalRequest(
             req.user.id, 
             id, 
@@ -179,8 +213,57 @@ export class PaymentsController {
             body.adminSignature,
             body.adminName,
             body.adminEmail,
-            body.method
+            body.method,
+            ip,
         );
+    }
+
+    @Post('admin/withdrawals/:id/approve')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    approveWithdrawal(
+        @Request() req,
+        @Param('id') id: string,
+        @Body() body: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string },
+    ) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.approveWithdrawal(req.user.id, id, { ...body, ip });
+    }
+
+    @Post('admin/withdrawals/:id/reject')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    rejectWithdrawal(
+        @Request() req,
+        @Param('id') id: string,
+        @Body() body: { notes: string; adminSignature: string; adminName?: string; adminEmail?: string },
+    ) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.rejectWithdrawal(req.user.id, id, { ...body, ip });
+    }
+
+    @Post('admin/withdrawals/:id/complete')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    completeWithdrawal(
+        @Request() req,
+        @Param('id') id: string,
+        @Body() body: { notes: string; adminSignature: string; adminName?: string; adminEmail?: string; idempotencyKey?: string },
+    ) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.completeWithdrawal(req.user.id, id, { ...body, ip });
+    }
+
+    @Post('admin/withdrawals/:id/release')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    releaseWithdrawal(
+        @Request() req,
+        @Param('id') id: string,
+        @Body() body: { notes: string; adminSignature: string; adminName?: string; adminEmail?: string; idempotencyKey?: string },
+    ) {
+        const { ip } = getAuditContext(req);
+        return this.paymentsService.releaseWithdrawalFunds(req.user.id, id, { ...body, ip });
     }
 
     @Get('admin/withdrawal-settings')
@@ -249,5 +332,101 @@ export class PaymentsController {
         @Body() body: { targetId: string; role: 'CUSTOMER' | 'VENDOR' }
     ) {
         return this.paymentsService.adminVerifyBankDetails(req.user.id, body.targetId, body.role);
+    }
+
+    // --- Admin Financial Accounting APIs ---
+
+    @Get('admin/seller-accounts')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getSellerAccounts(@Query() filters: any) {
+        return this.adminFinancialService.getSellerAccounts(filters);
+    }
+
+    @Get('admin/customer-accounts')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getCustomerAccounts(@Query() filters: any) {
+        return this.adminFinancialService.getCustomerAccounts(filters);
+    }
+
+    @Get('admin/financial-refunds')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialRefunds(@Query() filters: any) {
+        return this.adminFinancialService.getFinancialRefunds(filters);
+    }
+
+    @Get('admin/financial-penalties')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialPenalties(@Query() filters: any) {
+        return this.adminFinancialService.getFinancialPenalties(filters);
+    }
+
+    @Get('admin/settlement/summary')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getSettlementSummary() {
+        return this.adminFinancialService.getSettlementSummary();
+    }
+
+    @Get('admin/settlement/history')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getSettlementHistory(@Query('limit') limit?: string) {
+        return this.adminFinancialService.getSettlementHistory(limit ? Number(limit) : 5);
+    }
+
+    @Post('admin/settlement/run')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    runSettlement(
+        @Request() req,
+        @Body() body: { notes?: string; reason: string; adminSignature?: string; adminName?: string },
+    ) {
+        return this.adminFinancialService.runSettlement(req.user.id, body, getAuditContext(req));
+    }
+
+    @Get('admin/financial-adjustments')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialAdjustments(@Query() filters: any) {
+        return this.adminFinancialService.getFinancialAdjustments(filters);
+    }
+
+    @Post('admin/financial-adjustments')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    createFinancialAdjustment(@Request() req, @Body() body: any) {
+        return this.adminFinancialService.createFinancialAdjustment(req.user.id, body);
+    }
+
+    @Get('admin/financial-audit')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialAudit(@Query() filters: any) {
+        return this.adminFinancialService.getFinancialAudit(filters);
+    }
+
+    @Get('admin/financial-reports/:reportId')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialReport(@Param('reportId') reportId: string, @Query() filters: any) {
+        return this.adminFinancialService.getFinancialReport(reportId, filters);
+    }
+
+    @Get('admin/financial-settings')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getFinancialSettings() {
+        return this.adminFinancialService.getFinancialSettings();
+    }
+
+    @Put('admin/financial-settings')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    updateFinancialSettings(@Request() req, @Body() body: Record<string, unknown>) {
+        return this.adminFinancialService.updateFinancialSettings(req.user.id, body, getAuditContext(req));
     }
 }

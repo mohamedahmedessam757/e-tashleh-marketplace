@@ -40,6 +40,9 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
 }: FinancialFeedRowProps) {
     const isCredit = item.direction === 'CREDIT' || item.direction === 'RELEASE';
     const isDebit = item.direction === 'DEBIT';
+    const debitAmount = item.debit ?? (isDebit ? item.amount : null);
+    const creditAmount = item.credit ?? (isCredit ? item.amount : null);
+    const executor = item.executorName || item.executor || (item.metadata as any)?.adminName || '—';
 
     const breakdownParts: string[] = [];
     if (item.commission != null && item.commission > 0) breakdownParts.push(`C:${item.commission}`);
@@ -65,18 +68,11 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
         <React.Fragment>
             <tr
                 onClick={() => onRowClick(item)}
-                className={`
-                    hover:bg-white/[0.04] transition-colors cursor-pointer group
-                    ${item.isNew ? 'financial-row-new animate-gold-pulse' : ''}
-                `}
+                className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
             >
                 <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors duration-300 ${
-                            item.isNew
-                                ? 'bg-gold-500/20 border-gold-500/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]'
-                                : 'bg-white/5 border-white/10 group-hover:border-white/20'
-                        }`}>
+                    <div className="flex items-center gap-4 relative">
+                        <div className="relative w-10 h-10 rounded-xl flex items-center justify-center border transition-colors duration-300 bg-white/5 border-white/10 group-hover:border-white/20">
                             {eventIcon}
                         </div>
                         <div>
@@ -135,6 +131,20 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                         <span className="text-[10px] opacity-30 font-bold uppercase">{item.currency}</span>
                     </div>
                 </td>
+                <td className="px-6 py-6 text-center font-mono text-xs text-rose-400">
+                    {debitAmount != null ? (
+                        <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}>
+                            {Number(debitAmount).toLocaleString()}
+                        </BlurredSection>
+                    ) : '—'}
+                </td>
+                <td className="px-6 py-6 text-center font-mono text-xs text-emerald-400">
+                    {creditAmount != null ? (
+                        <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}>
+                            {Number(creditAmount).toLocaleString()}
+                        </BlurredSection>
+                    ) : '—'}
+                </td>
                 <td className="px-6 py-6 text-center">
                     <span className="font-mono text-[10px] text-white/50">
                         {breakdownParts.length > 0 ? breakdownParts.join(' · ') : '—'}
@@ -148,13 +158,16 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
                     })}
                 </td>
+                <td className="px-6 py-6 text-center text-[10px] text-white/50 font-bold truncate max-w-[120px]">
+                    {executor}
+                </td>
                 <td className="px-6 py-6">
                     <div className="flex items-center justify-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${
                             item.status === 'COMPLETED' || item.status === 'SUCCESS'
                                 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                                 : item.status === 'PENDING'
-                                    ? 'bg-amber-500 animate-pulse'
+                                    ? 'bg-amber-500'
                                     : 'bg-white/20'
                         }`} />
                         <span className="text-[10px] text-white/60 font-black uppercase">{item.status}</span>
@@ -195,7 +208,7 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
             </tr>
             {isExpanded && (
                 <tr className="bg-white/[0.02]">
-                    <td colSpan={9} className="px-8 py-4">
+                    <td colSpan={12} className="px-8 py-4">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[10px] font-mono text-white/50">
                             {item.unitPrice != null && (
                                 <div><span className="text-white/25 block uppercase mb-1">{t.admin.billing.invoiceViewer.unitPrice}</span>{Number(item.unitPrice).toLocaleString()} AED</div>

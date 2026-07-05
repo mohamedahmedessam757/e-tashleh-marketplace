@@ -79,6 +79,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         fetchBankDetails,
         saveBankDetails,
         requestWithdrawal,
+        cancelWithdrawal,
         getStripeOnboardingUrl
     } = useCustomerWalletStore();
     const { notifications, fetchNotifications } = useNotificationStore();
@@ -111,8 +112,12 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const payoutMethodReady = isPayoutMethodReady(payoutMethod, payoutReadiness);
     const hasEnoughBalance =
         availableBalance !== null && availableBalance >= withdrawalLimits.min;
+    const activeWithdrawal = withdrawalRequests.some((r) =>
+        ['PENDING', 'PROCESSING'].includes(r.status),
+    );
+    const stripeConnectEnabled = withdrawalLimits.stripeConnectEnabled !== false;
     const canWithdraw =
-        !stats?.withdrawalsFrozen && hasEnoughBalance && payoutMethodReady;
+        !stats?.withdrawalsFrozen && hasEnoughBalance && payoutMethodReady && !activeWithdrawal;
 
     useEffect(() => {
         fetchWalletData();
@@ -466,6 +471,8 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
             'COMPLETED': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
             'SUCCESS': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
             'PENDING': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+            'PROCESSING': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            'REJECTED': 'bg-red-500/10 text-red-400 border-red-500/20',
             'FAILED': 'bg-red-500/10 text-red-400 border-red-500/20',
             'REFUNDED': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
             'DELIVERED': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -479,7 +486,9 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         const labels: Record<string, string> = {
             'COMPLETED': isAr ? 'مكتمل' : 'Completed',
             'SUCCESS': isAr ? 'ناجح' : 'Success',
-            'PENDING': isAr ? 'قيد الانتظار' : 'Pending',
+            'PENDING': isAr ? 'بانتظار المراجعة' : 'Pending Review',
+            'PROCESSING': isAr ? 'جارٍ التنفيذ' : 'Processing',
+            'REJECTED': isAr ? 'مرفوض' : 'Rejected',
             'FAILED': isAr ? 'فاشل' : 'Failed',
             'REFUNDED': isAr ? 'مسترجع' : 'Refunded',
             'DELIVERED': isAr ? 'تم التوصيل' : 'Delivered',
@@ -833,19 +842,41 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                     {/* 2026 REVOLUTION: Integrated Loyalty Progress (Advanced Mathematical Logic) */}
                     {(() => {
                         const spent = Number(stats?.totalSpent || 0);
-                        const tiers = [
-                            { id: 'BASIC', label: t.dashboard.profile.loyalty.tiers.basic, limit: 1000, rate: '2%' },
-                            { id: 'SILVER', label: t.dashboard.profile.loyalty.tiers.silver, limit: 3000, rate: '3%' },
-                            { id: 'GOLD', label: t.dashboard.profile.loyalty.tiers.gold, limit: 10000, rate: '4%' },
-                            { id: 'VIP', label: t.dashboard.profile.loyalty.tiers.vip, limit: 20000, rate: '5%' },
-                            { id: 'PARTNER', label: t.dashboard.profile.loyalty.tiers.partner, limit: 20000, rate: '6%' },
-                        ];
+                        const thresholds = stats?.loyaltyConfig?.thresholds || {
+                          SILVER: 1000,
+                          GOLD: 3000,
+                          VIP: 10000,
+                          PARTNER: 20000,
+                        };
+                        const tierPercents = stats?.loyaltyConfig?.tiers || {};
+                        const tierOrder = ['BASIC', 'SILVER', 'GOLD', 'VIP', 'PARTNER'] as const;
+                        const nextThreshold: Record<string, number> = {
+                          BASIC: thresholds.SILVER,
+                          SILVER: thresholds.GOLD,
+                          GOLD: thresholds.VIP,
+                          VIP: thresholds.PARTNER,
+                          PARTNER: thresholds.PARTNER,
+                        };
+                        const tiers = tierOrder.map((id, idx) => {
+                          const percent = tierPercents[id]?.percent ?? [0.02, 0.03, 0.04, 0.05, 0.06][idx];
+                          const labels: Record<string, string> = {
+                            BASIC: t.dashboard.profile.loyalty.tiers.basic,
+                            SILVER: t.dashboard.profile.loyalty.tiers.silver,
+                            GOLD: t.dashboard.profile.loyalty.tiers.gold,
+                            VIP: t.dashboard.profile.loyalty.tiers.vip,
+                            PARTNER: t.dashboard.profile.loyalty.tiers.partner,
+                          };
+                          return {
+                            id,
+                            label: labels[id],
+                            limit: nextThreshold[id],
+                            rate: `${Math.round(percent * 100)}%`,
+                          };
+                        });
                         
                         const currentTierIdx = tiers.findIndex(tier => tier.id === (stats?.loyaltyTier || 'BASIC'));
                         const nextTier = currentTierIdx < tiers.length - 1 ? tiers[currentTierIdx + 1] : null;
                         
-                        // v2026 Relative Progression Logic:
-                        // (CurrentSpent - LevelStart) / (LevelEnd - LevelStart)
                         const startLimit = currentTierIdx === 0 ? 0 : tiers[currentTierIdx - 1].limit;
                         const endLimit = nextTier ? nextTier.limit : tiers[currentTierIdx].limit;
                         
@@ -1050,12 +1081,14 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                     >
                                         {isAr ? 'تحويل بنكي' : 'Bank Transfer'}
                                     </button>
+                                    {stripeConnectEnabled && (
                                     <button 
                                         onClick={() => setPayoutMethod('STRIPE')}
                                         className={`px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${payoutMethod === 'STRIPE' ? 'bg-[#635BFF] text-white' : 'text-white/40'}`}
                                     >
                                         Stripe Connect
                                     </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -1089,7 +1122,12 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                         <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available Balance:'} <span className="text-emerald-400 font-black">{isLoading ? '…' : `${(stats?.customerBalance ?? 0).toLocaleString()} AED`}</span></span>
                                         <span className="text-white/30">{isAr ? 'الحد الأدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
-                                    {!canWithdraw && !isLoading && !stats?.withdrawalsFrozen && !payoutMethodReady && (
+                                    {!canWithdraw && !isLoading && !stats?.withdrawalsFrozen && activeWithdrawal && (
+                                        <p className="text-[10px] text-amber-400/80">
+                                            {isAr ? 'لديك طلب سحب نشط — انتظر معالجته أو ألغِه من السجل أدناه' : 'You have an active withdrawal — wait for processing or cancel it below'}
+                                        </p>
+                                    )}
+                                    {!canWithdraw && !isLoading && !stats?.withdrawalsFrozen && !activeWithdrawal && !payoutMethodReady && (
                                         <p className="text-[10px] text-white/40">
                                             {!payoutReadiness.hasAny
                                                 ? isAr
@@ -1171,11 +1209,12 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                             <th className="px-4 py-4">{isAr ? 'الحالة' : 'Status'}</th>
                                             <th className="px-4 py-4">{isAr ? 'التاريخ' : 'Date'}</th>
                                             <th className="px-4 py-4">{isAr ? 'ملاحظات الإدارة' : 'Admin Notes'}</th>
+                                            <th className="px-4 py-4">{isAr ? 'إجراء' : 'Action'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.02]">
                                         {withdrawalRequests.length === 0 ? (
-                                            <tr><td colSpan={5} className="p-8 text-white/20 text-[10px] font-black italic">{isAr ? 'لا توجد طلبات سحب سابقة' : 'No previous withdrawal requests found'}</td></tr>
+                                            <tr><td colSpan={6} className="p-8 text-white/20 text-[10px] font-black italic">{isAr ? 'لا توجد طلبات سحب سابقة' : 'No previous withdrawal requests found'}</td></tr>
                                         ) : (
                                             withdrawalRequests.map(req => (
                                                 <tr key={req.id} className="hover:bg-white/[0.01] transition-colors">
@@ -1194,7 +1233,21 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                                         {new Date(req.createdAt).toLocaleDateString()}
                                                     </td>
                                                     <td className="px-4 py-4 text-[10px] text-white/40 italic">
-                                                        {req.adminNotes || '---'}
+                                                        {(req as any).rejectionReason || req.adminNotes || '---'}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        {req.status === 'PENDING' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={async () => {
+                                                                    const res = await cancelWithdrawal(req.id);
+                                                                    if (!res.success) setWithdrawError(res.message);
+                                                                }}
+                                                                className="text-[9px] font-black uppercase text-rose-400 hover:text-rose-300"
+                                                            >
+                                                                {isAr ? 'إلغاء' : 'Cancel'}
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EscrowService } from '../payments/escrow.service';
+import { FinancialConfigService } from '../common/financial-config.service';
 import {
     escrowReleaseWindowEnd,
     isEscrowPaymentEligibleForAutoRelease,
@@ -14,12 +15,15 @@ export class EscrowCronService {
     constructor(
         private prisma: PrismaService,
         private escrowService: EscrowService,
+        private financialConfig: FinancialConfigService,
     ) {}
 
     @Cron(CronExpression.EVERY_HOUR)
     async handleAutoRelease() {
-        this.logger.log('Running Escrow Auto-Release Cron (24h after delivery/completion)...');
-        const windowEnd = escrowReleaseWindowEnd();
+        const config = await this.financialConfig.getConfig();
+        const holdHours = config.escrowHoldHoursMerchant;
+        this.logger.log(`Running Escrow Auto-Release Cron (${holdHours}h after delivery/completion)...`);
+        const windowEnd = escrowReleaseWindowEnd(new Date(), holdHours);
 
         try {
             const heldEscrows = await this.prisma.escrowTransaction.findMany({

@@ -15,6 +15,7 @@ enum UserRole {
   SUPER_ADMIN
   SUPPORT
   VERIFICATION_OFFICER
+  ACCOUNTANT
 
   @@map("user_role")
 }
@@ -282,6 +283,7 @@ model User {
 
   // Loyalty & Referral System
   customerBalance   Decimal     @default(0) @map("customer_balance") @db.Decimal(14, 2)
+  customerFrozenBalance Decimal @default(0) @map("customer_frozen_balance") @db.Decimal(14, 2)
   loyaltyTier       LoyaltyTier @default(BASIC) @map("loyalty_tier")
   pointsLastResetAt DateTime?   @default(now()) @map("points_last_reset_at")
   totalSpent        Decimal     @default(0) @map("total_spent") @db.Decimal(14, 2)
@@ -294,6 +296,7 @@ model User {
   referredUsers     User[]      @relation("ReferralHistory")
 
   withdrawalRequests WithdrawalRequest[]
+  processedWithdrawals WithdrawalRequest[] @relation("WithdrawalProcessor")
   walletTransactions WalletTransaction[]
 
   // Reviews
@@ -315,6 +318,8 @@ model User {
   createdViolationTypes ViolationType[]
   caseMessages          CaseMessage[]
   adminActivityLogs     AdminActivityLog[]
+  financialSettlements  FinancialSettlement[] @relation("FinancialSettlementRunner")
+  financialAdjustmentsCreated FinancialAdjustment[] @relation("FinancialAdjustmentCreator")
 
   // Customer Return Risk Tracking (2026)
   totalDeliveredOrders     Int                 @default(0) @map("total_delivered_orders")
@@ -1155,6 +1160,8 @@ model PaymentTransaction {
   commission   Decimal @default(0) @db.Decimal(14, 2)
   totalAmount  Decimal @map("total_amount") @db.Decimal(14, 2)
   currency     String  @default("AED")
+  displayCurrency String? @map("display_currency")
+  fxRate       Decimal? @map("fx_rate") @db.Decimal(12, 6)
 
   // Card Info (masked)
   cardLast4  String? @map("card_last4")
@@ -1605,15 +1612,28 @@ model WithdrawalRequest {
   role             String   @default("VENDOR") // VENDOR | CUSTOMER
   amount           Decimal  @db.Decimal(14, 2)
   currency         String   @default("AED")
-  status           String   @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED, FAILED
+  status           String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, REJECTED, CANCELLED (+ legacy)
   payoutMethod     String   @default("BANK_TRANSFER") @map("payout_method") // STRIPE | BANK_TRANSFER
   stripeTransferId String?  @map("stripe_transfer_id")
   adminNotes       String?  @map("admin_notes")
+  rejectionReason  String?  @map("rejection_reason")
+  processedBy      String?  @map("processed_by") @db.Uuid
+  adminSignature   String?  @map("admin_signature") @db.Text
+  approvedAt       DateTime? @map("approved_at") @db.Timestamptz
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+  cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz
+  cancelledBy      String?  @map("cancelled_by") @db.Uuid
+  transferCompletedAt DateTime? @map("transfer_completed_at") @db.Timestamptz
+  ibanSnapshot     String?  @map("iban_snapshot") @db.Text
+  stripeAccountSnapshot String? @map("stripe_account_snapshot") @db.Text
+  stripeIdempotencyKey String? @map("stripe_idempotency_key")
+  balanceHeldAtRequest Decimal? @map("balance_held_at_request") @db.Decimal(14, 2)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
   user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  processor User? @relation("WithdrawalProcessor", fields: [processedBy], references: [id])
 
   @@index([storeId])
   @@index([userId])
@@ -2087,4 +2107,48 @@ model VerificationActivityLog {
   @@index([taskId])
   @@index([officerId])
   @@map("verification_activity_logs")
+}
+
+model FinancialSettlement {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stripeBalance        Decimal  @default(0) @map("stripe_balance") @db.Decimal(14, 2)
+  escrowHeld           Decimal  @default(0) @map("escrow_held") @db.Decimal(14, 2)
+  transferableAmount   Decimal  @default(0) @map("transferable_amount") @db.Decimal(14, 2)
+  transferredAmount    Decimal  @default(0) @map("transferred_amount") @db.Decimal(14, 2)
+  reconciliationDelta  Decimal  @default(0) @map("reconciliation_delta") @db.Decimal(14, 2)
+  dbSnapshot           Json     @default("{}") @map("db_snapshot")
+  runById              String?  @map("run_by") @db.Uuid
+  notes                String?  @db.Text
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  runBy User? @relation("FinancialSettlementRunner", fields: [runById], references: [id])
+
+  @@index([createdAt])
+  @@index([runById])
+  @@map("financial_settlements")
+}
+
+model FinancialAdjustment {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adjustmentNumber String   @unique @map("adjustment_number")
+  invoiceId        String?  @map("invoice_id") @db.Uuid
+  orderId          String?  @map("order_id") @db.Uuid
+  targetUserId     String?  @map("target_user_id") @db.Uuid
+  targetStoreId    String?  @map("target_store_id") @db.Uuid
+  type             String   @db.VarChar(16)
+  amount           Decimal  @db.Decimal(14, 2)
+  currency         String   @default("AED") @db.VarChar(8)
+  reason           String   @db.Text
+  createdById      String?  @map("created_by") @db.Uuid
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  createdBy User? @relation("FinancialAdjustmentCreator", fields: [createdById], references: [id])
+
+  @@index([invoiceId])
+  @@index([orderId])
+  @@index([targetUserId])
+  @@index([targetStoreId])
+  @@index([createdAt])
+  @@map("financial_adjustments")
 }

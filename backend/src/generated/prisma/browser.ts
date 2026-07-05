@@ -302,3 +302,13 @@ export type VerificationLink = Prisma.VerificationLinkModel
  * 
  */
 export type VerificationActivityLog = Prisma.VerificationActivityLogModel
+/**
+ * Model FinancialSettlement
+ * 
+ */
+export type FinancialSettlement = Prisma.FinancialSettlementModel
+/**
+ * Model FinancialAdjustment
+ * 
+ */
+export type FinancialAdjustment = Prisma.FinancialAdjustmentModel
