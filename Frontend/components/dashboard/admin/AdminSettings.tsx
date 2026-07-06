@@ -7,6 +7,7 @@ import {
   Globe, Plus, Trash2, ShieldCheck, Activity, RefreshCw,
   Mail, Phone, Percent, Box, Lock, Unlock, MessageSquare,
   Coins, Languages, Clock, Monitor, MapPin, Hash, User, Calendar,
+  CreditCard, Zap, AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VehicleCatalogManager } from './VehicleCatalogManager';
@@ -38,6 +39,13 @@ export const AdminSettings: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'general' | 'financial' | 'logistics' | 'content' | 'security' | 'catalog'>('general');
   const [showFinancialAudit, setShowFinancialAudit] = useState(false);
+  const [savedStripeConnectEnabled, setSavedStripeConnectEnabled] = useState(false);
+  const [pendingStripeConnect, setPendingStripeConnect] = useState<boolean | null>(null);
+  const [financialAuditMeta, setFinancialAuditMeta] = useState<{
+    title: string;
+    subtitle: string;
+    mode: 'stripe' | 'general';
+  }>({ title: '', subtitle: '', mode: 'general' });
   const [activeShipmentTypeId, setActiveShipmentTypeId] = useState<string>('standard');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -138,6 +146,7 @@ export const AdminSettings: React.FC = () => {
             ...prev,
             financial: { ...(prev.financial || {}), ...data.financial },
           }));
+          setSavedStripeConnectEnabled(Boolean(data.financial.stripeConnectEnabled));
         }
       } catch (err) {
         console.error('Failed to load financial settings', err);
@@ -148,10 +157,44 @@ export const AdminSettings: React.FC = () => {
 
   const handleSaveSection = async (section: string) => {
     if (section === 'financial') {
+      setFinancialAuditMeta({
+        mode: 'general',
+        title: isAr ? 'تدقيق مالي — حفظ الإعدادات' : 'Financial audit — save settings',
+        subtitle: isAr ? 'سبب التعديل والتوقيع مطلوبان قبل حفظ جميع إعدادات المالية' : 'Reason and signature are required before saving all financial settings',
+      });
       setShowFinancialAudit(true);
       return;
     }
     await persistSection(section);
+  };
+
+  const stripeConnectDisplayed =
+    pendingStripeConnect ?? Boolean(formData.financial?.stripeConnectEnabled);
+
+  const handleStripeConnectToggle = (next: boolean) => {
+    const current = Boolean(formData.financial?.stripeConnectEnabled);
+    if (next === current && pendingStripeConnect === null) return;
+
+    setPendingStripeConnect(next);
+    setFinancialAuditMeta({
+      mode: 'stripe',
+      title: next
+        ? (isAr ? 'تفعيل Stripe Connect' : 'Enable Stripe Connect')
+        : (isAr ? 'إيقاف Stripe Connect' : 'Disable Stripe Connect'),
+      subtitle: next
+        ? (isAr
+            ? 'سيتم إشعار جميع العملاء والتجار. اكتب سبب التفعيل (10 أحرف على الأقل) والتوقيع للتدقيق.'
+            : 'All customers and merchants will be notified. Provide activation reason (min 10 chars) and signature for audit.')
+        : (isAr
+            ? 'سيتم إخفاء خيار Stripe من المحافظ. اكتب سبب الإيقاف (10 أحرف على الأقل) والتوقيع للتدقيق.'
+            : 'Stripe payout option will be hidden from wallets. Provide deactivation reason (min 10 chars) and signature for audit.'),
+    });
+    setShowFinancialAudit(true);
+  };
+
+  const closeFinancialAudit = () => {
+    setShowFinancialAudit(false);
+    setPendingStripeConnect(null);
   };
 
   const persistSection = async (section: string) => {
@@ -187,13 +230,27 @@ export const AdminSettings: React.FC = () => {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('access_token');
+      const financialPayload = {
+        ...formData.financial,
+        ...(pendingStripeConnect !== null ? { stripeConnectEnabled: pendingStripeConnect } : {}),
+        reason: audit.reason,
+        adminName: audit.adminName,
+        adminSignature: audit.adminSignature,
+      };
       const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData.financial, reason: audit.reason, adminName: audit.adminName, adminSignature: audit.adminSignature }),
+        body: JSON.stringify(financialPayload),
       });
       if (res.ok) {
-        setShowFinancialAudit(false);
+        const nextStripe = pendingStripeConnect ?? Boolean(formData.financial?.stripeConnectEnabled);
+        setFormData((prev: any) => ({
+          ...prev,
+          financial: { ...prev.financial, stripeConnectEnabled: nextStripe },
+        }));
+        setSavedStripeConnectEnabled(nextStripe);
+        setPendingStripeConnect(null);
+        closeFinancialAudit();
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         await fetchSystemSettings();
@@ -569,24 +626,98 @@ export const AdminSettings: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
-                      {isAr ? 'Stripe Connect' : 'Stripe Connect'}
-                    </h3>
-                    <p className="text-[11px] text-white/30 mb-4">
-                      {isAr ? 'تفعيل خيار السحب عبر Stripe Connect للعملاء والتجار' : 'Enable Stripe Connect payout option for customers and merchants'}
-                    </p>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(formData.financial?.stripeConnectEnabled)}
-                        onChange={(e) => updateField('financial', 'stripeConnectEnabled', e.target.checked)}
-                        className="w-5 h-5 rounded border-white/20"
-                      />
-                      <span className="text-sm font-bold text-white">
-                        {isAr ? 'تفعيل Stripe Connect' : 'Enable Stripe Connect'}
-                      </span>
-                    </label>
+                  <div className="relative overflow-hidden rounded-[2.5rem] border border-[#635BFF]/25 bg-gradient-to-br from-[#635BFF]/10 via-[#0F1014] to-black p-8 shadow-[0_0_60px_rgba(99,91,255,0.12)]">
+                    <div className="absolute top-0 left-0 w-48 h-48 bg-[#635BFF]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full blur-2xl translate-x-1/4 translate-y-1/4 pointer-events-none" />
+
+                    <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                      <div className="flex items-start gap-5 flex-1">
+                        <div className="w-16 h-16 rounded-2xl bg-[#635BFF] flex items-center justify-center shadow-lg shadow-[#635BFF]/30 shrink-0">
+                          <CreditCard className="text-white" size={28} />
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-xl font-black text-white tracking-tight">
+                              Stripe Connect
+                            </h3>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                stripeConnectDisplayed
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                  : 'bg-white/5 text-white/40 border-white/10'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${stripeConnectDisplayed ? 'bg-emerald-400 animate-pulse' : 'bg-white/30'}`} />
+                              {stripeConnectDisplayed
+                                ? (isAr ? 'مفعّل' : 'Active')
+                                : (isAr ? 'متوقف' : 'Inactive')}
+                            </span>
+                            {pendingStripeConnect !== null && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <AlertCircle size={10} />
+                                {isAr ? 'بانتظار التدقيق' : 'Pending audit'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-white/50 leading-relaxed max-w-xl">
+                            {isAr
+                              ? 'عند التفعيل يظهر خيار السحب عبر Stripe Connect للعملاء والتجار. عند الإيقاف يبقى التحويل البنكي فقط — مع إشعار فوري لجميع المستخدمين.'
+                              : 'When enabled, Stripe Connect appears as a payout option for customers and merchants. When disabled, only bank transfer remains — all users are notified immediately.'}
+                          </p>
+                          <div className="flex flex-wrap gap-4 pt-1">
+                            <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase">
+                              <Zap size={12} className="text-[#635BFF]" />
+                              {isAr ? 'تحويل أسرع' : 'Faster payouts'}
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase">
+                              <ShieldCheck size={12} className="text-emerald-500/80" />
+                              {isAr ? 'تدقيق إلزامي عند التغيير' : 'Mandatory audit on change'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center lg:items-end gap-3 shrink-0">
+                        <label className="relative inline-flex items-center cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={stripeConnectDisplayed}
+                            disabled={isSaving}
+                            onChange={(e) => handleStripeConnectToggle(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div
+                            className={`relative w-[72px] h-9 rounded-full transition-all duration-300 border-2 ${
+                              stripeConnectDisplayed
+                                ? 'bg-[#635BFF] border-[#635BFF]/50 shadow-[0_0_24px_rgba(99,91,255,0.45)]'
+                                : 'bg-white/5 border-white/10'
+                            } peer-focus-visible:ring-2 peer-focus-visible:ring-[#635BFF]/50`}
+                          >
+                            <div
+                              className={`absolute top-1 left-1 w-7 h-7 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+                                stripeConnectDisplayed ? 'translate-x-[34px]' : 'translate-x-0'
+                              }`}
+                            >
+                              {stripeConnectDisplayed ? (
+                                <Zap size={14} className="text-[#635BFF]" />
+                              ) : (
+                                <Lock size={12} className="text-white/40" />
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                        <p className="text-[9px] text-white/25 font-bold uppercase tracking-wider text-center lg:text-right max-w-[140px]">
+                          {isAr ? 'التغيير يتطلب سبباً وتوقيعاً' : 'Change requires reason & signature'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {savedStripeConnectEnabled !== stripeConnectDisplayed && pendingStripeConnect === null && (
+                      <p className="relative mt-6 text-[10px] text-amber-400/80 font-bold flex items-center gap-2">
+                        <AlertCircle size={12} />
+                        {isAr ? 'لديك تغييرات غير محفوظة — استخدم زر حفظ التعديلات' : 'Unsaved changes — use Commit Changes to save'}
+                      </p>
+                    )}
                   </div>
 
                   <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem]">
@@ -1270,10 +1401,11 @@ export const AdminSettings: React.FC = () => {
     </div>
       <FinancialAuditModal
         isOpen={showFinancialAudit}
-        onClose={() => setShowFinancialAudit(false)}
+        onClose={closeFinancialAudit}
         onConfirm={saveFinancialSettings}
-        title={isAr ? 'تدقيق مالي — حفظ الإعدادات' : 'Financial audit — save settings'}
-        subtitle={isAr ? 'سبب التعديل والتوقيع مطلوبان' : 'Reason and signature are required'}
+        title={financialAuditMeta.title || (isAr ? 'تدقيق مالي — حفظ الإعدادات' : 'Financial audit — save settings')}
+        subtitle={financialAuditMeta.subtitle || (isAr ? 'سبب التعديل والتوقيع مطلوبان' : 'Reason and signature are required')}
+        actionType={financialAuditMeta.mode === 'stripe' && pendingStripeConnect === false ? 'REJECT' : 'APPROVE'}
       />
     </>
   );
