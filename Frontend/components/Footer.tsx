@@ -4,7 +4,7 @@ import { Container } from './ui/Container';
 import { NomoBadge } from './ui/NomoBadge';
 import { Headset, MapPin, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { SITE_CUSTOMER_EMAIL, SITE_MERCHANT_EMAIL } from '../config/site';
+import { siteContacts } from '../config/site';
 
 interface FooterProps {
     onOpenSupport: () => void;
@@ -42,14 +42,14 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSupport, onNavigateToLicen
                                 <Mail size={16} className="text-gold-500 shrink-0" />
                                 <div className="flex flex-col items-center lg:items-start gap-0.5">
                                     <span className="text-white/40 text-xs">{(t.footer as any).customerEmailLabel}</span>
-                                    <a href={`mailto:${SITE_CUSTOMER_EMAIL}`} className="hover:text-white transition-colors dir-ltr">{SITE_CUSTOMER_EMAIL}</a>
+                                    <a href={`mailto:${siteContacts.customer}`} className="hover:text-white transition-colors dir-ltr">{siteContacts.customer}</a>
                                 </div>
                             </li>
                             <li className="flex items-center gap-3 justify-center lg:justify-start text-white/70 text-sm">
                                 <Mail size={16} className="text-gold-500 shrink-0" />
                                 <div className="flex flex-col items-center lg:items-start gap-0.5">
                                     <span className="text-white/40 text-xs">{(t.footer as any).merchantEmailLabel}</span>
-                                    <a href={`mailto:${SITE_MERCHANT_EMAIL}`} className="hover:text-white transition-colors dir-ltr">{SITE_MERCHANT_EMAIL}</a>
+                                    <a href={`mailto:${siteContacts.merchant}`} className="hover:text-white transition-colors dir-ltr">{siteContacts.merchant}</a>
                                 </div>
                             </li>
                             <li className="flex items-start gap-3 justify-center lg:justify-start text-white/70 text-sm">

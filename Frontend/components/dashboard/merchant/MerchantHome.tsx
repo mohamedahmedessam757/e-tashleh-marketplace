@@ -10,6 +10,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { useReviewStore } from '../../../stores/useReviewStore';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
+import { PolicyChangeBanner } from '../../ui/PolicyChangeBanner';
 import {
     belongsToMerchantStore,
     getMerchantOrderProgress,
@@ -185,6 +186,8 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+
+            <PolicyChangeBanner audience="VENDOR" />
             
             {/* Header / Welcome */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1814] via-[#24211B] to-[#151310] border border-white/5 shadow-2xl p-8 transition-all hover:shadow-gold-500/5 group">

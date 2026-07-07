@@ -13,7 +13,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
 import compression from 'compression';
 import { validateProductionEnv } from './config/env.validation';
@@ -73,7 +72,6 @@ async function bootstrap() {
 
     app.use(compression());
     app.use(helmet());
-    app.useGlobalFilters(new GlobalHttpExceptionFilter());
 
     // Enable Global Validation
     app.useGlobalPipes(new ValidationPipe({

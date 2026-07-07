@@ -668,6 +668,10 @@ export type UserWhereInput = {
   adminPermission?: Prisma.XOR<Prisma.AdminPermissionNullableScalarRelationFilter, Prisma.AdminPermissionWhereInput> | null
   createdAdminPermissions?: Prisma.AdminPermissionListRelationFilter
   updatedAdminPermissions?: Prisma.AdminPermissionListRelationFilter
+  staticPagesUpdated?: Prisma.StaticPageListRelationFilter
+  announcementsCreated?: Prisma.PlatformAnnouncementListRelationFilter
+  platformErrors?: Prisma.PlatformErrorEventListRelationFilter
+  platformErrorsResolved?: Prisma.PlatformErrorEventListRelationFilter
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referredUsers?: Prisma.UserListRelationFilter
   withdrawalRequests?: Prisma.WithdrawalRequestListRelationFilter
@@ -776,6 +780,10 @@ export type UserOrderByWithRelationInput = {
   adminPermission?: Prisma.AdminPermissionOrderByWithRelationInput
   createdAdminPermissions?: Prisma.AdminPermissionOrderByRelationAggregateInput
   updatedAdminPermissions?: Prisma.AdminPermissionOrderByRelationAggregateInput
+  staticPagesUpdated?: Prisma.StaticPageOrderByRelationAggregateInput
+  announcementsCreated?: Prisma.PlatformAnnouncementOrderByRelationAggregateInput
+  platformErrors?: Prisma.PlatformErrorEventOrderByRelationAggregateInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventOrderByRelationAggregateInput
   referredBy?: Prisma.UserOrderByWithRelationInput
   referredUsers?: Prisma.UserOrderByRelationAggregateInput
   withdrawalRequests?: Prisma.WithdrawalRequestOrderByRelationAggregateInput
@@ -887,6 +895,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   adminPermission?: Prisma.XOR<Prisma.AdminPermissionNullableScalarRelationFilter, Prisma.AdminPermissionWhereInput> | null
   createdAdminPermissions?: Prisma.AdminPermissionListRelationFilter
   updatedAdminPermissions?: Prisma.AdminPermissionListRelationFilter
+  staticPagesUpdated?: Prisma.StaticPageListRelationFilter
+  announcementsCreated?: Prisma.PlatformAnnouncementListRelationFilter
+  platformErrors?: Prisma.PlatformErrorEventListRelationFilter
+  platformErrorsResolved?: Prisma.PlatformErrorEventListRelationFilter
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referredUsers?: Prisma.UserListRelationFilter
   withdrawalRequests?: Prisma.WithdrawalRequestListRelationFilter
@@ -1114,6 +1126,10 @@ export type UserCreateInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -1222,6 +1238,10 @@ export type UserUncheckedCreateInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -1328,6 +1348,10 @@ export type UserUpdateInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -1436,6 +1460,10 @@ export type UserUncheckedUpdateInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -2000,6 +2028,38 @@ export type UserUpdateOneWithoutVerificationReviewsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutVerificationReviewsInput, Prisma.UserUpdateWithoutVerificationReviewsInput>, Prisma.UserUncheckedUpdateWithoutVerificationReviewsInput>
 }
 
+export type UserCreateNestedOneWithoutStaticPagesUpdatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedCreateWithoutStaticPagesUpdatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStaticPagesUpdatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutStaticPagesUpdatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedCreateWithoutStaticPagesUpdatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStaticPagesUpdatedInput
+  upsert?: Prisma.UserUpsertWithoutStaticPagesUpdatedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutStaticPagesUpdatedInput, Prisma.UserUpdateWithoutStaticPagesUpdatedInput>, Prisma.UserUncheckedUpdateWithoutStaticPagesUpdatedInput>
+}
+
+export type UserCreateNestedOneWithoutAnnouncementsCreatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedCreateWithoutAnnouncementsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementsCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutAnnouncementsCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedCreateWithoutAnnouncementsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementsCreatedInput
+  upsert?: Prisma.UserUpsertWithoutAnnouncementsCreatedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAnnouncementsCreatedInput, Prisma.UserUpdateWithoutAnnouncementsCreatedInput>, Prisma.UserUncheckedUpdateWithoutAnnouncementsCreatedInput>
+}
+
 export type UserCreateNestedOneWithoutNotificationsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput
@@ -2324,6 +2384,38 @@ export type UserUpdateOneWithoutProcessedWithdrawalsNestedInput = {
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProcessedWithdrawalsInput, Prisma.UserUpdateWithoutProcessedWithdrawalsInput>, Prisma.UserUncheckedUpdateWithoutProcessedWithdrawalsInput>
+}
+
+export type UserCreateNestedOneWithoutPlatformErrorsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPlatformErrorsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutPlatformErrorsResolvedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsResolvedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPlatformErrorsResolvedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutPlatformErrorsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPlatformErrorsInput
+  upsert?: Prisma.UserUpsertWithoutPlatformErrorsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPlatformErrorsInput, Prisma.UserUpdateWithoutPlatformErrorsInput>, Prisma.UserUncheckedUpdateWithoutPlatformErrorsInput>
+}
+
+export type UserUpdateOneWithoutPlatformErrorsResolvedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsResolvedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPlatformErrorsResolvedInput
+  upsert?: Prisma.UserUpsertWithoutPlatformErrorsResolvedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPlatformErrorsResolvedInput, Prisma.UserUpdateWithoutPlatformErrorsResolvedInput>, Prisma.UserUncheckedUpdateWithoutPlatformErrorsResolvedInput>
 }
 
 export type UserCreateNestedOneWithoutCreatedViolationTypesInput = {
@@ -2760,6 +2852,10 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -2867,6 +2963,10 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -2988,6 +3088,10 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -3095,6 +3199,10 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -3201,6 +3309,10 @@ export type UserCreateWithoutReferredUsersInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
@@ -3308,6 +3420,10 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
@@ -3418,6 +3534,10 @@ export type UserCreateWithoutReferredByInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
@@ -3524,6 +3644,10 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -3651,6 +3775,10 @@ export type UserUpdateWithoutReferredUsersInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
@@ -3758,6 +3886,10 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
@@ -3937,6 +4069,10 @@ export type UserCreateWithoutSettingsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -4044,6 +4180,10 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -4165,6 +4305,10 @@ export type UserUpdateWithoutSettingsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -4272,6 +4416,10 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -4377,6 +4525,10 @@ export type UserCreateWithoutStoreInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -4484,6 +4636,10 @@ export type UserUncheckedCreateWithoutStoreInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -4605,6 +4761,10 @@ export type UserUpdateWithoutStoreInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -4712,6 +4872,10 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -4817,6 +4981,10 @@ export type UserCreateWithoutOrdersInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -4924,6 +5092,10 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -5045,6 +5217,10 @@ export type UserUpdateWithoutOrdersInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -5152,6 +5328,10 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -5257,6 +5437,10 @@ export type UserCreateWithoutVerificationReviewsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -5364,6 +5548,10 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -5485,6 +5673,10 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -5592,6 +5784,922 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutStaticPagesUpdatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutStaticPagesUpdatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutStaticPagesUpdatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedCreateWithoutStaticPagesUpdatedInput>
+}
+
+export type UserUpsertWithoutStaticPagesUpdatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedUpdateWithoutStaticPagesUpdatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedCreateWithoutStaticPagesUpdatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutStaticPagesUpdatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutStaticPagesUpdatedInput, Prisma.UserUncheckedUpdateWithoutStaticPagesUpdatedInput>
+}
+
+export type UserUpdateWithoutStaticPagesUpdatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutStaticPagesUpdatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutAnnouncementsCreatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutAnnouncementsCreatedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutAnnouncementsCreatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedCreateWithoutAnnouncementsCreatedInput>
+}
+
+export type UserUpsertWithoutAnnouncementsCreatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedUpdateWithoutAnnouncementsCreatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedCreateWithoutAnnouncementsCreatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAnnouncementsCreatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementsCreatedInput, Prisma.UserUncheckedUpdateWithoutAnnouncementsCreatedInput>
+}
+
+export type UserUpdateWithoutAnnouncementsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAnnouncementsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -5697,6 +6805,10 @@ export type UserCreateWithoutNotificationsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -5804,6 +6916,10 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -5925,6 +7041,10 @@ export type UserUpdateWithoutNotificationsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -6032,6 +7152,10 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -6137,6 +7261,10 @@ export type UserCreateWithoutReturnsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -6244,6 +7372,10 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -6365,6 +7497,10 @@ export type UserUpdateWithoutReturnsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -6472,6 +7608,10 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -6577,6 +7717,10 @@ export type UserCreateWithoutDisputesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -6684,6 +7828,10 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -6805,6 +7953,10 @@ export type UserUpdateWithoutDisputesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -6912,6 +8064,10 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -7018,6 +8174,10 @@ export type UserCreateWithoutCaseMessagesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -7125,6 +8285,10 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -7246,6 +8410,10 @@ export type UserUpdateWithoutCaseMessagesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -7353,6 +8521,10 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -7457,6 +8629,10 @@ export type UserCreateWithoutOrderChatsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -7564,6 +8740,10 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -7685,6 +8865,10 @@ export type UserUpdateWithoutOrderChatsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -7792,6 +8976,10 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -7897,6 +9085,10 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -8004,6 +9196,10 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -8125,6 +9321,10 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -8232,6 +9432,10 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -8337,6 +9541,10 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -8444,6 +9652,10 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -8565,6 +9777,10 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -8672,6 +9888,10 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -8777,6 +9997,10 @@ export type UserCreateWithoutSecurityLogsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -8884,6 +10108,10 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -9005,6 +10233,10 @@ export type UserUpdateWithoutSecurityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -9112,6 +10344,10 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -9217,6 +10453,10 @@ export type UserCreateWithoutSessionInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -9324,6 +10564,10 @@ export type UserUncheckedCreateWithoutSessionInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -9445,6 +10689,10 @@ export type UserUpdateWithoutSessionInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -9552,6 +10800,10 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -9657,6 +10909,10 @@ export type UserCreateWithoutPaymentsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -9764,6 +11020,10 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -9885,6 +11145,10 @@ export type UserUpdateWithoutPaymentsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -9992,6 +11256,10 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -10098,6 +11366,10 @@ export type UserCreateWithoutWalletTransactionsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -10205,6 +11477,10 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -10326,6 +11602,10 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -10433,6 +11713,10 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -10537,6 +11821,10 @@ export type UserCreateWithoutInvoicesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -10644,6 +11932,10 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -10765,6 +12057,10 @@ export type UserUpdateWithoutInvoicesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -10872,6 +12168,10 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -10977,6 +12277,10 @@ export type UserCreateWithoutCardsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -11084,6 +12388,10 @@ export type UserUncheckedCreateWithoutCardsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -11205,6 +12513,10 @@ export type UserUpdateWithoutCardsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -11312,6 +12624,10 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -11417,6 +12733,10 @@ export type UserCreateWithoutCreatedContractsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -11524,6 +12844,10 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -11645,6 +12969,10 @@ export type UserUpdateWithoutCreatedContractsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -11752,6 +13080,10 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -11857,6 +13189,10 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -11964,6 +13300,10 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -12074,6 +13414,10 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -12181,6 +13525,10 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -12302,6 +13650,10 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -12409,6 +13761,10 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -12525,6 +13881,10 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -12632,6 +13992,10 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -12737,6 +14101,10 @@ export type UserCreateWithoutShippingWaybillsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -12844,6 +14212,10 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -12965,6 +14337,10 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -13072,6 +14448,10 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -13178,6 +14558,10 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -13285,6 +14669,10 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -13406,6 +14794,10 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -13513,6 +14905,10 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -13618,6 +15014,10 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -13725,6 +15125,10 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -13846,6 +15250,10 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -13953,6 +15361,10 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -14058,6 +15470,10 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -14165,6 +15581,10 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -14286,6 +15706,10 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -14393,6 +15817,10 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -14498,6 +15926,10 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
@@ -14605,6 +16037,10 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
@@ -14715,6 +16151,10 @@ export type UserCreateWithoutProcessedWithdrawalsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -14822,6 +16262,10 @@ export type UserUncheckedCreateWithoutProcessedWithdrawalsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
@@ -14943,6 +16387,10 @@ export type UserUpdateWithoutWithdrawalRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
@@ -15050,6 +16498,10 @@ export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
@@ -15166,6 +16618,10 @@ export type UserUpdateWithoutProcessedWithdrawalsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -15273,8 +16729,924 @@ export type UserUncheckedUpdateWithoutProcessedWithdrawalsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutPlatformErrorsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutPlatformErrorsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutPlatformErrorsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsInput>
+}
+
+export type UserCreateWithoutPlatformErrorsResolvedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutPlatformErrorsResolvedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutPlatformErrorsResolvedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsResolvedInput>
+}
+
+export type UserUpsertWithoutPlatformErrorsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPlatformErrorsInput, Prisma.UserUncheckedUpdateWithoutPlatformErrorsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPlatformErrorsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPlatformErrorsInput, Prisma.UserUncheckedUpdateWithoutPlatformErrorsInput>
+}
+
+export type UserUpdateWithoutPlatformErrorsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPlatformErrorsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUpsertWithoutPlatformErrorsResolvedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedUpdateWithoutPlatformErrorsResolvedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedCreateWithoutPlatformErrorsResolvedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPlatformErrorsResolvedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPlatformErrorsResolvedInput, Prisma.UserUncheckedUpdateWithoutPlatformErrorsResolvedInput>
+}
+
+export type UserUpdateWithoutPlatformErrorsResolvedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPlatformErrorsResolvedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
   walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
   submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
   updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
@@ -15378,6 +17750,10 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -15485,6 +17861,10 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -15606,6 +17986,10 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -15713,6 +18097,10 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -15818,6 +18206,10 @@ export type UserCreateWithoutViolationsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -15925,6 +18317,10 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -16035,6 +18431,10 @@ export type UserCreateWithoutIssuedViolationsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -16142,6 +18542,10 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -16263,6 +18667,10 @@ export type UserUpdateWithoutViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -16370,6 +18778,10 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -16486,6 +18898,10 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -16593,6 +19009,10 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -16698,6 +19118,10 @@ export type UserCreateWithoutViolationAppealsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -16805,6 +19229,10 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -16915,6 +19343,10 @@ export type UserCreateWithoutReviewedAppealsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -17022,6 +19454,10 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -17143,6 +19579,10 @@ export type UserUpdateWithoutViolationAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -17250,6 +19690,10 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -17366,6 +19810,10 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -17473,6 +19921,10 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -17578,6 +20030,10 @@ export type UserCreateWithoutPenaltyActionsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -17685,6 +20141,10 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -17795,6 +20255,10 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -17902,6 +20366,10 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -18023,6 +20491,10 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -18130,6 +20602,10 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -18246,6 +20722,10 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -18353,6 +20833,10 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -18458,6 +20942,10 @@ export type UserCreateWithoutScoreLogsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -18565,6 +21053,10 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -18686,6 +21178,10 @@ export type UserUpdateWithoutScoreLogsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -18793,6 +21289,10 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -18898,6 +21398,10 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -19005,6 +21509,10 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -19126,6 +21634,10 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -19233,6 +21745,10 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -19338,6 +21854,10 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -19445,6 +21965,10 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -19555,6 +22079,10 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -19662,6 +22190,10 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -19783,6 +22315,10 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -19890,6 +22426,10 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -20006,6 +22546,10 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -20113,6 +22657,10 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -20218,6 +22766,10 @@ export type UserCreateWithoutRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -20325,6 +22877,10 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -20435,6 +22991,10 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -20542,6 +23102,10 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -20663,6 +23227,10 @@ export type UserUpdateWithoutRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -20770,6 +23338,10 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -20886,6 +23458,10 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -20993,6 +23569,10 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -21097,6 +23677,10 @@ export type UserCreateWithoutAdminPermissionInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -21204,6 +23788,10 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -21314,6 +23902,10 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -21421,6 +24013,10 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -21531,6 +24127,10 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -21638,6 +24238,10 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -21759,6 +24363,10 @@ export type UserUpdateWithoutAdminPermissionInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -21866,6 +24474,10 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -21982,6 +24594,10 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -22089,6 +24705,10 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -22205,6 +24825,10 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -22312,6 +24936,10 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -22417,6 +25045,10 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -22524,6 +25156,10 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -22634,6 +25270,10 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -22741,6 +25381,10 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -22862,6 +25506,10 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -22969,6 +25617,10 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -23085,6 +25737,10 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -23192,6 +25848,10 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -23297,6 +25957,10 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -23404,6 +26068,10 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -23525,6 +26193,10 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -23632,6 +26304,10 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -23737,6 +26413,10 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -23844,6 +26524,10 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -23965,6 +26649,10 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -24072,6 +26760,10 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -24177,6 +26869,10 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -24284,6 +26980,10 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -24405,6 +27105,10 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -24512,6 +27216,10 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -24618,6 +27326,10 @@ export type UserCreateWithoutFinancialSettlementsInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -24725,6 +27437,10 @@ export type UserUncheckedCreateWithoutFinancialSettlementsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -24846,6 +27562,10 @@ export type UserUpdateWithoutFinancialSettlementsInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -24953,6 +27673,10 @@ export type UserUncheckedUpdateWithoutFinancialSettlementsInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -25058,6 +27782,10 @@ export type UserCreateWithoutFinancialAdjustmentsCreatedInput = {
   adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
   referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
   referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
@@ -25165,6 +27893,10 @@ export type UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
   referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
@@ -25286,6 +28018,10 @@ export type UserUpdateWithoutFinancialAdjustmentsCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
@@ -25393,6 +28129,10 @@ export type UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -25553,6 +28293,10 @@ export type UserUpdateWithoutReferredByInput = {
   adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
@@ -25659,6 +28403,10 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
   createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
   referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
   processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
@@ -25770,6 +28518,10 @@ export type UserCountOutputType = {
   whatsAppMessageLogs: number
   createdAdminPermissions: number
   updatedAdminPermissions: number
+  staticPagesUpdated: number
+  announcementsCreated: number
+  platformErrors: number
+  platformErrorsResolved: number
   referredUsers: number
   withdrawalRequests: number
   processedWithdrawals: number
@@ -25821,6 +28573,10 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   whatsAppMessageLogs?: boolean | UserCountOutputTypeCountWhatsAppMessageLogsArgs
   createdAdminPermissions?: boolean | UserCountOutputTypeCountCreatedAdminPermissionsArgs
   updatedAdminPermissions?: boolean | UserCountOutputTypeCountUpdatedAdminPermissionsArgs
+  staticPagesUpdated?: boolean | UserCountOutputTypeCountStaticPagesUpdatedArgs
+  announcementsCreated?: boolean | UserCountOutputTypeCountAnnouncementsCreatedArgs
+  platformErrors?: boolean | UserCountOutputTypeCountPlatformErrorsArgs
+  platformErrorsResolved?: boolean | UserCountOutputTypeCountPlatformErrorsResolvedArgs
   referredUsers?: boolean | UserCountOutputTypeCountReferredUsersArgs
   withdrawalRequests?: boolean | UserCountOutputTypeCountWithdrawalRequestsArgs
   processedWithdrawals?: boolean | UserCountOutputTypeCountProcessedWithdrawalsArgs
@@ -26029,6 +28785,34 @@ export type UserCountOutputTypeCountCreatedAdminPermissionsArgs<ExtArgs extends 
  */
 export type UserCountOutputTypeCountUpdatedAdminPermissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AdminPermissionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountStaticPagesUpdatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StaticPageWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAnnouncementsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlatformAnnouncementWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPlatformErrorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlatformErrorEventWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPlatformErrorsResolvedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlatformErrorEventWhereInput
 }
 
 /**
@@ -26275,6 +29059,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   adminPermission?: boolean | Prisma.User$adminPermissionArgs<ExtArgs>
   createdAdminPermissions?: boolean | Prisma.User$createdAdminPermissionsArgs<ExtArgs>
   updatedAdminPermissions?: boolean | Prisma.User$updatedAdminPermissionsArgs<ExtArgs>
+  staticPagesUpdated?: boolean | Prisma.User$staticPagesUpdatedArgs<ExtArgs>
+  announcementsCreated?: boolean | Prisma.User$announcementsCreatedArgs<ExtArgs>
+  platformErrors?: boolean | Prisma.User$platformErrorsArgs<ExtArgs>
+  platformErrorsResolved?: boolean | Prisma.User$platformErrorsResolvedArgs<ExtArgs>
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referredUsers?: boolean | Prisma.User$referredUsersArgs<ExtArgs>
   withdrawalRequests?: boolean | Prisma.User$withdrawalRequestsArgs<ExtArgs>
@@ -26502,6 +29290,10 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   adminPermission?: boolean | Prisma.User$adminPermissionArgs<ExtArgs>
   createdAdminPermissions?: boolean | Prisma.User$createdAdminPermissionsArgs<ExtArgs>
   updatedAdminPermissions?: boolean | Prisma.User$updatedAdminPermissionsArgs<ExtArgs>
+  staticPagesUpdated?: boolean | Prisma.User$staticPagesUpdatedArgs<ExtArgs>
+  announcementsCreated?: boolean | Prisma.User$announcementsCreatedArgs<ExtArgs>
+  platformErrors?: boolean | Prisma.User$platformErrorsArgs<ExtArgs>
+  platformErrorsResolved?: boolean | Prisma.User$platformErrorsResolvedArgs<ExtArgs>
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referredUsers?: boolean | Prisma.User$referredUsersArgs<ExtArgs>
   withdrawalRequests?: boolean | Prisma.User$withdrawalRequestsArgs<ExtArgs>
@@ -26566,6 +29358,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     adminPermission: Prisma.$AdminPermissionPayload<ExtArgs> | null
     createdAdminPermissions: Prisma.$AdminPermissionPayload<ExtArgs>[]
     updatedAdminPermissions: Prisma.$AdminPermissionPayload<ExtArgs>[]
+    staticPagesUpdated: Prisma.$StaticPagePayload<ExtArgs>[]
+    announcementsCreated: Prisma.$PlatformAnnouncementPayload<ExtArgs>[]
+    platformErrors: Prisma.$PlatformErrorEventPayload<ExtArgs>[]
+    platformErrorsResolved: Prisma.$PlatformErrorEventPayload<ExtArgs>[]
     referredBy: Prisma.$UserPayload<ExtArgs> | null
     referredUsers: Prisma.$UserPayload<ExtArgs>[]
     withdrawalRequests: Prisma.$WithdrawalRequestPayload<ExtArgs>[]
@@ -27067,6 +29863,10 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   adminPermission<T extends Prisma.User$adminPermissionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminPermissionArgs<ExtArgs>>): Prisma.Prisma__AdminPermissionClient<runtime.Types.Result.GetResult<Prisma.$AdminPermissionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   createdAdminPermissions<T extends Prisma.User$createdAdminPermissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdAdminPermissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   updatedAdminPermissions<T extends Prisma.User$updatedAdminPermissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$updatedAdminPermissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  staticPagesUpdated<T extends Prisma.User$staticPagesUpdatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$staticPagesUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaticPagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  announcementsCreated<T extends Prisma.User$announcementsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$announcementsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlatformAnnouncementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  platformErrors<T extends Prisma.User$platformErrorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$platformErrorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlatformErrorEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  platformErrorsResolved<T extends Prisma.User$platformErrorsResolvedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$platformErrorsResolvedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlatformErrorEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   referredBy<T extends Prisma.User$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   referredUsers<T extends Prisma.User$referredUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   withdrawalRequests<T extends Prisma.User$withdrawalRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$withdrawalRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WithdrawalRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -28228,6 +31028,102 @@ export type User$updatedAdminPermissionsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.AdminPermissionScalarFieldEnum | Prisma.AdminPermissionScalarFieldEnum[]
+}
+
+/**
+ * User.staticPagesUpdated
+ */
+export type User$staticPagesUpdatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StaticPage
+   */
+  select?: Prisma.StaticPageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StaticPage
+   */
+  omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
+  where?: Prisma.StaticPageWhereInput
+  orderBy?: Prisma.StaticPageOrderByWithRelationInput | Prisma.StaticPageOrderByWithRelationInput[]
+  cursor?: Prisma.StaticPageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StaticPageScalarFieldEnum | Prisma.StaticPageScalarFieldEnum[]
+}
+
+/**
+ * User.announcementsCreated
+ */
+export type User$announcementsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlatformAnnouncement
+   */
+  select?: Prisma.PlatformAnnouncementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlatformAnnouncement
+   */
+  omit?: Prisma.PlatformAnnouncementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlatformAnnouncementInclude<ExtArgs> | null
+  where?: Prisma.PlatformAnnouncementWhereInput
+  orderBy?: Prisma.PlatformAnnouncementOrderByWithRelationInput | Prisma.PlatformAnnouncementOrderByWithRelationInput[]
+  cursor?: Prisma.PlatformAnnouncementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlatformAnnouncementScalarFieldEnum | Prisma.PlatformAnnouncementScalarFieldEnum[]
+}
+
+/**
+ * User.platformErrors
+ */
+export type User$platformErrorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlatformErrorEvent
+   */
+  select?: Prisma.PlatformErrorEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlatformErrorEvent
+   */
+  omit?: Prisma.PlatformErrorEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlatformErrorEventInclude<ExtArgs> | null
+  where?: Prisma.PlatformErrorEventWhereInput
+  orderBy?: Prisma.PlatformErrorEventOrderByWithRelationInput | Prisma.PlatformErrorEventOrderByWithRelationInput[]
+  cursor?: Prisma.PlatformErrorEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlatformErrorEventScalarFieldEnum | Prisma.PlatformErrorEventScalarFieldEnum[]
+}
+
+/**
+ * User.platformErrorsResolved
+ */
+export type User$platformErrorsResolvedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlatformErrorEvent
+   */
+  select?: Prisma.PlatformErrorEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlatformErrorEvent
+   */
+  omit?: Prisma.PlatformErrorEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlatformErrorEventInclude<ExtArgs> | null
+  where?: Prisma.PlatformErrorEventWhereInput
+  orderBy?: Prisma.PlatformErrorEventOrderByWithRelationInput | Prisma.PlatformErrorEventOrderByWithRelationInput[]
+  cursor?: Prisma.PlatformErrorEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlatformErrorEventScalarFieldEnum | Prisma.PlatformErrorEventScalarFieldEnum[]
 }
 
 /**

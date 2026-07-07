@@ -6,7 +6,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { TicketList } from './TicketList';
 import { TicketForm } from './TicketForm';
 import { AccordionItem } from '../../ui/Accordion';
-import { SITE_CONTACT_EMAIL } from '../../../config/site';
+import { siteContacts } from '../../../config/site';
 
 interface SupportPageProps {
     onNavigate?: (path: string, id?: any) => void;
@@ -236,7 +236,7 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-white/40">Email:</span>
-                                    <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{SITE_CONTACT_EMAIL}</a>
+                                    <a href={`mailto:${siteContacts.contact}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.contact}</a>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-white/40">WhatsApp:</span>

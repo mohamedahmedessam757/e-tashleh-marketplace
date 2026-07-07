@@ -3,6 +3,7 @@ import {
   Get, 
   Post, 
   Put, 
+  Patch,
   Delete, 
   Body, 
   Param, 
@@ -20,6 +21,7 @@ import {
   UpdatePermissionsDto, 
   ChangeAdminPasswordDto 
 } from './dto/admin-permissions.dto';
+import { ToggleAdminStatusDto } from '../platform-settings/dto/settings-audit.dto';
 
 @Controller('admin-permissions')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -78,5 +80,16 @@ export class AdminPermissionsController {
   ) {
     const actorId = req.user.id || req.user.userId;
     return this.adminPermissionsService.updateAdminPassword(userId, dto, actorId);
+  }
+
+  @Patch(':userId/status')
+  @Roles(UserRole.SUPER_ADMIN)
+  async toggleStatus(
+    @Param('userId') userId: string,
+    @Body() dto: ToggleAdminStatusDto,
+    @Request() req,
+  ) {
+    const actorId = req.user.id || req.user.userId;
+    return this.adminPermissionsService.toggleAdminStatus(userId, dto, actorId);
   }
 }

@@ -6,7 +6,7 @@ import { OrdersService } from '../orders/orders.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrderStatus, ActorType, ViolationTargetType } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
-import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../orders/order-time.constants';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { EscrowService } from '../payments/escrow.service';
@@ -23,6 +23,7 @@ export class OrderCleanupService {
         private readonly violationsService: ViolationsService,
         private readonly offerFulfillment: OfferFulfillmentService,
         private readonly escrowService: EscrowService,
+        private readonly orderDurationConfig: OrderDurationConfigService,
     ) { }
 
     // Run every 1 minute to check for expired orders for near real-time expirations
@@ -55,7 +56,8 @@ export class OrderCleanupService {
     async handleOfferReturnWindowReminder() {
         if (!(await this.prisma.ensureConnected())) return;
 
-        const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        const windowMs = await this.orderDurationConfig.getReturnDisputeMs();
+        const returnHours = await this.orderDurationConfig.getReturnWindowHours();
         const reminderLeadMs = 2 * 60 * 60 * 1000;
         const now = Date.now();
         const reminderStart = new Date(now + reminderLeadMs - 15 * 60 * 1000);
@@ -110,7 +112,8 @@ export class OrderCleanupService {
 
     /** Per-offer 24h window expiry for multi-item / partial delivery orders */
     private async handleOfferAutoCompletion() {
-        const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        const windowMs = await this.orderDurationConfig.getReturnDisputeMs();
+        const returnHours = await this.orderDurationConfig.getReturnWindowHours();
         const windowEnd = new Date(Date.now() - windowMs);
 
         const eligibleOffers = await this.prisma.offer.findMany({
@@ -155,8 +158,8 @@ export class OrderCleanupService {
                     recipientRole: 'CUSTOMER',
                     titleAr: 'انتهت مهلة الإرجاع للقطعة',
                     titleEn: 'Item return window expired',
-                    messageAr: `انتهت مهلة الإرجاع/النزاع (${POST_DELIVERY_RETURN_DISPUTE_HOURS} ساعة) للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
-                    messageEn: `The ${POST_DELIVERY_RETURN_DISPUTE_HOURS}-hour return/dispute window for "${partName}" in order #${offer.order.orderNumber} has expired.`,
+                    messageAr: `انتهت مهلة الإرجاع/النزاع (${returnHours} ساعة) للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
+                    messageEn: `The ${returnHours}-hour return/dispute window for "${partName}" in order #${offer.order.orderNumber} has expired.`,
                     type: 'system_alert',
                     link: `/dashboard/orders/${offer.orderId}`,
                 });
@@ -168,7 +171,8 @@ export class OrderCleanupService {
 
     /** Legacy single-item path: complete whole order after order.deliveredAt + 24h */
     private async handleSingleItemOrderAutoCompletion() {
-        const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        const windowMs = await this.orderDurationConfig.getReturnDisputeMs();
+        const returnHours = await this.orderDurationConfig.getReturnWindowHours();
         const windowEnd = new Date(Date.now() - windowMs);
 
         const deliveredOrders = await this.prisma.order.findMany({
@@ -197,7 +201,7 @@ export class OrderCleanupService {
                     continue;
                 }
 
-                const hoursLabel = POST_DELIVERY_RETURN_DISPUTE_HOURS;
+                const hoursLabel = returnHours;
                 this.logger.log(`Auto-completing delivered order ${order.orderNumber} (ID: ${order.id}) after ${hoursLabel}h return window`);
 
                 await this.ordersService.transitionStatus(
@@ -241,6 +245,9 @@ export class OrderCleanupService {
     async handleAssemblyCartCron() {
         this.logger.debug('Running Assembly Cart Auto-Ship & Notifications Job...');
         const now = new Date();
+        const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
+        const assemblyHoursLimit = assemblyDays * 24;
+        const reminderDay = Math.max(assemblyDays - 1, 1);
         const orders = await this.prisma.order.findMany({
             where: { status: OrderStatus.PREPARATION },
             include: { 
@@ -261,9 +268,9 @@ export class OrderCleanupService {
                 const diffHours = (now.getTime() - paidAt.getTime()) / (1000 * 60 * 60);
 
                 // 1. Check 7 Days passed -> AUTO-SHIP (Consolidation) or AUTO-CANCEL (Single Merchant Inaction)
-                if (diffHours >= 7 * 24) {
+                if (diffHours >= assemblyHoursLimit) {
                     if (order.requestType === 'multiple') {
-                        this.logger.log(`Auto-shipping assembly cart for order ${order.orderNumber} due to 7-day timeout`);
+                        this.logger.log(`Auto-shipping assembly cart for order ${order.orderNumber} due to ${assemblyDays}-day timeout`);
                         
                         const pendingOfferIds = order.offers
                             .filter(o => !o.shippedFromCart)
@@ -277,25 +284,25 @@ export class OrderCleanupService {
                             await this.notificationsService.create({
                                 recipientId: order.customerId, recipientRole: 'CUSTOMER',
                                 titleAr: 'شحن تلقائي لسلة التجميع 📦', titleEn: 'Auto-Ship: Assembly Cart 📦',
-                                messageAr: `لقد مضى 7 أيام على تجميع طلبك رقم #${order.orderNumber}. تم شحن القطع المتاحة حالياً إليك تلقائياً لضمان وصولها في الوقت المحدد.`,
-                                messageEn: `7 days have passed for your assembly cart #${order.orderNumber}. Available items have been auto-shipped to ensure timely delivery.`,
+                                messageAr: `لقد مضى ${assemblyDays} أيام على تجميع طلبك رقم #${order.orderNumber}. تم شحن القطع المتاحة حالياً إليك تلقائياً لضمان وصولها في الوقت المحدد.`,
+                                messageEn: `${assemblyDays} days have passed for your assembly cart #${order.orderNumber}. Available items have been auto-shipped to ensure timely delivery.`,
                                 type: 'system_alert', link: `/dashboard/orders`
                             });
                         }
                     } else {
                         // Single order auto-cancel (standard behavior)
-                        this.logger.error(`Auto-cancelling single order ${order.orderNumber} due to merchant inaction (7 days)`);
+                        this.logger.error(`Auto-cancelling single order ${order.orderNumber} due to merchant inaction (${assemblyDays} days)`);
                         await this.ordersService.transitionStatus(
                             order.id, OrderStatus.CANCELLED,
                             { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                            'System: Auto-cancelled after 7 days without preparation'
+                            `System: Auto-cancelled after ${assemblyDays} days without preparation`
                         );
 
                         await this.notificationsService.create({
                             recipientId: order.customerId, recipientRole: 'CUSTOMER',
                             titleAr: 'تم إلغاء طلبك لعدم استجابة التاجر', titleEn: 'Order Cancelled: Merchant Inaction',
-                            messageAr: `نعتذر منك، تم إلغاء الطلب #${order.orderNumber} تلقائياً لعدم قيام التاجر بتجهيزه خلال مهلة 7 أيام. سيتم البدء بإجراءات استرداد المبلغ.`,
-                            messageEn: `We apologize. Order #${order.orderNumber} was auto-cancelled as the merchant failed to prepare it within 7 days. Refund process initiated.`,
+                            messageAr: `نعتذر منك، تم إلغاء الطلب #${order.orderNumber} تلقائياً لعدم قيام التاجر بتجهيزه خلال مهلة ${assemblyDays} أيام. سيتم البدء بإجراءات استرداد المبلغ.`,
+                            messageEn: `We apologize. Order #${order.orderNumber} was auto-cancelled as the merchant failed to prepare it within ${assemblyDays} days. Refund process initiated.`,
                             type: 'system_alert', link: `/dashboard/orders`
                         });
 
@@ -313,7 +320,7 @@ export class OrderCleanupService {
                                         targetStoreId: store.id,
                                         targetType: ViolationTargetType.MERCHANT,
                                         orderId: order.id,
-                                        reason: `Order #${order.orderNumber} auto-cancelled after 7 days without preparation.`,
+                                        reason: `Order #${order.orderNumber} auto-cancelled after ${assemblyDays} days without preparation.`,
                                         metadata: { orderNumber: order.orderNumber },
                                         dedupSuffix: store.id,
                                     });
@@ -337,12 +344,12 @@ export class OrderCleanupService {
                     }
                 }
                 // 3. 6 Day reminder for customer
-                else if (diffHours >= 6 * 24 && diffHours < (6 * 24) + 1) {
+                else if (diffHours >= reminderDay * 24 && diffHours < (reminderDay * 24) + 1) {
                     await this.notificationsService.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER',
                         titleAr: 'تذكير: اقتراب الشحن التلقائي', titleEn: 'Reminder: Auto-Ship Approaching',
-                        messageAr: `عناصرك المحتجزة للطلب #${order.orderNumber} أوشكت على إنهاء مدة الحفظ (7 أيام). يرجى تأكيد استلام الشحنة إذا لم تكن ستنتظر قطعاً أخرى.`,
-                        messageEn: `Your reserved items for order #${order.orderNumber} are nearing the 7-day limit. Please request shipping soon.`,
+                        messageAr: `عناصرك المحتجزة للطلب #${order.orderNumber} أوشكت على إنهاء مدة الحفظ (${assemblyDays} أيام). يرجى تأكيد استلام الشحنة إذا لم تكن ستنتظر قطعاً أخرى.`,
+                        messageEn: `Your reserved items for order #${order.orderNumber} are nearing the ${assemblyDays}-day limit. Please request shipping soon.`,
                         type: 'system_alert', link: `/dashboard/shipping-cart`
                     });
                 }

@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Building2, Loader2, X, Check } from 'lucide-react';
@@ -66,7 +66,7 @@ export const EntitySearchInput: React.FC<EntitySearchInputProps> = ({
       try {
         const token = localStorage.getItem('access_token') || sessionStorage.getItem('token');
         // Correcting API URL: Remove /api suffix and use Vite env variable
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         
         const response = await fetch(`${baseUrl}/users/admin/search?q=${encodeURIComponent(query)}`, {
           headers: { 

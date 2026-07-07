@@ -15,7 +15,7 @@ interface ReturnsState {
     escalateDispute: (orderId: string, orderPartId: string | undefined, reason: string, description: string, files: File[]) => Promise<boolean>;
 }
 
-const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const getApiUrl = () => import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('access_token');

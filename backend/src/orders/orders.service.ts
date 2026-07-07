@@ -11,7 +11,8 @@ import { ChatService } from '../chat/chat.service';
 import { ShipmentsService } from '../shipments/shipments.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { UsersService } from '../users/users.service';
-import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from './order-time.constants';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
+import { LogisticsConfigService } from '../common/logistics-config.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
@@ -45,6 +46,8 @@ export class OrdersService {
         private verificationTasks: VerificationTasksService,
         @Inject(forwardRef(() => EscrowService))
         private escrowService: EscrowService,
+        private orderDurationConfig: OrderDurationConfigService,
+        private logisticsConfig: LogisticsConfigService,
     ) { }
 
     /** Backward-compatible singular `review` field for API consumers (first review). */
@@ -1376,6 +1379,8 @@ export class OrdersService {
             orderBy: { createdAt: 'desc' }
         });
 
+        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
+
         // Format for the frontend CartItemType
         const cartItems = [];
         for (const order of orders) {
@@ -1385,7 +1390,7 @@ export class OrdersService {
             )[0];
 
             let paidAt = firstPayment?.paidAt || order.updatedAt;
-            let expiryDate = new Date(paidAt.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from payment
+            let expiryDate = new Date(paidAt.getTime() + assemblyCartMs);
 
             // For each accepted offer (which is paid, since order is PREPARATION)
             const acceptedOffers = order.offers.length > 0 ? order.offers : (order.acceptedOffer ? [order.acceptedOffer] : []);
@@ -1490,6 +1495,7 @@ export class OrdersService {
             orderBy: { createdAt: 'desc' }
         });
 
+        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
         const cartItems = [];
         for (const order of orders) {
             const firstPayment = order.payments.sort((a, b) =>
@@ -1497,7 +1503,7 @@ export class OrdersService {
             )[0];
 
             let paidAt = firstPayment?.paidAt || order.updatedAt;
-            let expiryDate = new Date(paidAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+            let expiryDate = new Date(paidAt.getTime() + assemblyCartMs);
 
             for (const offer of order.offers as any[]) {
                 if (!offer.payments?.length) continue;
@@ -1627,11 +1633,13 @@ export class OrdersService {
             orderBy: { updatedAt: 'desc' }
         });
 
+        const windowMs = await this.orderDurationConfig.getReturnDisputeMs();
+        const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+
         const deliveredItems = [];
         for (const order of orders) {
             const isMulti = this.offerFulfillment.isMultiItemOrder(order);
             const orderDeliveredAt = order.deliveredAt ?? order.updatedAt;
-            const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
 
             const firstPayment = order.payments?.sort((a, b) => (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0))[0];
 
@@ -1849,6 +1857,18 @@ export class OrdersService {
                 reason:
                     'No items are ready for shipping. Each part must be prepared, verified, and handed over to admin by its merchant before you can ship it from the assembly cart.',
             };
+        }
+
+        const totalWeightKg = validOffers.reduce(
+            (sum, offer) => sum + Number(offer.weightKg || 0),
+            0,
+        );
+        const logisticsCfg = await this.logisticsConfig.getConfig();
+        if (
+            totalWeightKg > 0 &&
+            this.logisticsConfig.isWeightEnforcementEnabled(logisticsCfg)
+        ) {
+            await this.logisticsConfig.assertWeightAllowed(totalWeightKg);
         }
 
         // Actor info for logging
@@ -2538,6 +2558,7 @@ export class OrdersService {
             const nextStatus = await this.offerFulfillment.recomputeOrderStatus(orderId);
 
             if (isMulti && nextStatus === OrderStatus.PARTIALLY_DELIVERED) {
+                const returnHours = await this.orderDurationConfig.getReturnWindowHours();
                 const deliveredOffers = await this.prisma.offer.findMany({
                     where: {
                         orderId,
@@ -2554,8 +2575,8 @@ export class OrdersService {
                             recipientRole: 'CUSTOMER',
                             titleAr: `وصلت قطعة: ${partName}`,
                             titleEn: `Part delivered: ${partName}`,
-                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${POST_DELIVERY_RETURN_DISPUTE_HOURS} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${POST_DELIVERY_RETURN_DISPUTE_HOURS} hours to return or dispute this item.`,
+                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
                             type: 'ORDER',
                             link: `/dashboard/orders/${orderId}`,
                             metadata: { offerId: offer.id, orderPartId: offer.orderPartId },

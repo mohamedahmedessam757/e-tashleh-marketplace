@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SITE_CONTACT_EMAIL } from '../../../config/site';
+import { siteContacts } from '../../../config/site';
 
 interface MerchantStatusGuardProps {
   children: React.ReactNode;
@@ -139,13 +139,13 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
                     </div>
                   </a>
 
-                  <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-gold-500/10 hover:border-gold-500/20 transition-all group">
+                  <a href={`mailto:${siteContacts.contact}`} className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-gold-500/10 hover:border-gold-500/20 transition-all group">
                     <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                       <Mail size={20} className="text-blue-400" />
                     </div>
                     <div>
                       <p className="text-[10px] text-white/40 font-bold uppercase">{isAr ? 'البريد الإلكتروني' : 'Email Support'}</p>
-                      <p className="text-sm text-white font-mono">{SITE_CONTACT_EMAIL}</p>
+                      <p className="text-sm text-white font-mono">{siteContacts.contact}</p>
                     </div>
                   </a>
                 </div>

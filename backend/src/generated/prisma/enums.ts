@@ -208,6 +208,25 @@ export const CarrierType = {
 export type CarrierType = (typeof CarrierType)[keyof typeof CarrierType]
 
 
+export const PlatformErrorSource = {
+  CLIENT: 'CLIENT',
+  API: 'API',
+  UNHANDLED: 'UNHANDLED'
+} as const
+
+export type PlatformErrorSource = (typeof PlatformErrorSource)[keyof typeof PlatformErrorSource]
+
+
+export const PlatformErrorSeverity = {
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
+  FATAL: 'FATAL'
+} as const
+
+export type PlatformErrorSeverity = (typeof PlatformErrorSeverity)[keyof typeof PlatformErrorSeverity]
+
+
 export const ViolationTargetType = {
   CUSTOMER: 'CUSTOMER',
   MERCHANT: 'MERCHANT'

@@ -680,6 +680,40 @@ export type EnumShipmentStatusNullableWithAggregatesFilter<$PrismaModel = never>
   _max?: Prisma.NestedEnumShipmentStatusNullableFilter<$PrismaModel>
 }
 
+export type EnumPlatformErrorSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSource | Prisma.EnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel> | $Enums.PlatformErrorSource
+}
+
+export type EnumPlatformErrorSeverityFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSeverity | Prisma.EnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel> | $Enums.PlatformErrorSeverity
+}
+
+export type EnumPlatformErrorSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSource | Prisma.EnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSourceWithAggregatesFilter<$PrismaModel> | $Enums.PlatformErrorSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel>
+}
+
+export type EnumPlatformErrorSeverityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSeverity | Prisma.EnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSeverityWithAggregatesFilter<$PrismaModel> | $Enums.PlatformErrorSeverity
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel>
+}
+
 export type EnumViolationTargetTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.ViolationTargetType | Prisma.EnumViolationTargetTypeFieldRefInput<$PrismaModel>
   in?: $Enums.ViolationTargetType[] | Prisma.ListEnumViolationTargetTypeFieldRefInput<$PrismaModel>
@@ -1469,6 +1503,40 @@ export type NestedEnumShipmentStatusNullableWithAggregatesFilter<$PrismaModel = 
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumShipmentStatusNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumShipmentStatusNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumPlatformErrorSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSource | Prisma.EnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel> | $Enums.PlatformErrorSource
+}
+
+export type NestedEnumPlatformErrorSeverityFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSeverity | Prisma.EnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel> | $Enums.PlatformErrorSeverity
+}
+
+export type NestedEnumPlatformErrorSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSource | Prisma.EnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSource[] | Prisma.ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSourceWithAggregatesFilter<$PrismaModel> | $Enums.PlatformErrorSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlatformErrorSourceFilter<$PrismaModel>
+}
+
+export type NestedEnumPlatformErrorSeverityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PlatformErrorSeverity | Prisma.EnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  in?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PlatformErrorSeverity[] | Prisma.ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPlatformErrorSeverityWithAggregatesFilter<$PrismaModel> | $Enums.PlatformErrorSeverity
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPlatformErrorSeverityFilter<$PrismaModel>
 }
 
 export type NestedEnumViolationTargetTypeFilter<$PrismaModel = never> = {

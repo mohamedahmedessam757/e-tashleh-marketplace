@@ -105,6 +105,11 @@ export type AuditLog = Prisma.AuditLogModel
  */
 export type StaticPage = Prisma.StaticPageModel
 /**
+ * Model PlatformAnnouncement
+ * 
+ */
+export type PlatformAnnouncement = Prisma.PlatformAnnouncementModel
+/**
  * Model OrderPart
  * 
  */
@@ -244,6 +249,11 @@ export type WithdrawalRequest = Prisma.WithdrawalRequestModel
  * 
  */
 export type PlatformSettings = Prisma.PlatformSettingsModel
+/**
+ * Model PlatformErrorEvent
+ * 
+ */
+export type PlatformErrorEvent = Prisma.PlatformErrorEventModel
 /**
  * Model VehicleMake
  * 

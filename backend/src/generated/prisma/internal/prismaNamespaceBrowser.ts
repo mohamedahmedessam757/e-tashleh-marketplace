@@ -64,6 +64,7 @@ export const ModelName = {
   OfferRejection: 'OfferRejection',
   AuditLog: 'AuditLog',
   StaticPage: 'StaticPage',
+  PlatformAnnouncement: 'PlatformAnnouncement',
   OrderPart: 'OrderPart',
   Notification: 'Notification',
   ReturnRequest: 'ReturnRequest',
@@ -92,6 +93,7 @@ export const ModelName = {
   RatingImpactRule: 'RatingImpactRule',
   WithdrawalRequest: 'WithdrawalRequest',
   PlatformSettings: 'PlatformSettings',
+  PlatformErrorEvent: 'PlatformErrorEvent',
   VehicleMake: 'VehicleMake',
   VehicleModel: 'VehicleModel',
   ViolationType: 'ViolationType',
@@ -483,10 +485,35 @@ export const StaticPageScalarFieldEnum = {
   titleEn: 'titleEn',
   contentAr: 'contentAr',
   contentEn: 'contentEn',
+  isPublished: 'isPublished',
+  updatedById: 'updatedById',
+  version: 'version',
+  metaJson: 'metaJson',
   updatedAt: 'updatedAt'
 } as const
 
 export type StaticPageScalarFieldEnum = (typeof StaticPageScalarFieldEnum)[keyof typeof StaticPageScalarFieldEnum]
+
+
+export const PlatformAnnouncementScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  titleAr: 'titleAr',
+  titleEn: 'titleEn',
+  bodyAr: 'bodyAr',
+  bodyEn: 'bodyEn',
+  effectiveFrom: 'effectiveFrom',
+  expiresAt: 'expiresAt',
+  audience: 'audience',
+  settingKey: 'settingKey',
+  createdById: 'createdById',
+  auditMetadata: 'auditMetadata',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlatformAnnouncementScalarFieldEnum = (typeof PlatformAnnouncementScalarFieldEnum)[keyof typeof PlatformAnnouncementScalarFieldEnum]
 
 
 export const OrderPartScalarFieldEnum = {
@@ -1096,6 +1123,39 @@ export const PlatformSettingsScalarFieldEnum = {
 } as const
 
 export type PlatformSettingsScalarFieldEnum = (typeof PlatformSettingsScalarFieldEnum)[keyof typeof PlatformSettingsScalarFieldEnum]
+
+
+export const PlatformErrorEventScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  severity: 'severity',
+  errorCode: 'errorCode',
+  errorName: 'errorName',
+  message: 'message',
+  stackFingerprint: 'stackFingerprint',
+  userId: 'userId',
+  userRole: 'userRole',
+  userEmail: 'userEmail',
+  userPhone: 'userPhone',
+  pagePath: 'pagePath',
+  pageLabel: 'pageLabel',
+  httpMethod: 'httpMethod',
+  httpStatus: 'httpStatus',
+  requestPath: 'requestPath',
+  userAgent: 'userAgent',
+  deviceClass: 'deviceClass',
+  locale: 'locale',
+  correlationId: 'correlationId',
+  metadata: 'metadata',
+  occurrenceCount: 'occurrenceCount',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type PlatformErrorEventScalarFieldEnum = (typeof PlatformErrorEventScalarFieldEnum)[keyof typeof PlatformErrorEventScalarFieldEnum]
 
 
 export const VehicleMakeScalarFieldEnum = {

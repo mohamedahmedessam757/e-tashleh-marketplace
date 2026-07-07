@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -104,7 +104,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
         setIsProcessing(true);
         setPaymentMethod('STRIPE');
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
             const response = await fetch(`${apiUrl}/payments/shipping-checkout`, {
                 method: 'POST',
                 headers: {
@@ -153,7 +153,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
         setIsProcessing(true);
         setPaymentMethod('WALLET');
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
             const response = await fetch(`${apiUrl}/returns/pay-shipping-wallet`, {
                 method: 'POST',
                 headers: {

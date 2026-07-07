@@ -12,6 +12,8 @@ import {
   normalizeDashboardStats,
   type DashboardStatsErrorCode,
 } from '../utils/dashboardStats';
+import { getSystemConfigDefaults, mergeSystemConfig } from '../utils/systemConfigDefaults';
+import type { EarnIncomeConfig } from '../types/earnIncome';
 
 let feedRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -136,12 +138,46 @@ export interface SystemConfig {
     contactEmail: string;
     supportPhone: string;
     enablePreferencesStep: boolean;
+    logoUrl?: string;
+    logoDarkUrl?: string;
+    faviconUrl?: string;
+    contacts?: {
+      customer: string;
+      merchant: string;
+      wholesale: string;
+      company: string;
+    };
+    earnIncome?: EarnIncomeConfig;
+  };
+  company?: {
+    legalNameAr: string;
+    legalNameEn: string;
+    crNumber: string;
+    taxNumber: string;
+    licenseNumber: string;
+    licenseExpiry: string;
+    hqAddressAr: string;
+    hqAddressEn: string;
+    economicRegistryNumber: string;
+    economicRegistryContentAr?: string;
+    economicRegistryContentEn?: string;
+    nomoDocumentUrl?: string;
+    nomoDocumentUpdatedAt?: string;
+  };
+  orderDurations?: {
+    assemblyCartDays: number;
+    returnWindowHours: number;
+    disputeWindowHours: number;
+    paymentTimeoutHours: number;
+    reminderDaysBeforeAssemblyExpiry: number[];
   };
   financial: {
     commissionRate: number;
     minCommission: number;
   };
   logistics: {
+    globalMinWeightKg?: number;
+    globalMaxWeightKg?: number;
     shipmentTypes: ShipmentType[];
   };
   content: {
@@ -399,7 +435,16 @@ export interface AdminState {
 
   // Platform Settings (2026 Enhanced)
   fetchSystemSettings: () => Promise<void>;
-  saveSystemSetting: (key: string, value: any, reason?: string) => Promise<boolean>;
+  saveSystemSetting: (
+    key: string,
+    value: any,
+    audit?: {
+      reason?: string;
+      adminName?: string;
+      adminSignature?: string;
+      adminSignatureType?: 'DRAWN' | 'TYPED';
+    },
+  ) => Promise<boolean>;
   subscribeToSettings: () => void;
   unsubscribeFromSettings: () => void;
 
@@ -622,73 +667,7 @@ export const useAdminStore = create<AdminState>()(
       isLoadingCatalog: false,
       catalogSubscription: null,
 
-      systemConfig: {
-        general: {
-          platformName: 'e-tashleh',
-          contactEmail: 'shop@e-tashleh.shop',
-          supportPhone: '0525700525',
-          enablePreferencesStep: true
-        },
-        financial: {
-          commissionRate: 25,
-          minCommission: 100
-        },
-        logistics: {
-          shipmentTypes: [
-            {
-              id: 'standard',
-              nameAr: 'شحن قياسي (قطع غيار عادية)',
-              nameEn: 'Standard Shipping (Normal Parts)',
-              basePrice: 60,
-              isWeightBound: true,
-              weightBrackets: [
-                { id: '1', minWeight: 0, maxWeight: 5, price: 0 },
-                { id: '2', minWeight: 5.1, maxWeight: 10, price: 40 },
-                { id: '3', minWeight: 10.1, maxWeight: 20, price: 90 },
-              ]
-            },
-            {
-              id: 'engine',
-              nameAr: 'شحن ماكينة (محرك)',
-              nameEn: 'Engine Shipping',
-              basePrice: 450,
-              isWeightBound: false,
-              hasCylinders: true,
-              cylinderRates: [
-                { cylinders: 4, price: 450 },
-                { cylinders: 6, price: 650 },
-                { cylinders: 8, price: 850 }
-              ],
-              weightBrackets: []
-            },
-            {
-              id: 'gearbox',
-              nameAr: 'شحن جيربوكس',
-              nameEn: 'Gearbox Shipping',
-              basePrice: 350,
-              isWeightBound: false,
-              weightBrackets: []
-            },
-            {
-              id: 'bumper',
-              nameAr: 'صدام أمامى',
-              nameEn: 'Front Bumper',
-              basePrice: 150,
-              isWeightBound: false,
-              weightBrackets: []
-            }
-          ]
-        },
-        content: {
-          vendorContract: {
-            contentAr: '',
-            contentEn: '',
-            firstPartyConfig: {}
-          },
-          privacyPolicy: '...',
-          invoiceFooter: 'ELLIPP FZ LLC...'
-        }
-      },
+      systemConfig: getSystemConfigDefaults(),
 
       loginAdmin: (user, permissions) => {
         // 2026 Defensive Guard: Ensure user object has required shape
@@ -824,9 +803,9 @@ export const useAdminStore = create<AdminState>()(
             const data = await res.json();
             
             if (data.system_config) {
-              const config = data.system_config;
-              if (config.financial && config.financial.vatRate !== undefined && config.financial.minCommission === undefined) {
-                config.financial.minCommission = config.financial.vatRate;
+              const config = mergeSystemConfig(data.system_config);
+              if (config.financial && (config.financial as any).vatRate !== undefined && config.financial.minCommission === undefined) {
+                config.financial.minCommission = (config.financial as any).vatRate;
               }
               set({ systemConfig: config });
               if (config.financial?.commissionRate) set({ commissionRate: config.financial.commissionRate });
@@ -857,7 +836,7 @@ export const useAdminStore = create<AdminState>()(
         try {
           const res = await fetch(`${API_URL}/system/config`);
           if (res.ok) {
-            const config = await res.json();
+            const config = mergeSystemConfig(await res.json());
             
             // Sync backward compatibility for commission
             if (config.financial && config.financial.vatRate !== undefined && config.financial.minCommission === undefined) {
@@ -872,10 +851,14 @@ export const useAdminStore = create<AdminState>()(
         }
       },
 
-      saveSystemSetting: async (key: string, value: any, reason?: string) => {
+      saveSystemSetting: async (key: string, value: any, audit?: {
+        reason?: string;
+        adminName?: string;
+        adminSignature?: string;
+        adminSignatureType?: 'DRAWN' | 'TYPED';
+      }) => {
         try {
           const token = localStorage.getItem('access_token');
-          // OPTIMISTIC UPDATE: Reflect changes immediately for both Admin and Public states
           if (key === 'system_status') {
              const newStatus = { 
                ...get().systemStatus,
@@ -896,7 +879,13 @@ export const useAdminStore = create<AdminState>()(
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ value, reason })
+            body: JSON.stringify({
+              value,
+              reason: audit?.reason,
+              adminName: audit?.adminName,
+              adminSignature: audit?.adminSignature,
+              adminSignatureType: audit?.adminSignatureType,
+            })
           });
 
           if (res.ok) {
@@ -930,9 +919,9 @@ export const useAdminStore = create<AdminState>()(
               const { setting_key, setting_value } = payload.new as any;
               
               if (setting_key === 'system_config') {
-                const config = setting_value;
-                if (config.financial && config.financial.vatRate !== undefined && config.financial.minCommission === undefined) {
-                  config.financial.minCommission = config.financial.vatRate;
+                const config = mergeSystemConfig(setting_value);
+                if (config.financial && (config.financial as any).vatRate !== undefined && config.financial.minCommission === undefined) {
+                  config.financial.minCommission = (config.financial as any).vatRate;
                 }
                 set({ systemConfig: config });
                 if (config.financial?.commissionRate) set({ commissionRate: config.financial.commissionRate });

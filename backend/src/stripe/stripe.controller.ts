@@ -26,7 +26,7 @@ export class StripeController {
     private resolveFrontendBaseUrl(): string {
         let frontendUrl =
             this.configService.get<string>('FRONTEND_URL')?.trim() ||
-            'http://localhost:5173';
+            'https://e-tashleh.net';
         frontendUrl = frontendUrl.replace(/^["']|["']$/g, '').replace(/\/$/, '');
 
         const isProd = this.configService.get<string>('NODE_ENV') === 'production';

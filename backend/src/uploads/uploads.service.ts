@@ -5,6 +5,8 @@ import { validateUploadedFile, UploadProfile } from './upload-validation.util';
 
 export const VERIFICATION_FIELD_PHOTOS_BUCKET = 'verification-field-photos';
 
+export const PLATFORM_ASSETS_BUCKET = 'marketplace-uploads';
+
 @Injectable()
 export class UploadsService {
     private supabase: SupabaseClient;
@@ -88,5 +90,19 @@ export class UploadsService {
             .getPublicUrl(storagePath);
 
         return { url: urlData.publicUrl, storagePath };
+    }
+
+    async uploadPlatformAsset(
+        file: Express.Multer.File,
+        assetType: 'logo' | 'logo-dark' | 'earn-income-icon' | 'nomo-document',
+    ): Promise<string> {
+        const profile = assetType === 'nomo-document' ? 'verification' : 'platform-asset';
+        validateUploadedFile(file, profile as any);
+
+        const allowed = new Set(['logo', 'logo-dark', 'earn-income-icon', 'nomo-document']);
+        const safeType = allowed.has(assetType) ? assetType : 'logo';
+        const prefix = `platform-assets/${safeType}`;
+
+        return this.uploadFile(file, prefix, PLATFORM_ASSETS_BUCKET, profile as any);
     }
 }

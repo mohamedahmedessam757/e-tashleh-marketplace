@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore, ShippingRule, AdminActivityLog } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -7,7 +7,7 @@ import {
   Globe, Plus, Trash2, ShieldCheck, Activity, RefreshCw,
   Mail, Phone, Percent, Box, Lock, Unlock, MessageSquare,
   Coins, Languages, Clock, Monitor, MapPin, Hash, User, Calendar,
-  CreditCard, Zap, AlertCircle,
+  CreditCard, Zap, AlertCircle, Building2, Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VehicleCatalogManager } from './VehicleCatalogManager';
@@ -15,10 +15,21 @@ import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsSto
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { BlurredSection } from './BlurredSection';
 import { FinancialAuditModal } from './FinancialAuditModal';
+import { SettingsAuditModal, SettingsAuditPayload } from './SettingsAuditModal';
+import { AdminSettingsGeneralExtras } from './AdminSettingsGeneralExtras';
+import { AdminSettingsCompanyTab } from './AdminSettingsCompanyTab';
+import { AdminSettingsOrdersTab } from './AdminSettingsOrdersTab';
+import { AdminSettingsStaticPagesTab } from './AdminSettingsStaticPagesTab';
+import { AdminSettingsEarnIncomeTab } from './AdminSettingsEarnIncomeTab';
+import { usePlatformContentStore } from '../../../stores/usePlatformContentStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
-export const AdminSettings: React.FC = () => {
+interface AdminSettingsProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
   const { t, language, setLanguage } = useLanguage();
   const isAr = language === 'ar';
 
@@ -37,8 +48,11 @@ export const AdminSettings: React.FC = () => {
     fetchSettings, subscribeToSettings: subscribeToPlatformSettings
   } = usePlatformSettingsStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'financial' | 'logistics' | 'content' | 'security' | 'catalog'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'earn-income' | 'financial' | 'logistics' | 'content' | 'security' | 'catalog' | 'company' | 'orders'>('general');
   const [showFinancialAudit, setShowFinancialAudit] = useState(false);
+  const [showSettingsAudit, setShowSettingsAudit] = useState(false);
+  const [pendingAuditSection, setPendingAuditSection] = useState<string | null>(null);
+  const [pendingMaintenanceValue, setPendingMaintenanceValue] = useState<boolean | null>(null);
   const [savedStripeConnectEnabled, setSavedStripeConnectEnabled] = useState(false);
   const [pendingStripeConnect, setPendingStripeConnect] = useState<boolean | null>(null);
   const [financialAuditMeta, setFinancialAuditMeta] = useState<{
@@ -64,6 +78,9 @@ export const AdminSettings: React.FC = () => {
   const visibleTabs = React.useMemo(() => {
     const allTabs = [
       { id: 'general', label: t.admin.settingsTabs.general, icon: Globe, color: 'text-blue-400', permissionKey: 'GENERAL' },
+      { id: 'earn-income', label: t.admin.settingsTabs.earnIncome, icon: Sparkles, color: 'text-gold-400', permissionKey: 'EARN_INCOME' },
+      { id: 'company', label: t.admin.settingsTabs.company, icon: Building2, color: 'text-cyan-400', permissionKey: 'COMPANY' },
+      { id: 'orders', label: t.admin.settingsTabs.orders, icon: Clock, color: 'text-indigo-400', permissionKey: 'ORDERS' },
       { id: 'financial', label: t.admin.settingsTabs.financial, icon: DollarSign, color: 'text-green-400', permissionKey: 'FINANCIAL' },
       { id: 'logistics', label: t.admin.settingsTabs.logistics, icon: Truck, color: 'text-purple-400', permissionKey: 'LOGISTICS' },
       { id: 'content', label: t.admin.settingsTabs.content, icon: FileText, color: 'text-gold-400', permissionKey: 'CONTENT' },
@@ -83,10 +100,13 @@ export const AdminSettings: React.FC = () => {
     subscribeToSettings();
     fetchSettings(); // Fetch initial platform settings
     const unsubscribePlatform = subscribeToPlatformSettings(); // Subscribe to realtime changes
+    const unsubscribeContent = usePlatformContentStore.getState().subscribeRealtime();
+    usePlatformContentStore.getState().fetchStaticPages();
 
     return () => {
       unsubscribeFromSettings();
       unsubscribePlatform();
+      unsubscribeContent();
     };
   }, []);
 
@@ -165,7 +185,9 @@ export const AdminSettings: React.FC = () => {
       setShowFinancialAudit(true);
       return;
     }
-    await persistSection(section);
+    if (section === 'catalog') return;
+    setPendingAuditSection(section);
+    setShowSettingsAudit(true);
   };
 
   const stripeConnectDisplayed =
@@ -197,20 +219,19 @@ export const AdminSettings: React.FC = () => {
     setPendingStripeConnect(null);
   };
 
-  const persistSection = async (section: string) => {
+  const persistSection = async (section: string, audit?: SettingsAuditPayload) => {
     setIsSaving(true);
     let success = false;
-    const reason = isAr ? `تحديث إعدادات ${section} من لوحة الإدارة` : `Administrative update for ${section}`;
 
     try {
       if (section === 'security') {
-        success = await saveSystemSetting('system_status', statusDraft, reason);
+        success = await saveSystemSetting('system_status', statusDraft, audit);
       } else if (section === 'content') {
         success = await saveVendorContract(contractDraft);
       } else {
-        await saveSystemSetting('ALLOW_CUSTOMER_ACCOUNT_DELETION', deletionDraft, reason);
-        await saveSystemSetting('CHAT_ATTACHMENTS_ENABLED', attachmentsDraft, reason);
-        success = await saveSystemSetting('system_config', formData, reason);
+        await saveSystemSetting('ALLOW_CUSTOMER_ACCOUNT_DELETION', deletionDraft, audit);
+        await saveSystemSetting('CHAT_ATTACHMENTS_ENABLED', attachmentsDraft, audit);
+        success = await saveSystemSetting('system_config', formData, audit);
       }
 
       if (success) {
@@ -224,6 +245,46 @@ export const AdminSettings: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const confirmSettingsAudit = async (audit: SettingsAuditPayload) => {
+    const section = pendingAuditSection || activeTab;
+
+    if (section === 'security-maintenance' && pendingMaintenanceValue !== null) {
+      const nextStatus = { ...statusDraft, maintenanceMode: pendingMaintenanceValue };
+      setStatusDraft(nextStatus);
+      setShowSettingsAudit(false);
+      setPendingAuditSection(null);
+      setPendingMaintenanceValue(null);
+      setIsSaving(true);
+      try {
+        const success = await saveSystemSetting('system_status', nextStatus, audit);
+        if (success) {
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          await fetchSystemSettings();
+        }
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    setShowSettingsAudit(false);
+    setPendingAuditSection(null);
+    await persistSection(section, audit);
+  };
+
+  const handleMaintenanceToggle = () => {
+    setPendingMaintenanceValue(!statusDraft.maintenanceMode);
+    setPendingAuditSection('security-maintenance');
+    setShowSettingsAudit(true);
+  };
+
+  const closeSettingsAudit = () => {
+    setShowSettingsAudit(false);
+    setPendingAuditSection(null);
+    setPendingMaintenanceValue(null);
   };
 
   const saveFinancialSettings = async (audit: { reason: string; adminName: string; adminSignature: string }) => {
@@ -269,6 +330,19 @@ export const AdminSettings: React.FC = () => {
         ...prev[section],
         [field]: value
       }
+    }));
+  };
+
+  const updateNested = (section: string, parent: string, field: string, value: any) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [parent]: {
+          ...(prev[section]?.[parent] || {}),
+          [field]: value,
+        },
+      },
     }));
   };
 
@@ -539,7 +613,38 @@ export const AdminSettings: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                    <AdminSettingsGeneralExtras
+                      isAr={isAr}
+                      formData={formData}
+                      updateField={updateField}
+                      updateNested={updateNested}
+                    />
                   </div>
+                )}
+
+                {activeTab === 'earn-income' && (
+                  <AdminSettingsEarnIncomeTab
+                    isAr={isAr}
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                )}
+
+                {activeTab === 'company' && (
+                  <AdminSettingsCompanyTab
+                    isAr={isAr}
+                    formData={formData}
+                    updateField={updateField}
+                    updateNested={updateNested}
+                  />
+                )}
+
+                {activeTab === 'orders' && (
+                  <AdminSettingsOrdersTab
+                    isAr={isAr}
+                    formData={formData}
+                    updateField={updateField}
+                  />
                 )}
 
                 {/* 2. FINANCIAL TAB */}
@@ -1017,6 +1122,24 @@ export const AdminSettings: React.FC = () => {
                                   </div>
                                 </div>
 
+                                {activeType.isWeightBound && (
+                                  <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 animate-in fade-in duration-300">
+                                    <div>
+                                      <label className="text-[10px] font-black text-white/40 uppercase">{isAr ? 'الحد الأدنى للوزن (كجم)' : 'Min weight (kg)'}</label>
+                                      <input type="number" className="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm"
+                                        value={formData.logistics?.globalMinWeightKg ?? 0}
+                                        onChange={(e) => updateField('logistics', 'globalMinWeightKg', Number(e.target.value))} />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] font-black text-white/40 uppercase">{isAr ? 'الحد الأقصى للوزن (كجم)' : 'Max weight (kg)'}</label>
+                                      <input type="number" className="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm"
+                                        value={formData.logistics?.globalMaxWeightKg ?? 50}
+                                        onChange={(e) => updateField('logistics', 'globalMaxWeightKg', Number(e.target.value))} />
+                                    </div>
+                                    <p className="col-span-2 text-[10px] text-white/40">{isAr ? 'يُطبَّق عند تفعيل الاعتماد على الوزن لهذا النوع' : 'Applied when weight-based shipping is enabled for this type'}</p>
+                                  </div>
+                                )}
+
                                 {activeType.hasCylinders && (
                                   <div className="space-y-6 p-8 rounded-[2rem] bg-gold-500/5 border border-gold-500/10 animate-in zoom-in-95 duration-300">
                                     <div className="flex justify-between items-center border-b border-gold-500/10 pb-4">
@@ -1199,6 +1322,12 @@ export const AdminSettings: React.FC = () => {
                 {/* 4. CONTENT */}
                 {activeTab === 'content' && (
                   <div className="grid grid-cols-1 gap-12">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-black text-white">{isAr ? 'صفحات المنصة الثابتة' : 'Static platform pages'}</h3>
+                      <AdminSettingsStaticPagesTab isAr={isAr} />
+                    </div>
+                    <div className="border-t border-white/10 pt-10 space-y-4">
+                      <h3 className="text-lg font-black text-white">{isAr ? 'عقد التاجر' : 'Vendor contract'}</h3>
                     {[
                       { l: isAr ? 'شروط وأحكام الشراكة الرقمية (العربية)' : 'Partnership Framework (Arabic)', d: 'rtl', k: 'contentAr' },
                       { l: isAr ? 'شروط وأحكام الشراكة الرقمية (الإنجليزية)' : 'Partnership Framework (English)', d: 'ltr', k: 'contentEn' }
@@ -1218,6 +1347,7 @@ export const AdminSettings: React.FC = () => {
                         />
                       </div>
                     ))}
+                    </div>
                   </div>
                 )}
 
@@ -1236,11 +1366,49 @@ export const AdminSettings: React.FC = () => {
                             {isAr ? 'تجميد كافة العمليات التفاعلية باستثناء المسؤولين.' : 'Freeze all interaction logic for non-admins.'}
                           </p>
                         </div>
-                        <button onClick={() => setStatusDraft({ ...statusDraft, maintenanceMode: !statusDraft.maintenanceMode })}
+                        <button onClick={handleMaintenanceToggle}
                           className={`px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-tight transition-all shadow-2xl active:scale-95 ${statusDraft.maintenanceMode ? 'bg-red-500 text-white' : 'bg-green-500 text-black'}`}>
                           {statusDraft.maintenanceMode ? (isAr ? 'إيقاف الصيانة' : 'Go Online') : (isAr ? 'تنشيط الصيانة' : 'Go Maintenance')}
                         </button>
                       </div>
+
+                      {onNavigate && (
+                        <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] shadow-inner flex flex-col items-center justify-center text-center gap-4">
+                          <ShieldCheck size={32} className="text-gold-500" />
+                          <h4 className="text-sm font-black text-white uppercase tracking-tight">
+                            {isAr ? 'إدارة الوصول والحسابات' : 'Access Control'}
+                          </h4>
+                          <p className="text-[11px] text-white/30 max-w-xs">
+                            {isAr ? 'تفعيل/إيقاف حسابات المسؤولين مع تدقيق موقّع.' : 'Enable or disable admin accounts with signed audit.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('access-control')}
+                            className="px-8 py-3 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 text-xs font-black uppercase tracking-widest hover:bg-gold-500/20 transition-all"
+                          >
+                            {isAr ? 'فتح إدارة الوصول' : 'Open Access Control'}
+                          </button>
+                        </div>
+                      )}
+
+                      {onNavigate && (
+                        <div className="p-8 bg-white/[0.02] border border-red-500/10 rounded-[2.5rem] shadow-inner flex flex-col items-center justify-center text-center gap-4">
+                          <AlertCircle size={32} className="text-red-400" />
+                          <h4 className="text-sm font-black text-white uppercase tracking-tight">
+                            {isAr ? 'مراقبة أخطاء المنصة' : 'Platform Error Monitoring'}
+                          </h4>
+                          <p className="text-[11px] text-white/30 max-w-xs">
+                            {isAr ? 'أخطاء العملاء والتجار والأدمن مع correlation ID وبحث متقدم.' : 'Customer, merchant, and admin errors with correlation ID and advanced search.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('platform-errors')}
+                            className="px-8 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-black uppercase tracking-widest hover:bg-red-500/20 transition-all"
+                          >
+                            {isAr ? 'فتح سجل الأخطاء' : 'Open Error Log'}
+                          </button>
+                        </div>
+                      )}
 
                       {/* Maintenance Metadata (New Phase 4) */}
                       <div className="space-y-6">
@@ -1386,6 +1554,7 @@ export const AdminSettings: React.FC = () => {
               </div>
 
               {/* STICKY ACTION FOOTER (Phase 4 Final) */}
+              {activeTab !== 'catalog' && (
               <div className="absolute bottom-0 left-0 right-0 p-10 bg-gradient-to-t from-[#12100E] via-[#12100E]/95 to-transparent flex justify-center lg:justify-end items-center z-40">
                 <button onClick={() => handleSaveSection(activeTab)} disabled={isSaving}
                   className="flex items-center gap-4 px-12 py-5 bg-gold-500 hover:bg-gold-400 disabled:opacity-50 text-black font-black text-xs uppercase tracking-tight rounded-2xl shadow-[0_20px_60px_rgba(234,179,8,0.3)] transition-all active:scale-95 group">
@@ -1393,12 +1562,19 @@ export const AdminSettings: React.FC = () => {
                   {isAr ? 'حفظ كافة التعديلات' : 'Commit High-Level Changes'}
                 </button>
               </div>
-
+              )}
             </GlassCard>
           </BlurredSection>
         </motion.div>
       </AnimatePresence>
     </div>
+      <SettingsAuditModal
+        isOpen={showSettingsAudit}
+        onClose={closeSettingsAudit}
+        onConfirm={confirmSettingsAudit}
+        title={isAr ? 'تدقيق إعدادات النظام' : 'System settings audit'}
+        subtitle={isAr ? 'سبب التعديل (10 أحرف على الأقل) والتوقيع مطلوبان' : 'Reason (min 10 chars) and signature required'}
+      />
       <FinancialAuditModal
         isOpen={showFinancialAudit}
         onClose={closeFinancialAudit}

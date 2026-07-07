@@ -7,6 +7,9 @@ import {
   resolveIpLocationSync,
 } from '../common/ip/ip-geolocation.util';
 import { FinancialConfigService } from '../common/financial-config.service';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
+import { LogisticsConfigService } from '../common/logistics-config.service';
+import { PlatformBrandingService } from '../common/platform-branding.service';
 
 @Injectable()
 export class PlatformSettingsService {
@@ -24,6 +27,9 @@ export class PlatformSettingsService {
     private readonly prisma: PrismaService,
     private readonly auditLogs: AuditLogsService,
     private readonly financialConfig: FinancialConfigService,
+    private readonly orderDurationConfig: OrderDurationConfigService,
+    private readonly logisticsConfig: LogisticsConfigService,
+    private readonly platformBranding: PlatformBrandingService,
   ) {}
 
   /**
@@ -72,6 +78,7 @@ export class PlatformSettingsService {
     value: any,
     reason?: string,
     context?: { ip: string; ua: string },
+    audit?: { adminName?: string; adminSignature?: string; adminSignatureType?: string },
   ) {
     const oldSetting = await this.prisma.platformSettings.findUnique({
       where: { settingKey: key },
@@ -124,6 +131,9 @@ export class PlatformSettingsService {
         settingKey: key,
         oldValue: oldSetting?.settingValue || null,
         newValue: value,
+        adminName: audit?.adminName,
+        adminSignature: audit?.adminSignature,
+        adminSignatureType: audit?.adminSignatureType,
       },
       reason: reason || `Updated system setting: ${key}`,
     });
@@ -141,6 +151,9 @@ export class PlatformSettingsService {
 
     if (key === PlatformSettingsService.KEYS.SYSTEM_CONFIG) {
       this.financialConfig.invalidateCache();
+      this.orderDurationConfig.invalidateCache();
+      this.logisticsConfig.invalidateCache();
+      this.platformBranding.invalidateCache();
       const financial = (value as Record<string, unknown>)?.financial;
       if (financial) {
         await this.auditLogs.logAction({

@@ -38,11 +38,15 @@ import { WidersModule } from './widers/widers.module';
 import { EmailModule } from './email/email.module';
 import { PublicDocumentsModule } from './public-documents/public-documents.module';
 
+import { PlatformConfigModule } from './common/platform-config.module';
+import { PlatformAnnouncementsModule } from './platform-announcements/platform-announcements.module';
+import { PlatformErrorsModule } from './platform-errors/platform-errors.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { ContractChangesModule } from './contract-changes/contract-changes.module';
 
 @Module({
     imports: [
+        PlatformConfigModule,
         AuthorizationModule,
         WidersModule,
         EmailModule,
@@ -80,6 +84,8 @@ import { ContractChangesModule } from './contract-changes/contract-changes.modul
         StripeModule,
         ViolationsModule,
         PlatformSettingsModule,
+        PlatformAnnouncementsModule,
+        PlatformErrorsModule,
         VehicleCatalogModule,
         AdminPermissionsModule,
         VerificationTasksModule,

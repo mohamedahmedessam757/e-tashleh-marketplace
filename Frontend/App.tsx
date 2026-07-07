@@ -1,13 +1,15 @@
 
-import React, { useState, Suspense, lazy, useEffect } from 'react';
+import React, { useEffect, Suspense, lazy, useState } from 'react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { PlatformErrorBoundary } from './components/PlatformErrorBoundary';
+import { initPlatformErrorReporter } from './utils/platformErrorReporter';
 import { usePublicSystemStatus } from './hooks/usePublicSystemStatus';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoleSelectionScreen } from './components/RoleSelectionScreen';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Footer } from './components/Footer';
-import { SITE_CONTACT_EMAIL } from './config/site';
+import { siteContacts, hydrateSiteConfig } from './config/site';
 import { AuthLayout } from './components/auth/AuthLayout';
 
 const SupportModal = lazy(() =>
@@ -45,7 +47,7 @@ const VerifyLinkPage = lazy(() =>
 );
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 const BOOT_SKIP_KEY = 'etashleh_booted';
 
@@ -141,6 +143,10 @@ function AppContent() {
   const [landingInitialSection, setLandingInitialSection] = useState<string | null>(null);
   const [recoveryRole, setRecoveryRole] = useState<'customer' | 'merchant'>('customer');
   const { publicSystemStatus } = usePublicSystemStatus(30_000, !loading);
+
+  useEffect(() => {
+    void hydrateSiteConfig();
+  }, []);
 
   // Handle Scrolling to Landing Section
   useEffect(() => {
@@ -630,7 +636,7 @@ function AppContent() {
               </div>
               <div className="text-left overflow-hidden">
                 <p className="text-[8px] text-white/30 uppercase font-black tracking-widest truncate">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</p>
-                <p className="text-white text-sm font-bold truncate">{SITE_CONTACT_EMAIL}</p>
+                <p className="text-white text-sm font-bold truncate">{siteContacts.contact}</p>
               </div>
             </div>
           </div>
@@ -937,9 +943,15 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    initPlatformErrorReporter();
+  }, []);
+
   return (
     <LanguageProvider>
-      <AppContent />
+      <PlatformErrorBoundary>
+        <AppContent />
+      </PlatformErrorBoundary>
     </LanguageProvider>
   );
 }

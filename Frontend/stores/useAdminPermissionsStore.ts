@@ -31,6 +31,13 @@ interface AdminPermissionsState {
   updatePermissions: (userId: string, data: any) => Promise<boolean>;
   deleteAdmin: (userId: string) => Promise<boolean>;
   updateAdminPassword: (userId: string, password: string) => Promise<boolean>;
+  toggleAdminStatus: (userId: string, audit: {
+    isActive: boolean;
+    reason: string;
+    adminName: string;
+    adminSignature: string;
+    adminSignatureType?: 'DRAWN' | 'TYPED';
+  }) => Promise<boolean>;
   
   // Helpers
   _getRole: () => string | null;
@@ -120,6 +127,17 @@ export const useAdminPermissionsStore = create<AdminPermissionsState>((set, get)
       return true;
     } catch (error) {
       console.error('Failed to update admin password', error);
+      return false;
+    }
+  },
+
+  toggleAdminStatus: async (userId, audit) => {
+    try {
+      await client.patch(`/admin-permissions/${userId}/status`, audit);
+      await get().fetchAdminList();
+      return true;
+    } catch (error) {
+      console.error('Failed to toggle admin status', error);
       return false;
     }
   },

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+﻿import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ShieldCheck, CheckCircle2, XCircle, AlertTriangle, User, Calendar,
@@ -154,7 +154,7 @@ export const VerificationReviewPanel: React.FC<VerificationReviewPanelProps> = (
         formData.append('folder', `admin-review/${folder}`);
 
         const token = localStorage.getItem('access_token');
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         
         const response = await fetch(`${API_URL}/uploads/verification`, {
             method: 'POST',

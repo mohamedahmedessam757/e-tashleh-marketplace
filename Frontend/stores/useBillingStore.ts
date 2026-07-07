@@ -36,7 +36,7 @@ interface BillingState {
     setDefaultCard: (id: string) => Promise<void>;
 }
 
-const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const getApiUrl = () => import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 const getHeaders = () => {
     const token = localStorage.getItem('access_token');
     return {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, ChevronDown, CheckCircle, Loader2, Mail, User, HelpCircle, PhoneCall } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -67,7 +67,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
     setStatus('sending');
     try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         const response = await fetch(`${apiUrl}/public-support`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

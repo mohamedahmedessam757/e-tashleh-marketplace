@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useAdminChatStore } from '../../../../stores/useAdminChatStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { admin } from '../../../../data/locales/admin';
@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { escapeHtml } from '../../../../utils/htmlSanitize';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 export const AdminChatContext: React.FC = () => {
     const { language } = useLanguage();

@@ -20,8 +20,18 @@ export type StaticPageModel = runtime.Types.Result.DefaultSelection<Prisma.$Stat
 
 export type AggregateStaticPage = {
   _count: StaticPageCountAggregateOutputType | null
+  _avg: StaticPageAvgAggregateOutputType | null
+  _sum: StaticPageSumAggregateOutputType | null
   _min: StaticPageMinAggregateOutputType | null
   _max: StaticPageMaxAggregateOutputType | null
+}
+
+export type StaticPageAvgAggregateOutputType = {
+  version: number | null
+}
+
+export type StaticPageSumAggregateOutputType = {
+  version: number | null
 }
 
 export type StaticPageMinAggregateOutputType = {
@@ -31,6 +41,9 @@ export type StaticPageMinAggregateOutputType = {
   titleEn: string | null
   contentAr: string | null
   contentEn: string | null
+  isPublished: boolean | null
+  updatedById: string | null
+  version: number | null
   updatedAt: Date | null
 }
 
@@ -41,6 +54,9 @@ export type StaticPageMaxAggregateOutputType = {
   titleEn: string | null
   contentAr: string | null
   contentEn: string | null
+  isPublished: boolean | null
+  updatedById: string | null
+  version: number | null
   updatedAt: Date | null
 }
 
@@ -51,10 +67,22 @@ export type StaticPageCountAggregateOutputType = {
   titleEn: number
   contentAr: number
   contentEn: number
+  isPublished: number
+  updatedById: number
+  version: number
+  metaJson: number
   updatedAt: number
   _all: number
 }
 
+
+export type StaticPageAvgAggregateInputType = {
+  version?: true
+}
+
+export type StaticPageSumAggregateInputType = {
+  version?: true
+}
 
 export type StaticPageMinAggregateInputType = {
   id?: true
@@ -63,6 +91,9 @@ export type StaticPageMinAggregateInputType = {
   titleEn?: true
   contentAr?: true
   contentEn?: true
+  isPublished?: true
+  updatedById?: true
+  version?: true
   updatedAt?: true
 }
 
@@ -73,6 +104,9 @@ export type StaticPageMaxAggregateInputType = {
   titleEn?: true
   contentAr?: true
   contentEn?: true
+  isPublished?: true
+  updatedById?: true
+  version?: true
   updatedAt?: true
 }
 
@@ -83,6 +117,10 @@ export type StaticPageCountAggregateInputType = {
   titleEn?: true
   contentAr?: true
   contentEn?: true
+  isPublished?: true
+  updatedById?: true
+  version?: true
+  metaJson?: true
   updatedAt?: true
   _all?: true
 }
@@ -125,6 +163,18 @@ export type StaticPageAggregateArgs<ExtArgs extends runtime.Types.Extensions.Int
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: StaticPageAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: StaticPageSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: StaticPageMinAggregateInputType
@@ -155,6 +205,8 @@ export type StaticPageGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   _count?: StaticPageCountAggregateInputType | true
+  _avg?: StaticPageAvgAggregateInputType
+  _sum?: StaticPageSumAggregateInputType
   _min?: StaticPageMinAggregateInputType
   _max?: StaticPageMaxAggregateInputType
 }
@@ -166,8 +218,14 @@ export type StaticPageGroupByOutputType = {
   titleEn: string | null
   contentAr: string | null
   contentEn: string | null
+  isPublished: boolean
+  updatedById: string | null
+  version: number
+  metaJson: runtime.JsonValue | null
   updatedAt: Date
   _count: StaticPageCountAggregateOutputType | null
+  _avg: StaticPageAvgAggregateOutputType | null
+  _sum: StaticPageSumAggregateOutputType | null
   _min: StaticPageMinAggregateOutputType | null
   _max: StaticPageMaxAggregateOutputType | null
 }
@@ -197,7 +255,12 @@ export type StaticPageWhereInput = {
   titleEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
   contentAr?: Prisma.StringNullableFilter<"StaticPage"> | string | null
   contentEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  isPublished?: Prisma.BoolFilter<"StaticPage"> | boolean
+  updatedById?: Prisma.UuidNullableFilter<"StaticPage"> | string | null
+  version?: Prisma.IntFilter<"StaticPage"> | number
+  metaJson?: Prisma.JsonNullableFilter<"StaticPage">
   updatedAt?: Prisma.DateTimeFilter<"StaticPage"> | Date | string
+  updatedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type StaticPageOrderByWithRelationInput = {
@@ -207,7 +270,12 @@ export type StaticPageOrderByWithRelationInput = {
   titleEn?: Prisma.SortOrderInput | Prisma.SortOrder
   contentAr?: Prisma.SortOrderInput | Prisma.SortOrder
   contentEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
+  metaJson?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  updatedBy?: Prisma.UserOrderByWithRelationInput
 }
 
 export type StaticPageWhereUniqueInput = Prisma.AtLeast<{
@@ -220,7 +288,12 @@ export type StaticPageWhereUniqueInput = Prisma.AtLeast<{
   titleEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
   contentAr?: Prisma.StringNullableFilter<"StaticPage"> | string | null
   contentEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  isPublished?: Prisma.BoolFilter<"StaticPage"> | boolean
+  updatedById?: Prisma.UuidNullableFilter<"StaticPage"> | string | null
+  version?: Prisma.IntFilter<"StaticPage"> | number
+  metaJson?: Prisma.JsonNullableFilter<"StaticPage">
   updatedAt?: Prisma.DateTimeFilter<"StaticPage"> | Date | string
+  updatedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id" | "slug">
 
 export type StaticPageOrderByWithAggregationInput = {
@@ -230,10 +303,16 @@ export type StaticPageOrderByWithAggregationInput = {
   titleEn?: Prisma.SortOrderInput | Prisma.SortOrder
   contentAr?: Prisma.SortOrderInput | Prisma.SortOrder
   contentEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
+  metaJson?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.StaticPageCountOrderByAggregateInput
+  _avg?: Prisma.StaticPageAvgOrderByAggregateInput
   _max?: Prisma.StaticPageMaxOrderByAggregateInput
   _min?: Prisma.StaticPageMinOrderByAggregateInput
+  _sum?: Prisma.StaticPageSumOrderByAggregateInput
 }
 
 export type StaticPageScalarWhereWithAggregatesInput = {
@@ -246,6 +325,10 @@ export type StaticPageScalarWhereWithAggregatesInput = {
   titleEn?: Prisma.StringNullableWithAggregatesFilter<"StaticPage"> | string | null
   contentAr?: Prisma.StringNullableWithAggregatesFilter<"StaticPage"> | string | null
   contentEn?: Prisma.StringNullableWithAggregatesFilter<"StaticPage"> | string | null
+  isPublished?: Prisma.BoolWithAggregatesFilter<"StaticPage"> | boolean
+  updatedById?: Prisma.UuidNullableWithAggregatesFilter<"StaticPage"> | string | null
+  version?: Prisma.IntWithAggregatesFilter<"StaticPage"> | number
+  metaJson?: Prisma.JsonNullableWithAggregatesFilter<"StaticPage">
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"StaticPage"> | Date | string
 }
 
@@ -256,7 +339,11 @@ export type StaticPageCreateInput = {
   titleEn?: string | null
   contentAr?: string | null
   contentEn?: string | null
+  isPublished?: boolean
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
+  updatedBy?: Prisma.UserCreateNestedOneWithoutStaticPagesUpdatedInput
 }
 
 export type StaticPageUncheckedCreateInput = {
@@ -266,6 +353,10 @@ export type StaticPageUncheckedCreateInput = {
   titleEn?: string | null
   contentAr?: string | null
   contentEn?: string | null
+  isPublished?: boolean
+  updatedById?: string | null
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
@@ -276,7 +367,11 @@ export type StaticPageUpdateInput = {
   titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedBy?: Prisma.UserUpdateOneWithoutStaticPagesUpdatedNestedInput
 }
 
 export type StaticPageUncheckedUpdateInput = {
@@ -286,6 +381,10 @@ export type StaticPageUncheckedUpdateInput = {
   titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -296,6 +395,10 @@ export type StaticPageCreateManyInput = {
   titleEn?: string | null
   contentAr?: string | null
   contentEn?: string | null
+  isPublished?: boolean
+  updatedById?: string | null
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
@@ -306,6 +409,9 @@ export type StaticPageUpdateManyMutationInput = {
   titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -316,7 +422,21 @@ export type StaticPageUncheckedUpdateManyInput = {
   titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  updatedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StaticPageListRelationFilter = {
+  every?: Prisma.StaticPageWhereInput
+  some?: Prisma.StaticPageWhereInput
+  none?: Prisma.StaticPageWhereInput
+}
+
+export type StaticPageOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type StaticPageCountOrderByAggregateInput = {
@@ -326,7 +446,15 @@ export type StaticPageCountOrderByAggregateInput = {
   titleEn?: Prisma.SortOrder
   contentAr?: Prisma.SortOrder
   contentEn?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  metaJson?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type StaticPageAvgOrderByAggregateInput = {
+  version?: Prisma.SortOrder
 }
 
 export type StaticPageMaxOrderByAggregateInput = {
@@ -336,6 +464,9 @@ export type StaticPageMaxOrderByAggregateInput = {
   titleEn?: Prisma.SortOrder
   contentAr?: Prisma.SortOrder
   contentEn?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  version?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -346,7 +477,177 @@ export type StaticPageMinOrderByAggregateInput = {
   titleEn?: Prisma.SortOrder
   contentAr?: Prisma.SortOrder
   contentEn?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  version?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type StaticPageSumOrderByAggregateInput = {
+  version?: Prisma.SortOrder
+}
+
+export type StaticPageCreateNestedManyWithoutUpdatedByInput = {
+  create?: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput> | Prisma.StaticPageCreateWithoutUpdatedByInput[] | Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput | Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput[]
+  createMany?: Prisma.StaticPageCreateManyUpdatedByInputEnvelope
+  connect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+}
+
+export type StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput = {
+  create?: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput> | Prisma.StaticPageCreateWithoutUpdatedByInput[] | Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput | Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput[]
+  createMany?: Prisma.StaticPageCreateManyUpdatedByInputEnvelope
+  connect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+}
+
+export type StaticPageUpdateManyWithoutUpdatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput> | Prisma.StaticPageCreateWithoutUpdatedByInput[] | Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput | Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput[]
+  upsert?: Prisma.StaticPageUpsertWithWhereUniqueWithoutUpdatedByInput | Prisma.StaticPageUpsertWithWhereUniqueWithoutUpdatedByInput[]
+  createMany?: Prisma.StaticPageCreateManyUpdatedByInputEnvelope
+  set?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  disconnect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  delete?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  connect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  update?: Prisma.StaticPageUpdateWithWhereUniqueWithoutUpdatedByInput | Prisma.StaticPageUpdateWithWhereUniqueWithoutUpdatedByInput[]
+  updateMany?: Prisma.StaticPageUpdateManyWithWhereWithoutUpdatedByInput | Prisma.StaticPageUpdateManyWithWhereWithoutUpdatedByInput[]
+  deleteMany?: Prisma.StaticPageScalarWhereInput | Prisma.StaticPageScalarWhereInput[]
+}
+
+export type StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput> | Prisma.StaticPageCreateWithoutUpdatedByInput[] | Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput | Prisma.StaticPageCreateOrConnectWithoutUpdatedByInput[]
+  upsert?: Prisma.StaticPageUpsertWithWhereUniqueWithoutUpdatedByInput | Prisma.StaticPageUpsertWithWhereUniqueWithoutUpdatedByInput[]
+  createMany?: Prisma.StaticPageCreateManyUpdatedByInputEnvelope
+  set?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  disconnect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  delete?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  connect?: Prisma.StaticPageWhereUniqueInput | Prisma.StaticPageWhereUniqueInput[]
+  update?: Prisma.StaticPageUpdateWithWhereUniqueWithoutUpdatedByInput | Prisma.StaticPageUpdateWithWhereUniqueWithoutUpdatedByInput[]
+  updateMany?: Prisma.StaticPageUpdateManyWithWhereWithoutUpdatedByInput | Prisma.StaticPageUpdateManyWithWhereWithoutUpdatedByInput[]
+  deleteMany?: Prisma.StaticPageScalarWhereInput | Prisma.StaticPageScalarWhereInput[]
+}
+
+export type StaticPageCreateWithoutUpdatedByInput = {
+  id?: string
+  slug: string
+  titleAr?: string | null
+  titleEn?: string | null
+  contentAr?: string | null
+  contentEn?: string | null
+  isPublished?: boolean
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Date | string
+}
+
+export type StaticPageUncheckedCreateWithoutUpdatedByInput = {
+  id?: string
+  slug: string
+  titleAr?: string | null
+  titleEn?: string | null
+  contentAr?: string | null
+  contentEn?: string | null
+  isPublished?: boolean
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Date | string
+}
+
+export type StaticPageCreateOrConnectWithoutUpdatedByInput = {
+  where: Prisma.StaticPageWhereUniqueInput
+  create: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type StaticPageCreateManyUpdatedByInputEnvelope = {
+  data: Prisma.StaticPageCreateManyUpdatedByInput | Prisma.StaticPageCreateManyUpdatedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type StaticPageUpsertWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.StaticPageWhereUniqueInput
+  update: Prisma.XOR<Prisma.StaticPageUpdateWithoutUpdatedByInput, Prisma.StaticPageUncheckedUpdateWithoutUpdatedByInput>
+  create: Prisma.XOR<Prisma.StaticPageCreateWithoutUpdatedByInput, Prisma.StaticPageUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type StaticPageUpdateWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.StaticPageWhereUniqueInput
+  data: Prisma.XOR<Prisma.StaticPageUpdateWithoutUpdatedByInput, Prisma.StaticPageUncheckedUpdateWithoutUpdatedByInput>
+}
+
+export type StaticPageUpdateManyWithWhereWithoutUpdatedByInput = {
+  where: Prisma.StaticPageScalarWhereInput
+  data: Prisma.XOR<Prisma.StaticPageUpdateManyMutationInput, Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByInput>
+}
+
+export type StaticPageScalarWhereInput = {
+  AND?: Prisma.StaticPageScalarWhereInput | Prisma.StaticPageScalarWhereInput[]
+  OR?: Prisma.StaticPageScalarWhereInput[]
+  NOT?: Prisma.StaticPageScalarWhereInput | Prisma.StaticPageScalarWhereInput[]
+  id?: Prisma.UuidFilter<"StaticPage"> | string
+  slug?: Prisma.StringFilter<"StaticPage"> | string
+  titleAr?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  titleEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  contentAr?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  contentEn?: Prisma.StringNullableFilter<"StaticPage"> | string | null
+  isPublished?: Prisma.BoolFilter<"StaticPage"> | boolean
+  updatedById?: Prisma.UuidNullableFilter<"StaticPage"> | string | null
+  version?: Prisma.IntFilter<"StaticPage"> | number
+  metaJson?: Prisma.JsonNullableFilter<"StaticPage">
+  updatedAt?: Prisma.DateTimeFilter<"StaticPage"> | Date | string
+}
+
+export type StaticPageCreateManyUpdatedByInput = {
+  id?: string
+  slug: string
+  titleAr?: string | null
+  titleEn?: string | null
+  contentAr?: string | null
+  contentEn?: string | null
+  isPublished?: boolean
+  version?: number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Date | string
+}
+
+export type StaticPageUpdateWithoutUpdatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  titleAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StaticPageUncheckedUpdateWithoutUpdatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  titleAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StaticPageUncheckedUpdateManyWithoutUpdatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  titleAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  metaJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -358,7 +659,12 @@ export type StaticPageSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   titleEn?: boolean
   contentAr?: boolean
   contentEn?: boolean
+  isPublished?: boolean
+  updatedById?: boolean
+  version?: boolean
+  metaJson?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["staticPage"]>
 
 export type StaticPageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -368,7 +674,12 @@ export type StaticPageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   titleEn?: boolean
   contentAr?: boolean
   contentEn?: boolean
+  isPublished?: boolean
+  updatedById?: boolean
+  version?: boolean
+  metaJson?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["staticPage"]>
 
 export type StaticPageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -378,7 +689,12 @@ export type StaticPageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   titleEn?: boolean
   contentAr?: boolean
   contentEn?: boolean
+  isPublished?: boolean
+  updatedById?: boolean
+  version?: boolean
+  metaJson?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["staticPage"]>
 
 export type StaticPageSelectScalar = {
@@ -388,14 +704,29 @@ export type StaticPageSelectScalar = {
   titleEn?: boolean
   contentAr?: boolean
   contentEn?: boolean
+  isPublished?: boolean
+  updatedById?: boolean
+  version?: boolean
+  metaJson?: boolean
   updatedAt?: boolean
 }
 
-export type StaticPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "titleAr" | "titleEn" | "contentAr" | "contentEn" | "updatedAt", ExtArgs["result"]["staticPage"]>
+export type StaticPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "titleAr" | "titleEn" | "contentAr" | "contentEn" | "isPublished" | "updatedById" | "version" | "metaJson" | "updatedAt", ExtArgs["result"]["staticPage"]>
+export type StaticPageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
+}
+export type StaticPageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
+}
+export type StaticPageIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.StaticPage$updatedByArgs<ExtArgs>
+}
 
 export type $StaticPagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "StaticPage"
-  objects: {}
+  objects: {
+    updatedBy: Prisma.$UserPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     slug: string
@@ -403,6 +734,10 @@ export type $StaticPagePayload<ExtArgs extends runtime.Types.Extensions.Internal
     titleEn: string | null
     contentAr: string | null
     contentEn: string | null
+    isPublished: boolean
+    updatedById: string | null
+    version: number
+    metaJson: runtime.JsonValue | null
     updatedAt: Date
   }, ExtArgs["result"]["staticPage"]>
   composites: {}
@@ -798,6 +1133,7 @@ readonly fields: StaticPageFieldRefs;
  */
 export interface Prisma__StaticPageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  updatedBy<T extends Prisma.StaticPage$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StaticPage$updatedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -833,6 +1169,10 @@ export interface StaticPageFieldRefs {
   readonly titleEn: Prisma.FieldRef<"StaticPage", 'String'>
   readonly contentAr: Prisma.FieldRef<"StaticPage", 'String'>
   readonly contentEn: Prisma.FieldRef<"StaticPage", 'String'>
+  readonly isPublished: Prisma.FieldRef<"StaticPage", 'Boolean'>
+  readonly updatedById: Prisma.FieldRef<"StaticPage", 'String'>
+  readonly version: Prisma.FieldRef<"StaticPage", 'Int'>
+  readonly metaJson: Prisma.FieldRef<"StaticPage", 'Json'>
   readonly updatedAt: Prisma.FieldRef<"StaticPage", 'DateTime'>
 }
     
@@ -850,6 +1190,10 @@ export type StaticPageFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
   /**
    * Filter, which StaticPage to fetch.
    */
@@ -869,6 +1213,10 @@ export type StaticPageFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
+  /**
    * Filter, which StaticPage to fetch.
    */
   where: Prisma.StaticPageWhereUniqueInput
@@ -886,6 +1234,10 @@ export type StaticPageFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
   /**
    * Filter, which StaticPage to fetch.
    */
@@ -935,6 +1287,10 @@ export type StaticPageFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensi
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
+  /**
    * Filter, which StaticPage to fetch.
    */
   where?: Prisma.StaticPageWhereInput
@@ -982,6 +1338,10 @@ export type StaticPageFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
   /**
    * Filter, which StaticPages to fetch.
    */
@@ -1031,6 +1391,10 @@ export type StaticPageCreateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
+  /**
    * The data needed to create a StaticPage.
    */
   data: Prisma.XOR<Prisma.StaticPageCreateInput, Prisma.StaticPageUncheckedCreateInput>
@@ -1064,6 +1428,10 @@ export type StaticPageCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    */
   data: Prisma.StaticPageCreateManyInput | Prisma.StaticPageCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1078,6 +1446,10 @@ export type StaticPageUpdateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
   /**
    * The data needed to update a StaticPage.
    */
@@ -1130,6 +1502,10 @@ export type StaticPageUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    * Limit how many StaticPages to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1144,6 +1520,10 @@ export type StaticPageUpsertArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
   /**
    * The filter to search for the StaticPage to update in case it exists.
    */
@@ -1171,6 +1551,10 @@ export type StaticPageDeleteArgs<ExtArgs extends runtime.Types.Extensions.Intern
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
+  /**
    * Filter which StaticPage to delete.
    */
   where: Prisma.StaticPageWhereUniqueInput
@@ -1191,6 +1575,25 @@ export type StaticPageDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 /**
+ * StaticPage.updatedBy
+ */
+export type StaticPage$updatedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
  * StaticPage without action
  */
 export type StaticPageDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1202,4 +1605,8 @@ export type StaticPageDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the StaticPage
    */
   omit?: Prisma.StaticPageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaticPageInclude<ExtArgs> | null
 }

@@ -1,4 +1,4 @@
-export interface LicenseField {
+﻿export interface LicenseField {
   labelAr: string;
   labelEn: string;
   valueAr: string;
@@ -13,7 +13,7 @@ export interface LicenseSection {
 
 export const BUSINESS_LICENSE_NUMBER = '45000927';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 /** Served inline by backend — not a direct public static file URL */
 export const NOMO_REGISTRY_PDF_URL = `${API_URL}/public/documents/nomo-registry`;

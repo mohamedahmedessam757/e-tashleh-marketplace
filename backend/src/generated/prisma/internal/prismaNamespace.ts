@@ -397,6 +397,7 @@ export const ModelName = {
   OfferRejection: 'OfferRejection',
   AuditLog: 'AuditLog',
   StaticPage: 'StaticPage',
+  PlatformAnnouncement: 'PlatformAnnouncement',
   OrderPart: 'OrderPart',
   Notification: 'Notification',
   ReturnRequest: 'ReturnRequest',
@@ -425,6 +426,7 @@ export const ModelName = {
   RatingImpactRule: 'RatingImpactRule',
   WithdrawalRequest: 'WithdrawalRequest',
   PlatformSettings: 'PlatformSettings',
+  PlatformErrorEvent: 'PlatformErrorEvent',
   VehicleMake: 'VehicleMake',
   VehicleModel: 'VehicleModel',
   ViolationType: 'ViolationType',
@@ -458,7 +460,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog" | "financialSettlement" | "financialAdjustment"
+    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "platformAnnouncement" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "platformErrorEvent" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog" | "financialSettlement" | "financialAdjustment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1421,6 +1423,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.StaticPageCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.StaticPageCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlatformAnnouncement: {
+      payload: Prisma.$PlatformAnnouncementPayload<ExtArgs>
+      fields: Prisma.PlatformAnnouncementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlatformAnnouncementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlatformAnnouncementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        findFirst: {
+          args: Prisma.PlatformAnnouncementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlatformAnnouncementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        findMany: {
+          args: Prisma.PlatformAnnouncementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>[]
+        }
+        create: {
+          args: Prisma.PlatformAnnouncementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        createMany: {
+          args: Prisma.PlatformAnnouncementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlatformAnnouncementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>[]
+        }
+        delete: {
+          args: Prisma.PlatformAnnouncementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        update: {
+          args: Prisma.PlatformAnnouncementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlatformAnnouncementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlatformAnnouncementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlatformAnnouncementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlatformAnnouncementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformAnnouncementPayload>
+        }
+        aggregate: {
+          args: Prisma.PlatformAnnouncementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlatformAnnouncement>
+        }
+        groupBy: {
+          args: Prisma.PlatformAnnouncementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformAnnouncementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlatformAnnouncementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformAnnouncementCountAggregateOutputType> | number
         }
       }
     }
@@ -3496,6 +3572,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PlatformErrorEvent: {
+      payload: Prisma.$PlatformErrorEventPayload<ExtArgs>
+      fields: Prisma.PlatformErrorEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlatformErrorEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlatformErrorEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        findFirst: {
+          args: Prisma.PlatformErrorEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlatformErrorEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        findMany: {
+          args: Prisma.PlatformErrorEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>[]
+        }
+        create: {
+          args: Prisma.PlatformErrorEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        createMany: {
+          args: Prisma.PlatformErrorEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlatformErrorEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>[]
+        }
+        delete: {
+          args: Prisma.PlatformErrorEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        update: {
+          args: Prisma.PlatformErrorEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlatformErrorEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlatformErrorEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlatformErrorEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlatformErrorEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformErrorEventPayload>
+        }
+        aggregate: {
+          args: Prisma.PlatformErrorEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlatformErrorEvent>
+        }
+        groupBy: {
+          args: Prisma.PlatformErrorEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformErrorEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlatformErrorEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformErrorEventCountAggregateOutputType> | number
+        }
+      }
+    }
     VehicleMake: {
       payload: Prisma.$VehicleMakePayload<ExtArgs>
       fields: Prisma.VehicleMakeFieldRefs
@@ -5222,10 +5372,35 @@ export const StaticPageScalarFieldEnum = {
   titleEn: 'titleEn',
   contentAr: 'contentAr',
   contentEn: 'contentEn',
+  isPublished: 'isPublished',
+  updatedById: 'updatedById',
+  version: 'version',
+  metaJson: 'metaJson',
   updatedAt: 'updatedAt'
 } as const
 
 export type StaticPageScalarFieldEnum = (typeof StaticPageScalarFieldEnum)[keyof typeof StaticPageScalarFieldEnum]
+
+
+export const PlatformAnnouncementScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  titleAr: 'titleAr',
+  titleEn: 'titleEn',
+  bodyAr: 'bodyAr',
+  bodyEn: 'bodyEn',
+  effectiveFrom: 'effectiveFrom',
+  expiresAt: 'expiresAt',
+  audience: 'audience',
+  settingKey: 'settingKey',
+  createdById: 'createdById',
+  auditMetadata: 'auditMetadata',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlatformAnnouncementScalarFieldEnum = (typeof PlatformAnnouncementScalarFieldEnum)[keyof typeof PlatformAnnouncementScalarFieldEnum]
 
 
 export const OrderPartScalarFieldEnum = {
@@ -5835,6 +6010,39 @@ export const PlatformSettingsScalarFieldEnum = {
 } as const
 
 export type PlatformSettingsScalarFieldEnum = (typeof PlatformSettingsScalarFieldEnum)[keyof typeof PlatformSettingsScalarFieldEnum]
+
+
+export const PlatformErrorEventScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  severity: 'severity',
+  errorCode: 'errorCode',
+  errorName: 'errorName',
+  message: 'message',
+  stackFingerprint: 'stackFingerprint',
+  userId: 'userId',
+  userRole: 'userRole',
+  userEmail: 'userEmail',
+  userPhone: 'userPhone',
+  pagePath: 'pagePath',
+  pageLabel: 'pageLabel',
+  httpMethod: 'httpMethod',
+  httpStatus: 'httpStatus',
+  requestPath: 'requestPath',
+  userAgent: 'userAgent',
+  deviceClass: 'deviceClass',
+  locale: 'locale',
+  correlationId: 'correlationId',
+  metadata: 'metadata',
+  occurrenceCount: 'occurrenceCount',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type PlatformErrorEventScalarFieldEnum = (typeof PlatformErrorEventScalarFieldEnum)[keyof typeof PlatformErrorEventScalarFieldEnum]
 
 
 export const VehicleMakeScalarFieldEnum = {
@@ -6490,6 +6698,34 @@ export type ListEnumShipmentStatusFieldRefInput<$PrismaModel> = FieldRefInputTyp
 
 
 /**
+ * Reference to a field of type 'PlatformErrorSource'
+ */
+export type EnumPlatformErrorSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformErrorSource'>
+    
+
+
+/**
+ * Reference to a field of type 'PlatformErrorSource[]'
+ */
+export type ListEnumPlatformErrorSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformErrorSource[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PlatformErrorSeverity'
+ */
+export type EnumPlatformErrorSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformErrorSeverity'>
+    
+
+
+/**
+ * Reference to a field of type 'PlatformErrorSeverity[]'
+ */
+export type ListEnumPlatformErrorSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformErrorSeverity[]'>
+    
+
+
+/**
  * Reference to a field of type 'ViolationTargetType'
  */
 export type EnumViolationTargetTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ViolationTargetType'>
@@ -6765,6 +7001,7 @@ export type GlobalOmitConfig = {
   offerRejection?: Prisma.OfferRejectionOmit
   auditLog?: Prisma.AuditLogOmit
   staticPage?: Prisma.StaticPageOmit
+  platformAnnouncement?: Prisma.PlatformAnnouncementOmit
   orderPart?: Prisma.OrderPartOmit
   notification?: Prisma.NotificationOmit
   returnRequest?: Prisma.ReturnRequestOmit
@@ -6793,6 +7030,7 @@ export type GlobalOmitConfig = {
   ratingImpactRule?: Prisma.RatingImpactRuleOmit
   withdrawalRequest?: Prisma.WithdrawalRequestOmit
   platformSettings?: Prisma.PlatformSettingsOmit
+  platformErrorEvent?: Prisma.PlatformErrorEventOmit
   vehicleMake?: Prisma.VehicleMakeOmit
   vehicleModel?: Prisma.VehicleModelOmit
   violationType?: Prisma.ViolationTypeOmit

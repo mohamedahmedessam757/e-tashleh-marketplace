@@ -27,6 +27,7 @@ import { AdminBilling } from './AdminBilling';
 import { AdminInvoicesHub } from './AdminInvoicesHub';
 import { AdminOrderInvoicePage } from './AdminOrderInvoicePage';
 import { AdminAuditLogs } from './AdminAuditLogs';
+import { AdminPlatformErrors } from './AdminPlatformErrors';
 import { AdminShipping } from './AdminShipping';
 import { AdminSettings } from './AdminSettings';
 import { AdminSupport } from './AdminSupport';
@@ -364,6 +365,9 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     if (subPath === 'audit-logs') {
         return <PermissionGuard page="audit-logs" action="view"><AdminAuditLogs /></PermissionGuard>;
     }
+    if (subPath === 'platform-errors') {
+        return <PermissionGuard page="platform-errors" action="view"><AdminPlatformErrors /></PermissionGuard>;
+    }
     if (subPath === 'shipping') {
         return <PermissionGuard page="shipping" action="view"><AdminShipping initialSearch={viewId} /></PermissionGuard>;
     }
@@ -371,7 +375,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         return <PermissionGuard page="shipping-carts" action="view"><AdminShippingCarts /></PermissionGuard>;
     }
     if (subPath === 'settings') {
-        return <PermissionGuard page="settings" action="view"><AdminSettings /></PermissionGuard>;
+        return <PermissionGuard page="settings" action="view"><AdminSettings onNavigate={navigate} /></PermissionGuard>;
     }
     if (subPath === 'support') {
         return <PermissionGuard page="support" action="view"><AdminSupport viewId={viewId} /></PermissionGuard>;

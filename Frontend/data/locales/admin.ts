@@ -11,6 +11,13 @@ export const admin = {
     shipping: 'إدارة الشحن',
     shippingCarts: 'سلال التجميع',
     auditLogs: 'سجل العمليات',
+    platformErrors: {
+      title: 'أخطاء المنصة',
+      subtitle: 'مراقبة أخطاء العملاء والتجار والأدمن',
+      top10: 'أكثر 10 أخطاء — آخر 24 ساعة',
+      correlated: 'أحداث مرتبطة',
+      resolve: 'وضع كمحلول',
+    },
     violations: 'المخالفات والعقوبات',
     accessControl: 'إدارة الوصول والحوكمة',
     verificationTasks: 'مهام المطابقة الميدانية',
@@ -81,9 +88,21 @@ export const admin = {
     },
     settingsTabs: {
       general: 'عام',
+      earnIncome: 'اكسب دخل معنا',
+      company: 'الشركة',
+      orders: 'الطلبات',
       financial: 'المالية',
       logistics: 'اللوجستيات',
       content: 'المحتوى'
+    },
+    settingsExtended: {
+      maintenanceAudit: 'تدقيق وضع الصيانة',
+      accessControlLink: 'فتح إدارة الوصول',
+      weightLimitsHint: 'يُفرض الحد الأدنى/الأقصى للوزن في مسارات الشحن عند إنشاء البوليصة.',
+      toggleAdminOff: 'إيقاف الحساب',
+      toggleAdminOn: 'تفعيل الحساب',
+      adminSuspended: 'موقوف',
+      policyBannerDismiss: 'إغلاق الإعلان',
     },
     financials: {
       title: 'المالية والعمولات',
@@ -1479,6 +1498,13 @@ export const admin = {
     disputes: 'Return & Dispute Center',
     shipping: 'Shipping Management',
     auditLogs: 'Audit Logs',
+    platformErrors: {
+      title: 'Platform Errors',
+      subtitle: 'Monitor errors across customers, merchants, and admins',
+      top10: 'Top 10 errors — last 24 hours',
+      correlated: 'Correlated events',
+      resolve: 'Mark resolved',
+    },
     violations: 'Violations & Penalties',
     accessControl: 'Access Control & Governance',
     verificationTasks: 'Verification Tasks',
@@ -1549,9 +1575,21 @@ export const admin = {
     },
     settingsTabs: {
       general: 'General',
+      earnIncome: 'Earn Income',
+      company: 'Company',
+      orders: 'Orders',
       financial: 'Financial',
       logistics: 'Logistics',
       content: 'Content'
+    },
+    settingsExtended: {
+      maintenanceAudit: 'Maintenance mode audit',
+      accessControlLink: 'Open Access Control',
+      weightLimitsHint: 'Min/max weight is enforced when creating shipments and waybills.',
+      toggleAdminOff: 'Deactivate account',
+      toggleAdminOn: 'Activate account',
+      adminSuspended: 'Suspended',
+      policyBannerDismiss: 'Dismiss announcement',
     },
     financials: {
       title: 'Financials & Commissions',

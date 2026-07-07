@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Award,
@@ -32,7 +32,7 @@ import { supabase } from '../../../services/supabase';
 import { client } from '../../../services/api/client';
 
 // Same origin as rest of app (axios injects access_token)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 // Types (must precede normalizePerformance)
 interface PerformanceData {

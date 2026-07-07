@@ -270,6 +270,10 @@ model User {
   adminPermission         AdminPermission?  @relation("UserPermissions")
   createdAdminPermissions AdminPermission[] @relation("PermissionCreator")
   updatedAdminPermissions AdminPermission[] @relation("PermissionUpdater")
+  staticPagesUpdated      StaticPage[]      @relation("StaticPageUpdater")
+  announcementsCreated    PlatformAnnouncement[] @relation("AnnouncementCreator")
+  platformErrors          PlatformErrorEvent[] @relation("PlatformErrorUser")
+  platformErrorsResolved  PlatformErrorEvent[] @relation("PlatformErrorResolver")
 
   // Payout & Stripe Details
   bankName            String? @map("bank_name")
@@ -740,15 +744,46 @@ model AuditLog {
 }
 
 model StaticPage {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug      String   @unique
-  titleAr   String?  @map("title_ar")
-  titleEn   String?  @map("title_en")
-  contentAr String?  @map("content_ar")
-  contentEn String?  @map("content_en")
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  titleAr     String?  @map("title_ar")
+  titleEn     String?  @map("title_en")
+  contentAr   String?  @map("content_ar")
+  contentEn   String?  @map("content_en")
+  isPublished Boolean  @default(true) @map("is_published")
+  updatedById String?  @map("updated_by") @db.Uuid
+  version     Int      @default(1)
+  metaJson    Json?    @default("{}") @map("meta_json")
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
+  updatedBy User? @relation("StaticPageUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([isPublished])
   @@map("static_pages")
+}
+
+model PlatformAnnouncement {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String    @unique
+  titleAr       String?   @map("title_ar")
+  titleEn       String?   @map("title_en")
+  bodyAr        String?   @map("body_ar")
+  bodyEn        String?   @map("body_en")
+  effectiveFrom DateTime  @default(now()) @map("effective_from") @db.Timestamptz
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz
+  audience      String    @default("ALL")
+  settingKey    String?   @map("setting_key")
+  createdById   String?   @map("created_by") @db.Uuid
+  auditMetadata Json?     @default("{}") @map("audit_metadata")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+
+  createdBy User? @relation("AnnouncementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([isActive, effectiveFrom, expiresAt])
+  @@index([audience])
+  @@map("platform_announcements")
 }
 
 model OrderPart {
@@ -1648,6 +1683,66 @@ model PlatformSettings {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("platform_settings")
+}
+
+enum PlatformErrorSource {
+  CLIENT
+  API
+  UNHANDLED
+
+  @@map("platform_error_source")
+}
+
+enum PlatformErrorSeverity {
+  INFO
+  WARN
+  ERROR
+  FATAL
+
+  @@map("platform_error_severity")
+}
+
+model PlatformErrorEvent {
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source            PlatformErrorSource
+  severity          PlatformErrorSeverity @default(ERROR)
+  errorCode         String?               @map("error_code")
+  errorName         String?               @map("error_name")
+  message           String
+  stackFingerprint  String?               @map("stack_fingerprint")
+  userId            String?               @map("user_id") @db.Uuid
+  userRole          String                @default("GUEST") @map("user_role")
+  userEmail         String?               @map("user_email")
+  userPhone         String?               @map("user_phone")
+  pagePath          String?               @map("page_path")
+  pageLabel         String?               @map("page_label")
+  httpMethod        String?               @map("http_method")
+  httpStatus        Int?                  @map("http_status")
+  requestPath       String?               @map("request_path")
+  userAgent         String?               @map("user_agent")
+  deviceClass       String                @default("unknown") @map("device_class")
+  locale            String?
+  correlationId     String                @map("correlation_id") @db.Uuid
+  metadata          Json                  @default("{}")
+  occurrenceCount   Int                   @default(1) @map("occurrence_count")
+  firstSeenAt       DateTime              @default(now()) @map("first_seen_at") @db.Timestamptz
+  lastSeenAt        DateTime              @default(now()) @map("last_seen_at") @db.Timestamptz
+  resolvedAt        DateTime?             @map("resolved_at") @db.Timestamptz
+  resolvedBy        String?               @map("resolved_by") @db.Uuid
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  user     User? @relation("PlatformErrorUser", fields: [userId], references: [id], onDelete: SetNull)
+  resolver User? @relation("PlatformErrorResolver", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@index([lastSeenAt(sort: Desc)])
+  @@index([correlationId])
+  @@index([stackFingerprint, lastSeenAt(sort: Desc)])
+  @@index([userEmail])
+  @@index([userPhone])
+  @@index([pagePath])
+  @@index([errorName])
+  @@index([source, severity])
+  @@map("platform_error_events")
 }
 
 // -----------------------------------------------------

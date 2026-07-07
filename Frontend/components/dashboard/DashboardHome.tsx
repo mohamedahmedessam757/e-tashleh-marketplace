@@ -9,6 +9,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useOrderStore } from '../../stores/useOrderStore';
 import { useProfileStore } from '../../stores/useProfileStore';
 import { PendingStoreReviewBanner } from './shared/PendingStoreReviewBanner';
+import { PolicyChangeBanner } from '../ui/PolicyChangeBanner';
 import { isAcceptedOfferStatus } from '../../utils/offerStatusHelpers';
 
 interface DashboardHomeProps {
@@ -105,6 +106,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
             animate="show"
             className="space-y-8"
         >
+
+            <motion.div variants={itemVariants}>
+                <PolicyChangeBanner audience="CUSTOMER" />
+            </motion.div>
 
             <motion.div variants={itemVariants}>
                 <PendingStoreReviewBanner onNavigate={onNavigate} />

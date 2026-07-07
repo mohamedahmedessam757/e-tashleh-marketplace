@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Mail, ArrowRight, ArrowLeft, Phone, Info, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { SITE_WHOLESALE_EMAIL } from '../config/site';
+import { siteContacts } from '../config/site';
 import { LanguageToggle } from './ui/LanguageToggle';
 
 interface WholesaleScreenProps {
@@ -80,10 +80,10 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                                     {t.wholesale?.emailLabel || 'البريد الإلكتروني'}
                                 </p>
                                 <a
-                                    href={`mailto:${SITE_WHOLESALE_EMAIL}`}
+                                    href={`mailto:${siteContacts.wholesale}`}
                                     className="text-2xl md:text-3xl font-bold text-white hover:text-[#2E965E] transition-colors dir-ltr font-mono"
                                 >
-                                    {t.wholesale?.email || SITE_WHOLESALE_EMAIL}
+                                    {t.wholesale?.email || siteContacts.wholesale}
                                 </a>
                             </div>
 
@@ -102,7 +102,7 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                             <a
-                                href={`mailto:${SITE_WHOLESALE_EMAIL}`}
+                                href={`mailto:${siteContacts.wholesale}`}
                                 className="flex items-center justify-center gap-2 bg-[#2E965E] hover:bg-[#257a4d] text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-[#2E965E]/20 active:scale-95"
                             >
                                 <Send size={18} />

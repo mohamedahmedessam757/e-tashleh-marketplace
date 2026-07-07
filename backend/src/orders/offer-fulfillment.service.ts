@@ -15,7 +15,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrderStateMachine } from './fsm/order-state-machine.service';
 
-import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from './order-time.constants';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import { aggregateMultiItemDeliveryStatus } from './offer-resolution.helpers';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
@@ -42,6 +42,7 @@ export class OfferFulfillmentService {
         private fsm: OrderStateMachine,
         private auditLogs: AuditLogsService,
         private notifications: NotificationsService,
+        private orderDurationConfig: OrderDurationConfigService,
     ) {}
 
     private isAcceptedOffer(status: string) {
@@ -677,7 +678,7 @@ export class OfferFulfillmentService {
 
     getOfferReturnWindowEndsAt(offer: { deliveredAt?: Date | null }) {
         if (!offer.deliveredAt) return null;
-        const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        const windowMs = this.orderDurationConfig.getReturnDisputeMsSync();
         return new Date(offer.deliveredAt.getTime() + windowMs);
     }
 
@@ -760,8 +761,9 @@ export class OfferFulfillmentService {
         }
         const endsAt = this.getOfferReturnWindowEndsAt(offer);
         if (!endsAt || Date.now() > endsAt.getTime()) {
+            const returnHours = this.orderDurationConfig.getReturnWindowHoursSync();
             throw new BadRequestException(
-                `Return/dispute window (${POST_DELIVERY_RETURN_DISPUTE_HOURS} hours) has expired for "${partName}".`,
+                `Return/dispute window (${returnHours} hours) has expired for "${partName}".`,
             );
         }
     }
@@ -770,7 +772,7 @@ export class OfferFulfillmentService {
         offerId: string,
         reason = 'System: Auto-completed after return/dispute window expired',
     ) {
-        const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        const windowMs = this.orderDurationConfig.getReturnDisputeMsSync();
         const windowEnd = new Date(Date.now() - windowMs);
 
         const txnResult = await this.prisma.$transaction(async (tx) => {

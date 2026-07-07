@@ -23,6 +23,7 @@ import { useOrderChatStore } from '../../stores/useOrderChatStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { TrackingView } from './tracking/TrackingView';
 import { ReviewModal } from './reviews/ReviewModal';
+import { PolicyChangeBanner } from '../ui/PolicyChangeBanner';
 import { ReturnRequestModal } from './resolution/ReturnRequestModal';
 import { DisputeModal } from './resolution/DisputeModal';
 import { OrderExpiredModal } from './OrderExpiredModal';
@@ -714,6 +715,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+
+            <PolicyChangeBanner audience="CUSTOMER" />
 
             {/* Chat Initiation Loading Overlay */}
             {chatLoading && (

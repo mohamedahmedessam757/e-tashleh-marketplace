@@ -6,6 +6,9 @@ import { Container } from '../ui/Container';
 import { GlassCard } from '../ui/GlassCard';
 import { LanguageToggle } from '../ui/LanguageToggle';
 import { businessLicenseSections } from '../../data/businessLicense';
+import { usePublicConfig } from '../../hooks/usePublicConfig';
+import { useStaticPage } from '../../hooks/useStaticPage';
+import { StaticPageBody } from './StaticPageBody';
 
 interface BusinessLicensePageProps {
   onBack: () => void;
@@ -16,6 +19,29 @@ export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const ArrowIcon = isAr ? ArrowRight : ArrowLeft;
+  const { config } = usePublicConfig();
+  const { page: registryPage, error: registryError } = useStaticPage('economic-registry');
+  const company = (config?.company || {}) as Record<string, string>;
+
+  const legalSubtitle = isAr
+    ? `${company.legalNameAr || 'إليب ش.م.ح. - ذ.م.م'} | ${company.legalNameEn || 'Ellipp FZ_LLC'}`
+    : `${company.legalNameEn || 'Ellipp FZ_LLC'} | ${company.legalNameAr || 'إليب ش.م.ح. - ذ.م.م'}`;
+
+  const registryContent = !registryError && registryPage
+    ? (isAr ? registryPage.contentAr : registryPage.contentEn) || registryPage.contentEn || registryPage.contentAr
+    : null;
+
+  const resolveFieldValue = (field: { labelEn: string; valueAr: string; valueEn: string }) => {
+    const labelEn = field.labelEn.toLowerCase();
+    if (company.economicRegistryNumber && labelEn.includes('ern')) return company.economicRegistryNumber;
+    if (company.licenseNumber && labelEn.includes('bl local')) return company.licenseNumber;
+    if (company.crNumber && labelEn.includes('commercial register')) return company.crNumber;
+    if (company.taxNumber && labelEn.includes('tax')) return company.taxNumber;
+    if (company.legalNameAr && labelEn.includes('arabic')) return company.legalNameAr;
+    if (company.legalNameEn && labelEn.includes('english')) return company.legalNameEn;
+    if (company.licenseExpiry && labelEn.includes('expiry')) return company.licenseExpiry;
+    return isAr ? field.valueAr : field.valueEn;
+  };
 
   return (
     <div className="min-h-screen bg-[#1A1814] text-white">
@@ -53,7 +79,7 @@ export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack
             {isAr ? 'السجل الاقتصادي الوطني' : 'National Economic Register'}
           </h1>
           <p className="text-white/50 text-sm">
-            {isAr ? 'إليب ش.م.ح. - ذ.م.م | Ellipp FZ_LLC' : 'Ellipp FZ_LLC | إليب ش.م.ح. - ذ.م.م'}
+            {legalSubtitle}
           </p>
 
           {onVerifyRegistry && (
@@ -69,6 +95,12 @@ export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack
             </button>
           )}
         </motion.div>
+
+        {registryContent && registryContent.length > 40 && (
+          <GlassCard className="p-6 md:p-8 mb-8 border-gold-500/10 max-w-4xl mx-auto">
+            <StaticPageBody content={registryContent} className="text-sm md:text-base" />
+          </GlassCard>
+        )}
 
         <div className="space-y-6 max-w-4xl mx-auto">
           {businessLicenseSections.map((section, sectionIdx) => (
@@ -94,7 +126,7 @@ export const BusinessLicensePage: React.FC<BusinessLicensePageProps> = ({ onBack
                         field.valueEn === field.valueAr && /[A-Za-z]/.test(field.valueEn) ? 'dir-ltr font-mono' : ''
                       }`}
                     >
-                      {isAr ? field.valueAr : field.valueEn}
+                      {resolveFieldValue(field)}
                     </div>
                   </div>
                 ))}

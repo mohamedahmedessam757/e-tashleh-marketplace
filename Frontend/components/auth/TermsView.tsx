@@ -1,11 +1,15 @@
 import React from 'react';
 import { FileText, Shield, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useStaticPage } from '../../hooks/useStaticPage';
+import { StaticPageBody } from '../legal/StaticPageBody';
 
 export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal?: boolean }> = ({ initialSection = 'terms', isModal = false }) => {
     const { t, language, ensureLegalContent } = useLanguage();
-    // Default to first item if terms, or first privacy item if privacy.
-    // Logic below will handle valid setting.
+    const isAr = language === 'ar';
+    const { page: termsPage, error: termsError } = useStaticPage('terms');
+    const { page: privacyPage, error: privacyError } = useStaticPage('privacy');
+
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const privacyRef = React.useRef<HTMLDivElement>(null);
@@ -16,16 +20,12 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
 
     React.useEffect(() => {
         if (initialSection === 'privacy') {
-            // Expand first privacy item (index 100)
             setExpandedIndex(100);
-            // Scroll to Privacy Section
             setTimeout(() => {
                 privacyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300); // 300ms delay to allow animation/rendering
+            }, 300);
         } else {
-            // Expand first terms item
             setExpandedIndex(0);
-            // Scroll to top
             if (containerRef.current) containerRef.current.scrollTop = 0;
         }
     }, [initialSection]);
@@ -33,6 +33,15 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
     const toggleAccordion = (index: number) => {
         setExpandedIndex(expandedIndex === index ? null : index);
     };
+
+    const termsApiContent = !termsError && termsPage
+        ? (isAr ? termsPage.contentAr : termsPage.contentEn) || termsPage.contentEn || termsPage.contentAr
+        : null;
+    const privacyApiContent = !privacyError && privacyPage
+        ? (isAr ? privacyPage.contentAr : privacyPage.contentEn) || privacyPage.contentEn || privacyPage.contentAr
+        : null;
+    const useTermsApi = Boolean(termsApiContent && termsApiContent.length > 80);
+    const usePrivacyApi = Boolean(privacyApiContent && privacyApiContent.length > 80);
 
     return (
         <div className="space-y-6">
@@ -45,65 +54,31 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
             </div>
 
             <div ref={containerRef} className={`space-y-4 ${isModal ? '' : 'h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gold-500/30 scrollbar-track-white/5'}`}>
-                {/* Terms Content */}
-                {t.legal.termsContent.map((item, idx) => (
-                    <div
-                        key={idx}
-                        className="bg-white/5 border border-white/5 rounded-xl overflow-hidden"
-                    >
-                        <button
-                            onClick={() => toggleAccordion(idx)}
-                            className={`w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors ${language === 'ar' ? 'text-right' : 'text-left'}`}
-                        >
-                            <h4 className={`text-sm md:text-base font-bold ${expandedIndex === idx ? 'text-gold-400' : 'text-white'}`}>
-                                {item.title}
-                            </h4>
-                            <ChevronDown
-                                className={`text-white/40 w-4 h-4 transition-transform duration-300 ${expandedIndex === idx ? 'rotate-180 text-gold-500' : ''}`}
-                            />
-                        </button>
-                        {expandedIndex === idx && (
-                            <div className="p-4 pt-0 text-white/70 leading-relaxed border-t border-white/5 text-xs md:text-sm">
-                                {Array.isArray(item.content) ? (
-                                    <ul className={`space-y-3 ${language === 'ar' ? 'pr-2' : 'pl-2'}`}>
-                                        {item.content.map((line, i) => (
-                                            <li key={i} className="flex items-start gap-3">
-                                                <span className="text-gold-500 mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-current" />
-                                                <span className="flex-1">{line.replace(/^•\s*/, '')}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="whitespace-pre-line">{item.content}</div>
-                                )}
-                            </div>
-                        )}
+                {useTermsApi ? (
+                    <div className="bg-white/5 border border-white/5 rounded-xl p-6">
+                        <h4 className="text-base font-bold text-gold-400 mb-4">
+                            {isAr ? termsPage?.titleAr || termsPage?.titleEn : termsPage?.titleEn || termsPage?.titleAr}
+                        </h4>
+                        <StaticPageBody content={termsApiContent!} className="text-xs md:text-sm" />
                     </div>
-                ))}
-
-                {/* Privacy Content appended for completeness in this view */}
-                <div ref={privacyRef} className="pt-6 border-t border-white/10 mt-6">
-                    <div className="flex items-center gap-2 mb-4 text-white/80 font-bold">
-                        <Shield className="w-5 h-5 text-gold-500" />
-                        <span>{t.legal.tabs.privacy}</span>
-                    </div>
-                    {t.legal.privacyContent.map((item, idx) => (
+                ) : (
+                    t.legal.termsContent.map((item, idx) => (
                         <div
-                            key={`p-${idx}`}
-                            className="bg-white/5 border border-white/5 rounded-xl overflow-hidden mb-4"
+                            key={idx}
+                            className="bg-white/5 border border-white/5 rounded-xl overflow-hidden"
                         >
                             <button
-                                onClick={() => toggleAccordion(idx + 100)}
+                                onClick={() => toggleAccordion(idx)}
                                 className={`w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors ${language === 'ar' ? 'text-right' : 'text-left'}`}
                             >
-                                <h4 className={`text-sm md:text-base font-bold ${expandedIndex === idx + 100 ? 'text-gold-400' : 'text-white'}`}>
+                                <h4 className={`text-sm md:text-base font-bold ${expandedIndex === idx ? 'text-gold-400' : 'text-white'}`}>
                                     {item.title}
                                 </h4>
                                 <ChevronDown
-                                    className={`text-white/40 w-4 h-4 transition-transform duration-300 ${expandedIndex === idx + 100 ? 'rotate-180 text-gold-500' : ''}`}
+                                    className={`text-white/40 w-4 h-4 transition-transform duration-300 ${expandedIndex === idx ? 'rotate-180 text-gold-500' : ''}`}
                                 />
                             </button>
-                            {expandedIndex === idx + 100 && (
+                            {expandedIndex === idx && (
                                 <div className="p-4 pt-0 text-white/70 leading-relaxed border-t border-white/5 text-xs md:text-sm">
                                     {Array.isArray(item.content) ? (
                                         <ul className={`space-y-3 ${language === 'ar' ? 'pr-2' : 'pl-2'}`}>
@@ -120,7 +95,57 @@ export const TermsView: React.FC<{ initialSection?: 'terms' | 'privacy', isModal
                                 </div>
                             )}
                         </div>
-                    ))}
+                    ))
+                )}
+
+                <div ref={privacyRef} className="pt-6 border-t border-white/10 mt-6">
+                    <div className="flex items-center gap-2 mb-4 text-white/80 font-bold">
+                        <Shield className="w-5 h-5 text-gold-500" />
+                        <span>{t.legal.tabs.privacy}</span>
+                    </div>
+                    {usePrivacyApi ? (
+                        <div className="bg-white/5 border border-white/5 rounded-xl p-6">
+                            <h4 className="text-base font-bold text-gold-400 mb-4">
+                                {isAr ? privacyPage?.titleAr || privacyPage?.titleEn : privacyPage?.titleEn || privacyPage?.titleAr}
+                            </h4>
+                            <StaticPageBody content={privacyApiContent!} className="text-xs md:text-sm" />
+                        </div>
+                    ) : (
+                        t.legal.privacyContent.map((item, idx) => (
+                            <div
+                                key={`p-${idx}`}
+                                className="bg-white/5 border border-white/5 rounded-xl overflow-hidden mb-4"
+                            >
+                                <button
+                                    onClick={() => toggleAccordion(idx + 100)}
+                                    className={`w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors ${language === 'ar' ? 'text-right' : 'text-left'}`}
+                                >
+                                    <h4 className={`text-sm md:text-base font-bold ${expandedIndex === idx + 100 ? 'text-gold-400' : 'text-white'}`}>
+                                        {item.title}
+                                    </h4>
+                                    <ChevronDown
+                                        className={`text-white/40 w-4 h-4 transition-transform duration-300 ${expandedIndex === idx + 100 ? 'rotate-180 text-gold-500' : ''}`}
+                                    />
+                                </button>
+                                {expandedIndex === idx + 100 && (
+                                    <div className="p-4 pt-0 text-white/70 leading-relaxed border-t border-white/5 text-xs md:text-sm">
+                                        {Array.isArray(item.content) ? (
+                                            <ul className={`space-y-3 ${language === 'ar' ? 'pr-2' : 'pl-2'}`}>
+                                                {item.content.map((line, i) => (
+                                                    <li key={i} className="flex items-start gap-3">
+                                                        <span className="text-gold-500 mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-current" />
+                                                        <span className="flex-1">{line.replace(/^•\s*/, '')}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="whitespace-pre-line">{item.content}</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

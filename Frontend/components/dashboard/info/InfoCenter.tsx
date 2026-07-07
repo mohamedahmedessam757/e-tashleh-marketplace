@@ -5,7 +5,7 @@ import { Info, Shield, FileText, HelpCircle, Mail, ChevronDown, CheckCircle2, Lo
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { GlassCard } from '../../ui/GlassCard';
 import { useOrderChatStore } from '../../../stores/useOrderChatStore'; // Import unified store
-import { SITE_CONTACT_EMAIL } from '../../../config/site';
+import { siteContacts } from '../../../config/site';
 
 export const InfoCenter: React.FC = () => {
   const { t, language } = useLanguage();
@@ -207,7 +207,7 @@ export const InfoCenter: React.FC = () => {
                       <div className="p-2 bg-gold-500/20 text-gold-400 rounded-lg"><Mail size={20} /></div>
                       <div>
                         <div className="text-[10px] text-white/40 uppercase">Email</div>
-                        <div className="text-sm font-bold text-white">{SITE_CONTACT_EMAIL}</div>
+                        <div className="text-sm font-bold text-white">{siteContacts.contact}</div>
                       </div>
                     </div>
                     <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center gap-3">

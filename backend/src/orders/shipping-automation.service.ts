@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OrdersService } from './orders.service';
 import { OrderStatus, ActorType } from '@prisma/client';
 import { WaybillsService } from '../waybills/waybills.service';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 
 @Injectable()
 export class ShippingAutomationService {
@@ -13,6 +14,7 @@ export class ShippingAutomationService {
         private readonly prisma: PrismaService,
         private readonly ordersService: OrdersService,
         private readonly waybillsService: WaybillsService,
+        private readonly orderDurationConfig: OrderDurationConfigService,
     ) {}
 
     /**
@@ -49,10 +51,11 @@ export class ShippingAutomationService {
      */
     @Cron(CronExpression.EVERY_6_HOURS)
     async handleAutoShipping() {
-        this.logger.log('🚀 Starting 7-day Auto-Shipping audit...');
+        this.logger.log('🚀 Starting assembly cart auto-shipping audit...');
 
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - assemblyDays);
 
         try {
             // Find offers that are:
@@ -66,7 +69,7 @@ export class ShippingAutomationService {
                     payments: {
                         some: {
                             status: 'SUCCESS',
-                            paidAt: { lte: sevenDaysAgo }
+                            paidAt: { lte: cutoff }
                         }
                     },
                     // Only for orders in phases that support assembly cart

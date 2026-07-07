@@ -97,7 +97,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
     set({ isLoading: true, error: null, customersSearchQuery: search });
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       const query = params.toString();
@@ -114,7 +114,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
   fetchCustomerById: async (id: string) => {
     const token = localStorage.getItem('access_token');
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
     const response = await fetch(`${API_URL}/users/admin/customers/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -144,7 +144,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const response = await fetch(`${API_URL}/users/admin/customers/${id}/status`, {
         method: 'PATCH',
         headers: {
@@ -173,7 +173,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const response = await fetch(`${API_URL}/users/admin/customers/${id}/update`, {
         method: 'PATCH',
         headers: {
@@ -200,7 +200,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const response = await fetch(`${API_URL}/users/admin/customers/${id}/notes`, {
         method: 'PATCH',
         headers: {
@@ -220,7 +220,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   updateCustomerRestrictions: async (id, data) => {
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const response = await fetch(`${API_URL}/users/admin/customers/${id}/restrictions`, {
         method: 'PATCH',
         headers: {
@@ -244,7 +244,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   clearCustomerRestrictions: async (id, signatureData) => {
     try {
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
       const response = await fetch(`${API_URL}/users/admin/customers/${id}/clear-restrictions`, {
         method: 'POST',
         headers: {

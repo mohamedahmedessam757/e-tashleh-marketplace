@@ -4,6 +4,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as bcrypt from 'bcrypt';
 import { CreateAdminDto, UpdatePermissionsDto, ChangeAdminPasswordDto } from './dto/admin-permissions.dto';
+import { ToggleAdminStatusDto } from '../platform-settings/dto/settings-audit.dto';
 import { ActorType, UserRole } from '@prisma/client';
 
 @Injectable()
@@ -177,6 +178,77 @@ export class AdminPermissionsService {
     });
     if (!admin) throw new NotFoundException('Admin not found');
     return admin;
+  }
+
+  async toggleAdminStatus(
+    targetUserId: string,
+    dto: ToggleAdminStatusDto,
+    actorId: string,
+  ) {
+    if (targetUserId === actorId && !dto.isActive) {
+      throw new ForbiddenException('You cannot deactivate your own account');
+    }
+
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: { adminPermission: true },
+    });
+    if (!targetUser) throw new NotFoundException('Admin not found');
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.adminPermission.upsert({
+        where: { userId: targetUserId },
+        update: {
+          isActive: dto.isActive,
+          updatedById: actorId,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId: targetUserId,
+          permissions: {},
+          isActive: dto.isActive,
+          createdById: actorId,
+          updatedById: actorId,
+        },
+      });
+
+      if (!dto.isActive) {
+        await tx.user.update({
+          where: { id: targetUserId },
+          data: {
+            status: 'SUSPENDED',
+            suspendReason: `Administrative deactivation: ${dto.reason}`,
+          },
+        });
+      } else if (targetUser.status === 'SUSPENDED') {
+        await tx.user.update({
+          where: { id: targetUserId },
+          data: {
+            status: 'ACTIVE',
+            suspendReason: null,
+            suspendedUntil: null,
+          },
+        });
+      }
+
+      await this.auditLogs.logAction({
+        action: 'ADMIN_ACCOUNT_TOGGLED',
+        entity: 'USER',
+        actorType: ActorType.ADMIN,
+        actorId,
+        reason: dto.reason,
+        metadata: {
+          targetUserId,
+          email: targetUser.email,
+          isActive: dto.isActive,
+          adminName: dto.adminName,
+          adminSignature: dto.adminSignature,
+          adminSignatureType: dto.adminSignatureType,
+        },
+      }, tx);
+
+      return { success: true, isActive: dto.isActive };
+    });
   }
 
   async deleteAdmin(targetUserId: string, actorId: string) {

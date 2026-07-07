@@ -353,7 +353,7 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
 
     subscribeToChat: (chatId: string) => {
         const initSocket = () => {
-            const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
+            const baseUrl = (import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net/api').replace(/\/api\/?$/, '');
             const token = localStorage.getItem('access_token');
             const socket = io(`${baseUrl}/chat`, {
                 path: '/socket.io',

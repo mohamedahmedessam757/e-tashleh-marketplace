@@ -37,6 +37,7 @@ export const PERMISSION_PAGES = {
   BILLING: 'billing',
   INVOICES: 'invoices',
   AUDIT: 'audit-logs',
+  PLATFORM_ERRORS: 'platform-errors',
   SECURITY: 'security-audit',
   SETTINGS: 'settings',
   SUPPORT: 'support',
@@ -138,7 +139,11 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
   'settings': {
     fields: ['SYSTEM_HEALTH'],
     actions: ['EXPORT_REPORTS'],
-    tabs: ['GENERAL', 'FINANCIAL', 'LOGISTICS', 'CONTENT', 'CATALOG', 'MAINTENANCE']
+    tabs: ['GENERAL', 'EARN_INCOME', 'COMPANY', 'ORDERS', 'FINANCIAL', 'LOGISTICS', 'CONTENT', 'CATALOG', 'MAINTENANCE']
+  },
+  'platform-errors': {
+    fields: [],
+    actions: ['EXPORT_REPORTS'],
   },
   'verification-tasks': {
     fields: [],

@@ -14,7 +14,7 @@ import {
   IconBuilding,
 } from './ui/FooterIcons';
 import { useLanguage } from '../contexts/LanguageContext';
-import { LANDING_WHATSAPP_NUMBER } from '../config/site';
+import { siteContacts } from '../config/site';
 
 interface LandingFooterProps {
     onOpenSupport: () => void;
@@ -98,7 +98,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
 
                         <div className="flex flex-col items-center gap-2 group cursor-pointer">
                             <a
-                                href={`https://wa.me/${LANDING_WHATSAPP_NUMBER}`}
+                                href={`https://wa.me/${siteContacts.whatsapp}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:bg-[#1DA851] transition-all transform hover:scale-105 hover:shadow-[#25D366]/40"

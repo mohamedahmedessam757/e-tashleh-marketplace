@@ -37,6 +37,7 @@ import {
   parseStoredPhone,
 } from '../../../utils/phoneCountries';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SettingsAuditModal, SettingsAuditPayload } from './SettingsAuditModal';
 
 // --- Types ---
 interface AdminAccount {
@@ -62,7 +63,8 @@ export const AdminAccessControl: React.FC = () => {
     createAdmin, 
     updatePermissions, 
     deleteAdmin, 
-    updateAdminPassword 
+    updateAdminPassword,
+    toggleAdminStatus,
   } = useAdminPermissionsStore();
 
   // --- UI State ---
@@ -92,6 +94,38 @@ export const AdminAccessControl: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState('');
+  const [toggleTarget, setToggleTarget] = useState<AdminAccount | null>(null);
+  const [showToggleAudit, setShowToggleAudit] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  const isAdminActive = (admin: AdminAccount) => admin.adminPermission?.isActive !== false;
+
+  const handleToggleStatus = (admin: AdminAccount) => {
+    if (admin.role === 'SUPER_ADMIN') return;
+    setToggleTarget(admin);
+    setShowToggleAudit(true);
+  };
+
+  const confirmToggleStatus = async (audit: SettingsAuditPayload) => {
+    if (!toggleTarget) return;
+    setIsToggling(true);
+    try {
+      const nextActive = !isAdminActive(toggleTarget);
+      const ok = await toggleAdminStatus(toggleTarget.id, {
+        isActive: nextActive,
+        reason: audit.reason,
+        adminName: audit.adminName,
+        adminSignature: audit.adminSignature,
+        adminSignatureType: audit.adminSignatureType,
+      });
+      if (ok) {
+        setShowToggleAudit(false);
+        setToggleTarget(null);
+      }
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   useEffect(() => {
     fetchAdminList();
@@ -493,7 +527,7 @@ export const AdminAccessControl: React.FC = () => {
             {language === 'ar' ? 'حسابات نشطة' : 'Active Accounts'}
           </div>
           <div className="text-3xl font-bold text-white">
-            {adminList.filter(a => a.status === 'ACTIVE').length}
+            {adminList.filter(a => isAdminActive(a) && a.status === 'ACTIVE').length}
           </div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
@@ -576,9 +610,13 @@ export const AdminAccessControl: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${admin.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_rgba(34,197,94,0.5)]`} />
-                        <span className="text-white/60 text-xs">{admin.status}</span>
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${isAdminActive(admin) && admin.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_rgba(34,197,94,0.5)]`} />
+                          <span className="text-white/60 text-xs">
+                            {isAdminActive(admin) ? admin.status : (language === 'ar' ? 'موقوف' : 'Suspended')}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center text-white/40 text-xs font-mono">
@@ -603,6 +641,23 @@ export const AdminAccessControl: React.FC = () => {
                         >
                           <Key className="w-4 h-4" />
                         </button>
+                        {admin.role !== 'SUPER_ADMIN' && (
+                          <button
+                            onClick={() => handleToggleStatus(admin)}
+                            className={`p-2 rounded-lg border border-white/5 transition-all ${
+                              isAdminActive(admin)
+                                ? 'bg-white/5 hover:bg-orange-500/20 text-white/60 hover:text-orange-400'
+                                : 'bg-green-500/10 hover:bg-green-500/20 text-green-400 hover:text-green-300'
+                            }`}
+                            title={
+                              isAdminActive(admin)
+                                ? (language === 'ar' ? 'إيقاف الحساب' : 'Deactivate account')
+                                : (language === 'ar' ? 'تفعيل الحساب' : 'Activate account')
+                            }
+                          >
+                            {isAdminActive(admin) ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                          </button>
+                        )}
                         {admin.role !== 'SUPER_ADMIN' && (
                           <button 
                             onClick={() => {
@@ -1238,6 +1293,22 @@ export const AdminAccessControl: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <SettingsAuditModal
+        isOpen={showToggleAudit}
+        onClose={() => { setShowToggleAudit(false); setToggleTarget(null); }}
+        onConfirm={confirmToggleStatus}
+        title={
+          toggleTarget && isAdminActive(toggleTarget)
+            ? (language === 'ar' ? 'إيقاف حساب إداري' : 'Deactivate admin account')
+            : (language === 'ar' ? 'تفعيل حساب إداري' : 'Activate admin account')
+        }
+        subtitle={
+          toggleTarget
+            ? `${toggleTarget.name} (${toggleTarget.email})`
+            : undefined
+        }
+      />
     </div>
   );
 };

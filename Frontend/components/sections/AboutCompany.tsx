@@ -4,9 +4,20 @@ import { GlassCard } from '../ui/GlassCard';
 import { motion } from 'framer-motion';
 import { Target, Lightbulb, HeartHandshake, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useStaticPage } from '../../hooks/useStaticPage';
+import { StaticPageBody } from '../legal/StaticPageBody';
 
 export const AboutCompany: React.FC = () => {
   const { t, language } = useLanguage();
+  const isAr = language === 'ar';
+  const { page, error } = useStaticPage('about');
+  const apiDescription = !error && page
+    ? (isAr ? page.contentAr : page.contentEn) || page.contentEn || page.contentAr
+    : null;
+  const companyTitle = !error && page
+    ? (isAr ? page.titleAr || page.titleEn : page.titleEn || page.titleAr)
+    : t.about.companyName;
+  const description = apiDescription && apiDescription.length > 40 ? apiDescription : t.about.description;
 
   return (
     <section id="about" className="py-12 md:py-20 relative overflow-hidden">
@@ -18,11 +29,15 @@ export const AboutCompany: React.FC = () => {
             <div className="text-center mb-8 md:mb-16">
                 <span className="text-gold-400 text-xs md:text-sm font-bold tracking-wider uppercase mb-2 block">{t.about.title}</span>
                 <h2 className="text-2xl md:text-5xl font-bold text-white mb-4 md:mb-6">
-                    {t.about.companyName}
+                    {companyTitle}
                 </h2>
+                {apiDescription && apiDescription.length > 40 ? (
+                  <StaticPageBody content={description} className="text-white/70 max-w-3xl mx-auto text-sm md:text-lg px-2" />
+                ) : (
                 <p className="text-white/70 max-w-3xl mx-auto leading-relaxed text-sm md:text-lg px-2">
-                    {t.about.description}
+                    {description}
                 </p>
+                )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-start">

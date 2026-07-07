@@ -1,14 +1,9 @@
+const PRODUCTION_API_URL = 'https://api.e-tashleh.net';
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
-const getDefaultApiUrl = () => {
-    if (typeof window === 'undefined') {
-        return 'http://localhost:3000';
-    }
-
-    return `http://${window.location.hostname}:3000`;
-};
+const getDefaultApiUrl = () => PRODUCTION_API_URL;
 
 export const resolveApiUrl = () => {
     const configuredUrl = import.meta.env.VITE_API_URL?.trim();

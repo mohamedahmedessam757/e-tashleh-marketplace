@@ -3,12 +3,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PlatformSettingsService } from './platform-settings.service';
+import { SettingsAuditDto } from './dto/settings-audit.dto';
+import { PlatformAnnouncementsService } from '../platform-announcements/platform-announcements.service';
 
 @Controller('admin/platform-settings')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Permissions('settings', 'view')
 export class PlatformSettingsController {
-  constructor(private readonly settingsService: PlatformSettingsService) {}
+  constructor(
+    private readonly settingsService: PlatformSettingsService,
+    private readonly announcements: PlatformAnnouncementsService,
+  ) {}
 
   @Get()
   async getAll() {
@@ -25,17 +30,55 @@ export class PlatformSettingsController {
   async update(
     @Request() req,
     @Param('key') key: string,
-    @Body() body: { value: any; reason?: string },
+    @Body() body: SettingsAuditDto | { value: any; reason?: string },
   ) {
     const context = this.getContext(req);
-    return this.settingsService.updateSetting(
+    const audit = body as SettingsAuditDto;
+    const value = audit.value ?? (body as { value: unknown }).value;
+    const reason = audit.reason ?? (body as { reason?: string }).reason;
+
+    let beforeOrderDurations: Record<string, unknown> = {};
+    if (key === 'system_config') {
+      try {
+        const oldCfg = (await this.settingsService.getSetting(key)) as Record<string, unknown>;
+        beforeOrderDurations = (oldCfg?.orderDurations ?? {}) as Record<string, unknown>;
+      } catch {
+        beforeOrderDurations = {};
+      }
+    }
+
+    const result = await this.settingsService.updateSetting(
       req.user.id,
       req.user.email,
       key,
-      body.value,
-      body.reason,
+      value,
+      reason,
       context,
+      {
+        adminName: audit.adminName,
+        adminSignature: audit.adminSignature,
+        adminSignatureType: audit.adminSignatureType,
+      },
     );
+
+    if (key === 'system_config' && audit.adminName && audit.adminSignature) {
+      const cfg = value as Record<string, unknown>;
+      const after = (cfg?.orderDurations ?? {}) as Record<string, unknown>;
+      if (Object.keys(after).length) {
+        await this.announcements.createOrderDurationChangeAnnouncement(
+          req.user.id,
+          beforeOrderDurations,
+          after,
+          {
+            reason: reason || 'Order duration update',
+            adminName: audit.adminName,
+            adminSignature: audit.adminSignature,
+          },
+        );
+      }
+    }
+
+    return result;
   }
 
   @Get('activity/logs')

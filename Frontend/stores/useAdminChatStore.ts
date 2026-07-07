@@ -4,7 +4,7 @@ import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 import { getCurrentUserId } from '../utils/auth';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 export interface AdminChatMessage {
     id: string;

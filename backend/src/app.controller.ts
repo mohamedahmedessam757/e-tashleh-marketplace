@@ -1,10 +1,17 @@
 import { Controller, Get, Header } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
-import { PlatformSettingsService } from './platform-settings/platform-settings.service';
+import { PlatformBrandingService } from './common/platform-branding.service';
+import { OrderDurationConfigService } from './common/order-duration-config.service';
+import { LogisticsConfigService } from './common/logistics-config.service';
 
 @Controller()
 export class AppController {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private readonly platformBranding: PlatformBrandingService,
+        private readonly orderDurationConfig: OrderDurationConfigService,
+        private readonly logisticsConfig: LogisticsConfigService,
+    ) {}
 
     @Get()
     getRoot() {
@@ -32,7 +39,6 @@ export class AppController {
             return { maintenanceMode: false };
         }
         
-        // Safely parse the stored value — handles both object and string formats
         const value = statusSetting.settingValue as any;
         
         return {
@@ -43,13 +49,50 @@ export class AppController {
         };
     }
 
+    @Get('system/public-config')
+    @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    async getPublicConfig() {
+        const [branding, orderDurations, logistics, statusSetting, configRow] = await Promise.all([
+            this.platformBranding.getConfig(),
+            this.orderDurationConfig.getConfig(),
+            this.logisticsConfig.getConfig(),
+            this.prisma.platformSettings.findUnique({ where: { settingKey: 'system_status' } }),
+            this.prisma.platformSettings.findUnique({ where: { settingKey: 'system_config' } }),
+        ]);
+
+        const status = (statusSetting?.settingValue ?? {}) as Record<string, unknown>;
+        const company = ((configRow?.settingValue as Record<string, unknown>)?.company ?? {}) as Record<string, unknown>;
+
+        return {
+            general: this.platformBranding.getPublicSnapshot(branding),
+            orderDurations,
+            logistics: this.logisticsConfig.getPublicSnapshot(logistics),
+            company: {
+                legalNameAr: company.legalNameAr ?? null,
+                legalNameEn: company.legalNameEn ?? null,
+                crNumber: company.crNumber ?? null,
+                taxNumber: company.taxNumber ?? null,
+                licenseNumber: company.licenseNumber ?? null,
+                licenseExpiry: company.licenseExpiry ?? null,
+                hqAddressAr: company.hqAddressAr ?? null,
+                hqAddressEn: company.hqAddressEn ?? null,
+                economicRegistryNumber: company.economicRegistryNumber ?? null,
+                nomoDocumentUrl: company.nomoDocumentUrl ?? null,
+            },
+            maintenance: {
+                maintenanceMode: status?.maintenanceMode === true,
+                endTime: status?.endTime ?? null,
+                maintenanceMsgAr: status?.maintenanceMsgAr ?? null,
+                maintenanceMsgEn: status?.maintenanceMsgEn ?? null,
+            },
+        };
+    }
+
+    /** @deprecated Use GET /system/public-config — returns sanitized subset only */
     @Get('system/config')
     async getSystemConfig() {
-        const configSetting = await this.prisma.platformSettings.findUnique({
-            where: { settingKey: 'system_config' }
-        });
-        
-        return configSetting?.settingValue || {};
+        const pub = await this.getPublicConfig();
+        return pub;
     }
 
     @Get('system/feature-flags')
@@ -64,12 +107,10 @@ export class AppController {
         
         const getVal = (key: string, defaultVal: boolean) => {
             const s = settings.find(x => x.settingKey === key);
-            // Handle both primitive boolean and JSON string format
             if (s) {
                 if (typeof s.settingValue === 'boolean') return s.settingValue;
                 if (typeof s.settingValue === 'string') return s.settingValue.toLowerCase() === 'true';
                 if (typeof s.settingValue === 'object' && s.settingValue !== null) {
-                    // Just in case it's stored as {"value": false}
                     const obj = s.settingValue as any;
                     if ('value' in obj) return obj.value;
                 }

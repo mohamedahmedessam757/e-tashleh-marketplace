@@ -7,11 +7,11 @@ export class StaticPagesController {
 
     @Get()
     findAll() {
-        return this.staticPagesService.findAll();
+        return this.staticPagesService.findAllPublished();
     }
 
     @Get(':slug')
     findOne(@Param('slug') slug: string) {
-        return this.staticPagesService.findOne(slug);
+        return this.staticPagesService.findPublishedBySlug(slug);
     }
 }

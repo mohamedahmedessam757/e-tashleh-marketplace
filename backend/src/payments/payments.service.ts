@@ -628,7 +628,7 @@ export class PaymentsService {
         const shippingAmount = Number(caseRecord.shippingRefund || 0);
         if (shippingAmount <= 0) throw new BadRequestException('No shipping cost to pay');
 
-        const baseUrl = (frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173').replace(
+        const baseUrl = (frontendUrl || process.env.FRONTEND_URL || 'https://e-tashleh.net').replace(
             /\/$/,
             '',
         );

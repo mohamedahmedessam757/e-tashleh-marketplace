@@ -4,6 +4,7 @@ import {
     UnauthorizedException,
     ConflictException,
     BadRequestException,
+    ForbiddenException,
 } from '@nestjs/common';
 import { ActorType } from '@prisma/client';
 import { UsersService } from '../users/users.service';
@@ -90,6 +91,18 @@ export class AuthService {
     }
 
     async login(user: any, ip?: string, userAgent?: string, fingerprint?: string) {
+        if (this.isStaffRole(user.role)) {
+            const adminPerm = await this.prisma.adminPermission.findUnique({
+                where: { userId: user.id },
+            });
+            if (adminPerm && !adminPerm.isActive) {
+                throw new ForbiddenException('Admin account is inactive. Contact Super Admin.');
+            }
+            if (user.status === 'SUSPENDED' || user.status === 'BLOCKED') {
+                throw new ForbiddenException('Account is suspended or blocked.');
+            }
+        }
+
         const payload = { email: user.email, sub: user.id, role: user.role };
         const token = this.jwtService.sign(payload, {
             expiresIn: resolveJwtExpiresIn(user.role) as `${number}${'s' | 'm' | 'h' | 'd'}`,
