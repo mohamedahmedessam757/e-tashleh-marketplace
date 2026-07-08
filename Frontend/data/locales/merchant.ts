@@ -487,6 +487,18 @@ export const merchant = {
       expired: 'منتهية الصلاحية',
       shipping_deadline: 'يجب الشحن خلال'
     },
+    sla: {
+      collectingOffers: 'ينتهي جمع العروض خلال',
+      selection: 'مهلة اختيار العرض',
+      payment: 'مهلة الدفع',
+      preparation: 'مهلة التجهيز',
+      delayedPreparation: 'مهلة التجهيز المتأخر',
+      shipping: 'مهلة الشحن',
+      return: 'مهلة الإرجاع / النزاع',
+      correction: 'مهلة التصحيح',
+      expired: 'انتهت المهلة',
+      remaining: 'الوقت المتبقي',
+    },
     earnings: {
       title: 'الأرباح والمحفظة',
       available: 'الرصيد المستحق',
@@ -1273,6 +1285,18 @@ export const merchant = {
       expired: 'Expired',
       ship_within: 'Ship within',
       shipping_deadline: 'Ship within'
+    },
+    sla: {
+      collectingOffers: 'Offer collection ends in',
+      selection: 'Selection deadline',
+      payment: 'Payment deadline',
+      preparation: 'Preparation deadline',
+      delayedPreparation: 'Delayed prep grace',
+      shipping: 'Shipping SLA',
+      return: 'Return / dispute window',
+      correction: 'Correction deadline',
+      expired: 'Deadline expired',
+      remaining: 'Time remaining',
     },
     earnings: {
       title: 'Earnings & Wallet',

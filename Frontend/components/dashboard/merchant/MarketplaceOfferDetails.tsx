@@ -10,6 +10,7 @@ import {
     ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { SubmitOfferModal } from './SubmitOfferModal';
 import { GlassCard } from '../../ui/GlassCard';
@@ -812,70 +813,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 </div>
 
                 {/* Status Badge & Timer */}
-                <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/10 w-full md:w-auto">
+                <div className="flex flex-col md:flex-row items-stretch gap-4 bg-white/5 px-4 py-3 rounded-xl border border-white/10 w-full md:w-auto">
+                    <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
                     {(() => {
-                        // If order is active and time hasn't expired (or status is explicitly collecting)
-                        if ((order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') && (!expired || order.status === 'COLLECTING_OFFERS')) {
-                            return (
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                                    <span className="text-sm text-white/60">{isAr ? 'الوقت المتبقي لتقديم عرض:' : 'Time left to offer:'}</span>
-                                    <CountdownTimer targetDate={getOfferDeadline(order.createdAt || order.date)} compact={true} />
-                                </div>
-                            );
-                        }
-
-                        if (order.status === 'AWAITING_SELECTION') {
-                            return (
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                                    <span className="text-sm text-white/60">{isAr ? 'مهلة اختيار العميل المتبقية:' : 'Selection deadline:'}</span>
-                                    <CountdownTimer targetDate={order.selectionDeadlineAt || new Date(new Date(order.createdAt || order.date).getTime() + 48 * 60 * 60 * 1000).toISOString()} compact={true} />
-                                </div>
-                            );
-                        }
-                        
-                        if (order.status === 'AWAITING_PAYMENT') {
-                            return (
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                                    <span className="text-sm text-white/60">{isAr ? 'الوقت المتبقي لإتمام العميل الدفع:' : 'Time left for client pay:'}</span>
-                                    <CountdownTimer targetDate={getPaymentDeadline(order.offerAcceptedAt || order.updatedAt)} compact={true} />
-                                </div>
-                            );
-                        }
-
-                        if (order.status === 'PREPARATION') {
-                            return (
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                                    <span className="text-sm text-white/60">{isAr ? 'مهلة التجهيز المتبقية:' : 'Time left for preparation:'}</span>
-                                    <CountdownTimer targetDate={getPreparationDeadline(order.updatedAt)} compact={true} />
-                                </div>
-                            );
-                        }
-
-                        if (order.status === 'DELAYED_PREPARATION') {
-                            return (
-                                <div className="flex items-center justify-between w-full md:w-auto gap-4 bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                                    <span className="text-sm font-bold text-red-500 animate-pulse flex items-center gap-1.5"><AlertTriangle size={16} /> {isAr ? 'عاجل: وقت إضافي أخير للتجهيز' : 'URGENT: Final penalty grace period'}</span>
-                                    <div className="text-red-400 font-bold bg-zinc-950 px-2 py-0.5 rounded border border-red-500/30">
-                                         <CountdownTimer targetDate={order.delayedPreparationDeadlineAt || getOfferDeadline(order.updatedAt)} compact={true} />
-                                    </div>
-                                </div>
-                            );
-                        }
-
-                        // CORRECTION_PERIOD: show urgent countdown timer (48h)
-                        if (order.status === 'CORRECTION_PERIOD') {
-                            const correctionDeadline = order.correctionDeadlineAt || 
-                                new Date(new Date().getTime() + 48 * 60 * 60 * 1000).toISOString();
-                            return (
-                                <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 px-4 py-2 rounded-xl animate-pulse">
-                                    <AlertTriangle size={16} className="text-orange-400 shrink-0" />
-                                    <span className="text-orange-400 font-bold text-sm">{isAr ? '⚠️ مهلة التصحيح:' : '⚠️ Correction:'}</span>
-                                    <CountdownTimer targetDate={correctionDeadline} compact hideExpiredText={false} />
-                                </div>
-                            );
-                        }
-
-                        // NON_MATCHING: preparing to enter correction period
                         if (order.status === 'NON_MATCHING') {
                             return (
                                 <div className="flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-xl">

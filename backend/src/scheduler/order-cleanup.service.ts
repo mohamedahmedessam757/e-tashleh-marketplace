@@ -8,6 +8,7 @@ import { OrderStatus, ActorType, ViolationTargetType } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
+import { OrderSlaService } from '../orders/order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { EscrowService } from '../payments/escrow.service';
 
@@ -24,6 +25,7 @@ export class OrderCleanupService {
         private readonly offerFulfillment: OfferFulfillmentService,
         private readonly escrowService: EscrowService,
         private readonly orderDurationConfig: OrderDurationConfigService,
+        private readonly orderSla: OrderSlaService,
     ) { }
 
     // Run every 1 minute to check for expired orders for near real-time expirations
@@ -360,15 +362,9 @@ export class OrderCleanupService {
     }
 
     private async handleCollectingOffersReveal() {
-        const now = new Date();
-        
-        // Find orders in COLLECTING_OFFERS where the reveal time has arrived
         const readyToReveal = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.COLLECTING_OFFERS,
-                revealOffersAt: {
-                    lte: now,
-                },
             },
             include: {
                 parts: { select: { id: true, name: true } },
@@ -380,7 +376,12 @@ export class OrderCleanupService {
             },
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+
         for (const order of readyToReveal) {
+            if (!this.orderSla.isSlaExpired(order, durationCfg) && order.revealOffersAt && order.revealOffersAt > new Date()) {
+                continue;
+            }
             try {
                 this.logger.log(`Revealing offers for order ${order.orderNumber} (ID: ${order.id}). Transitioning to AWAITING_SELECTION.`);
                 
@@ -455,15 +456,9 @@ export class OrderCleanupService {
     }
 
     private async expireAwaitingSelection() {
-        const now = new Date();
-
-        // Find orders in AWAITING_SELECTION where the customer selection deadline has passed
         const expiredOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.AWAITING_SELECTION,
-                selectionDeadlineAt: {
-                    lt: now,
-                },
             },
             include: {
                 _count: {
@@ -472,7 +467,10 @@ export class OrderCleanupService {
             }
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+
         for (const order of expiredOrders) {
+            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
                 const hasOffers = order._count.offers > 0;
                 this.logger.log(`Expiring order selection period ${order.orderNumber} (ID: ${order.id}) [hasOffers: ${hasOffers}]`);
@@ -501,31 +499,19 @@ export class OrderCleanupService {
     }
 
     async expireAwaitingPayment() {
-        const now = new Date();
-        const legacyExpiryDate = new Date();
-        legacyExpiryDate.setHours(legacyExpiryDate.getHours() - 24);
-
         const expiredOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.AWAITING_PAYMENT,
-                OR: [
-                    {
-                        paymentDeadlineAt: {
-                            lt: now, // Deadline has passed
-                        }
-                    },
-                    {
-                        paymentDeadlineAt: null,
-                        updatedAt: {
-                            lt: legacyExpiryDate // Fallback for older orders without paymentDeadlineAt
-                        }
-                    }
-                ]
             },
             select: { 
                 id: true, 
                 orderNumber: true, 
                 customerId: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                paymentDeadlineAt: true,
+                offerAcceptedAt: true,
                 offers: {
                     where: { status: 'accepted' },
                     select: { storeId: true }
@@ -533,7 +519,10 @@ export class OrderCleanupService {
             },
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+
         for (const order of expiredOrders) {
+            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
                 this.logger.log(`Expiring unpaid order ${order.orderNumber} (ID: ${order.id})`);
                 await this.ordersService.transitionStatus(
@@ -585,6 +574,10 @@ export class OrderCleanupService {
     }
 
     async handlePreparationDelays() {
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const prepMs = this.orderDurationConfig.hoursToMs(durationCfg.preparationHours);
+        const graceMs = this.orderDurationConfig.hoursToMs(durationCfg.delayedPreparationGraceHours);
+
         const orders = await this.prisma.order.findMany({
             where: { status: OrderStatus.PREPARATION },
             include: {
@@ -604,18 +597,17 @@ export class OrderCleanupService {
 
         for (const order of orders) {
             try {
-                // Determine 48h deadline
                 let prepStartTime = order.updatedAt.getTime();
                 if (order.payments.length > 0) {
                     prepStartTime = order.payments[0].createdAt.getTime();
                 }
 
-                const deadline = prepStartTime + (48 * 60 * 60 * 1000);
+                const deadline = prepStartTime + prepMs;
 
                 if (now > deadline) {
-                    this.logger.warn(`Order ${order.orderNumber} exceeded 48h prep time. Shifting to DELAYED_PREPARATION.`);
+                    this.logger.warn(`Order ${order.orderNumber} exceeded prep SLA. Shifting to DELAYED_PREPARATION.`);
                     
-                    const delayedDeadline = new Date(now + 24 * 60 * 60 * 1000);
+                    const delayedDeadline = new Date(now + graceMs);
 
                     await this.ordersService.transitionStatus(
                         order.id,
@@ -667,14 +659,16 @@ export class OrderCleanupService {
     }
 
     async handleCriticalPreparationFailures() {
-        const now = new Date();
-
         const criticalOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.DELAYED_PREPARATION,
-                delayedPreparationDeadlineAt: { lt: now }
             },
             include: {
+                payments: {
+                    select: { createdAt: true, status: true },
+                    orderBy: { createdAt: 'asc' },
+                    take: 1,
+                },
                 offers: {
                     where: { status: 'accepted' },
                     select: { storeId: true }
@@ -682,7 +676,10 @@ export class OrderCleanupService {
             }
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+
         for (const order of criticalOrders) {
+            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
                 this.logger.error(`Order ${order.orderNumber} exceeded 24h grace period. Issuing violation and cancellation.`);
 
@@ -746,12 +743,14 @@ export class OrderCleanupService {
     }
 
     private async handleNonMatchingToCorrection() {
-        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const graceMs = this.orderDurationConfig.minutesToMs(durationCfg.nonMatchingGraceMinutes);
+        const cutoff = new Date(Date.now() - graceMs);
         
         const orders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.NON_MATCHING,
-                updatedAt: { lt: twoMinutesAgo }
+                updatedAt: { lt: cutoff }
             }
         });
 
@@ -773,19 +772,19 @@ export class OrderCleanupService {
     }
 
     private async handleCorrectionPeriodExpiry() {
-        const now = new Date();
-
         const expiredOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.CORRECTION_PERIOD,
-                correctionDeadlineAt: { lt: now }
             },
             include: {
                 offers: true
             }
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+
         for (const order of expiredOrders) {
+            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
                 this.logger.log(`Cancelling order ${order.orderNumber} due to CORRECTION_PERIOD timeout.`);
                 

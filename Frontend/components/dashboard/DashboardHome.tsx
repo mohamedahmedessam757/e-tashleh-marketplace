@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { Button } from '../ui/Button';
 import { Badge, StatusType } from '../ui/Badge';
+import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
 import { Plus, Search, Car, ArrowRight, ArrowLeft, Clock, CheckCircle2, TrendingUp, ChevronRight, ChevronLeft, Activity, Package } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useOrderStore } from '../../stores/useOrderStore';
@@ -210,6 +211,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                                         </div>
                                     </div>
                                     <Badge status={activeOrder.status as StatusType} />
+                                    <OrderStatusCountdown order={activeOrder} variant="compact" />
                                 </div>
 
                                 {/* Progress Bar Visual */}

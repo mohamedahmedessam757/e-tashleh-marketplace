@@ -5,10 +5,9 @@ import { Badge, StatusType } from '../../ui/Badge';
 import { StatusTimeline } from '../../ui/StatusTimeline';
 import { OfferCard } from '../OfferCard';
 import { PartOffersDrawer } from '../PartOffersDrawer';
-import { CountdownTimer } from '../OrderDetails';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { ShipmentTracker } from '../shipments/ShipmentTracker';
-import { OrderCountdown } from '../../ui/OrderCountdown';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useOrderById } from '../../../hooks/useOrderById';
@@ -379,23 +378,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         <span className="text-sm font-medium">{(t.dashboard.orders as any)?.backToList || 'Back to list'}</span>
                     </button>
 
-                    {/* Customer Timers (Mirrored) */}
-                    <div className="flex gap-4">
-                        {order.status === 'AWAITING_OFFERS' && (
-                            <CountdownTimer targetDate={getOfferDeadline()} label={(t.dashboard.timers as any)?.offers_expires || 'Offers Expires'} />
-                        )}
-                        {order.status === 'AWAITING_PAYMENT' && order.offerAcceptedAt && (
-                            <CountdownTimer targetDate={getPaymentDeadline()} label={(t.dashboard.timers as any)?.payment_expires || 'Payment Expires'} />
-                        )}
-                        {(order.status === 'DELIVERED' || order.status === 'DELIVERED_TO_CUSTOMER') && (
-                            <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} variant="badge" />
-                        )}
-                    </div>
+                    <OrderStatusCountdown order={order} variant="card" className="max-w-md" />
                 </div>
-
-                {(order.status === 'DELIVERED' || order.status === 'DELIVERED_TO_CUSTOMER') && (
-                    <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} variant="full" />
-                )}
 
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
                     <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -148,7 +148,9 @@ export const OrderSelectionModal: React.FC<OrderSelectionModalProps> = ({ isOpen
 
                                                     <div className="flex flex-col items-end gap-3 self-center">
                                                         <OrderCountdown 
-                                                            deliveredAt={order.deliveredAt || order.updatedAt} 
+                                                            order={order}
+                                                            status={order.status}
+                                                            updatedAt={order.deliveredAt || order.updatedAt}
                                                             compact
                                                         />
                                                     </div>

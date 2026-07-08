@@ -5,6 +5,7 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Badge, StatusType } from '../../ui/Badge';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { Search, Filter, Download, ArrowRight, ArrowLeft, Plus, Trash2, Edit, CheckCircle2, User, Package, Car, ChevronDown, Loader2, PackageSearch } from 'lucide-react';
 
 export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => void }> = ({ onNavigate }) => {
@@ -236,6 +237,7 @@ export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => vo
                                             </div>
                                             <div className="flex flex-wrap items-center gap-1.5">
                                                 <Badge status={order.status} className="scale-90 origin-left" />
+                                                <OrderStatusCountdown order={order} variant="compact" />
                                                 {order.shipments?.[0] && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
                                                     <Badge status={order.shipments[0].status as StatusType} className="scale-75 origin-left animate-in fade-in zoom-in duration-500" />
                                                 )}

@@ -170,6 +170,13 @@ export interface SystemConfig {
     disputeWindowHours: number;
     paymentTimeoutHours: number;
     reminderDaysBeforeAssemblyExpiry: number[];
+    offerCollectionHours: number;
+    offerSelectionHours: number;
+    preparationHours: number;
+    delayedPreparationGraceHours: number;
+    shippingSlaHours: number;
+    correctionPeriodHours: number;
+    nonMatchingGraceMinutes: number;
   };
   financial: {
     commissionRate: number;

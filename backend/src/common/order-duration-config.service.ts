@@ -10,6 +10,13 @@ export interface OrderDurationConfig {
   disputeWindowHours: number;
   paymentTimeoutHours: number;
   reminderDaysBeforeAssemblyExpiry: number[];
+  offerCollectionHours: number;
+  offerSelectionHours: number;
+  preparationHours: number;
+  delayedPreparationGraceHours: number;
+  shippingSlaHours: number;
+  correctionPeriodHours: number;
+  nonMatchingGraceMinutes: number;
 }
 
 const DEFAULTS: OrderDurationConfig = {
@@ -18,6 +25,13 @@ const DEFAULTS: OrderDurationConfig = {
   disputeWindowHours: POST_DELIVERY_RETURN_DISPUTE_HOURS,
   paymentTimeoutHours: 24,
   reminderDaysBeforeAssemblyExpiry: [5, 6],
+  offerCollectionHours: 24,
+  offerSelectionHours: 24,
+  preparationHours: 48,
+  delayedPreparationGraceHours: 24,
+  shippingSlaHours: 72,
+  correctionPeriodHours: 48,
+  nonMatchingGraceMinutes: 2,
 };
 
 @Injectable()
@@ -101,7 +115,6 @@ export class OrderDurationConfigService implements OnModuleInit {
     return hours * 60 * 60 * 1000;
   }
 
-  /** Backward-compatible alias used during migration from constants */
   async getReturnDisputeHours(): Promise<number> {
     return this.getReturnWindowHours();
   }
@@ -116,8 +129,48 @@ export class OrderDurationConfigService implements OnModuleInit {
     return (await this.getConfig()).paymentTimeoutHours;
   }
 
+  async getOfferCollectionHours(): Promise<number> {
+    return (await this.getConfig()).offerCollectionHours;
+  }
+
+  async getOfferSelectionHours(): Promise<number> {
+    return (await this.getConfig()).offerSelectionHours;
+  }
+
+  async getPreparationHours(): Promise<number> {
+    return (await this.getConfig()).preparationHours;
+  }
+
+  async getDelayedPreparationGraceHours(): Promise<number> {
+    return (await this.getConfig()).delayedPreparationGraceHours;
+  }
+
+  async getShippingSlaHours(): Promise<number> {
+    return (await this.getConfig()).shippingSlaHours;
+  }
+
+  async getCorrectionPeriodHours(): Promise<number> {
+    return (await this.getConfig()).correctionPeriodHours;
+  }
+
+  async getNonMatchingGraceMinutes(): Promise<number> {
+    return (await this.getConfig()).nonMatchingGraceMinutes;
+  }
+
   async getReminderDaysBeforeAssemblyExpiry(): Promise<number[]> {
     return (await this.getConfig()).reminderDaysBeforeAssemblyExpiry;
+  }
+
+  hoursToMs(hours: number): number {
+    return hours * 60 * 60 * 1000;
+  }
+
+  daysToMs(days: number): number {
+    return days * 24 * 60 * 60 * 1000;
+  }
+
+  minutesToMs(minutes: number): number {
+    return minutes * 60 * 1000;
   }
 
   private merge(fromDb: Partial<OrderDurationConfig>): OrderDurationConfig {
@@ -131,6 +184,23 @@ export class OrderDurationConfigService implements OnModuleInit {
       disputeWindowHours: this.clampInt(fromDb.disputeWindowHours, 1, 720, DEFAULTS.disputeWindowHours),
       paymentTimeoutHours: this.clampInt(fromDb.paymentTimeoutHours, 1, 168, DEFAULTS.paymentTimeoutHours),
       reminderDaysBeforeAssemblyExpiry: reminder.length ? reminder : DEFAULTS.reminderDaysBeforeAssemblyExpiry,
+      offerCollectionHours: this.clampInt(fromDb.offerCollectionHours, 1, 168, DEFAULTS.offerCollectionHours),
+      offerSelectionHours: this.clampInt(fromDb.offerSelectionHours, 1, 168, DEFAULTS.offerSelectionHours),
+      preparationHours: this.clampInt(fromDb.preparationHours, 1, 336, DEFAULTS.preparationHours),
+      delayedPreparationGraceHours: this.clampInt(
+        fromDb.delayedPreparationGraceHours,
+        1,
+        168,
+        DEFAULTS.delayedPreparationGraceHours,
+      ),
+      shippingSlaHours: this.clampInt(fromDb.shippingSlaHours, 1, 720, DEFAULTS.shippingSlaHours),
+      correctionPeriodHours: this.clampInt(fromDb.correctionPeriodHours, 1, 336, DEFAULTS.correctionPeriodHours),
+      nonMatchingGraceMinutes: this.clampInt(
+        fromDb.nonMatchingGraceMinutes,
+        1,
+        60,
+        DEFAULTS.nonMatchingGraceMinutes,
+      ),
     };
   }
 

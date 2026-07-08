@@ -637,6 +637,18 @@ export const customer = {
       payment_expires: 'تنتهي مهلة الدفع خلال',
       return_window: 'نافذة الإرجاع تنتهي خلال'
     },
+    sla: {
+      collectingOffers: 'ينتهي جمع العروض خلال',
+      selection: 'مهلة اختيار العرض',
+      payment: 'مهلة الدفع',
+      preparation: 'مهلة التجهيز',
+      delayedPreparation: 'مهلة التجهيز المتأخر',
+      shipping: 'مهلة الشحن',
+      return: 'مهلة الإرجاع / النزاع',
+      correction: 'مهلة التصحيح',
+      expired: 'انتهت المهلة',
+      remaining: 'الوقت المتبقي',
+    },
     notifications: {
       title: 'الإشعارات',
       markAllRead: 'تحديد الكل كمقروء',
@@ -1903,6 +1915,18 @@ export const customer = {
       offers_expires: 'Offers expire in',
       payment_expires: 'Payment expires in',
       return_window: 'Return window closes in'
+    },
+    sla: {
+      collectingOffers: 'Offer collection ends in',
+      selection: 'Selection deadline',
+      payment: 'Payment deadline',
+      preparation: 'Preparation deadline',
+      delayedPreparation: 'Delayed prep grace',
+      shipping: 'Shipping SLA',
+      return: 'Return / dispute window',
+      correction: 'Correction deadline',
+      expired: 'Deadline expired',
+      remaining: 'Time remaining',
     },
     notifications: {
       title: 'Notifications',

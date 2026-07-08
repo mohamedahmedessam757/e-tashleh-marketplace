@@ -19,6 +19,7 @@ import { VerdictPopUp } from './resolution/VerdictPopUp';
 import { RestrictionAlertBanner } from './shared/RestrictionAlertBanner';
 import { getCurrentUserId } from '../../utils/auth';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
+import { refreshOrderSlaFromApi } from '../../utils/orderSla';
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -181,6 +182,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     // Reset the store if role changed to prevent data leakage between roles
     const orderStore = useOrderStore.getState();
     orderStore.resetForRole(role);
+
+    void refreshOrderSlaFromApi(true);
 
     // Start Realtime WebSockets for zero-latency sync (replaces legacy polling)
     startRealtime(getCurrentUserId() || undefined, role);

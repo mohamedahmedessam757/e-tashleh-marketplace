@@ -2,6 +2,7 @@
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore, ShippingRule, AdminActivityLog } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { refreshOrderSlaFromApi } from '../../../utils/orderSla';
 import {
   Settings, DollarSign, Truck, FileText, Save, CheckCircle2,
   Globe, Plus, Trash2, ShieldCheck, Activity, RefreshCw,
@@ -239,6 +240,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
         setTimeout(() => setShowSuccess(false), 3000);
         await fetchSystemSettings();
         await fetchSettings();
+        if (section !== 'security' && section !== 'content') {
+          await refreshOrderSlaFromApi(true);
+        }
       }
     } catch (err) {
       console.error("Critical Save Error:", err);

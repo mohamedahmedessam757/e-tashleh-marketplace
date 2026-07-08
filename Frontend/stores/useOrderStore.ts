@@ -6,6 +6,8 @@ import { useBillingStore } from './useBillingStore';
 import { ordersApi } from '../services/api/orders';
 import { supabase } from '../services/supabase';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../utils/orderSla';
+import { resolveOrderActiveSla } from '../utils/resolveOrderActiveSla';
+import type { OrderActiveSla } from '../types/orderSla';
 import { formatApiErrorMessage } from '../utils/formatApiErrorMessage';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
@@ -187,6 +189,7 @@ export interface Order {
 
     // Status & Dates
     status: StatusType;
+    activeSla?: OrderActiveSla | null;
     date: string; // Display Date
     createdAt: string;
     updatedAt: string;
@@ -379,6 +382,23 @@ export const mapRealtimeOrderRow = (row: Record<string, unknown>): Partial<Order
     if (row.delivered_at != null || row.deliveredAt != null) {
         partial.deliveredAt = String(row.delivered_at ?? row.deliveredAt);
     }
+    if (row.payment_deadline_at != null || row.paymentDeadlineAt != null) {
+        partial.paymentDeadlineAt = String(row.payment_deadline_at ?? row.paymentDeadlineAt);
+    }
+    if (row.delayed_preparation_deadline_at != null || row.delayedPreparationDeadlineAt != null) {
+        partial.delayedPreparationDeadlineAt = String(
+            row.delayed_preparation_deadline_at ?? row.delayedPreparationDeadlineAt,
+        );
+    }
+    if (row.shipped_at != null || row.shippedAt != null) {
+        partial.shippedAt = String(row.shipped_at ?? row.shippedAt);
+    }
+    if (row.offer_accepted_at != null || row.offerAcceptedAt != null) {
+        partial.offerAcceptedAt = String(row.offer_accepted_at ?? row.offerAcceptedAt);
+    }
+    if (row.offers_deadline_at != null || row.offersDeadlineAt != null) {
+        partial.offersDeadlineAt = String(row.offers_deadline_at ?? row.offersDeadlineAt);
+    }
     if (row.admin_notes != null || row.adminNotes != null) {
         partial.adminNotes = String(row.admin_notes ?? row.adminNotes);
     }
@@ -544,6 +564,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 if (partial.verificationDocuments === undefined) {
                     updated.verificationDocuments = o.verificationDocuments;
                 }
+                updated.activeSla = resolveOrderActiveSla(updated);
                 return updated;
             }),
         }));

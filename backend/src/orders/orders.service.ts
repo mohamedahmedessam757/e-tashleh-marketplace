@@ -15,6 +15,7 @@ import { OrderDurationConfigService } from '../common/order-duration-config.serv
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
+import { OrderSlaService } from './order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
@@ -48,6 +49,7 @@ export class OrdersService {
         private escrowService: EscrowService,
         private orderDurationConfig: OrderDurationConfigService,
         private logisticsConfig: LogisticsConfigService,
+        private orderSla: OrderSlaService,
     ) { }
 
     /** Backward-compatible singular `review` field for API consumers (first review). */
@@ -56,6 +58,11 @@ export class OrdersService {
     ): T & { review: unknown | null } {
         const reviews = order.reviews ?? [];
         return { ...order, review: reviews[0] ?? null };
+    }
+
+    private async attachActiveSlaToOrder<T extends Record<string, unknown>>(order: T) {
+        const cfg = await this.orderDurationConfig.getConfig();
+        return this.orderSla.attachActiveSla(order, cfg);
     }
 
     async create(customerId: string, createOrderDto: CreateOrderDto): Promise<Order> {
@@ -74,6 +81,8 @@ export class OrdersService {
 
         // 1. Generate Order Number
         const orderNumber = await this.generateOrderNumber();
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const collectionMs = this.orderDurationConfig.hoursToMs(durationCfg.offerCollectionHours);
 
         // 2. Transaction: Create Order + Parts + Audit Log + Update Count
         const result = await this.prisma.$transaction(async (tx) => {
@@ -111,8 +120,8 @@ export class OrdersService {
                     customerId,
                     orderNumber,
                     status: OrderStatus.COLLECTING_OFFERS,
-                    revealOffersAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                    offersStopAt: new Date(Date.now() + 23.75 * 60 * 60 * 1000), // 23h 45m
+                    revealOffersAt: new Date(Date.now() + collectionMs),
+                    offersStopAt: new Date(Date.now() + collectionMs - 15 * 60 * 1000),
                     selectionDeadlineAt: null, // Set dynamically upon reveal
 
                     // New Relation: Create all parts
@@ -379,6 +388,11 @@ export class OrdersService {
                         select: { id: true, status: true, carrierName: true, trackingNumber: true, createdAt: true },
                         orderBy: { createdAt: 'desc' }
                     },
+                    payments: {
+                        select: { id: true, createdAt: true, status: true },
+                        orderBy: { createdAt: 'asc' },
+                        take: 3,
+                    },
                     _count: {
                         select: { offers: true }
                     }
@@ -409,8 +423,11 @@ export class OrdersService {
             }
         });
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const itemsWithSla = this.orderSla.attachActiveSlaBatch(items as any[], durationCfg);
+
         return {
-            items,
+            items: itemsWithSla,
             total,
             page,
             limit,
@@ -457,13 +474,18 @@ export class OrdersService {
                     : {}),
                 verificationDocuments: { orderBy: { createdAt: 'desc' } },
                 shippingAddresses: { orderBy: { createdAt: 'asc' } },
+                payments: {
+                    select: { id: true, createdAt: true, status: true },
+                    orderBy: { createdAt: 'asc' },
+                },
                 _count: {
                     select: { offers: true }
                 }
             },
         });
         if (!order) throw new NotFoundException(`Order #${id} not found`);
-        return this.attachLegacyReviewField(order);
+        const withReview = this.attachLegacyReviewField(order);
+        return this.attachActiveSlaToOrder(withReview);
     }
 
     async issueWaybillsForAdmin(
@@ -554,6 +576,12 @@ export class OrdersService {
         // 1. Validate Transition (Guard)
         this.fsm.validateTransition(order.status, newStatus);
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const selectionDeadlineAt =
+            newStatus === OrderStatus.AWAITING_SELECTION
+                ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.offerSelectionHours))
+                : undefined;
+
         // 2. Transaction: Update Status + Audit Log
         const result = await this.prisma.$transaction(async (tx) => {
             // New 2026 Logic: Check all accepted offers for warranty (Multi-part support)
@@ -587,7 +615,7 @@ export class OrdersService {
                     updatedAt: now,
                     warranty_active_at: isTransitioningToWarranty ? now : undefined,
                     warranty_end_at: isTransitioningToWarranty ? finalWarrantyEnd : undefined,
-                    selectionDeadlineAt: newStatus === OrderStatus.AWAITING_SELECTION ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined,
+                    selectionDeadlineAt,
                     deliveredAt: isFirstDeliveredTransition ? now : undefined,
                 },
             });
@@ -830,6 +858,11 @@ export class OrdersService {
         this.fsm.validateTransition(order.status, OrderStatus.AWAITING_PAYMENT);
 
         // 2. Transaction
+        const paymentCfg = await this.orderDurationConfig.getConfig();
+        const paymentDeadline = new Date(
+            Date.now() + this.orderDurationConfig.hoursToMs(paymentCfg.paymentTimeoutHours),
+        );
+
         const result = await this.prisma.$transaction(async (tx) => {
             // Update the accepted offer's status
             await tx.offer.update({
@@ -853,10 +886,7 @@ export class OrdersService {
                 });
             }
 
-            // Enforce explicit 24h deadline for checkout
-            const paymentDeadline = new Date();
-            paymentDeadline.setHours(paymentDeadline.getHours() + 24);
-
+            // Enforce payment deadline from platform config
             // Link Offer and Update Status
             const updatedOrder = await tx.order.update({
                 where: { id: orderId },
@@ -986,14 +1016,16 @@ export class OrdersService {
 
             let updatedOrder = order;
             if (hasAnyAccepted && [OrderStatus.AWAITING_OFFERS, OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_SELECTION].includes(order.status as any)) {
-                const now = new Date();
-                const paymentDeadline = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                const paymentCfg = await this.orderDurationConfig.getConfig();
+                const partPaymentDeadline = new Date(
+                    Date.now() + this.orderDurationConfig.hoursToMs(paymentCfg.paymentTimeoutHours),
+                );
                 
                 updatedOrder = await tx.order.update({
                     where: { id: orderId },
                     data: { 
                         status: OrderStatus.AWAITING_PAYMENT,
-                        paymentDeadlineAt: paymentDeadline
+                        paymentDeadlineAt: partPaymentDeadline
                     },
                 });
             }
@@ -1199,9 +1231,11 @@ export class OrdersService {
             throw new BadRequestException('Please wait 24 hours before renewing again');
         }
 
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const collectionMs = this.orderDurationConfig.hoursToMs(durationCfg.offerCollectionHours);
         const now = Date.now();
-        const newDeadline = new Date(now + 24 * 60 * 60 * 1000);
-        const offersStopAt = new Date(now + 23.75 * 60 * 60 * 1000);
+        const newDeadline = new Date(now + collectionMs);
+        const offersStopAt = new Date(now + collectionMs - 15 * 60 * 1000);
 
         const updated = await this.prisma.order.update({
             where: { id: orderId },
@@ -2164,9 +2198,12 @@ export class OrdersService {
 
         const isApprove = data.action === 'APPROVE' || data.status === 'APPROVED' || data.approved === true;
         const decision = isApprove ? 'APPROVED' : 'REJECTED';
+        const durationCfg = await this.orderDurationConfig.getConfig();
         
         let newOrderStatus: OrderStatus = decision === 'APPROVED' ? OrderStatus.VERIFICATION_SUCCESS : OrderStatus.NON_MATCHING;
-        let correctionDeadline = decision === 'REJECTED' ? new Date(Date.now() + 48 * 60 * 60 * 1000) : null;
+        let correctionDeadline = decision === 'REJECTED'
+            ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours))
+            : null;
         let newRejectionCount = order.rejectionCount;
 
         if (decision === 'REJECTED' && !isPerOfferReview) {

@@ -151,6 +151,13 @@ export function getSystemConfigDefaults(): SystemConfig {
       disputeWindowHours: 24,
       paymentTimeoutHours: 24,
       reminderDaysBeforeAssemblyExpiry: [5, 6],
+      offerCollectionHours: 24,
+      offerSelectionHours: 24,
+      preparationHours: 48,
+      delayedPreparationGraceHours: 24,
+      shippingSlaHours: 72,
+      correctionPeriodHours: 48,
+      nonMatchingGraceMinutes: 2,
     },
     financial: {
       commissionRate: 25,

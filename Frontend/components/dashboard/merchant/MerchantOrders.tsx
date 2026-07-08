@@ -7,6 +7,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge, StatusType } from '../../ui/Badge';
 import { OrderCountdown } from '../../ui/OrderCountdown';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 
 const CarIcon = (props: any) => (
@@ -282,6 +283,7 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
                                 <span className="text-gold-400 font-mono font-bold text-sm block leading-none mb-1">#{order.orderNumber || order.id}</span>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <StatusIndicator status={order.status} />
+                                    <OrderStatusCountdown order={order} variant="compact" />
                                     <InCartBadge order={order} isAr={isAr} />
                                     {order.shipments?.[0] && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
                                         <Badge status={order.shipments[0].status as StatusType} className="scale-75 origin-left animate-in fade-in zoom-in duration-500" />
@@ -336,7 +338,7 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
                                     <Calendar size={12} />
                                     {isAr ? 'سلمت يوم:' : 'Delivered:'} {new Date(order.deliveredAt || order.updatedAt).toLocaleDateString()}
                                     <div className="mx-2">•</div>
-                                    <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} />
+                                    <OrderStatusCountdown order={order} variant="compact" />
                                 </div>
                                 {order.warranty_end_at ? (
                                     <div className="flex justify-center mt-2">

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { Users, Store, Activity, DollarSign, Package, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, MoreHorizontal, ShieldCheck, CheckCircle2, Download, Filter, Search, Plus, Trash2, Edit, Car, User } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
@@ -781,8 +782,9 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                                     </div>
 
                                     {/* Status */}
-                                    <div className="col-span-2">
+                                    <div className="col-span-2 flex flex-col gap-1.5 items-start">
                                         <Badge status={order.status} className="shadow-lg shadow-black/20" />
+                                        <OrderStatusCountdown order={order} variant="compact" />
                                     </div>
 
                                     {/* Financials */}

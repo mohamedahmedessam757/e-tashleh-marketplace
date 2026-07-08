@@ -8,9 +8,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useOrderStore } from '../../stores/useOrderStore';
 import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { Order } from '../../types';
-import { CountdownTimer } from './OrderDetails';
 import { OrderCountdown } from '../ui/OrderCountdown';
-import { getDynamicOrderDeadline, isOrderExpired } from '../../utils/dateUtils';
+import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
+import { isOrderExpired } from '../../utils/dateUtils';
 import { useProfileStore } from '../../stores/useProfileStore';
 import { ShieldAlert, AlertTriangle, Info } from 'lucide-react';
 
@@ -324,7 +324,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                                 return (
                                                                     <div className="flex items-center gap-2">
                                                                         <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
-                                                                        <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} />
+                                                                        <OrderStatusCountdown order={order} variant="compact" />
                                                                     </div>
                                                                 );
                                                             }
@@ -332,38 +332,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                         })()}
                                                     </div>
 
-                                                    {/* Independent Timer: only for specific pending/tracking states */}
-                                                    {(() => {
-                                                        const deadline = getDynamicOrderDeadline(order);
-                                                        const isAwaiting = ['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status);
-                                                        const isTracking = [
-                                                            'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 
-                                                            'VERIFICATION', 'VERIFICATION_SUCCESS', 
-                                                            'NON_MATCHING', 'CORRECTION_PERIOD', 
-                                                            'CORRECTION_SUBMITTED', 'READY_FOR_SHIPPING', 
-                                                            'DELIVERED'
-                                                        ].includes(order.status);
-                                                        
-                                                        if (!deadline || (!isAwaiting && !isTracking)) return null;
-                                                        
-                                                        const expiredNow = new Date(deadline).getTime() < new Date().getTime();
-                                                        if (expiredNow && !isAwaiting) return null;
-
-                                                        return (
-                                                            <div className="flex justify-end bg-gold-500/10 rounded-xl px-4 py-2 border border-gold-500/30 shadow-[0_0_15px_rgba(168,139,62,0.1)] group-hover:border-gold-500/50 transition-colors">
-                                                                <div className="flex flex-col items-end">
-                                                                    <span className="text-[9px] text-gold-400/60 uppercase font-black tracking-widest mb-0.5">
-                                                                        {isAr ? 'الوقت المتبقي' : 'Time Remaining'}
-                                                                    </span>
-                                                                    <CountdownTimer 
-                                                                        targetDate={deadline} 
-                                                                        compact={true} 
-                                                                        hideExpiredText={!isAwaiting}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })()}
+                                                    <OrderStatusCountdown order={order} variant="compact" className="mt-1" />
 
                                                     {/* New Offers Count */}
                                                     {(() => {

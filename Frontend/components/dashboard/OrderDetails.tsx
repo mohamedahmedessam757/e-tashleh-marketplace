@@ -33,6 +33,7 @@ import { ShipmentBatchCard } from './shared/ShipmentBatchCard';
 import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { ShipmentTracker } from './shipments/ShipmentTracker';
 import { OrderCountdown } from '../ui/OrderCountdown';
+import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { useResolutionStore } from '../../stores/useResolutionStore';
 import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
@@ -879,65 +880,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         <span className="text-sm font-medium">{t.dashboard.orders.backToList}</span>
                     </button>
 
-                    {/* Timers — each status shows its own correct deadline */}
-                    {order.status === 'COLLECTING_OFFERS' && order.revealOffersAt && (
-                        <CountdownTimer targetDate={order.revealOffersAt} label={language === 'ar' ? 'يتم الكشف عن العروض خلال' : 'Offers Reveal In'} />
-                    )}
-                    {order.status === 'AWAITING_OFFERS' && (
-                        <CountdownTimer targetDate={getOfferDeadline()} label={t.dashboard.timers.offers_expires} />
-                    )}
-                    {(order.status === 'AWAITING_PAYMENT' || order.status === 'PARTIALLY_PAID') && (
-                        <CountdownTimer targetDate={getPaymentDeadline()} label={language === 'ar' ? 'مهلة الدفع' : 'Payment Deadline'} />
-                    )}
-                    {order.status === 'PREPARATION' && (
-                        <CountdownTimer targetDate={getPreparationDeadline()} label={language === 'ar' ? 'مهلة التجهيز (48س)' : 'Prep Deadline (48h)'} />
-                    )}
-                    {order.status === 'DELAYED_PREPARATION' && order.delayedPreparationDeadlineAt && (
-                        <div className="flex flex-col items-end gap-1">
-                            <span className="text-[10px] text-red-400/80 font-bold uppercase tracking-wider animate-pulse">
-                                {language === 'ar' ? '⚠️ مهلة التجهيز الأخيرة (24س)' : '⚠️ Final Grace Deadline (24h)'}
-                            </span>
-                            <div className="flex gap-1 text-red-400 font-mono font-bold text-sm bg-red-500/10 px-3 py-1 rounded-full border border-red-500/30 animate-pulse">
-                                <CountdownTimer
-                                    targetDate={order.delayedPreparationDeadlineAt}
-                                    label=""
-                                    compact
-                                    hideExpiredText={false}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    {order.status === 'CORRECTION_PERIOD' && (
-                        <div className="flex flex-col items-end gap-1">
-                            <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider animate-pulse">
-                                {language === 'ar' ? '⚠️ مهلة تصحيح التوثيق (48س)' : '⚠️ Correction Deadline (48h)'}
-                            </span>
-                            <div className="flex gap-1 text-orange-400 font-mono font-bold text-sm bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/30 animate-pulse">
-                                <CountdownTimer
-                                    targetDate={order.correctionDeadlineAt || new Date(new Date().getTime() + 48*60*60*1000).toISOString()}
-                                    label=""
-                                    compact
-                                    hideExpiredText={false}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    {!isMultiPartOrder &&
-                        (order.status === 'DELIVERED' ||
-                            order.status === 'PARTIALLY_DELIVERED' ||
-                            order.status === 'DELIVERED_TO_CUSTOMER') && (
-                        <div className="w-full md:w-auto">
-                            <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} variant="badge" />
-                        </div>
-                    )}
+                    <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
                 </div>
-
-                {!isMultiPartOrder &&
-                    (order.status === 'DELIVERED' ||
-                        order.status === 'PARTIALLY_DELIVERED' ||
-                        order.status === 'DELIVERED_TO_CUSTOMER') && (
-                    <OrderCountdown updatedAt={order.deliveredAt || order.updatedAt} status={order.status} variant="full" />
-                )}
 
                 <MerchantHandoverPendingBanner
                     order={order}
