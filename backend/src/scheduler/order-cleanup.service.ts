@@ -11,6 +11,7 @@ import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OrderSlaService } from '../orders/order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { EscrowService } from '../payments/escrow.service';
+import { CronLockService } from '../common/cron-lock.service';
 
 @Injectable()
 export class OrderCleanupService {
@@ -26,6 +27,7 @@ export class OrderCleanupService {
         private readonly escrowService: EscrowService,
         private readonly orderDurationConfig: OrderDurationConfigService,
         private readonly orderSla: OrderSlaService,
+        private readonly cronLock: CronLockService,
     ) { }
 
     // Run every 1 minute to check for expired orders for near real-time expirations
@@ -36,13 +38,17 @@ export class OrderCleanupService {
             this.logger.warn('Skipping order cleanup — database unreachable.');
             return;
         }
-        await this.handleCollectingOffersReveal();
-        await this.expireAwaitingSelection();
-        await this.expireAwaitingPayment();
-        await this.handlePreparationDelays();
-        await this.handleCriticalPreparationFailures();
-        await this.handleNonMatchingToCorrection();
-        await this.handleCorrectionPeriodExpiry();
+        // Prevent overlapping runs across instances (and slow ticks overlapping themselves).
+        const { ran } = await this.cronLock.runWithLock('order-cleanup-minute', async () => {
+            await this.handleCollectingOffersReveal();
+            await this.expireAwaitingSelection();
+            await this.expireAwaitingPayment();
+            await this.handlePreparationDelays();
+            await this.handleCriticalPreparationFailures();
+            await this.handleNonMatchingToCorrection();
+            await this.handleCorrectionPeriodExpiry();
+        });
+        if (!ran) this.logger.debug('Order cleanup skipped (locked by another instance).');
     }
 
     // Run every hour to auto-complete offers after return window (multi-item) and single-item orders

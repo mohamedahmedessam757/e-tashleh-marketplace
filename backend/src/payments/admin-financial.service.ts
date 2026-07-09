@@ -614,10 +614,15 @@ export class AdminFinancialService {
       });
 
       if (body.targetUserId) {
+        // Lock the row to prevent concurrent adjustments racing the solvency check.
+        await tx.$executeRaw`SELECT id FROM users WHERE id = ${body.targetUserId}::uuid FOR UPDATE`;
         const user = await tx.user.findUnique({ where: { id: body.targetUserId } });
         if (!user) throw new NotFoundException('Target user not found');
 
         const delta = body.type === 'CREDIT' ? body.amount : -body.amount;
+        if (body.type === 'DEBIT' && Number(user.customerBalance || 0) < body.amount) {
+          throw new BadRequestException('Insufficient balance for debit adjustment');
+        }
         const updated = await tx.user.update({
           where: { id: body.targetUserId },
           data: { customerBalance: { increment: delta } },
@@ -636,10 +641,14 @@ export class AdminFinancialService {
           },
         });
       } else if (body.targetStoreId) {
+        await tx.$executeRaw`SELECT id FROM stores WHERE id = ${body.targetStoreId}::uuid FOR UPDATE`;
         const store = await tx.store.findUnique({ where: { id: body.targetStoreId } });
         if (!store) throw new NotFoundException('Target store not found');
 
         const delta = body.type === 'CREDIT' ? body.amount : -body.amount;
+        if (body.type === 'DEBIT' && Number(store.balance || 0) < body.amount) {
+          throw new BadRequestException('Insufficient balance for debit adjustment');
+        }
         const updated = await tx.store.update({
           where: { id: body.targetStoreId },
           data: { balance: { increment: delta } },

@@ -848,10 +848,9 @@ export class OrdersService {
     async acceptOffer(orderId: string, offerId: string, customerId: string): Promise<Order> {
         const order = await this.findOne(orderId);
 
+        // Ownership: a customer may only accept offers on their OWN order (IDOR fix).
         if (order.customerId !== customerId) {
-            // throw new ForbiddenException('You can only accept offers for your own orders');
-            // For simplicity in this context, assuming guard handles it or just proceed. 
-            // Ideally import ForbiddenException.
+            throw new ForbiddenException('You can only accept offers for your own orders');
         }
 
         // 1. Validate Transition
@@ -864,11 +863,17 @@ export class OrdersService {
         );
 
         const result = await this.prisma.$transaction(async (tx) => {
-            // Update the accepted offer's status
-            await tx.offer.update({
-                where: { id: offerId },
-                data: { status: 'accepted' }
+            // Lock the order row so two concurrent accepts can't both win.
+            await tx.$executeRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+
+            // Atomically claim the offer ONLY if it belongs to this order and is still pending.
+            const claimed = await tx.offer.updateMany({
+                where: { id: offerId, orderId, status: 'pending' },
+                data: { status: 'accepted' },
             });
+            if (claimed.count === 0) {
+                throw new BadRequestException('Offer is not available for acceptance on this order');
+            }
 
             // Auto-reject sibling offers on the same part
             const acceptedOffer = await tx.offer.findUnique({
@@ -982,10 +987,18 @@ export class OrdersService {
         }
 
         const result = await this.prisma.$transaction(async (tx) => {
-            // Update the accepted offer's status
-            const acceptedOffer = await tx.offer.update({
-                where: { id: offerId },
+            await tx.$executeRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+
+            // Claim ONLY if the offer belongs to this order + part and is still pending (IDOR/race fix).
+            const claimed = await tx.offer.updateMany({
+                where: { id: offerId, orderId, orderPartId: partId, status: 'pending' },
                 data: { status: 'accepted' },
+            });
+            if (claimed.count === 0) {
+                throw new BadRequestException('Offer is not available for acceptance on this part');
+            }
+            const acceptedOffer = await tx.offer.findUniqueOrThrow({
+                where: { id: offerId },
                 include: { store: true }
             });
 

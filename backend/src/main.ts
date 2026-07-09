@@ -66,6 +66,12 @@ async function bootstrap() {
         bodyParser: false,
     });
 
+    // Behind Nginx/load balancer: trust the first proxy hop so req.ip / X-Forwarded-For
+    // reflect the real client. Without this, throttling and IP audit logs see the proxy IP,
+    // which lets attackers evade per-IP rate limits.
+    const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || '1');
+    app.set('trust proxy', Number.isFinite(trustProxyHops) ? trustProxyHops : 1);
+
     const bodyLimit = parseBodyLimitMb();
     app.useBodyParser('json', { limit: bodyLimit });
     app.useBodyParser('urlencoded', { extended: true, limit: bodyLimit });

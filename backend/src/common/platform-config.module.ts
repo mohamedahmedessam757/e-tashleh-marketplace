@@ -4,6 +4,7 @@ import { FinancialConfigService } from './financial-config.service';
 import { OrderDurationConfigService } from './order-duration-config.service';
 import { LogisticsConfigService } from './logistics-config.service';
 import { PlatformBrandingService } from './platform-branding.service';
+import { CronLockService } from './cron-lock.service';
 
 @Global()
 @Module({
@@ -13,12 +14,14 @@ import { PlatformBrandingService } from './platform-branding.service';
     OrderDurationConfigService,
     LogisticsConfigService,
     PlatformBrandingService,
+    CronLockService,
   ],
   exports: [
     FinancialConfigService,
     OrderDurationConfigService,
     LogisticsConfigService,
     PlatformBrandingService,
+    CronLockService,
   ],
 })
 export class PlatformConfigModule {}

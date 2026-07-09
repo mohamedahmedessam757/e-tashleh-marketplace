@@ -5,11 +5,19 @@ import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
+import { ResourceAccessService } from '../common/authorization/resource-access.service';
 
 @Controller('shipments')
 @UseGuards(JwtAuthGuard)
 export class ShipmentsController {
-    constructor(private readonly shipmentsService: ShipmentsService) {}
+    constructor(
+        private readonly shipmentsService: ShipmentsService,
+        private readonly resourceAccess: ResourceAccessService,
+    ) {}
+
+    private actorFrom(req: any) {
+        return { id: req.user.id, role: req.user.role, storeId: req.user.storeId };
+    }
 
     @UseGuards(PermissionsGuard)
     @Permissions('shipping', 'view')
@@ -24,12 +32,14 @@ export class ShipmentsController {
     }
 
     @Get('order/:orderId')
-    getByOrderId(@Param('orderId') orderId: string) {
+    async getByOrderId(@Request() req, @Param('orderId') orderId: string) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), orderId);
         return this.shipmentsService.getByOrderId(orderId);
     }
 
     @Get(':id/logs')
-    getLogs(@Param('id') id: string) {
+    async getLogs(@Request() req, @Param('id') id: string) {
+        await this.resourceAccess.assertUserCanAccessShipment(this.actorFrom(req), id);
         return this.shipmentsService.getLogs(id);
     }
 

@@ -65,6 +65,9 @@ export class OtpService {
     }
 
     private isDevBypassActive(): boolean {
+        // Hard stop: the fixed dev-bypass code is NEVER valid in production, no matter how
+        // channels/env are configured.
+        if (process.env.NODE_ENV === 'production') return false;
         if (process.env.OTP_DEV_BYPASS === 'false') return false;
         const anyChannelLive =
             this.widersConfig.enabled || this.emailConfig.enabled;

@@ -63,6 +63,15 @@ export class ResourceAccessService {
     await this.assertUserCanAccessOrder(actor, orderId);
   }
 
+  async assertUserCanAccessShipment(actor: AuthActor, shipmentId: string): Promise<void> {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      select: { orderId: true },
+    });
+    if (!shipment) throw new NotFoundException('Shipment not found');
+    await this.assertUserCanAccessOrder(actor, shipment.orderId);
+  }
+
   async assertUserCanAccessWaybill(actor: AuthActor, waybillId: string): Promise<void> {
     const waybill = await (this.prisma as any).shippingWaybill.findUnique({
       where: { id: waybillId },

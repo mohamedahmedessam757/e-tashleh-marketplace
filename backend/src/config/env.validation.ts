@@ -35,4 +35,21 @@ export function validateProductionEnv(): void {
   if (resendOn && !process.env.RESEND_API_KEY?.trim()) {
     throw new Error('RESEND_API_KEY must be set when RESEND_ENABLED is true in production');
   }
+
+  // OTP dev-bypass (fixed code 123456) must never be enabled in production.
+  if (process.env.OTP_DEV_BYPASS === 'true') {
+    throw new Error('OTP_DEV_BYPASS must not be true in production');
+  }
+
+  // Stripe must be fully configured in production so payments/webhooks are verified.
+  const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!stripeSecret) {
+    throw new Error('STRIPE_SECRET_KEY must be set in production');
+  }
+  if (stripeSecret.startsWith('sk_test_')) {
+    throw new Error('STRIPE_SECRET_KEY must not be a test key in production');
+  }
+  if (!process.env.STRIPE_WEBHOOK_SECRET?.trim()) {
+    throw new Error('STRIPE_WEBHOOK_SECRET must be set in production');
+  }
 }

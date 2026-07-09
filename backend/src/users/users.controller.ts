@@ -5,6 +5,8 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { sanitizeUser, isAdminRole } from '../common/user-sanitizer';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { AdminUpdateCustomerDto } from './dto/admin-update-customer.dto';
 
 @Controller('users')
 export class UsersController {
@@ -55,7 +57,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('customers', 'edit')
   @Patch('admin/customers/:id/update')
-  async updateCustomerData(@Param('id') id: string, @Body() body: any) {
+  async updateCustomerData(@Param('id') id: string, @Body() body: AdminUpdateCustomerDto) {
     return this.usersService.adminUpdateCustomer(id, body);
   }
 
@@ -107,15 +109,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('profile/update')
-  async updateProfile(@Request() req, @Body() body: { name?: string; phone?: string; avatar?: string }) {
-    console.log('Update Profile Request:', { userId: req.user?.id, body });
-    // Proxy update to bypass RLS
-    try {
-      return await this.usersService.update(req.user.id || req.user.userId, body);
-    } catch (error) {
-      console.error('Update Profile Error:', error);
-      throw error;
-    }
+  async updateProfile(@Request() req, @Body() body: UpdateProfileDto) {
+    // Only name/avatar are accepted. Sensitive fields (phone/email/role/balance/status)
+    // are intentionally NOT settable here — they go through OTP-gated flows.
+    return this.usersService.update(req.user.id || req.user.userId, body);
   }
 
   @UseGuards(JwtAuthGuard)

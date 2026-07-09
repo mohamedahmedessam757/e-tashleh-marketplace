@@ -9,6 +9,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { ActorType, UserRole } from '@prisma/client';
+import { ResourceAccessService } from '../common/authorization/resource-access.service';
 
 import { ExcelService } from './excel.service';
 import { Response } from 'express';
@@ -18,8 +19,13 @@ import { Response } from 'express';
 export class OrdersController {
     constructor(
         private readonly ordersService: OrdersService,
-        private readonly excelService: ExcelService
+        private readonly excelService: ExcelService,
+        private readonly resourceAccess: ResourceAccessService,
     ) { }
+
+    private actorFrom(req: any) {
+        return { id: req.user.id, role: req.user.role, storeId: req.user.storeId };
+    }
 
     @Post()
     create(@Request() req, @Body() createOrderDto: CreateOrderDto) {
@@ -89,16 +95,18 @@ export class OrdersController {
     }
 
     @Get(':id')
-    findOne(@Request() req, @Param('id') id: string) {
+    async findOne(@Request() req, @Param('id') id: string) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), id);
         return this.ordersService.findOneWithContext(id, req.user);
     }
 
     @Patch(':id/transition')
-    transition(
+    async transition(
         @Request() req,
         @Param('id') id: string,
         @Body() transitionDto: TransitionOrderDto
     ) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), id);
         // Map UserRole to ActorType
         let actorType: ActorType = ActorType.SYSTEM;
         const role = req.user.role;
@@ -164,7 +172,8 @@ export class OrdersController {
     }
 
     @Get(':id/fulfillment-summary')
-    getFulfillmentSummary(@Param('id') orderId: string) {
+    async getFulfillmentSummary(@Request() req, @Param('id') orderId: string) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), orderId);
         return this.ordersService.getOfferFulfillmentSummary(orderId);
     }
 

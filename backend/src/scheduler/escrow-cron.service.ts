@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EscrowService } from '../payments/escrow.service';
 import { FinancialConfigService } from '../common/financial-config.service';
+import { CronLockService } from '../common/cron-lock.service';
 import {
     escrowReleaseWindowEnd,
     isEscrowPaymentEligibleForAutoRelease,
@@ -16,10 +17,16 @@ export class EscrowCronService {
         private prisma: PrismaService,
         private escrowService: EscrowService,
         private financialConfig: FinancialConfigService,
+        private cronLock: CronLockService,
     ) {}
 
     @Cron(CronExpression.EVERY_HOUR)
     async handleAutoRelease() {
+        const { ran } = await this.cronLock.runWithLock('escrow-auto-release', () => this.runAutoRelease());
+        if (!ran) this.logger.debug('Escrow auto-release skipped (locked by another instance).');
+    }
+
+    private async runAutoRelease() {
         const config = await this.financialConfig.getConfig();
         const holdHours = config.escrowHoldHoursMerchant;
         this.logger.log(`Running Escrow Auto-Release Cron (${holdHours}h after delivery/completion)...`);

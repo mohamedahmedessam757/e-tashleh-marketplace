@@ -7,6 +7,8 @@ import { AdminFinancialService } from './admin-financial.service';
 import { ProcessPaymentDto } from './dto/process-payment.dto';
 import { CreateIntentDto } from './dto/create-intent.dto';
 import { AdminManualPayoutDto } from './dto/admin-payout.dto';
+import { WithdrawalRequestDto } from './dto/withdrawal-request.dto';
+import { CreateFinancialAdjustmentDto } from './dto/financial-adjustment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { getAuditContext } from '../common/audit-context.util';
 
@@ -93,7 +95,7 @@ export class PaymentsController {
 
     @Post('customer/withdraw')
     @Throttle({ default: { limit: 3, ttl: 3600000 } })
-    requestCustomerWithdrawal(@Request() req, @Body() body: { amount: number; payoutMethod?: string }) {
+    requestCustomerWithdrawal(@Request() req, @Body() body: WithdrawalRequestDto) {
         const { ip } = getAuditContext(req);
         return this.paymentsService.requestCustomerWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER', ip);
     }
@@ -173,7 +175,7 @@ export class PaymentsController {
 
     @Post('merchant/withdraw')
     @Throttle({ default: { limit: 3, ttl: 3600000 } })
-    requestWithdrawal(@Request() req, @Body() body: { amount: number; payoutMethod?: string }) {
+    requestWithdrawal(@Request() req, @Body() body: WithdrawalRequestDto) {
         const { ip } = getAuditContext(req);
         return this.paymentsService.requestWithdrawal(req.user.id, body.amount, body.payoutMethod || 'BANK_TRANSFER', ip);
     }
@@ -398,7 +400,7 @@ export class PaymentsController {
     @Post('admin/financial-adjustments')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'edit')
-    createFinancialAdjustment(@Request() req, @Body() body: any) {
+    createFinancialAdjustment(@Request() req, @Body() body: CreateFinancialAdjustmentDto) {
         return this.adminFinancialService.createFinancialAdjustment(req.user.id, body);
     }
 

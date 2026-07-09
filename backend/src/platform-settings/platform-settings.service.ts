@@ -202,31 +202,11 @@ export class PlatformSettingsService {
         },
       };
 
-      // 3. Absolute Deduplication (2026 Zero-Duplicate Standard)
+      // Append-only audit trail. Previously this method DELETED all prior activity records
+      // for the admin (keeping only the latest), which destroyed the audit history and let
+      // an actor erase evidence simply by performing another action. Audit logs must never be
+      // mutated/deleted here — always insert a new immutable record.
       try {
-        const existingLogs = await this.prisma.adminActivityLog.findMany({
-          where: logData.adminId ? { adminId: logData.adminId } : { email: logData.email },
-          orderBy: { createdAt: 'desc' }
-        });
-
-        if (existingLogs.length > 0) {
-          const [latest, ...duplicates] = existingLogs;
-
-          if (duplicates.length > 0) {
-            await this.prisma.adminActivityLog.deleteMany({
-              where: { id: { in: duplicates.map(d => d.id) } }
-            });
-          }
-
-          return await this.prisma.adminActivityLog.update({
-            where: { id: latest.id },
-            data: {
-              ...logData,
-              createdAt: new Date()
-            }
-          });
-        }
-
         return await this.prisma.adminActivityLog.create({ data: logData });
       } catch (prismaError) {
         // FK targets auth.users — retry without adminId (user id kept in metadata)

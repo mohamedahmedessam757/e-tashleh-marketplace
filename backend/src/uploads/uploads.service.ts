@@ -92,6 +92,21 @@ export class UploadsService {
         return { url: urlData.publicUrl, storagePath };
     }
 
+    /**
+     * Generate a short-lived signed URL for a private-bucket object. Use this for sensitive
+     * documents (KYC, verification, appeals) instead of permanent public URLs.
+     */
+    async createSignedUrl(bucket: string, path: string, expiresInSeconds = 300): Promise<string> {
+        const { data, error } = await this.supabase.storage
+            .from(bucket)
+            .createSignedUrl(path, expiresInSeconds);
+
+        if (error || !data?.signedUrl) {
+            throw new BadRequestException('Could not create signed URL');
+        }
+        return data.signedUrl;
+    }
+
     async uploadPlatformAsset(
         file: Express.Multer.File,
         assetType: 'logo' | 'logo-dark' | 'earn-income-icon' | 'nomo-document',

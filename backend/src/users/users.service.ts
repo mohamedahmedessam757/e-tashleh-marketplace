@@ -310,10 +310,15 @@ export class UsersService {
     });
   }
 
-  async update(id: string, data: { name?: string; phone?: string; avatar?: string }) {
+  async update(id: string, data: { name?: string; avatar?: string }) {
+    // Explicit field allow-list — never spread arbitrary client input into Prisma.
+    const safeData: { name?: string; avatar?: string } = {};
+    if (typeof data.name === 'string') safeData.name = data.name;
+    if (typeof data.avatar === 'string') safeData.avatar = data.avatar;
+
     const user = await this.prisma.user.update({
       where: { id },
-      data: data
+      data: safeData
     });
 
     // Notify user of profile update (Security Alert)
@@ -640,12 +645,17 @@ export class UsersService {
   }
 
   async adminUpdateCustomer(id: string, data: { name?: string; email?: string; country?: string; phone?: string }) {
+    // Explicit allow-list prevents an admin (or limited admin) from escalating
+    // role / balance / status via a crafted request body.
+    const safeData: Prisma.UserUpdateInput = { updatedAt: new Date() };
+    if (typeof data.name === 'string') safeData.name = data.name;
+    if (typeof data.email === 'string') safeData.email = data.email.trim().toLowerCase();
+    if (typeof data.country === 'string') safeData.country = data.country;
+    if (typeof data.phone === 'string') safeData.phone = data.phone;
+
     return this.prisma.user.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date()
-      }
+      data: safeData
     });
   }
 

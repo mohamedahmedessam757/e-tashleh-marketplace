@@ -2336,6 +2336,23 @@ export class PaymentsService {
         return this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT id FROM stores WHERE id = ${store.id}::uuid FOR UPDATE`;
 
+            // Re-validate AFTER acquiring the row lock to close the TOCTOU window:
+            // two concurrent requests can both pass the pre-lock checks above.
+            const locked = await tx.store.findUnique({
+                where: { id: store.id },
+                select: { balance: true },
+            });
+            if (!locked || Number(locked.balance) < amount) {
+                throw new BadRequestException('Insufficient balance');
+            }
+            const activeWithdrawal = await tx.withdrawalRequest.findFirst({
+                where: { storeId: store.id, status: { in: ['PENDING', 'PROCESSING'] } },
+                select: { id: true },
+            });
+            if (activeWithdrawal) {
+                throw new ConflictException('You already have an active withdrawal request');
+            }
+
             await tx.store.update({
                 where: { id: store.id },
                 data: {
@@ -2447,6 +2464,22 @@ export class PaymentsService {
         return this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT id FROM users WHERE id = ${user.id}::uuid FOR UPDATE`;
 
+            // Re-validate AFTER acquiring the row lock to close the TOCTOU window.
+            const locked = await tx.user.findUnique({
+                where: { id: user.id },
+                select: { customerBalance: true },
+            });
+            if (!locked || Number(locked.customerBalance) < amount) {
+                throw new BadRequestException('Insufficient balance in your rewards wallet');
+            }
+            const activeWithdrawal = await tx.withdrawalRequest.findFirst({
+                where: { userId: user.id, status: { in: ['PENDING', 'PROCESSING'] } },
+                select: { id: true },
+            });
+            if (activeWithdrawal) {
+                throw new ConflictException('You already have an active withdrawal request');
+            }
+
             await tx.user.update({
                 where: { id: user.id },
                 data: {
@@ -2499,7 +2532,19 @@ export class PaymentsService {
     }
 
     async getWithdrawalRequests(userId: string, role: string, filters?: any) {
-        if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT' || role === 'ACCOUNTANT') {
+        if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+            return this.getAdminWithdrawals(filters);
+        }
+
+        // Scoped staff (SUPPORT/ACCOUNTANT) must hold the granular billing.view permission
+        // to see the platform-wide withdrawal list — role alone is not sufficient.
+        if (role === 'SUPPORT' || role === 'ACCOUNTANT') {
+            const perm = await this.prisma.adminPermission.findUnique({ where: { userId } });
+            const permissions = (perm?.permissions ?? {}) as Record<string, any>;
+            const canViewBilling = !!perm?.isActive && permissions?.billing?.view === true;
+            if (!canViewBilling) {
+                throw new ForbiddenException('Access Denied: Missing view permission for billing');
+            }
             return this.getAdminWithdrawals(filters);
         }
 
@@ -3054,24 +3099,42 @@ export class PaymentsService {
             throw new BadRequestException('Insufficient balance for manual payout');
         }
 
-        return this.prisma.$transaction(async (tx) => {
+        if (method === PayoutMethod.STRIPE_CONNECT && !stripeId) {
+            throw new BadRequestException('User does not have a Stripe Connect account');
+        }
+
+        // Phase A (committed tx): lock, revalidate and debit the ledger. No network calls here,
+        // so the DB transaction stays short and never blocks on Stripe.
+        const walletTx = await this.prisma.$transaction(async (tx) => {
             let balanceAfter = 0;
 
             if (role === 'CUSTOMER') {
+                await tx.$executeRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+                const locked = await tx.user.findUnique({ where: { id: userId }, select: { customerBalance: true } });
+                const current = Number(locked?.customerBalance || 0);
+                if (current < amount) {
+                    throw new BadRequestException('Insufficient balance for manual payout');
+                }
                 await tx.user.update({
                     where: { id: userId },
                     data: { customerBalance: { decrement: amount } }
                 });
-                balanceAfter = balance - amount;
+                balanceAfter = current - amount;
             } else {
+                await tx.$executeRaw`SELECT id FROM stores WHERE id = ${user.store!.id}::uuid FOR UPDATE`;
+                const locked = await tx.store.findUnique({ where: { id: user.store!.id }, select: { balance: true } });
+                const current = Number(locked?.balance || 0);
+                if (current < amount) {
+                    throw new BadRequestException('Insufficient balance for manual payout');
+                }
                 await tx.store.update({
                     where: { id: user.store!.id },
                     data: { balance: { decrement: amount } }
                 });
-                balanceAfter = balance - amount;
+                balanceAfter = current - amount;
             }
 
-            const walletTx = await tx.walletTransaction.create({
+            const created = await tx.walletTransaction.create({
                 data: {
                     userId,
                     role: role,
@@ -3083,40 +3146,52 @@ export class PaymentsService {
                 }
             });
 
-            let transferId = null;
-            if (method === PayoutMethod.STRIPE_CONNECT) {
-                if (!stripeId) throw new BadRequestException('User does not have a Stripe Connect account');
-                try {
-                    const transfer = await this.stripeService.createTransfer(
-                        amount.toString(),
-                        'AED',
-                        stripeId,
-                        `MANUAL_PAYOUT_${walletTx.id}`,
-                        { adminId, note },
-                        `manual_payout_${walletTx.id}`,
-                    );
-                    transferId = transfer.id;
-                } catch (err: any) {
-                    this.logger.error(`Stripe Transfer failed for manual payout: ${err.message}`);
-                    throw new BadRequestException(`Stripe Transfer failed: ${err.message}`);
-                }
-            }
-
             await this.auditLogs.logAction({
                 entity: 'FINANCIAL',
                 action: 'MANUAL_PAYOUT',
                 actorType: ActorType.ADMIN,
                 actorId: adminId,
                 actorName: adminName,
-                metadata: {
-                    amount,
-                    method,
-                    note,
-                    adminEmail,
-                    adminSignature,
-                    stripeTransferId: transferId
-                }
+                metadata: { amount, method, note, adminEmail, adminSignature }
             }, tx);
+
+            return created;
+        });
+
+        // Phase B (after commit): run the Stripe transfer OUTSIDE the DB transaction, keyed by the
+        // persisted walletTx id so retries never double-transfer. Compensate on failure.
+        let transferId: string | null = null;
+        if (method === PayoutMethod.STRIPE_CONNECT) {
+            try {
+                const transfer = await this.stripeService.createTransfer(
+                    amount.toString(),
+                    'AED',
+                    stripeId!,
+                    `MANUAL_PAYOUT_${walletTx.id}`,
+                    { adminId, note },
+                    `manual_payout_${walletTx.id}`,
+                );
+                transferId = transfer.id;
+                await this.prisma.walletTransaction.update({
+                    where: { id: walletTx.id },
+                    data: { metadata: { stripeTransferId: transferId } },
+                });
+            } catch (err: any) {
+                this.logger.error(`Stripe Transfer failed for manual payout: ${err.message}`);
+                await this.prisma.$transaction(async (tx) => {
+                    if (role === 'CUSTOMER') {
+                        await tx.user.update({ where: { id: userId }, data: { customerBalance: { increment: amount } } });
+                    } else {
+                        await tx.store.update({ where: { id: user.store!.id }, data: { balance: { increment: amount } } });
+                    }
+                    await tx.walletTransaction.update({
+                        where: { id: walletTx.id },
+                        data: { description: `Admin Payout REVERSED (Stripe failed): ${note || 'No notes'}` },
+                    });
+                });
+                throw new BadRequestException(`Stripe Transfer failed: ${err.message}`);
+            }
+        }
 
             this.notifications.create({
                 recipientId: userId,
@@ -3128,12 +3203,12 @@ export class PaymentsService {
                 link: '/dashboard/wallet'
             });
 
-            return {
-                success: true,
-                message: 'Manual payout executed successfully',
-                walletTransactionId: walletTx.id
-            };
-        });
+        return {
+            success: true,
+            message: 'Manual payout executed successfully',
+            walletTransactionId: walletTx.id,
+            stripeTransferId: transferId,
+        };
     }
 
     /**

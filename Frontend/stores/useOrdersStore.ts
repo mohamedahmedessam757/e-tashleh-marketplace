@@ -1,8 +1,7 @@
 
 import { create } from 'zustand';
-import { supabase } from '../services/supabase';
-import { Order, OrderStatus } from '../types';
-import { getCurrentUserId } from '../utils/auth';
+import { Order } from '../types';
+import { ordersApi } from '../services/api/orders';
 
 interface OrdersState {
     orders: Order[];
@@ -28,80 +27,24 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     fetchOrders: async () => {
         set({ loading: true, error: null });
         try {
-            const userId = getCurrentUserId();
-
-            if (!userId) {
-
-                set({ orders: [], loading: false });
-                return;
-            }
-
-            const { data, error } = await supabase
-                .from('orders')
-                .select(`
-                    *,
-                    parts:order_parts(*),
-                    offers!offers_order_id_fkey(*),
-                    store:stores(*)
-                `)
-                .eq('customer_id', userId)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-
-
-            // Transform data if needed to match interface strictly
-            const mappedOrders = (data || []).map(order => ({
-                ...order,
-                // Map snake_case to camelCase
-                orderNumber: order.order_number,
-                vehicleMake: order.vehicle_make,
-                vehicleModel: order.vehicle_model,
-                vehicleYear: order.vehicle_year,
-                partName: order.part_name,
-                createdAt: order.created_at,
-                updatedAt: order.updated_at,
-                // ── Critical deadline fields ──
-                offersDeadlineAt: order.offers_deadline_at,
-                paymentDeadlineAt: order.payment_deadline_at,
-                offerAcceptedAt: order.offer_accepted_at,
-                shippedAt: order.shipped_at,
-                deliveredAt: order.delivered_at,
-                delayedPreparationDeadlineAt: order.delayed_preparation_deadline_at,
-                // ── Warranty Logic ──
-                warranty_active_at: order.warranty_active_at,
-                warranty_end_at: order.warranty_end_at,
-                // ─────────────────────
-                offersCount: (order.offers || []).filter((off: any) => off.status !== 'rejected').length,
-                // Ensure features are arrays and map offers status
-                offers: (order.offers || []).map((off: any) => ({
-                    ...off,
-                    status: off.status || 'pending'
-                })),
-                store: order.store || undefined,
-                parts: order.parts || []
-            }));
-
-            set({ orders: mappedOrders as Order[] });
+            // Route through the NestJS backend, which authenticates the caller (JWT) and
+            // returns ONLY the orders that user is allowed to see. Never query the DB
+            // directly with the anonymous Supabase client (bypasses server-side authz/RLS).
+            const result = await ordersApi.getAll({ limit: 100 });
+            const items = Array.isArray(result) ? result : (result?.items ?? []);
+            set({ orders: items as Order[] });
         } catch (err: any) {
             console.error('Error fetching orders:', err);
-            set({ error: err.message });
+            set({ error: err?.response?.data?.message || err?.message || 'Failed to load orders' });
         } finally {
             set({ loading: false });
         }
     },
 
-    cancelOrder: async (orderId: string) => {
+    cancelOrder: async (orderId: string, reason?: string) => {
         try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ status: 'CANCELLED' })
-                .eq('id', orderId);
-
-            if (error) throw error;
-
-            // Optimistic update
+            // Goes through the FSM-guarded, authorized backend transition endpoint.
+            await ordersApi.cancel(orderId, reason);
             set(state => ({
                 orders: state.orders.map(o =>
                     o.id === orderId ? { ...o, status: 'CANCELLED' } : o
@@ -116,13 +59,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
 
     deleteOrder: async (orderId: string) => {
         try {
-            const { error } = await supabase
-                .from('orders')
-                .delete()
-                .eq('id', orderId);
-
-            if (error) throw error;
-
+            await ordersApi.delete(orderId);
             set(state => ({
                 orders: state.orders.filter(o => o.id !== orderId)
             }));
@@ -135,19 +72,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
 
     renewOrder: async (orderId: string) => {
         try {
-            const newDeadline = new Date();
-            newDeadline.setHours(newDeadline.getHours() + 24);
-
-            const { error } = await supabase
-                .from('orders')
-                .update({
-                    status: 'AWAITING_OFFERS',
-                    offers_deadline_at: newDeadline.toISOString()
-                })
-                .eq('id', orderId);
-
-            if (error) throw error;
-
+            await ordersApi.renew(orderId);
             // Refresh orders to get latest state
             await get().fetchOrders();
             return true;

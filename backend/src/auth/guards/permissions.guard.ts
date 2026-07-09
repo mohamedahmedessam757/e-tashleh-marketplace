@@ -40,9 +40,11 @@ export class PermissionsGuard implements CanActivate {
     });
 
     const currentRole = (dbUser?.role || user.role || '').toString().toUpperCase();
-    
-    // High-level Admins are the ultimate authority
-    if (currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN') {
+
+    // Only SUPER_ADMIN is the ultimate authority. ADMIN (and every other staff role) is
+    // subject to the SAME granular permission checks — otherwise the RBAC model is bypassable
+    // by anyone holding the ADMIN role.
+    if (currentRole === 'SUPER_ADMIN') {
       return true;
     }
 

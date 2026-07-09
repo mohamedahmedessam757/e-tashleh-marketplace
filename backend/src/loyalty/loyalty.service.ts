@@ -473,18 +473,24 @@ export class LoyaltyService {
       throw new BadRequestException('Invalid redeem amount');
     }
 
-    const user = await this.prisma.user.findUnique({
+    const exists = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { loyaltyPoints: true },
+      select: { id: true },
     });
-    if (!user) throw new NotFoundException('User not found');
-    if (user.loyaltyPoints < amount) {
+    if (!exists) throw new NotFoundException('User not found');
+
+    // Atomic conditional decrement — prevents concurrent double-spend of points.
+    // Only rows that still have enough points are updated.
+    const claimed = await this.prisma.user.updateMany({
+      where: { id: userId, loyaltyPoints: { gte: amount } },
+      data: { loyaltyPoints: { decrement: amount } },
+    });
+    if (claimed.count === 0) {
       throw new BadRequestException('Insufficient points');
     }
 
-    const updated = await this.prisma.user.update({
+    const updated = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      data: { loyaltyPoints: { decrement: amount } },
       select: {
         loyaltyPoints: true,
         loyaltyTier: true,
