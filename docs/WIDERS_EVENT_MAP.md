@@ -8,8 +8,9 @@ Single source for which in-app events dispatch which Widers template families.
 
 | Template family | Widers API name (ar) | Trigger |
 |-----------------|----------------------|---------|
-| `auth_otp_customer` | `auth_otp_customer_ar_v2` | OTP via WhatsApp — customer (`otp.service.ts`) |
-| `auth_otp_vendor` | `auth_otp_vendor_ar_v2` | OTP via WhatsApp — vendor |
+| `auth_otp_customer` | `auth_otp_customer_ar_v2` | OTP via WhatsApp — customer register/login (`otp.service.ts`) |
+| `auth_otp_vendor` | `auth_otp_vendor_ar_v2` | OTP via WhatsApp — vendor register/login |
+| `auth_otp_admin` | `auth_otp_admin_ar_v2` | OTP via WhatsApp — staff 2FA (all admin roles) |
 | `txn_order_customer` | `txn_order_customer_ar_v2` | `OFFER`, `ORDER`, `ORDER_UPDATE`, payment without invoice |
 | `txn_order_merchant` | `txn_order_merchant_ar_v2` | Same as customer, merchant role |
 | `txn_shipment_customer` | `txn_shipment_customer_ar_v2` | `SHIPMENT_UPDATE` |
@@ -29,7 +30,7 @@ Single source for which in-app events dispatch which Widers template families.
 - Footer (Widers): `إي-تشليح | E-TASHLEH`
 - Site: https://e-tashleh.net
 - Button base: `https://e-tashleh.net/dashboard/`
-- OTP category: **Utility** (`WIDERS_OTP_MODE=utility`, body fields: `name`, `otp_code`)
+- OTP category: **AUTHENTICATION** (`WIDERS_OTP_MODE=authentication`, body `{{1}}` = `otp_code` + copy-code button)
 
 ## Intentionally no WhatsApp template
 

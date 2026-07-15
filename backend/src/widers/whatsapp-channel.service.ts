@@ -209,17 +209,22 @@ export class WhatsAppChannelService {
     }
 
     async sendOtp(
-        audience: 'customer' | 'vendor',
+        audience: 'customer' | 'vendor' | 'admin',
         phone: string,
         name: string,
         otpCode: string,
         language?: WidersTemplateLanguage,
     ): Promise<{ sent: boolean; error?: string }> {
-        const family = audience === 'vendor' ? 'auth_otp_vendor' : 'auth_otp_customer';
+        const family =
+            audience === 'vendor'
+                ? 'auth_otp_vendor'
+                : audience === 'admin'
+                  ? 'auth_otp_admin'
+                  : 'auth_otp_customer';
         const lang = language ?? 'ar';
 
+        // Default / preferred: Meta AUTHENTICATION templates (body {{1}} + copy-code button)
         if (this.config.otpMode === 'authentication') {
-            // Meta Authentication templates: OTP in body + button (Phase 2+)
             const templateName = resolveTemplateName(family, lang);
             const result = await this.widers.sendTemplateMessage({
                 phone,
@@ -238,6 +243,19 @@ export class WhatsAppChannelService {
                     },
                 ],
             });
+            void this.messageLog
+                .logOutbound({
+                    phone,
+                    templateName,
+                    templateLanguage: lang,
+                    sendResult: result,
+                    metadata: { familyBase: family, audience, otpMode: 'authentication' },
+                })
+                .catch((err) =>
+                    this.logger.warn(
+                        `Failed to persist WhatsApp OTP log: ${err instanceof Error ? err.message : err}`,
+                    ),
+                );
             return {
                 sent: Boolean(result.success),
                 error: result.error ?? result.message,
@@ -247,7 +265,7 @@ export class WhatsAppChannelService {
         return this.sendUtilityOtp(family, phone, name, otpCode, lang);
     }
 
-    /** Utility OTP with dedicated component fallbacks (2 body params). */
+    /** Legacy utility OTP fallback (name + otp_code) when WIDERS_OTP_MODE=utility. */
     private async sendUtilityOtp(
         family: string,
         phone: string,
@@ -258,11 +276,15 @@ export class WhatsAppChannelService {
         const templateName = resolveTemplateName(family, language);
         const definition = getTemplateDefinition(templateName);
         const displayName = truncateWhatsAppParam(name || 'مستخدم', 60);
+        const bodyFields = definition?.bodyFields?.length
+            ? definition.bodyFields
+            : (['otp_code'] as TemplateBodyField[]);
 
         const attempts = buildOtpSendAttempts({
             name: displayName,
             otpCode,
             headerText: definition?.headerText,
+            bodyFields,
         });
 
         const result = await this.dispatchTemplateAttempts(

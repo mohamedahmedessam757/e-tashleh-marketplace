@@ -25,8 +25,9 @@ export interface TemplateAuditReport {
 
 /** Maps template family base → notification/code events that dispatch it */
 export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
-    auth_otp_customer: ['otp.service:REGISTER/LOGIN whatsapp customer'],
-    auth_otp_vendor: ['otp.service:REGISTER/LOGIN whatsapp vendor'],
+    auth_otp_customer: ['otp.service:REGISTER whatsapp customer'],
+    auth_otp_vendor: ['otp.service:REGISTER whatsapp vendor'],
+    auth_otp_admin: ['otp.service:LOGIN staff (ADMIN/SUPER_ADMIN/SUPPORT/VERIFICATION_OFFICER/ACCOUNTANT)'],
     txn_order_customer: ['OFFER', 'ORDER', 'ORDER_UPDATE', 'payment (no invoice)'],
     txn_order_merchant: ['OFFER', 'ORDER', 'ORDER_UPDATE', 'payment (no invoice)'],
     txn_shipment_customer: ['SHIPMENT_UPDATE'],

@@ -282,12 +282,15 @@ export function buildWelcomeSendAttempts(
 }
 
 /**
- * Utility OTP: exactly two body params (name + otp_code). Header optional fallback.
+ * OTP send attempts.
+ * AUTHENTICATION templates: body {{1}} = otp_code only.
+ * Legacy utility: pass bodyFields ['name','otp_code'] when needed.
  */
 export function buildOtpSendAttempts(options: {
     name: string;
     otpCode: string;
     headerText?: string;
+    bodyFields?: TemplateBodyField[];
 }): TemplateSendAttempt[] {
     const attempts: TemplateSendAttempt[] = [];
     const seen = new Set<string>();
@@ -299,18 +302,23 @@ export function buildOtpSendAttempts(options: {
         attempts.push(attempt);
     };
 
-    const bodyFields: TemplateBodyField[] = ['name', 'otp_code'];
-    const bodyTexts = [options.name, options.otpCode];
-    const headerText = options.headerText ?? 'رمز التحقق';
+    const bodyFields: TemplateBodyField[] =
+        options.bodyFields?.length ? options.bodyFields : ['otp_code'];
+    const bodyTexts = bodyFields.map((field) =>
+        field === 'name' ? options.name : options.otpCode,
+    );
+    const headerText = options.headerText;
 
-    push({
-        label: 'components-header-body',
-        components: buildTemplateComponents({
-            bodyTexts,
-            bodyFields,
-            headerText,
-        }),
-    });
+    if (headerText) {
+        push({
+            label: 'components-header-body',
+            components: buildTemplateComponents({
+                bodyTexts,
+                bodyFields,
+                headerText,
+            }),
+        });
+    }
 
     push({
         label: 'components-body-only',

@@ -54,7 +54,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       const data = await authApi.login(email, password, fingerprint || undefined);
 
       const role = data.user?.role;
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT' || role === 'VERIFICATION_OFFICER') {
+      if (
+        role === 'ADMIN' ||
+        role === 'SUPER_ADMIN' ||
+        role === 'SUPPORT' ||
+        role === 'VERIFICATION_OFFICER' ||
+        role === 'ACCOUNTANT'
+      ) {
         setUserName(data.user.name || 'Admin');
         setUserPhone(data.user.phone || '');
         setLoginData(data);

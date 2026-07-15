@@ -81,7 +81,7 @@ export class WidersReadinessService {
             id: 'otp_mode',
             label: 'WIDERS_OTP_MODE',
             status: 'pass',
-            detail: `Current: ${this.config.otpMode} (utility until Meta Authentication approved)`,
+            detail: `Current: ${this.config.otpMode} (use authentication with approved auth_otp_* templates)`,
         });
 
         const ping = this.widers.isReady()

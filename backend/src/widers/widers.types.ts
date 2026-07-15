@@ -1,6 +1,6 @@
 export type WidersTemplateLanguage = 'ar' | 'en';
 
-export type WidersAudience = 'customer' | 'merchant' | 'vendor';
+export type WidersAudience = 'customer' | 'merchant' | 'vendor' | 'admin';
 
 export type WidersTemplateCategory = 'UTILITY' | 'AUTHENTICATION' | 'MARKETING';
 

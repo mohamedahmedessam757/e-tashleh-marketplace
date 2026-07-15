@@ -3,6 +3,7 @@ const STAFF_ROLES = new Set([
     'SUPER_ADMIN',
     'SUPPORT',
     'VERIFICATION_OFFICER',
+    'ACCOUNTANT',
 ]);
 
 /**

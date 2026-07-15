@@ -24,10 +24,12 @@ import {
     OTP_MAX_VERIFY_ATTEMPTS,
 } from './otp-purpose';
 
+export type OtpAudience = 'customer' | 'vendor' | 'admin';
+
 export interface IssueOtpParams {
     channel: OtpChannel;
     purpose: OtpPurpose;
-    audience: 'customer' | 'vendor';
+    audience: OtpAudience;
     phone?: string;
     name?: string;
     email?: string;
@@ -171,7 +173,12 @@ export class OtpService {
             },
         });
 
-        const audience = params.audience === 'vendor' ? 'vendor' : 'customer';
+        const audience: OtpAudience =
+            params.audience === 'vendor'
+                ? 'vendor'
+                : params.audience === 'admin'
+                  ? 'admin'
+                  : 'customer';
         const displayName = params.name?.trim() || 'مستخدم';
         let sendResult: { sent: boolean; error?: string } = { sent: false };
 

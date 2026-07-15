@@ -71,10 +71,13 @@ export class AuthService {
         'SUPER_ADMIN',
         'SUPPORT',
         'VERIFICATION_OFFICER',
+        'ACCOUNTANT',
     ]);
 
-    private audienceForRole(role: string): 'customer' | 'vendor' {
-        return role === 'VENDOR' ? 'vendor' : 'customer';
+    private audienceForRole(role: string): 'customer' | 'vendor' | 'admin' {
+        if (role === 'VENDOR') return 'vendor';
+        if (AuthService.STAFF_ROLES.has(role)) return 'admin';
+        return 'customer';
     }
 
     private isStaffRole(role: string): boolean {
@@ -582,7 +585,7 @@ export class AuthService {
             phone: channel === 'whatsapp' ? user.phone! : undefined,
             email: user.email,
             purpose: OtpPurpose.LOGIN,
-            audience: 'customer',
+            audience: 'admin',
             name: user.name ?? undefined,
             role: user.role,
         });

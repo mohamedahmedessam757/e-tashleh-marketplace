@@ -12,6 +12,7 @@ const token = process.env.WIDERS_API_TOKEN?.trim();
 const REGISTRY_NAMES = [
     'auth_otp_customer_ar_v2',
     'auth_otp_vendor_ar_v2',
+    'auth_otp_admin_ar_v2',
     'txn_order_customer_ar_v2',
     'txn_order_merchant_ar_v2',
     'txn_shipment_customer_ar_v2',

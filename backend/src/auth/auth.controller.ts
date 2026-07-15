@@ -121,7 +121,7 @@ export class AuthController {
         return this.authService.resendEmailLoginOtp(body.email);
     }
 
-    /** Staff 2FA — Admin / Super Admin / Support / Verification Officer */
+    /** Staff 2FA — Admin / Super Admin / Support / Verification Officer / Accountant */
     @Post('otp/send')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     async sendStaffOtp(@Body() body: StaffOtpDto) {

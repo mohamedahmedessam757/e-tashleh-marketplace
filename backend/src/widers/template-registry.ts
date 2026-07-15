@@ -60,15 +60,17 @@ function def(
 
 /** Mirrors Widers Dashboard templates — single source of truth for dispatch */
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
-    // OTP — utility fallback until Meta Authentication is enabled on WABA
-    def('auth_otp_customer', 'ar', 'customer', ['name', 'otp_code'], {
-        category: 'UTILITY',
-        headerText: 'رمز التحقق',
+    // OTP — Meta AUTHENTICATION (body {{1}} = otp_code + copy-code button)
+    def('auth_otp_customer', 'ar', 'customer', ['otp_code'], {
+        category: 'AUTHENTICATION',
         buttonUrlDynamic: false,
     }),
-    def('auth_otp_vendor', 'ar', 'vendor', ['name', 'otp_code'], {
-        category: 'UTILITY',
-        headerText: 'رمز التحقق',
+    def('auth_otp_vendor', 'ar', 'vendor', ['otp_code'], {
+        category: 'AUTHENTICATION',
+        buttonUrlDynamic: false,
+    }),
+    def('auth_otp_admin', 'ar', 'admin', ['otp_code'], {
+        category: 'AUTHENTICATION',
         buttonUrlDynamic: false,
     }),
 
