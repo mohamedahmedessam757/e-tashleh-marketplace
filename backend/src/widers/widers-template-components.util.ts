@@ -337,13 +337,14 @@ export function buildWelcomeSendAttempts(
 /**
  * AUTHENTICATION COPY_CODE OTP via Widers / Meta Cloud API.
  *
- * Live probes (Jul 2026, Widers apps.widers.net):
- * - body {{1}} + button url {{1}} (Meta official) → DELIVERS
- * - body-only (1 param) → also DELIVERS (Widers may hydrate COPY_CODE)
+ * Live probes (Jul 2026, Widers apps.widers.net) — success = real message_wamid:
+ * - body {{1}} + button url {{1}} (Meta COPY_CODE official) → DELIVERS
+ * - body-only (1 param, no button) → Meta #131008 Required parameter is missing
  * - flat parameters:[code] → does NOT substitute {{1}}
  * - parameters:[name, code] / body with 2 params → Meta #132000 (2 vs 1)
  *
- * Always send Meta official shape. Never include contact `name` in body.
+ * Always send Meta official COPY_CODE shape. Never include contact `name` in body.
+ * Do not trust last_message or HTTP status:success alone — require wamid.
  */
 export const AUTH_OTP_PAYLOAD_VERSION = 'auth-copy-code-v4';
 

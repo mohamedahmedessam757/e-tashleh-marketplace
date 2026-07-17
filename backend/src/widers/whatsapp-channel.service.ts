@@ -234,7 +234,12 @@ export class WhatsAppChannelService {
         name: string,
         otpCode: string,
         language?: WidersTemplateLanguage,
-    ): Promise<{ sent: boolean; error?: string }> {
+    ): Promise<{
+        sent: boolean;
+        error?: string;
+        payloadVersion?: string;
+        templateName?: string;
+    }> {
         const family =
             audience === 'vendor'
                 ? 'auth_otp_vendor'
@@ -292,6 +297,8 @@ export class WhatsAppChannelService {
         return {
             sent: Boolean(result.success),
             error: formatWidersError(result.error, result.message),
+            payloadVersion: 'auth-copy-code-v4',
+            templateName,
         };
     }
 
