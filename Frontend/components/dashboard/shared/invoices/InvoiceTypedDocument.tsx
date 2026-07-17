@@ -1,0 +1,321 @@
+import React from 'react';
+import {
+  Hash,
+  Calendar,
+  Package,
+  Truck,
+  Percent,
+  User,
+  Building2,
+} from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import type { InvoiceDocTab } from './invoiceDocs.types';
+
+interface Labels {
+  invoiceTitle: string;
+  invoiceNumber: string;
+  orderNumber: string;
+  offerNumber: string;
+  issueDate: string;
+  partName: string;
+  partPrice: string;
+  shippingCompany: string;
+  shippingPending: string;
+  shippingRevenue: string;
+  lineItems: string;
+  platformCompany: string;
+  commissionAmount: string;
+  customer: string;
+  total: string;
+  thankYou: string;
+  electronicDoc: string;
+  emptyTitle: string;
+  emptyHint: string;
+  groupId: string;
+}
+
+interface InvoiceTypedDocumentProps {
+  inv: any;
+  docType: Exclude<InvoiceDocTab, 'MASTER'>;
+  isAr: boolean;
+  isRTL: boolean;
+  labels: Labels;
+}
+
+const InfoRow: React.FC<{ icon: any; label: string; value: string }> = ({
+  icon: Icon,
+  label,
+  value,
+}) => (
+  <div className="flex items-start gap-2 text-xs sm:text-sm">
+    <Icon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0 inv-icon" />
+    <span className="text-gray-400 shrink-0 inv-label">{label}:</span>
+    <span className="text-white font-semibold break-all inv-value">{value || '--'}</span>
+  </div>
+);
+
+export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
+  inv,
+  docType,
+  isAr,
+  isRTL,
+  labels,
+}) => {
+  const order = inv?.order || {};
+  const acceptedOffer =
+    order?.offers?.find(
+      (o: any) =>
+        o.id === inv?.payment?.offerId ||
+        o.status === 'accepted' ||
+        o.status === 'ACCEPTED',
+    ) || order?.offers?.[0];
+  const customer = order?.customer || null;
+
+  const invoiceNumber = inv.invoiceNumber || '--';
+  const orderNumber = order.orderNumber || '--';
+  const offerNumber = acceptedOffer?.offerNumber || '--';
+  const rawDate = inv.issuedAt || order.createdAt;
+  const invoiceDate = rawDate
+    ? `${new Date(rawDate).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })} | ${new Date(rawDate).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })}`
+    : '--';
+
+  const currency = inv.currency || 'AED';
+  const partName =
+    inv.livePartName ||
+    inv.partNameSnapshot ||
+    acceptedOffer?.orderPart?.name ||
+    order.partName ||
+    (isAr ? 'قطعة غيار' : 'Spare Part');
+  const customerName =
+    customer?.name || customer?.email || (isAr ? 'عميل' : 'Customer');
+  const carrierName =
+    inv.liveCarrierName ||
+    inv.carrierNameSnapshot ||
+    order?.shipments?.[0]?.carrierName ||
+    null;
+  const platformName =
+    (isAr
+      ? inv.livePlatformLegalNameAr || inv.platformLegalNameAr
+      : inv.livePlatformLegalNameEn || inv.platformLegalNameEn) ||
+    'ELLIPP FZ LLC';
+
+  const amount =
+    docType === 'PART'
+      ? Number(inv.subtotal || inv.total || 0)
+      : docType === 'SHIPPING'
+        ? Number(inv.shipping || inv.total || 0)
+        : Number(inv.commission || inv.total || 0);
+
+  const lineItems: Array<{ partName?: string; amount?: number; paymentId?: string }> =
+    Array.isArray(inv.lineItems) ? inv.lineItems : [];
+
+  const qrValue = `https://e-tashleh.net/invoice/${inv.id}`;
+  const TitleIcon =
+    docType === 'PART' ? Package : docType === 'SHIPPING' ? Truck : Percent;
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <div
+        className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section"
+        style={{ border: 'none !important', background: 'transparent !important' }}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2">
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+          </div>
+          <h1 className="text-3xl font-black text-[#b8860b] uppercase tracking-wider">
+            E-Tashleh
+          </h1>
+        </div>
+        <p className="text-[18px] font-black text-gray-800 uppercase tracking-widest">
+          {labels.invoiceTitle}
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-white/10 inv-section">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white inv-value mb-1">
+            E-Tashleh.net
+          </h1>
+          <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
+              <span className="inv-label">{labels.invoiceNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value">
+                {invoiceNumber}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
+              <span className="inv-label">{labels.orderNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value">
+                {orderNumber}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
+              <span className="inv-label">{labels.offerNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value">
+                {offerNumber}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gold-500 inv-icon" />
+              <span className="inv-label">{labels.issueDate}:</span>
+              <span className="font-mono text-white inv-value">{invoiceDate}</span>
+            </div>
+            {inv.invoiceGroupId && (
+              <div className="flex items-center gap-2">
+                <Hash className="w-4 h-4 text-gold-500 inv-icon" />
+                <span className="inv-label">{labels.groupId}:</span>
+                <span className="font-mono text-white/70 inv-value text-[11px]">
+                  {String(inv.invoiceGroupId).slice(0, 8)}…
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gold-500/10 border border-gold-500/20">
+          <TitleIcon className="w-5 h-5 text-gold-500" />
+          <span className="text-xs font-black uppercase tracking-wider text-gold-400">
+            {labels.invoiceTitle}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+        <div className="inv-section bg-white/5 rounded-xl p-4 border border-white/10">
+          {docType === 'COMMISSION' ? (
+            <>
+              <InfoRow
+                icon={Building2}
+                label={labels.platformCompany}
+                value={platformName}
+              />
+              <div className="mt-3">
+                <InfoRow icon={Package} label={labels.partName} value={partName} />
+              </div>
+            </>
+          ) : docType === 'SHIPPING' ? (
+            <>
+              <InfoRow
+                icon={Truck}
+                label={labels.shippingCompany}
+                value={carrierName || labels.shippingPending}
+              />
+              <div className="mt-3">
+                <InfoRow icon={User} label={labels.customer} value={customerName} />
+              </div>
+            </>
+          ) : (
+            <>
+              <InfoRow icon={Package} label={labels.partName} value={partName} />
+              <div className="mt-3">
+                <InfoRow icon={User} label={labels.customer} value={customerName} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="inv-section bg-white/5 rounded-xl p-4 border border-white/10 space-y-3">
+          {docType === 'PART' && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 inv-label">{labels.partPrice}</span>
+              <span className="font-mono text-white inv-value">
+                {amount.toLocaleString()} {currency}
+              </span>
+            </div>
+          )}
+          {docType === 'COMMISSION' && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 inv-label">{labels.commissionAmount}</span>
+              <span className="font-mono text-white inv-value">
+                {amount.toLocaleString()} {currency}
+              </span>
+            </div>
+          )}
+          {docType === 'SHIPPING' && (
+            <>
+              {lineItems.length > 1 ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gold-500">
+                    {labels.lineItems}
+                  </p>
+                  {lineItems.map((line, idx) => (
+                    <div
+                      key={`${line.paymentId || idx}`}
+                      className="flex justify-between text-xs sm:text-sm gap-3"
+                    >
+                      <span className="text-gray-400 inv-label truncate">
+                        {line.partName || partName}
+                      </span>
+                      <span className="font-mono text-white inv-value shrink-0">
+                        {Number(line.amount || 0).toLocaleString()} {currency}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400 inv-label">{labels.shippingRevenue}</span>
+                  <span className="font-mono text-white inv-value">
+                    {amount.toLocaleString()} {currency}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-gold-500/20 to-black/40 rounded-xl p-6 sm:p-8 border-2 border-gold-500 mt-8 inv-total-box flex justify-center">
+        <div className="text-center bg-black/40 px-6 py-4 rounded-xl border border-gold-500/30 max-w-md w-full">
+          <p className="text-[10px] font-black text-gold-500 uppercase tracking-widest mb-1">
+            {labels.total}
+          </p>
+          <p className="text-4xl sm:text-5xl font-black text-gold-500 font-mono inv-total-amount">
+            {Math.round(amount).toLocaleString()}
+            <span className="text-xl sm:text-2xl font-bold ms-2 text-gold-400">
+              {currency}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div className="text-center pt-8 mt-12 border-t-2 border-white/10 inv-footer">
+        <div className="inline-block bg-white p-3 rounded-xl border-4 border-gold-500 mb-4">
+          <QRCodeSVG value={qrValue} size={120} level="H" includeMargin={false} />
+        </div>
+        <div className="space-y-1.5 text-xs text-gray-500">
+          <p className="inv-label font-bold text-gray-400">{labels.thankYou}</p>
+          <p className="inv-label">{labels.electronicDoc}</p>
+          <div className="mt-4 pt-4 border-t border-white/5 inline-block">
+            <p className="text-gray-600 font-mono text-[10px] inv-label tracking-widest">
+              ELLIPP FZ LLC | {isAr ? 'رخصة تجارية:' : 'L/N:'} 45000927 |{' '}
+              {isAr ? 'سجل تجاري:' : 'CR:'} 0000004036902
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const InvoiceDocEmptyState: React.FC<{
+  title: string;
+  hint: string;
+}> = ({ title, hint }) => (
+  <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
+    <Package size={40} className="mx-auto mb-4 text-white/20" />
+    <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+    <p className="text-white/50 text-sm max-w-md mx-auto">{hint}</p>
+  </div>
+);

@@ -129,13 +129,13 @@ export class WidersService {
     buildComponents(
         bodyTexts: string[],
         options?: {
-            headerText?: string;
+            headerVariableText?: string;
             buttonSuffix?: string;
         },
     ): WidersTemplateComponent[] {
         return buildTemplateComponents({
             bodyTexts,
-            headerText: options?.headerText,
+            headerVariableText: options?.headerVariableText,
             buttonSuffix: options?.buttonSuffix,
         });
     }

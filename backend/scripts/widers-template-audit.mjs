@@ -23,7 +23,7 @@ const REGISTRY_NAMES = [
     'txn_waybill_merchant_ar_v2',
     'txn_document_vendor_ar_v2',
     'txn_verification_customer_ar_v2',
-    'txn_verification_merchant_ar_v2',
+    'txn_verification_vendor_ar_v2',
     'welcome_customer_ar_v2',
     'welcome_vendor_ar_v2',
 ];

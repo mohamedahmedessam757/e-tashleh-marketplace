@@ -52,6 +52,14 @@ export type InvoiceMinAggregateOutputType = {
   total: runtime.Decimal | null
   currency: string | null
   status: string | null
+  invoiceType: string | null
+  invoiceGroupId: string | null
+  parentInvoiceId: string | null
+  shippingBatchKey: string | null
+  partNameSnapshot: string | null
+  carrierNameSnapshot: string | null
+  platformLegalNameEn: string | null
+  platformLegalNameAr: string | null
   issuedAt: Date | null
 }
 
@@ -67,6 +75,14 @@ export type InvoiceMaxAggregateOutputType = {
   total: runtime.Decimal | null
   currency: string | null
   status: string | null
+  invoiceType: string | null
+  invoiceGroupId: string | null
+  parentInvoiceId: string | null
+  shippingBatchKey: string | null
+  partNameSnapshot: string | null
+  carrierNameSnapshot: string | null
+  platformLegalNameEn: string | null
+  platformLegalNameAr: string | null
   issuedAt: Date | null
 }
 
@@ -82,6 +98,15 @@ export type InvoiceCountAggregateOutputType = {
   total: number
   currency: number
   status: number
+  invoiceType: number
+  invoiceGroupId: number
+  parentInvoiceId: number
+  shippingBatchKey: number
+  lineItems: number
+  partNameSnapshot: number
+  carrierNameSnapshot: number
+  platformLegalNameEn: number
+  platformLegalNameAr: number
   issuedAt: number
   _all: number
 }
@@ -113,6 +138,14 @@ export type InvoiceMinAggregateInputType = {
   total?: true
   currency?: true
   status?: true
+  invoiceType?: true
+  invoiceGroupId?: true
+  parentInvoiceId?: true
+  shippingBatchKey?: true
+  partNameSnapshot?: true
+  carrierNameSnapshot?: true
+  platformLegalNameEn?: true
+  platformLegalNameAr?: true
   issuedAt?: true
 }
 
@@ -128,6 +161,14 @@ export type InvoiceMaxAggregateInputType = {
   total?: true
   currency?: true
   status?: true
+  invoiceType?: true
+  invoiceGroupId?: true
+  parentInvoiceId?: true
+  shippingBatchKey?: true
+  partNameSnapshot?: true
+  carrierNameSnapshot?: true
+  platformLegalNameEn?: true
+  platformLegalNameAr?: true
   issuedAt?: true
 }
 
@@ -143,6 +184,15 @@ export type InvoiceCountAggregateInputType = {
   total?: true
   currency?: true
   status?: true
+  invoiceType?: true
+  invoiceGroupId?: true
+  parentInvoiceId?: true
+  shippingBatchKey?: true
+  lineItems?: true
+  partNameSnapshot?: true
+  carrierNameSnapshot?: true
+  platformLegalNameEn?: true
+  platformLegalNameAr?: true
   issuedAt?: true
   _all?: true
 }
@@ -245,6 +295,15 @@ export type InvoiceGroupByOutputType = {
   total: runtime.Decimal
   currency: string
   status: string
+  invoiceType: string
+  invoiceGroupId: string | null
+  parentInvoiceId: string | null
+  shippingBatchKey: string | null
+  lineItems: runtime.JsonValue | null
+  partNameSnapshot: string | null
+  carrierNameSnapshot: string | null
+  platformLegalNameEn: string | null
+  platformLegalNameAr: string | null
   issuedAt: Date
   _count: InvoiceCountAggregateOutputType | null
   _avg: InvoiceAvgAggregateOutputType | null
@@ -283,6 +342,15 @@ export type InvoiceWhereInput = {
   total?: Prisma.DecimalFilter<"Invoice"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Invoice"> | string
   status?: Prisma.StringFilter<"Invoice"> | string
+  invoiceType?: Prisma.StringFilter<"Invoice"> | string
+  invoiceGroupId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  parentInvoiceId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  shippingBatchKey?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  lineItems?: Prisma.JsonNullableFilter<"Invoice">
+  partNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  carrierNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameEn?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameAr?: Prisma.StringNullableFilter<"Invoice"> | string | null
   issuedAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -301,6 +369,15 @@ export type InvoiceOrderByWithRelationInput = {
   total?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  invoiceType?: Prisma.SortOrder
+  invoiceGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentInvoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippingBatchKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  lineItems?: Prisma.SortOrderInput | Prisma.SortOrder
+  partNameSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  carrierNameSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  platformLegalNameEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  platformLegalNameAr?: Prisma.SortOrderInput | Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
   order?: Prisma.OrderOrderByWithRelationInput
   customer?: Prisma.UserOrderByWithRelationInput
@@ -322,6 +399,15 @@ export type InvoiceWhereUniqueInput = Prisma.AtLeast<{
   total?: Prisma.DecimalFilter<"Invoice"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Invoice"> | string
   status?: Prisma.StringFilter<"Invoice"> | string
+  invoiceType?: Prisma.StringFilter<"Invoice"> | string
+  invoiceGroupId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  parentInvoiceId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  shippingBatchKey?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  lineItems?: Prisma.JsonNullableFilter<"Invoice">
+  partNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  carrierNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameEn?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameAr?: Prisma.StringNullableFilter<"Invoice"> | string | null
   issuedAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -340,6 +426,15 @@ export type InvoiceOrderByWithAggregationInput = {
   total?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  invoiceType?: Prisma.SortOrder
+  invoiceGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentInvoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippingBatchKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  lineItems?: Prisma.SortOrderInput | Prisma.SortOrder
+  partNameSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  carrierNameSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  platformLegalNameEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  platformLegalNameAr?: Prisma.SortOrderInput | Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
   _count?: Prisma.InvoiceCountOrderByAggregateInput
   _avg?: Prisma.InvoiceAvgOrderByAggregateInput
@@ -363,6 +458,15 @@ export type InvoiceScalarWhereWithAggregatesInput = {
   total?: Prisma.DecimalWithAggregatesFilter<"Invoice"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringWithAggregatesFilter<"Invoice"> | string
   status?: Prisma.StringWithAggregatesFilter<"Invoice"> | string
+  invoiceType?: Prisma.StringWithAggregatesFilter<"Invoice"> | string
+  invoiceGroupId?: Prisma.UuidNullableWithAggregatesFilter<"Invoice"> | string | null
+  parentInvoiceId?: Prisma.UuidNullableWithAggregatesFilter<"Invoice"> | string | null
+  shippingBatchKey?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
+  lineItems?: Prisma.JsonNullableWithAggregatesFilter<"Invoice">
+  partNameSnapshot?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
+  carrierNameSnapshot?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
+  platformLegalNameEn?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
+  platformLegalNameAr?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
   issuedAt?: Prisma.DateTimeWithAggregatesFilter<"Invoice"> | Date | string
 }
 
@@ -375,6 +479,15 @@ export type InvoiceCreateInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutInvoicesInput
   customer: Prisma.UserCreateNestedOneWithoutInvoicesInput
@@ -393,6 +506,15 @@ export type InvoiceUncheckedCreateInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -405,6 +527,15 @@ export type InvoiceUpdateInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutInvoicesNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutInvoicesNestedInput
@@ -423,6 +554,15 @@ export type InvoiceUncheckedUpdateInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -438,6 +578,15 @@ export type InvoiceCreateManyInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -450,6 +599,15 @@ export type InvoiceUpdateManyMutationInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -465,6 +623,15 @@ export type InvoiceUncheckedUpdateManyInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -490,6 +657,15 @@ export type InvoiceCountOrderByAggregateInput = {
   total?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  invoiceType?: Prisma.SortOrder
+  invoiceGroupId?: Prisma.SortOrder
+  parentInvoiceId?: Prisma.SortOrder
+  shippingBatchKey?: Prisma.SortOrder
+  lineItems?: Prisma.SortOrder
+  partNameSnapshot?: Prisma.SortOrder
+  carrierNameSnapshot?: Prisma.SortOrder
+  platformLegalNameEn?: Prisma.SortOrder
+  platformLegalNameAr?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
 }
 
@@ -512,6 +688,14 @@ export type InvoiceMaxOrderByAggregateInput = {
   total?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  invoiceType?: Prisma.SortOrder
+  invoiceGroupId?: Prisma.SortOrder
+  parentInvoiceId?: Prisma.SortOrder
+  shippingBatchKey?: Prisma.SortOrder
+  partNameSnapshot?: Prisma.SortOrder
+  carrierNameSnapshot?: Prisma.SortOrder
+  platformLegalNameEn?: Prisma.SortOrder
+  platformLegalNameAr?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
 }
 
@@ -527,6 +711,14 @@ export type InvoiceMinOrderByAggregateInput = {
   total?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  invoiceType?: Prisma.SortOrder
+  invoiceGroupId?: Prisma.SortOrder
+  parentInvoiceId?: Prisma.SortOrder
+  shippingBatchKey?: Prisma.SortOrder
+  partNameSnapshot?: Prisma.SortOrder
+  carrierNameSnapshot?: Prisma.SortOrder
+  platformLegalNameEn?: Prisma.SortOrder
+  platformLegalNameAr?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
 }
 
@@ -672,6 +864,15 @@ export type InvoiceCreateWithoutCustomerInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutInvoicesInput
   payment: Prisma.PaymentTransactionCreateNestedOneWithoutInvoicesInput
@@ -688,6 +889,15 @@ export type InvoiceUncheckedCreateWithoutCustomerInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -732,6 +942,15 @@ export type InvoiceScalarWhereInput = {
   total?: Prisma.DecimalFilter<"Invoice"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFilter<"Invoice"> | string
   status?: Prisma.StringFilter<"Invoice"> | string
+  invoiceType?: Prisma.StringFilter<"Invoice"> | string
+  invoiceGroupId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  parentInvoiceId?: Prisma.UuidNullableFilter<"Invoice"> | string | null
+  shippingBatchKey?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  lineItems?: Prisma.JsonNullableFilter<"Invoice">
+  partNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  carrierNameSnapshot?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameEn?: Prisma.StringNullableFilter<"Invoice"> | string | null
+  platformLegalNameAr?: Prisma.StringNullableFilter<"Invoice"> | string | null
   issuedAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
 }
 
@@ -744,6 +963,15 @@ export type InvoiceCreateWithoutOrderInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutInvoicesInput
   payment: Prisma.PaymentTransactionCreateNestedOneWithoutInvoicesInput
@@ -760,6 +988,15 @@ export type InvoiceUncheckedCreateWithoutOrderInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -798,6 +1035,15 @@ export type InvoiceCreateWithoutPaymentInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutInvoicesInput
   customer: Prisma.UserCreateNestedOneWithoutInvoicesInput
@@ -814,6 +1060,15 @@ export type InvoiceUncheckedCreateWithoutPaymentInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -854,6 +1109,15 @@ export type InvoiceCreateManyCustomerInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -866,6 +1130,15 @@ export type InvoiceUpdateWithoutCustomerInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutInvoicesNestedInput
   payment?: Prisma.PaymentTransactionUpdateOneRequiredWithoutInvoicesNestedInput
@@ -882,6 +1155,15 @@ export type InvoiceUncheckedUpdateWithoutCustomerInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -896,6 +1178,15 @@ export type InvoiceUncheckedUpdateManyWithoutCustomerInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -910,6 +1201,15 @@ export type InvoiceCreateManyOrderInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -922,6 +1222,15 @@ export type InvoiceUpdateWithoutOrderInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutInvoicesNestedInput
   payment?: Prisma.PaymentTransactionUpdateOneRequiredWithoutInvoicesNestedInput
@@ -938,6 +1247,15 @@ export type InvoiceUncheckedUpdateWithoutOrderInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -952,6 +1270,15 @@ export type InvoiceUncheckedUpdateManyWithoutOrderInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -966,6 +1293,15 @@ export type InvoiceCreateManyPaymentInput = {
   total: runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: string
   status?: string
+  invoiceType?: string
+  invoiceGroupId?: string | null
+  parentInvoiceId?: string | null
+  shippingBatchKey?: string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: string | null
+  carrierNameSnapshot?: string | null
+  platformLegalNameEn?: string | null
+  platformLegalNameAr?: string | null
   issuedAt?: Date | string
 }
 
@@ -978,6 +1314,15 @@ export type InvoiceUpdateWithoutPaymentInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutInvoicesNestedInput
   customer?: Prisma.UserUpdateOneRequiredWithoutInvoicesNestedInput
@@ -994,6 +1339,15 @@ export type InvoiceUncheckedUpdateWithoutPaymentInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1008,6 +1362,15 @@ export type InvoiceUncheckedUpdateManyWithoutPaymentInput = {
   total?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceType?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentInvoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingBatchKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineItems?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  partNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  carrierNameSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  platformLegalNameAr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issuedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1025,6 +1388,15 @@ export type InvoiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   total?: boolean
   currency?: boolean
   status?: boolean
+  invoiceType?: boolean
+  invoiceGroupId?: boolean
+  parentInvoiceId?: boolean
+  shippingBatchKey?: boolean
+  lineItems?: boolean
+  partNameSnapshot?: boolean
+  carrierNameSnapshot?: boolean
+  platformLegalNameEn?: boolean
+  platformLegalNameAr?: boolean
   issuedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1043,6 +1415,15 @@ export type InvoiceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   total?: boolean
   currency?: boolean
   status?: boolean
+  invoiceType?: boolean
+  invoiceGroupId?: boolean
+  parentInvoiceId?: boolean
+  shippingBatchKey?: boolean
+  lineItems?: boolean
+  partNameSnapshot?: boolean
+  carrierNameSnapshot?: boolean
+  platformLegalNameEn?: boolean
+  platformLegalNameAr?: boolean
   issuedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1061,6 +1442,15 @@ export type InvoiceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   total?: boolean
   currency?: boolean
   status?: boolean
+  invoiceType?: boolean
+  invoiceGroupId?: boolean
+  parentInvoiceId?: boolean
+  shippingBatchKey?: boolean
+  lineItems?: boolean
+  partNameSnapshot?: boolean
+  carrierNameSnapshot?: boolean
+  platformLegalNameEn?: boolean
+  platformLegalNameAr?: boolean
   issuedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1079,10 +1469,19 @@ export type InvoiceSelectScalar = {
   total?: boolean
   currency?: boolean
   status?: boolean
+  invoiceType?: boolean
+  invoiceGroupId?: boolean
+  parentInvoiceId?: boolean
+  shippingBatchKey?: boolean
+  lineItems?: boolean
+  partNameSnapshot?: boolean
+  carrierNameSnapshot?: boolean
+  platformLegalNameEn?: boolean
+  platformLegalNameAr?: boolean
   issuedAt?: boolean
 }
 
-export type InvoiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invoiceNumber" | "orderId" | "paymentId" | "customerId" | "subtotal" | "shipping" | "commission" | "total" | "currency" | "status" | "issuedAt", ExtArgs["result"]["invoice"]>
+export type InvoiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invoiceNumber" | "orderId" | "paymentId" | "customerId" | "subtotal" | "shipping" | "commission" | "total" | "currency" | "status" | "invoiceType" | "invoiceGroupId" | "parentInvoiceId" | "shippingBatchKey" | "lineItems" | "partNameSnapshot" | "carrierNameSnapshot" | "platformLegalNameEn" | "platformLegalNameAr" | "issuedAt", ExtArgs["result"]["invoice"]>
 export type InvoiceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1118,6 +1517,18 @@ export type $InvoicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     total: runtime.Decimal
     currency: string
     status: string
+    /**
+     * MASTER | PART | SHIPPING | COMMISSION
+     */
+    invoiceType: string
+    invoiceGroupId: string | null
+    parentInvoiceId: string | null
+    shippingBatchKey: string | null
+    lineItems: runtime.JsonValue | null
+    partNameSnapshot: string | null
+    carrierNameSnapshot: string | null
+    platformLegalNameEn: string | null
+    platformLegalNameAr: string | null
     issuedAt: Date
   }, ExtArgs["result"]["invoice"]>
   composites: {}
@@ -1556,6 +1967,15 @@ export interface InvoiceFieldRefs {
   readonly total: Prisma.FieldRef<"Invoice", 'Decimal'>
   readonly currency: Prisma.FieldRef<"Invoice", 'String'>
   readonly status: Prisma.FieldRef<"Invoice", 'String'>
+  readonly invoiceType: Prisma.FieldRef<"Invoice", 'String'>
+  readonly invoiceGroupId: Prisma.FieldRef<"Invoice", 'String'>
+  readonly parentInvoiceId: Prisma.FieldRef<"Invoice", 'String'>
+  readonly shippingBatchKey: Prisma.FieldRef<"Invoice", 'String'>
+  readonly lineItems: Prisma.FieldRef<"Invoice", 'Json'>
+  readonly partNameSnapshot: Prisma.FieldRef<"Invoice", 'String'>
+  readonly carrierNameSnapshot: Prisma.FieldRef<"Invoice", 'String'>
+  readonly platformLegalNameEn: Prisma.FieldRef<"Invoice", 'String'>
+  readonly platformLegalNameAr: Prisma.FieldRef<"Invoice", 'String'>
   readonly issuedAt: Prisma.FieldRef<"Invoice", 'DateTime'>
 }
     

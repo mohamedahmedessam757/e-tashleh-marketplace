@@ -516,8 +516,8 @@ export interface AdminState {
   isLoadingFinancialPenalties: boolean;
   isLoadingFinancialAudit: boolean;
   isLoadingFinancialReport: boolean;
-  fetchAdminCustomerInvoices: (params?: { search?: string; status?: string; page?: number; entityType?: string }) => Promise<void>;
-  fetchAdminStoreInvoices: (params?: { search?: string; page?: number; entityType?: string }) => Promise<void>;
+  fetchAdminCustomerInvoices: (params?: { search?: string; status?: string; page?: number; entityType?: string; invoiceType?: string }) => Promise<void>;
+  fetchAdminStoreInvoices: (params?: { search?: string; page?: number; entityType?: string; invoiceType?: string }) => Promise<void>;
   fetchSellerAccounts: (search?: string) => Promise<void>;
   fetchCustomerAccounts: (search?: string) => Promise<void>;
   fetchFinancialRefunds: (search?: string) => Promise<void>;
@@ -1837,6 +1837,7 @@ export const useAdminStore = create<AdminState>()(
           if (params?.search) query.set('search', params.search);
           if (params?.entityType) query.set('entityType', params.entityType);
           if (params?.status) query.set('status', params.status);
+          if (params?.invoiceType) query.set('invoiceType', params.invoiceType);
           if (params?.page) query.set('page', String(params.page));
           query.set('limit', '50');
           const res = await fetch(`${API_URL}/invoices/admin/customers?${query}`, {
@@ -1863,6 +1864,7 @@ export const useAdminStore = create<AdminState>()(
           const query = new URLSearchParams();
           if (params?.search) query.set('search', params.search);
           if (params?.entityType) query.set('entityType', params.entityType);
+          if (params?.invoiceType) query.set('invoiceType', params.invoiceType);
           if (params?.page) query.set('page', String(params.page));
           query.set('limit', '50');
           const res = await fetch(`${API_URL}/invoices/admin/stores?${query}`, {

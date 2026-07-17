@@ -65,7 +65,11 @@ export function isParameterCountMismatchError(error?: string | null): boolean {
 export interface BuildTemplateComponentsOptions {
     bodyTexts: string[];
     bodyFields?: TemplateBodyField[];
-    headerText?: string;
+    /**
+     * Only for templates whose Meta header is a *variable* ({{1}}).
+     * Static headers (most txn_* templates) must NOT be sent — leave undefined.
+     */
+    headerVariableText?: string;
     buttonSuffix?: string;
     useNamedBodyParameters?: boolean;
 }
@@ -75,13 +79,13 @@ export function buildTemplateComponents(
 ): WidersTemplateComponent[] {
     const components: WidersTemplateComponent[] = [];
 
-    if (options.headerText) {
+    if (options.headerVariableText) {
         components.push({
             type: 'header',
             parameters: [
                 {
                     type: 'text',
-                    text: truncateWhatsAppParam(options.headerText, 60),
+                    text: truncateWhatsAppParam(options.headerVariableText, 60),
                 },
             ],
         });
@@ -169,6 +173,8 @@ export interface TemplateSendAttempt {
 
 /**
  * Ordered send attempts for standard (transactional) templates.
+ * Same body param count on every attempt — only packaging / button presence changes.
+ * Never sends static headerText (registry headerText is documentation only).
  */
 export function buildTemplateComponentVariants(
     options: BuildTemplateComponentsOptions,
@@ -183,10 +189,12 @@ export function buildTemplateComponentVariants(
         attempts.push(attempt);
     };
 
+    const bodyTexts = options.bodyTexts;
+    const bodyFields = options.bodyFields;
     const base = {
-        bodyTexts: options.bodyTexts,
-        bodyFields: options.bodyFields,
-        headerText: options.headerText,
+        bodyTexts,
+        bodyFields,
+        headerVariableText: options.headerVariableText,
         buttonSuffix: options.buttonSuffix,
     };
 
@@ -205,25 +213,17 @@ export function buildTemplateComponentVariants(
         });
     }
 
-    if (options.headerText) {
-        push({
-            label: 'no-header',
-            components: buildTemplateComponents({
-                ...base,
-                headerText: undefined,
-            }),
-        });
-    }
+    push({
+        label: 'parameters-array',
+        bodyParameters: bodyTexts,
+        parameterFormat: 'parameters',
+    });
 
-    if (options.buttonSuffix && options.headerText) {
-        push({
-            label: 'body-only',
-            components: buildTemplateComponents({
-                bodyTexts: options.bodyTexts,
-                bodyFields: options.bodyFields,
-            }),
-        });
-    }
+    push({
+        label: 'variables-array',
+        bodyParameters: bodyTexts,
+        parameterFormat: 'variables',
+    });
 
     if (options.useNamedBodyParameters) {
         push({
@@ -282,16 +282,11 @@ export function buildWelcomeSendAttempts(
 }
 
 /**
- * OTP send attempts.
- * AUTHENTICATION templates: body {{1}} = otp_code only.
- * Legacy utility: pass bodyFields ['name','otp_code'] when needed.
+ * AUTHENTICATION OTP: exactly one body param {{1}} = otp_code.
+ * Ordered attempts — never send name as a second body param (#132000).
  */
-export function buildOtpSendAttempts(options: {
-    name: string;
-    otpCode: string;
-    headerText?: string;
-    bodyFields?: TemplateBodyField[];
-}): TemplateSendAttempt[] {
+export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[] {
+    const code = truncateWhatsAppParam(otpCode.trim() || '000000', 20);
     const attempts: TemplateSendAttempt[] = [];
     const seen = new Set<string>();
 
@@ -302,43 +297,90 @@ export function buildOtpSendAttempts(options: {
         attempts.push(attempt);
     };
 
-    const bodyFields: TemplateBodyField[] =
-        options.bodyFields?.length ? options.bodyFields : ['otp_code'];
-    const bodyTexts = bodyFields.map((field) =>
-        field === 'name' ? options.name : options.otpCode,
-    );
-    const headerText = options.headerText;
-
-    if (headerText) {
-        push({
-            label: 'components-header-body',
-            components: buildTemplateComponents({
-                bodyTexts,
-                bodyFields,
-                headerText,
-            }),
-        });
-    }
-
     push({
-        label: 'components-body-only',
-        components: buildTemplateComponents({
-            bodyTexts,
-            bodyFields,
-        }),
+        label: 'body-only',
+        components: [
+            {
+                type: 'body',
+                parameters: [{ type: 'text', text: code }],
+            },
+        ],
     });
 
     push({
         label: 'parameters-array',
-        bodyParameters: bodyTexts,
+        bodyParameters: [code],
         parameterFormat: 'parameters',
     });
 
     push({
         label: 'variables-array',
-        bodyParameters: bodyTexts,
+        bodyParameters: [code],
         parameterFormat: 'variables',
     });
 
+    push({
+        label: 'body-plus-otp-button',
+        components: [
+            {
+                type: 'body',
+                parameters: [{ type: 'text', text: code }],
+            },
+            {
+                type: 'button',
+                sub_type: 'otp',
+                index: '0',
+                parameters: [{ type: 'text', text: code }],
+            },
+        ],
+    });
+
+    push({
+        label: 'body-plus-url-button',
+        components: [
+            {
+                type: 'body',
+                parameters: [{ type: 'text', text: code }],
+            },
+            {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: code }],
+            },
+        ],
+    });
+
     return attempts;
+}
+
+/** @deprecated Use buildAuthOtpSendAttempts — kept for tests/compat */
+export function buildOtpSendAttempts(options: {
+    name: string;
+    otpCode: string;
+    headerText?: string;
+    bodyFields?: TemplateBodyField[];
+}): TemplateSendAttempt[] {
+    const bodyFields: TemplateBodyField[] = options.bodyFields?.length
+        ? options.bodyFields
+        : ['otp_code'];
+    if (bodyFields.length === 1 && bodyFields[0] === 'otp_code') {
+        return buildAuthOtpSendAttempts(options.otpCode);
+    }
+
+    // Legacy utility path (name + otp) — must not be used with AUTHENTICATION templates
+    const bodyTexts = bodyFields.map((field) =>
+        field === 'name' ? options.name : options.otpCode,
+    );
+    return [
+        {
+            label: 'legacy-body',
+            components: buildTemplateComponents({ bodyTexts, bodyFields }),
+        },
+        {
+            label: 'parameters-array',
+            bodyParameters: bodyTexts,
+            parameterFormat: 'parameters',
+        },
+    ];
 }

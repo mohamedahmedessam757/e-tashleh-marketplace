@@ -38,7 +38,7 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
     txn_waybill_merchant: ['ORDER_UPDATE (waybill keywords)'],
     txn_document_vendor: ['DOC_EXPIRY', 'SUCCESS', 'document notifications'],
     txn_verification_customer: ['ORDER/ORDER_UPDATE + metadata.verification'],
-    txn_verification_merchant: ['ORDER/ORDER_UPDATE + metadata.verification'],
+    txn_verification_vendor: ['ORDER/ORDER_UPDATE + metadata.verification'],
     welcome_customer: ['auth.service:register CUSTOMER'],
     welcome_vendor: ['auth.service:register VENDOR'],
 };

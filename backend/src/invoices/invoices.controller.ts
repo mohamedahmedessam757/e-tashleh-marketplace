@@ -30,6 +30,7 @@ export class InvoicesController {
         @Query('search') search?: string,
         @Query('status') status?: string,
         @Query('entityType') entityType?: 'customer' | 'store',
+        @Query('invoiceType') invoiceType?: string,
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
@@ -37,6 +38,7 @@ export class InvoicesController {
             search,
             status,
             entityType,
+            invoiceType,
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
         });
@@ -48,12 +50,14 @@ export class InvoicesController {
     getAdminStoreInvoices(
         @Query('search') search?: string,
         @Query('entityType') entityType?: 'customer' | 'store',
+        @Query('invoiceType') invoiceType?: string,
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
         return this.invoicesService.getAdminStoreInvoices({
             search,
             entityType,
+            invoiceType,
             page: page ? Number(page) : undefined,
             limit: limit ? Number(limit) : undefined,
         });
@@ -79,7 +83,7 @@ export class InvoicesController {
             { id: req.user.id, role: req.user.role, storeId: req.user.storeId },
             orderId,
         );
-        return this.invoicesService.getInvoicesByOrder(orderId);
+        return this.invoicesService.getInvoicesByOrder(orderId, req.user.role);
     }
 
     @Get(':id')

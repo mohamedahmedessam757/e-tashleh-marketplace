@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from '../stripe/stripe.service';
 import { Prisma, ActorType } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface EscrowAmounts {
     merchantAmount: number;
@@ -39,8 +41,6 @@ export interface StripeRefundContext {
     };
 }
 
-import { NotificationsService } from '../notifications/notifications.service';
-
 @Injectable()
 export class EscrowService {
     private readonly logger = new Logger(EscrowService.name);
@@ -50,6 +50,7 @@ export class EscrowService {
         private stripeService: StripeService,
         private notifications: NotificationsService,
         private auditLogs: AuditLogsService,
+        private readonly invoiceSnapshot: InvoiceSnapshotService,
     ) {}
 
     /**
@@ -816,6 +817,11 @@ export class EscrowService {
                 refundReason: ctx.reason,
             },
         });
+
+        // Sync invoice documents for this payment (safe for combined SHIPPING)
+        if (totalRefunded >= ctx.paymentTotalAmount) {
+            await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, ctx.paymentId);
+        }
 
         const order = await tx.order.findUnique({
             where: { id: ctx.orderId },

@@ -8,8 +8,12 @@ import { AdminFinancialDataTable } from './AdminFinancialDataTable';
 import { useFinancialTableRealtime } from '../../../hooks/useFinancialTableRealtime';
 import { BlurredSection } from './BlurredSection';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
+import { invoiceTypeBadgeClass } from '../shared/invoices/invoiceDocs.types';
 
 type InvoiceTab = 'customers' | 'stores';
+type InvoiceTypeFilter = 'ALL' | 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION';
+
+const DOC_TAB_STORAGE_KEY = 'admin_invoice_doc_tab';
 
 interface AdminInvoicesHubProps {
   onNavigate?: (path: string, id?: string) => void;
@@ -22,6 +26,7 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
   const [tab, setTab] = useState<InvoiceTab>('customers');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [invoiceType, setInvoiceType] = useState<InvoiceTypeFilter>('ALL');
   const isSectionBlurred = useAdminPermissionsStore((s) => s.isSectionBlurred);
 
   const adminCustomerInvoices = useAdminStore((s) => s.adminCustomerInvoices);
@@ -34,16 +39,17 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
   const fetchAdminStoreInvoices = useAdminStore((s) => s.fetchAdminStoreInvoices);
 
   const refetch = useCallback(() => {
+    const typeParam = invoiceType === 'ALL' ? undefined : invoiceType;
     if (tab === 'customers') {
-      fetchAdminCustomerInvoices({ search, entityType: 'customer', page });
+      fetchAdminCustomerInvoices({ search, entityType: 'customer', page, invoiceType: typeParam });
     } else {
-      fetchAdminStoreInvoices({ search, entityType: 'store', page });
+      fetchAdminStoreInvoices({ search, entityType: 'store', page, invoiceType: typeParam });
     }
-  }, [tab, search, page, fetchAdminCustomerInvoices, fetchAdminStoreInvoices]);
+  }, [tab, search, page, invoiceType, fetchAdminCustomerInvoices, fetchAdminStoreInvoices]);
 
   useEffect(() => {
     setPage(1);
-  }, [tab, search]);
+  }, [tab, search, invoiceType]);
 
   useEffect(() => {
     const timer = setTimeout(refetch, 350);
@@ -61,6 +67,32 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
     tab === 'customers'
       ? hub.searchCustomers || (isAr ? 'بحث العملاء: الاسم / الإيميل / الهاتف / ID' : 'Search customers: name / email / phone / ID')
       : hub.searchStores || (isAr ? 'بحث المتاجر: الاسم / الإيميل / الهاتف / ID' : 'Search stores: name / email / phone / ID');
+
+  const typeLabel = (type?: string) => {
+    const tpe = String(type || 'MASTER').toUpperCase();
+    if (tpe === 'PART') return hub.typePart || (isAr ? 'قطعة' : 'Part');
+    if (tpe === 'SHIPPING') return hub.typeShipping || (isAr ? 'شحن' : 'Shipping');
+    if (tpe === 'COMMISSION') return hub.typeCommission || (isAr ? 'عمولة' : 'Commission');
+    return hub.typeMaster || (isAr ? 'شاملة' : 'Master');
+  };
+
+  const openInvoice = (orderId: string, type?: string) => {
+    try {
+      const tabType = String(type || 'MASTER').toUpperCase();
+      sessionStorage.setItem(DOC_TAB_STORAGE_KEY, tabType);
+    } catch {
+      /* ignore */
+    }
+    onNavigate?.('admin-order-invoice', orderId);
+  };
+
+  const typeFilters: { id: InvoiceTypeFilter; label: string }[] = [
+    { id: 'ALL', label: hub.filterAll || (isAr ? 'الكل' : 'All') },
+    { id: 'MASTER', label: hub.filterMaster || (isAr ? 'شاملة' : 'Master') },
+    { id: 'PART', label: hub.filterPart || (isAr ? 'قطعة' : 'Part') },
+    { id: 'SHIPPING', label: hub.filterShipping || (isAr ? 'شحن' : 'Shipping') },
+    { id: 'COMMISSION', label: hub.filterCommission || (isAr ? 'عمولة' : 'Commission') },
+  ];
 
   const columns = useMemo(() => {
     const entityCol =
@@ -102,6 +134,17 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
         header: hub.invoiceNumber || (isAr ? 'رقم الفاتورة' : 'Invoice #'),
         render: (r: any) => (
           <span className="font-mono text-gold-500">{r.invoiceNumber || r.id?.slice(-8)}</span>
+        ),
+      },
+      {
+        key: 'invoiceType',
+        header: hub.type || (isAr ? 'النوع' : 'Type'),
+        render: (r: any) => (
+          <span
+            className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
+          >
+            {typeLabel(r.invoiceType)}
+          </span>
         ),
       },
       {
@@ -164,7 +207,7 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
         render: (r: any) => (
           <button
             type="button"
-            onClick={() => r.orderId && onNavigate?.('admin-order-invoice', r.orderId)}
+            onClick={() => r.orderId && openInvoice(r.orderId, r.invoiceType)}
             className="p-2 rounded-xl bg-white/5 hover:bg-gold-500 hover:text-black border border-white/10 transition-all"
             title={hub.view || (isAr ? 'عرض' : 'View')}
           >
@@ -210,6 +253,23 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
           placeholder={searchPlaceholder}
           className="w-full lg:w-96"
         />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {typeFilters.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setInvoiceType(f.id)}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
+              invoiceType === f.id
+                ? 'bg-gold-500 text-black border-gold-500'
+                : 'bg-white/5 text-white/50 border-white/10 hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       <GlassCard className="p-0 overflow-hidden bg-black/20 border-white/5 shadow-2xl">

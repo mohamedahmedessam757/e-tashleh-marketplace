@@ -171,7 +171,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
     def('welcome_vendor', 'ar', 'vendor', ['name'], {
-        category: 'MARKETING',
+        category: 'UTILITY',
         buttonLabel: 'ابدأ الآن',
         buttonUrlDynamic: false,
     }),

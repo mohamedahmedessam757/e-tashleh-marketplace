@@ -10,7 +10,7 @@ import {
     type TemplateBodyField,
 } from './template-registry';
 import {
-    buildOtpSendAttempts,
+    buildAuthOtpSendAttempts,
     buildTemplateComponentVariants,
     buildWelcomeSendAttempts,
     isWhatsAppInvalidParameterError,
@@ -155,6 +155,7 @@ export class WhatsAppChannelService {
             'مستخدم';
 
         const isWelcome = familyBase.startsWith('welcome_');
+        // headerText on registry is documentation only (static Meta header) — never send as param
         const sendAttempts: TemplateSendAttempt[] = isWelcome
             ? buildWelcomeSendAttempts({
                   bodyTexts,
@@ -165,7 +166,6 @@ export class WhatsAppChannelService {
             : buildTemplateComponentVariants({
                   bodyTexts,
                   bodyFields: definition.bodyFields,
-                  headerText: definition.headerText,
                   buttonSuffix,
               });
 
@@ -174,7 +174,7 @@ export class WhatsAppChannelService {
             definition.language,
             ctx.phone,
             sendAttempts,
-            isWelcome,
+            true,
         );
 
         void this.messageLog
@@ -222,78 +222,36 @@ export class WhatsAppChannelService {
                   ? 'auth_otp_admin'
                   : 'auth_otp_customer';
         const lang = language ?? 'ar';
+        const templateName = resolveTemplateName(family, lang);
 
-        // Default / preferred: Meta AUTHENTICATION templates (body {{1}} + copy-code button)
-        if (this.config.otpMode === 'authentication') {
-            const templateName = resolveTemplateName(family, lang);
-            const result = await this.widers.sendTemplateMessage({
-                phone,
-                templateName,
-                templateLanguage: lang,
-                components: [
-                    {
-                        type: 'body',
-                        parameters: [{ type: 'text', text: otpCode }],
-                    },
-                    {
-                        type: 'button',
-                        sub_type: 'otp',
-                        index: '0',
-                        parameters: [{ type: 'text', text: otpCode }],
-                    },
-                ],
-            });
-            void this.messageLog
-                .logOutbound({
-                    phone,
-                    templateName,
-                    templateLanguage: lang,
-                    sendResult: result,
-                    metadata: { familyBase: family, audience, otpMode: 'authentication' },
-                })
-                .catch((err) =>
-                    this.logger.warn(
-                        `Failed to persist WhatsApp OTP log: ${err instanceof Error ? err.message : err}`,
-                    ),
-                );
-            return {
-                sent: Boolean(result.success),
-                error: result.error ?? result.message,
-            };
-        }
-
-        return this.sendUtilityOtp(family, phone, name, otpCode, lang);
-    }
-
-    /** Legacy utility OTP fallback (name + otp_code) when WIDERS_OTP_MODE=utility. */
-    private async sendUtilityOtp(
-        family: string,
-        phone: string,
-        name: string,
-        otpCode: string,
-        language: WidersTemplateLanguage,
-    ): Promise<{ sent: boolean; error?: string }> {
-        const templateName = resolveTemplateName(family, language);
-        const definition = getTemplateDefinition(templateName);
-        const displayName = truncateWhatsAppParam(name || 'مستخدم', 60);
-        const bodyFields = definition?.bodyFields?.length
-            ? definition.bodyFields
-            : (['otp_code'] as TemplateBodyField[]);
-
-        const attempts = buildOtpSendAttempts({
-            name: displayName,
-            otpCode,
-            headerText: definition?.headerText,
-            bodyFields,
-        });
-
+        // Always AUTHENTICATION shape: body {{1}} = otp only (ignore WIDERS_OTP_MODE=utility)
+        const attempts = buildAuthOtpSendAttempts(otpCode);
         const result = await this.dispatchTemplateAttempts(
             templateName,
-            language,
+            lang,
             phone,
             attempts,
             true,
         );
+
+        void this.messageLog
+            .logOutbound({
+                phone,
+                templateName,
+                templateLanguage: lang,
+                sendResult: result,
+                metadata: {
+                    familyBase: family,
+                    audience,
+                    otpMode: 'authentication',
+                    nameProvided: Boolean(name?.trim()),
+                },
+            })
+            .catch((err) =>
+                this.logger.warn(
+                    `Failed to persist WhatsApp OTP log: ${err instanceof Error ? err.message : err}`,
+                ),
+            );
 
         return {
             sent: Boolean(result.success),

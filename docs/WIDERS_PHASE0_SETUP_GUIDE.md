@@ -16,11 +16,11 @@
 | قفل Meta | لا تعيد إنشاء `welcome_customer_ar_v2` أو أي اسم قديم — **استخدم `_ar_v2` دائماً** |
 | خطأ Widers | *"لا يمكن إضافة محتوى جديد باللغة Arabic أثناء حذف المحتوى..."* → الحل: أسماء `_v2` |
 | الكود | NestJS يرسل تلقائياً `{family}_ar_v2` (انظر `template-registry.ts`) |
-| OTP | **Utility** + `WIDERS_OTP_MODE=utility` + متغير **`otp_code`** |
+| OTP | **AUTHENTICATION** + `WIDERS_OTP_MODE=authentication` + body `{{1}}` = **otp_code** فقط (+ زر نسخ الرمز) |
 
 ### ترتيب الإنشاء في Widers (بعد موافقة Meta لكل واحد)
 
-1. `auth_otp_customer_ar_v2` + `auth_otp_vendor_ar_v2`
+1. `auth_otp_customer_ar_v2` + `auth_otp_vendor_ar_v2` + `auth_otp_admin_ar_v2`
 2. `welcome_customer_ar_v2` + `welcome_vendor_ar_v2`
 3. `txn_order_customer_ar_v2` + `txn_order_merchant_ar_v2`
 4. باقي `txn_*_ar_v2` (شحن، فاتورة، بوليصة، مستندات، توثيق)
@@ -127,7 +127,7 @@
 | `cta_path` | مسار الرابط بعد /dashboard/ |
 | `part_name` | اسم القطعة (عروض/شحن — اختياري) |
 | `rejection_reason` | سبب الرفض (يُدمج غالباً في status_detail) |
-| `otp_code` | رمز OTP (Utility — قوالب auth_otp_*_v2) |
+| `otp_code` | رمز OTP (AUTHENTICATION — قوالب auth_otp_*_v2، معامل body وحيد) |
 
 > **ملاحظة:** في **قوالب Meta** المتغيرات في النص غالباً `{{1}}`, `{{2}}`, `{{3}}` بالترتيب — ليس أسماء الحقول. الجدول أعلاه لجهات الاتصال والتسويق. التفاصيل الكاملة في **ملحق و** أسفل الملف.
 
@@ -163,32 +163,33 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 | # | اسم القالب في لوحة Widers (حقل **الاسم**) | اسم القالب التقني (Meta/API) | الجمهور | Header |
 |---|------------------------------------------|------------------------------|---------|--------|
-| 1 | رمز التحقق — عميل | `auth_otp_customer_ar_v2` | عميل | `رمز التحقق` |
-| 2 | رمز التحقق — تاجر | `auth_otp_vendor_ar_v2` | تاجر | `رمز التحقق` |
-| 3 | **تحديث حالة الطلب للعميل** | `txn_order_customer_ar_v2` | عميل | `تحديث حالة الطلب` |
-| 4 | تحديث حالة الطلب للتاجر | `txn_order_merchant_ar_v2` | تاجر | `تحديث حالة الطلب` |
-| 5 | تحديث الشحن للعميل | `txn_shipment_customer_ar_v2` | عميل | `تحديث الشحن` |
-| 6 | تحديث الشحن للتاجر | `txn_shipment_merchant_ar_v2` | تاجر | `تحديث شحن الطلب` |
-| 7 | فاتورة جاهزة للعميل | `txn_invoice_customer_ar_v2` | عميل | `فاتورة جاهزة` |
-| 8 | فاتورة جديدة للتاجر | `txn_invoice_merchant_ar_v2` | تاجر | `فاتورة جديدة` |
-| 9 | بوليصة الشحن للعميل | `txn_waybill_customer_ar_v2` | عميل | `بوليصة الشحن` |
-| 10 | بوليصة الشحن للتاجر | `txn_waybill_merchant_ar_v2` | تاجر | `بوليصة الشحن` |
-| 11 | مستندات المتجر | `txn_document_vendor_ar_v2` | تاجر | `مستندات المتجر` |
-| 12 | توثيق الطلب للعميل | `txn_verification_customer_ar_v2` | عميل | `توثيق الطلب` |
-| 13 | توثيق الطلب للتاجر | `txn_verification_vendor_ar_v2` | تاجر | `توثيق الطلب` |
-| 14 | ترحيب بالعميل *(اختياري)* | `welcome_customer_ar_v2` | عميل | — |
-| 15 | ترحيب بالتاجر *(اختياري)* | `welcome_vendor_ar_v2` | تاجر | — |
+| 1 | رمز التحقق — عميل | `auth_otp_customer_ar_v2` | عميل | — (AUTH) |
+| 2 | رمز التحقق — تاجر | `auth_otp_vendor_ar_v2` | تاجر | — (AUTH) |
+| 3 | رمز التحقق — أدمن | `auth_otp_admin_ar_v2` | أدمن | — (AUTH) |
+| 4 | **تحديث حالة الطلب للعميل** | `txn_order_customer_ar_v2` | عميل | `تحديث حالة الطلب` |
+| 5 | تحديث حالة الطلب للتاجر | `txn_order_merchant_ar_v2` | تاجر | `تحديث حالة الطلب` |
+| 6 | تحديث الشحن للعميل | `txn_shipment_customer_ar_v2` | عميل | `تحديث الشحن` |
+| 7 | تحديث الشحن للتاجر | `txn_shipment_merchant_ar_v2` | تاجر | `تحديث شحن الطلب` |
+| 8 | فاتورة جاهزة للعميل | `txn_invoice_customer_ar_v2` | عميل | `فاتورة جاهزة` |
+| 9 | فاتورة جديدة للتاجر | `txn_invoice_merchant_ar_v2` | تاجر | `فاتورة جديدة` |
+| 10 | بوليصة الشحن للعميل | `txn_waybill_customer_ar_v2` | عميل | `بوليصة الشحن` |
+| 11 | بوليصة الشحن للتاجر | `txn_waybill_merchant_ar_v2` | تاجر | `بوليصة الشحن` |
+| 12 | مستندات المتجر | `txn_document_vendor_ar_v2` | تاجر | `مستندات المتجر` |
+| 13 | توثيق الطلب للعميل | `txn_verification_customer_ar_v2` | عميل | `توثيق الطلب` |
+| 14 | توثيق الطلب للتاجر | `txn_verification_vendor_ar_v2` | تاجر | `توثيق الطلب` |
+| 15 | ترحيب بالعميل *(اختياري)* | `welcome_customer_ar_v2` | عميل | — |
+| 16 | ترحيب بالتاجر *(اختياري)* | `welcome_vendor_ar_v2` | تاجر | — |
 
 ### جداول ربط المتغيرات — انسخها في «إعداد القالب»
 
-#### `auth_otp_customer_ar_v2` / `auth_otp_vendor_ar_v2` (Utility)
+#### `auth_otp_customer_ar_v2` / `auth_otp_vendor_ar_v2` / `auth_otp_admin_ar_v2` (AUTHENTICATION)
 
-| المتغير في القالب | اختر في Widers | حقل الكود (NestJS) |
-|-------------------|----------------|---------------------|
-| `{{1}}` | **اسم جهة الاتصال** | `name` |
-| `{{2}}` | *(OTP — يُمرَّر من API)* | `otp_code` |
+| المتغير في القالب | المعنى | حقل الكود (NestJS) |
+|-------------------|--------|---------------------|
+| `{{1}}` | رمز OTP فقط | `otp_code` |
 
-> **Utility OTP فقط** — لا تستخدم فئة Authentication في v2.
+> **AUTHENTICATION فقط** — لا ترسل `name` كمعامل ثانٍ (خطأ Meta #132000).  
+> زر القالب: **نسخ الرمز** (Copy code). Backend يجرّب body-only ثم fallbacks بنفس المعامل الواحد.
 
 ---
 
@@ -300,36 +301,29 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 | الحقل | القيمة |
 |-------|--------|
 | **الاسم في لوحة Widers** | `رمز التحقق — عميل` |
-| **اسم القالب التقني (Meta/API)** | `auth_otp_cust_ar_v2` |
-| **الفئة** | **Utility** (أداة مساعدة) — **ليس** Authentication |
-| **Header** | `رمز التحقق` |
+| **اسم القالب التقني (Meta/API)** | `auth_otp_customer_ar_v2` |
+| **الفئة** | **Authentication** (مصادقة) |
+| **Header** | بدون (أو حسب نموذج Meta للمصادقة) |
 
-**Body (Utility — انسخ):**
+**Body (AUTHENTICATION — مثال):**
 ```
-مرحباً {{1}}،
-
-رمز التحقق الخاص بك على E-TASHLEH:
-
-{{2}}
-
-لا تشارك هذا الرمز مع أي شخص.
+"{{1}}" هو كود التحقق الخاص بك. للحفاظ على أمانك، لا تشارك هذا الكود مع أي شخص. تنتهي صلاحيتها خلال ٣ دقائق.
 ```
 
-**Footer:** `إي-تشليح | E-TASHLEH`  
-**لا زر URL** في قالب OTP Utility.
+**زر:** نسخ الرمز (Copy code) — Meta يملأ نفس `{{1}}`.
 
-→ **إنشاء القالب** → بعد الموافقة: **إعداد القالب** → `{{1}}` اسم جهة الاتصال | `{{2}}` **otp_code** → **حفظ**.
+→ بعد الموافقة: لا تربط `{{1}}` باسم جهة الاتصال — الكود يمرّر OTP من API مباشرة.
 
-**Backend:** `WIDERS_OTP_MODE=utility`
+**Backend:** `WIDERS_OTP_MODE=authentication` (الكود يفرض شكل AUTH حتى لو تغيّر الـ env).
 
-**كرر للتاجر:**
+**كرر للتاجر والأدمن:**
 
-| الحقل | القيمة |
-|-------|--------|
-| **الاسم في لوحة Widers** | `رمز التحقق — تاجر` |
-| **اسم القالب التقني** | `auth_otp_vendor_ar_v2` |
+| الاسم في Widers | اسم القالب التقني |
+|-----------------|-------------------|
+| رمز التحقق — تاجر | `auth_otp_vendor_ar_v2` |
+| رمز التحقق — أدمن | `auth_otp_admin_ar_v2` |
 
-**إعداد المتغيرات (Utility OTP):** `{{1}}` → اسم جهة الاتصال | `{{2}}` → otp_code
+**إعداد المتغيرات:** `{{1}}` → otp_code فقط (معامل واحد).
 
 ---
 
@@ -743,8 +737,9 @@ Thank you — E-TASHLEH
 
 | اسم Widers (عربي) | template_name | status | lang | {{1}} Widers | {{2}} | {{3}} | {{4}} | {{5}} | button suffix |
 |-------------------|---------------|--------|------|--------------|-------|-------|-------|-------|---------------|
-| رمز التحقق — عميل | auth_otp_customer_ar_v2 | | ar | اسم جهة الاتصال | otp_code | | | | — |
-| رمز التحقق — تاجر | auth_otp_vendor_ar_v2 | | ar | اسم جهة الاتصال | otp_code | | | | — |
+| رمز التحقق — عميل | auth_otp_customer_ar_v2 | | ar | otp_code | | | | | — |
+| رمز التحقق — تاجر | auth_otp_vendor_ar_v2 | | ar | otp_code | | | | | — |
+| رمز التحقق — أدمن | auth_otp_admin_ar_v2 | | ar | otp_code | | | | | — |
 | تحديث حالة الطلب للعميل | txn_order_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
 | تحديث حالة الطلب للتاجر | txn_order_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
 | تحديث الشحن للعميل | txn_shipment_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | order-details/{orderId} |
@@ -785,7 +780,7 @@ TEST_PHONE=+9665xxxxxxxx
 # أسئلة شائعة
 
 **س: Meta رفض القالب؟**  
-ج: قلّل علامات تعجب، لا وعود تسويقية. OTP = **Utility** فقط (`otp_code` في Body).
+ج: قلّل علامات تعجب، لا وعود تسويقية. OTP = **AUTHENTICATION** فقط (`{{1}}` = otp_code في Body).
 
 **س: هل أكتب الرمز {{1}} في Widers؟**  
 ج: نعم في محتوى Body — بالترتيب. عند الإرسال من API نمرّر القيم بنفس الترتيب.
@@ -1075,7 +1070,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 | القالب | {{1}} في Widers | {{2}} | {{3}} | {{4}} | {{5}} | حقل الكود |
 |--------|-----------------|-------|-------|-------|-------|-----------|
-| auth_otp_* | اسم جهة الاتصال | otp_code | — | — | — | name, otp_code |
+| auth_otp_* | otp_code | — | — | — | — | otp_code فقط |
 | txn_order_* | اسم جهة الاتصال | order_number | status_detail | — | — | name, order_number, status_detail |
 | txn_shipment_* | اسم جهة الاتصال | order_number | status_detail | tracking_number | — | + tracking_number |
 | txn_invoice_* | اسم جهة الاتصال | order_number | invoice_number | amount | summary | + invoice_number, amount, summary |

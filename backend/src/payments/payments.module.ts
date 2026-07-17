@@ -11,6 +11,7 @@ import { CardsModule } from '../cards/cards.module';
 import { FinancialConfigService } from '../common/financial-config.service';
 import { AdminFinancialService } from './admin-financial.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
+import { InvoicesModule } from '../invoices/invoices.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
         forwardRef(() => StripeModule),
         forwardRef(() => OrdersModule),
         CardsModule,
+        InvoicesModule,
     ],
     controllers: [PaymentsController],
     providers: [PaymentsService, EscrowService, FinancialConfigService, AdminFinancialService, WithdrawalWorkflowService],

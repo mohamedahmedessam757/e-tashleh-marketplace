@@ -5785,6 +5785,15 @@ export const InvoiceScalarFieldEnum = {
   total: 'total',
   currency: 'currency',
   status: 'status',
+  invoiceType: 'invoiceType',
+  invoiceGroupId: 'invoiceGroupId',
+  parentInvoiceId: 'parentInvoiceId',
+  shippingBatchKey: 'shippingBatchKey',
+  lineItems: 'lineItems',
+  partNameSnapshot: 'partNameSnapshot',
+  carrierNameSnapshot: 'carrierNameSnapshot',
+  platformLegalNameEn: 'platformLegalNameEn',
+  platformLegalNameAr: 'platformLegalNameAr',
   issuedAt: 'issuedAt'
 } as const
 

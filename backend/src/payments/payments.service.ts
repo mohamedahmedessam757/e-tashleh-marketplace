@@ -70,6 +70,7 @@ import {
 } from '../common/search/admin-entity-search.util';
 import { FinancialConfigService } from '../common/financial-config.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
+import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
 
 @Injectable()
 export class PaymentsService {
@@ -87,6 +88,7 @@ export class PaymentsService {
         private readonly cardsService: CardsService,
         private readonly financialConfig: FinancialConfigService,
         private readonly withdrawalWorkflow: WithdrawalWorkflowService,
+        private readonly invoiceSnapshot: InvoiceSnapshotService,
     ) { }
 
     /**
@@ -113,7 +115,7 @@ export class PaymentsService {
             include: {
                 offers: {
                     where: { status: 'accepted' },
-                    include: { store: true },
+                    include: { store: true, orderPart: true },
                 },
             },
         });
@@ -240,33 +242,30 @@ export class PaymentsService {
                     },
                 });
 
-                // 7e. Generate invoice (once per payment â€” same guard as Stripe fulfillment)
-                let invoiceNumber: string;
-                const existingInvoice = await tx.invoice.findFirst({
-                    where: { paymentId: payment.id },
-                    select: { invoiceNumber: true },
+                // 7e. Generate invoice bundle (MASTER + PART + COMMISSION + SHIPPING)
+                const companySnap = await this.resolveCompanySnapshot(tx);
+                const partName =
+                    (offer as any).orderPart?.name ||
+                    (order as any).partName ||
+                    'Spare Part';
+                const bundle = await this.invoiceSnapshot.ensurePaymentInvoiceBundle(tx, {
+                    orderId,
+                    paymentId: payment.id,
+                    customerId,
+                    unitPrice,
+                    shippingCost,
+                    commission,
+                    totalAmount,
+                    currency: 'AED',
+                    partName,
+                    shippingType: (order as any).shippingType || null,
+                    cartShipmentId: (offer as any).cartShipmentId || null,
+                    offerId,
+                    platformLegalNameEn: companySnap.legalNameEn,
+                    platformLegalNameAr: companySnap.legalNameAr,
+                    actorId: customerId,
                 });
-                if (existingInvoice) {
-                    invoiceNumber = existingInvoice.invoiceNumber;
-                } else {
-                    const invResult = await tx.$queryRaw<{ generate_invoice_number: string }[]>`SELECT generate_invoice_number()`;
-                    invoiceNumber = invResult[0].generate_invoice_number;
-
-                    await tx.invoice.create({
-                        data: {
-                            invoiceNumber,
-                            orderId,
-                            paymentId: payment.id,
-                            customerId,
-                            subtotal: unitPrice,
-                            shipping: shippingCost,
-                            commission,
-                            total: totalAmount,
-                            currency: 'AED',
-                            status: 'PAID',
-                        },
-                    });
-                }
+                const invoiceNumber = bundle.masterInvoiceNumber;
 
                 // 7f. Check if ALL accepted offers are now paid
                 const allAcceptedOfferIds = order.offers.map(o => o.id);
@@ -675,7 +674,7 @@ export class PaymentsService {
             include: { 
                 order: true, 
                 offer: { 
-                    include: { store: true } 
+                    include: { store: true, orderPart: true } 
                 } 
             }
         });
@@ -832,33 +831,31 @@ export class PaymentsService {
                 }
             }
 
-            // c. Generate Invoice (once per payment)
+            // c. Generate Invoice bundle (MASTER + PART + COMMISSION + SHIPPING)
             let invoiceNumber: string | undefined;
-            const existingInvoice = await tx.invoice.findFirst({
-                where: { paymentId: payment.id },
-                select: { invoiceNumber: true },
+            const companySnap = await this.resolveCompanySnapshot(tx);
+            const partName =
+                (payment.offer as any)?.orderPart?.name ||
+                (payment.order as any)?.partName ||
+                'Spare Part';
+            const bundle = await this.invoiceSnapshot.ensurePaymentInvoiceBundle(tx, {
+                orderId: payment.orderId,
+                paymentId: payment.id,
+                customerId: payment.customerId,
+                unitPrice,
+                shippingCost,
+                commission,
+                totalAmount: Number(payment.totalAmount),
+                currency: 'AED',
+                partName,
+                shippingType: (payment.order as any)?.shippingType || null,
+                cartShipmentId: (payment.offer as any)?.cartShipmentId || null,
+                offerId: payment.offerId,
+                platformLegalNameEn: companySnap.legalNameEn,
+                platformLegalNameAr: companySnap.legalNameAr,
+                actorId: payment.customerId,
             });
-            if (existingInvoice) {
-                invoiceNumber = existingInvoice.invoiceNumber;
-            } else {
-                const invResult = await tx.$queryRaw<{ generate_invoice_number: string }[]>`SELECT generate_invoice_number()`;
-                invoiceNumber = invResult[0].generate_invoice_number;
-
-                await tx.invoice.create({
-                    data: {
-                        invoiceNumber,
-                        orderId: payment.orderId,
-                        paymentId: payment.id,
-                        customerId: payment.customerId,
-                        subtotal: unitPrice,
-                        shipping: shippingCost,
-                        commission,
-                        total: Number(payment.totalAmount),
-                        currency: 'AED',
-                        status: 'PAID',
-                    },
-                });
-            }
+            invoiceNumber = bundle.masterInvoiceNumber;
 
             // d. Check if ALL accepted offers are now paid
             const allAcceptedOffers = await tx.offer.findMany({
@@ -1003,14 +1000,20 @@ export class PaymentsService {
         const refundedMajor = charge.amount_refunded / 100;
         const fullRefund = charge.amount_refunded >= charge.amount;
 
-        await this.prisma.paymentTransaction.update({
-            where: { id: payment.id },
-            data: {
-                refundedAmount: refundedMajor,
-                refundedAt: fullRefund ? new Date() : payment.refundedAt ?? new Date(),
-                refundReason: payment.refundReason || 'STRIPE_CHARGE_REFUNDED',
-                ...(fullRefund ? { status: 'REFUNDED' } : {}),
-            },
+        await this.prisma.$transaction(async (tx) => {
+            await tx.paymentTransaction.update({
+                where: { id: payment.id },
+                data: {
+                    refundedAmount: refundedMajor,
+                    refundedAt: fullRefund ? new Date() : payment.refundedAt ?? new Date(),
+                    refundReason: payment.refundReason || 'STRIPE_CHARGE_REFUNDED',
+                    ...(fullRefund ? { status: 'REFUNDED' } : {}),
+                },
+            });
+
+            if (fullRefund) {
+                await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, payment.id);
+            }
         });
     }
 
@@ -1283,6 +1286,29 @@ export class PaymentsService {
             metadata,
             stripeCustomerId,
         );
+    }
+
+    private async resolveCompanySnapshot(tx?: Prisma.TransactionClient): Promise<{
+        legalNameEn: string;
+        legalNameAr: string;
+    }> {
+        const db = tx || this.prisma;
+        try {
+            const row = await db.platformSettings.findUnique({
+                where: { settingKey: 'system_config' },
+            });
+            const company = ((row?.settingValue as Record<string, unknown>)?.company ||
+                {}) as Record<string, unknown>;
+            return {
+                legalNameEn: String(company.legalNameEn || 'ELLIPP FZ LLC'),
+                legalNameAr: String(company.legalNameAr || 'إليب ش.م.ح. - ذ.م.م'),
+            };
+        } catch {
+            return {
+                legalNameEn: 'ELLIPP FZ LLC',
+                legalNameAr: 'إليب ش.م.ح. - ذ.م.م',
+            };
+        }
     }
 
     private detectCardBrand(cardNumber: string): string {

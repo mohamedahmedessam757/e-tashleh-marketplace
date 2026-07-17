@@ -1315,6 +1315,17 @@ model Invoice {
   currency   String  @default("AED")
   status     String  @default("PAID") // PAID | REFUNDED | CANCELLED
 
+  /// MASTER | PART | SHIPPING | COMMISSION
+  invoiceType          String  @default("MASTER") @map("invoice_type")
+  invoiceGroupId       String? @map("invoice_group_id") @db.Uuid
+  parentInvoiceId      String? @map("parent_invoice_id") @db.Uuid
+  shippingBatchKey     String? @map("shipping_batch_key")
+  lineItems            Json?   @map("line_items")
+  partNameSnapshot     String? @map("part_name_snapshot")
+  carrierNameSnapshot  String? @map("carrier_name_snapshot")
+  platformLegalNameEn  String? @map("platform_legal_name_en")
+  platformLegalNameAr  String? @map("platform_legal_name_ar")
+
   issuedAt DateTime @default(now()) @map("issued_at") @db.Timestamptz
 
   order    Order              @relation(fields: [orderId], references: [id])
@@ -1324,6 +1335,9 @@ model Invoice {
   @@index([orderId])
   @@index([customerId])
   @@index([paymentId])
+  @@index([orderId, invoiceType])
+  @@index([invoiceGroupId])
+  @@index([shippingBatchKey])
   @@map("invoices")
 }
 

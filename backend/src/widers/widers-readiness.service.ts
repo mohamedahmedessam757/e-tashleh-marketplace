@@ -80,8 +80,11 @@ export class WidersReadinessService {
         checks.push({
             id: 'otp_mode',
             label: 'WIDERS_OTP_MODE',
-            status: 'pass',
-            detail: `Current: ${this.config.otpMode} (use authentication with approved auth_otp_* templates)`,
+            status: this.config.otpMode === 'authentication' ? 'pass' : 'warn',
+            detail:
+                this.config.otpMode === 'authentication'
+                    ? 'authentication — auth_otp_* send body {{1}}=otp only'
+                    : `Current: ${this.config.otpMode} — set authentication; code still sends AUTH shape for auth_otp_*`,
         });
 
         const ping = this.widers.isReady()

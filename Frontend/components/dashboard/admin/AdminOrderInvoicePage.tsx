@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { OrderInvoicesPanel } from '../shared/OrderInvoicesPanel';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
+import type { InvoiceDocTab } from '../shared/invoices/invoiceDocs.types';
+
+const DOC_TAB_STORAGE_KEY = 'admin_invoice_doc_tab';
 
 interface AdminOrderInvoicePageProps {
   orderId: string;
   onNavigate?: (path: string, id?: string) => void;
   onBack?: () => void;
+}
+
+function peekDocTab(): InvoiceDocTab | undefined {
+  try {
+    const raw = sessionStorage.getItem(DOC_TAB_STORAGE_KEY);
+    if (
+      raw === 'MASTER' ||
+      raw === 'PART' ||
+      raw === 'SHIPPING' ||
+      raw === 'COMMISSION'
+    ) {
+      return raw;
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
 }
 
 export const AdminOrderInvoicePage: React.FC<AdminOrderInvoicePageProps> = ({
@@ -24,7 +44,25 @@ export const AdminOrderInvoicePage: React.FC<AdminOrderInvoicePageProps> = ({
       ? 'SUPER_ADMIN'
       : adminRole === 'VERIFICATION_OFFICER'
         ? 'VERIFICATION_OFFICER'
-        : 'ADMIN';
+        : adminRole === 'ACCOUNTANT'
+          ? 'ACCOUNTANT'
+          : adminRole === 'SUPPORT'
+            ? 'SUPPORT'
+            : 'ADMIN';
+
+  // Peek (do not remove) so React Strict Mode remount still sees the tab.
+  const [initialDocTab] = useState<InvoiceDocTab | undefined>(() => peekDocTab());
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        sessionStorage.removeItem(DOC_TAB_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [orderId]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-16 max-w-5xl mx-auto">
@@ -54,7 +92,11 @@ export const AdminOrderInvoicePage: React.FC<AdminOrderInvoicePageProps> = ({
       </div>
 
       <GlassCard className="p-4 sm:p-8 bg-[#151310] border-white/5 shadow-2xl overflow-hidden">
-        <OrderInvoicesPanel orderId={orderId} role={role as any} />
+        <OrderInvoicesPanel
+          orderId={orderId}
+          role={role as any}
+          initialDocTab={initialDocTab}
+        />
       </GlassCard>
     </div>
   );

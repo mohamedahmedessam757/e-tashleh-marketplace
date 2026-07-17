@@ -81,12 +81,15 @@ export class InvoicesService {
             status: invoice.status,
             currency: invoice.currency,
             issuedAt: invoice.issuedAt,
+            invoiceType: (invoice as any).invoiceType || 'MASTER',
+            invoiceGroupId: (invoice as any).invoiceGroupId || null,
+            isDerived: false,
         };
     }
 
     async getUserInvoices(userId: string) {
         return this.prisma.invoice.findMany({
-            where: { customerId: userId },
+            where: { customerId: userId, invoiceType: 'MASTER' },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -122,7 +125,7 @@ export class InvoicesService {
 
     async getInvoiceById(userId: string, id: string) {
         const invoice = await this.prisma.invoice.findFirst({
-            where: { id, customerId: userId },
+            where: { id, customerId: userId, invoiceType: 'MASTER' },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -206,6 +209,7 @@ export class InvoicesService {
         search?: string;
         status?: string;
         entityType?: 'customer' | 'store';
+        invoiceType?: string;
         page?: number;
         limit?: number;
     }) {
@@ -216,6 +220,9 @@ export class InvoicesService {
         let baseWhere: Prisma.InvoiceWhereInput = {};
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
+        }
+        if (filters?.invoiceType && filters.invoiceType !== 'ALL') {
+            baseWhere.invoiceType = filters.invoiceType;
         }
 
         const search = normalizeSearchQuery(filters?.search);
@@ -270,6 +277,7 @@ export class InvoicesService {
         search?: string;
         entityType?: 'customer' | 'store';
         status?: string;
+        invoiceType?: string;
         page?: number;
         limit?: number;
     }) {
@@ -283,6 +291,9 @@ export class InvoicesService {
 
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
+        }
+        if (filters?.invoiceType && filters.invoiceType !== 'ALL') {
+            baseWhere.invoiceType = filters.invoiceType;
         }
 
         const search = normalizeSearchQuery(filters?.search);
@@ -403,7 +414,8 @@ export class InvoicesService {
 
         return this.prisma.invoice.findMany({
             where: {
-                paymentId: { in: paymentIds }
+                paymentId: { in: paymentIds },
+                invoiceType: 'MASTER',
             },
             include: {
                 payment: {
@@ -438,12 +450,23 @@ export class InvoicesService {
         });
     }
 
-    async getInvoicesByOrder(orderId: string) {
+    async getInvoicesByOrder(orderId: string, role?: string) {
+        const r = String(role || '').toUpperCase();
+        const isAdmin =
+            r === 'ADMIN' ||
+            r === 'SUPER_ADMIN' ||
+            r === 'SUPPORT' ||
+            r === 'ACCOUNTANT' ||
+            r === 'VERIFICATION_OFFICER';
+
         const invoices = await this.prisma.invoice.findMany({
-            where: { orderId },
+            where: {
+                orderId,
+                ...(isAdmin ? {} : { invoiceType: 'MASTER' }),
+            },
             include: {
                 payment: {
-                    select: { offerId: true },
+                    select: { offerId: true, status: true },
                 },
                 order: {
                     include: {
@@ -460,6 +483,17 @@ export class InvoicesService {
                         store: true,
                         parts: true,
                         shippingAddresses: true,
+                        shipments: {
+                            select: {
+                                id: true,
+                                carrierName: true,
+                                carrierType: true,
+                                trackingNumber: true,
+                                createdAt: true,
+                            },
+                            orderBy: { createdAt: 'desc' },
+                            take: 5,
+                        },
                         offers: {
                             where: { status: 'accepted' },
                             include: {
@@ -473,16 +507,154 @@ export class InvoicesService {
             orderBy: { issuedAt: 'asc' }
         });
 
-        const byPayment = new Map<string, (typeof invoices)[number]>();
-        for (const inv of invoices) {
-            const key = inv.paymentId;
-            const existing = byPayment.get(key);
-            if (!existing || inv.issuedAt > existing.issuedAt) {
-                byPayment.set(key, inv);
+        // Enrich with live company branding (read once)
+        let companyLive: { legalNameEn: string; legalNameAr: string } | null = null;
+        try {
+            const row = await this.prisma.platformSettings.findUnique({
+                where: { settingKey: 'system_config' },
+            });
+            const company = ((row?.settingValue as Record<string, unknown>)?.company ||
+                {}) as Record<string, unknown>;
+            companyLive = {
+                legalNameEn: String(company.legalNameEn || 'ELLIPP FZ LLC'),
+                legalNameAr: String(company.legalNameAr || 'إليب ش.م.ح. - ذ.م.م'),
+            };
+        } catch {
+            companyLive = {
+                legalNameEn: 'ELLIPP FZ LLC',
+                legalNameAr: 'إليب ش.م.ح. - ذ.م.م',
+            };
+        }
+
+        const enrich = (inv: (typeof invoices)[number]) => {
+            const carrierLive =
+                inv.carrierNameSnapshot ||
+                (inv.order as any)?.shipments?.[0]?.carrierName ||
+                null;
+            const offerForPayment = (inv.order as any)?.offers?.find(
+                (o: any) => o.id === inv.payment?.offerId,
+            );
+            const partLive =
+                inv.partNameSnapshot ||
+                offerForPayment?.orderPart?.name ||
+                (inv.order as any)?.partName ||
+                null;
+            return {
+                ...inv,
+                invoiceType: inv.invoiceType || 'MASTER',
+                invoiceGroupId: inv.invoiceGroupId || inv.id,
+                isDerived: false,
+                livePartName: partLive,
+                liveCarrierName: carrierLive,
+                livePlatformLegalNameEn:
+                    inv.platformLegalNameEn || companyLive?.legalNameEn,
+                livePlatformLegalNameAr:
+                    inv.platformLegalNameAr || companyLive?.legalNameAr,
+            };
+        };
+
+        if (!isAdmin) {
+            // One MASTER per payment (latest)
+            const byPayment = new Map<string, (typeof invoices)[number]>();
+            for (const inv of invoices) {
+                if ((inv.invoiceType || 'MASTER') !== 'MASTER') continue;
+                const key = inv.paymentId;
+                const existing = byPayment.get(key);
+                if (!existing || inv.issuedAt > existing.issuedAt) {
+                    byPayment.set(key, inv);
+                }
+            }
+            return Array.from(byPayment.values())
+                .sort((a, b) => a.issuedAt.getTime() - b.issuedAt.getTime())
+                .map(enrich);
+        }
+
+        const enriched = invoices.map(enrich);
+
+        // Derived docs for legacy MASTER rows missing typed siblings
+        const byPayment = new Map<string, typeof enriched>();
+        for (const inv of enriched) {
+            const list = byPayment.get(inv.paymentId) || [];
+            list.push(inv);
+            byPayment.set(inv.paymentId, list);
+        }
+
+        const derived: any[] = [];
+        for (const [, group] of byPayment) {
+            const master = group.find((i) => i.invoiceType === 'MASTER');
+            if (!master) continue;
+            const types = new Set(group.map((i) => i.invoiceType));
+            const baseMeta = {
+                order: master.order,
+                payment: master.payment,
+                customerId: master.customerId,
+                orderId: master.orderId,
+                paymentId: master.paymentId,
+                currency: master.currency,
+                status: master.status,
+                issuedAt: master.issuedAt,
+                invoiceGroupId: master.invoiceGroupId,
+                parentInvoiceId: master.id,
+                isDerived: true,
+                livePartName: master.livePartName,
+                liveCarrierName: master.liveCarrierName,
+                livePlatformLegalNameEn: master.livePlatformLegalNameEn,
+                livePlatformLegalNameAr: master.livePlatformLegalNameAr,
+                partNameSnapshot: master.partNameSnapshot || master.livePartName,
+                carrierNameSnapshot: master.carrierNameSnapshot || master.liveCarrierName,
+                platformLegalNameEn: master.livePlatformLegalNameEn,
+                platformLegalNameAr: master.livePlatformLegalNameAr,
+            };
+
+            if (!types.has('PART')) {
+                derived.push({
+                    ...baseMeta,
+                    id: `derived-part-${master.id}`,
+                    invoiceNumber: `${master.invoiceNumber}-P`,
+                    invoiceType: 'PART',
+                    subtotal: master.subtotal,
+                    shipping: 0,
+                    commission: 0,
+                    total: master.subtotal,
+                });
+            }
+            if (!types.has('COMMISSION')) {
+                derived.push({
+                    ...baseMeta,
+                    id: `derived-commission-${master.id}`,
+                    invoiceNumber: `${master.invoiceNumber}-C`,
+                    invoiceType: 'COMMISSION',
+                    subtotal: 0,
+                    shipping: 0,
+                    commission: master.commission,
+                    total: master.commission,
+                });
+            }
+            if (!types.has('SHIPPING') && Number(master.shipping) > 0) {
+                derived.push({
+                    ...baseMeta,
+                    id: `derived-shipping-${master.id}`,
+                    invoiceNumber: `${master.invoiceNumber}-S`,
+                    invoiceType: 'SHIPPING',
+                    subtotal: 0,
+                    shipping: master.shipping,
+                    commission: 0,
+                    total: master.shipping,
+                    shippingBatchKey: master.paymentId,
+                    lineItems: [
+                        {
+                            paymentId: master.paymentId,
+                            partName: master.livePartName || 'Part',
+                            amount: Number(master.shipping),
+                        },
+                    ],
+                });
             }
         }
-        return Array.from(byPayment.values()).sort(
-            (a, b) => a.issuedAt.getTime() - b.issuedAt.getTime(),
+
+        return [...enriched, ...derived].sort(
+            (a, b) =>
+                new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime(),
         );
     }
 }
