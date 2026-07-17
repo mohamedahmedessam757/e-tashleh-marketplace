@@ -208,6 +208,14 @@ export function isWidersSendSuccess(parsed: {
     return parsed.success !== false;
 }
 
+/**
+ * Real Meta acceptance for sendtemplatemessage.
+ * Widers often returns status:success with message_wamid:null while Meta later logs #100/#132000.
+ */
+export function hasWidersMetaWamid(parsed: { message_wamid?: string | null }): boolean {
+    return typeof parsed.message_wamid === 'string' && parsed.message_wamid.startsWith('wamid');
+}
+
 export interface TemplateSendAttempt {
     label: string;
     components?: WidersTemplateComponent[];
@@ -327,33 +335,69 @@ export function buildWelcomeSendAttempts(
 }
 
 /**
- * AUTHENTICATION COPY_CODE OTP via Widers.
+ * AUTHENTICATION COPY_CODE OTP via Widers / Meta Cloud API.
  *
- * Live getTemplates: BODY has {{1}}, BUTTON URL also has {{1}}.
- * Empirically (probe-widers-otp-delivery.mjs, Jul 2026):
- * - components body-only with 1 text param → DELIVERS
- * - components body + button url → also delivers on clean contacts
- * - flat parameters:[code] → does NOT substitute {{1}} via Widers
+ * Live probes (Jul 2026, Widers apps.widers.net):
+ * - body {{1}} + button url {{1}} (Meta official) → DELIVERS
+ * - body-only (1 param) → also DELIVERS (Widers may hydrate COPY_CODE)
+ * - flat parameters:[code] → does NOT substitute {{1}}
  * - parameters:[name, code] / body with 2 params → Meta #132000 (2 vs 1)
  *
- * Use body-only only. Widers fills COPY_CODE button from the same body {{1}}.
- * Never include `name` or a second body parameter.
+ * Always send Meta official shape. Never include contact `name` in body.
  */
-export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[] {
-    const code = truncateWhatsAppParam(otpCode.trim().replace(/\s+/g, '') || '000000', 15);
-    if (!/^\d{4,8}$/.test(code)) {
-        // Still send digits-only best-effort; callers generate numeric OTP
-    }
+export const AUTH_OTP_PAYLOAD_VERSION = 'auth-copy-code-v4';
 
+export function normalizeAuthOtpCode(otpCode: string): string {
+    return truncateWhatsAppParam(otpCode.trim().replace(/\s+/g, '') || '000000', 15);
+}
+
+/** Meta COPY_CODE send components — body + button URL, same code twice. */
+export function buildAuthOtpComponents(otpCode: string): WidersTemplateComponent[] {
+    const code = normalizeAuthOtpCode(otpCode);
     return [
         {
-            label: 'auth-body-only-v3',
-            components: [
-                {
-                    type: 'body',
-                    parameters: [{ type: 'text', text: code }],
-                },
-            ],
+            type: 'body',
+            parameters: [{ type: 'text', text: code }],
+        },
+        {
+            type: 'button',
+            sub_type: 'url',
+            index: '0',
+            parameters: [{ type: 'text', text: code }],
+        },
+    ];
+}
+
+/**
+ * Pull a single OTP from any inbound attempt shape.
+ * Prefer a 4–8 digit token (handles legacy [name, code] mistakes).
+ */
+export function extractAuthOtpCode(options: {
+    components?: WidersTemplateComponent[];
+    bodyParameters?: string[];
+}): string | null {
+    const texts: string[] = [];
+    for (const c of options.components ?? []) {
+        for (const p of c.parameters ?? []) {
+            const t = String(p.text ?? '').trim();
+            if (t) texts.push(t);
+        }
+    }
+    for (const p of options.bodyParameters ?? []) {
+        const t = String(p ?? '').trim();
+        if (t) texts.push(t);
+    }
+    const numeric = texts.filter((t) => /^\d{4,8}$/.test(t));
+    if (numeric.length) return normalizeAuthOtpCode(numeric[numeric.length - 1]!);
+    if (texts.length) return normalizeAuthOtpCode(texts[texts.length - 1]!);
+    return null;
+}
+
+export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[] {
+    return [
+        {
+            label: AUTH_OTP_PAYLOAD_VERSION,
+            components: buildAuthOtpComponents(otpCode),
         },
     ];
 }

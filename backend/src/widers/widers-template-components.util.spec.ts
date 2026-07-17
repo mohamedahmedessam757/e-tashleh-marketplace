@@ -1,8 +1,10 @@
 import {
+    AUTH_OTP_PAYLOAD_VERSION,
     buildAuthOtpSendAttempts,
     buildOtpSendAttempts,
     buildTemplateComponentVariants,
     buildWelcomeSendAttempts,
+    extractAuthOtpCode,
     resolveTemplateBodyValue,
 } from './widers-template-components.util';
 
@@ -27,32 +29,40 @@ describe('widers-template-components.util', () => {
     });
 
     describe('buildAuthOtpSendAttempts', () => {
-        it('sends only auth-body-only-v3 with a single body param', () => {
+        it('sends auth-copy-code-v4 with body + button url', () => {
             const attempts = buildAuthOtpSendAttempts('123456');
 
             expect(attempts).toHaveLength(1);
-            expect(attempts[0]?.label).toBe('auth-body-only-v3');
-            expect(attempts[0]?.components).toHaveLength(1);
+            expect(attempts[0]?.label).toBe(AUTH_OTP_PAYLOAD_VERSION);
+            expect(attempts[0]?.components).toHaveLength(2);
             expect(attempts[0]?.components?.[0]?.type).toBe('body');
             expect(attempts[0]?.components?.[0]?.parameters).toHaveLength(1);
             expect(attempts[0]?.components?.[0]?.parameters?.[0]?.text).toBe('123456');
+            expect(attempts[0]?.components?.[1]?.type).toBe('button');
+            expect(attempts[0]?.components?.[1]?.sub_type).toBe('url');
+            expect(attempts[0]?.components?.[1]?.parameters?.[0]?.text).toBe('123456');
             expect(attempts[0]?.bodyParameters).toBeUndefined();
         });
+    });
 
-        it('never includes a button component (Widers fills COPY_CODE from body)', () => {
-            const attempts = buildAuthOtpSendAttempts('654321');
-            expect(attempts[0]?.components?.some((c) => c.type === 'button')).toBe(false);
+    describe('extractAuthOtpCode', () => {
+        it('prefers numeric code from legacy [name, code]', () => {
+            expect(
+                extractAuthOtpCode({
+                    bodyParameters: ['abd_alkarem', '889900'],
+                }),
+            ).toBe('889900');
         });
     });
 
     describe('buildOtpSendAttempts', () => {
-        it('defaults to auth-body-only-v3', () => {
+        it('defaults to auth-copy-code-v4', () => {
             const attempts = buildOtpSendAttempts({
                 name: 'أحمد',
                 otpCode: '123456',
             });
 
-            expect(attempts[0]?.label).toBe('auth-body-only-v3');
+            expect(attempts[0]?.label).toBe(AUTH_OTP_PAYLOAD_VERSION);
             expect(attempts[0]?.components?.[0]?.parameters).toHaveLength(1);
         });
     });

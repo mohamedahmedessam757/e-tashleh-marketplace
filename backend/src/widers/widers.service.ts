@@ -8,9 +8,12 @@ import type {
 } from './widers.types';
 import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import {
+    buildAuthOtpComponents,
     buildTemplateComponents,
+    extractAuthOtpCode,
     extractWidersTemplateSendError,
     formatWidersError,
+    hasWidersMetaWamid,
     isWidersSendSuccess,
 } from './widers-template-components.util';
 
@@ -159,64 +162,44 @@ export class WidersService {
             template_language: payload.templateLanguage,
         };
 
-        if (payload.components?.length) {
-            // Harden AUTH OTP: never forward >1 body parameter (Meta #132000)
-            if (payload.templateName.startsWith('auth_otp_')) {
-                body.components = payload.components
-                    .filter((c) => c.type === 'body')
-                    .map((c) => ({
-                        type: 'body' as const,
-                        parameters: (c.parameters ?? []).slice(0, 1).map((p) => ({
-                            type: 'text' as const,
-                            text: String(p.text ?? '').trim(),
-                        })),
-                    }))
-                    .filter((c) => c.parameters.length === 1);
-                if (!(body.components as unknown[]).length) {
-                    return {
-                        success: false,
-                        error: 'auth_otp payload must include exactly 1 body parameter',
-                    };
-                }
-            } else {
-                body.components = payload.components;
+        if (payload.templateName.startsWith('auth_otp_')) {
+            // Absolute rebuild — never forward raw/legacy shapes that cause Meta #132000
+            const code = extractAuthOtpCode({
+                components: payload.components,
+                bodyParameters: payload.bodyParameters,
+            });
+            if (!code) {
+                return {
+                    success: false,
+                    error: 'auth_otp payload must include an OTP code',
+                };
             }
+            body.components = buildAuthOtpComponents(code);
+            this.logger.log(
+                `OTP outbound ${payload.templateName} → ${phone} [auth-copy-code-v4 rebuilt body=1 button=1]`,
+            );
+        } else if (payload.components?.length) {
+            body.components = payload.components;
         } else if (payload.bodyParameters?.length) {
-            if (payload.templateName.startsWith('auth_otp_')) {
-                // Flat parameters for AUTH often fail on Widers; force single body component
-                const code = String(payload.bodyParameters[0] ?? '').trim();
-                body.components = [
-                    {
-                        type: 'body',
-                        parameters: [{ type: 'text', text: code }],
-                    },
-                ];
-            } else {
-                const key =
-                    payload.parameterFormat === 'variables' ? 'variables' : 'parameters';
-                body[key] = payload.bodyParameters;
-            }
+            const key =
+                payload.parameterFormat === 'variables' ? 'variables' : 'parameters';
+            body[key] = payload.bodyParameters;
         }
 
-        const formatLabel = payload.components?.length
-            ? `components×${payload.components.length}`
+        const formatLabel = body.components
+            ? `components×${(body.components as unknown[]).length}`
             : `${payload.parameterFormat ?? 'parameters'}×${payload.bodyParameters?.length ?? 0}`;
 
         this.logger.log(
             `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone} [${formatLabel}]`,
         );
         if (payload.templateName.startsWith('auth_otp_')) {
-            // Log shape only (never log the OTP code itself in production logs at info — truncate)
-            const shape = payload.components?.length
-                ? payload.components.map((c) => ({
-                      type: c.type,
-                      sub_type: c.sub_type,
-                      paramCount: c.parameters?.length ?? 0,
-                  }))
-                : {
-                      format: payload.parameterFormat ?? 'parameters',
-                      count: payload.bodyParameters?.length ?? 0,
-                  };
+            const comps = body.components as WidersTemplateComponent[];
+            const shape = comps.map((c) => ({
+                type: c.type,
+                sub_type: c.sub_type,
+                paramCount: c.parameters?.length ?? 0,
+            }));
             this.logger.log(`OTP payload shape for ${payload.templateName}: ${JSON.stringify(shape)}`);
         }
 
@@ -270,8 +253,21 @@ export class WidersService {
                 return { ...parsed, success: false, error: err };
             }
 
+            // HTTP status:success alone is not delivery — require Meta wamid
+            if (!hasWidersMetaWamid(parsed)) {
+                this.logger.warn(
+                    `Widers soft-fail ${payload.templateName} message_id=${parsed.message_id ?? '?'} (no wamid)`,
+                );
+                return {
+                    ...parsed,
+                    success: false,
+                    error:
+                        'Widers returned success without Meta wamid (check send logs)',
+                };
+            }
+
             this.logger.log(
-                `Widers accepted ${payload.templateName} message_id=${parsed.message_id ?? '?'} wamid=${parsed.message_wamid ?? 'null'}`,
+                `Widers accepted ${payload.templateName} message_id=${parsed.message_id ?? '?'} wamid=${parsed.message_wamid}`,
             );
             return { ...parsed, success: true };
         } catch (err) {

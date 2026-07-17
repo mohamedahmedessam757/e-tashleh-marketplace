@@ -83,7 +83,7 @@ export class WidersReadinessService {
             status: this.config.otpMode === 'authentication' ? 'pass' : 'warn',
             detail:
                 this.config.otpMode === 'authentication'
-                    ? 'authentication — auth_otp_* send body {{1}}=otp only'
+                    ? 'authentication — auth_otp_* send Meta COPY_CODE body+button (auth-copy-code-v4)'
                     : `Current: ${this.config.otpMode} — set authentication; code still sends AUTH shape for auth_otp_*`,
         });
 

@@ -143,6 +143,23 @@ export class WhatsAppChannelService {
             return { sent: false, error: `Unknown template: ${templateName}` };
         }
 
+        // Never route AUTH OTP through generic variants (risk of name+code → #132000)
+        if (familyBase.startsWith('auth_otp_') || definition.category === 'AUTHENTICATION') {
+            const audience: 'customer' | 'vendor' | 'admin' = familyBase.includes('vendor')
+                ? 'vendor'
+                : familyBase.includes('admin')
+                  ? 'admin'
+                  : 'customer';
+            const otpCode = ctx.fields.otp_code?.trim() || '000000';
+            const contactName = ctx.fields.name?.trim() || 'مستخدم';
+            const otpResult = await this.sendOtp(audience, ctx.phone, contactName, otpCode, lang);
+            return {
+                sent: otpResult.sent,
+                error: otpResult.error,
+                templateName,
+            };
+        }
+
         const bodyTexts = definition.bodyFields.map((field) =>
             resolveTemplateBodyValue(field, ctx.fields[field]),
         );
@@ -227,18 +244,19 @@ export class WhatsAppChannelService {
         const lang = language ?? 'ar';
         const templateName = resolveTemplateName(family, lang);
 
-        // Single body {{1}}=otp only — never name, never flat parameters:[name,code]
+        // Meta COPY_CODE: body {{1}} + button url {{1}} — never name, never flat [name,code]
         const attempts = buildAuthOtpSendAttempts(otpCode);
         const bodyParams = attempts[0]?.components?.find((c) => c.type === 'body')?.parameters;
-        if (!bodyParams || bodyParams.length !== 1) {
+        const buttonParams = attempts[0]?.components?.find((c) => c.type === 'button')?.parameters;
+        if (!bodyParams || bodyParams.length !== 1 || !buttonParams || buttonParams.length !== 1) {
             this.logger.error(
-                `OTP payload guard failed for ${templateName}: expected 1 body param, got ${bodyParams?.length ?? 0}`,
+                `OTP payload guard failed for ${templateName}: expected body=1 button=1`,
             );
-            return { sent: false, error: 'Invalid OTP template payload (body param count)' };
+            return { sent: false, error: 'Invalid OTP template payload (COPY_CODE shape)' };
         }
 
         this.logger.log(
-            `OTP send ${templateName} → ${phone} [auth-body-only-v3 bodyParams=1 audience=${audience}]`,
+            `OTP send ${templateName} → ${phone} [auth-copy-code-v4 body=1 button=1 audience=${audience}]`,
         );
 
         const result = await this.dispatchTemplateAttempts(
@@ -259,8 +277,9 @@ export class WhatsAppChannelService {
                     familyBase: family,
                     audience,
                     otpMode: 'authentication',
-                    otpPayloadVersion: 'auth-body-only-v3',
+                    otpPayloadVersion: 'auth-copy-code-v4',
                     bodyParamCount: 1,
+                    buttonParamCount: 1,
                     nameProvided: Boolean(name?.trim()),
                 },
             })
