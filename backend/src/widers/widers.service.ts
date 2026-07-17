@@ -10,6 +10,8 @@ import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import {
     buildTemplateComponents,
     extractWidersTemplateSendError,
+    formatWidersError,
+    isWidersSendSuccess,
 } from './widers-template-components.util';
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -172,6 +174,20 @@ export class WidersService {
         this.logger.log(
             `Sending template ${payload.templateName} (${payload.templateLanguage}) → ${phone} [${formatLabel}]`,
         );
+        if (payload.templateName.startsWith('auth_otp_')) {
+            // Log shape only (never log the OTP code itself in production logs at info — truncate)
+            const shape = payload.components?.length
+                ? payload.components.map((c) => ({
+                      type: c.type,
+                      sub_type: c.sub_type,
+                      paramCount: c.parameters?.length ?? 0,
+                  }))
+                : {
+                      format: payload.parameterFormat ?? 'parameters',
+                      count: payload.bodyParameters?.length ?? 0,
+                  };
+            this.logger.log(`OTP payload shape for ${payload.templateName}: ${JSON.stringify(shape)}`);
+        }
 
         const token = this.widersConfig.apiToken;
         if (!token) {
@@ -204,10 +220,7 @@ export class WidersService {
                 return { ...parsed, success: false, error };
             }
 
-            const embeddedError = extractWidersTemplateSendError(
-                { ...parsed, success: parsed.success !== false },
-                text,
-            );
+            const embeddedError = extractWidersTemplateSendError(parsed, text);
             if (embeddedError) {
                 this.logger.warn(
                     `Widers sendtemplatemessage rejected ${payload.templateName}: ${embeddedError}`,
@@ -215,7 +228,21 @@ export class WidersService {
                 return { ...parsed, success: false, error: embeddedError };
             }
 
-            return { ...parsed, success: parsed.success !== false };
+            const ok = isWidersSendSuccess(parsed);
+            if (!ok) {
+                const err =
+                    typeof parsed.error === 'string'
+                        ? parsed.error
+                        : parsed.error && typeof parsed.error === 'object'
+                          ? parsed.error.message
+                          : parsed.message ?? 'Widers send failed';
+                return { ...parsed, success: false, error: err };
+            }
+
+            this.logger.log(
+                `Widers accepted ${payload.templateName} message_id=${parsed.message_id ?? '?'} wamid=${parsed.message_wamid ?? 'null'}`,
+            );
+            return { ...parsed, success: true };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown Widers error';
             this.logger.error(`Widers sendtemplatemessage failed: ${message}`);
@@ -252,8 +279,11 @@ export class WidersService {
         }
 
         const result = await this.getTemplates();
-        if (!result.success) {
-            return { reachable: false, error: result.error ?? result.message };
+        if (!isWidersSendSuccess(result)) {
+            return {
+                reachable: false,
+                error: formatWidersError(result.error, result.message),
+            };
         }
 
         const data = result.data;

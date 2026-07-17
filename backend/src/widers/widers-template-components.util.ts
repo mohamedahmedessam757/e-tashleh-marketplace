@@ -132,9 +132,26 @@ function attemptKey(attempt: TemplateSendAttempt): string {
 
 /** Detect Meta/Widers errors embedded in HTTP-200 responses. */
 export function extractWidersTemplateSendError(
-    parsed: { success?: boolean; error?: string; message?: string; data?: unknown },
+    parsed: {
+        success?: boolean;
+        status?: string;
+        error?: string | { message?: string; code?: number; error_data?: unknown };
+        message?: string;
+        data?: unknown;
+    },
     rawText?: string,
 ): string | undefined {
+    const errorObj =
+        parsed.error && typeof parsed.error === 'object'
+            ? parsed.error
+            : undefined;
+    const errorStr =
+        typeof parsed.error === 'string'
+            ? parsed.error
+            : typeof errorObj?.message === 'string'
+              ? errorObj.message
+              : undefined;
+
     const dataError =
         parsed.data && typeof parsed.data === 'object'
             ? (() => {
@@ -148,12 +165,17 @@ export function extractWidersTemplateSendError(
               ? parsed.data
               : undefined;
 
-    const combined = [parsed.error, parsed.message, dataError, rawText]
+    const combined = [errorStr, parsed.message, dataError, rawText]
         .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
         .join(' ');
 
-    if (parsed.success === false) {
-        return parsed.error ?? parsed.message ?? (combined || 'Widers send failed');
+    const statusFailed =
+        parsed.success === false ||
+        (typeof parsed.status === 'string' &&
+            parsed.status.toLowerCase() !== 'success');
+
+    if (statusFailed) {
+        return errorStr ?? parsed.message ?? (combined || 'Widers send failed');
     }
 
     if (isWhatsAppInvalidParameterError(combined)) {
@@ -161,6 +183,29 @@ export function extractWidersTemplateSendError(
     }
 
     return undefined;
+}
+
+export function formatWidersError(
+    error?: string | { message?: string; code?: number; error_data?: unknown } | null,
+    fallback?: string,
+): string | undefined {
+    if (typeof error === 'string' && error.trim()) return error;
+    if (error && typeof error === 'object' && typeof error.message === 'string') {
+        return error.message;
+    }
+    return fallback;
+}
+
+/** Normalize Widers wpbox success flags (`success` boolean or `status: "success"`). */
+export function isWidersSendSuccess(parsed: {
+    success?: boolean;
+    status?: string;
+}): boolean {
+    if (typeof parsed.status === 'string') {
+        return parsed.status.toLowerCase() === 'success';
+    }
+    // Undefined success with no status → treat as ok only if caller already filtered errors
+    return parsed.success !== false;
 }
 
 export interface TemplateSendAttempt {
@@ -282,11 +327,20 @@ export function buildWelcomeSendAttempts(
 }
 
 /**
- * AUTHENTICATION OTP: exactly one body param {{1}} = otp_code.
- * Ordered attempts — never send name as a second body param (#132000).
+ * AUTHENTICATION COPY_CODE OTP (Meta + Widers).
+ *
+ * Live template shape (getTemplates):
+ * - BODY has exactly {{1}} (the code)
+ * - BUTTON URL has {{1}} (same code) — sub_type must be `url`
+ *
+ * Do NOT send name in the body (causes Meta #132000: body expects 1, got 2).
+ * Do NOT send body-only without the button when the template has a COPY_CODE URL var.
+ *
+ * Widers «إعداد القالب»: leave Body {{1}} unmapped (no contact-name field).
+ * If {{1}} is mapped to contact name AND we also pass the OTP, Meta sees 2 body params.
  */
 export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[] {
-    const code = truncateWhatsAppParam(otpCode.trim() || '000000', 20);
+    const code = truncateWhatsAppParam(otpCode.trim() || '000000', 15);
     const attempts: TemplateSendAttempt[] = [];
     const seen = new Set<string>();
 
@@ -297,16 +351,24 @@ export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[]
         attempts.push(attempt);
     };
 
+    // 1) Official Meta COPY_CODE payload (body {{1}} + button url {{1}})
     push({
-        label: 'body-only',
+        label: 'meta-copy-code',
         components: [
             {
                 type: 'body',
                 parameters: [{ type: 'text', text: code }],
             },
+            {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: code }],
+            },
         ],
     });
 
+    // 2) Widers positional shorthand — one value reused for body/button by wpbox
     push({
         label: 'parameters-array',
         bodyParameters: [code],
@@ -319,33 +381,12 @@ export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[]
         parameterFormat: 'variables',
     });
 
+    // 3) Body-only last resort (some WABA configs fill button from body)
     push({
-        label: 'body-plus-otp-button',
+        label: 'body-only',
         components: [
             {
                 type: 'body',
-                parameters: [{ type: 'text', text: code }],
-            },
-            {
-                type: 'button',
-                sub_type: 'otp',
-                index: '0',
-                parameters: [{ type: 'text', text: code }],
-            },
-        ],
-    });
-
-    push({
-        label: 'body-plus-url-button',
-        components: [
-            {
-                type: 'body',
-                parameters: [{ type: 'text', text: code }],
-            },
-            {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
                 parameters: [{ type: 'text', text: code }],
             },
         ],

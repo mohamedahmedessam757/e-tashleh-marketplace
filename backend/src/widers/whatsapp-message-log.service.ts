@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import type { WidersApiResponse } from './widers.types';
 import type { MetaStatusError } from './widers-webhook.types';
+import { formatWidersError, isWidersSendSuccess } from './widers-template-components.util';
 
 export interface LogOutboundParams {
     phone: string;
@@ -25,7 +26,11 @@ export class WhatsAppMessageLogService {
 
     extractMessageId(result?: WidersApiResponse): string | null {
         if (!result) return null;
-        const candidates: unknown[] = [result.data];
+        const candidates: unknown[] = [
+            result.message_id,
+            result.message_wamid,
+            result.data,
+        ];
         if (result.data && typeof result.data === 'object') {
             const data = result.data as Record<string, unknown>;
             candidates.push(
@@ -44,13 +49,18 @@ export class WhatsAppMessageLogService {
             if (typeof value === 'string' && value.trim()) {
                 return value.trim();
             }
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                return String(value);
+            }
         }
         return null;
     }
 
     async logOutbound(params: LogOutboundParams): Promise<string> {
         const externalMessageId = this.extractMessageId(params.sendResult);
-        const sent = params.sendResult?.success !== false;
+        const sent = params.sendResult
+            ? isWidersSendSuccess(params.sendResult)
+            : false;
 
         const log = await this.prisma.whatsAppMessageLog.create({
             data: {
@@ -68,7 +78,10 @@ export class WhatsAppMessageLogService {
                 notificationId: params.notificationId,
                 errorMessage: sent
                     ? undefined
-                    : params.sendResult?.error ?? params.sendResult?.message,
+                    : formatWidersError(
+                          params.sendResult?.error,
+                          params.sendResult?.message,
+                      ),
                 payload: (params.sendResult ?? {}) as object,
                 metadata: (params.metadata ?? {}) as object,
                 sentAt: sent ? new Date() : undefined,

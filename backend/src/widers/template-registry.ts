@@ -74,16 +74,18 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
-    // Orders
+    // Orders — Meta button URLs are static (no {{n}}); do not send button params
     def('txn_order_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
         headerText: 'تحديث حالة الطلب',
         buttonLabel: 'عرض الطلب',
         buttonSuffixPattern: suffix.orderCustomer,
+        buttonUrlDynamic: false,
     }),
     def('txn_order_merchant', 'ar', 'merchant', ['name', 'order_number', 'status_detail'], {
         headerText: 'تحديث حالة الطلب',
         buttonLabel: 'فتح الطلب',
         buttonSuffixPattern: suffix.orderMerchant,
+        buttonUrlDynamic: false,
     }),
 
     // Shipments
@@ -96,6 +98,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'تحديث الشحن',
         buttonLabel: 'تتبع الشحنة',
         buttonSuffixPattern: suffix.orderCustomer,
+        buttonUrlDynamic: false,
     }),
     def('txn_shipment_merchant', 'ar', 'merchant', [
         'name',
@@ -106,6 +109,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'تحديث شحن الطلب',
         buttonLabel: 'فتح الطلب',
         buttonSuffixPattern: suffix.orderMerchant,
+        buttonUrlDynamic: false,
     }),
 
     // Invoices (per offer)
@@ -119,6 +123,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'فاتورة جاهزة',
         buttonLabel: 'عرض الفاتورة',
         buttonSuffixPattern: suffix.invoiceCustomer,
+        buttonUrlDynamic: false,
     }),
     def('txn_invoice_merchant', 'ar', 'merchant', [
         'name',
@@ -130,6 +135,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'فاتورة جديدة',
         buttonLabel: 'عرض الفاتورة',
         buttonSuffixPattern: suffix.invoiceMerchant,
+        buttonUrlDynamic: false,
     }),
 
     // Waybills
@@ -137,11 +143,13 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'بوليصة الشحن',
         buttonLabel: 'عرض البوليصة',
         buttonSuffixPattern: suffix.waybillCustomer,
+        buttonUrlDynamic: false,
     }),
     def('txn_waybill_merchant', 'ar', 'merchant', ['name', 'order_number', 'status_detail'], {
         headerText: 'بوليصة الشحن',
         buttonLabel: 'عرض البوليصة',
         buttonSuffixPattern: suffix.waybillMerchant,
+        buttonUrlDynamic: false,
     }),
 
     // Store documents (vendor only)
@@ -157,11 +165,13 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         headerText: 'توثيق الطلب',
         buttonLabel: 'عرض الطلب',
         buttonSuffixPattern: suffix.orderCustomer,
+        buttonUrlDynamic: false,
     }),
     def('txn_verification_vendor', 'ar', 'merchant', ['name', 'order_number', 'status_detail'], {
         headerText: 'توثيق الطلب',
         buttonLabel: 'فتح الطلب',
         buttonSuffixPattern: suffix.orderMerchant,
+        buttonUrlDynamic: false,
     }),
 
     // Marketing welcome — body {{1}} only; button URL is static in Widers (no API suffix)

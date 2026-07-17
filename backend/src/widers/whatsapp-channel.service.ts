@@ -13,6 +13,7 @@ import {
     buildAuthOtpSendAttempts,
     buildTemplateComponentVariants,
     buildWelcomeSendAttempts,
+    formatWidersError,
     isWhatsAppInvalidParameterError,
     resolveTemplateBodyValue,
     type TemplateSendAttempt,
@@ -84,7 +85,9 @@ export class WhatsAppChannelService {
 
         const shouldRetry = (result: typeof lastResult) =>
             retryAllOnFailure ||
-            isWhatsAppInvalidParameterError(result.error ?? result.message);
+            isWhatsAppInvalidParameterError(
+                formatWidersError(result.error, result.message),
+            );
 
         for (let i = 1; i < attempts.length && !lastResult.success; i += 1) {
             if (!shouldRetry(lastResult)) break;
@@ -145,7 +148,7 @@ export class WhatsAppChannelService {
         );
 
         const buttonSuffix =
-            definition.buttonSuffixPattern && definition.buttonUrlDynamic !== false
+            definition.buttonSuffixPattern && definition.buttonUrlDynamic === true
                 ? this.buildCtaSuffix(definition.buttonSuffixPattern, ctx.orderId, ctx.offerId)
                 : undefined;
 
@@ -200,7 +203,7 @@ export class WhatsAppChannelService {
         if (!result.success) {
             return {
                 sent: false,
-                error: result.error ?? result.message,
+                error: formatWidersError(result.error, result.message),
                 templateName: definition.name,
             };
         }
@@ -255,7 +258,7 @@ export class WhatsAppChannelService {
 
         return {
             sent: Boolean(result.success),
-            error: result.error ?? result.message,
+            error: formatWidersError(result.error, result.message),
         };
     }
 

@@ -30,7 +30,9 @@ Single source for which in-app events dispatch which Widers template families.
 - Footer (Widers): `إي-تشليح | E-TASHLEH`
 - Site: https://e-tashleh.net
 - Button base: `https://e-tashleh.net/dashboard/`
-- OTP category: **AUTHENTICATION** (`WIDERS_OTP_MODE=authentication`, body `{{1}}` = `otp_code` + copy-code button)
+- OTP category: **AUTHENTICATION** (`WIDERS_OTP_MODE=authentication`)
+- OTP send: Meta COPY_CODE — body `{{1}}` + button URL `{{1}}` (same code). **Never** map Body `{{1}}` to contact name in Widers «إعداد القالب» (causes Meta #132000: 2 vs 1).
+- txn_* buttons in current WABA are **static URLs** — NestJS does not send button URL parameters.
 
 ## Intentionally no WhatsApp template
 

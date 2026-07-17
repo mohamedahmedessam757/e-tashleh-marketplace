@@ -42,9 +42,13 @@ export interface MakeContactPayload {
 
 export interface WidersApiResponse<T = unknown> {
     success?: boolean;
+    /** Widers wpbox often returns `status: "success" | "error"` instead of boolean `success` */
+    status?: string;
     message?: string;
+    message_id?: number | string;
+    message_wamid?: string | null;
     data?: T;
-    error?: string;
+    error?: string | { message?: string; code?: number; error_data?: unknown };
 }
 
 export interface WidersHealthStatus {

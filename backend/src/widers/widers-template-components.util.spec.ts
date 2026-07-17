@@ -27,14 +27,16 @@ describe('widers-template-components.util', () => {
     });
 
     describe('buildAuthOtpSendAttempts', () => {
-        it('starts with body-only single otp param', () => {
+        it('starts with Meta COPY_CODE body+url button (1 body param)', () => {
             const attempts = buildAuthOtpSendAttempts('123456');
 
-            expect(attempts[0]?.label).toBe('body-only');
-            expect(attempts[0]?.components).toHaveLength(1);
+            expect(attempts[0]?.label).toBe('meta-copy-code');
+            expect(attempts[0]?.components).toHaveLength(2);
             expect(attempts[0]?.components?.[0]?.type).toBe('body');
             expect(attempts[0]?.components?.[0]?.parameters).toHaveLength(1);
-            expect(attempts[0]?.components?.[0]?.parameters?.[0]?.text).toBe('123456');
+            expect(attempts[0]?.components?.[1]?.type).toBe('button');
+            expect(attempts[0]?.components?.[1]?.sub_type).toBe('url');
+            expect(attempts[0]?.components?.[1]?.parameters).toHaveLength(1);
         });
 
         it('never sends two body parameters on any attempt', () => {
@@ -49,24 +51,16 @@ describe('widers-template-components.util', () => {
                 }
             }
         });
-
-        it('includes packaging fallbacks with same single param', () => {
-            const attempts = buildAuthOtpSendAttempts('111222');
-            expect(attempts.find((a) => a.label === 'parameters-array')?.bodyParameters).toEqual([
-                '111222',
-            ]);
-            expect(attempts.some((a) => a.label === 'body-plus-otp-button')).toBe(true);
-        });
     });
 
     describe('buildOtpSendAttempts', () => {
-        it('defaults to auth single-param attempts', () => {
+        it('defaults to auth Meta COPY_CODE attempts', () => {
             const attempts = buildOtpSendAttempts({
                 name: 'أحمد',
                 otpCode: '123456',
             });
 
-            expect(attempts[0]?.label).toBe('body-only');
+            expect(attempts[0]?.label).toBe('meta-copy-code');
             expect(attempts[0]?.components?.[0]?.parameters).toHaveLength(1);
         });
     });

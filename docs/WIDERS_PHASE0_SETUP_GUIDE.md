@@ -186,10 +186,13 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 | المتغير في القالب | المعنى | حقل الكود (NestJS) |
 |-------------------|--------|---------------------|
-| `{{1}}` | رمز OTP فقط | `otp_code` |
+| Body `{{1}}` | رمز OTP | `otp_code` |
+| Button URL `{{1}}` | نفس الرمز (Copy code) | نفس `otp_code` |
 
-> **AUTHENTICATION فقط** — لا ترسل `name` كمعامل ثانٍ (خطأ Meta #132000).  
-> زر القالب: **نسخ الرمز** (Copy code). Backend يجرّب body-only ثم fallbacks بنفس المعامل الواحد.
+> **مهم جدًا — خطأ Meta #132000:** في Widers → **إعداد القالب** لكل `auth_otp_*`:  
+> اترك قائمة **Body متغير 1** على `---اختر حقل---` (فارغ).  
+> **لا تربطها باسم جهة الاتصال**. إذا ربطتها بالاسم + الـ API أرسل الرمز، Meta يرى معاملَي body (2) بينما القالب يتوقع (1).  
+> الـ Backend يمرّر الرمز مرة في body ومرة في زر `url` (مواصفات Meta COPY_CODE).
 
 ---
 
