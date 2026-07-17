@@ -160,11 +160,42 @@ export class WidersService {
         };
 
         if (payload.components?.length) {
-            body.components = payload.components;
+            // Harden AUTH OTP: never forward >1 body parameter (Meta #132000)
+            if (payload.templateName.startsWith('auth_otp_')) {
+                body.components = payload.components
+                    .filter((c) => c.type === 'body')
+                    .map((c) => ({
+                        type: 'body' as const,
+                        parameters: (c.parameters ?? []).slice(0, 1).map((p) => ({
+                            type: 'text' as const,
+                            text: String(p.text ?? '').trim(),
+                        })),
+                    }))
+                    .filter((c) => c.parameters.length === 1);
+                if (!(body.components as unknown[]).length) {
+                    return {
+                        success: false,
+                        error: 'auth_otp payload must include exactly 1 body parameter',
+                    };
+                }
+            } else {
+                body.components = payload.components;
+            }
         } else if (payload.bodyParameters?.length) {
-            const key =
-                payload.parameterFormat === 'variables' ? 'variables' : 'parameters';
-            body[key] = payload.bodyParameters;
+            if (payload.templateName.startsWith('auth_otp_')) {
+                // Flat parameters for AUTH often fail on Widers; force single body component
+                const code = String(payload.bodyParameters[0] ?? '').trim();
+                body.components = [
+                    {
+                        type: 'body',
+                        parameters: [{ type: 'text', text: code }],
+                    },
+                ];
+            } else {
+                const key =
+                    payload.parameterFormat === 'variables' ? 'variables' : 'parameters';
+                body[key] = payload.bodyParameters;
+            }
         }
 
         const formatLabel = payload.components?.length

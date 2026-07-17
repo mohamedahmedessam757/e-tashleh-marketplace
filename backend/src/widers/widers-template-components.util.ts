@@ -327,72 +327,35 @@ export function buildWelcomeSendAttempts(
 }
 
 /**
- * AUTHENTICATION COPY_CODE OTP (Meta + Widers).
+ * AUTHENTICATION COPY_CODE OTP via Widers.
  *
- * Live template shape (getTemplates):
- * - BODY has exactly {{1}} (the code)
- * - BUTTON URL has {{1}} (same code) — sub_type must be `url`
+ * Live getTemplates: BODY has {{1}}, BUTTON URL also has {{1}}.
+ * Empirically (probe-widers-otp-delivery.mjs, Jul 2026):
+ * - components body-only with 1 text param → DELIVERS
+ * - components body + button url → also delivers on clean contacts
+ * - flat parameters:[code] → does NOT substitute {{1}} via Widers
+ * - parameters:[name, code] / body with 2 params → Meta #132000 (2 vs 1)
  *
- * Do NOT send name in the body (causes Meta #132000: body expects 1, got 2).
- * Do NOT send body-only without the button when the template has a COPY_CODE URL var.
- *
- * Widers «إعداد القالب»: leave Body {{1}} unmapped (no contact-name field).
- * If {{1}} is mapped to contact name AND we also pass the OTP, Meta sees 2 body params.
+ * Use body-only only. Widers fills COPY_CODE button from the same body {{1}}.
+ * Never include `name` or a second body parameter.
  */
 export function buildAuthOtpSendAttempts(otpCode: string): TemplateSendAttempt[] {
-    const code = truncateWhatsAppParam(otpCode.trim() || '000000', 15);
-    const attempts: TemplateSendAttempt[] = [];
-    const seen = new Set<string>();
+    const code = truncateWhatsAppParam(otpCode.trim().replace(/\s+/g, '') || '000000', 15);
+    if (!/^\d{4,8}$/.test(code)) {
+        // Still send digits-only best-effort; callers generate numeric OTP
+    }
 
-    const push = (attempt: TemplateSendAttempt) => {
-        const key = attemptKey(attempt);
-        if (seen.has(key)) return;
-        seen.add(key);
-        attempts.push(attempt);
-    };
-
-    // 1) Official Meta COPY_CODE payload (body {{1}} + button url {{1}})
-    push({
-        label: 'meta-copy-code',
-        components: [
-            {
-                type: 'body',
-                parameters: [{ type: 'text', text: code }],
-            },
-            {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: code }],
-            },
-        ],
-    });
-
-    // 2) Widers positional shorthand — one value reused for body/button by wpbox
-    push({
-        label: 'parameters-array',
-        bodyParameters: [code],
-        parameterFormat: 'parameters',
-    });
-
-    push({
-        label: 'variables-array',
-        bodyParameters: [code],
-        parameterFormat: 'variables',
-    });
-
-    // 3) Body-only last resort (some WABA configs fill button from body)
-    push({
-        label: 'body-only',
-        components: [
-            {
-                type: 'body',
-                parameters: [{ type: 'text', text: code }],
-            },
-        ],
-    });
-
-    return attempts;
+    return [
+        {
+            label: 'auth-body-only-v3',
+            components: [
+                {
+                    type: 'body',
+                    parameters: [{ type: 'text', text: code }],
+                },
+            ],
+        },
+    ];
 }
 
 /** @deprecated Use buildAuthOtpSendAttempts — kept for tests/compat */

@@ -227,14 +227,26 @@ export class WhatsAppChannelService {
         const lang = language ?? 'ar';
         const templateName = resolveTemplateName(family, lang);
 
-        // Always AUTHENTICATION shape: body {{1}} = otp only (ignore WIDERS_OTP_MODE=utility)
+        // Single body {{1}}=otp only — never name, never flat parameters:[name,code]
         const attempts = buildAuthOtpSendAttempts(otpCode);
+        const bodyParams = attempts[0]?.components?.find((c) => c.type === 'body')?.parameters;
+        if (!bodyParams || bodyParams.length !== 1) {
+            this.logger.error(
+                `OTP payload guard failed for ${templateName}: expected 1 body param, got ${bodyParams?.length ?? 0}`,
+            );
+            return { sent: false, error: 'Invalid OTP template payload (body param count)' };
+        }
+
+        this.logger.log(
+            `OTP send ${templateName} → ${phone} [auth-body-only-v3 bodyParams=1 audience=${audience}]`,
+        );
+
         const result = await this.dispatchTemplateAttempts(
             templateName,
             lang,
             phone,
             attempts,
-            true,
+            false,
         );
 
         void this.messageLog
@@ -247,6 +259,8 @@ export class WhatsAppChannelService {
                     familyBase: family,
                     audience,
                     otpMode: 'authentication',
+                    otpPayloadVersion: 'auth-body-only-v3',
+                    bodyParamCount: 1,
                     nameProvided: Boolean(name?.trim()),
                 },
             })
