@@ -317,10 +317,10 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     ], [kpis, t]);
 
     const platformRevenueKpis = useMemo(() => [
-        { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${(kpis.platformCommissions ?? kpis.grossCommission || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
+        { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${((kpis.platformCommissions ?? kpis.grossCommission) || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
         { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7' },
         { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
-        { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${(kpis.netPlatformRevenue ?? kpis.netPlatformPosition || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
+        { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${((kpis.netPlatformRevenue ?? kpis.netPlatformPosition) || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
     ], [kpis, t]);
 
     const revenueKpis = useMemo(() => [
