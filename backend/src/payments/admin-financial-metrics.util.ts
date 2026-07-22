@@ -47,6 +47,11 @@ export interface AdminFinancialKpis {
   totalPenalties: number;
   dailyTxCount: number;
   monthlyTxCount: number;
+  /** Platform revenue report KPIs (2026) */
+  platformCommissions: number;
+  loyaltyReferralExpenses: number;
+  commissionRefunds: number;
+  netPlatformRevenue: number;
 }
 
 function buildFailedUnsettledWhere(): Prisma.PaymentTransactionWhereInput {
@@ -67,7 +72,22 @@ export interface SalesTrendPoint {
 export function buildAdminDateRange(filters?: {
   startDate?: string;
   endDate?: string;
+  period?: 'monthly' | 'quarterly' | 'yearly';
 }): AdminDateRange {
+  if (filters?.period && !filters?.startDate && !filters?.endDate) {
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    const start = new Date(end);
+    start.setHours(0, 0, 0, 0);
+    if (filters.period === 'monthly') {
+      start.setMonth(start.getMonth() - 1);
+    } else if (filters.period === 'quarterly') {
+      start.setMonth(start.getMonth() - 3);
+    } else {
+      start.setFullYear(start.getFullYear() - 1);
+    }
+    return { startDate: start, endDate: end };
+  }
   const startDate = filters?.startDate ? new Date(filters.startDate) : null;
   const endDate = filters?.endDate ? new Date(filters.endDate) : null;
   if (endDate) endDate.setHours(23, 59, 59, 999);
@@ -309,7 +329,22 @@ export async function computeAdminFinancialKpis(
     countFinancialTransactionsSince(prisma, startOfMonth()),
   ]);
 
-  const grossSales = Number(grossSalesAgg._sum.totalAmount || 0);
+  const commissionRefundsAgg = await prisma.paymentTransaction.aggregate({
+    where: {
+      refundedAmount: { gt: 0 },
+      ...(buildPaymentDateFilter(range)
+        ? {
+            OR: [
+              { paidAt: buildPaymentDateFilter(range) },
+              { paidAt: null, createdAt: buildPaymentDateFilter(range)! },
+            ],
+          }
+        : {}),
+    },
+    _sum: { commission: true },
+  });
+
+    const grossSales = Number(grossSalesAgg._sum.totalAmount || 0);
   const grossCommission = Number(commissionAgg._sum.commission || 0);
   const totalReferralPaid = Number(referralAgg._sum.amount || 0);
   const totalLoyaltyPaid = Number(loyaltyPaidAgg._sum.amount || 0);
@@ -387,6 +422,14 @@ export async function computeAdminFinancialKpis(
     totalPenalties: roundMoney(Number(penaltiesAgg._sum.amount || 0)),
     dailyTxCount,
     monthlyTxCount,
+    platformCommissions: roundMoney(grossCommission),
+    loyaltyReferralExpenses: roundMoney(totalLoyaltyPaid + totalReferralPaid),
+    commissionRefunds: roundMoney(Number(commissionRefundsAgg._sum.commission || 0)),
+    netPlatformRevenue: roundMoney(
+      grossCommission -
+        (totalLoyaltyPaid + totalReferralPaid) -
+        Number(commissionRefundsAgg._sum.commission || 0),
+    ),
   };
 }
 

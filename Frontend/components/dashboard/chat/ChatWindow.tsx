@@ -170,10 +170,31 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
     );
   }
 
-  // Smart Chat Logic Checks
+  // Smart Chat Logic Checks — Hard Gate: closed/expired never reopen via orderStatus
   const chatStatus = displayChat.status;
-  const isChatActive = chatStatus === 'active' || 
-    (orderStatus && ['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PREPARATION', 'SHIPPED'].includes(orderStatus));
+  const isTerminalChatStatus =
+    chatStatus === 'closed' ||
+    chatStatus === 'expired' ||
+    chatStatus === 'closed_others';
+  const isChatActive =
+    !isTerminalChatStatus &&
+    (chatStatus === 'active' ||
+      (!!orderStatus &&
+        [
+          'AWAITING_OFFERS',
+          'COLLECTING_OFFERS',
+          'AWAITING_SELECTION',
+          'AWAITING_PAYMENT',
+          'PREPARATION',
+          'SHIPPED',
+        ].includes(orderStatus)));
+
+  const isOrderCompletedLock =
+    isOrderChat &&
+    chatStatus === 'closed' &&
+    orderChat?.type !== 'support' &&
+    !!orderStatus &&
+    ['COMPLETED', 'WARRANTY_ACTIVE'].includes(orderStatus);
 
   const handleSend = async () => {
     if ((!text.trim() && !pendingAttachment) || !isChatActive || isUploading) return;
@@ -491,9 +512,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           <div className="flex justify-center my-4">
             <span className="text-xs text-gray-400 bg-gray-500/10 px-3 py-1 rounded-full border border-gray-500/20 flex items-center gap-1">
               <CheckCircle2 size={12} />
-              {orderChat?.type === 'support' 
+              {orderChat?.type === 'support'
                 ? (language === 'ar' ? 'تم إغلاق المحادثة (تم حل المشكلة)' : 'Chat Closed (Issue Resolved)')
-                : (language === 'ar' ? 'تم إغلاق المحادثة (تم قبول عرض آخر)' : 'Chat Closed (Offer Accepted Elsewhere)')
+                : isOrderCompletedLock
+                  ? (language === 'ar' ? 'تم إغلاق المحادثة (الطلب مكتمل)' : 'Chat Closed (Order Completed)')
+                  : (language === 'ar' ? 'تم إغلاق المحادثة (تم قبول عرض آخر)' : 'Chat Closed (Offer Accepted Elsewhere)')
               }
             </span>
           </div>
@@ -594,15 +617,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
                 <CheckCircle2 className="text-gold-500" size={24} />
                 <div>
                   <h4 className="text-white font-bold text-sm">
-                    {orderChat?.type === 'support' 
+                    {orderChat?.type === 'support'
                       ? (language === 'ar' ? 'تم حل المشكلة' : 'Issue Resolved')
-                      : (language === 'ar' ? 'تم الاختيار' : 'Order in Progress')
+                      : isOrderCompletedLock
+                        ? (language === 'ar' ? 'الطلب مكتمل' : 'Order Completed')
+                        : (language === 'ar' ? 'تم الاختيار' : 'Order in Progress')
                     }
                   </h4>
                   <p className="text-xs text-white/40">
                     {orderChat?.type === 'support'
                       ? (language === 'ar' ? 'تم إغلاق هذه المحادثة لأن المشكلة الخاصة بك قد حُلّت بنجاح.' : 'This chat is closed because your issue has been successfully resolved.')
-                      : (language === 'ar' ? 'تم إغلاق هذه المحادثة بسبب قبولك لعرض آخر لهذا الطلب.' : 'This chat is closed because you accepted another offer for this order.')
+                      : isOrderCompletedLock
+                        ? (language === 'ar' ? 'تم إغلاق هذه المحادثة لأن الطلب اكتمل. يمكنك متابعة الدعم عبر مركز المساعدة إن لزم.' : 'This chat is closed because the order is completed. Use support if you still need help.')
+                        : (language === 'ar' ? 'تم إغلاق هذه المحادثة بسبب قبولك لعرض آخر لهذا الطلب.' : 'This chat is closed because you accepted another offer for this order.')
                     }
                   </p>
                 </div>

@@ -51,6 +51,8 @@ import { useMerchantWalletStore, subscribeToMerchantWalletUpdates } from '../../
 import { PayoutMethodPanel } from '../wallet/PayoutMethodPanel';
 import { BankDetailsModal } from '../wallet/BankDetailsModal';
 import { PayoutLinkRequiredAlert } from '../wallet/PayoutLinkRequiredAlert';
+import { WithdrawalReceiptModal } from '../shared/WithdrawalReceiptModal';
+import { paymentsApi } from '../../../services/api/payments';
 import {
     getPayoutReadiness,
     getNoPayoutLinkedMessage,
@@ -125,6 +127,8 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [withdrawError, setWithdrawError] = useState('');
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+    const [receiptId, setReceiptId] = useState<string | null>(null);
+    const [exportingWithdrawals, setExportingWithdrawals] = useState(false);
     const [isOnboarding, setIsOnboarding] = useState(false);
     const [payoutMethod, setPayoutMethod] = useState<'BANK_TRANSFER' | 'STRIPE'>('BANK_TRANSFER');
 
@@ -1055,9 +1059,28 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                 <Clock className="text-gold-500/50" size={16} />
                                 <h3 className="text-base font-bold text-white">{isAr ? 'سجل عمليات السحب' : 'Withdrawal History'}</h3>
                             </div>
-                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-black text-white/40 flex items-center gap-2">
-                                <div className="w-1 h-1 rounded-full bg-gold-500 animate-pulse" />
-                                {withdrawalRequests.length} {isAr ? 'عمليات' : 'Records'}
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    disabled={exportingWithdrawals || withdrawalRequests.length === 0}
+                                    onClick={async () => {
+                                        setExportingWithdrawals(true);
+                                        try {
+                                            await paymentsApi.downloadWithdrawalsExport({ format: 'xlsx' });
+                                        } catch {
+                                            setWithdrawError(isAr ? 'فشل التصدير' : 'Export failed');
+                                        } finally {
+                                            setExportingWithdrawals(false);
+                                        }
+                                    }}
+                                    className="text-[10px] font-black uppercase text-gold-400 hover:text-gold-300 disabled:opacity-40"
+                                >
+                                    {exportingWithdrawals ? (isAr ? 'جاري...' : 'Exporting...') : 'Excel'}
+                                </button>
+                                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-black text-white/40 flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-gold-500 animate-pulse" />
+                                    {withdrawalRequests.length} {isAr ? 'عمليات' : 'Records'}
+                                </div>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
@@ -1123,15 +1146,24 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                                     <p className="text-[8px] text-white/20 font-black uppercase">{new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    {req.status === 'PENDING' && (
+                                                    <div className="flex items-center justify-center gap-2">
                                                         <button
                                                             type="button"
-                                                            onClick={() => cancelWithdrawal(req.id)}
-                                                            className="text-[9px] font-black uppercase text-rose-400"
+                                                            onClick={() => setReceiptId(req.id)}
+                                                            className="text-[9px] font-black uppercase text-gold-400"
                                                         >
-                                                            {isAr ? 'إلغاء' : 'Cancel'}
+                                                            {isAr ? 'إيصال' : 'Receipt'}
                                                         </button>
-                                                    )}
+                                                        {req.status === 'PENDING' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => cancelWithdrawal(req.id)}
+                                                                className="text-[9px] font-black uppercase text-rose-400"
+                                                            >
+                                                                {isAr ? 'إلغاء' : 'Cancel'}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -1284,6 +1316,12 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             </div>
 
             {/* Bank Details Modal Integration */}
+            <WithdrawalReceiptModal
+                isOpen={!!receiptId}
+                withdrawalId={receiptId}
+                onClose={() => setReceiptId(null)}
+                language={isAr ? 'ar' : 'en'}
+            />
             <AnimatePresence>
                 {showBankForm && (
                     <BankDetailsModal

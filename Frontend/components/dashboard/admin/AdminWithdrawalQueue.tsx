@@ -3,7 +3,9 @@ import {
   AlertOctagon,
   CheckCircle2,
   CreditCard,
+  Download,
   ExternalLink,
+  FileText,
   Landmark,
   RefreshCw,
   RotateCcw,
@@ -14,9 +16,11 @@ import { BlurredSection } from './BlurredSection';
 import { RejectWithdrawalModal } from './RejectWithdrawalModal';
 import { CompleteWithdrawalModal } from './CompleteWithdrawalModal';
 import { ReleaseFundsModal } from './ReleaseFundsModal';
+import { WithdrawalReceiptModal } from '../shared/WithdrawalReceiptModal';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
+import { paymentsApi } from '../../../services/api/payments';
 
 const STATUS_FILTERS = ['PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED', 'CANCELLED', 'ALL'] as const;
 
@@ -48,6 +52,12 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
   const isSectionBlurred = useAdminPermissionsStore((s) => s.isSectionBlurred);
 
   const canApprove = canPerform('billing', 'APPROVE_WITHDRAWAL') || currentAdmin?.role === 'SUPER_ADMIN';
+  const canExport =
+    canPerform('billing', 'EXPORT_FINANCIALS') ||
+    canPerform('billing', 'EXPORT_REPORTS') ||
+    currentAdmin?.role === 'SUPER_ADMIN';
+  const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const canReject = canPerform('billing', 'REJECT_WITHDRAWAL') || currentAdmin?.role === 'SUPER_ADMIN';
 
   const [selectedReq, setSelectedReq] = useState<any>(null);
@@ -93,22 +103,49 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
         className="w-full sm:w-80"
       />
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((status) => {
-          const active = statusFilter === status;
-          return (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setFinancialFilters({ withdrawalStatus: status })}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${
-                active ? 'bg-gold-500 text-black border-gold-500' : 'bg-white/5 text-white/50 border-white/10 hover:border-white/20'
-              }`}
-            >
-              {t.admin.billing.withdrawals.filters[filterLabelKey(status)]}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex flex-wrap gap-2">
+          {STATUS_FILTERS.map((status) => {
+            const active = statusFilter === status;
+            return (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setFinancialFilters({ withdrawalStatus: status })}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${
+                  active ? 'bg-gold-500 text-black border-gold-500' : 'bg-white/5 text-white/50 border-white/10 hover:border-white/20'
+                }`}
+              >
+                {t.admin.billing.withdrawals.filters[filterLabelKey(status)]}
+              </button>
+            );
+          })}
+        </div>
+        {canExport && (
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={async () => {
+              setExporting(true);
+              try {
+                await paymentsApi.downloadWithdrawalsExport({
+                  admin: true,
+                  format: 'xlsx',
+                  status: statusFilter,
+                  role,
+                });
+              } catch (err: any) {
+                alert(err?.response?.data?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
+              } finally {
+                setExporting(false);
+              }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-gold-500/30 bg-gold-500/10 text-gold-400 hover:bg-gold-500/20 disabled:opacity-50"
+          >
+            <Download size={14} />
+            {exporting ? (isAr ? 'جاري التصدير...' : 'Exporting...') : (isAr ? 'تصدير Excel' : 'Export Excel')}
+          </button>
+        )}
       </div>
 
       <GlassCard className="p-0 overflow-hidden bg-black/20 border-white/5 shadow-2xl">
@@ -170,6 +207,14 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                       <td className="px-6 py-5 font-mono text-[9px] text-white/30">#{req.id.slice(-8).toUpperCase()}</td>
                       <td className="px-6 py-5">
                         <div className="flex gap-2 justify-end flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setReceiptId(req.id)}
+                            className="w-10 h-10 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black rounded-xl border border-gold-500/20 flex items-center justify-center"
+                            title={isAr ? 'إيصال' : 'Receipt'}
+                          >
+                            <FileText size={18} />
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -254,6 +299,13 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
           </table>
         </div>
       </GlassCard>
+
+      <WithdrawalReceiptModal
+        isOpen={!!receiptId}
+        withdrawalId={receiptId}
+        onClose={() => setReceiptId(null)}
+        language={isAr ? 'ar' : 'en'}
+      />
 
       <RejectWithdrawalModal
         isOpen={showRejectModal}

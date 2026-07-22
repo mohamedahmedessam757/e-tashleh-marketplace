@@ -338,7 +338,9 @@ export type AdminFinancialReportId =
   | 'seller-balances'
   | 'customer-balances'
   | 'penalties-summary'
-  | 'platform-reconciliation';
+  | 'platform-reconciliation'
+  | 'platform-revenue-summary'
+  | 'platform-revenue';
 
 export interface VehicleModel {
   id: string;
@@ -480,6 +482,7 @@ export interface AdminState {
   financialFilters: {
     startDate?: string;
     endDate?: string;
+    period?: 'monthly' | 'quarterly' | 'yearly' | '';
     type?: string;
     role?: string;
     status?: string;
@@ -654,6 +657,7 @@ export const useAdminStore = create<AdminState>()(
       financialFilters: {
         startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
+        period: '',
         type: 'ALL',
         role: 'ALL',
         status: 'ALL',
@@ -1141,6 +1145,7 @@ export const useAdminStore = create<AdminState>()(
           params.set('status', status);
           if (financialFilters.startDate) params.set('startDate', financialFilters.startDate);
           if (financialFilters.endDate) params.set('endDate', financialFilters.endDate);
+          if (financialFilters.period) params.set('period', financialFilters.period);
           if (financialFilters.search) params.set('search', financialFilters.search);
           if (financialFilters.role && financialFilters.role !== 'ALL') {
             params.set('role', financialFilters.role);
@@ -2043,6 +2048,7 @@ export const useAdminStore = create<AdminState>()(
             startDate: params?.startDate ?? financialFilters.startDate ?? '',
             endDate: params?.endDate ?? financialFilters.endDate ?? '',
           });
+          if (params?.period) query.set('period', params.period);
           const res = await fetch(`${API_URL}/payments/admin/financial-reports/${reportId}?${query}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -2069,36 +2075,25 @@ export const useAdminStore = create<AdminState>()(
             startDate: params?.startDate ?? financialFilters.startDate ?? '',
             endDate: params?.endDate ?? financialFilters.endDate ?? '',
           });
+          if (params?.period) query.set('period', params.period);
           const res = await fetch(`${API_URL}/payments/admin/financial-reports/${reportId}?${query}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          if (!res.ok) return;
-          const contentType = res.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const data = await res.json();
-            if (!Array.isArray(data) || data.length === 0) return;
-            const headers = Object.keys(data[0]).join(',');
-            const csvRows = data.map((row: Record<string, unknown>) =>
-              Object.values(row).map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','),
-            );
-            const blob = new Blob(['\ufeff' + [headers, ...csvRows].join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${reportId}_${Date.now()}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
-            return;
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.message || `Export failed (${res.status})`);
           }
           const blob = await res.blob();
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `${reportId}_${Date.now()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+          const ext = format === 'csv' ? 'csv' : format === 'pdf' ? 'pdf' : 'xlsx';
+          link.download = `${reportId}_${Date.now()}.${ext}`;
           link.click();
           URL.revokeObjectURL(url);
         } catch (error) {
           console.error('Failed to export financial report', error);
+          throw error;
         }
       },
 

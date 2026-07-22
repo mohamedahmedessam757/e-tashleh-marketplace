@@ -125,6 +125,12 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const unsubscribeFromFinancialFeed = useAdminStore(s => s.unsubscribeFromFinancialFeed);
 
     const exportFinancialCSV = useAdminStore(s => s.exportFinancialCSV);
+    const exportFinancialReport = useAdminStore(s => s.exportFinancialReport);
+    const canPerformBilling = useAdminPermissionsStore(s => s.canPerform);
+    const canExportFinancials =
+      canPerformBilling('billing', 'EXPORT_FINANCIALS') ||
+      canPerformBilling('billing', 'EXPORT_REPORTS') ||
+      currentAdmin?.role === 'SUPER_ADMIN';
     const sendManualPayout = useAdminStore(s => s.sendManualPayout);
     const withdrawalLimits = useAdminStore(s => s.withdrawalLimits);
     const updateWithdrawalLimits = useAdminStore(s => s.updateWithdrawalLimits);
@@ -310,6 +316,13 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         { label: t.admin.billing.kpis.completedWithdrawals, value: `${(kpis.completedWithdrawals || 0).toLocaleString()} AED`, subValue: `${kpis.completedWithdrawalsCount || 0} ${t.admin.billing.kpis.completedWithdrawalsSub}`, icon: CheckCircle2, color: '#10b981' },
     ], [kpis, t]);
 
+    const platformRevenueKpis = useMemo(() => [
+        { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${(kpis.platformCommissions ?? kpis.grossCommission || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
+        { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7' },
+        { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
+        { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${(kpis.netPlatformRevenue ?? kpis.netPlatformPosition || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
+    ], [kpis, t]);
+
     const revenueKpis = useMemo(() => [
         { label: t.admin.billing.kpis.logisticsRevenue, value: `${(kpis.shippingCollected ?? kpis.shippingProfit ?? 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.logisticsSub, icon: Activity, color: '#10b981' },
         { label: t.admin.billing.kpis.referralEcosystem, value: `${(kpis.referralPaidOut ?? kpis.referralEarnings ?? 0).toLocaleString()} AED`, subValue: `${kpis.referralCount || 0} ${t.admin.billing.kpis.activeReferrals} · ${t.admin.billing.kpis.referralSub}`, icon: Users, color: '#8b5cf6' },
@@ -414,18 +427,38 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {([
+                              { id: 'monthly' as const, label: t.admin.billing.kpis.periodMonthly || 'Monthly' },
+                              { id: 'quarterly' as const, label: t.admin.billing.kpis.periodQuarterly || 'Quarterly' },
+                              { id: 'yearly' as const, label: t.admin.billing.kpis.periodYearly || 'Yearly' },
+                            ]).map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => setFinancialFilters({ period: p.id, startDate: '', endDate: '' })}
+                                className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase border ${
+                                  financialFilters.period === p.id
+                                    ? 'bg-gold-500 text-black border-gold-500'
+                                    : 'bg-white/5 text-white/50 border-white/10'
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            ))}
+                        </div>
                         <div className="flex items-center gap-2 bg-white/5 p-2 rounded-2xl border border-white/10">
                             <input 
                                 type="date" 
                                 value={financialFilters.startDate || ''}
-                                onChange={(e) => setFinancialFilters({ startDate: e.target.value })}
+                                onChange={(e) => setFinancialFilters({ startDate: e.target.value, period: '' })}
                                 className="bg-transparent border-none text-[10px] text-white font-mono focus:ring-0 cursor-pointer outline-none"
                             />
                             <span className="text-white/20 text-xs">→</span>
                             <input 
                                 type="date" 
                                 value={financialFilters.endDate || ''}
-                                onChange={(e) => setFinancialFilters({ endDate: e.target.value })}
+                                onChange={(e) => setFinancialFilters({ endDate: e.target.value, period: '' })}
                                 className="bg-transparent border-none text-[10px] text-white font-mono focus:ring-0 cursor-pointer outline-none"
                             />
                         </div>
@@ -437,13 +470,34 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                                 className="w-full lg:w-72"
                             />
                         </div>
-                        <button 
-                            onClick={() => exportFinancialCSV()} 
-                            className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-3 group"
-                            title={t.common.export}
-                        >
-                            <Download size={20} className="group-hover:scale-110 transition-transform" />
-                        </button>
+                        {canExportFinancials && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => exportFinancialCSV()}
+                              className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-3 group"
+                              title="CSV"
+                            >
+                              <Download size={20} className="group-hover:scale-110 transition-transform" />
+                            </button>
+                            {(['xlsx', 'pdf'] as const).map((fmt) => (
+                              <button
+                                key={fmt}
+                                type="button"
+                                onClick={() =>
+                                  exportFinancialReport('platform-revenue-summary', fmt, {
+                                    startDate: financialFilters.startDate || '',
+                                    endDate: financialFilters.endDate || '',
+                                    ...(financialFilters.period ? { period: financialFilters.period } : {}),
+                                  })
+                                }
+                                className="px-3 py-2 bg-gold-500/10 hover:bg-gold-500 hover:text-black text-gold-400 rounded-2xl border border-gold-500/20 text-[9px] font-black uppercase"
+                              >
+                                {fmt.toUpperCase()}
+                              </button>
+                            ))}
+                          </>
+                        )}
                         {isHighLevelAdmin && (
                             <button 
                                 onClick={() => setShowPayoutModal(true)} 
@@ -542,6 +596,15 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="space-y-4">
+                        <OverviewKpiSection
+                            title={t.admin.billing.kpis.platformRevenueSection || (isAr ? 'إيرادات المنصة (ملخص)' : 'Platform Revenue Summary')}
+                            items={platformRevenueKpis}
+                            renderValue={(item) => (
+                                <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}>
+                                    <h3 className="text-xl sm:text-2xl font-black text-white font-mono tracking-tight">{item.value}</h3>
+                                </BlurredSection>
+                            )}
+                        />
                         <OverviewKpiSection
                             title={isAr ? 'السيولة والتحويلات' : 'Liquidity & Payouts'}
                             items={liquidityKpis}

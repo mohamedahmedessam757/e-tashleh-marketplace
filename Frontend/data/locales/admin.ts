@@ -861,6 +861,14 @@ export const admin = {
         reconciliationWarning: 'صافى ربح المنصة',
         reconciliationDelta: 'فرق التسوية',
         grossCommission: 'إجمالي عمولات المنصة',
+        platformCommissions: 'إجمالي عمولات المنصة',
+        loyaltyReferralExpenses: 'إجمالي مصروف الولاء والإحالة',
+        commissionRefunds: 'إجمالي العمولات المستردة',
+        netPlatformRevenue: 'صافي إيرادات المنصة',
+        platformRevenueSection: 'إيرادات المنصة (ملخص)',
+        periodMonthly: 'شهري',
+        periodQuarterly: 'ربع سنوي',
+        periodYearly: 'سنوي',
         grossCommissionSub: 'قبل خصم المصاريف',
         totalReleasedToMerchants: 'محوّل للمتاجر',
         totalReleasedSub: 'أرباح مُحرّرة من الضمان',
@@ -1046,6 +1054,8 @@ export const admin = {
           'customer-balances': 'أعلى العملاء إنفاقاً',
           'penalties-summary': 'الغرامات المُطبّقة على المحافظ',
           'platform-reconciliation': 'مطابقة أرصدة المنصة مع Stripe',
+          'platform-revenue-summary': 'عمولات المنصة ومصروفات الولاء وصافي الإيرادات',
+          'platform-revenue': 'عمولات المنصة ومصروفات الولاء وصافي الإيرادات',
         },
         statusLabels: {
           HELD: 'محجوز',
@@ -1154,7 +1164,9 @@ export const admin = {
           'seller-balances': 'أرصدة المتاجر',
           'customer-balances': 'أرصدة العملاء',
           'penalties-summary': 'ملخص الغرامات',
-          'platform-reconciliation': 'مطابقة المنصة'
+          'platform-reconciliation': 'مطابقة المنصة',
+          'platform-revenue-summary': 'إيرادات المنصة',
+          'platform-revenue': 'إيرادات المنصة'
         }
       },
       finAudit: {
@@ -2325,6 +2337,14 @@ export const admin = {
         reconciliationWarning: 'Net Platform Profit',
         reconciliationDelta: 'Reconciliation Delta',
         grossCommission: 'Gross Platform Commission',
+        platformCommissions: 'Platform Commissions',
+        loyaltyReferralExpenses: 'Loyalty & Referral Expenses',
+        commissionRefunds: 'Commission Refunds',
+        netPlatformRevenue: 'Net Platform Revenue',
+        platformRevenueSection: 'Platform Revenue Summary',
+        periodMonthly: 'Monthly',
+        periodQuarterly: 'Quarterly',
+        periodYearly: 'Yearly',
         grossCommissionSub: 'Before expense deductions',
         totalReleasedToMerchants: 'Released to Merchants',
         totalReleasedSub: 'Escrow-released earnings',
@@ -2510,6 +2530,8 @@ export const admin = {
           'customer-balances': 'Top spending customers',
           'penalties-summary': 'Wallet penalties applied',
           'platform-reconciliation': 'Platform balance reconciliation with Stripe',
+          'platform-revenue-summary': 'Platform commissions, loyalty/referral spend, and net revenue',
+          'platform-revenue': 'Platform commissions, loyalty/referral spend, and net revenue',
         },
         statusLabels: {
           HELD: 'Held',
@@ -2618,7 +2640,9 @@ export const admin = {
           'seller-balances': 'Seller Balances',
           'customer-balances': 'Customer Balances',
           'penalties-summary': 'Penalties Summary',
-          'platform-reconciliation': 'Platform Reconciliation'
+          'platform-reconciliation': 'Platform Reconciliation',
+          'platform-revenue-summary': 'Platform Revenue',
+          'platform-revenue': 'Platform Revenue'
         }
       },
       finAudit: {

@@ -66,9 +66,15 @@ export class PermissionsGuard implements CanActivate {
 
     // Ensure permissions object and the specific page key exist
     const pagePerms = permissions && typeof permissions === 'object' ? permissions[page] : null;
-    
-    // Check granular access with safety fallback
-    const hasAccess = pagePerms && pagePerms[action] === true;
+
+    // Support both top-level view/edit and nested granular actions (EXPORT_FINANCIALS, etc.)
+    const hasTopLevel = !!(pagePerms && pagePerms[action] === true);
+    const hasNestedAction = !!(
+      pagePerms &&
+      typeof pagePerms.actions === 'object' &&
+      pagePerms.actions[action] === true
+    );
+    const hasAccess = hasTopLevel || hasNestedAction;
 
     if (!hasAccess) {
       throw new ForbiddenException(`Access Denied: Missing ${action} permission for ${page}`);

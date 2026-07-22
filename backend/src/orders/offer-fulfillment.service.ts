@@ -1,8 +1,10 @@
 import {
     BadRequestException,
     ForbiddenException,
+    Inject,
     Injectable,
     NotFoundException,
+    forwardRef,
 } from '@nestjs/common';
 import {
     ActorType,
@@ -16,6 +18,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrderStateMachine } from './fsm/order-state-machine.service';
 
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
+import { ChatService } from '../chat/chat.service';
 import { aggregateMultiItemDeliveryStatus } from './offer-resolution.helpers';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
@@ -43,6 +46,8 @@ export class OfferFulfillmentService {
         private auditLogs: AuditLogsService,
         private notifications: NotificationsService,
         private orderDurationConfig: OrderDurationConfigService,
+        @Inject(forwardRef(() => ChatService))
+        private chatService: ChatService,
     ) {}
 
     private isAcceptedOffer(status: string) {
@@ -162,6 +167,12 @@ export class OfferFulfillmentService {
                 newState: nextStatus,
                 reason: 'Recomputed from per-offer fulfillment statuses',
             });
+
+            if (nextStatus === OrderStatus.COMPLETED) {
+                this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
+                    console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
+                });
+            }
         }
 
         return nextStatus;

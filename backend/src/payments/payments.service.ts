@@ -71,6 +71,8 @@ import {
 import { FinancialConfigService } from '../common/financial-config.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
+import * as ExcelJS from 'exceljs';
+import { Response } from 'express';
 
 @Injectable()
 export class PaymentsService {
@@ -2766,6 +2768,166 @@ export class PaymentsService {
 
     async cancelWithdrawalRequest(userId: string, requestId: string, ip?: string | null) {
         return this.withdrawalWorkflow.cancelWithdrawalRequest(userId, requestId, ip);
+    }
+
+    private async assertCanAccessWithdrawal(userId: string, role: string, request: {
+        id: string;
+        userId: string | null;
+        storeId: string | null;
+    }) {
+        const isAdminRole = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'ACCOUNTANT'].includes(role);
+        if (isAdminRole) {
+            if (role === 'ADMIN' || role === 'SUPER_ADMIN') return;
+            const perm = await this.prisma.adminPermission.findUnique({ where: { userId } });
+            const permissions = (perm?.permissions ?? {}) as Record<string, any>;
+            const canViewBilling = !!perm?.isActive && permissions?.billing?.view === true;
+            if (!canViewBilling) {
+                throw new ForbiddenException('Access Denied: Missing view permission for billing');
+            }
+            return;
+        }
+
+        if (request.userId === userId) return;
+
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            select: { id: true },
+        });
+        if (store && request.storeId === store.id) return;
+
+        throw new ForbiddenException('Unauthorized access to this withdrawal');
+    }
+
+    async getWithdrawalReceipt(userId: string, role: string, requestId: string) {
+        const request = await this.prisma.withdrawalRequest.findUnique({
+            where: { id: requestId },
+            include: {
+                user: { select: { id: true, name: true, email: true, phone: true } },
+                store: { select: { id: true, name: true, storeCode: true } },
+                processor: { select: { id: true, name: true, email: true } },
+            },
+        });
+        if (!request) throw new NotFoundException('Withdrawal request not found');
+        await this.assertCanAccessWithdrawal(userId, role, request);
+
+        return {
+            receiptNumber: `WD-${request.id.slice(0, 8).toUpperCase()}`,
+            id: request.id,
+            amount: Number(request.amount),
+            currency: request.currency,
+            status: request.status,
+            payoutMethod: request.payoutMethod,
+            role: request.role,
+            createdAt: request.createdAt,
+            approvedAt: request.approvedAt,
+            completedAt: request.completedAt,
+            cancelledAt: request.cancelledAt,
+            transferCompletedAt: request.transferCompletedAt,
+            rejectionReason: request.rejectionReason,
+            adminNotes: request.adminNotes,
+            ibanSnapshot: request.ibanSnapshot ? maskIban(request.ibanSnapshot) : null,
+            stripeTransferId: request.stripeTransferId,
+            accountName:
+                request.role === 'CUSTOMER'
+                    ? request.user?.name || request.user?.email || null
+                    : request.store?.name || null,
+            accountCode:
+                request.role === 'CUSTOMER'
+                    ? request.user?.email || null
+                    : request.store?.storeCode || null,
+            processedBy: request.processor
+                ? { name: request.processor.name, email: request.processor.email }
+                : null,
+        };
+    }
+
+    async exportWithdrawals(
+        userId: string,
+        role: string,
+        filters: any,
+        format: 'xlsx' | 'csv',
+        res: Response,
+    ) {
+        const isAdminRole = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'ACCOUNTANT'].includes(role);
+        let rows: any[];
+
+        if (isAdminRole) {
+            rows = await this.getAdminWithdrawals({
+                ...filters,
+                status: filters?.status || 'ALL',
+            });
+        } else {
+            rows = await this.getWithdrawalRequests(userId, role, filters);
+        }
+
+        const flat = rows.map((r) => ({
+            id: r.id,
+            createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : '',
+            amount: Number(r.amount),
+            currency: r.currency || 'AED',
+            status: r.status,
+            payoutMethod: r.payoutMethod,
+            completedAt: r.completedAt ? new Date(r.completedAt).toISOString() : '',
+            failureReason: r.rejectionReason || '',
+            role: r.role,
+            userName: r.user?.name || r.user?.email || '',
+            storeName: r.store?.name || r.store?.storeCode || '',
+        }));
+
+        const filename = `withdrawals_${new Date().toISOString().slice(0, 10)}.${format}`;
+
+        if (format === 'csv') {
+            const headers = Object.keys(flat[0] || {
+                id: '',
+                createdAt: '',
+                amount: '',
+                currency: '',
+                status: '',
+                payoutMethod: '',
+                completedAt: '',
+                failureReason: '',
+                role: '',
+                userName: '',
+                storeName: '',
+            });
+            const escape = (v: unknown) => {
+                const s = String(v ?? '');
+                if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+                return s;
+            };
+            const lines = [
+                headers.join(','),
+                ...flat.map((row) => headers.map((h) => escape((row as any)[h])).join(',')),
+            ];
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+            res.send('\uFEFF' + lines.join('\n'));
+            return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Withdrawals');
+        sheet.columns = [
+            { header: 'ID', key: 'id', width: 38 },
+            { header: 'Created At', key: 'createdAt', width: 24 },
+            { header: 'Amount', key: 'amount', width: 12 },
+            { header: 'Currency', key: 'currency', width: 10 },
+            { header: 'Status', key: 'status', width: 14 },
+            { header: 'Payout Method', key: 'payoutMethod', width: 16 },
+            { header: 'Completed At', key: 'completedAt', width: 24 },
+            { header: 'Failure Reason', key: 'failureReason', width: 28 },
+            { header: 'Role', key: 'role', width: 12 },
+            { header: 'User', key: 'userName', width: 24 },
+            { header: 'Store', key: 'storeName', width: 24 },
+        ];
+        sheet.addRows(flat);
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        await workbook.xlsx.write(res);
+        res.end();
     }
 
     async getUserWithdrawalLimits(userId: string, role: 'CUSTOMER' | 'VENDOR') {

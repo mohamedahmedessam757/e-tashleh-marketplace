@@ -18,8 +18,10 @@ import {
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore, type AdminFinancialReportId } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 
 const REPORT_IDS: AdminFinancialReportId[] = [
+  'platform-revenue-summary',
   'sales-summary',
   'commission-summary',
   'gateway-fees',
@@ -33,7 +35,9 @@ const REPORT_IDS: AdminFinancialReportId[] = [
   'platform-reconciliation',
 ];
 
-const REPORT_ICONS: Record<AdminFinancialReportId, React.ElementType> = {
+const REPORT_ICONS: Partial<Record<AdminFinancialReportId, React.ElementType>> = {
+  'platform-revenue-summary': Crown,
+  'platform-revenue': Crown,
   'sales-summary': TrendingUp,
   'commission-summary': BarChart3,
   'gateway-fees': Wallet,
@@ -93,6 +97,8 @@ const MONEY_KEYS = new Set([
 const HIDDEN_COLUMNS = new Set(['avatar', 'logo']);
 
 const COLUMN_ORDER: Partial<Record<AdminFinancialReportId, string[]>> = {
+  'platform-revenue-summary': ['metric', 'label', 'amount'],
+  'platform-revenue': ['metric', 'label', 'amount'],
   'sales-summary': ['date', 'total', 'count'],
   'commission-summary': ['createdAt', 'orderId', 'totalAmount', 'commission', 'gatewayFee'],
   'gateway-fees': ['createdAt', 'orderId', 'gatewayFee', 'totalAmount'],
@@ -138,10 +144,17 @@ export const AdminFinancialReports: React.FC = () => {
   const isLoadingFinancialReport = useAdminStore((s) => s.isLoadingFinancialReport);
   const fetchFinancialReport = useAdminStore((s) => s.fetchFinancialReport);
   const exportFinancialReport = useAdminStore((s) => s.exportFinancialReport);
+  const currentAdmin = useAdminStore((s) => s.currentAdmin);
+  const canPerform = useAdminPermissionsStore((s) => s.canPerform);
+  const canExport =
+    canPerform('billing', 'EXPORT_FINANCIALS') ||
+    canPerform('billing', 'EXPORT_REPORTS') ||
+    currentAdmin?.role === 'SUPER_ADMIN';
 
-  const [selectedReport, setSelectedReport] = useState<AdminFinancialReportId>('sales-summary');
+  const [selectedReport, setSelectedReport] = useState<AdminFinancialReportId>('platform-revenue-summary');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [period, setPeriod] = useState<'' | 'monthly' | 'quarterly' | 'yearly'>('');
   const [error, setError] = useState<string | null>(null);
 
   const loadReport = useCallback(() => {
@@ -149,8 +162,9 @@ export const AdminFinancialReports: React.FC = () => {
     fetchFinancialReport(selectedReport, {
       ...(startDate ? { startDate } : {}),
       ...(endDate ? { endDate } : {}),
+      ...(period ? { period } : {}),
     }).catch((err: Error) => setError(err.message));
-  }, [selectedReport, startDate, endDate, fetchFinancialReport]);
+  }, [selectedReport, startDate, endDate, period, fetchFinancialReport]);
 
   useEffect(() => {
     loadReport();
@@ -288,11 +302,18 @@ export const AdminFinancialReports: React.FC = () => {
               <RefreshCw size={14} className={isLoadingFinancialReport ? 'animate-spin' : ''} />
               {bt.refresh}
             </button>
-            {(['csv', 'xlsx'] as const).map((format) => (
+            {canExport &&
+              (['csv', 'xlsx', 'pdf'] as const).map((format) => (
               <button
                 key={format}
                 type="button"
-                onClick={() => exportFinancialReport(selectedReport, format, { startDate, endDate })}
+                onClick={() =>
+                  exportFinancialReport(selectedReport, format, {
+                    startDate,
+                    endDate,
+                    ...(period ? { period } : {}),
+                  }).catch((err: Error) => setError(err.message))
+                }
                 className="px-4 py-2.5 bg-gold-500/10 hover:bg-gold-500 hover:text-black border border-gold-500/20 text-gold-500 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all"
               >
                 <Download size={14} />
@@ -302,6 +323,25 @@ export const AdminFinancialReports: React.FC = () => {
           </div>
         </div>
       </GlassCard>
+
+      
+      {selectedReport === 'platform-revenue-summary' && financialReportData?.summary && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[
+            { key: 'platformCommissions', ar: 'عمولات المنصة', en: 'Platform Commissions' },
+            { key: 'loyaltyReferralExpenses', ar: 'مصروف الولاء والإحالة', en: 'Loyalty & Referral Expenses' },
+            { key: 'commissionRefunds', ar: 'عمولات مستردة', en: 'Commission Refunds' },
+            { key: 'netPlatformRevenue', ar: 'صافي إيرادات المنصة', en: 'Net Platform Revenue' },
+          ].map((card) => (
+            <GlassCard key={card.key} className="p-5 bg-[#151310] border-white/5">
+              <p className="text-[10px] font-black uppercase text-white/40 mb-2">{isAr ? card.ar : card.en}</p>
+              <p className="text-2xl font-black text-gold-400">
+                {Number((financialReportData.summary as any)[card.key] || 0).toLocaleString()} AED
+              </p>
+            </GlassCard>
+          ))}
+        </div>
+      )}
 
       {/* Report type picker */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -339,12 +379,37 @@ export const AdminFinancialReports: React.FC = () => {
             <span className="text-[10px] font-black uppercase">{isAr ? 'فترة التقرير' : 'Report period'}</span>
           </div>
           <div className="flex flex-wrap items-center gap-3 flex-1">
+            {([
+              { id: 'monthly', ar: 'شهري', en: 'Monthly' },
+              { id: 'quarterly', ar: 'ربع سنوي', en: 'Quarterly' },
+              { id: 'yearly', ar: 'سنوي', en: 'Yearly' },
+            ] as const).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setPeriod(p.id);
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase border ${
+                  period === p.id
+                    ? 'bg-gold-500 text-black border-gold-500'
+                    : 'bg-white/5 text-white/50 border-white/10'
+                }`}
+              >
+                {isAr ? p.ar : p.en}
+              </button>
+            ))}
             <div className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5">
               <span className="text-[9px] font-black text-white/30 uppercase">{bt.dateFrom}</span>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setPeriod('');
+                  setStartDate(e.target.value);
+                }}
                 className="bg-transparent text-xs text-white font-mono outline-none"
               />
             </div>
@@ -354,7 +419,10 @@ export const AdminFinancialReports: React.FC = () => {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setPeriod('');
+                  setEndDate(e.target.value);
+                }}
                 className="bg-transparent text-xs text-white font-mono outline-none"
               />
             </div>

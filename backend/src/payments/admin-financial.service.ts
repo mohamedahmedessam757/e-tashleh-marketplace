@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -40,6 +41,7 @@ export const FINANCIAL_REPORT_IDS = [
   'seller-earnings',
   'customer-spending',
   'platform-revenue',
+  'platform-revenue-summary',
   'reconciliation',
   'daily-transactions',
   // Legacy / UI aliases (resolved before switch)
@@ -55,6 +57,7 @@ export const FINANCIAL_REPORT_IDS = [
 ] as const;
 
 const REPORT_ID_ALIASES: Record<string, FinancialReportId> = {
+  'platform-revenue-summary': 'platform-revenue',
   'gateway-fees': 'commission-summary',
   'shipping-collected': 'daily-transactions',
   'refunds-summary': 'refund-summary',
@@ -740,7 +743,7 @@ export class AdminFinancialService {
 
   async getFinancialReport(
     reportId: string,
-    filters?: { startDate?: string; endDate?: string; limit?: number },
+    filters?: { startDate?: string; endDate?: string; limit?: number; period?: 'monthly' | 'quarterly' | 'yearly'; format?: string },
   ) {
     const resolvedId = (REPORT_ID_ALIASES[reportId] ?? reportId) as CoreReportId;
     const coreIds: CoreReportId[] = [
@@ -989,24 +992,74 @@ export class AdminFinancialService {
       }
       case 'platform-revenue': {
         const kpis = await computeAdminFinancialKpis(this.prisma, range);
-        const wallet = await this.prisma.platformWallet.findFirst();
+        const refundDateFilter =
+          range.startDate || range.endDate
+            ? {
+                ...(range.startDate ? { gte: range.startDate } : {}),
+                ...(range.endDate ? { lte: range.endDate } : {}),
+              }
+            : undefined;
+        const commissionRefundsAgg = await this.prisma.paymentTransaction.aggregate({
+          where: {
+            refundedAmount: { gt: 0 },
+            ...(refundDateFilter
+              ? {
+                  OR: [
+                    { paidAt: refundDateFilter },
+                    { paidAt: null, createdAt: refundDateFilter },
+                  ],
+                }
+              : {}),
+          },
+          _sum: { commission: true },
+        });
+        // Net Platform Revenue = Platform Commissions − Loyalty/Referral Expenses − Commission Refunds
+        const platformCommissions = kpis.grossCommission;
+        const loyaltyReferralExpenses = roundMoney(
+          Number(kpis.loyaltyCashbackPaid || 0) + Number(kpis.referralPaidOut || 0),
+        );
+        const commissionRefunds = roundMoney(Number(commissionRefundsAgg._sum.commission || 0));
+        const netPlatformRevenue = roundMoney(
+          platformCommissions - loyaltyReferralExpenses - commissionRefunds,
+        );
         return {
           ...base,
           summary: {
+            platformCommissions,
+            loyaltyReferralExpenses,
+            commissionRefunds,
+            netPlatformRevenue,
+            // legacy fields kept for older UI cards
             platformRevenue: kpis.platformRevenue,
             platformCommissionBalance: kpis.platformCommissionBalance,
             platformFeesBalance: kpis.platformFeesBalance,
             netPlatformPosition: kpis.netPlatformPosition,
+            formula: 'netPlatformRevenue = platformCommissions - loyaltyReferralExpenses - commissionRefunds',
+            periodStart: range.startDate,
+            periodEnd: range.endDate,
           },
-          rows: wallet
-            ? [
-                {
-                  commissionBalance: roundMoney(Number(wallet.commissionBalance || 0)),
-                  feesBalance: roundMoney(Number(wallet.feesBalance || 0)),
-                  updatedAt: wallet.updatedAt,
-                },
-              ]
-            : [],
+          rows: [
+            {
+              metric: 'platformCommissions',
+              label: 'Platform Commissions',
+              amount: platformCommissions,
+            },
+            {
+              metric: 'loyaltyReferralExpenses',
+              label: 'Loyalty & Referral Expenses',
+              amount: loyaltyReferralExpenses,
+            },
+            {
+              metric: 'commissionRefunds',
+              label: 'Commission Refunds',
+              amount: commissionRefunds,
+            },
+            {
+              metric: 'netPlatformRevenue',
+              label: 'Net Platform Revenue',
+              amount: netPlatformRevenue,
+            },
+          ],
         };
       }
       case 'reconciliation': {
@@ -1235,5 +1288,117 @@ export class AdminFinancialService {
       skip += batchSize;
       if (users.length < batchSize) break;
     }
+  }
+  async assertCanExportFinancialReports(userId: string, role: string) {
+    if (String(role || '').toUpperCase() === 'SUPER_ADMIN') return;
+    const perm = await this.prisma.adminPermission.findUnique({ where: { userId } });
+    const billing = ((perm?.permissions ?? {}) as any)?.billing;
+    const allowed =
+      !!perm?.isActive &&
+      (billing?.EXPORT_FINANCIALS === true ||
+        billing?.EXPORT_REPORTS === true ||
+        billing?.actions?.EXPORT_FINANCIALS === true ||
+        billing?.actions?.EXPORT_REPORTS === true);
+    if (!allowed) {
+      throw new ForbiddenException(
+        'Access Denied: Missing EXPORT_FINANCIALS/EXPORT_REPORTS for billing',
+      );
+    }
+  }
+
+  async exportFinancialReportFile(
+    reportId: string,
+    filters: { startDate?: string; endDate?: string; period?: 'monthly' | 'quarterly' | 'yearly' },
+    format: 'csv' | 'xlsx' | 'pdf',
+    res: import('express').Response,
+  ) {
+    const report = await this.getFinancialReport(reportId, filters);
+    const rows = Array.isArray((report as any).rows) ? (report as any).rows : [];
+    const summary = (report as any).summary || {};
+    const flatRows =
+      rows.length > 0
+        ? rows
+        : Object.keys(summary).map((k) => ({ metric: k, amount: summary[k] }));
+    const filename = `${reportId}_${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'pdf' : format}`;
+
+    if (format === 'csv') {
+      const headers = Object.keys(flatRows[0] || { metric: '', amount: '' });
+      const escape = (v: unknown) => {
+        const s = String(v ?? '');
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const lines = [
+        headers.join(','),
+        ...flatRows.map((row: any) => headers.map((h) => escape(row[h])).join(',')),
+      ];
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      res.send('\uFEFF' + lines.join('\n'));
+      return;
+    }
+
+    if (format === 'xlsx') {
+      const ExcelJS = await import('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Report');
+      const headers = Object.keys(flatRows[0] || { metric: '', amount: '' });
+      sheet.columns = headers.map((h) => ({ header: h, key: h, width: 24 }));
+      sheet.addRows(flatRows);
+      if (summary && Object.keys(summary).length) {
+        const summarySheet = workbook.addWorksheet('Summary');
+        summarySheet.columns = [
+          { header: 'key', key: 'key', width: 32 },
+          { header: 'value', key: 'value', width: 40 },
+        ];
+        summarySheet.addRows(
+          Object.entries(summary).map(([key, value]) => ({ key, value: String(value ?? '') })),
+        );
+      }
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      await workbook.xlsx.write(res);
+      res.end();
+      return;
+    }
+
+    // Lightweight text PDF (no new dependency)
+    const lines = [
+      `Report: ${reportId}`,
+      `Generated: ${new Date().toISOString()}`,
+      '',
+      'Summary:',
+      ...Object.entries(summary).map(([k, v]) => `  ${k}: ${v}`),
+      '',
+      'Rows:',
+      ...flatRows.map((r: any) => JSON.stringify(r)),
+    ];
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    // Minimal valid-ish PDF wrapper for text content
+    const content = lines.join('\n').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+    const stream = `BT /F1 10 Tf 40 750 Td (${content.slice(0, 1800)}) Tj ET`;
+    const pdf = `%PDF-1.1
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>endobj
+4 0 obj<< /Length ${stream.length} >>stream
+${stream}
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000306 00000 n 
+trailer<< /Size 5 /Root 1 0 R >>
+startxref
+${400 + stream.length}
+%%EOF`;
+    res.send(Buffer.from(pdf, 'utf8'));
   }
 }

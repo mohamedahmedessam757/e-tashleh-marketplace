@@ -100,6 +100,20 @@ export const authApi = {
         return response.data;
     },
 
+    initContactChange: async (field: 'email' | 'phone', newValue: string) => {
+        const response = await client.post('/users/profile/contact-change/init', { field, newValue });
+        return response.data;
+    },
+
+    verifyContactChange: async (field: 'email' | 'phone', newValue: string, otp: string) => {
+        const response = await client.post('/users/profile/contact-change/verify', {
+            field,
+            newValue,
+            otp,
+        });
+        return response.data;
+    },
+
     // Recovery API endpoints
     requestRecoveryEmailOtp: async (email: string, role: 'customer' | 'merchant') => {
         const response = await client.post('/auth/recovery/request-email-otp', { email, role });

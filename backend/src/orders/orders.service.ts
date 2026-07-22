@@ -52,6 +52,13 @@ export class OrdersService {
         private orderSla: OrderSlaService,
     ) { }
 
+    /** Side-effects when an order reaches COMPLETED from any code path. */
+    afterOrderReachedCompletion(orderId: string) {
+        this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
+            console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
+        });
+    }
+
     /** Backward-compatible singular `review` field for API consumers (first review). */
     private attachLegacyReviewField<T extends { reviews?: unknown[] | null }>(
         order: T,
@@ -701,6 +708,7 @@ export class OrdersService {
                 this.loyaltyService.processReferralReward(orderId).catch(err => {
                     console.error(`Failed to process referral reward for order ${orderId}:`, err);
                 });
+                this.afterOrderReachedCompletion(orderId);
             }
 
             // 3.1 Notify Customer

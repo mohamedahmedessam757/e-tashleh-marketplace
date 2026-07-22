@@ -9,6 +9,7 @@ const PURPOSE_LABELS: Partial<Record<OtpPurpose, { ar: string; en: string }>> = 
     LOGIN: { ar: 'تسجيل الدخول', en: 'Sign in' },
     RECOVERY_STEP1: { ar: 'استرداد الحساب', en: 'Account recovery' },
     RECOVERY_PHONE: { ar: 'تأكيد رقم الجوال', en: 'Phone verification' },
+    PROFILE_CHANGE: { ar: 'تأكيد تغيير بيانات التواصل', en: 'Confirm contact change' },
 };
 
 @Injectable()

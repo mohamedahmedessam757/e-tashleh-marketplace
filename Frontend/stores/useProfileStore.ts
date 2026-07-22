@@ -234,23 +234,30 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     const userId = getCurrentUserId();
     if (!userId) return;
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          name: data.name,
-          phone: data.phone
-        })
-        .eq('id', userId);
+    // Security: never write email/phone from the client store.
+    // Contact changes go through OTP endpoints; name/avatar via Nest API only.
+    const safePatch: { name?: string; avatar?: string } = {};
+    if (typeof data.name === 'string') safePatch.name = data.name;
+    if (typeof data.avatar === 'string') safePatch.avatar = data.avatar;
+    if (Object.keys(safePatch).length === 0) {
+      // Ignore attempts to patch email/phone (or empty updates)
+      if (data.email !== undefined || data.phone !== undefined) {
+        console.warn('[useProfileStore] Ignored email/phone update — use contact-change OTP flow');
+      }
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const { authApi } = await import('../services/api/auth');
+      await authApi.updateProfile(safePatch);
 
       set((state) => ({
-        user: state.user ? { ...state.user, ...data } : null
+        user: state.user ? { ...state.user, ...safePatch } : null
       }));
     } catch (err: any) {
       console.error('Failed to update profile:', err);
       set({ error: err.message });
+      throw err;
     }
   },
 

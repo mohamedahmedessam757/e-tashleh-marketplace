@@ -395,6 +395,7 @@ export class ShipmentsService {
                     updatedAt: new Date()
                 }
             });
+            this.ordersService.afterOrderReachedCompletion(shipment.orderId);
         }
 
         // Send rich bilingual notifications

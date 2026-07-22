@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Query, Param, Put, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Query, Param, Put, ForbiddenException, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -11,6 +11,7 @@ import { WithdrawalRequestDto } from './dto/withdrawal-request.dto';
 import { CreateFinancialAdjustmentDto } from './dto/financial-adjustment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { getAuditContext } from '../common/audit-context.util';
+import { Response } from 'express';
 
 @Controller('payments')
 @UseGuards(JwtAuthGuard)
@@ -189,6 +190,38 @@ export class PaymentsController {
     @Get('withdrawals')
     getWithdrawals(@Request() req, @Query() filters: any) {
         return this.paymentsService.getWithdrawalRequests(req.user.id, req.user.role, filters);
+    }
+
+    @Get('withdrawals/export')
+    async exportWithdrawals(
+        @Request() req,
+        @Query() filters: any,
+        @Res() res: Response,
+    ) {
+        const format = (filters?.format === 'csv' ? 'csv' : 'xlsx') as 'xlsx' | 'csv';
+        const role = String(req.user.role || '').toUpperCase();
+        const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'ACCOUNTANT'].includes(role);
+        if (isStaff) {
+            throw new ForbiddenException('Staff must use /payments/admin/withdrawals/export');
+        }
+        return this.paymentsService.exportWithdrawals(req.user.id, req.user.role, filters, format, res);
+    }
+
+    @Get('withdrawals/:id/receipt')
+    getWithdrawalReceipt(@Request() req, @Param('id') id: string) {
+        return this.paymentsService.getWithdrawalReceipt(req.user.id, req.user.role, id);
+    }
+
+    @Get('admin/withdrawals/export')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'EXPORT_FINANCIALS')
+    async adminExportWithdrawals(
+        @Request() req,
+        @Query() filters: any,
+        @Res() res: Response,
+    ) {
+        const format = (filters?.format === 'csv' ? 'csv' : 'xlsx') as 'xlsx' | 'csv';
+        return this.paymentsService.exportWithdrawals(req.user.id, req.user.role, filters, format, res);
     }
 
     @Get('admin/withdrawals/:id/stripe-status')
@@ -414,7 +447,26 @@ export class PaymentsController {
     @Get('admin/financial-reports/:reportId')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'view')
-    getFinancialReport(@Param('reportId') reportId: string, @Query() filters: any) {
+    async getFinancialReport(
+        @Request() req,
+        @Param('reportId') reportId: string,
+        @Query() filters: any,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const format = String(filters?.format || '').toLowerCase();
+        if (format === 'csv' || format === 'xlsx' || format === 'pdf') {
+            // Export requires EXPORT_FINANCIALS or EXPORT_REPORTS (checked via nested actions)
+            await this.adminFinancialService.assertCanExportFinancialReports(
+                req.user.id,
+                req.user.role,
+            );
+            return this.adminFinancialService.exportFinancialReportFile(
+                reportId,
+                filters,
+                format as 'csv' | 'xlsx' | 'pdf',
+                res,
+            );
+        }
         return this.adminFinancialService.getFinancialReport(reportId, filters);
     }
 

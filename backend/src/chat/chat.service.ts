@@ -15,6 +15,7 @@ import {
     isUuid,
     mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
+import { shouldLockChatOnCompletion } from './chat-completion-lock.util';
 
 @Injectable()
 export class ChatService {
@@ -784,6 +785,57 @@ export class ChatService {
             },
             data: { status: 'CLOSED' }
         });
+    }
+
+    /**
+     * Lock winning vendor–customer order chat when the order reaches COMPLETED
+     * (or WARRANTY_ACTIVE after completion) and there is no open dispute/return.
+     * Does not touch support chats. Does not reopen later if a dispute opens.
+     */
+    async lockOrderVendorChatOnCompletion(orderId: string): Promise<{ locked: number }> {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                id: true,
+                status: true,
+                disputes: { select: { status: true } },
+                returns: { select: { status: true } },
+            },
+        });
+        if (!order) return { locked: 0 };
+
+        const { shouldLock, reason } = shouldLockChatOnCompletion({
+            orderStatus: order.status,
+            disputeStatuses: order.disputes.map((d) => d.status),
+            returnStatuses: order.returns.map((r) => r.status),
+        });
+        if (!shouldLock || !reason) return { locked: 0 };
+
+        const openVendorChats = await this.prisma.orderChat.findMany({
+            where: {
+                orderId,
+                type: 'order',
+                status: 'OPEN',
+                vendorId: { not: null },
+            },
+            select: { id: true },
+        });
+        if (openVendorChats.length === 0) return { locked: 0 };
+
+        await this.prisma.orderChat.updateMany({
+            where: { id: { in: openVendorChats.map((c) => c.id) } },
+            data: { status: 'CLOSED' },
+        });
+
+        for (const chat of openVendorChats) {
+            this.chatGateway.server.to(chat.id).emit('chatStatusChanged', {
+                chatId: chat.id,
+                status: 'CLOSED',
+                reason,
+            });
+        }
+
+        return { locked: openVendorChats.length };
     }
 
 

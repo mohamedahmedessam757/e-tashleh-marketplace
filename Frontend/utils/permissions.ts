@@ -89,7 +89,7 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
   },
   'billing': {
     fields: ['BANK_DETAILS', 'TAX_RECORDS', 'PROFIT_STATS', 'PAYOUT_QUEUE'],
-    actions: ['APPROVE_WITHDRAWAL', 'REJECT_WITHDRAWAL', 'GENERATE_INVOICE', 'EXPORT_FINANCIALS'],
+    actions: ['APPROVE_WITHDRAWAL', 'REJECT_WITHDRAWAL', 'GENERATE_INVOICE', 'EXPORT_FINANCIALS', 'EXPORT_REPORTS'],
     tabs: [
       'OVERVIEW',
       'CUSTOMER_ACCOUNTS',

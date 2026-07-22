@@ -8,6 +8,8 @@ module.exports = {
         '**/gulf-phone.util.spec.ts',
         '**/widers-template-components.util.spec.ts',
         '**/invoice-snapshot.util.spec.ts',
+        '**/chat-completion-lock.util.spec.ts',
+        '**/escrow-release-eligibility.util.spec.ts',
     ],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',
