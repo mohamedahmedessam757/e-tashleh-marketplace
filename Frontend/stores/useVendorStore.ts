@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { useNotificationStore } from './useNotificationStore';
 import { supabase } from '../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { daysUntilLicenseExpiry, parseLicenseDate } from '../utils/licenseExpiry';
 
 /** Ref-count: multiple components may request vendor profile realtime. */
 let vendorProfileRealtimeRefCount = 0;
@@ -658,15 +659,16 @@ export const useVendorStore = create<VendorState>()(
   checkLicenseStatus: () => {
     const state = get();
     const license = state.documents.license;
+    const contractExpiry = state.contractAcceptance?.secondPartyData?.licenseExpiry;
+    const expiryRaw = license.expiryDate || contractExpiry;
 
     // Only check if active or already expired (to re-activate)
     if (['PENDING_DOCUMENTS', 'PENDING_REVIEW', 'IDLE'].includes(state.vendorStatus)) return;
 
-    if (license.expiryDate) {
-      const today = new Date();
-      const expiry = new Date(license.expiryDate);
-      const diffTime = expiry.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (expiryRaw) {
+      const expiry = parseLicenseDate(expiryRaw);
+      if (!expiry) return;
+      const diffDays = daysUntilLicenseExpiry(expiry);
 
       if (diffDays <= 0 && state.vendorStatus !== 'LICENSE_EXPIRED') {
         // EXPIRED: Block Access

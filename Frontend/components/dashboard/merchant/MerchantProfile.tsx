@@ -12,6 +12,7 @@ import { printHtml } from '../../../utils/print';
 import { sanitizeHtml } from '../../../utils/htmlSanitize';
 import { renderToString } from 'react-dom/server';
 import { ContractAmendmentModal } from './ContractAmendmentModal';
+import { LicenseExpiryBanner } from './LicenseExpiryBanner';
 import type { SecondPartyData } from '../../../utils/contractBaker';
 
 export const MerchantProfile: React.FC = () => {
@@ -191,6 +192,7 @@ export const MerchantProfile: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <LicenseExpiryBanner onNavigate={() => setActiveProfileTab('contract')} />
             <div className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20">

@@ -213,8 +213,8 @@ export const merchant = {
       viewRules: 'عرض القواعد',
     },
     alerts: {
-      licenseExpiring: 'تنبيه: الرخصة التجارية تنتهي قريباً (أقل من 30 يوم).',
-      licenseExpired: 'عاجل: انتهت صلاحية الرخصة التجارية. تم إيقاف استقبال الطلبات الجديدة.',
+      licenseExpiring: 'رخصتك التجارية على وشك الانتهاء — يرجى التجديد قريباً.',
+      licenseExpired: 'انتهت صلاحية الرخصة التجارية — تم إيقاف استقبال الطلبات الجديدة.',
       latePrep: 'تنبيه: يوجد طلبات متأخرة في التجهيز.',
       updateLicense: 'تحديث الرخصة',
       restricted: 'الحساب مقيد',
@@ -982,8 +982,8 @@ export const merchant = {
       viewRules: 'View Rules',
     },
     alerts: {
-      licenseExpiring: 'Warning: Commercial license expires soon (< 30 days).',
-      licenseExpired: 'Urgent: Commercial license expired. New orders stopped.',
+      licenseExpiring: 'Your commercial license is about to expire — please renew soon.',
+      licenseExpired: 'Commercial license expired — new orders are stopped until renewal.',
       latePrep: 'Warning: Late orders in preparation.',
       updateLicense: 'Update License',
       restricted: 'Account Restricted',

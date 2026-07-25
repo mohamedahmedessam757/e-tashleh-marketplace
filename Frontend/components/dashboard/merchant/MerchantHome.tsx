@@ -10,6 +10,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { useReviewStore } from '../../../stores/useReviewStore';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
+import { LicenseExpiryBanner } from './LicenseExpiryBanner';
 import { PolicyChangeBanner } from '../../ui/PolicyChangeBanner';
 import {
     belongsToMerchantStore,
@@ -55,34 +56,10 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     }, [fetchDashboardStats, fetchVendorProfile, fetchImpactRules, fetchMerchantCases, fetchOrders]);
 
     // --- LOGIC: Alerts ---
+    // License expiry is shown via LicenseExpiryBanner (contract + document date).
     const activeAlerts = [];
-    
-    // 1. License Check
-    const license = documents.license;
-    if (license.expiryDate) {
-        const today = new Date();
-        const expiry = new Date(license.expiryDate);
-        const diffTime = expiry.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays <= 0 || vendorStatus === 'LICENSE_EXPIRED') {
-            activeAlerts.push({ 
-                type: 'error', 
-                title: t.dashboard.merchant.alerts.accountRestricted, 
-                msg: t.dashboard.merchant.alerts.licenseExpired,
-                icon: ShieldAlert
-            });
-        } else if (diffDays <= 30) {
-            activeAlerts.push({ 
-                type: 'warning', 
-                title: t.dashboard.merchant.alerts.attention, 
-                msg: `${t.dashboard.merchant.alerts.licenseExpiring} (${diffDays} ${t.common.days})`,
-                icon: AlertTriangle
-            });
-        }
-    }
-
-    // 1.1 Review Queued Alert (2026 Governance)
+    // 1. Review Queued Alert (2026 Governance)
     const hasPendingDocs = Object.values(documents).some((d: any) => d?.status === 'pending');
     const hasActiveOrders = (performance?.activeOrdersCount || 0) > 0;
     
@@ -188,7 +165,8 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
 
             <PolicyChangeBanner audience="VENDOR" />
-            
+            <LicenseExpiryBanner onNavigate={onNavigate} />
+
             {/* Header / Welcome */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1814] via-[#24211B] to-[#151310] border border-white/5 shadow-2xl p-8 transition-all hover:shadow-gold-500/5 group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-gold-500/10 transition-all duration-700" />

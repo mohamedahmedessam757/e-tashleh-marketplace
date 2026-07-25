@@ -36,7 +36,7 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
         switch (status) {
             case 'ACTIVE': return <span className="bg-green-500/10 text-green-400 px-2 py-1 rounded text-[10px] border border-green-500/20 font-bold whitespace-nowrap">{isAr ? 'نشط' : 'Active'}</span>;
             case 'PENDING_REVIEW': return <span className="bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded text-[10px] border border-yellow-500/20 font-bold animate-pulse whitespace-nowrap">{isAr ? 'قيد المراجعة' : 'Pending Review'}</span>;
-            case 'PENDING_DOCUMENTS': return <span className="bg-orange-500/10 text-orange-400 px-2 py-1 rounded text-[10px] border border-orange-500/20 font-bold whitespace-nowrap">{isAr ? 'بانتظار المستندات' : 'Pending Docs'}</span>;
+            case 'PENDING_DOCUMENTS': return <span className="bg-orange-500/10 text-orange-400 px-2 py-1 rounded text-[10px] border border-orange-500/20 font-bold whitespace-nowrap">{isAr ? 'تحت المراجعة' : 'Under Review'}</span>;
             case 'LICENSE_EXPIRED': return <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-[10px] border border-red-500/20 font-bold whitespace-nowrap">{isAr ? 'رخصة منتهية' : 'License Expired'}</span>;
             case 'BLOCKED': return <span className="bg-black text-white/50 px-2 py-1 rounded text-[10px] border border-white/10 font-bold whitespace-nowrap">{isAr ? 'محظور' : 'Blocked'}</span>;
             default: return <span className="bg-white/10 text-white/50 px-2 py-1 rounded text-[10px] whitespace-nowrap">{isAr ? 'غير نشط' : 'Inactive'}</span>;
