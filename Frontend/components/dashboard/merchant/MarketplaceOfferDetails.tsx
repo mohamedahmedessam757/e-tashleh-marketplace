@@ -1022,8 +1022,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     <PartialShippingProgressCard order={order} isAr={isAr} />
 
                     {/* ★ Order Progress Tracker (Mirror of Customer View) */}
-                    <GlassCard className="p-0 overflow-visible bg-[#1A1814] border-white/5 shadow-none !shadow-none">
-                        <div className="p-6 overflow-visible">
+                    <GlassCard
+                        className="p-0 overflow-hidden bg-[#1A1814] !border-white/5 !shadow-none no-entrance-anim"
+                        enableHover={false}
+                        enableBlur={false}
+                    >
+                        <div className="p-6">
                             {shouldShowVerificationBanner(
                                 merchantAcceptedOffers.length > 0
                                     ? merchantTimelineStatus

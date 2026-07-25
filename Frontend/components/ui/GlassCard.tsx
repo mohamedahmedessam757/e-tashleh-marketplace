@@ -17,13 +17,14 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
   enableHover = true,
   enableBlur = true
 }, ref) => {
+  const skipEntranceAnim = className.includes('no-entrance-anim');
   return (
     <div
       ref={ref}
       onClick={onClick}
-      style={{ animationDelay: `${delay}s` }}
+      style={{ animationDelay: skipEntranceAnim ? undefined : `${delay}s` }}
       className={`
-        animate-fade-in-up
+        ${skipEntranceAnim ? '' : 'animate-fade-in-up'}
         bg-white/5 
         ${enableBlur ? 'backdrop-blur-xl' : ''} 
         border border-white/10 
