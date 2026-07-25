@@ -50,6 +50,7 @@ export interface WhatsAppDispatchContext {
  */
 export interface WhatsAppMaybeSendParams extends NotificationDispatchInput {
     recipientId: string;
+    notificationId?: string;
 }
 
 @Injectable()
@@ -426,12 +427,19 @@ export class WhatsAppChannelService {
                 fields,
                 orderId: orderId ?? undefined,
                 offerId: invoiceContext.offerId ?? offerId ?? undefined,
-                logContext: { recipientUserId: params.recipientId },
+                logContext: {
+                    recipientUserId: params.recipientId,
+                    notificationId: params.notificationId,
+                },
             });
 
             if (!result.sent) {
                 this.logger.warn(
-                    `WhatsApp maybeSend failed (${family}) → ${normalizedPhone}: ${result.error}`,
+                    `WhatsApp maybeSend failed (${family}) → ${normalizedPhone} notif=${params.notificationId ?? '-'}: ${result.error}`,
+                );
+            } else {
+                this.logger.log(
+                    `WhatsApp maybeSend ok (${family}/${result.templateName}) → ${normalizedPhone} notif=${params.notificationId ?? '-'}`,
                 );
             }
         } catch (err) {

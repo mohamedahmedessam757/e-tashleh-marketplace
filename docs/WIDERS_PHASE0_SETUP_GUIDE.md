@@ -1109,7 +1109,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 | دفع + فاتورة (كل offer) | `txn_invoice_*` | نعم | نعم |
 | إصدار بوليصة / إرجاع | `txn_waybill_*` | نعم | نعم |
 | مستند: موافقة / رفض / إعادة رفع | `txn_document_vendor` | — | نعم |
-| تفعيل/رفض/إيقاف متجر | `txn_document_vendor` أو `txn_order_merchant` | — | نعم |
+| تفعيل متجر (ACTIVE) | `welcome_vendor` | — | نعم |
 | توثيق قطعة (verification) | `txn_verification_*` | نعم | نعم |
 | عرض جديد / قبول عرض | `txn_order_*` | نعم | نعم |
 | إرجاع / نزاع | `txn_order_*` | نعم | نعم |
@@ -1160,3 +1160,40 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 | 13 | `txn_verification_vendor_ar_v2` |
 | 14 | `welcome_customer_ar_v2` |
 | 15 | `welcome_vendor_ar_v2` |
+
+---
+
+# Troubleshooting — Meta `131026` Message Undeliverable
+
+**المعنى:** Widers/Meta قبلت طلب الإرسال (غالباً يوجد `message_id` / صف في السجلات) لكن WhatsApp **فشل تسليم** الرسالة للجهاز.
+
+**ليس** نفس خطأ المتغيرات `#132000` (عدد params خاطئ).
+
+## أسباب شائعة (2026)
+
+1. الرقم غير مسجّل على WhatsApp / محظور للأعمال.
+2. رقم مختلف عن رقم OTP الناجح.
+3. قالب UTILITY/MARKETING موقوف أو غير APPROVED بينما AUTHENTICATION يعمل.
+4. قيود جودة الحساب / حدود الرسائل خارج نافذة الجلسة لقوالب معيّنة.
+5. الدولة غير مدعومة لنوع القالب.
+
+## ماذا تفعل في المنصة
+
+1. تأكد أن الإشعار وُجد في جدول `Notification` وأن صف `WhatsAppMessageLog` وُجد لنفس الوقت.
+2. إن وُجد log + `errorCode=131026` → المشكلة في Meta/Widers delivery، **ليس** نقص trigger في Nest.
+3. قارن نفس الرقم مع OTP الناجح.
+4. في Widers: القوالب `_ar_v2` كلها APPROVED وغير paused.
+5. لا تعِد الإرسال بشكل عشوائي متكرر (يضر quality rating).
+
+## مسار المنصة الصحيح
+
+```
+Domain → NotificationsService.create → WhatsAppChannelService.maybeSend → Widers → Meta
+```
+
+- فحص السجلات: `GET /widers/message-logs` (Admin JWT)
+- اختبار المسار: `POST /widers/test/notification-path` (Admin JWT)
+- سكربت: `node backend/scripts/probe-platform-notification-path.mjs`
+- تشخيص DB: `npx tsx backend/scripts/diagnose-widers-phase0.ts`
+
+**تفعيل المتجر** يرسل `welcome_vendor_ar_v2` (ليس `txn_document_vendor`).

@@ -516,9 +516,9 @@ export class StoresService {
                 data: { status: 'approved', expiresAt: nextYear, updatedAt: new Date() }
             });
 
-            // Notify Merchant
+            // Notify Merchant — await so WhatsApp dispatch completes
             if (result.ownerId) {
-                this.notificationsService.create({
+                await this.notificationsService.create({
                     recipientId: result.ownerId,
                     recipientRole: 'MERCHANT',
                     titleAr: 'تم تفعيل متجرك المشترك!',

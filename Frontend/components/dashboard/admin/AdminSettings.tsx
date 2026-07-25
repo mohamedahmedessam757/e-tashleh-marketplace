@@ -1414,6 +1414,27 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                         </div>
                       )}
 
+                      {onNavigate && (
+                        <div className="p-8 bg-white/[0.02] border border-emerald-500/10 rounded-[2.5rem] shadow-inner flex flex-col items-center justify-center text-center gap-4">
+                          <MessageSquare size={32} className="text-emerald-400" />
+                          <h4 className="text-sm font-black text-white uppercase tracking-tight">
+                            {isAr ? 'سجلات واتساب (Widers)' : 'WhatsApp Logs (Widers)'}
+                          </h4>
+                          <p className="text-[11px] text-white/30 max-w-xs">
+                            {isAr
+                              ? 'آخر رسائل القوالب وحالة التسليم وأخطاء Meta مثل 131026.'
+                              : 'Recent template sends, delivery status, and Meta errors such as 131026.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('whatsapp-logs')}
+                            className="px-8 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all"
+                          >
+                            {isAr ? 'فتح سجلات واتساب' : 'Open WhatsApp Logs'}
+                          </button>
+                        </div>
+                      )}
+
                       {/* Maintenance Metadata (New Phase 4) */}
                       <div className="space-y-6">
                         <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] shadow-inner space-y-6">

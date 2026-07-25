@@ -23,7 +23,7 @@ Single source for which in-app events dispatch which Widers template families.
 | `txn_verification_customer` | `txn_verification_customer_ar_v2` | `ORDER` / `ORDER_UPDATE` + `metadata.verification` |
 | `txn_verification_vendor` | `txn_verification_vendor_ar_v2` | Same, merchant role |
 | `welcome_customer` | `welcome_customer_ar_v2` | After register — `auth.service.ts` |
-| `welcome_vendor` | `welcome_vendor_ar_v2` | After register — vendor |
+| `welcome_vendor` | `welcome_vendor_ar_v2` | After vendor register (`auth.service`) **and** admin store activation (`stores.service` ACTIVE + `docType: store_activation`) |
 
 ## Branding & URLs
 

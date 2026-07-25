@@ -29,6 +29,7 @@ import { AdminInvoicesHub } from './AdminInvoicesHub';
 import { AdminOrderInvoicePage } from './AdminOrderInvoicePage';
 import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminPlatformErrors } from './AdminPlatformErrors';
+import { AdminWhatsAppLogs } from './AdminWhatsAppLogs';
 import { AdminShipping } from './AdminShipping';
 import { AdminSettings } from './AdminSettings';
 import { AdminSupport } from './AdminSupport';
@@ -368,6 +369,9 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     }
     if (subPath === 'platform-errors') {
         return <PermissionGuard page="platform-errors" action="view"><AdminPlatformErrors /></PermissionGuard>;
+    }
+    if (subPath === 'whatsapp-logs') {
+        return <PermissionGuard page="platform-errors" action="view"><AdminWhatsAppLogs /></PermissionGuard>;
     }
     if (subPath === 'shipping') {
         return <PermissionGuard page="shipping" action="view"><AdminShipping initialSearch={viewId} /></PermissionGuard>;

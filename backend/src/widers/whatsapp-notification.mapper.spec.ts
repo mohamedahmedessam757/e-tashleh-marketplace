@@ -67,4 +67,44 @@ describe('resolveTemplateFamily', () => {
     );
     expect(family).toBe('txn_order_merchant');
   });
+
+  it('maps ORDER to txn_order_customer', () => {
+    const family = resolveTemplateFamily(
+      { ...base, type: 'ORDER', recipientRole: 'CUSTOMER' },
+      'CUSTOMER',
+    );
+    expect(family).toBe('txn_order_customer');
+  });
+
+  it('maps SHIPMENT_UPDATE to txn_shipment_customer', () => {
+    const family = resolveTemplateFamily(
+      { ...base, type: 'SHIPMENT_UPDATE', recipientRole: 'CUSTOMER' },
+      'CUSTOMER',
+    );
+    expect(family).toBe('txn_shipment_customer');
+  });
+
+  it('maps SHIPMENT_UPDATE to txn_shipment_merchant', () => {
+    const family = resolveTemplateFamily(
+      { ...base, type: 'SHIPMENT_UPDATE' },
+      'MERCHANT',
+    );
+    expect(family).toBe('txn_shipment_merchant');
+  });
+
+  it('maps waybill order_update to txn_waybill_customer', () => {
+    const family = resolveTemplateFamily(
+      {
+        ...base,
+        recipientRole: 'CUSTOMER',
+        type: 'order_update',
+        titleAr: 'بوليصة الشحن',
+        titleEn: 'Waybill',
+        messageAr: 'تم إصدار بوليصة',
+        messageEn: 'Waybill issued',
+      },
+      'CUSTOMER',
+    );
+    expect(family).toBe('txn_waybill_customer');
+  });
 });

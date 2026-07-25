@@ -224,7 +224,7 @@ export class OrdersService {
                         type: 'ORDER',
                         link: `/merchant/orders/${result.id}`,
                         metadata: { orderId: result.id, orderNumber }
-                    }).catch(() => {}); // Non-blocking
+                    });
                 }
             }
         } catch (e) {
@@ -948,9 +948,23 @@ export class OrdersService {
                         messageAr: `وافق العميل للتو على عرضك للطلب #${order.orderNumber}. بانتظار إتمام عملية الدفع.`,
                         messageEn: `The customer just accepted your offer for Order #${order.orderNumber}. Awaiting payment.`,
                         type: 'ORDER',
-                        link: `/dashboard/orders/${order.id}`
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
                     }).catch(e => console.error('Failed to notify merchant of acceptance', e));
                 }
+
+                // Notify customer — awaiting payment (WhatsApp via NotificationsService)
+                this.notifications.create({
+                    recipientId: customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'تم قبول العرض — بانتظار الدفع',
+                    titleEn: 'Offer accepted — awaiting payment',
+                    messageAr: `تم قبول العرض للطلب #${order.orderNumber}. يرجى إتمام الدفع خلال المهلة المحددة.`,
+                    messageEn: `An offer was accepted for Order #${order.orderNumber}. Please complete payment within the deadline.`,
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
+                }).catch(e => console.error('Failed to notify customer of acceptance', e));
 
                 // Notify Losing Merchants (Reject Offers)
                 const losingOffers = await this.prisma.offer.findMany({
@@ -1085,9 +1099,23 @@ export class OrdersService {
                 messageAr: `وافق العميل للتو على عرضك للقطعة في الطلب #${order.orderNumber}.`,
                 messageEn: `The customer just accepted your offer for a part in Order #${order.orderNumber}.`,
                 type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
             }).catch(e => console.error('Failed to notify merchant', e));
         }
+
+        // Notify customer — part accepted / awaiting payment
+        this.notifications.create({
+            recipientId: customerId,
+            recipientRole: 'CUSTOMER',
+            titleAr: 'تم قبول عرض — بانتظار الدفع',
+            titleEn: 'Offer accepted — awaiting payment',
+            messageAr: `تم قبول عرض لقطعة في الطلب #${order.orderNumber}. يمكنك المتابعة للدفع.`,
+            messageEn: `An offer was accepted for a part in Order #${order.orderNumber}. You can proceed to payment.`,
+            type: 'ORDER',
+            link: `/dashboard/orders/${order.id}`,
+            metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId, partId },
+        }).catch(e => console.error('Failed to notify customer of part acceptance', e));
 
         // Notify losers
         for (const losingOffer of losingOffers) {

@@ -40,7 +40,10 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
     txn_verification_customer: ['ORDER/ORDER_UPDATE + metadata.verification'],
     txn_verification_vendor: ['ORDER/ORDER_UPDATE + metadata.verification'],
     welcome_customer: ['auth.service:register CUSTOMER'],
-    welcome_vendor: ['auth.service:register VENDOR'],
+    welcome_vendor: [
+        'auth.service:register VENDOR',
+        'stores.service:updateStatus ACTIVE (docType store_activation)',
+    ],
 };
 
 function familyBaseFromTemplateName(name: string): string {

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationsGateway } from './notifications.gateway';
 import { WhatsAppChannelService } from '../widers/whatsapp-channel.service';
+import { isWhatsAppEligibleRole } from '../widers/whatsapp-notification.mapper';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,7 +34,7 @@ export class NotificationsService {
             }
         }
 
-        // 1. Rate Limiting: Max 20 per hour per user
+        // 1. Rate Limiting: Max 20 per minute per user
         if (await this.isRateLimited(data.recipientId)) {
             this.logger.warn(`Rate limit reached for user ${data.recipientId}. Notification suppressed.`);
             return null;
@@ -60,24 +61,29 @@ export class NotificationsService {
         // 4. Real-time Emission
         this.gateway.sendToUser(data.recipientId, notification);
 
-        // 5. WhatsApp transactional dispatch (Phase 5 — customer + merchant only)
-        void this.whatsappChannel
-            .maybeSend({
-                recipientId: data.recipientId,
-                recipientRole: recipientRole ?? 'CUSTOMER',
-                type: data.type,
-                titleAr: data.titleAr,
-                titleEn: data.titleEn,
-                messageAr: data.messageAr,
-                messageEn: data.messageEn,
-                link: data.link,
-                metadata: data.metadata,
-            })
-            .catch((err) =>
+        // 5. WhatsApp transactional dispatch — AWAIT for eligible roles so the send
+        // completes before the HTTP request ends (void fire-and-forget was dropping txn_*).
+        const roleForWa = recipientRole ?? 'CUSTOMER';
+        if (isWhatsAppEligibleRole(roleForWa)) {
+            try {
+                await this.whatsappChannel.maybeSend({
+                    recipientId: data.recipientId,
+                    recipientRole: roleForWa,
+                    type: data.type,
+                    titleAr: data.titleAr,
+                    titleEn: data.titleEn,
+                    messageAr: data.messageAr,
+                    messageEn: data.messageEn,
+                    link: data.link,
+                    metadata: data.metadata,
+                    notificationId: notification.id,
+                });
+            } catch (err) {
                 this.logger.warn(
-                    `WhatsApp dispatch hook failed: ${err instanceof Error ? err.message : err}`,
-                ),
-            );
+                    `WhatsApp dispatch hook failed (notif=${notification.id}): ${err instanceof Error ? err.message : err}`,
+                );
+            }
+        }
 
         return notification;
     }

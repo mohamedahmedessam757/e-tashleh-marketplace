@@ -302,6 +302,13 @@ export class ShipmentsService {
             metadata: { orderId: data.orderId, trackingNumber: data.trackingNumber }
         });
 
+        // Notify customer + merchant that shipment tracking started (same path as status updates)
+        await this.notifyRelevantUsers(
+            data.orderId,
+            ShipmentStatus.RECEIVED_AT_HUB,
+            userId ? 'Shipment created by merchant request' : 'Shipment created by automated waybill issuance',
+        );
+
         return shipment;
     }
 
