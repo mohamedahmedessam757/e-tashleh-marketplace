@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Package, PlusCircle, MessageSquare, User, Bell, LogOut, Menu, Scale, Info, ChevronDown, Search, Wallet, Grid, Users, ShieldAlert, BarChart3, Settings, ShoppingBag, ListChecks, Truck, FileText, BadgeDollarSign, Store, Star, Award, Database, Headset, ShieldCheck, Lock, CreditCard, RotateCcw, ArrowRight, ArrowLeft, Receipt, PackageSearch, Bug } from 'lucide-react';
+import { Home, Package, PlusCircle, MessageSquare, MessageCircle, User, Bell, LogOut, Menu, Scale, Info, ChevronDown, Search, Wallet, Grid, Users, ShieldAlert, BarChart3, Settings, ShoppingBag, ListChecks, Truck, FileText, BadgeDollarSign, Store, Star, Award, Database, Headset, ShieldCheck, Lock, CreditCard, RotateCcw, ArrowRight, ArrowLeft, Receipt, PackageSearch, Bug } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { useProfileStore } from '../../stores/useProfileStore';
@@ -260,6 +260,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { id: 'invoices', icon: Receipt, label: (t.admin as any).invoicesHub?.title || (language === 'ar' ? 'الفوترة' : 'Billing'), allowed: ['SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT'] },
     { id: 'audit-logs', icon: Database, label: t.admin.auditLogs, allowed: ['SUPER_ADMIN', 'ADMIN'] },
     { id: 'platform-errors', icon: Bug, label: (t.admin as any).platformErrors?.title || (language === 'ar' ? 'أخطاء المنصة' : 'Platform Errors'), allowed: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'whatsapp-logs', icon: MessageCircle, label: language === 'ar' ? 'سجلات واتساب' : 'WhatsApp Logs', allowed: ['SUPER_ADMIN', 'ADMIN'] },
     { id: 'security-audit', icon: ShieldCheck, label: t.admin.security.title, allowed: ['SUPER_ADMIN'] },
 
     // New: Support

@@ -249,6 +249,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
       {dashboardPath === 'shipping-carts' && <AdminHome subPath="shipping-carts" />}
       {dashboardPath === 'audit-logs' && <AdminHome subPath="audit-logs" />}
       {dashboardPath === 'platform-errors' && <AdminHome subPath="platform-errors" />}
+      {dashboardPath === 'whatsapp-logs' && <AdminHome subPath="whatsapp-logs" onNavigate={onNavigate} />}
       {dashboardPath === 'settings' && <AdminHome subPath="settings" />}
       {dashboardPath === 'support' && <AdminHome subPath="support" viewId={viewId} />}
       {dashboardPath === 'resolution' && <AdminHome subPath="resolution" />}

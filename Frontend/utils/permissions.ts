@@ -145,6 +145,10 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
     fields: [],
     actions: ['EXPORT_REPORTS'],
   },
+  'whatsapp-logs': {
+    fields: [],
+    actions: [],
+  },
   'verification-tasks': {
     fields: [],
     actions: ['start', 'complete', 'upload_photos'],

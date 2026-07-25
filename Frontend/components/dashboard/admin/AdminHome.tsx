@@ -371,7 +371,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         return <PermissionGuard page="platform-errors" action="view"><AdminPlatformErrors /></PermissionGuard>;
     }
     if (subPath === 'whatsapp-logs') {
-        return <PermissionGuard page="platform-errors" action="view"><AdminWhatsAppLogs /></PermissionGuard>;
+        return <PermissionGuard page="whatsapp-logs" action="view"><AdminWhatsAppLogs /></PermissionGuard>;
     }
     if (subPath === 'shipping') {
         return <PermissionGuard page="shipping" action="view"><AdminShipping initialSearch={viewId} /></PermissionGuard>;
