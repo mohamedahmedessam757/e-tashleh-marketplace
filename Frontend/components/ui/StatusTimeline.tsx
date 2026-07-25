@@ -63,36 +63,82 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     { id: 'delivery', label: { ar: 'الاستلام', en: 'Delivery' } },
   ];
 
+  const n = steps.length;
   const isDelayed = currentStatus === 'DELAYED_PREPARATION';
   const isPrepared = currentStatus === 'PREPARED';
   const activeIndex = getOrderTimelineStepIndex(currentStatus);
   const isCancelled = currentStatus === 'CANCELLED';
-  const progressPct = isCancelled
-    ? 0
-    : Math.max(0, Math.min(100, (activeIndex / (steps.length - 1)) * 100));
+
+  // Line runs center→center of first/last circles (not container edges)
+  const sideInset = `calc(100% / ${n} / 2)`;
+  const trackSpan = `calc(100% - 100% / ${n})`;
+  const filledWidth =
+    isCancelled || activeIndex <= 0
+      ? '0px'
+      : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
 
   return (
-    <div className="w-full py-8 px-4 isolate">
-      <div className="flex justify-between items-start relative">
-        {/* Connection lines — no transform animations (avoids rectangular layer ghosts) */}
+    <div className="w-full py-8 px-2 sm:px-4 isolate" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* Circles + connector line (line aligned to circle centers) */}
+      <div className="relative h-10 w-full">
         <div
-          className="absolute top-5 inset-x-0 h-1 bg-white/10 rounded-full pointer-events-none"
+          className="absolute top-1/2 h-1 -translate-y-1/2 bg-white/10 rounded-full pointer-events-none"
+          style={{ left: sideInset, width: trackSpan }}
           aria-hidden
         />
         {!isCancelled && (
           <div
-            className={`absolute top-5 h-1 rounded-full pointer-events-none transition-[width] duration-500 ease-out ${
+            className={`absolute top-1/2 h-1 -translate-y-1/2 rounded-full pointer-events-none transition-[width] duration-500 ease-out ${
               isDelayed ? 'bg-red-500' : 'bg-gold-500'
             }`}
             style={
               isAr
-                ? { right: 0, width: `${progressPct}%` }
-                : { left: 0, width: `${progressPct}%` }
+                ? { right: sideInset, width: filledWidth }
+                : { left: sideInset, width: filledWidth }
             }
             aria-hidden
           />
         )}
 
+        <div className="relative z-[1] flex h-10 w-full">
+          {steps.map((step, idx) => {
+            const isCompleted = idx <= activeIndex && !isCancelled;
+            const isCurrent = idx === activeIndex && !isCancelled;
+            const isCurrentDelayed = isCurrent && isDelayed;
+
+            return (
+              <div
+                key={step.id}
+                className="flex flex-1 items-center justify-center min-w-0"
+              >
+                <div
+                  className={[
+                    'w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0',
+                    'outline-none shadow-none ring-0 bg-clip-padding',
+                    isCurrentDelayed
+                      ? 'bg-red-900 border-red-500 text-red-300'
+                      : isCompleted
+                        ? 'bg-gold-500 border-gold-400 text-white'
+                        : 'bg-[#1A1814] border-white/20 text-white/30',
+                    isCurrent && !isCurrentDelayed ? 'border-gold-300' : '',
+                  ].join(' ')}
+                >
+                  {isCurrentDelayed ? (
+                    <AlertTriangle size={16} className="text-red-400" />
+                  ) : isCompleted ? (
+                    <Check size={16} />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-current" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Labels under matching columns */}
+      <div className="mt-3 flex w-full">
         {steps.map((step, idx) => {
           const isCompleted = idx <= activeIndex && !isCancelled;
           const isCurrent = idx === activeIndex && !isCancelled;
@@ -100,32 +146,11 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
           return (
             <div
-              key={step.id}
-              className="flex flex-col items-center gap-3 relative z-[1] min-w-0 flex-1"
+              key={`${step.id}-label`}
+              className="flex flex-1 flex-col items-center min-w-0 px-0.5"
             >
-              <div
-                className={[
-                  'w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0',
-                  'outline-none shadow-none ring-0',
-                  isCurrentDelayed
-                    ? 'bg-red-900 border-red-500 text-red-300'
-                    : isCompleted
-                      ? 'bg-gold-500 border-gold-400 text-white'
-                      : 'bg-[#1A1814] border-white/20 text-white/30',
-                  isCurrent && !isCurrentDelayed ? 'border-gold-300' : '',
-                ].join(' ')}
-              >
-                {isCurrentDelayed ? (
-                  <AlertTriangle size={16} className="text-red-400" />
-                ) : isCompleted ? (
-                  <Check size={16} />
-                ) : (
-                  <div className="w-2 h-2 rounded-full bg-current" />
-                )}
-              </div>
-
               <span
-                className={`text-[10px] md:text-xs font-bold whitespace-nowrap text-center px-0.5 ${
+                className={`text-[10px] md:text-xs font-bold text-center leading-tight ${
                   isCurrentDelayed
                     ? 'text-red-400'
                     : isCompleted
@@ -134,47 +159,47 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 }`}
               >
                 {isAr ? step.label.ar : step.label.en}
-                {fulfillmentSummary &&
-                  fulfillmentSummary.total > 1 &&
-                  idx <= activeIndex &&
-                  (() => {
-                    const hint = buildFulfillmentStepHint(
-                      fulfillmentSummary,
-                      idx,
-                      isAr,
-                    );
-                    return hint ? (
-                      <span className="block text-[9px] text-gold-400/80 font-normal text-center mt-0.5">
-                        {hint}
-                      </span>
-                    ) : null;
-                  })()}
-                {shipmentDeliverySummary &&
-                  shipmentDeliverySummary.total > 1 &&
-                  (() => {
-                    const deliveryHint = buildShipmentDeliveryStepHint(
-                      shipmentDeliverySummary,
-                      idx,
-                      isAr,
-                      activeIndex,
-                    );
-                    return deliveryHint ? (
-                      <span className="block text-[9px] text-cyan-400/90 font-normal text-center mt-0.5">
-                        {deliveryHint}
-                      </span>
-                    ) : null;
-                  })()}
-                {isCurrentDelayed && idx === activeIndex && (
-                  <span className="block text-[9px] text-red-400/70 font-normal text-center">
-                    {isAr ? '(متأخر)' : '(Delayed)'}
-                  </span>
-                )}
-                {isPrepared && (idx === 3 || idx === activeIndex) && (
-                  <span className="block text-[9px] text-green-400/70 font-normal text-center">
-                    {isAr ? '(تم)' : '(Done)'}
-                  </span>
-                )}
               </span>
+              {fulfillmentSummary &&
+                fulfillmentSummary.total > 1 &&
+                idx <= activeIndex &&
+                (() => {
+                  const hint = buildFulfillmentStepHint(
+                    fulfillmentSummary,
+                    idx,
+                    isAr,
+                  );
+                  return hint ? (
+                    <span className="block text-[9px] text-gold-400/80 font-normal text-center mt-0.5">
+                      {hint}
+                    </span>
+                  ) : null;
+                })()}
+              {shipmentDeliverySummary &&
+                shipmentDeliverySummary.total > 1 &&
+                (() => {
+                  const deliveryHint = buildShipmentDeliveryStepHint(
+                    shipmentDeliverySummary,
+                    idx,
+                    isAr,
+                    activeIndex,
+                  );
+                  return deliveryHint ? (
+                    <span className="block text-[9px] text-cyan-400/90 font-normal text-center mt-0.5">
+                      {deliveryHint}
+                    </span>
+                  ) : null;
+                })()}
+              {isCurrentDelayed && idx === activeIndex && (
+                <span className="block text-[9px] text-red-400/70 font-normal text-center mt-0.5">
+                  {isAr ? '(متأخر)' : '(Delayed)'}
+                </span>
+              )}
+              {isPrepared && (idx === 3 || idx === activeIndex) && (
+                <span className="block text-[9px] text-green-400/70 font-normal text-center mt-0.5">
+                  {isAr ? '(تم)' : '(Done)'}
+                </span>
+              )}
             </div>
           );
         })}
