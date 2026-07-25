@@ -119,7 +119,7 @@
 | `order_number` | رقم الطلب |
 | `invoice_number` | رقم الفاتورة |
 | `offer_id` | معرف العرض |
-| `tracking_number` | رقم التتبع |
+| `tracking_number` | رقم التتبع (يُلحق في status_detail للشحن) / في `{{4}}` للشحن = deep-link URL |
 | `status_detail` | نص الإشعار الكامل |
 | `amount` | المبلغ |
 | `store_name` | اسم المتجر |
@@ -226,11 +226,22 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 |---------|----------------|-----------|
 | `{{1}}` | اسم جهة الاتصال | `name` |
 | `{{2}}` | order_number | `order_number` |
-| `{{3}}` | status_detail | `status_detail` |
-| `{{4}}` | tracking_number | `tracking_number` |
+| `{{3}}` | status_detail | `status_detail` (+ رقم التتبع الحقيقي عند التوفر) |
+| `{{4}}` | رابط متابعة الشحن (absolute URL) | `tracking_number` field → deep-link |
 
-**زر عميل:** `تتبع الشحنة` → `order-details/{orderId}`  
-**زر تاجر:** `فتح الطلب` → `explore-offer/{orderId}`
+**قيمة `{{4}}` من Nest (2026):**
+- عميل: `{FRONTEND_URL}/dashboard/order-details/{orderId}?tab=waybills`
+- تاجر: `{FRONTEND_URL}/dashboard/explore-offer/{orderId}?tab=waybills`
+- لا JWT في الرابط — بوابة الجلسة في الـ SPA (`pendingRedirect`)
+
+**ملاحظة Widers UI (يدوي):** يُفضَّل تعديل نص Body من  
+`للمتابعة استخدم رقم التتبع: {{4}}`  
+إلى  
+`رابط متابعة الشحن على المنصة: {{4}}`  
+ثم مزامنة/موافقة Meta إن طُلب. الكود يرسل الـ URL في `{{4}}` حتى قبل تعديل النص.
+
+**زر عميل:** `تتبع الشحنة` → `order-details/{orderId}` (static في WABA الحالي)  
+**زر تاجر:** `فتح الطلب` → `explore-offer/{orderId}` (static في WABA الحالي)
 
 ---
 
@@ -431,7 +442,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 تفاصيل التحديث التالي: {{3}}
 
-للمتابعة استخدم رقم التتبع: {{4}}
+رابط متابعة الشحن على المنصة: {{4}}
 
 شكراً لثقتك بنا.
 ```
@@ -440,8 +451,10 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 |-------|----------------|-----------|
 | `{{1}}` | اسم جهة الاتصال | `name` |
 | `{{2}}` | order_number | `order_number` |
-| `{{3}}` | status_detail | `status_detail` |
-| `{{4}}` | tracking_number | `tracking_number` |
+| `{{3}}` | status_detail | `status_detail` (+ رقم التتبع عند التوفر) |
+| `{{4}}` | رابط https مطلق | deep-link → `order-details/{orderId}?tab=waybills` |
+
+> **2026:** Nest يرسل في `{{4}}` رابط المنصة (ليس رقم الناقل). رقم التتبع يُلحق في `{{3}}`. إن كان القالب APPROVED بالنص القديم «رقم التتبع» يبقى يعمل؛ يُفضَّل تحديث النص أعلاه + موافقة Meta عند الإمكان.
 
 **Footer:** `إي-تشليح | E-TASHLEH` (لا تكرر الاسم في Body)
 
@@ -466,7 +479,7 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 
 تفاصيل التحديث التالي: {{3}}
 
-للمتابعة استخدم رقم التتبع: {{4}}
+رابط متابعة الشحن على المنصة: {{4}}
 
 شكراً لتعاونك معنا.
 ```
@@ -475,8 +488,8 @@ order-details/ORDER_UUID_HERE?tab=invoices&offerId=OFFER_UUID_HERE
 |-------|----------------|-----------|
 | `{{1}}` | اسم جهة الاتصال | `name` |
 | `{{2}}` | order_number | `order_number` |
-| `{{3}}` | status_detail | `status_detail` |
-| `{{4}}` | tracking_number | `tracking_number` |
+| `{{3}}` | status_detail | `status_detail` (+ رقم التتبع عند التوفر) |
+| `{{4}}` | رابط https مطلق | deep-link → `explore-offer/{orderId}?tab=waybills` |
 
 **Footer:** `إي-تشليح | E-TASHLEH`  
 زر: `فتح الطلب` — suffix: `explore-offer/UUID`
@@ -745,8 +758,8 @@ Thank you — E-TASHLEH
 | رمز التحقق — أدمن | auth_otp_admin_ar_v2 | | ar | otp_code | | | | | — |
 | تحديث حالة الطلب للعميل | txn_order_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{orderId} |
 | تحديث حالة الطلب للتاجر | txn_order_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | explore-offer/{orderId} |
-| تحديث الشحن للعميل | txn_shipment_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | order-details/{orderId} |
-| تحديث الشحن للتاجر | txn_shipment_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | tracking_number | | explore-offer/{orderId} |
+| تحديث الشحن للعميل | txn_shipment_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail(+trk) | deep-link URL | | order-details/{orderId}?tab=waybills |
+| تحديث الشحن للتاجر | txn_shipment_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail(+trk) | deep-link URL | | explore-offer/{orderId}?tab=waybills |
 | فاتورة جاهزة للعميل | txn_invoice_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | order-details/{id}?tab=invoices&offerId={offerId} |
 | فاتورة جديدة للتاجر | txn_invoice_merchant_ar_v2 | | ar | اسم جهة الاتصال | order_number | invoice_number | amount | summary | explore-offer/{id}?tab=invoices&offerId={offerId} |
 | بوليصة الشحن للعميل | txn_waybill_customer_ar_v2 | | ar | اسم جهة الاتصال | order_number | status_detail | | | order-details/{id}?tab=waybills |
@@ -884,7 +897,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 تفاصيل التحديث التالي: {{3}}
 
-للمتابعة استخدم رقم التتبع: {{4}}
+رابط متابعة الشحن على المنصة: {{4}}
 
 شكراً لثقتك بنا.
 ```
@@ -897,7 +910,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 
 تفاصيل التحديث التالي: {{3}}
 
-للمتابعة استخدم رقم التتبع: {{4}}
+رابط متابعة الشحن على المنصة: {{4}}
 
 شكراً لتعاونك معنا.
 ```
@@ -1075,7 +1088,7 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 |--------|-----------------|-------|-------|-------|-------|-----------|
 | auth_otp_* | otp_code | — | — | — | — | otp_code فقط |
 | txn_order_* | اسم جهة الاتصال | order_number | status_detail | — | — | name, order_number, status_detail |
-| txn_shipment_* | اسم جهة الاتصال | order_number | status_detail | tracking_number | — | + tracking_number |
+| txn_shipment_* | اسم جهة الاتصال | order_number | status_detail(+trk) | deep-link URL | — | {{4}}=shipment follow URL |
 | txn_invoice_* | اسم جهة الاتصال | order_number | invoice_number | amount | summary | + invoice_number, amount, summary |
 | txn_waybill_* | اسم جهة الاتصال | order_number | status_detail | — | — | name, order_number, status_detail |
 | txn_document_vendor | store_name | doc_type | status_detail | — | — | store_name, doc_type, status_detail |
@@ -1144,6 +1157,6 @@ Meta تسمح بـ **Footer ثابت** منفصل. لتجنب الرفض أو ا
 | 10 | `txn_waybill_merchant_ar_v2` |
 | 11 | `txn_document_vendor_ar_v2` |
 | 12 | `txn_verification_customer_ar_v2` |
-| 13 | `txn_verification_merchant_ar_v2` |
+| 13 | `txn_verification_vendor_ar_v2` |
 | 14 | `welcome_customer_ar_v2` |
 | 15 | `welcome_vendor_ar_v2` |

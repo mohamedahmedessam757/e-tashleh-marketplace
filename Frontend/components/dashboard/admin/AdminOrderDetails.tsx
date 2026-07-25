@@ -782,7 +782,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                                                         offerNumber={o.offerNumber}
                                                                                         storeCode={o.storeCode}
                                                                                         submittedAt={o.submittedAt}
-                                                                                        disabled={true}
+                                                                                        readOnly={true}
+                                                                                        orderStatus={order.status}
                                                                                         isSelected={offerStatus === 'accepted'}
                                                                                     />
                                                                                 </div>
@@ -821,7 +822,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     onAcceptOffer={noOp}
                                     onChat={noOp}
                                     onRejectOffer={noOp}
-                                    disabled={true} // Disable actions for admin
+                                    readOnly={true}
+                                    orderStatus={order.status}
                                 />
                             )}
                         </div>
@@ -862,7 +864,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                 onAccept={noOp}
                                                 onChat={noOp}
                                                 onReject={noOp}
-                                                disabled={true} // Admin only views
+                                                readOnly={true}
+                                                orderStatus={order.status}
                                             />
                                         </div>
                                     ))

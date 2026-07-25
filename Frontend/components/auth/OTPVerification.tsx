@@ -17,7 +17,7 @@ interface OTPVerificationProps {
   email: string;
   phone?: string;
   method?: 'email' | 'whatsapp';
-  /** Masked phone when login-via-email sends OTP to WhatsApp */
+  /** @deprecated Prefer phone/email; kept for backward compat */
   deliveryHint?: string;
   /** Seconds until code expires — from API expiresInMinutes or default 600 */
   expiresInSeconds?: number;
@@ -44,6 +44,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const isExpired = timer <= 0;
+  const isWhatsapp = method === 'whatsapp';
 
   const invalidCodeFallback =
     t.auth.errors?.invalidCode ||
@@ -134,10 +135,22 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
     }
   };
 
-  const destination =
-    method === 'whatsapp'
-      ? phone || email
-      : deliveryHint || email;
+  const destination = isWhatsapp
+    ? phone || deliveryHint || email
+    : email || deliveryHint;
+
+  const subtitleText = isWhatsapp
+    ? t.auth.otp?.sentToWhatsapp ||
+      (language === 'ar'
+        ? 'تم إرسال رمز التحقق إلى واتساب الرقم المسجّل:'
+        : 'Verification code sent to WhatsApp on your registered number:')
+    : t.auth.otp?.sentToEmail ||
+      (language === 'ar'
+        ? 'تم إرسال رمز التحقق إلى البريد الإلكتروني المسجّل:'
+        : 'Verification code sent to your registered email:');
+
+  const sentToPrefix =
+    t.auth.otp?.sentTo || (language === 'ar' ? 'تم الإرسال إلى' : 'Sent to');
 
   const validForLabel =
     t.auth.otp?.validFor ||
@@ -148,24 +161,11 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
       <div className="text-center">
         <h2 className="text-2xl font-bold text-white mb-2">{t.auth.otp.title}</h2>
         <div className="text-white/60 text-sm">
-          {method === 'email' && deliveryHint ? (
-            <>
-              {language === 'ar'
-                ? 'تم إرسال رمز التحقق إلى واتساب الرقم المسجّل:'
-                : 'Verification code sent to WhatsApp on your registered number:'}
-              <br />
-              <div className="text-gold-400 font-mono mt-1 text-lg" dir="ltr">
-                {deliveryHint}
-              </div>
-            </>
-          ) : (
-            <>
-              {t.auth.otp.subtitle} <br />
-              <div className="text-gold-400 font-mono mt-1 text-lg" dir="ltr">
-                {destination}
-              </div>
-            </>
-          )}
+          {subtitleText}
+          <br />
+          <div className="text-gold-400 font-mono mt-1 text-lg" dir="ltr">
+            {destination}
+          </div>
         </div>
       </div>
 
@@ -226,19 +226,15 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
 
         <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
           <div className="text-center text-white/30 text-xs">
-            {method === 'whatsapp' ? (
+            {isWhatsapp ? (
               <span className="flex items-center justify-center gap-2 text-green-500/50">
                 <MessageSquare size={12} />
-                {t.auth.otp.whatsapp}
+                {destination ? `${sentToPrefix} ${destination}` : t.auth.otp.whatsapp}
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2 text-gold-500/50">
                 <Mail size={12} />
-                {deliveryHint
-                  ? (language === 'ar'
-                      ? `تم الإرسال إلى ${deliveryHint}`
-                      : `Sent to ${deliveryHint}`)
-                  : t.auth.otp.emailAlt}
+                {destination ? `${sentToPrefix} ${destination}` : t.auth.otp.emailAlt}
               </span>
             )}
           </div>

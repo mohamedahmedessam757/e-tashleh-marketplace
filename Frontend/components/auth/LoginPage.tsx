@@ -222,15 +222,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     return (
       <div className="p-4">
         <OTPVerification
-          email={userEmail}
+          email={loginEmail || userEmail || maskedEmail || ''}
           phone={`${countryCode}${phone}`}
           method={activationMethod}
           expiresInSeconds={otpExpiresInSeconds}
-          deliveryHint={
-            activationMethod === 'email'
-              ? maskedEmail ?? loginEmail ?? userEmail
-              : undefined
-          }
           onResend={async () => {
             if (activationMethod === 'whatsapp') {
               const result = await authApi.resendMobileLoginOtp(`${countryCode}${phone}`);

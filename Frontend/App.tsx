@@ -1,5 +1,5 @@
 
-import React, { useEffect, Suspense, lazy, useState } from 'react';
+import React, { useEffect, Suspense, lazy, useState, useCallback } from 'react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { PlatformErrorBoundary } from './components/PlatformErrorBoundary';
 import { initPlatformErrorReporter } from './utils/platformErrorReporter';
@@ -72,6 +72,9 @@ import { useNavigationHistory, parseUrlToState } from './utils/useNavigationHist
 import {
   inferRequiredRoleFromDashboardPath,
   splitDashboardPath,
+  persistPendingRedirect,
+  loadPersistedPendingRedirect,
+  clearPersistedPendingRedirect,
   type PendingRedirect,
 } from './utils/widersDeepLink';
 
@@ -188,7 +191,12 @@ function AppContent() {
   });
 
   // Restore state from URL on initial load and setup pending redirect
-  const [pendingRedirect, setPendingRedirect] = useState<PendingRedirect | null>(null);
+  const [pendingRedirect, setPendingRedirectState] = useState<PendingRedirect | null>(null);
+
+  const setPendingRedirect = useCallback((pending: PendingRedirect | null) => {
+    setPendingRedirectState(pending);
+    persistPendingRedirect(pending);
+  }, []);
 
   // --- IMMEDIATE ROLE & URL SYNC ON MOUNT ---
   // This prevents the "Flash of Black Screen" by ensuring role is set before loading finishes
@@ -271,6 +279,23 @@ function AppContent() {
       }
     } else {
       setCurrentView(initialState.view as ViewState);
+      // Login page refresh: restore WhatsApp deep-link intended destination
+      if (
+        initialState.view === 'customer-login' ||
+        initialState.view === 'merchant-login' ||
+        initialState.view === 'login' ||
+        initialState.view === 'role-selection'
+      ) {
+        const saved = loadPersistedPendingRedirect();
+        if (saved) {
+          setPendingRedirect(saved);
+          if (saved.requiredRole === 'merchant') {
+            setLoginInitialTab('merchant');
+          } else if (saved.requiredRole === 'customer') {
+            setLoginInitialTab('customer');
+          }
+        }
+      }
     }
   }, []);
 
@@ -518,6 +543,7 @@ function AppContent() {
         pendingRedirect.search,
       );
       setPendingRedirect(null);
+      clearPersistedPendingRedirect();
     } else {
       const backendRole = getCurrentUser()?.role;
       const defaultPath =

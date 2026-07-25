@@ -51,6 +51,7 @@ import {
     resolveMerchantHandoverPhase,
 } from '../../../utils/merchantLogisticsStatus';
 import { readDashboardDeepLink } from '../../../utils/widersDeepLink';
+import { isOrderExpired as isOrderSlaExpired } from '../../../utils/dateUtils';
 
 function toDisplayImageUrls(images?: (string | File)[]): string[] {
     return (images ?? []).filter((item): item is string => typeof item === 'string');
@@ -529,13 +530,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         [performance.editCount, performance.withdrawalCount, performance.totalOffersSent],
     );
 
-    const getOfferDeadline = (dateStr: string) => {
-        const d = new Date(dateStr);
-        d.setHours(d.getHours() + 23);
-        d.setMinutes(d.getMinutes() + 45); // 23:45 Cutoff for 2026 Governance
-        return d.toISOString();
-    };
-
     const getPaymentDeadline = (dateStr?: string) => {
         if (order?.paymentDeadlineAt) return order.paymentDeadlineAt;
         const base = dateStr || order?.offerAcceptedAt || order?.updatedAt;
@@ -551,17 +545,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         const d = new Date(base);
         d.setHours(d.getHours() + 48);
         return d.toISOString();
-    };
-
-    const isOrderExpired = (dateStr: string) => {
-        if (!dateStr) return false;
-        try {
-            const deadline = new Date(getOfferDeadline(dateStr)).getTime();
-            if (isNaN(deadline)) return false;
-            return new Date().getTime() > deadline;
-        } catch (e) {
-            return false;
-        }
     };
 
     // 2026 Centralized Lifecycle States
@@ -751,7 +734,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         );
     }
 
-    const expired = isOrderExpired(order.createdAt || order.date);
+    const expired = isOrderSlaExpired(order);
 
     return (
         <motion.div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 lg:pb-0">
@@ -855,6 +838,41 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             );
                         }
 
+                        // Collecting / awaiting offers — show real status (never "expired" fallback)
+                        if (order.status === 'COLLECTING_OFFERS' || order.status === 'AWAITING_OFFERS') {
+                            if (expired) {
+                                return (
+                                    <div className="flex items-center gap-2 text-red-400">
+                                        <AlertTriangle size={16} />
+                                        <span className="font-bold">{isAr ? 'الطلب منتهي' : 'Order Expired'}</span>
+                                    </div>
+                                );
+                            }
+                            const label =
+                                (t.common?.status as Record<string, string> | undefined)?.[order.status] ||
+                                (order.status === 'COLLECTING_OFFERS'
+                                    ? (isAr ? 'جاري جمع أفضل العروض' : 'Collecting offers')
+                                    : (isAr ? 'بانتظار العروض' : 'Awaiting offers'));
+                            return (
+                                <div className="flex items-center gap-2 text-gold-400 bg-gold-500/10 border border-gold-500/20 px-4 py-2 rounded-xl">
+                                    <Clock size={16} />
+                                    <span className="font-bold text-sm">{label}</span>
+                                </div>
+                            );
+                        }
+
+                        if (order.status === 'CANCELLED') {
+                            return (
+                                <div className="flex items-center gap-2 text-red-400">
+                                    <AlertTriangle size={16} />
+                                    <span className="font-bold">
+                                        {(t.common?.status as Record<string, string> | undefined)?.CANCELLED ||
+                                            (isAr ? 'ملغى' : 'Cancelled')}
+                                    </span>
+                                </div>
+                            );
+                        }
+
                         // If the order has progressed to checkout/shipping
                         if (isProgressive) {
                             // Check if the merchant has at least one accepted offer on this order
@@ -874,12 +892,23 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             );
                         }
 
+                        // Genuine deadline expiry only
+                        if (expired) {
+                            return (
+                                <div className="flex items-center gap-2 text-red-400">
+                                    <AlertTriangle size={16} />
+                                    <span className="font-bold">{isAr ? 'الطلب منتهي' : 'Order Expired'}</span>
+                                </div>
+                            );
+                        }
 
-                        // Otherwise it's genuinely expired or cancelled
+                        const fallbackLabel =
+                            (t.common?.status as Record<string, string> | undefined)?.[order.status] ||
+                            order.status;
                         return (
-                            <div className="flex items-center gap-2 text-red-400">
-                                <AlertTriangle size={16} />
-                                <span className="font-bold">{isAr ? 'الطلب منتهي' : 'Order Expired'}</span>
+                            <div className="flex items-center gap-2 text-white/70">
+                                <Clock size={16} />
+                                <span className="font-bold text-sm">{fallbackLabel}</span>
                             </div>
                         );
                     })()}
@@ -993,8 +1022,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     <PartialShippingProgressCard order={order} isAr={isAr} />
 
                     {/* ★ Order Progress Tracker (Mirror of Customer View) */}
-                    <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
-                        <div className="p-6">
+                    <GlassCard className="p-0 overflow-visible bg-[#1A1814] border-white/5 shadow-none !shadow-none">
+                        <div className="p-6 overflow-visible">
                             {shouldShowVerificationBanner(
                                 merchantAcceptedOffers.length > 0
                                     ? merchantTimelineStatus
@@ -1635,9 +1664,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 <div className="space-y-6 lg:sticky lg:top-24 self-start">
 
                     {/* Market Intelligence Widget */}
-                    <GlassCard className="p-6 border-gold-500/30 bg-gold-500/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-[50px] rounded-full pointer-events-none" />
-
+                    <GlassCard className="p-6 border-gold-500/30 bg-gold-500/5 relative">
                         <h3 className="text-gold-400 font-bold mb-4 flex items-center gap-2">
                             <Monitor size={18} />
                             {isAr ? 'معلومات السوق' : 'Market Intelligence'}

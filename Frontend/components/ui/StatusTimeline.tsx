@@ -75,12 +75,12 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
       <div className="flex justify-between items-center relative">
         
         {/* Connection Line Background */}
-        <div className="absolute top-5 left-0 w-full h-1 bg-white/10 -z-10 rounded-full" />
+        <div className="absolute top-5 left-0 w-full h-1 bg-white/10 z-0 rounded-full" />
         
         {/* Active Progress Line */}
         {!isCancelled && (
             <motion.div 
-                className={`absolute top-5 left-0 h-1 -z-0 rounded-full ${isDelayed ? 'bg-red-500' : 'bg-gold-500'}`}
+                className={`absolute top-5 left-0 h-1 z-[1] rounded-full ${isDelayed ? 'bg-red-500' : 'bg-gold-500'}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
                 transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -101,14 +101,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 animate={{ 
                   backgroundColor: isCurrentDelayed ? '#7f1d1d' : isCompleted ? '#A88B3E' : '#1A1814',
                   borderColor: isCurrentDelayed ? '#ef4444' : isCompleted ? '#C4A95C' : '#ffffff20',
-                  scale: isCurrent ? 1.2 : 1,
-                  boxShadow: isCurrentDelayed 
-                    ? '0 0 15px rgba(239,68,68,0.7)' 
-                    : isCurrent 
-                      ? '0 0 15px rgba(168,139,62,0.6)' 
-                      : 'none'
+                  scale: isCurrent ? 1.15 : 1,
                 }}
-                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors duration-300 z-10 ${isCompleted ? 'text-white' : 'text-white/30'}`}
+                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors duration-300 z-10 ${
+                  isCompleted ? 'text-white' : 'text-white/30'
+                } ${
+                  isCurrentDelayed
+                    ? 'ring-2 ring-red-500/40'
+                    : isCurrent
+                      ? 'ring-2 ring-gold-500/35'
+                      : ''
+                }`}
               >
                 {isCurrentDelayed 
                   ? <AlertTriangle size={16} className="text-red-400" /> 

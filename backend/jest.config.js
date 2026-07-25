@@ -10,6 +10,8 @@ module.exports = {
         '**/invoice-snapshot.util.spec.ts',
         '**/chat-completion-lock.util.spec.ts',
         '**/escrow-release-eligibility.util.spec.ts',
+        '**/whatsapp-notification.mapper.spec.ts',
+        '**/shipment-follow-url.util.spec.ts',
     ],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',

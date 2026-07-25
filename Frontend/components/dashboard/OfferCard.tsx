@@ -1,6 +1,6 @@
 import React, { useState, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Star, ShieldCheck, Truck, MessageSquare, CheckCircle2, Box, Tag, X, ZoomIn,Settings } from 'lucide-react';
+import { Star, ShieldCheck, Truck, MessageSquare, CheckCircle2, Box, Tag, X, ZoomIn, Settings, Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isAcceptedOfferStatus, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
 
@@ -26,6 +26,9 @@ export interface OfferProps {
     weight?: number | string;
     partType?: string;
     disabled?: boolean;
+    /** Admin/read-only view: hide accept/reject but show real offer status (not orderClosed) */
+    readOnly?: boolean;
+    orderStatus?: string;
     offerNumber?: string;
     storeCode?: string;
     submittedAt?: string;
@@ -58,6 +61,8 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     weight,
     partType,
     disabled,
+    readOnly,
+    orderStatus,
     offerNumber,
     storeCode,
     submittedAt,
@@ -323,6 +328,17 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                     ) : isRejectedOfferStatus(status) ? (
                         <div className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold text-sm">
                             {language === 'ar' ? 'تم الرفض' : 'Rejected'}
+                        </div>
+                    ) : readOnly ? (
+                        <div className="px-6 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-sm flex items-center gap-2">
+                            <Clock size={18} />
+                            {status === 'in_chat'
+                                ? (language === 'ar' ? 'في محادثة' : 'In Chat')
+                                : orderStatus === 'AWAITING_SELECTION'
+                                    ? (language === 'ar' ? 'بانتظار اختيار العروض' : 'Awaiting selection')
+                                    : orderStatus === 'COLLECTING_OFFERS' || orderStatus === 'AWAITING_OFFERS'
+                                        ? (language === 'ar' ? 'جاري جمع العروض' : 'Collecting offers')
+                                        : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
                         </div>
                     ) : disabled ? (
                         <div className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500/60 font-bold text-sm">

@@ -173,7 +173,8 @@ export class NotificationsService {
             ...data,
             recipientId,
             recipientRole: role,
-            type: data.type || 'system'
+            // Do not default to SYSTEM — that silently blocks WhatsApp dispatch
+            type: data.type || 'ALERT',
         });
     }
 

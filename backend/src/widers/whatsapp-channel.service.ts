@@ -26,9 +26,11 @@ import {
     normalizeWhatsAppRole,
     resolveTemplateFamily,
     type NotificationDispatchInput,
+    type WhatsAppAudienceRole,
 } from './whatsapp-notification.mapper';
 import { WhatsAppMessageLogService } from './whatsapp-message-log.service';
 import { resolveUserPhone } from '../common/phone/gulf-phone.util';
+import { buildShipmentFollowUrl } from './shipment-follow-url.util';
 
 export interface WhatsAppDispatchContext {
     phone: string;
@@ -307,11 +309,24 @@ export class WhatsAppChannelService {
      * Fire-and-forget safe: never throws to caller.
      */
     async maybeSend(params: WhatsAppMaybeSendParams): Promise<void> {
-        if (!this.config.enabled) return;
-        if (!isWhatsAppEligibleRole(params.recipientRole)) return;
+        if (!this.config.enabled) {
+            this.logger.warn(`WhatsApp maybeSend skip: disabled (recipient=${params.recipientId})`);
+            return;
+        }
+        if (!isWhatsAppEligibleRole(params.recipientRole)) {
+            this.logger.warn(
+                `WhatsApp maybeSend skip: role (${params.recipientRole}) recipient=${params.recipientId}`,
+            );
+            return;
+        }
 
         const audienceRole = normalizeWhatsAppRole(params.recipientRole);
-        if (!audienceRole) return;
+        if (!audienceRole) {
+            this.logger.warn(
+                `WhatsApp maybeSend skip: role_normalize (${params.recipientRole}) recipient=${params.recipientId}`,
+            );
+            return;
+        }
 
         try {
             const user = await this.prisma.user.findUnique({
@@ -326,10 +341,22 @@ export class WhatsAppChannelService {
                 },
             });
 
-            if (!user?.phone || user.whatsappOptIn === false) return;
+            if (!user?.phone) {
+                this.logger.warn(`WhatsApp maybeSend skip: no_phone recipient=${params.recipientId}`);
+                return;
+            }
+            if (user.whatsappOptIn === false) {
+                this.logger.warn(`WhatsApp maybeSend skip: opt_out recipient=${params.recipientId}`);
+                return;
+            }
 
             const normalizedPhone = resolveUserPhone(user.phone, user.countryCode);
-            if (!normalizedPhone) return;
+            if (!normalizedPhone) {
+                this.logger.warn(
+                    `WhatsApp maybeSend skip: phone_normalize recipient=${params.recipientId}`,
+                );
+                return;
+            }
 
             const orderId = extractOrderId(params.metadata, params.link);
             const offerId = extractOfferId(params.metadata);
@@ -342,7 +369,12 @@ export class WhatsAppChannelService {
             const family = resolveTemplateFamily(params, audienceRole, {
                 hasInvoice: invoiceContext.hasInvoice,
             });
-            if (!family) return;
+            if (!family) {
+                this.logger.warn(
+                    `WhatsApp maybeSend skip: family_null type=${params.type ?? ''} recipient=${params.recipientId}`,
+                );
+                return;
+            }
 
             const lang = this.resolveLanguage(user.settings?.preferredLanguage);
             const statusDetail = lang === 'en' ? params.messageEn : params.messageAr;
@@ -355,10 +387,19 @@ export class WhatsAppChannelService {
             };
 
             if (family.startsWith('txn_shipment_')) {
-                fields.tracking_number = await this.resolveTrackingNumber(
+                const tracking = await this.resolveTrackingNumber(
                     orderId,
                     params.metadata,
                 );
+                if (tracking && tracking !== 'غير متوفر') {
+                    const trackingLabel =
+                        lang === 'en' ? `Tracking: ${tracking}` : `رقم التتبع: ${tracking}`;
+                    fields.status_detail = truncateWhatsAppParam(
+                        `${fields.status_detail || statusDetail} | ${trackingLabel}`,
+                    );
+                }
+                const followUrl = this.resolveShipmentFollowUrl(audienceRole, orderId);
+                fields.tracking_number = followUrl ?? 'غير متوفر';
             }
 
             if (family.startsWith('txn_invoice_')) {
@@ -426,6 +467,22 @@ export class WhatsAppChannelService {
         const blob = `${params.messageAr} ${params.messageEn}`;
         const match = blob.match(/#([A-Z0-9-]+)/i);
         return match?.[1] ?? '-';
+    }
+
+    private resolveShipmentFollowUrl(
+        role: WhatsAppAudienceRole,
+        orderId: string | null,
+    ): string | null {
+        if (!this.config.frontendUrl) {
+            this.logger.warn(
+                'WhatsApp shipment link: FRONTEND_URL missing — falling back to https://e-tashleh.net',
+            );
+        }
+        return buildShipmentFollowUrl({
+            role,
+            orderId,
+            frontendUrl: this.config.frontendUrl,
+        });
     }
 
     private async resolveTrackingNumber(

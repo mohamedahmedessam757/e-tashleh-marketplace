@@ -525,8 +525,9 @@ export class StoresService {
                     titleEn: 'Your store has been activated!',
                     messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
                     messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
-                    type: 'SYSTEM',
-                    link: '/dashboard/merchant/store'
+                    type: 'SUCCESS',
+                    link: '/dashboard/merchant/store',
+                    metadata: { docType: 'store_activation', storeId: id },
                 }).catch(e => console.error('Failed to send store activation notification', e));
             }
         }
@@ -541,8 +542,9 @@ export class StoresService {
                     titleEn: 'Store registration request rejected',
                     messageAr: `نأسف لإبلاغك بأنه تم رفض طلبك. السبب: ${reason || 'يرجى مراجعة المستندات والمحاولة مرة أخرى بحساب جديد'}.`,
                     messageEn: `We regret to inform you that your request was rejected. Reason: ${reason || 'Please review documents and try again with a new account'}.`,
-                    type: 'SYSTEM',
-                    link: '/auth/register'
+                    type: 'SUCCESS',
+                    link: '/auth/register',
+                    metadata: { docType: 'store_rejection', storeId: id },
                 }).catch(e => console.error('Failed to send store rejection notification', e));
             }
         }

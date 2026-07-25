@@ -671,6 +671,13 @@ export class ShipmentsService {
 
         if (!STATUS_LABELS[status]) return;
 
+        const latestShipment = await this.prisma.shipment.findFirst({
+            where: { orderId },
+            orderBy: { updatedAt: 'desc' },
+            select: { trackingNumber: true },
+        });
+        const trackingNumber = latestShipment?.trackingNumber?.trim() || undefined;
+
         const labels = STATUS_LABELS[status];
         const customsSuffixAr = (status === ShipmentStatus.CUSTOMS_DELAY)
             ? `\n${labels.ar}${customsDelayInput ? '\n' + customsDelayInput : ''}`
@@ -687,6 +694,12 @@ export class ShipmentsService {
             customsSuffixEn,
         );
 
+        const shipmentMeta = {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            ...(trackingNumber ? { trackingNumber } : {}),
+        };
+
         await this.notifications.create({
             recipientId: order.customerId,
             recipientRole: 'CUSTOMER',
@@ -696,7 +709,7 @@ export class ShipmentsService {
             messageEn: bodies.customer.en,
             type: 'SHIPMENT_UPDATE',
             link: `/customer/orders/${order.id}`,
-            metadata: { orderId: order.id, orderNumber: order.orderNumber },
+            metadata: shipmentMeta,
         });
 
         const acceptedOffer = await this.prisma.offer.findFirst({
@@ -715,7 +728,7 @@ export class ShipmentsService {
                 messageEn: bodies.merchant.en,
                 type: 'SHIPMENT_UPDATE',
                 link: `/merchant/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber },
+                metadata: shipmentMeta,
             });
         }
 

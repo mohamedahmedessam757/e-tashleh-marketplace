@@ -99,9 +99,15 @@ export function resolveTemplateFamily(
     opts?: { hasInvoice?: boolean },
 ): string | null {
     const type = (input.type ?? '').toUpperCase();
+    const docType = String(input.metadata?.docType ?? '');
 
     if (['REFERRAL', 'CHAT', 'FINANCIAL', 'WALLET', 'SYSTEM'].includes(type)) {
         return null;
+    }
+
+    // Store activation → welcome_vendor (PHASE0 / Meta header: تم تفعيل متجرك بنجاح)
+    if (role === 'MERCHANT' && docType === 'store_activation') {
+        return 'welcome_vendor';
     }
 
     if (isDocumentNotification(input, role)) {
@@ -131,7 +137,7 @@ export function resolveTemplateFamily(
         if (isVerificationNotification(input)) {
             return role === 'CUSTOMER'
                 ? 'txn_verification_customer'
-                : 'txn_verification_merchant';
+                : 'txn_verification_vendor';
         }
         return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
     }
@@ -140,7 +146,7 @@ export function resolveTemplateFamily(
         if (isVerificationNotification(input)) {
             return role === 'CUSTOMER'
                 ? 'txn_verification_customer'
-                : 'txn_verification_merchant';
+                : 'txn_verification_vendor';
         }
         if (['ORDER', 'SYSTEM_ALERT', 'system_alert'].includes(type)) {
             return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';

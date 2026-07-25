@@ -688,11 +688,6 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
                   phone={`${store.account.countryCode}${store.account.phone}`}
                   method={otpMethod}
                   expiresInSeconds={otpExpiresInSeconds}
-                  deliveryHint={
-                    otpMethod === 'email'
-                      ? `${store.account.countryCode}${store.account.phone}`
-                      : undefined
-                  }
                   onResend={async () => {
                     const result = await authApi.registerResendOtp({
                       email: store.account.email,

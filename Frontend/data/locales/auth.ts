@@ -33,6 +33,9 @@ export const auth = {
       otp: {
         title: 'التحقق',
         subtitle: 'أدخل الرمز المرسل إلى',
+        sentToWhatsapp: 'تم إرسال رمز التحقق إلى واتساب الرقم المسجّل:',
+        sentToEmail: 'تم إرسال رمز التحقق إلى البريد الإلكتروني المسجّل:',
+        sentTo: 'تم الإرسال إلى',
         verify: 'تحقق',
         verifying: 'جاري التحقق...',
         resend: 'إعادة إرسال',
@@ -189,6 +192,9 @@ export const auth = {
       otp: {
         title: 'Verification',
         subtitle: 'Enter code sent to',
+        sentToWhatsapp: 'Verification code sent to WhatsApp on your registered number:',
+        sentToEmail: 'Verification code sent to your registered email:',
+        sentTo: 'Sent to',
         verify: 'Verify',
         verifying: 'Verifying...',
         resend: 'Resend',

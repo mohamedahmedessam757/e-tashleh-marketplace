@@ -176,6 +176,9 @@ interface PartOffersDrawerProps {
     onChat: (offer: any) => void;
     onRejectOffer: (offer: any) => void;
     disabled?: boolean;
+    /** When true, hide accept/reject and show status (admin view) */
+    readOnly?: boolean;
+    orderStatus?: string;
 }
 
 export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
@@ -190,7 +193,9 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     onAcceptOffer,
     onChat,
     onRejectOffer,
-    disabled
+    disabled,
+    readOnly,
+    orderStatus,
 }) => {
     const { language } = useLanguage();
     const isAr = language === 'ar';
@@ -354,10 +359,13 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                                     onChat={() => handleChat(offer)}
                                                     onReject={() => onRejectOffer(offer)}
                                                     disabled={
-                                                        disabled ||
-                                                        (acceptLoadingOfferId !== null &&
-                                                            acceptLoadingOfferId !== String(offer.id))
+                                                        !readOnly &&
+                                                        (disabled ||
+                                                            (acceptLoadingOfferId !== null &&
+                                                                acceptLoadingOfferId !== String(offer.id)))
                                                     }
+                                                    readOnly={readOnly}
+                                                    orderStatus={orderStatus}
                                                     acceptLoading={
                                                         acceptLoadingOfferId !== null &&
                                                         acceptLoadingOfferId === String(offer.id)
