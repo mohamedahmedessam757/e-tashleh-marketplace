@@ -289,13 +289,50 @@ export class StripeService {
     }
 
     /**
-     * Clear a bad stripeCustomerId so the next getOrCreateCustomer recreates it.
+     * Clear a bad stripeCustomerId and detach stale PaymentMethod links in DB.
+     * After customer recreate, old pm_* IDs are invalid on the platform account.
      */
     async clearStripeCustomerId(userId: string): Promise<void> {
-        await this.prisma.user.update({
-            where: { id: userId },
-            data: { stripeCustomerId: null },
-        });
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: userId },
+                data: { stripeCustomerId: null },
+            }),
+            this.prisma.userCard.updateMany({
+                where: { userId },
+                data: { stripePaymentMethodId: null },
+            }),
+        ]);
+    }
+
+    isMissingStripePaymentMethod(error: unknown): boolean {
+        const err = error as { code?: string; message?: string; statusCode?: number; raw?: { code?: string } };
+        const code = err?.code || err?.raw?.code;
+        const msg = String(err?.message || '');
+        return (
+            code === 'resource_missing' ||
+            err?.statusCode === 404 ||
+            /no such paymentmethod/i.test(msg) ||
+            /paymentmethod.*does not belong/i.test(msg) ||
+            /exists on one of your connected accounts/i.test(msg)
+        );
+    }
+
+    /**
+     * Verify a PaymentMethod exists on the platform customer; return null if stale.
+     */
+    async retrievePaymentMethodOrNull(paymentMethodId: string): Promise<any | null> {
+        this.assertConfigured();
+        try {
+            const pm = await this.stripe.paymentMethods.retrieve(paymentMethodId);
+            if ((pm as { deleted?: boolean }).deleted) return null;
+            return pm;
+        } catch (error: unknown) {
+            if (this.isMissingStripePaymentMethod(error) || this.isMissingStripeCustomer(error)) {
+                return null;
+            }
+            throw this.mapStripeError(error);
+        }
     }
 
     /**

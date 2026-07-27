@@ -12,6 +12,7 @@ import { useProfileStore } from '../../stores/useProfileStore';
 import { PendingStoreReviewBanner } from './shared/PendingStoreReviewBanner';
 import { PolicyChangeBanner } from '../ui/PolicyChangeBanner';
 import { isAcceptedOfferStatus } from '../../utils/offerStatusHelpers';
+import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 
 interface DashboardHomeProps {
     onNavigate: (path: string, id?: number) => void;
@@ -196,22 +197,26 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                     {activeOrder ? (
                         <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-gold-500/30 shadow-[0_0_30px_rgba(168,139,62,0.05)]">
                             <div className="p-6 md:p-8">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 shrink-0">
                                             <Car size={28} />
                                         </div>
-                                        <div>
-                                            <h4 className="text-xl font-bold text-white mb-1">{activeOrder.car}</h4>
-                                            <div className="flex items-center gap-2 text-sm text-white/50">
-                                                <span>{activeOrder.part}</span>
-                                                <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                                                <span className="text-gold-400">#{activeOrder.id}</span>
+                                        <div className="min-w-0">
+                                            <h4 className="text-xl font-bold text-white mb-1 truncate">{activeOrder.car}</h4>
+                                            <div className="flex flex-wrap items-center gap-2 text-sm text-white/50">
+                                                <span className="truncate max-w-[12rem]">{activeOrder.part}</span>
+                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
+                                                <span className="text-gold-400 font-mono text-xs truncate">
+                                                    #{formatOrderDisplayId(activeOrder)}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                    <Badge status={activeOrder.status as StatusType} />
-                                    <OrderStatusCountdown order={activeOrder} variant="compact" />
+                                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto sm:justify-end">
+                                        <Badge status={activeOrder.status as StatusType} />
+                                        <OrderStatusCountdown order={activeOrder} variant="compact" />
+                                    </div>
                                 </div>
 
                                 {/* Progress Bar Visual */}

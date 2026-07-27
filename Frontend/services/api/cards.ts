@@ -34,4 +34,11 @@ export const cardsApi = {
     const response = await client.post<UserCard>('/cards/sync-intent', { paymentIntentId });
     return response.data;
   },
+
+  invalidatePaymentMethod: async (paymentMethodId: string) => {
+    const response = await client.post<{ cleared: number }>('/cards/invalidate-pm', {
+      paymentMethodId,
+    });
+    return response.data;
+  },
 };

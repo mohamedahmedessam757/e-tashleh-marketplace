@@ -23,6 +23,12 @@ export class CardsController {
         return this.cardsService.syncFromPaymentIntent(req.user.id, body.paymentIntentId);
     }
 
+    /** Clear a stale Stripe PaymentMethod link after confirm failure */
+    @Post('invalidate-pm')
+    invalidatePaymentMethod(@Request() req, @Body() body: { paymentMethodId: string }) {
+        return this.cardsService.clearPaymentMethodLink(req.user.id, body.paymentMethodId);
+    }
+
     @Delete(':id')
     deleteCard(@Request() req, @Param('id') id: string) {
         return this.cardsService.deleteCard(req.user.id, id);

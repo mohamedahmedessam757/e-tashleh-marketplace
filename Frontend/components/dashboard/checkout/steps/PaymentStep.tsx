@@ -613,11 +613,13 @@ export const PaymentStep: React.FC = () => {
                   <p className="text-xs font-bold text-amber-400/90">{formatWarranty(getOfferWarranty(offer))}</p>
                 </div>
                 <div className="flex-1 min-w-[110px]">
-                  <p className="text-[10px] text-white/40 mb-1">{tFR.paymentStatus}</p>
+                  <p className="text-[10px] text-white/40 mb-1.5">{tFR.paymentStatus}</p>
                   {isPaid ? (
-                    <span className="inline-flex items-center gap-1.5 text-green-400 text-xs font-bold bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">{tPay.paid}</span>
+                    <span className="inline-flex items-center gap-1.5 text-green-400 text-xs font-bold bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+                      {tPay.paid}
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full whitespace-nowrap">
                       {isAr ? 'في انتظار الدفع' : 'Awaiting Payment'}
                     </span>
                   )}
@@ -755,6 +757,22 @@ export const PaymentStep: React.FC = () => {
                                     amount={activeAmount}
                                     savedPaymentMethodId={activeSavedPaymentMethodId}
                                     onSwitchToNewCard={() => {
+                                      setUseNewCard(true);
+                                      setSelectedCardId(null);
+                                    }}
+                                    onStalePaymentMethod={async (pmId) => {
+                                      try {
+                                        await cardsApi.invalidatePaymentMethod(pmId);
+                                      } catch {
+                                        /* ignore */
+                                      }
+                                      setSavedCards((prev) =>
+                                        prev.map((c) =>
+                                          c.stripePaymentMethodId === pmId
+                                            ? { ...c, stripePaymentMethodId: undefined }
+                                            : c,
+                                        ),
+                                      );
                                       setUseNewCard(true);
                                       setSelectedCardId(null);
                                     }}
