@@ -81,6 +81,18 @@ export function hasRemainingPaymentDue(order: {
   return accepted.some((o) => !isOfferConsideredPaid(o, paidIds));
 }
 
+/** Terminal / non-checkout statuses — payment CTAs must never appear. */
+export const NON_PAYABLE_ORDER_STATUSES = new Set([
+  'CANCELLED',
+  'COMPLETED',
+  'DELIVERED',
+  'REFUNDED',
+  'RETURNED',
+  'CLOSED',
+  'EXPIRED',
+  'REJECTED',
+]);
+
 const CHECKOUT_RESUME_ORDER_STATUSES = new Set([
   'COLLECTING_OFFERS',
   'AWAITING_SELECTION',
@@ -89,21 +101,21 @@ const CHECKOUT_RESUME_ORDER_STATUSES = new Set([
   'PARTIALLY_PAID',
 ]);
 
+export function isOrderStatusPayable(status?: string): boolean {
+  const normalized = String(status || '').toUpperCase();
+  if (!normalized) return false;
+  if (NON_PAYABLE_ORDER_STATUSES.has(normalized)) return false;
+  return CHECKOUT_RESUME_ORDER_STATUSES.has(normalized);
+}
+
 /** Show "continue payment" on order page when checkout can still be resumed. */
 export function shouldShowContinuePaymentButton(order: {
   status?: string;
   offers?: OrderOffer[];
   payments?: Array<{ status?: string; offerId?: string }>;
 }): boolean {
-  const accepted = getAcceptedOffersFromList(order.offers);
-  if (!accepted.length) return false;
-
-  const status = String(order.status || '').toUpperCase();
-  if (CHECKOUT_RESUME_ORDER_STATUSES.has(status)) {
-    if (status === 'AWAITING_PAYMENT' || status === 'PARTIALLY_PAID') {
-      return hasRemainingPaymentDue(order);
-    }
-    return true;
-  }
+  // Defense-in-depth: cancelled / closed orders must never expose payment CTAs
+  // even if accepted offers still look "awaiting payment" in UI.
+  if (!isOrderStatusPayable(order.status)) return false;
   return hasRemainingPaymentDue(order);
 }

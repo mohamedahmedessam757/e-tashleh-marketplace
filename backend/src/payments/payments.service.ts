@@ -724,6 +724,26 @@ export class PaymentsService {
             return;
         }
 
+        // Never credit wallets / advance fulfillment on cancelled or closed orders.
+        // If Stripe already captured funds, ops must refund — do not auto-fulfill.
+        const blockedFulfillStatuses = new Set([
+            'CANCELLED',
+            'REFUNDED',
+            'CLOSED',
+            'RETURNED',
+            'EXPIRED',
+            'REJECTED',
+        ]);
+        const orderStatus = String(payment.order?.status || '').toUpperCase();
+        if (blockedFulfillStatuses.has(orderStatus)) {
+            this.logger.error(
+                `Refusing Stripe fulfillment for ${paymentIntentId}: order ${payment.orderId} is ${orderStatus}. Manual refund review required.`,
+            );
+            throw new BadRequestException(
+                `Cannot fulfill payment — order is ${orderStatus}. Contact support for refund review.`,
+            );
+        }
+
         const stripeClient = this.stripeService.getStripeClient();
         const intentSnapshot = await stripeClient.paymentIntents.retrieve(paymentIntentId);
         const expectedMinor = Math.round(Number(payment.totalAmount) * 100);

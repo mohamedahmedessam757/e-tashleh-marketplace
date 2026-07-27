@@ -59,6 +59,7 @@ import {
     hasRemainingPaymentDue,
     isOfferConsideredPaid,
     shouldShowContinuePaymentButton,
+    isOrderStatusPayable,
 } from '../../utils/checkoutPaymentHelpers';
 import { PendingStoreReviewBanner } from './shared/PendingStoreReviewBanner';
 import { MultiItemCompletionBadge } from './shared/MultiItemCompletionBadge';
@@ -444,6 +445,19 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     };
 
     const openCheckout = (accOffer?: typeof firstAcceptedOffer) => {
+        // Hard stop: cancelled / closed orders must never enter checkout
+        if (!isOrderStatusPayable(order.status)) {
+            useNotificationStore.getState().addNotification({
+                type: 'SYSTEM',
+                titleAr: 'الطلب غير قابل للدفع',
+                titleEn: 'Order not payable',
+                messageAr: 'لا يمكن متابعة الدفع لأن حالة هذا الطلب لا تسمح بذلك (مثلاً ملغى أو مغلق).',
+                messageEn: 'Checkout is blocked because this order status does not allow payment (e.g. cancelled or closed).',
+                recipientRole: 'CUSTOMER',
+            });
+            return;
+        }
+
         const checkout = useCheckoutStore.getState();
 
         const paidIds = collectPaidOfferIdsFromOrder(order);

@@ -16,6 +16,7 @@ import { isAcceptedOfferStatus, isActiveOfferStatus } from '../../../utils/offer
 import {
     areAllAcceptedOffersPaid,
     getAcceptedOffersFromList,
+    isOrderStatusPayable,
 } from '../../../utils/checkoutPaymentHelpers';
 import { hasMeaningfulAddress } from '../../../utils/checkoutSessionStorage';
 
@@ -63,6 +64,25 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
         if (!orderId) return;
         void useOrderStore.getState().fetchOrder(orderId);
     }, [orderId]);
+
+    // Block checkout wizard if order became non-payable (e.g. CANCELLED mid-session)
+    useEffect(() => {
+        if (!order) return;
+        if (isOrderStatusPayable(order.status)) return;
+
+        addNotification({
+            recipientRole: 'CUSTOMER',
+            type: 'system',
+            titleKey: 'error',
+            message:
+                language === 'ar'
+                    ? 'لا يمكن إكمال الدفع — هذا الطلب ملغى أو مغلق.'
+                    : 'Checkout blocked — this order is cancelled or closed.',
+            priority: 'high',
+        });
+        clearCheckoutForOrder(String(order.id));
+        onNavigate('order-details', order.id);
+    }, [order?.id, order?.status, language, addNotification, clearCheckoutForOrder, onNavigate]);
 
     useEffect(() => {
         if (!order || !orderId) return;
@@ -255,6 +275,10 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
             onComplete(); // Go back to order details
         }
     };
+
+    if (order && !isOrderStatusPayable(order.status)) {
+        return null;
+    }
 
     return (
         <>
