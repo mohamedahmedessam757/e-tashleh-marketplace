@@ -168,6 +168,20 @@ export class OfferFulfillmentService {
                 reason: 'Recomputed from per-offer fulfillment statuses',
             });
 
+            // Aggregate path bypasses OrdersService.transitionStatus — emit ORDER_STATUS WA/in-app here.
+            await this.notifyAggregateStatusChange({
+                orderId,
+                orderNumber: order.orderNumber,
+                customerId: order.customerId,
+                newStatus: nextStatus,
+                paidOffers,
+            }).catch((err) => {
+                console.error(
+                    `Failed aggregate status notify for order ${orderId}:`,
+                    err instanceof Error ? err.message : err,
+                );
+            });
+
             if (nextStatus === OrderStatus.COMPLETED) {
                 this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
                     console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
@@ -176,6 +190,121 @@ export class OfferFulfillmentService {
         }
 
         return nextStatus;
+    }
+
+    /** Statuses that should fan out customer/merchant WhatsApp via txn_order_* */
+    private static readonly AGGREGATE_NOTIFY_STATUSES = new Set<OrderStatus>([
+        OrderStatus.PREPARATION,
+        OrderStatus.DELAYED_PREPARATION,
+        OrderStatus.PREPARED,
+        OrderStatus.VERIFICATION,
+        OrderStatus.VERIFICATION_SUCCESS,
+        OrderStatus.NON_MATCHING,
+        OrderStatus.CORRECTION_PERIOD,
+        OrderStatus.READY_FOR_SHIPPING,
+        OrderStatus.PARTIALLY_SHIPPED,
+        OrderStatus.SHIPPED,
+        OrderStatus.PARTIALLY_DELIVERED,
+        OrderStatus.DELIVERED,
+        OrderStatus.COMPLETED,
+        OrderStatus.CANCELLED,
+    ]);
+
+    private async notifyAggregateStatusChange(params: {
+        orderId: string;
+        orderNumber: string;
+        customerId: string;
+        newStatus: OrderStatus;
+        paidOffers: OfferWithPayments[];
+    }) {
+        if (!OfferFulfillmentService.AGGREGATE_NOTIFY_STATUSES.has(params.newStatus)) {
+            return;
+        }
+
+        const messagesAr: Partial<Record<OrderStatus, string>> = {
+            [OrderStatus.PREPARATION]: 'بدأ تجهيز قطع طلبك الآن.',
+            [OrderStatus.DELAYED_PREPARATION]: 'يوجد تأخير في التجهيز. نعمل على تسريع طلبك.',
+            [OrderStatus.PREPARED]: 'تم تجهيز القطع وهي جاهزة لمرحلة التوثيق/الشحن.',
+            [OrderStatus.VERIFICATION]: 'طلبك قيد فحص القطعة والتوثيق.',
+            [OrderStatus.VERIFICATION_SUCCESS]: 'تم اعتماد التوثيق بنجاح.',
+            [OrderStatus.NON_MATCHING]: 'نتيجة الفحص: غير مطابق. يرجى متابعة التعليمات.',
+            [OrderStatus.CORRECTION_PERIOD]: 'أنت في فترة التصحيح. يرجى استكمال المطلوب.',
+            [OrderStatus.READY_FOR_SHIPPING]: 'طلبك جاهز للشحن.',
+            [OrderStatus.PARTIALLY_SHIPPED]: 'تم شحن جزء من قطع طلبك.',
+            [OrderStatus.SHIPPED]: 'طلبك الآن في الطريق إليك.',
+            [OrderStatus.PARTIALLY_DELIVERED]: 'تم تسليم جزء من قطع طلبك.',
+            [OrderStatus.DELIVERED]: 'تم تسليم طلبك.',
+            [OrderStatus.COMPLETED]: 'اكتمل طلبك بنجاح.',
+            [OrderStatus.CANCELLED]: 'تم إلغاء الطلب.',
+        };
+        const messagesEn: Partial<Record<OrderStatus, string>> = {
+            [OrderStatus.PREPARATION]: 'Your parts are now being prepared.',
+            [OrderStatus.DELAYED_PREPARATION]: 'Preparation is delayed. We are speeding up your order.',
+            [OrderStatus.PREPARED]: 'Parts are prepared and ready for verification/shipping.',
+            [OrderStatus.VERIFICATION]: 'Your order is under part verification.',
+            [OrderStatus.VERIFICATION_SUCCESS]: 'Verification approved successfully.',
+            [OrderStatus.NON_MATCHING]: 'Verification result: non-matching. Please follow instructions.',
+            [OrderStatus.CORRECTION_PERIOD]: 'You are in the correction window. Complete the required steps.',
+            [OrderStatus.READY_FOR_SHIPPING]: 'Your order is ready for shipping.',
+            [OrderStatus.PARTIALLY_SHIPPED]: 'Some parts of your order have shipped.',
+            [OrderStatus.SHIPPED]: 'Your order is on the way.',
+            [OrderStatus.PARTIALLY_DELIVERED]: 'Some parts of your order were delivered.',
+            [OrderStatus.DELIVERED]: 'Your order has been delivered.',
+            [OrderStatus.COMPLETED]: 'Your order is complete.',
+            [OrderStatus.CANCELLED]: 'The order was cancelled.',
+        };
+
+        const messageAr = messagesAr[params.newStatus];
+        const messageEn = messagesEn[params.newStatus];
+        if (!messageAr || !messageEn) return;
+
+        const verificationStatuses = new Set<OrderStatus>([
+            OrderStatus.VERIFICATION,
+            OrderStatus.VERIFICATION_SUCCESS,
+            OrderStatus.NON_MATCHING,
+            OrderStatus.CORRECTION_PERIOD,
+        ]);
+        const isVerification = verificationStatuses.has(params.newStatus);
+        const metadata = {
+            orderId: params.orderId,
+            orderNumber: params.orderNumber,
+            status: params.newStatus,
+            waEvent: isVerification ? 'VERIFICATION' : 'ORDER_STATUS',
+            ...(isVerification ? { verification: true } : {}),
+            source: 'AGGREGATE_STATUS',
+        };
+
+        await this.notifications.create({
+            recipientId: params.customerId,
+            recipientRole: 'CUSTOMER',
+            titleAr: `تحديث حالة الطلب #${params.orderNumber}`,
+            titleEn: `Order Status Update #${params.orderNumber}`,
+            messageAr,
+            messageEn,
+            type: 'ORDER',
+            link: `/dashboard/orders/${params.orderId}`,
+            metadata,
+        });
+
+        const merchantOwnerIds = new Set<string>();
+        for (const offer of params.paidOffers) {
+            const ownerId = offer.store?.ownerId;
+            if (ownerId) merchantOwnerIds.add(ownerId);
+        }
+
+        for (const ownerId of merchantOwnerIds) {
+            await this.notifications.create({
+                recipientId: ownerId,
+                recipientRole: 'MERCHANT',
+                titleAr: `تحديث حالة الطلب #${params.orderNumber}`,
+                titleEn: `Order Status Update #${params.orderNumber}`,
+                messageAr,
+                messageEn,
+                type: 'ORDER',
+                link: `/merchant/orders/${params.orderId}`,
+                metadata,
+            });
+        }
     }
 
     private orderStatusToFulfillmentFloor(

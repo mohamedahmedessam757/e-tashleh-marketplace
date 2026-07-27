@@ -451,16 +451,20 @@ export class PaymentsService {
 
         let stripeCustomerId: string;
         let intent: any;
-        try {
-            stripeCustomerId = await this.stripeService.getOrCreateCustomer(customerId, user.email, user.name);
+        const intentMetadata = {
+            orderId,
+            offerId,
+            customerId,
+            orderNumber: order.orderNumber,
+            offerNumber: offer.offerNumber,
+        };
 
-            const intentMetadata = {
-                orderId,
-                offerId,
+        try {
+            stripeCustomerId = await this.stripeService.getOrCreateCustomer(
                 customerId,
-                orderNumber: order.orderNumber,
-                offerNumber: offer.offerNumber,
-            };
+                user.email,
+                user.name,
+            );
 
             // 5. Stripe PaymentIntent — reuse open PENDING intent when possible (avoids duplicate intents on retry)
             intent = await this.resolveOrCreateStripeIntent(
@@ -473,15 +477,55 @@ export class PaymentsService {
                 stripeCustomerId,
             );
         } catch (err: any) {
-            if (err instanceof BadRequestException || err instanceof NotFoundException || err instanceof ForbiddenException || err instanceof ConflictException) {
+            const errMsg = String(err?.message || '');
+            const staleCustomer =
+                this.stripeService.isMissingStripeCustomer(err) ||
+                /no such customer/i.test(errMsg);
+
+            if (staleCustomer) {
+                this.logger.warn(
+                    `Stale Stripe customer for user ${customerId}; clearing and recreating PaymentIntent`,
+                );
+                try {
+                    await this.stripeService.clearStripeCustomerId(customerId);
+                    stripeCustomerId = await this.stripeService.getOrCreateCustomer(
+                        customerId,
+                        user.email,
+                        user.name,
+                    );
+                    // Do not reuse PENDING intents bound to the deleted customer
+                    intent = await this.stripeService.createPaymentIntent(
+                        totalAmount.toString(),
+                        'AED',
+                        intentMetadata,
+                        stripeCustomerId,
+                    );
+                } catch (retryErr: any) {
+                    const retryMsg = retryErr?.message || 'Stripe payment initialization failed';
+                    throw new BadRequestException(
+                        /Stripe|card|amount|customer/i.test(retryMsg)
+                            ? retryMsg
+                            : `Payment provider error: ${retryMsg}`,
+                    );
+                }
+            } else if (
+                err instanceof BadRequestException ||
+                err instanceof NotFoundException ||
+                err instanceof ForbiddenException ||
+                err instanceof ConflictException
+            ) {
                 throw err;
+            } else {
+                const stripeMsg = errMsg || 'Stripe payment initialization failed';
+                throw new BadRequestException(
+                    stripeMsg.includes('Stripe') ||
+                        stripeMsg.includes('card') ||
+                        stripeMsg.includes('amount') ||
+                        stripeMsg.includes('customer')
+                        ? stripeMsg
+                        : `Payment provider error: ${stripeMsg}`,
+                );
             }
-            const stripeMsg = err?.message || 'Stripe payment initialization failed';
-            throw new BadRequestException(
-                stripeMsg.includes('Stripe') || stripeMsg.includes('card') || stripeMsg.includes('amount')
-                    ? stripeMsg
-                    : `Payment provider error: ${stripeMsg}`,
-            );
         }
 
         // 6. Record PENDING transaction — atomic upsert (race-safe vs concurrent prefetch + pay clicks)
@@ -1088,7 +1132,31 @@ export class PaymentsService {
             include: { order: true }
         });
 
-        if (!payment) throw new NotFoundException('Payment record not found');
+        // Soft miss: checkout sync probes every accepted offer before any intent exists.
+        // Returning NONE avoids noisy 404s and is not an authorization leak (owner checked below).
+        if (!payment) {
+            const offer = await this.prisma.offer.findUnique({
+                where: { id: offerId },
+                select: {
+                    id: true,
+                    orderId: true,
+                    order: { select: { customerId: true, status: true } },
+                },
+            });
+            if (!offer) throw new NotFoundException('Offer not found');
+            if (offer.order.customerId !== customerId) {
+                throw new ForbiddenException('Not owner of this payment');
+            }
+            return {
+                status: 'NONE',
+                paidAt: null,
+                transactionNumber: null,
+                totalAmount: null,
+                orderId: offer.orderId,
+                orderStatus: offer.order.status,
+            };
+        }
+
         if (payment.customerId !== customerId) throw new ForbiddenException('Not owner of this payment');
 
         return {

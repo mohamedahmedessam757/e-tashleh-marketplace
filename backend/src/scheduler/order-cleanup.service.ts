@@ -606,11 +606,18 @@ export class OrderCleanupService {
                     titleEn: 'Payment Period Expired',
                     messageAr: `تم إلغاء طلبك (#${order.orderNumber}) لعدم إتمام خطوة السداد خلال الـ 24 ساعة المحددة.`,
                     messageEn: `Your order (#${order.orderNumber}) was cancelled as payment was not completed within the 24h limit.`,
-                    type: 'system_alert',
-                    link: 'orders',
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        status: 'CANCELLED',
+                        waEvent: 'ORDER_STATUS',
+                    },
                 });
 
-                // Notify Merchants
+                // Notify Merchants (transitionStatus already WA-notifies accepted merchant;
+                // keep in-app + WA with explicit waEvent for stores that only appear on offers)
                 for (const offer of order.offers) {
                     if (offer.storeId) {
                         await this.notificationsService.notifyMerchantByStoreId(offer.storeId, {
@@ -618,8 +625,14 @@ export class OrderCleanupService {
                             titleEn: 'Order Cancelled: Unpaid',
                             messageAr: `تم إلغاء الطلب (#${order.orderNumber}) من قبل النظام لتجاوز العميل مهلة السداد (24 ساعة).`,
                             messageEn: `Order (#${order.orderNumber}) was cancelled by the system as the customer missed the 24h payment deadline.`,
-                            type: 'system_alert',
-                            link: `/merchant/orders`
+                            type: 'ORDER',
+                            link: `/merchant/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                status: 'CANCELLED',
+                                waEvent: 'ORDER_STATUS',
+                            },
                         });
                     }
                 }
@@ -789,8 +802,14 @@ export class OrderCleanupService {
                     titleEn: 'Apology: Order Cancelled & Merchant Penalized',
                     messageAr: `نعتذر لك بشدة، قامت الإدارة بشكل تلقائي بإلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز، سيتم محاسبة المتجر وبدء ارجاع أموالك الى المحفظة خلال أيام العمل.`,
                     messageEn: `We apologize. Order #${order.orderNumber} was cancelled. The merchant failed to prepare the items. A penalty was issued and your refund has been queued.`,
-                    type: 'system_alert',
-                    link: `/dashboard/orders`
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        status: 'CANCELLED',
+                        waEvent: 'ORDER_STATUS',
+                    },
                 });
             } catch (err) {
                 this.logger.error(`Failed executing handleCriticalPreparationFailures on ${order.id}: ${err.message}`);
@@ -877,7 +896,14 @@ export class OrderCleanupService {
                     titleAr: 'إلغاء الطلب واسترجاع المبلغ', titleEn: 'Order Cancelled & Refunded',
                     messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة للمواصفات. جاري استرجاع أموالك.`,
                     messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. Refund initiated.`,
-                    type: 'system_alert', link: `/dashboard/orders`
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        status: 'CANCELLED',
+                        waEvent: 'ORDER_STATUS',
+                    },
                 });
 
                 // Admin Notification

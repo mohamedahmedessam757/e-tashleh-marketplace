@@ -372,7 +372,7 @@ export class WhatsAppChannelService {
             });
             if (!family) {
                 this.logger.warn(
-                    `WhatsApp maybeSend skip: family_null type=${params.type ?? ''} recipient=${params.recipientId}`,
+                    `WhatsApp maybeSend skip: family_null type=${params.type ?? ''} waEvent=${String(params.metadata?.waEvent ?? '')} recipient=${params.recipientId}`,
                 );
                 return;
             }

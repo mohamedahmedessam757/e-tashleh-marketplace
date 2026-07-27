@@ -226,30 +226,76 @@ export class StripeService {
     }
 
     /**
-     * Get or Create a Stripe Customer for a user
+     * Get or Create a Stripe Customer for a user.
+     * Recovers from stale IDs (deleted customer / test↔live key mismatch).
      */
     async getOrCreateCustomer(userId: string, email: string, name?: string): Promise<string> {
+        this.assertConfigured();
+
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
-            select: { stripeCustomerId: true }
+            select: { stripeCustomerId: true },
         });
 
         if (user?.stripeCustomerId) {
-            return user.stripeCustomerId;
+            try {
+                const existing = await this.stripe.customers.retrieve(user.stripeCustomerId);
+                if (existing && !(existing as { deleted?: boolean }).deleted) {
+                    return user.stripeCustomerId;
+                }
+            } catch (error: unknown) {
+                if (!this.isMissingStripeCustomer(error)) {
+                    throw this.mapStripeError(error);
+                }
+                this.logger.warn(
+                    `Stale Stripe customer ${user.stripeCustomerId} for user ${userId}; recreating`,
+                );
+            }
+
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { stripeCustomerId: null },
+            });
         }
 
-        const customer = await this.stripe.customers.create({
-            email,
-            name,
-            metadata: { userId }
-        });
+        try {
+            const customer = await this.stripe.customers.create({
+                email,
+                name: name || undefined,
+                metadata: { userId },
+            });
 
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { stripeCustomerId: customer.id },
+            });
+
+            return customer.id;
+        } catch (error: unknown) {
+            throw this.mapStripeError(error);
+        }
+    }
+
+    /** True when Stripe says the Customer object no longer exists. */
+    isMissingStripeCustomer(error: unknown): boolean {
+        const err = error as { code?: string; message?: string; statusCode?: number; raw?: { code?: string } };
+        const code = err?.code || err?.raw?.code;
+        const msg = String(err?.message || '');
+        return (
+            code === 'resource_missing' ||
+            err?.statusCode === 404 ||
+            /no such customer/i.test(msg)
+        );
+    }
+
+    /**
+     * Clear a bad stripeCustomerId so the next getOrCreateCustomer recreates it.
+     */
+    async clearStripeCustomerId(userId: string): Promise<void> {
         await this.prisma.user.update({
             where: { id: userId },
-            data: { stripeCustomerId: customer.id }
+            data: { stripeCustomerId: null },
         });
-
-        return customer.id;
     }
 
     /**

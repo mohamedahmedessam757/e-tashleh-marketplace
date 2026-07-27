@@ -37,8 +37,11 @@ export class CardsService {
                         match.stripePaymentMethodId = method.id; // Update in-memory for immediate return
                     }
                 }
-            } catch (err) {
-                console.error('Stripe sync failed:', err.message);
+            } catch (err: any) {
+                if (this.stripeService.isMissingStripeCustomer(err)) {
+                    await this.stripeService.clearStripeCustomerId(userId);
+                }
+                console.error('Stripe sync failed:', err?.message || err);
             }
         }
 

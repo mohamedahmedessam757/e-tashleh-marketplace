@@ -217,9 +217,22 @@ export function resolveTemplateName(
 /** Meta/WhatsApp per-variable body limit (safe default) */
 export const WHATSAPP_BODY_PARAM_MAX = 1024;
 
+/**
+ * Meta rejects many body-variable shapes (#100): newlines, tabs,
+ * long space runs, and frequently emoji / variation selectors.
+ */
+export function sanitizeWhatsAppParam(value: string): string {
+    return value
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}]/gu, '')
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/ {5,}/g, '    ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function truncateWhatsAppParam(value: string, max = WHATSAPP_BODY_PARAM_MAX): string {
-    const trimmed = value.trim();
-    if (trimmed.length <= max) return trimmed;
+    const trimmed = sanitizeWhatsAppParam(value);
+    if (trimmed.length <= max) return trimmed || '-';
     return `${trimmed.slice(0, max - 1)}…`;
 }
 
