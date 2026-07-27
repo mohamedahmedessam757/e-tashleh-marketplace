@@ -747,7 +747,7 @@ export class StoresService {
                     select: {
                         licenseExpiry: true,
                         contractAcceptances: {
-                            where: { status: 'ACTIVE' },
+                            where: { isActive: true },
                             orderBy: { acceptedAt: 'desc' },
                             take: 1,
                             select: { secondPartyData: true },

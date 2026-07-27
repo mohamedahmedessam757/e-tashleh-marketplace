@@ -341,6 +341,9 @@ export class OffersService {
                 offerNumber: true,
                 canEditUntil: true,
                 isWithdrawn: true,
+                partType: true,
+                weightKg: true,
+                cylinders: true,
                 order: { select: { orderNumber: true } },
             },
         });
