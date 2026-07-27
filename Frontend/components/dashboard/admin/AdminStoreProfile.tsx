@@ -85,7 +85,8 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
     const [pendingStatusUpdate, setPendingStatusUpdate] = useState<'ACTIVE' | 'BLOCKED' | 'REJECTED' | 'SUSPENDED' | null>(null);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isBanModalOpen, setIsBanModalOpen] = useState(false);
-    const [pendingRestrictionAction, setPendingRestrictionAction] = useState<'UPDATE' | 'CLEAR' | null>(null);
+    const [pendingRestrictionAction, setPendingRestrictionAction] = useState<'UPDATE' | 'CLEAR' | 'BIDDING_APPLY' | 'BIDDING_LIFT' | null>(null);
+    const [pendingBiddingDays, setPendingBiddingDays] = useState(5);
     const [rejectionReason, setRejectionReason] = useState('');
     const [adminNotes, setAdminNotes] = useState(currentStoreProfile?.adminNotes || '');
 
@@ -272,6 +273,32 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     setIsSignatureModalOpen(false);
                 } else {
                     throw new Error('Clear failed');
+                }
+            } else if (pendingRestrictionAction === 'BIDDING_APPLY') {
+                const days = Math.max(1, Math.min(90, pendingBiddingDays || 5));
+                const success = await useAdminStore.getState().updateStoreRestrictions(vendorId, {
+                    offerBiddingRestrictionDays: days,
+                    offerBiddingRestrictionReason: `Admin manual restriction (${days}d) by ${signatureData.adminSignatureName}`,
+                    ...signatureData,
+                });
+                if (success) {
+                    window.alert(isAr ? 'تم تطبيق تقييد تقديم العروض بنجاح' : 'Offer bidding restriction applied');
+                    setIsSignatureModalOpen(false);
+                    await useAdminStore.getState().fetchStoreProfile(vendorId);
+                } else {
+                    throw new Error('Bidding apply failed');
+                }
+            } else if (pendingRestrictionAction === 'BIDDING_LIFT') {
+                const success = await useAdminStore.getState().updateStoreRestrictions(vendorId, {
+                    clearOfferBiddingRestriction: true,
+                    ...signatureData,
+                });
+                if (success) {
+                    window.alert(isAr ? 'تم فك تقييد تقديم العروض' : 'Offer bidding restriction lifted');
+                    setIsSignatureModalOpen(false);
+                    await useAdminStore.getState().fetchStoreProfile(vendorId);
+                } else {
+                    throw new Error('Bidding lift failed');
                 }
             } else {
                 const data = { ...restrictionData, ...signatureData };
@@ -1666,7 +1693,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                                         </span>
                                                                     </div>
 
-                                                                    {doc.status === 'approved' && daysRemaining !== null && (
+                                                                    {daysRemaining !== null && (
                                                                         <div className={`mt-1 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-black uppercase ${daysRemaining <= 7 ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
                                                                             daysRemaining <= 30 ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
                                                                                 'bg-green-500/10 text-green-500 border border-green-500/20'
@@ -1677,6 +1704,28 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                                                 : `${daysRemaining < 0 ? 'Expired' : `${daysRemaining} Days Left`}`}
                                                                         </div>
                                                                     )}
+                                                                    {doc.expiresAt && (
+                                                                        <p className="mt-1 text-[9px] text-white/35 font-mono">
+                                                                            {isAr ? 'انتهاء:' : 'Expires:'}{' '}
+                                                                            {String(doc.expiresAt).slice(0, 10)}
+                                                                            {doc.status === 'pending' ? (isAr ? ' (مُصرَّح)' : ' (declared)') : ''}
+                                                                        </p>
+                                                                    )}
+                                                                    {String(doc.docType || '').toUpperCase() === 'LICENSE' && (() => {
+                                                                        const contractExpiry = (vendor as any)?.contractAcceptance?.secondPartyData?.licenseExpiry
+                                                                            || (vendor as any)?.contractAcceptances?.[0]?.secondPartyData?.licenseExpiry;
+                                                                        const declared = doc.expiresAt ? String(doc.expiresAt).slice(0, 10) : null;
+                                                                        const fromContract = contractExpiry ? String(contractExpiry).slice(0, 10) : null;
+                                                                        if (!fromContract) return null;
+                                                                        return (
+                                                                            <p className="mt-1 text-[9px] text-white/35">
+                                                                                {isAr ? 'تاريخ العقد:' : 'Contract date:'} {fromContract}
+                                                                                {declared && declared !== fromContract
+                                                                                    ? (isAr ? ` · المستند: ${declared}` : ` · Doc: ${declared}`)
+                                                                                    : ''}
+                                                                            </p>
+                                                                        );
+                                                                    })()}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2639,12 +2688,12 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                     </div>
                                                     <div>
                                                         <h3 className="text-lg font-bold text-white">
-                                                            {isAr ? 'حوكمة العروض — معدل التعديل' : 'Offer governance — modification rate'}
+                                                            {isAr ? 'حوكمة العروض — حذف شهري' : 'Offer governance — monthly deletions'}
                                                         </h3>
                                                         <p className="text-xs text-white/40 mt-0.5">
                                                             {isAr
-                                                                ? 'كل تعديل / إلغاء / انسحاب يُسجّل مع رقم الطلب والوقت'
-                                                                : 'Each edit, cancel, or withdrawal is logged with order # and time'}
+                                                                ? 'حد 50 حذف/انسحاب شهرياً · تحذير عند 35 · تقييد تقديم 5 أيام عند 50'
+                                                                : '50 deletions/withdrawals per month · warn at 35 · 5-day bidding ban at 50'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -2656,10 +2705,10 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                     <div className={`text-2xl font-black tabular-nums ${
                                                         offerGov.exceedsThreshold ? 'text-orange-400' : 'text-white'
                                                     }`}>
-                                                        {offerGov.modificationRatePercent}%
+                                                        {offerGov.monthlyOfferDeletionCount ?? 0}/50
                                                     </div>
                                                     <div className="text-[9px] font-black text-white/40 uppercase tracking-widest">
-                                                        {isAr ? 'معدل التعديل' : 'Mod rate'}
+                                                        {isAr ? 'حذف الشهر' : 'This month'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -2667,11 +2716,15 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                 {[
                                                     { label: isAr ? 'إجمالي العروض' : 'Total offers', value: offerGov.totalOffersSent, icon: Package },
-                                                    { label: isAr ? 'تعديلات' : 'Edits', value: offerGov.editCount, icon: Edit3 },
-                                                    { label: isAr ? 'سحوبات' : 'Withdrawals', value: offerGov.withdrawalCount, icon: Undo2 },
+                                                    { label: isAr ? 'تعديلات (تاريخي)' : 'Edits (historic)', value: offerGov.editCount, icon: Edit3 },
+                                                    { label: isAr ? 'سحوبات (تاريخي)' : 'Withdrawals (historic)', value: offerGov.withdrawalCount, icon: Undo2 },
                                                     {
-                                                        label: isAr ? 'الحد (5%)' : 'Threshold (5%)',
-                                                        value: offerGov.exceedsThreshold ? (isAr ? 'تجاوز' : 'Exceeded') : (isAr ? 'ضمن' : 'OK'),
+                                                        label: isAr ? 'حالة الحد' : 'Quota status',
+                                                        value: (offerGov.monthlyOfferDeletionCount ?? 0) >= 50
+                                                            ? (isAr ? 'مكتمل' : 'Full')
+                                                            : (offerGov.monthlyOfferDeletionCount ?? 0) >= 35
+                                                              ? (isAr ? 'تحذير' : 'Warn')
+                                                              : (isAr ? 'ضمن' : 'OK'),
                                                         icon: AlertTriangle,
                                                         warn: offerGov.exceedsThreshold,
                                                     },
@@ -2744,6 +2797,66 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                             </GlassCard>
                                         </div>
                                     )}
+
+                                    {/* Offer bidding restriction controls */}
+                                    <GlassCard className="p-6 space-y-4 border border-amber-500/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
+                                                <ShieldAlert size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white">
+                                                    {isAr ? 'تقييد تقديم العروض' : 'Offer bidding restriction'}
+                                                </h3>
+                                                <p className="text-xs text-white/40">
+                                                    {(vendor?.offerBiddingRestrictedUntil || offerGov?.offerBiddingRestrictedUntil) &&
+                                                    new Date(vendor?.offerBiddingRestrictedUntil || offerGov.offerBiddingRestrictedUntil) > new Date()
+                                                        ? (isAr
+                                                            ? `نشط حتى ${new Date(vendor?.offerBiddingRestrictedUntil || offerGov.offerBiddingRestrictedUntil).toLocaleString('ar-EG')}`
+                                                            : `Active until ${new Date(vendor?.offerBiddingRestrictedUntil || offerGov.offerBiddingRestrictedUntil).toISOString()}`)
+                                                        : (isAr ? 'لا يوجد تقييد نشط' : 'No active restriction')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap items-end gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">
+                                                    {isAr ? 'عدد الأيام' : 'Days'}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={90}
+                                                    defaultValue={5}
+                                                    id="offer-bid-restrict-days"
+                                                    className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const el = document.getElementById('offer-bid-restrict-days') as HTMLInputElement | null;
+                                                    const days = Math.max(1, Math.min(90, Number(el?.value || 5)));
+                                                    setPendingBiddingDays(days);
+                                                    setPendingRestrictionAction('BIDDING_APPLY');
+                                                    setIsSignatureModalOpen(true);
+                                                }}
+                                                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold"
+                                            >
+                                                {isAr ? 'تطبيق التقييد' : 'Apply restriction'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPendingRestrictionAction('BIDDING_LIFT');
+                                                    setIsSignatureModalOpen(true);
+                                                }}
+                                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 text-xs font-bold"
+                                            >
+                                                {isAr ? 'فك التقييد' : 'Lift restriction'}
+                                            </button>
+                                        </div>
+                                    </GlassCard>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Financial Restrictions */}
@@ -3008,10 +3121,29 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
 
             <AdminSignatureModal
                 isOpen={isSignatureModalOpen}
-                onClose={() => setIsSignatureModalOpen(false)}
+                onClose={() => {
+                    setIsSignatureModalOpen(false);
+                    setPendingRestrictionAction(null);
+                }}
                 onConfirm={handleUpdateRestrictions}
-                title={isAr ? 'اعتماد القيود الإدارية' : 'Authorize Administrative Restrictions'}
-                subtitle={isAr ? 'يرجى التوقيع للمتابعة وتطبيق القيود على هذا المتجر' : 'Please sign to proceed and apply restrictions to this store'}
+                title={
+                    pendingRestrictionAction === 'BIDDING_APPLY'
+                        ? (isAr ? 'توقيع تطبيق تقييد العروض' : 'Sign offer-bidding restriction')
+                        : pendingRestrictionAction === 'BIDDING_LIFT'
+                            ? (isAr ? 'توقيع فك تقييد العروض' : 'Sign lift offer-bidding restriction')
+                            : (isAr ? 'اعتماد القيود الإدارية' : 'Authorize Administrative Restrictions')
+                }
+                subtitle={
+                    pendingRestrictionAction === 'BIDDING_APPLY'
+                        ? (isAr
+                            ? `أدخل اسمك ووقّع لتطبيق تقييد تقديم العروض لمدة ${pendingBiddingDays} أيام. سيُسجّل التوقيع في سجل التدقيق ويُشعر التاجر عبر التنبيهات وواتساب.`
+                            : `Enter your name and sign to apply a ${pendingBiddingDays}-day offer bidding restriction. Signature is audited; merchant is notified in-app and via WhatsApp.`)
+                        : pendingRestrictionAction === 'BIDDING_LIFT'
+                            ? (isAr
+                                ? 'أدخل اسمك ووقّع لفك تقييد تقديم العروض. سيُسجّل التوقيع في سجل التدقيق.'
+                                : 'Enter your name and sign to lift the offer bidding restriction. Signature is audited.')
+                            : (isAr ? 'يرجى التوقيع للمتابعة وتطبيق القيود على هذا المتجر' : 'Please sign to proceed and apply restrictions to this store')
+                }
             />
 
             <AdminInitiateChatModal

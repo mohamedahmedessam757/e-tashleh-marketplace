@@ -286,6 +286,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         return () => clearTimeout(timer);
     }, [order, order?.status, order?.offers, expiryTick]);
 
+    // Light refetch while on page so cron cancel / reveal is reflected without full remount
+    useEffect(() => {
+        if (!order?.id) return;
+        if (!['AWAITING_SELECTION', 'AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(order.status)) return;
+        if (expiryTick === 0) return;
+        void useOrderStore.getState().fetchOrder(order.id);
+    }, [expiryTick, order?.id, order?.status]);
+
     useEffect(() => {
         if (orderId) {
             fetchCases('customer');
@@ -508,7 +516,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             await useOrderStore.getState().acceptOffer(order.id, partId, offer.id);
 
             if (isMultiPartOrder) {
-                setDrawerPart(null);
+                // Keep offers drawer open so success feedback stays on offers context
                 useNotificationStore.getState().addNotification({
                     type: 'SYSTEM',
                     titleAr: 'تم قبول العرض',
@@ -880,7 +888,11 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         <span className="text-sm font-medium">{t.dashboard.orders.backToList}</span>
                     </button>
 
-                    <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
+                    {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID'].includes(order.status) &&
+                        !expiryScenario &&
+                        !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) && (
+                        <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
+                    )}
                 </div>
 
                 <MerchantHandoverPendingBanner
@@ -1037,8 +1049,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 </button>
                             )}
 
-                            {/* Dynamic Phase Timer (COLLECTING_OFFERS / AWAITING_SELECTION) */}
-                            {['COLLECTING_OFFERS', 'AWAITING_SELECTION'].includes(order.status) && (
+                            {/* Dynamic Phase Timer (COLLECTING_OFFERS / AWAITING_SELECTION with offers) */}
+                            {((order.status === 'COLLECTING_OFFERS') ||
+                                (order.status === 'AWAITING_SELECTION' && visibleOffers.length > 0)) &&
+                                !expiryScenario && (
                                 <div className="text-right hidden md:block border-l border-white/10 pl-4 ml-2">
                                     <div className="text-xs text-gold-500/60 font-bold uppercase tracking-widest mb-1">
                                         {order.status === 'COLLECTING_OFFERS' 

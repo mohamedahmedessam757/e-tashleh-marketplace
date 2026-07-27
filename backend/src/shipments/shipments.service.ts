@@ -704,6 +704,8 @@ export class ShipmentsService {
         const shipmentMeta = {
             orderId: order.id,
             orderNumber: order.orderNumber,
+            waEvent: 'SHIPMENT_STATUS',
+            status,
             ...(trackingNumber ? { trackingNumber } : {}),
         };
 
@@ -719,16 +721,28 @@ export class ShipmentsService {
             metadata: shipmentMeta,
         });
 
-        const acceptedOffer = await this.prisma.offer.findFirst({
-            where: {
-                orderId,
-                status: { in: ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'] },
-            },
-            select: { storeId: true },
-        });
+        // Prefer acceptedOfferId store; fall back to any accepted/completed offer on the order
+        let merchantStoreId: string | null = null;
+        if (order.acceptedOfferId) {
+            const accepted = await this.prisma.offer.findUnique({
+                where: { id: order.acceptedOfferId },
+                select: { storeId: true },
+            });
+            merchantStoreId = accepted?.storeId ?? null;
+        }
+        if (!merchantStoreId) {
+            const acceptedOffer = await this.prisma.offer.findFirst({
+                where: {
+                    orderId,
+                    status: { in: ['accepted', 'ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'] },
+                },
+                select: { storeId: true },
+            });
+            merchantStoreId = acceptedOffer?.storeId ?? null;
+        }
 
-        if (acceptedOffer?.storeId) {
-            await this.notifications.notifyMerchantByStoreId(acceptedOffer.storeId, {
+        if (merchantStoreId) {
+            await this.notifications.notifyMerchantByStoreId(merchantStoreId, {
                 titleAr: 'تحديث شحن طلبك 📦',
                 titleEn: 'Order shipment update 📦',
                 messageAr: bodies.merchant.ar,

@@ -462,7 +462,20 @@ export const PaymentStep: React.FC = () => {
               {formatApiErrorMessage(paymentError)}
             </div>
             <button 
-              onClick={() => resetPaymentState()}
+              onClick={async () => {
+                resetPaymentState();
+                setActiveClientSecret(null);
+                const offerId = expandedOfferId || effectiveActivePaymentOfferId;
+                const retryOrderId = String(currentOrder?.id || orderId || '');
+                if (offerId && retryOrderId) {
+                  const secret = await createPaymentIntent(retryOrderId, String(offerId));
+                  if (secret) {
+                    setActiveClientSecret(secret);
+                    setActivePaymentOfferId(String(offerId));
+                    setPrefetchedSecrets((prev) => ({ ...prev, [String(offerId)]: secret }));
+                  }
+                }
+              }}
               className="px-4 py-1.5 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-colors flex items-center gap-2 shrink-0"
             >
               <RefreshCw size={12} />

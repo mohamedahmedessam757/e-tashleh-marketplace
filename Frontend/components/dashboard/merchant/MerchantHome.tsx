@@ -16,6 +16,7 @@ import {
     belongsToMerchantStore,
     getMerchantOrderProgress,
     getMerchantStatusLabel,
+    isEligibleMerchantIncomingOrder,
     isMerchantCompleted,
     isMerchantInProgress,
     isMerchantMarketplaceOpen,
@@ -32,6 +33,12 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { orders, fetchOrders } = useOrderStore();
     const { performance, documents, vendorStatus, storeId: myStoreId, storeInfo, withdrawalsFrozen, offerLimit, dailyOfferCount, visibilityRestricted, visibilityRate, restrictionAlertMessage } = useVendorStore();
+    const monthlyDeletions = performance?.monthlyOfferDeletionCount ?? 0;
+    const biddingRestrictedUntil = performance?.offerBiddingRestrictedUntil
+        ? new Date(performance.offerBiddingRestrictedUntil)
+        : null;
+    const isBiddingRestricted = !!(biddingRestrictedUntil && biddingRestrictedUntil.getTime() > Date.now());
+    const nearDeletionLimit = monthlyDeletions >= (performance?.monthlyDeletionWarnAt ?? 35);
     const { addNotification, notifications } = useNotificationStore();
     const isAr = language === 'ar';
     const ChevronIcon = isAr ? ChevronLeft : ChevronRight;
@@ -91,13 +98,9 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     // --- LOGIC: Stats & Categories ---
     const myOrders = orders.filter(o => belongsToMerchantStore(o, myStoreId));
 
-    // 1. New marketplace requests (open bidding — includes COLLECTING_OFFERS / AWAITING_SELECTION)
-    const newRequests = orders.filter(o => {
-        if (!isMerchantMarketplaceOpen(o.status)) return false;
-
-        const d = new Date(o.createdAt || o.date);
-        d.setHours(d.getHours() + 24);
-        if (new Date().getTime() > d.getTime() && o.status === 'AWAITING_OFFERS') return false;
+    // 1. New marketplace requests (open bidding only — never AWAITING_SELECTION)
+    const newRequests = orders.filter((o) => {
+        if (!isEligibleMerchantIncomingOrder(o)) return false;
 
         const make = (o.vehicle?.make || o.car || '').toLowerCase();
         const model = (o.vehicle?.model || '').toLowerCase();
@@ -167,6 +170,31 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             <PolicyChangeBanner audience="VENDOR" />
             <LicenseExpiryBanner onNavigate={onNavigate} />
 
+            {isBiddingRestricted && (
+                <GlassCard className="bg-red-500/10 border-red-500/30 p-4 flex items-start gap-3">
+                    <ShieldAlert size={20} className="text-red-400 shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-100/90">
+                        <p className="font-bold mb-1">{isAr ? 'تقييد تقديم العروض نشط' : 'Offer bidding restricted'}</p>
+                        <p className="text-red-200/70 text-xs">
+                            {isAr
+                                ? `لا يمكنك تقديم عروض جديدة حتى ${biddingRestrictedUntil?.toLocaleString('ar-EG')}. باقي اللوحة تعمل.`
+                                : `Cannot submit new offers until ${biddingRestrictedUntil?.toISOString()}. Rest of dashboard works.`}
+                        </p>
+                    </div>
+                </GlassCard>
+            )}
+
+            {nearDeletionLimit && !isBiddingRestricted && (
+                <GlassCard className="bg-orange-500/10 border-orange-500/30 p-4 flex items-start gap-3">
+                    <AlertTriangle size={20} className="text-orange-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-orange-100/90">
+                        {isAr
+                            ? `تحذير حوكمة: ${monthlyDeletions}/50 حذف/انسحاب هذا الشهر. عند 50 سيتم تقييد التقديم 5 أيام.`
+                            : `Governance warning: ${monthlyDeletions}/50 deletions this month. At 50, bidding is restricted for 5 days.`}
+                    </p>
+                </GlassCard>
+            )}
+
             {/* Header / Welcome */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1814] via-[#24211B] to-[#151310] border border-white/5 shadow-2xl p-8 transition-all hover:shadow-gold-500/5 group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-gold-500/10 transition-all duration-700" />
@@ -180,8 +208,17 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                         <p className="text-white/40 text-sm max-w-md leading-relaxed">{t.dashboard.merchant.home.welcomeSub}</p>
                         
                         {/* NEW: Administrative Restriction Highlights (2026 UX) */}
-                        {(withdrawalsFrozen || (offerLimit !== -1) || visibilityRestricted || restrictionAlertMessage) && (
+                                                {(withdrawalsFrozen || (offerLimit !== -1) || visibilityRestricted || restrictionAlertMessage || isBiddingRestricted) && (
                             <div className="flex flex-wrap gap-3 mt-6">
+                                {isBiddingRestricted && (
+                                    <button 
+                                        onClick={() => onNavigate('marketplace')}
+                                        className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-2 animate-pulse hover:bg-red-500/30 transition-all cursor-pointer group/pill"
+                                    >
+                                        <ShieldAlert size={14} className="text-red-500 group-hover/pill:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">{isAr ? 'تقديم العروض مقيّد' : 'Bidding Restricted'}</span>
+                                    </button>
+                                )}
                                 {withdrawalsFrozen && (
                                     <button 
                                         onClick={() => onNavigate('wallet')}

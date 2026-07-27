@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
-import { getOfferModificationMetrics, isActiveMerchantOffer } from '../../../utils/merchantOffers';
+import { getOfferModificationMetrics, getMonthlyOfferDeletionMetrics, isActiveMerchantOffer } from '../../../utils/merchantOffers';
 import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
 import { useVendorStore } from '../../../stores/useVendorStore';
@@ -172,6 +172,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     // Real offers from API (persistent across page reloads)
     const [myOffers, setMyOffers] = useState<any[]>([]);
     const [isBlockedFromOrder, setIsBlockedFromOrder] = useState(false);
+    const [blockedPartIds, setBlockedPartIds] = useState<string[]>([]);
+    const [partDeletionCounts, setPartDeletionCounts] = useState<Record<string, number>>({});
+    const [editOfferId, setEditOfferId] = useState<string | null>(null);
 
     // Offer Lock/Cancel States
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -211,6 +214,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 : (response?.activeOffers ?? []);
             setIsBlockedFromOrder(
                 Array.isArray(response) ? false : Boolean(response?.isBlockedFromOrder),
+            );
+            setBlockedPartIds(
+                Array.isArray(response) ? [] : (response?.blockedPartIds ?? []),
+            );
+            setPartDeletionCounts(
+                Array.isArray(response) ? {} : (response?.partDeletionCounts ?? {}),
             );
             const mappedOffers = (offersList || []).map((o: any) => ({
                 ...o,
@@ -527,7 +536,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     const modificationMetrics = useMemo(
         () => getOfferModificationMetrics(performance),
-        [performance.editCount, performance.withdrawalCount, performance.totalOffersSent],
+        [
+            performance.editCount,
+            performance.withdrawalCount,
+            performance.totalOffersSent,
+            performance.monthlyOfferDeletionCount,
+            performance.offerBiddingRestrictedUntil,
+        ],
+    );
+    const monthlyDeletionMetrics = useMemo(
+        () => getMonthlyOfferDeletionMetrics(performance),
+        [
+            performance.monthlyOfferDeletionCount,
+            performance.monthlyDeletionLimit,
+            performance.monthlyDeletionWarnAt,
+            performance.offerBiddingRestrictedUntil,
+        ],
     );
 
     const getPaymentDeadline = (dateStr?: string) => {
@@ -751,6 +775,41 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             (isAr
                                 ? 'لقد انسحبت من هذا الطلب ولا يمكنك تقديم عرض جديد عليه.'
                                 : 'You have withdrawn from this request and cannot submit a new offer on it.')}
+                    </p>
+                </motion.div>
+            )}
+
+            {monthlyDeletionMetrics.isBiddingRestricted && (
+                <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/30"
+                >
+                    <Shield size={20} className="text-red-400 shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-200/90 leading-relaxed">
+                        <p className="font-bold mb-1">
+                            {isAr ? 'تقييد تقديم العروض نشط' : 'Offer bidding restricted'}
+                        </p>
+                        <p>
+                            {isAr
+                                ? `لا يمكنك تقديم عروض جديدة حتى ${monthlyDeletionMetrics.restrictedUntil?.toLocaleString('ar-EG') || '—'}. باقي اللوحة تعمل بشكل طبيعي.`
+                                : `You cannot submit new offers until ${monthlyDeletionMetrics.restrictedUntil?.toISOString() || '—'}. The rest of your dashboard still works.`}
+                        </p>
+                    </div>
+                </motion.div>
+            )}
+
+            {monthlyDeletionMetrics.nearLimit && !monthlyDeletionMetrics.isBiddingRestricted && (
+                <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-orange-500/10 border border-orange-500/30"
+                >
+                    <AlertTriangle size={20} className="text-orange-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-orange-200/90 leading-relaxed">
+                        {isAr
+                            ? `تحذير: وصلت إلى ${monthlyDeletionMetrics.count}/${monthlyDeletionMetrics.limit} حذف/انسحاب هذا الشهر. متبقي ${monthlyDeletionMetrics.remaining}. عند 50 سيتم تقييد التقديم 5 أيام.`
+                            : `Warning: ${monthlyDeletionMetrics.count}/${monthlyDeletionMetrics.limit} deletions/withdrawals this month. ${monthlyDeletionMetrics.remaining} remaining. At 50, bidding is restricted for 5 days.`}
                     </p>
                 </motion.div>
             )}
@@ -1234,6 +1293,25 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                             </div>
                                         )}
 
+                                        {(partDeletionCounts[part.id] > 0 || blockedPartIds.includes(part.id)) && (
+                                            <div className="mt-8 mb-1 flex flex-wrap gap-2">
+                                                {partDeletionCounts[part.id] > 0 && (
+                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-orange-500/10 text-orange-300 border border-orange-500/20">
+                                                        {isAr
+                                                            ? `حذف على هذه القطعة: ${partDeletionCounts[part.id]}`
+                                                            : `Deletions on this part: ${partDeletionCounts[part.id]}`}
+                                                    </span>
+                                                )}
+                                                {blockedPartIds.includes(part.id) && (
+                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                                        {isAr
+                                                            ? 'انسحاب طوعي — لا إعادة تقديم على القطعة'
+                                                            : 'Voluntarily withdrawn — cannot re-bid on this part'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="mt-4 flex flex-col md:flex-row gap-6">
 
                                             {/* Media Preview Area */}
@@ -1586,18 +1664,32 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                 </div>
                                                                             )}
                                                                             {gov.isFreeCancelWindow && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setOfferToCancel(partOffer);
-                                                                                        setIsCancelDialogOpen(true);
-                                                                                    }}
-                                                                                    className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-white/5 hover:bg-white/10 text-white/70 border border-white/10"
-                                                                                >
-                                                                                    <Edit3 size={14} />
-                                                                                    {isAr ? 'إلغاء وتعديل العرض' : 'Cancel & Edit'}
-                                                                                </button>
+                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setEditOfferId(partOffer.id);
+                                                                                            setIsBidding(true);
+                                                                                        }}
+                                                                                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/25"
+                                                                                    >
+                                                                                        <Edit3 size={14} />
+                                                                                        {isAr ? 'تعديل العرض' : 'Edit Offer'}
+                                                                                    </button>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setOfferToCancel(partOffer);
+                                                                                            setIsCancelDialogOpen(true);
+                                                                                        }}
+                                                                                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-white/5 hover:bg-white/10 text-white/70 border border-white/10"
+                                                                                    >
+                                                                                        <XCircle size={14} />
+                                                                                        {isAr ? 'إلغاء وحذف العرض' : 'Cancel & Delete Offer'}
+                                                                                    </button>
+                                                                                </div>
                                                                             )}
                                                                             {gov.isVoluntaryWithdrawWindow && (
                                                                                 <button
@@ -1610,7 +1702,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                     className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20"
                                                                                 >
                                                                                     <AlertTriangle size={14} />
-                                                                                    {exploreOfferT?.voluntaryWithdrawBtn || (isAr ? 'إلغاء والانسحاب من الطلب' : 'Cancel & Withdraw from Request')}
+                                                                                    {exploreOfferT?.voluntaryWithdrawBtn || (isAr ? 'تراجع' : 'Withdraw')}
                                                                                 </button>
                                                                             )}
                                                                         </>
@@ -2228,6 +2320,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                         );
                                     }
 
+                                    if (monthlyDeletionMetrics.isBiddingRestricted) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 rounded-xl font-bold text-red-400/70 bg-red-500/5 cursor-not-allowed border border-red-500/20 flex flex-col items-center justify-center gap-1 leading-tight px-4"
+                                            >
+                                                <span>{isAr ? 'تقييد تقديم العروض نشط' : 'Offer bidding restricted'}</span>
+                                            </button>
+                                        );
+                                    }
+
                                     if (isBlockedFromOrder) {
                                         return (
                                             <button
@@ -2330,8 +2433,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.editWindow ||
                                             (isAr
-                                                ? 'لديك 15 دقيقة لتعديل أو حذف عرضك بعد الإرسال مباشرة.'
-                                                : 'You have 15 minutes to edit or delete your offer immediately after submission.')}
+                                                ? 'خلال 15 دقيقة: تعديل مجاني بدون عدّاد حذف، أو إلغاء وحذف (يعدّ في الـ 50 مع السماح بإعادة التقديم على نفس القطعة).'
+                                                : 'Within 15m: free edit (no deletion count), or cancel & delete (counts toward 50; re-bid on same part allowed).')}
                                     </div>
                                 </div>
                             </div>
@@ -2342,12 +2445,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <AlertTriangle size={16} />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'الانسحاب الطوعي من الطلب' : 'Voluntary Request Withdrawal'}</div>
+                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'تراجع بعد 15 دقيقة' : 'Withdraw after 15 minutes'}</div>
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.voluntaryWindow ||
                                             (isAr
-                                                ? 'بعد 15 دقيقة يمكنك الانسحاب الطوعي حتى ساعة قبل اختيار العميل. الانسحاب يمنعك من التقديم على هذا الطلب فقط.'
-                                                : 'After 15 minutes you may withdraw until 1 hour before customer selection. Blocks you from this request only.')}
+                                                ? 'بعد 15 دقيقة يمكنك التراجع حتى ساعة قبل اختيار العميل. التراجع يعدّ في الـ 50 ويمنع إعادة التقديم على نفس القطعة فقط.'
+                                                : 'After 15 minutes you may withdraw until 1h before selection. Counts toward 50 and blocks re-bidding on that part only.')}
                                     </div>
                                 </div>
                             </div>
@@ -2368,47 +2471,81 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 </div>
                             </div>
 
-                            {/* 5% Violation Rule */}
+                            {/* Monthly 50 deletion quota */}
                             <div className="mt-4 pt-4 border-t border-white/5">
                                 <div className="flex items-center justify-between text-[10px] mb-2">
-                                    <span className="text-white/40 uppercase font-bold">{isAr ? 'معدل التعديل الحالي' : 'Current Mod Rate'}</span>
+                                    <span className="text-white/40 uppercase font-bold">{isAr ? 'حذف هذا الشهر' : 'Deletions this month'}</span>
                                     <span
-                                        className={`font-bold ${modificationMetrics.exceedsThreshold ? 'text-red-400' : 'text-gold-400'}`}
+                                        className={`font-bold ${monthlyDeletionMetrics.nearLimit ? 'text-red-400' : 'text-gold-400'}`}
                                     >
-                                        {modificationMetrics.hasSample
-                                            ? `${modificationMetrics.percentLabel}%`
-                                            : '0%'}
+                                        {monthlyDeletionMetrics.count} / {monthlyDeletionMetrics.limit}
                                     </span>
                                 </div>
                                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative">
-                                    <div className="absolute inset-y-0 left-[100%] w-px bg-red-500/40 -translate-x-px z-10" title="5%" />
+                                    <div className="absolute inset-y-0 left-[70%] w-px bg-orange-500/50 -translate-x-px z-10" title="35 warn" />
                                     <motion.div
-                                        key={`${modificationMetrics.modActions}-${modificationMetrics.total}`}
+                                        key={`monthly-${monthlyDeletionMetrics.count}`}
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${modificationMetrics.barPercent}%` }}
+                                        animate={{ width: `${monthlyDeletionMetrics.barPercent}%` }}
                                         transition={{ duration: 0.6, ease: 'easeOut' }}
-                                        className={`h-full transition-colors ${modificationMetrics.exceedsThreshold ? 'bg-red-500' : 'bg-gold-500/40'}`}
+                                        className={`h-full transition-colors ${monthlyDeletionMetrics.atLimit ? 'bg-red-500' : monthlyDeletionMetrics.nearLimit ? 'bg-orange-500' : 'bg-gold-500/40'}`}
                                     />
                                 </div>
                                 <p className="text-[9px] text-white/30 mt-2">
-                                    {modificationMetrics.hasSample ? (
-                                        isAr ? (
-                                            <>
-                                                {modificationMetrics.modActions} تعديل/سحب من أصل{' '}
-                                                {modificationMetrics.total} عرض · الحد 5%
-                                            </>
-                                        ) : (
-                                            <>
-                                                {modificationMetrics.modActions} mods/withdrawals of{' '}
-                                                {modificationMetrics.total} offers · 5% cap
-                                            </>
-                                        )
-                                    ) : isAr ? (
-                                        'يُحسب المعدل بعد تقديم أول عرض.'
-                                    ) : (
-                                        'Rate is calculated after your first submitted offer.'
-                                    )}
+                                    {isAr
+                                        ? `عند 35 تحذير · عند 50 تقييد تقديم عروض 5 أيام. متبقي ${monthlyDeletionMetrics.remaining}.`
+                                        : `Warn at 35 · restrict bidding 5 days at 50. ${monthlyDeletionMetrics.remaining} remaining.`}
                                 </p>
+                            </div>
+
+                            {/* Rules notes */}
+                            <div className="mt-4 pt-4 border-t border-white/5 space-y-2 rounded-xl bg-white/[0.03] p-3 border border-white/5">
+                                <div className="text-[10px] font-black text-gold-400/80 uppercase tracking-widest">
+                                    {isAr ? 'ملاحظات هامة' : 'Important notes'}
+                                </div>
+                                <ul className="text-[10px] text-white/45 leading-relaxed space-y-1.5 list-disc pr-4 pl-4">
+                                    <li>
+                                        {isAr
+                                            ? 'خلال 15 دقيقة: «تعديل العرض» يحدّث السعر/المواصفات بدون عدّاد حذف. «إلغاء وحذف» يعدّ ضمن الـ 50 ويسمح بإعادة التقديم على نفس القطعة.'
+                                            : 'Within 15m: Edit updates the offer with no deletion count. Cancel & Delete counts toward 50 and allows re-bidding on the same part.'}
+                                    </li>
+                                    <li>
+                                        {isAr
+                                            ? 'بعد 15 دقيقة: «تراجع» يعدّ ضمن الـ 50 ويمنع إعادة التقديم على نفس القطعة حتى نهاية جمع العروض (مفرد أو مجمع).'
+                                            : 'After 15m: Withdraw counts toward 50 and blocks re-bidding on that part until collection ends (single or multi-part).'}
+                                    </li>
+                                    <li>
+                                        {isAr
+                                            ? 'كل حذف/انسحاب يُحسب على القطعة (+1) ضمن سقف 50 شهرياً للمتجر، ويتجدد كل شهر.'
+                                            : 'Each delete/withdraw counts per part (+1) toward the store’s monthly cap of 50, which resets every month.'}
+                                    </li>
+                                    <li>
+                                        {isAr
+                                            ? 'عند 50: تقييد تقديم عروض جديد لمدة 5 أيام (أو أطول من الأدمن). باقي اللوحة والطلبات النشطة تبقى متاحة.'
+                                            : 'At 50: new-offer bidding is restricted for 5 days (or longer via admin). The rest of the dashboard and active orders stay available.'}
+                                    </li>
+                                </ul>
+                                {Object.keys(partDeletionCounts).length > 0 && (
+                                    <div className="pt-2 border-t border-white/5 space-y-1">
+                                        <div className="text-[10px] font-bold text-white/50">
+                                            {isAr ? 'حذف على قطع هذا الطلب' : 'Deletions on parts in this order'}
+                                        </div>
+                                        {(order.parts || []).map((p: any) =>
+                                            partDeletionCounts[p.id] ? (
+                                                <div key={p.id} className="flex justify-between text-[10px] text-white/40">
+                                                    <span className="truncate max-w-[70%]">{p.name || p.id}</span>
+                                                    <span className="font-mono text-orange-300">{partDeletionCounts[p.id]}</span>
+                                                </div>
+                                            ) : null,
+                                        )}
+                                        {partDeletionCounts.__order__ ? (
+                                            <div className="flex justify-between text-[10px] text-white/40">
+                                                <span>{isAr ? 'طلب (بدون قطعة)' : 'Order (no part)'}</span>
+                                                <span className="font-mono text-orange-300">{partDeletionCounts.__order__}</span>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </GlassCard>
@@ -2494,13 +2631,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 </div>
                                 <h3 className="text-xl font-bold text-white">
                                     {exploreOfferT?.voluntaryWithdrawDialog?.title ||
-                                        (isAr ? 'إلغاء والانسحاب من الطلب؟' : 'Cancel & Withdraw from Request?')}
+                                        (isAr ? 'تراجع عن العرض؟' : 'Withdraw this offer?')}
                                 </h3>
                                 <p className="text-sm text-white/50 leading-relaxed px-2">
                                     {exploreOfferT?.voluntaryWithdrawDialog?.body ||
                                         (isAr
-                                            ? 'إذا انسحبت بإرادتك من هذا الطلب، سيُعتبر ملغياً بالنسبة لك ولن تتمكن من تقديم أي عرض آخر عليه. يمكنك التقديم على طلبات أخرى.'
-                                            : 'If you voluntarily withdraw, this request is cancelled for you and you cannot submit another offer on it. You may still bid on other requests.')}
+                                            ? 'التراجع يعد ضمن الحد الشهري (50) ويمنعك من إعادة التقديم على نفس القطعة حتى نهاية جمع العروض. يمكنك التقديم على قطع/طلبات أخرى.'
+                                            : 'Withdrawal counts toward the monthly limit (50) and blocks re-bidding on this part until collection ends. You may still bid on other parts/requests.')}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 mt-8 relative z-10">
@@ -2564,8 +2701,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 </h3>
                                 <p className="text-sm text-white/50 leading-relaxed px-2">
                                     {isAr 
-                                        ? 'سيتم حذف هذا العرض المسعر نهائياً من العميل ولا يمكن التراجع. إذا أردت تعديل السعر أو المواصفات، يجب حذفه ثم تقديم عرض جديد تماماً.' 
-                                        : 'This offer will be permanently deleted and removed from the customer list. To edit, you must cancel and issue a fresh offer.'}
+                                        ? 'سيتم حذف العرض ويُحسب ضمن الحد الشهري (50). يمكنك تقديم عرض جديد على نفس القطعة طالما مهلة الـ 15 دقيقة / باب الجمع ما زال مفتوحاً. للتعديل دون حذف استخدم زر «تعديل العرض».' 
+                                        : 'The offer will be deleted and count toward the monthly limit (50). You may re-submit on the same part while collection is open. To change price without deleting, use Edit Offer.'}
                                 </p>
                             </div>
 
@@ -2660,7 +2797,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             {/* EMBEDDED SUBMIT OFFER MODAL FORM */}
             <SubmitOfferModal
                 isOpen={isBidding}
-                onClose={() => setIsBidding(false)}
+                onClose={() => {
+                    setIsBidding(false);
+                    setEditOfferId(null);
+                }}
+                editOfferId={editOfferId}
+                blockedPartIds={blockedPartIds}
                 requestDetails={
                     order
                         ? {
@@ -2679,6 +2821,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 existingOffers={myOffers} // Pass offers back so modal enforces locks
                 onSubmit={async () => {
                     setIsBidding(false);
+                    setEditOfferId(null);
                     await fetchDashboardStats();
                     await fetchMyOffers();
                 }}

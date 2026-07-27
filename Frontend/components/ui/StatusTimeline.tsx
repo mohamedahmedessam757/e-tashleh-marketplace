@@ -102,7 +102,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
         <div className="relative z-[1] flex h-10 w-full">
           {steps.map((step, idx) => {
-            const isCompleted = idx <= activeIndex && !isCancelled;
+            const isCompleted = idx < activeIndex && !isCancelled;
             const isCurrent = idx === activeIndex && !isCancelled;
             const isCurrentDelayed = isCurrent && isDelayed;
 

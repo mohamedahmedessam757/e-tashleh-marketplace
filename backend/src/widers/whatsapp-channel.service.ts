@@ -421,6 +421,31 @@ export class WhatsAppChannelService {
                 fields.status_detail = statusDetail;
             }
 
+            // txn_offer_restriction_vendor_ar_v2:
+            // {{1}} name · {{2}} store_name · {{3}} status_detail
+            if (family.startsWith('txn_offer_restriction_')) {
+                const metaStore =
+                    typeof params.metadata?.store_name === 'string'
+                        ? params.metadata.store_name
+                        : typeof params.metadata?.storeName === 'string'
+                          ? params.metadata.storeName
+                          : '';
+                fields.store_name = truncateWhatsAppParam(
+                    metaStore.trim() || user.store?.name || user.name || 'متجر',
+                    60,
+                );
+                const metaDetailKey = lang === 'en' ? 'status_detail_en' : 'status_detail';
+                const metaDetailRaw =
+                    typeof params.metadata?.[metaDetailKey] === 'string'
+                        ? String(params.metadata[metaDetailKey]).trim()
+                        : typeof params.metadata?.status_detail === 'string'
+                          ? params.metadata.status_detail.trim()
+                          : '';
+                if (metaDetailRaw) {
+                    fields.status_detail = truncateWhatsAppParam(metaDetailRaw, 500);
+                }
+            }
+
             const result = await this.sendByFamily(family, {
                 phone: normalizedPhone,
                 language: lang,

@@ -12,6 +12,10 @@ import { supabase } from '../../../services/supabase';
 interface SubmitOfferModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** When set, modal PATCHes this offer instead of creating */
+    editOfferId?: string | null;
+    /** Parts blocked after voluntary withdraw */
+    blockedPartIds?: string[];
     requestDetails: {
         id: string | number;
         car: string;
@@ -97,6 +101,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
     calcTitle,
     merchantNetLabel,
     finalPriceLabel,
+    shippingLabel,
 }: {
     calculations: QuoteCalcResult;
     basePriceDisplay: string;
@@ -105,6 +110,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
     calcTitle: string;
     merchantNetLabel: string;
     finalPriceLabel: string;
+    shippingLabel: string;
 }) {
     return (
         <div className="bg-[#12110F] rounded-3xl border border-gold-500/20 p-6 relative overflow-hidden shadow-2xl">
@@ -132,11 +138,22 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
                         <span className="text-[10px] text-white/20 ml-1">AED</span>
                     </span>
                 </div>
+                <div className="flex justify-between items-center group">
+                    <span className="text-xs font-bold text-white/30 uppercase tracking-wider group-hover:text-white/60 transition-colors">
+                        {shippingLabel}
+                    </span>
+                    <span
+                        className={`font-mono text-sm text-white/80 font-bold transition-opacity ${isPriceSyncing ? 'opacity-60' : 'opacity-100'}`}
+                    >
+                        {calculations.shipping.toLocaleString()}{' '}
+                        <span className="text-[10px] text-white/20 ml-1">AED</span>
+                    </span>
+                </div>
                 <div className="p-6 rounded-[2rem] bg-gradient-to-br from-gold-500/10 via-gold-500/[0.02] to-transparent border border-gold-500/20 shadow-inner">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black text-gold-500 uppercase tracking-widest">{finalPriceLabel}</span>
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                             <span className="text-[7px] text-green-500 font-black uppercase tracking-tighter">Live Price</span>
                         </div>
                     </div>
@@ -160,7 +177,14 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
     );
 });
 
-const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, requestDetails, existingOffers, onSubmit }) => {
+const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
+    onClose,
+    requestDetails,
+    existingOffers,
+    onSubmit,
+    editOfferId = null,
+    blockedPartIds = [],
+}) => {
     const { t, language } = useLanguage();
     const shipmentTypes = useAdminStore((s) => s.systemConfig.logistics?.shipmentTypes) ?? [];
     const financialConfig = useAdminStore((s) => s.systemConfig.financial);
@@ -248,6 +272,22 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
             };
         };
 
+        if (editOfferId) {
+            const offerToEdit =
+                safeExistingOffers.find((o: any) => String(o.id) === String(editOfferId)) ||
+                Array.from(existingOfferMap.values()).find((o: any) => String(o.id) === String(editOfferId));
+            if (offerToEdit) {
+                const partId =
+                    offerToEdit.orderPartId ||
+                    offerToEdit.order_part_id ||
+                    (parts.length === 1 ? parts[0].id || 'single' : 'legacy');
+                setSelectedPartIds(new Set([partId]));
+                setActivePartId(partId);
+                setFormDataMap({ [partId]: buildFormFromOffer(offerToEdit) });
+                return;
+            }
+        }
+
         if (parts.length === 1) {
             const partId = parts[0].id || 'single';
             const existingOffer = existingOfferMap.get(partId);
@@ -258,15 +298,19 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
             const preSelectedIds = new Set<string>();
             const map: Record<string, PartFormData> = {};
             parts.forEach((p: any) => {
-                const existingOffer = existingOfferMap.get(p.id);
-                // We use existingOffer to know it's locked, but we don't prefill or select it 
-                // because editing requires cancellation first in 2026 UX.
                 map[p.id] = { ...DEFAULT_FORM };
             });
             // Auto-select first available part that:
             // 1. the merchant has NO existing offer on
             // 2. is not awarded to someone else
-            const availableParts = parts.filter((p: any) => !existingOfferMap.has(p.id) && !awardedToOthersMap.get(p.id));
+            // 3. is not voluntarily withdrawn (blocked)
+            const blocked = new Set(blockedPartIds || []);
+            const availableParts = parts.filter(
+                (p: any) =>
+                    !existingOfferMap.has(p.id) &&
+                    !awardedToOthersMap.get(p.id) &&
+                    !blocked.has(p.id),
+            );
             if (availableParts.length > 0) {
                 preSelectedIds.add(availableParts[0].id);
             }
@@ -280,7 +324,10 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
             setActivePartId(partId);
             setFormDataMap({ [partId]: existingOffer ? buildFormFromOffer(existingOffer) : { ...DEFAULT_FORM } });
         }
-    }, [requestDetails?.id, existingOfferMap, parts, awardedToOthersMap, safeExistingOffers]);
+        // Intentionally omit existingOfferMap / safeExistingOffers from deps so realtime
+        // offer refreshes do not wipe in-progress form input while the modal is open.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [requestDetails?.id, editOfferId, parts.length, blockedPartIds?.join?.(',') ?? '']);
 
     // Get active form data
     const activeForm = activePartId ? (formDataMap[activePartId] || DEFAULT_FORM) : DEFAULT_FORM;
@@ -325,7 +372,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
         if (error) setError(null);
     }, [activePartId, error, getShipmentTypeById]);
 
-    // Shared Calculation Logic for 2026 Resiliency
+    // Shared Calculation Logic — matches admin logistics (weight brackets only when isWeightBound)
     const getQuoteCalculations = useCallback((basePriceStr: string, weightStr: string, partType: string, cylinders?: number) => {
         const price = parseFloat(basePriceStr) || 0;
         const w = parseFloat(weightStr) || 0;
@@ -337,21 +384,21 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
             if (shipmentType.hasCylinders) {
                 const rate = (shipmentType.cylinderRates || []).find((r: any) => r.cylinders === cylinders);
                 if (rate) shippingCost = rate.price;
-            } else {
-                shippingCost = shipmentType.basePrice || 0;
-            }
-
-            if (!shipmentType.hasCylinders && shipmentType.isWeightBound && w > 0) {
-                const brackets = shipmentType.weightBrackets || [];
-                const bracket = brackets.find((b: any) => w >= b.minWeight && w <= b.maxWeight);
-                if (bracket) {
-                    shippingCost += bracket.price || 0;
-                } else if (brackets.length > 0) {
-                    const sorted = [...brackets].sort((a, b) => b.maxWeight - a.maxWeight);
-                    if (w > sorted[0].maxWeight) {
-                        shippingCost += sorted[0].price || 0;
+            } else if (shipmentType.isWeightBound) {
+                if (w > 0) {
+                    const brackets = shipmentType.weightBrackets || [];
+                    const bracket = brackets.find((b: any) => w >= b.minWeight && w <= b.maxWeight);
+                    if (bracket) {
+                        shippingCost = bracket.price || 0;
+                    } else if (brackets.length > 0) {
+                        const sorted = [...brackets].sort((a, b) => b.maxWeight - a.maxWeight);
+                        if (w > sorted[0].maxWeight) {
+                            shippingCost = sorted[0].price || 0;
+                        }
                     }
                 }
+            } else {
+                shippingCost = shipmentType.basePrice || 0;
             }
         }
 
@@ -380,6 +427,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
         (partId: string) => {
             if (awardedToOthersMap.get(partId)) return;
             if (existingOfferMap.has(partId)) return;
+            if ((blockedPartIds || []).includes(partId)) return;
 
             setSelectedPartIds((prev) => {
                 const next = new Set(prev);
@@ -544,15 +592,22 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                     cylinders: normalizedCylinders,
                 };
 
-                // CREATE — Always create new (Edit is locked, requires cancel first)
-                let resultData = await offersApi.create({
-                    ...editableFields,
-                    orderId: String(requestDetails?.id),
-                    orderPartId: partId !== 'legacy' && partId !== 'single' ? partId : undefined,
-                });
+                // CREATE or UPDATE (edit within 15m window)
+                let resultData;
+                if (editOfferId && existingOffer && String(existingOffer.id) === String(editOfferId)) {
+                    resultData = await offersApi.update(editOfferId, editableFields);
+                } else if (editOfferId && selectedParts.length === 1) {
+                    resultData = await offersApi.update(editOfferId, editableFields);
+                } else {
+                    resultData = await offersApi.create({
+                        ...editableFields,
+                        orderId: String(requestDetails?.id),
+                        orderPartId: partId !== 'legacy' && partId !== 'single' ? partId : undefined,
+                    });
+                }
 
                 // Optimistic UI Update
-                if (requestDetails?.id) {
+                if (requestDetails?.id && !editOfferId) {
                     addOfferToOrder(String(requestDetails.id), {
                         storeId: resultData?.store?.id || resultData?.storeId || 'my-store-session',
                         offerNumber: resultData?.offerNumber || '---',
@@ -634,7 +689,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[3px]"
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85"
             >
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -682,14 +737,16 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                     const isActive = activePartId === p.id;
                                     const hasExistingOffer = existingOfferMap.has(p.id);
                                     const isAwardedToOther = awardedToOthersMap.get(p.id);
+                                    const isPartBlocked = (blockedPartIds || []).includes(p.id);
+                                    const isLocked = isAwardedToOther || (hasExistingOffer && !editOfferId) || isPartBlocked;
 
                                     return (
                                         <button
                                             key={p.id}
                                             type="button"
-                                            disabled={isAwardedToOther || hasExistingOffer}
+                                            disabled={isLocked || !!editOfferId}
                                             onClick={() => {
-                                                if (isAwardedToOther || hasExistingOffer) return;
+                                                if (isLocked || editOfferId) return;
                                                 togglePart(p.id);
                                                 if (!isSelected) setActivePartId(p.id);
                                                 else if (isActive && selectedPartIds.size > 1) {
@@ -698,7 +755,9 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                                 }
                                             }}
                                             className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                                                isAwardedToOther
+                                                isPartBlocked
+                                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400/70 cursor-not-allowed'
+                                                    : isAwardedToOther
                                                     ? 'bg-red-500/5 border-red-500/10 text-red-400/50 cursor-not-allowed opacity-60'
                                                 : hasExistingOffer
                                                     ? 'bg-green-500/5 border-green-500/20 text-green-400/60 cursor-not-allowed opacity-75'
@@ -724,7 +783,11 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                                 />
                                             )}
                                             <span className="truncate max-w-[120px]">{p.name}</span>
-                                            {isAwardedToOther ? (
+                                            {isPartBlocked ? (
+                                                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+                                                    {isAr ? 'انسحاب' : 'Withdrawn'}
+                                                </span>
+                                            ) : isAwardedToOther ? (
                                                 <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20 whitespace-nowrap">
                                                     {isAr ? 'تم الاختيار' : 'Sold'}
                                                 </span>
@@ -837,6 +900,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                     calcTitle={t.dashboard.merchant.offerModal.calc.title}
                                     merchantNetLabel={t.dashboard.merchant.offerModal.calc.merchantNet}
                                     finalPriceLabel={t.dashboard.merchant.offerModal.calc.finalCustomerPrice}
+                                    shippingLabel={t.dashboard.merchant.offerModal.calc.shipping || (isAr ? 'تكلفة الشحن' : 'Shipping')}
                                 />
                             </div>
 
@@ -946,18 +1010,12 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                     })()}
 
                                     {/* 2. Weight */}
-                                    <AnimatePresence>
-                                        {(() => {
+                                    {(() => {
                                             const activeType = shipmentTypeOptions.find((t: any) => t.id === activeForm.partType);
                                             if (!activeType?.isWeightBound) return null;
                                             
                                             return (
-                                                <motion.div
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden"
-                                                >
+                                                <div className="overflow-hidden">
                                                     <label className="block text-xs text-white/60 mb-2 uppercase tracking-wider">
                                                         {t.dashboard.merchant.offerModal.weightLabel} <span className="text-red-500">*</span>
                                                     </label>
@@ -976,10 +1034,9 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                                             {t.dashboard.merchant.offerModal.weightUnit}
                                                         </div>
                                                     </div>
-                                                </motion.div>
+                                                </div>
                                             );
-                                        })()}
-                                    </AnimatePresence>
+                                    })()}
 
                                     <div className="h-px bg-white/5 my-4" />
 
@@ -1036,14 +1093,8 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                             </button>
                                         </div>
 
-                                        <AnimatePresence>
-                                            {activeForm.hasWarranty && (
-                                                <motion.div
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden"
-                                                >
+                                        {activeForm.hasWarranty && (
+                                                <div className="overflow-hidden">
                                                     <label className="block text-xs text-white/40 mb-2 uppercase tracking-wider mt-2">
                                                         {t.dashboard.merchant.offerModal.warrantyDurationLabel}
                                                     </label>
@@ -1061,11 +1112,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
 
                                                     {/* Custom Warranty Input */}
                                                     {activeForm.warrantyDuration === 'custom' && (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, y: -5 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            className="mt-2"
-                                                        >
+                                                        <div className="mt-2">
                                                             <input
                                                                 type="text"
                                                                 placeholder={isAr ? 'مثال: 45 يوم أو شهرين' : 'e.g., 45 days or 2 months'}
@@ -1073,11 +1120,10 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
                                                                 onChange={(e) => setCustomWarranties(prev => ({ ...prev, [activePartId!]: e.target.value }))}
                                                                 className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white text-sm focus:border-gold-500 outline-none placeholder-white/20"
                                                             />
-                                                        </motion.div>
+                                                        </div>
                                                     )}
-                                                </motion.div>
+                                                </div>
                                             )}
-                                        </AnimatePresence>
                                     </div>
 
                                     {/* 5. Notes */}
@@ -1199,7 +1245,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({ onClose, reque
             {/* Lightbox Overlay */}
             {activeMedia && (
                 <div
-                    className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-[3px]"
+                    className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90"
                     onClick={() => setActiveMedia(null)}
                 >
                     <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">

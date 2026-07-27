@@ -35,8 +35,13 @@ export class NotificationsService {
         }
 
         // 1. Rate Limiting: Max 20 per minute per user
-        if (await this.isRateLimited(data.recipientId)) {
-            this.logger.warn(`Rate limit reached for user ${data.recipientId}. Notification suppressed.`);
+        // ORDER_CREATED merchant fan-out may legitimately exceed 20 — use higher cap for that event only.
+        const waEvent = data.metadata?.waEvent != null ? String(data.metadata.waEvent) : '';
+        const isOrderCreatedFanout = waEvent === 'ORDER_CREATED';
+        if (await this.isRateLimited(data.recipientId, isOrderCreatedFanout ? 100 : 20)) {
+            this.logger.warn(
+                `Rate limit reached for user ${data.recipientId} (waEvent=${waEvent || 'n/a'}). Notification suppressed.`,
+            );
             return null;
         }
 
@@ -88,7 +93,7 @@ export class NotificationsService {
         return notification;
     }
 
-    private async isRateLimited(userId: string): Promise<boolean> {
+    private async isRateLimited(userId: string, maxPerMinute = 20): Promise<boolean> {
         const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
         const count = await this.prisma.notification.count({
             where: {
@@ -96,7 +101,7 @@ export class NotificationsService {
                 createdAt: { gte: oneMinuteAgo }
             }
         });
-        return count >= 20;
+        return count >= maxPerMinute;
     }
 
     async findAll(userId: string) {

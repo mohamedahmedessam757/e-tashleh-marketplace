@@ -89,7 +89,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
             {/* Filter groups */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Price sort — segmented control */}
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3 backdrop-blur-sm">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <ArrowUpDown size={12} className="text-gold-500/70" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
@@ -109,10 +109,8 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                                     }`}
                                 >
                                     {active && (
-                                        <motion.span
-                                            layoutId="offer-price-sort-pill"
+                                        <span
                                             className="absolute inset-0 rounded-lg bg-gradient-to-b from-gold-400 to-gold-600 shadow-[0_2px_12px_rgba(212,175,55,0.35)]"
-                                            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                                         />
                                     )}
                                     <span className="relative z-10">{isAr ? opt.ar : opt.en}</span>
@@ -123,7 +121,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                 </div>
 
                 {/* Warranty — chip row */}
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3 backdrop-blur-sm">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <Shield size={12} className="text-gold-500/70" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
@@ -202,6 +200,7 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     const [priceSort, setPriceSort] = useState<OfferPriceSort>('default');
     const [warrantyFilter, setWarrantyFilter] = useState<OfferWarrantyFilter>('all');
     const [acceptLoadingOfferId, setAcceptLoadingOfferId] = React.useState<string | null>(null);
+    const [acceptSuccessMsg, setAcceptSuccessMsg] = React.useState<string | null>(null);
     const isRejectedOfferStatus = (status?: string) => String(status || '').toUpperCase() === 'REJECTED';
 
     const baseOffers = useMemo(
@@ -223,17 +222,27 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     // Memoize handlers to prevent OfferCard re-renders
     const handleAccept = useCallback(async (offer: any) => {
         setAcceptLoadingOfferId(String(offer.id));
+        setAcceptSuccessMsg(null);
         try {
             await onAcceptOffer(offer);
+            setAcceptSuccessMsg(
+                isAr
+                    ? 'تم قبول العرض بنجاح. يمكنك متابعة باقي القطع من هنا.'
+                    : 'Offer accepted successfully. You can continue with other parts here.',
+            );
         } finally {
             setAcceptLoadingOfferId(null);
         }
-    }, [onAcceptOffer]);
+    }, [onAcceptOffer, isAr]);
 
     const handleChat = useCallback((offer: any) => {
         onChat(offer);
         onClose();
     }, [onChat, onClose]);
+
+    React.useEffect(() => {
+        if (!isOpen) setAcceptSuccessMsg(null);
+    }, [isOpen]);
 
     return (
         <AnimatePresence>
@@ -246,16 +255,16 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+                        className="fixed inset-0 z-[60] bg-black/70"
                     />
 
                     {/* Full-Screen Page Modal */}
                     <motion.div
                         key="drawer"
-                        initial={{ opacity: 0, scale: 0.96, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96, y: 20 }}
-                        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
                         className="fixed inset-0 md:inset-6 lg:inset-10 z-[70] flex flex-col bg-[#13110E] md:rounded-3xl border border-white/5 shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
@@ -315,6 +324,19 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                             hasActiveFilters={hasActiveFilters}
                         />
 
+                        {acceptSuccessMsg && (
+                            <div className="mx-4 md:mx-8 mt-4 p-4 rounded-2xl border border-green-500/30 bg-green-500/10 text-green-300 text-sm font-bold flex items-center justify-between gap-3">
+                                <span>{acceptSuccessMsg}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setAcceptSuccessMsg(null)}
+                                    className="text-[11px] uppercase tracking-wider text-green-200/70 hover:text-white shrink-0"
+                                >
+                                    {isAr ? 'إخفاء' : 'Dismiss'}
+                                </button>
+                            </div>
+                        )}
+
                         {/* Offers List */}
                         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/40 scrollbar-none custom-scrollbar">
                             <div className="max-w-4xl mx-auto w-full space-y-6">
@@ -341,8 +363,7 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                         )}
                                     </div>
                                 ) : (
-                                    <AnimatePresence mode="sync">
-                                        <div className="space-y-4">
+                                    <div className="space-y-4">
                                             {displayedOffers.map(offer => (
                                                 <OfferCard
                                                     key={offer.id}
@@ -373,7 +394,6 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                                 />
                                             ))}
                                         </div>
-                                    </AnimatePresence>
                                 )}
                             </div>
                         </div>

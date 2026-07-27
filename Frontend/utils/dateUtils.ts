@@ -19,10 +19,8 @@ export const isOrderExpired = (order: any): boolean => {
     if (!order) return false;
     if (order.status === 'CANCELLED') return true;
     
-    // Only AWAITING_OFFERS and AWAITING_PAYMENT can naturally "expire" into a dead state.
-    // Other statuses like PREPARATION, SHIPPED, DELIVERED have SLAs that might breach, 
-    // but the order itself doesn't become "Expired", it becomes "Delayed" or "Completed".
-    if (!['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status)) {
+    // Pre-payment windows that can naturally expire into a dead/cancelled state.
+    if (!['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status)) {
         return false;
     }
 

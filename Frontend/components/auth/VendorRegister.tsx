@@ -333,8 +333,19 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
   // Helper for file upload simulation
   const handleFileChange = (key: any, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      // store.setDocumentFile(key, e.target.files[0]); // Optional, uploadDocument handles it
-      store.uploadDocument(key, e.target.files[0]);
+      const expiry = store.documents[key]?.expiryDate ||
+        (key === 'license' ? store.contractFormData.secondPartyData.licenseExpiry : '');
+      if (!expiry) {
+        triggerError(
+          language === 'ar'
+            ? 'أدخل تاريخ انتهاء المستند قبل الرفع'
+            : 'Enter the document expiry date before uploading',
+          key,
+        );
+        e.target.value = '';
+        return;
+      }
+      store.uploadDocument(key, e.target.files[0], expiry);
       setError(null);
     }
   };
@@ -354,8 +365,23 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
         : 'Please upload the required documents highlighted in red';
         
       triggerError(errorMsg, missingDocs[0] as any);
-      // We set errorField to the first missing one to trigger the shake on the button, 
-      // but the UI loop will handle highlighting ALL missing ones.
+      return;
+    }
+
+    const missingExpiry = (['cr', 'license', 'id', 'iban', 'authLetter'] as const).filter(key => {
+      const d = store.documents[key];
+      if (key === 'license') {
+        return !(d.expiryDate || store.contractFormData.secondPartyData.licenseExpiry);
+      }
+      return !d.expiryDate;
+    });
+    if (missingExpiry.length > 0) {
+      triggerError(
+        language === 'ar'
+          ? 'يرجى إدخال تاريخ انتهاء لكل المستندات'
+          : 'Please enter an expiry date for every document',
+        missingExpiry[0] as any,
+      );
       return;
     }
 
@@ -409,7 +435,10 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
               iban: 'IBAN',
               authLetter: 'AUTH_LETTER'
             }[key] || 'OTHER',
-            url: doc.fileUrl
+            url: doc.fileUrl,
+            expiresAt:
+              doc.expiryDate ||
+              (key === 'license' ? store.contractFormData.secondPartyData.licenseExpiry : undefined),
           }))
       });
 
@@ -1035,6 +1064,29 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
                           )}
                           {(doc.status === 'completed' || doc.status === 'pending') && <div className="text-[10px] text-green-400">{t.auth.vendor.docs.completed}</div>}
                           {doc.status === 'empty' && <div className="text-[10px] text-white/30">PDF, JPG, PNG</div>}
+                          <div className="mt-2">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30 block mb-1">
+                              {language === 'ar' ? 'تاريخ الانتهاء' : 'Expiry date'}
+                            </label>
+                            <input
+                              type="date"
+                              value={
+                                (doc.expiryDate ||
+                                  (key === 'license'
+                                    ? store.contractFormData.secondPartyData.licenseExpiry
+                                    : '') ||
+                                  ''
+                                ).toString().slice(0, 10)
+                              }
+                              onChange={(e) => {
+                                store.updateDocumentMetadata(key, { expiryDate: e.target.value });
+                                if (key === 'license') {
+                                  store.updateContractFormData('secondPartyData', 'licenseExpiry', e.target.value);
+                                }
+                              }}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-2 text-xs text-white outline-none focus:border-gold-500"
+                            />
+                          </div>
                         </div>
 
                         {/* Action */}

@@ -1,4 +1,4 @@
-﻿import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -332,10 +332,10 @@ export class PaymentsService {
                 recipientId: customerId,
                 recipientRole: 'CUSTOMER',
                 type: 'payment',
-                titleAr: 'ØªÙ… Ø§Ù„Ø¯ÙØ¹ Ø¨Ù†Ø¬Ø§Ø­! ðŸŽ‰',
-                titleEn: 'Payment Successful! ðŸŽ‰',
-                messageAr: `Ø§Ø®ØªÙŠØ§Ø± Ø±Ø§Ø¦Ø¹! ðŸ‘Œ ØªÙ… Ø¯ÙØ¹ ${totalAmount} Ø¯Ø±Ù‡Ù… Ø¨Ù†Ø¬Ø§Ø­ Ù„Ù„Ø¹Ø±Ø¶ #${offer.offerNumber}. Ù†Ø­Ù† Ø§Ù„Ø¢Ù† Ø¨ØµØ¯Ø¯ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ ØªØ¬Ù‡ÙŠØ² Ø·Ù„Ø¨Ùƒ.`,
-                messageEn: `Great choice! ðŸ‘Œ Payment of AED ${totalAmount} successful for offer #${offer.offerNumber}. We are now starting to prepare your order.`,
+                titleAr: 'تم الدفع بنجاح! 🎉',
+                titleEn: 'Payment Successful! 🎉',
+                messageAr: `اختيار رائع! 👌 تم دفع ${totalAmount} درهم بنجاح للعرض #${offer.offerNumber}. نحن الآن بصدد البدء في تجهيز طلبك.`,
+                messageEn: `Great choice! 👌 Payment of AED ${totalAmount} successful for offer #${offer.offerNumber}. We are now starting to prepare your order.`,
                 link: 'checkout',
                 metadata: {
                     orderId,
@@ -343,6 +343,7 @@ export class PaymentsService {
                     amount: totalAmount,
                     invoiceNumber: result.invoiceNumber,
                     orderNumber: order.orderNumber,
+                    waEvent: 'INVOICE_ISSUED',
                 },
             });
 
@@ -352,9 +353,9 @@ export class PaymentsService {
                     recipientId: offer.store.ownerId,
                     recipientRole: 'VENDOR',
                     type: 'payment',
-                    titleAr: 'Ù…Ø¨ÙŠØ¹Ø© Ø¬Ø¯ÙŠØ¯Ø©! ðŸ’°',
-                    titleEn: 'New Sale! ðŸ’°',
-                    messageAr: `Ù…Ù…ØªØ§Ø²! ØªÙ… Ø¯ÙØ¹ Ø§Ù„Ø·Ù„Ø¨ #${order.orderNumber}. Ø§Ù„Ù…Ø¨Ù„Øº Ø§Ù„Ù…Ø¶Ø§Ù Ù„Ø­Ø³Ø§Ø¨Ùƒ: ${unitPrice + shippingCost} Ø¯Ø±Ù‡Ù…. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ Ø§Ù„ØªØ¬Ù‡ÙŠØ².`,
+                    titleAr: 'مبيعة جديدة! 💰',
+                    titleEn: 'New Sale! 💰',
+                    messageAr: `ممتاز! تم دفع الطلب #${order.orderNumber}. المبلغ المضاف لحسابك: ${unitPrice + shippingCost} درهم. يرجى البدء في التجهيز.`,
                     messageEn: `Excellent! Payment received for Order #${order.orderNumber}. Amount credited: AED ${unitPrice + shippingCost}. Please start preparation.`,
                     link: 'active-orders',
                     metadata: {
@@ -363,6 +364,7 @@ export class PaymentsService {
                         amount: unitPrice + shippingCost,
                         invoiceNumber: result.invoiceNumber,
                         orderNumber: order.orderNumber,
+                        waEvent: 'INVOICE_ISSUED',
                     },
                 });
             }
@@ -429,38 +431,68 @@ export class PaymentsService {
         const totalAmount = unitPrice + shippingCost + commission;
         const amountCents = Math.round(totalAmount * 100);
 
+        if (!Number.isFinite(totalAmount) || !Number.isFinite(amountCents) || amountCents < 200) {
+            throw new BadRequestException(
+                `Invalid payment amount (${totalAmount}). Minimum charge is 2.00 AED.`,
+            );
+        }
+
         // 4. Handle Stripe Customer (2026 Saved Card Logic)
         const user = await this.prisma.user.findUnique({
             where: { id: customerId },
             select: { email: true, name: true }
         });
-        const stripeCustomerId = await this.stripeService.getOrCreateCustomer(customerId, user.email, user.name);
+        if (!user) {
+            throw new NotFoundException('Customer not found');
+        }
+        if (!user.email) {
+            throw new BadRequestException('Customer email is required for payment processing');
+        }
 
-        const intentMetadata = {
-            orderId,
-            offerId,
-            customerId,
-            orderNumber: order.orderNumber,
-            offerNumber: offer.offerNumber,
-        };
+        let stripeCustomerId: string;
+        let intent: any;
+        try {
+            stripeCustomerId = await this.stripeService.getOrCreateCustomer(customerId, user.email, user.name);
 
-        // 5. Stripe PaymentIntent â€” reuse open PENDING intent when possible (avoids duplicate intents on retry)
-        let intent = await this.resolveOrCreateStripeIntent(
-            existingPayment?.stripePaymentId,
-            existingPayment?.status,
-            Number(existingPayment?.totalAmount ?? 0),
-            totalAmount,
-            amountCents,
-            intentMetadata,
-            stripeCustomerId,
-        );
+            const intentMetadata = {
+                orderId,
+                offerId,
+                customerId,
+                orderNumber: order.orderNumber,
+                offerNumber: offer.offerNumber,
+            };
 
-        // 6. Record PENDING transaction â€” atomic upsert (race-safe vs concurrent prefetch + pay clicks)
+            // 5. Stripe PaymentIntent — reuse open PENDING intent when possible (avoids duplicate intents on retry)
+            intent = await this.resolveOrCreateStripeIntent(
+                existingPayment?.stripePaymentId,
+                existingPayment?.status,
+                Number(existingPayment?.totalAmount ?? 0),
+                totalAmount,
+                amountCents,
+                intentMetadata,
+                stripeCustomerId,
+            );
+        } catch (err: any) {
+            if (err instanceof BadRequestException || err instanceof NotFoundException || err instanceof ForbiddenException || err instanceof ConflictException) {
+                throw err;
+            }
+            const stripeMsg = err?.message || 'Stripe payment initialization failed';
+            throw new BadRequestException(
+                stripeMsg.includes('Stripe') || stripeMsg.includes('card') || stripeMsg.includes('amount')
+                    ? stripeMsg
+                    : `Payment provider error: ${stripeMsg}`,
+            );
+        }
+
+        // 6. Record PENDING transaction — atomic upsert (race-safe vs concurrent prefetch + pay clicks)
         const isNewPaymentRow = !existingPayment;
         try {
             await this.prisma.$transaction(async (tx) => {
                 const txnResult = await tx.$queryRaw<{ generate_transaction_number: string }[]>`SELECT generate_transaction_number()`;
-                const transactionNumber = txnResult[0].generate_transaction_number;
+                const transactionNumber = txnResult?.[0]?.generate_transaction_number;
+                if (!transactionNumber) {
+                    throw new BadRequestException('Failed to generate transaction number');
+                }
 
                 await tx.paymentTransaction.upsert({
                     where: { offerId },
@@ -904,21 +936,28 @@ export class PaymentsService {
 
             // Notify Merchant
             if (orderTransitioned) {
-                this.notifications.create({
+                await this.notifications.create({
                     recipientId: storeOwnerId,
                     recipientRole: 'VENDOR',
-                    titleAr: 'Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ¬Ù‡ÙŠØ²! ðŸ“¦',
-                    titleEn: 'New Order Ready for Preparation! ðŸ“¦',
-                    messageAr: `ØªÙ… Ø¯ÙØ¹ Ù‚ÙŠÙ…Ø© Ø§Ù„Ø·Ù„Ø¨ #${orderNumber}. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ø¨Ø¯Ø¡ ÙÙŠ ØªØ¬Ù‡ÙŠØ² Ø§Ù„Ù‚Ø·Ø¹ Ù„Ù„Ø´Ø­Ù†.`,
+                    titleAr: 'طلب جديد جاهز للتجهيز! 📦',
+                    titleEn: 'New Order Ready for Preparation! 📦',
+                    messageAr: `تم دفع قيمة الطلب #${orderNumber}. يرجى البدء في تجهيز القطع للشحن.`,
                     messageEn: `Payment for Order #${orderNumber} confirmed. Please start preparing parts for shipment.`,
-                    type: 'ORDER',
-                    link: `/merchant/orders/${orderId}`
+                    type: 'payment',
+                    link: `/merchant/orders/${orderId}`,
+                    metadata: {
+                        orderId,
+                        invoiceNumber,
+                        orderNumber,
+                        amount: totalAmount,
+                        waEvent: 'INVOICE_ISSUED',
+                    },
                 }).catch(() => {});
 
                 this.notifications.notifyAdmins({
-                    titleAr: 'ØªÙ… Ø³Ø¯Ø§Ø¯ Ø·Ù„Ø¨ Ø¨Ù†Ø¬Ø§Ø­ ðŸ’¸',
-                    titleEn: 'Order Payment Successful ðŸ’¸',
-                    messageAr: `ØªÙ… Ø³Ø¯Ø§Ø¯ Ù…Ø¨Ù„Øº ${totalAmount} Ø¯Ø±Ù‡Ù… Ù„Ù„Ø·Ù„Ø¨ #${orderNumber}.`,
+                    titleAr: 'تم سداد طلب بنجاح 💵',
+                    titleEn: 'Order Payment Successful 💵',
+                    messageAr: `تم سداد مبلغ ${totalAmount} درهم للطلب #${orderNumber}.`,
                     messageEn: `Payment of AED ${totalAmount} confirmed for Order #${orderNumber}.`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${orderId}`,
@@ -927,22 +966,21 @@ export class PaymentsService {
             }
 
             // Final Notification to customer
-            this.notifications.create({
+            await this.notifications.create({
                 recipientId: customerId,
                 recipientRole: 'CUSTOMER',
                 type: 'payment',
-                titleAr: 'ØªÙ… Ø§Ù„Ø¯ÙØ¹ Ø¨Ù†Ø¬Ø§Ø­! ðŸŽ‰',
-                titleEn: 'Payment Successful! ðŸŽ‰',
-                messageAr: `ØªÙ… Ø¯ÙØ¹ ${totalAmount} Ø¯Ø±Ù‡Ù… Ø¨Ù†Ø¬Ø§Ø­ Ù„Ù„Ø¹Ø±Ø¶ #${offerNumber}. Ù†Ø­Ù† Ø§Ù„Ø¢Ù† Ù†Ø¬Ù‡Ø² Ø·Ù„Ø¨Ùƒ.`,
+                titleAr: 'تم الدفع بنجاح! 🎉',
+                titleEn: 'Payment Successful! 🎉',
+                messageAr: `تم دفع ${totalAmount} درهم بنجاح للعرض #${offerNumber}. نحن الآن نجهز طلبك.`,
                 messageEn: `Payment of AED ${totalAmount} successful for offer #${offerNumber}. Preparation started.`,
                 link: 'checkout',
                 metadata: {
                     orderId,
-                    offerId: payment.offerId,
-                    amount: totalAmount,
-                    paymentIntentId,
                     invoiceNumber,
                     orderNumber,
+                    amount: totalAmount,
+                    waEvent: 'INVOICE_ISSUED',
                 },
             }).catch(() => {});
         }

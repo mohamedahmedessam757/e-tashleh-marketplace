@@ -166,6 +166,15 @@ export function getOrderExpiryScenario(
 
   if (acceptedCount > 0) return null;
 
+  // Stuck / healed path: selection status with zero visible offers → treat as no_offers immediately
+  if (order.status === 'AWAITING_SELECTION' && visibleCount === 0) {
+    if (parts.length > 1) {
+      if (allPartsHaveNoOffers(offers, parts)) return 'no_offers';
+    } else {
+      return 'no_offers';
+    }
+  }
+
   const isMultiPart =
     order.requestType === 'multiple' || (parts.length > 1 && order.requestType !== 'single');
 

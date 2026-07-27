@@ -1366,6 +1366,7 @@ export class VerificationTasksService {
           messageEn: `Non-matching part detected for #${order.orderNumber}. You have 48h to submit correction.`,
           type: 'system_alert',
           link,
+          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
         });
       } else if (newOrderStatus === OrderStatus.CANCELLED && newRejectionCount >= 2) {
         await this.notifications.notifyMerchantByStoreId(storeId, {
@@ -1375,6 +1376,7 @@ export class VerificationTasksService {
           messageEn: `Order #${order.orderNumber} verification rejected twice. Order cancelled.`,
           type: 'system_alert',
           link,
+          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
         });
       } else if (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS) {
         await this.notifications.notifyMerchantByStoreId(storeId, {
@@ -1384,6 +1386,7 @@ export class VerificationTasksService {
           messageEn: `Verification for #${order.orderNumber} approved. You can now handover to courier.`,
           type: 'system_alert',
           link,
+          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
         });
       } else if (newOrderStatus === OrderStatus.VERIFICATION && !approved && officerDecision === 'NON_MATCHING') {
         await this.notifications.notifyMerchantByStoreId(storeId, {
@@ -1393,6 +1396,7 @@ export class VerificationTasksService {
           messageEn: `Admin overrode the non-match recommendation for order #${order.orderNumber}. Verification continues.`,
           type: 'system_alert',
           link,
+          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
         });
       }
     }
@@ -1407,6 +1411,7 @@ export class VerificationTasksService {
         messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. سيتم استرجاع مبلغك قريباً.`,
         messageEn: `Your order #${order.orderNumber} was cancelled due to non-matching part. Refund will be processed soon.`,
         link: `/customer/orders/${order.id}`,
+        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
       });
     }
 

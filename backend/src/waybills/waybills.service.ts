@@ -285,7 +285,12 @@ export class WaybillsService {
                             : automated
                                 ? `The system automatically issued a waybill for verified order #${order.orderNumber}. Pending courier pickup.`
                                 : `Admin issued waybill for your verified order #${order.orderNumber}. Pending courier pickup.`,
-                        link: `/merchant/orders/${order.id}`
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'WAYBILL_ISSUED',
+                        },
                     } as any);
                 }
             } catch (e) {
@@ -307,7 +312,12 @@ export class WaybillsService {
                 messageEn: isReturn
                     ? `Return label for order #${order.orderNumber} is ready. Please hand over the part to the courier when they arrive.`
                     : `Great news! Your shipping waybill for #${order.orderNumber} is ready. Your order is now in final preparation for delivery.`,
-                link: `/customer/orders/${order.id}`
+                link: `/customer/orders/${order.id}`,
+                metadata: {
+                    orderId: order.id,
+                    orderNumber: order.orderNumber,
+                    waEvent: 'WAYBILL_ISSUED',
+                },
             } as any);
         } catch (e) {
             this.logger.error('Failed to notify customer waybill issuance', e);
@@ -539,6 +549,11 @@ export class WaybillsService {
                                     ? `Grouped waybill for #${order.orderNumber} includes: ${partNames.join(', ')}.`
                                     : `Waybill issued for order #${order.orderNumber}.`,
                             link: `/merchant/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'WAYBILL_ISSUED',
+                            },
                         } as any)
                         .catch(() => {});
                 }
@@ -556,6 +571,11 @@ export class WaybillsService {
                     messageAr: `تم إصدار بوليصة شحن لطلبك #${order.orderNumber}.`,
                     messageEn: `Shipping waybill issued for order #${order.orderNumber}.`,
                     link: `/customer/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'WAYBILL_ISSUED',
+                    },
                 } as any)
                 .catch(() => {});
 

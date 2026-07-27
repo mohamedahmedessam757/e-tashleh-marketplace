@@ -160,6 +160,15 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
+    // Offer bidding restriction (vendor)
+    // Body: {{1}} name · {{2}} store_name · {{3}} status_detail
+    def('txn_offer_restriction_vendor', 'ar', 'merchant', ['name', 'store_name', 'status_detail'], {
+        headerText: 'تقييد تقديم العروض',
+        buttonLabel: 'فتح اللوحة',
+        buttonSuffixPattern: suffix.storeHome,
+        buttonUrlDynamic: false,
+    }),
+
     // Part verification
     def('txn_verification_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
         headerText: 'توثيق الطلب',

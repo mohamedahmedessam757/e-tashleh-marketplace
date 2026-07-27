@@ -13,6 +13,7 @@ import { sanitizeHtml } from '../../../utils/htmlSanitize';
 import { renderToString } from 'react-dom/server';
 import { ContractAmendmentModal } from './ContractAmendmentModal';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
+import { MerchantDocumentUploadModal, type MerchantDocKey } from './MerchantDocumentUploadModal';
 import type { SecondPartyData } from '../../../utils/contractBaker';
 
 export const MerchantProfile: React.FC = () => {
@@ -37,6 +38,10 @@ export const MerchantProfile: React.FC = () => {
     const logoInputRef = React.useRef<HTMLInputElement>(null);
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [showAmendmentModal, setShowAmendmentModal] = useState(false);
+    const [docUploadModal, setDocUploadModal] = useState<{
+        key: MerchantDocKey;
+        title: string;
+    } | null>(null);
 
     const archivedContracts = contractAcceptances.filter((a: any) => a.isActive === false);
     const hasPendingAmendment = pendingContractChanges.length > 0;
@@ -824,11 +829,12 @@ export const MerchantProfile: React.FC = () => {
                                                                 </span>
                                                                 <span className="text-[10px] text-white/20">•</span>
                                                                 <span className="text-[10px] text-white/30 font-mono italic">{dateLabel}</span>
-                                                                {displayStatus === 'approved' && doc?.expiryDate && daysLeft > 0 && (
+                                                                {doc?.expiryDate && daysLeft !== 999 && (
                                                                     <>
                                                                         <span className="text-[10px] text-white/20">•</span>
-                                                                        <span className={`text-[10px] font-bold ${daysLeft <= 30 ? 'text-gold-500 animate-pulse' : 'text-green-400/80'}`}>
+                                                                        <span className={`text-[10px] font-bold ${daysLeft <= 30 ? 'text-gold-500' : 'text-green-400/80'}`}>
                                                                             {language === 'ar' ? `متبقي ${daysLeft} يوم` : `${daysLeft} days left`}
+                                                                            {displayStatus === 'pending' ? (language === 'ar' ? ' (قيد المراجعة)' : ' (pending)') : ''}
                                                                         </span>
                                                                     </>
                                                                 )}
@@ -847,38 +853,27 @@ export const MerchantProfile: React.FC = () => {
                                                             </button>
                                                         )}
 
-                                                        <label className={`p-2.5 rounded-xl transition-all relative group/btn cursor-pointer ${
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setDocUploadModal({
+                                                                    key: docItem.key as MerchantDocKey,
+                                                                    title: docItem.label,
+                                                                })
+                                                            }
+                                                            className={`p-2.5 rounded-xl transition-all relative group/btn cursor-pointer ${
                                                             displayStatus === 'expired' || displayStatus === 'rejected' || displayStatus === 'reupload_requested' || displayStatus === 'empty'
-                                                                ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 animate-pulse'
+                                                                ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20'
                                                                 : 'bg-gold-500/5 hover:bg-gold-500/10 text-gold-500/40 hover:text-gold-500 border border-transparent'
                                                         }`} title={
                                                             hasActiveBusiness 
                                                                 ? (language === 'ar' ? 'يمكن الرفع الآن، وسيتم بدء المراجعة بعد اكتمال طلباتك النشطة' : 'Upload enabled; formal review will begin after your active orders are completed.')
                                                                 : (language === 'ar' ? 'تحديث المستند' : 'Update Document')
                                                         }>
-                                                            <input 
-                                                                type="file" 
-                                                                className="hidden" 
-                                                                accept=".pdf,.jpg,.png"
-                                                                disabled={false}
-                                                                onChange={(e) => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (file) {
-                                                                        let shouldUpload = true;
-                                                                        if (docItem.key === 'cr' || docItem.key === 'license') {
-                                                                            const confirmMsg = language === 'ar' 
-                                                                                ? 'تحديث هذا المستند القانوني سيؤدي إلى إيقاف الحساب مؤقتاً للمراجعة. هل أنت متأكد؟'
-                                                                                : 'Updating this legal document will temporarily suspend the account for review. Are you sure?';
-                                                                            shouldUpload = window.confirm(confirmMsg);
-                                                                        }
-                                                                        if (shouldUpload) {
-                                                                            uploadDocument(docItem.key as any, file);
-                                                                        }
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <RefreshCw size={18} className={`${displayStatus === 'uploading' ? 'animate-spin' : 'group-hover/btn:rotate-180 transition-transform duration-500'}`} />
-                                                        </label>
+                                                            {displayStatus === 'uploading'
+                                                                ? <RefreshCw size={18} className="animate-spin" />
+                                                                : <UploadCloud size={18} />}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             );
@@ -1148,6 +1143,29 @@ export const MerchantProfile: React.FC = () => {
                                 onSubmit={handleSubmitContractAmendment}
                             />
                         )}
+
+                        <MerchantDocumentUploadModal
+                            isOpen={Boolean(docUploadModal)}
+                            onClose={() => setDocUploadModal(null)}
+                            docKey={docUploadModal?.key || 'cr'}
+                            docTitle={docUploadModal?.title || ''}
+                            initialExpiry={
+                                docUploadModal
+                                    ? (documents as any)?.[docUploadModal.key]?.expiryDate ||
+                                      (docUploadModal.key === 'license'
+                                          ? contractAcceptance?.secondPartyData?.licenseExpiry
+                                          : null)
+                                    : null
+                            }
+                            requiresLegalConfirm={
+                                docUploadModal?.key === 'cr' || docUploadModal?.key === 'license'
+                            }
+                            onSubmit={async ({ file, expiresAt }) => {
+                                if (!docUploadModal) return;
+                                await uploadDocument(docUploadModal.key as any, file, expiresAt);
+                                await fetchVendorProfile();
+                            }}
+                        />
                         </motion.div>
                         )}
                     </AnimatePresence>

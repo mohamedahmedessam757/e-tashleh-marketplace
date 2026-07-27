@@ -848,12 +848,23 @@ export const useAdminStore = create<AdminState>()(
           const res = await fetch(`${API_URL}/system/config`);
           if (res.ok) {
             const config = mergeSystemConfig(await res.json());
-            
+
             // Sync backward compatibility for commission
             if (config.financial && config.financial.vatRate !== undefined && config.financial.minCommission === undefined) {
               config.financial.minCommission = config.financial.vatRate;
             }
-            
+
+            const prev = get().systemConfig;
+            const sameLogistics =
+              JSON.stringify(prev?.logistics?.shipmentTypes ?? null) ===
+              JSON.stringify(config?.logistics?.shipmentTypes ?? null);
+            const sameFinancial =
+              JSON.stringify(prev?.financial ?? null) ===
+              JSON.stringify(config?.financial ?? null);
+            if (sameLogistics && sameFinancial) {
+              return;
+            }
+
             set({ systemConfig: config });
             if (config.financial?.commissionRate) set({ commissionRate: config.financial.commissionRate });
           }

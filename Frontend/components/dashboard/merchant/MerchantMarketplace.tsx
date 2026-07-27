@@ -12,6 +12,7 @@ import { SubmitOfferModal } from './SubmitOfferModal';
 import { CountdownTimer } from '../OrderDetails';
 import { getDynamicOrderDeadline, isOrderExpired } from '../../../utils/dateUtils';
 import { getActiveOffersForStore } from '../../../utils/merchantOffers';
+import { isEligibleMerchantIncomingOrder } from '../../../utils/merchantOrderBuckets';
 
 interface MerchantMarketplaceProps {
     onNavigate?: (path: string, id?: any) => void;
@@ -20,7 +21,13 @@ interface MerchantMarketplaceProps {
 export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { orders, addOfferToOrder } = useOrderStore();
-    const { vendorStatus, storeInfo, storeId, visibilityRestricted, visibilityRate, visibilityNote } = useVendorStore();
+    const { vendorStatus, storeInfo, storeId, visibilityRestricted, visibilityRate, visibilityNote, performance } = useVendorStore();
+    const monthlyDeletions = performance?.monthlyOfferDeletionCount ?? 0;
+    const biddingUntil = performance?.offerBiddingRestrictedUntil
+        ? new Date(performance.offerBiddingRestrictedUntil)
+        : null;
+    const isBiddingRestricted = !!(biddingUntil && biddingUntil.getTime() > Date.now());
+    const nearDeletionLimit = monthlyDeletions >= (performance?.monthlyDeletionWarnAt ?? 35);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
 
@@ -45,10 +52,10 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
         );
     }
 
-    // Base active requests (excluding terminal states)
+    // Incoming marketplace ONLY: open bidding + stop time not elapsed.
+    // Never show AWAITING_SELECTION / payment / fulfillment here.
     const activeRequests = useMemo(() => {
-        const terminalStates = ['COMPLETED', 'RETURNED', 'REFUNDED', 'CANCELLED'];
-        return orders.filter(o => !terminalStates.includes(o.status));
+        return orders.filter((o) => isEligibleMerchantIncomingOrder(o));
     }, [orders]);
 
     // Compute unique car makes dynamically
@@ -141,6 +148,29 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            {isBiddingRestricted && (
+                <GlassCard className="bg-red-500/10 border-red-500/30 p-4 flex items-start gap-3">
+                    <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-100/90">
+                        <p className="font-bold mb-1">{isAr ? 'تقييد تقديم العروض نشط' : 'Offer bidding restricted'}</p>
+                        <p className="text-red-200/70 text-xs">
+                            {isAr
+                                ? `لا يمكنك تقديم عروض جديدة حتى ${biddingUntil?.toLocaleString('ar-EG')}.`
+                                : `Cannot submit new offers until ${biddingUntil?.toISOString()}.`}
+                        </p>
+                    </div>
+                </GlassCard>
+            )}
+            {nearDeletionLimit && !isBiddingRestricted && (
+                <GlassCard className="bg-orange-500/10 border-orange-500/30 p-4 flex items-start gap-3">
+                    <AlertTriangle size={20} className="text-orange-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-orange-100/90">
+                        {isAr
+                            ? `تحذير: ${monthlyDeletions}/50 حذف/انسحاب هذا الشهر.`
+                            : `Warning: ${monthlyDeletions}/50 deletions this month.`}
+                    </p>
+                </GlassCard>
+            )}
             {/* Visibility Restriction Transparency Banner [2026 Governance] */}
             {visibilityRestricted && visibilityRate < 100 && (
                 <GlassCard className="bg-blue-500/10 border-blue-500/20 p-5 flex items-center justify-between gap-6">

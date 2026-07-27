@@ -43,6 +43,7 @@ export type StoreAvgAggregateOutputType = {
   totalOffersSent: number | null
   editCount: number | null
   withdrawalCount: number | null
+  monthlyOfferDeletionCount: number | null
 }
 
 export type StoreSumAggregateOutputType = {
@@ -62,6 +63,7 @@ export type StoreSumAggregateOutputType = {
   totalOffersSent: number | null
   editCount: number | null
   withdrawalCount: number | null
+  monthlyOfferDeletionCount: number | null
 }
 
 export type StoreMinAggregateOutputType = {
@@ -117,6 +119,10 @@ export type StoreMinAggregateOutputType = {
   totalOffersSent: number | null
   editCount: number | null
   withdrawalCount: number | null
+  monthlyOfferDeletionCount: number | null
+  monthlyOfferDeletionMonth: string | null
+  offerBiddingRestrictedUntil: Date | null
+  offerBiddingRestrictionReason: string | null
 }
 
 export type StoreMaxAggregateOutputType = {
@@ -172,6 +178,10 @@ export type StoreMaxAggregateOutputType = {
   totalOffersSent: number | null
   editCount: number | null
   withdrawalCount: number | null
+  monthlyOfferDeletionCount: number | null
+  monthlyOfferDeletionMonth: string | null
+  offerBiddingRestrictedUntil: Date | null
+  offerBiddingRestrictionReason: string | null
 }
 
 export type StoreCountAggregateOutputType = {
@@ -229,6 +239,10 @@ export type StoreCountAggregateOutputType = {
   totalOffersSent: number
   editCount: number
   withdrawalCount: number
+  monthlyOfferDeletionCount: number
+  monthlyOfferDeletionMonth: number
+  offerBiddingRestrictedUntil: number
+  offerBiddingRestrictionReason: number
   _all: number
 }
 
@@ -250,6 +264,7 @@ export type StoreAvgAggregateInputType = {
   totalOffersSent?: true
   editCount?: true
   withdrawalCount?: true
+  monthlyOfferDeletionCount?: true
 }
 
 export type StoreSumAggregateInputType = {
@@ -269,6 +284,7 @@ export type StoreSumAggregateInputType = {
   totalOffersSent?: true
   editCount?: true
   withdrawalCount?: true
+  monthlyOfferDeletionCount?: true
 }
 
 export type StoreMinAggregateInputType = {
@@ -324,6 +340,10 @@ export type StoreMinAggregateInputType = {
   totalOffersSent?: true
   editCount?: true
   withdrawalCount?: true
+  monthlyOfferDeletionCount?: true
+  monthlyOfferDeletionMonth?: true
+  offerBiddingRestrictedUntil?: true
+  offerBiddingRestrictionReason?: true
 }
 
 export type StoreMaxAggregateInputType = {
@@ -379,6 +399,10 @@ export type StoreMaxAggregateInputType = {
   totalOffersSent?: true
   editCount?: true
   withdrawalCount?: true
+  monthlyOfferDeletionCount?: true
+  monthlyOfferDeletionMonth?: true
+  offerBiddingRestrictedUntil?: true
+  offerBiddingRestrictionReason?: true
 }
 
 export type StoreCountAggregateInputType = {
@@ -436,6 +460,10 @@ export type StoreCountAggregateInputType = {
   totalOffersSent?: true
   editCount?: true
   withdrawalCount?: true
+  monthlyOfferDeletionCount?: true
+  monthlyOfferDeletionMonth?: true
+  offerBiddingRestrictedUntil?: true
+  offerBiddingRestrictionReason?: true
   _all?: true
 }
 
@@ -580,6 +608,10 @@ export type StoreGroupByOutputType = {
   totalOffersSent: number
   editCount: number
   withdrawalCount: number
+  monthlyOfferDeletionCount: number
+  monthlyOfferDeletionMonth: string | null
+  offerBiddingRestrictedUntil: Date | null
+  offerBiddingRestrictionReason: string | null
   _count: StoreCountAggregateOutputType | null
   _avg: StoreAvgAggregateOutputType | null
   _sum: StoreSumAggregateOutputType | null
@@ -660,6 +692,10 @@ export type StoreWhereInput = {
   totalOffersSent?: Prisma.IntFilter<"Store"> | number
   editCount?: Prisma.IntFilter<"Store"> | number
   withdrawalCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionMonth?: Prisma.StringNullableFilter<"Store"> | string | null
+  offerBiddingRestrictedUntil?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.StringNullableFilter<"Store"> | string | null
   contract?: Prisma.XOR<Prisma.PlatformContractNullableScalarRelationFilter, Prisma.PlatformContractWhereInput> | null
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   documents?: Prisma.StoreDocumentListRelationFilter
@@ -733,6 +769,10 @@ export type StoreOrderByWithRelationInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
+  monthlyOfferDeletionMonth?: Prisma.SortOrderInput | Prisma.SortOrder
+  offerBiddingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  offerBiddingRestrictionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   contract?: Prisma.PlatformContractOrderByWithRelationInput
   owner?: Prisma.UserOrderByWithRelationInput
   documents?: Prisma.StoreDocumentOrderByRelationAggregateInput
@@ -809,6 +849,10 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   totalOffersSent?: Prisma.IntFilter<"Store"> | number
   editCount?: Prisma.IntFilter<"Store"> | number
   withdrawalCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionMonth?: Prisma.StringNullableFilter<"Store"> | string | null
+  offerBiddingRestrictedUntil?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.StringNullableFilter<"Store"> | string | null
   contract?: Prisma.XOR<Prisma.PlatformContractNullableScalarRelationFilter, Prisma.PlatformContractWhereInput> | null
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   documents?: Prisma.StoreDocumentListRelationFilter
@@ -882,6 +926,10 @@ export type StoreOrderByWithAggregationInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
+  monthlyOfferDeletionMonth?: Prisma.SortOrderInput | Prisma.SortOrder
+  offerBiddingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  offerBiddingRestrictionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.StoreCountOrderByAggregateInput
   _avg?: Prisma.StoreAvgOrderByAggregateInput
   _max?: Prisma.StoreMaxOrderByAggregateInput
@@ -947,6 +995,10 @@ export type StoreScalarWhereWithAggregatesInput = {
   totalOffersSent?: Prisma.IntWithAggregatesFilter<"Store"> | number
   editCount?: Prisma.IntWithAggregatesFilter<"Store"> | number
   withdrawalCount?: Prisma.IntWithAggregatesFilter<"Store"> | number
+  monthlyOfferDeletionCount?: Prisma.IntWithAggregatesFilter<"Store"> | number
+  monthlyOfferDeletionMonth?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  offerBiddingRestrictedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Store"> | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
 }
 
 export type StoreCreateInput = {
@@ -1002,6 +1054,10 @@ export type StoreCreateInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -1075,6 +1131,10 @@ export type StoreUncheckedCreateInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -1144,6 +1204,10 @@ export type StoreUpdateInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -1217,6 +1281,10 @@ export type StoreUncheckedUpdateInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -1288,6 +1356,10 @@ export type StoreCreateManyInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
 }
 
 export type StoreUpdateManyMutationInput = {
@@ -1343,6 +1415,10 @@ export type StoreUpdateManyMutationInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type StoreUncheckedUpdateManyInput = {
@@ -1400,6 +1476,10 @@ export type StoreUncheckedUpdateManyInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type StoreNullableScalarRelationFilter = {
@@ -1470,6 +1550,10 @@ export type StoreCountOrderByAggregateInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
+  monthlyOfferDeletionMonth?: Prisma.SortOrder
+  offerBiddingRestrictedUntil?: Prisma.SortOrder
+  offerBiddingRestrictionReason?: Prisma.SortOrder
 }
 
 export type StoreAvgOrderByAggregateInput = {
@@ -1489,6 +1573,7 @@ export type StoreAvgOrderByAggregateInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
 }
 
 export type StoreMaxOrderByAggregateInput = {
@@ -1544,6 +1629,10 @@ export type StoreMaxOrderByAggregateInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
+  monthlyOfferDeletionMonth?: Prisma.SortOrder
+  offerBiddingRestrictedUntil?: Prisma.SortOrder
+  offerBiddingRestrictionReason?: Prisma.SortOrder
 }
 
 export type StoreMinOrderByAggregateInput = {
@@ -1599,6 +1688,10 @@ export type StoreMinOrderByAggregateInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
+  monthlyOfferDeletionMonth?: Prisma.SortOrder
+  offerBiddingRestrictedUntil?: Prisma.SortOrder
+  offerBiddingRestrictionReason?: Prisma.SortOrder
 }
 
 export type StoreSumOrderByAggregateInput = {
@@ -1618,6 +1711,7 @@ export type StoreSumOrderByAggregateInput = {
   totalOffersSent?: Prisma.SortOrder
   editCount?: Prisma.SortOrder
   withdrawalCount?: Prisma.SortOrder
+  monthlyOfferDeletionCount?: Prisma.SortOrder
 }
 
 export type StoreScalarRelationFilter = {
@@ -2010,6 +2104,10 @@ export type StoreCreateWithoutOwnerInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
@@ -2081,6 +2179,10 @@ export type StoreUncheckedCreateWithoutOwnerInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -2166,6 +2268,10 @@ export type StoreUpdateWithoutOwnerInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
@@ -2237,6 +2343,10 @@ export type StoreUncheckedUpdateWithoutOwnerInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -2306,6 +2416,10 @@ export type StoreCreateWithoutDocumentsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
@@ -2378,6 +2492,10 @@ export type StoreUncheckedCreateWithoutDocumentsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
@@ -2462,6 +2580,10 @@ export type StoreUpdateWithoutDocumentsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
@@ -2534,6 +2656,10 @@ export type StoreUncheckedUpdateWithoutDocumentsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
@@ -2602,6 +2728,10 @@ export type StoreCreateWithoutOrdersInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -2674,6 +2804,10 @@ export type StoreUncheckedCreateWithoutOrdersInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -2758,6 +2892,10 @@ export type StoreUpdateWithoutOrdersInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -2830,6 +2968,10 @@ export type StoreUncheckedUpdateWithoutOrdersInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -2898,6 +3040,10 @@ export type StoreCreateWithoutVerificationDocumentsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -2970,6 +3116,10 @@ export type StoreUncheckedCreateWithoutVerificationDocumentsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -3054,6 +3204,10 @@ export type StoreUpdateWithoutVerificationDocumentsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -3126,6 +3280,10 @@ export type StoreUncheckedUpdateWithoutVerificationDocumentsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -3194,6 +3352,10 @@ export type StoreCreateWithoutOffersInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -3266,6 +3428,10 @@ export type StoreUncheckedCreateWithoutOffersInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -3350,6 +3516,10 @@ export type StoreUpdateWithoutOffersInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -3422,6 +3592,10 @@ export type StoreUncheckedUpdateWithoutOffersInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -3490,6 +3664,10 @@ export type StoreCreateWithoutReturnsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -3562,6 +3740,10 @@ export type StoreUncheckedCreateWithoutReturnsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -3646,6 +3828,10 @@ export type StoreUpdateWithoutReturnsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -3718,6 +3904,10 @@ export type StoreUncheckedUpdateWithoutReturnsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -3786,6 +3976,10 @@ export type StoreCreateWithoutDisputesInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -3858,6 +4052,10 @@ export type StoreUncheckedCreateWithoutDisputesInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -3942,6 +4140,10 @@ export type StoreUpdateWithoutDisputesInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -4014,6 +4216,10 @@ export type StoreUncheckedUpdateWithoutDisputesInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -4082,6 +4288,10 @@ export type StoreCreateWithoutOrderChatsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -4154,6 +4364,10 @@ export type StoreUncheckedCreateWithoutOrderChatsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -4238,6 +4452,10 @@ export type StoreUpdateWithoutOrderChatsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -4310,6 +4528,10 @@ export type StoreUncheckedUpdateWithoutOrderChatsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -4378,6 +4600,10 @@ export type StoreCreateWithoutContractInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceCreateNestedManyWithoutStoreInput
@@ -4449,6 +4675,10 @@ export type StoreUncheckedCreateWithoutContractInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -4549,6 +4779,10 @@ export type StoreScalarWhereInput = {
   totalOffersSent?: Prisma.IntFilter<"Store"> | number
   editCount?: Prisma.IntFilter<"Store"> | number
   withdrawalCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionCount?: Prisma.IntFilter<"Store"> | number
+  monthlyOfferDeletionMonth?: Prisma.StringNullableFilter<"Store"> | string | null
+  offerBiddingRestrictedUntil?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.StringNullableFilter<"Store"> | string | null
 }
 
 export type StoreCreateWithoutContractAcceptancesInput = {
@@ -4604,6 +4838,10 @@ export type StoreCreateWithoutContractAcceptancesInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -4676,6 +4914,10 @@ export type StoreUncheckedCreateWithoutContractAcceptancesInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
@@ -4760,6 +5002,10 @@ export type StoreUpdateWithoutContractAcceptancesInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -4832,6 +5078,10 @@ export type StoreUncheckedUpdateWithoutContractAcceptancesInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
@@ -4900,6 +5150,10 @@ export type StoreCreateWithoutContractChangeRequestsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -4972,6 +5226,10 @@ export type StoreUncheckedCreateWithoutContractChangeRequestsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutStoreInput
@@ -5056,6 +5314,10 @@ export type StoreUpdateWithoutContractChangeRequestsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -5128,6 +5390,10 @@ export type StoreUncheckedUpdateWithoutContractChangeRequestsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutStoreNestedInput
@@ -5196,6 +5462,10 @@ export type StoreCreateWithoutShippingWaybillsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -5268,6 +5538,10 @@ export type StoreUncheckedCreateWithoutShippingWaybillsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -5352,6 +5626,10 @@ export type StoreUpdateWithoutShippingWaybillsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -5424,6 +5702,10 @@ export type StoreUncheckedUpdateWithoutShippingWaybillsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -5492,6 +5774,10 @@ export type StoreCreateWithoutReviewsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -5564,6 +5850,10 @@ export type StoreUncheckedCreateWithoutReviewsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -5648,6 +5938,10 @@ export type StoreUpdateWithoutReviewsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -5720,6 +6014,10 @@ export type StoreUncheckedUpdateWithoutReviewsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -5788,6 +6086,10 @@ export type StoreCreateWithoutWithdrawalRequestsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -5860,6 +6162,10 @@ export type StoreUncheckedCreateWithoutWithdrawalRequestsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -5944,6 +6250,10 @@ export type StoreUpdateWithoutWithdrawalRequestsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -6016,6 +6326,10 @@ export type StoreUncheckedUpdateWithoutWithdrawalRequestsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -6084,6 +6398,10 @@ export type StoreCreateWithoutViolationsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -6156,6 +6474,10 @@ export type StoreUncheckedCreateWithoutViolationsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -6240,6 +6562,10 @@ export type StoreUpdateWithoutViolationsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -6312,6 +6638,10 @@ export type StoreUncheckedUpdateWithoutViolationsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -6380,6 +6710,10 @@ export type StoreCreateWithoutPenaltyActionsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   contract?: Prisma.PlatformContractCreateNestedOneWithoutStoresInput
   owner: Prisma.UserCreateNestedOneWithoutStoreInput
   documents?: Prisma.StoreDocumentCreateNestedManyWithoutStoreInput
@@ -6452,6 +6786,10 @@ export type StoreUncheckedCreateWithoutPenaltyActionsInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
   documents?: Prisma.StoreDocumentUncheckedCreateNestedManyWithoutStoreInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedCreateNestedManyWithoutStoreInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutStoreInput
@@ -6536,6 +6874,10 @@ export type StoreUpdateWithoutPenaltyActionsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contract?: Prisma.PlatformContractUpdateOneWithoutStoresNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
@@ -6608,6 +6950,10 @@ export type StoreUncheckedUpdateWithoutPenaltyActionsInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -6677,6 +7023,10 @@ export type StoreCreateManyContractInput = {
   totalOffersSent?: number
   editCount?: number
   withdrawalCount?: number
+  monthlyOfferDeletionCount?: number
+  monthlyOfferDeletionMonth?: string | null
+  offerBiddingRestrictedUntil?: Date | string | null
+  offerBiddingRestrictionReason?: string | null
 }
 
 export type StoreUpdateWithoutContractInput = {
@@ -6732,6 +7082,10 @@ export type StoreUpdateWithoutContractInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   owner?: Prisma.UserUpdateOneRequiredWithoutStoreNestedInput
   documents?: Prisma.StoreDocumentUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUpdateManyWithoutStoreNestedInput
@@ -6803,6 +7157,10 @@ export type StoreUncheckedUpdateWithoutContractInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   documents?: Prisma.StoreDocumentUncheckedUpdateManyWithoutStoreNestedInput
   contractAcceptances?: Prisma.ContractAcceptanceUncheckedUpdateManyWithoutStoreNestedInput
   contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutStoreNestedInput
@@ -6873,6 +7231,10 @@ export type StoreUncheckedUpdateManyWithoutContractInput = {
   totalOffersSent?: Prisma.IntFieldUpdateOperationsInput | number
   editCount?: Prisma.IntFieldUpdateOperationsInput | number
   withdrawalCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyOfferDeletionMonth?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  offerBiddingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  offerBiddingRestrictionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -7078,6 +7440,10 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   totalOffersSent?: boolean
   editCount?: boolean
   withdrawalCount?: boolean
+  monthlyOfferDeletionCount?: boolean
+  monthlyOfferDeletionMonth?: boolean
+  offerBiddingRestrictedUntil?: boolean
+  offerBiddingRestrictionReason?: boolean
   contract?: boolean | Prisma.Store$contractArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   documents?: boolean | Prisma.Store$documentsArgs<ExtArgs>
@@ -7152,6 +7518,10 @@ export type StoreSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   totalOffersSent?: boolean
   editCount?: boolean
   withdrawalCount?: boolean
+  monthlyOfferDeletionCount?: boolean
+  monthlyOfferDeletionMonth?: boolean
+  offerBiddingRestrictedUntil?: boolean
+  offerBiddingRestrictionReason?: boolean
   contract?: boolean | Prisma.Store$contractArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["store"]>
@@ -7211,6 +7581,10 @@ export type StoreSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   totalOffersSent?: boolean
   editCount?: boolean
   withdrawalCount?: boolean
+  monthlyOfferDeletionCount?: boolean
+  monthlyOfferDeletionMonth?: boolean
+  offerBiddingRestrictedUntil?: boolean
+  offerBiddingRestrictionReason?: boolean
   contract?: boolean | Prisma.Store$contractArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["store"]>
@@ -7270,9 +7644,13 @@ export type StoreSelectScalar = {
   totalOffersSent?: boolean
   editCount?: boolean
   withdrawalCount?: boolean
+  monthlyOfferDeletionCount?: boolean
+  monthlyOfferDeletionMonth?: boolean
+  offerBiddingRestrictedUntil?: boolean
+  offerBiddingRestrictionReason?: boolean
 }
 
-export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "name" | "storeCode" | "slug" | "description" | "category" | "logo" | "status" | "licenseExpiry" | "balance" | "pendingBalance" | "frozenBalance" | "stripeAccountId" | "stripeOnboarded" | "payoutSchedule" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "rating" | "rejectionReason" | "loyaltyTier" | "performanceScore" | "lifetimeEarnings" | "subscriptionTier" | "subscriptionActive" | "subscriptionExpiresAt" | "completedOrdersCount" | "avgResponseScore" | "selectedMakes" | "selectedModels" | "customMake" | "customModel" | "contractId" | "contractAcceptedAt" | "contractSignature" | "address" | "lat" | "lng" | "adminNotes" | "suspendedUntil" | "createdAt" | "updatedAt" | "offerLimit" | "dailyOfferCount" | "visibilityRestricted" | "visibilityNote" | "visibilitySignature" | "visibilityRate" | "totalOffersSent" | "editCount" | "withdrawalCount", ExtArgs["result"]["store"]>
+export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "name" | "storeCode" | "slug" | "description" | "category" | "logo" | "status" | "licenseExpiry" | "balance" | "pendingBalance" | "frozenBalance" | "stripeAccountId" | "stripeOnboarded" | "payoutSchedule" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "rating" | "rejectionReason" | "loyaltyTier" | "performanceScore" | "lifetimeEarnings" | "subscriptionTier" | "subscriptionActive" | "subscriptionExpiresAt" | "completedOrdersCount" | "avgResponseScore" | "selectedMakes" | "selectedModels" | "customMake" | "customModel" | "contractId" | "contractAcceptedAt" | "contractSignature" | "address" | "lat" | "lng" | "adminNotes" | "suspendedUntil" | "createdAt" | "updatedAt" | "offerLimit" | "dailyOfferCount" | "visibilityRestricted" | "visibilityNote" | "visibilitySignature" | "visibilityRate" | "totalOffersSent" | "editCount" | "withdrawalCount" | "monthlyOfferDeletionCount" | "monthlyOfferDeletionMonth" | "offerBiddingRestrictedUntil" | "offerBiddingRestrictionReason", ExtArgs["result"]["store"]>
 export type StoreInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contract?: boolean | Prisma.Store$contractArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -7376,6 +7754,10 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     totalOffersSent: number
     editCount: number
     withdrawalCount: number
+    monthlyOfferDeletionCount: number
+    monthlyOfferDeletionMonth: string | null
+    offerBiddingRestrictedUntil: Date | null
+    offerBiddingRestrictionReason: string | null
   }, ExtArgs["result"]["store"]>
   composites: {}
 }
@@ -7869,6 +8251,10 @@ export interface StoreFieldRefs {
   readonly totalOffersSent: Prisma.FieldRef<"Store", 'Int'>
   readonly editCount: Prisma.FieldRef<"Store", 'Int'>
   readonly withdrawalCount: Prisma.FieldRef<"Store", 'Int'>
+  readonly monthlyOfferDeletionCount: Prisma.FieldRef<"Store", 'Int'>
+  readonly monthlyOfferDeletionMonth: Prisma.FieldRef<"Store", 'String'>
+  readonly offerBiddingRestrictedUntil: Prisma.FieldRef<"Store", 'DateTime'>
+  readonly offerBiddingRestrictionReason: Prisma.FieldRef<"Store", 'String'>
 }
     
 

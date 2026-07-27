@@ -320,7 +320,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                         <Badge status={order.status as StatusType} />
                                                         {(() => {
                                                             const shipment = shipments.find(s => s.orderId === order.id);
-                                                            if (shipment && !['CANCELLED', 'AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status)) {
+                                                            if (shipment && !['CANCELLED', 'AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status)) {
                                                                 return (
                                                                     <div className="flex items-center gap-2">
                                                                         <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
@@ -332,12 +332,20 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                         })()}
                                                     </div>
 
-                                                    <OrderStatusCountdown order={order} variant="compact" className="mt-1" />
+                                                    {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID'].includes(order.status) &&
+                                                        order.status !== 'CANCELLED' &&
+                                                        !expired &&
+                                                        !(
+                                                            order.status === 'AWAITING_SELECTION' &&
+                                                            !(order.offers?.some((o) => o.status !== 'rejected'))
+                                                        ) && (
+                                                        <OrderStatusCountdown order={order} variant="compact" className="mt-1" />
+                                                    )}
 
                                                     {/* New Offers Count */}
                                                     {(() => {
                                                         const activeOffersCount = order.offers?.filter(o => o.status !== 'rejected').length || 0;
-                                                        if (activeOffersCount > 0 && ['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(order.status)) {
+                                                        if (activeOffersCount > 0 && ['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION'].includes(order.status)) {
                                                             return (
                                                                 <span className="text-xs font-medium text-gold-400 animate-pulse">
                                                                     {activeOffersCount} {t.dashboard.orders.newOffers}

@@ -1236,10 +1236,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                           return (
                             <>
                               <div className="flex justify-between items-center bg-white/5 p-6 rounded-3xl border border-white/5">
-                                <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
-                                  <Box size={18} className="text-purple-400" />
-                                  {isAr ? 'شرائح الأوزان والتسعير' : 'Weight Brackets'}
-                                </h3>
+                                <div>
+                                  <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                                    <Box size={18} className="text-purple-400" />
+                                    {isAr ? 'شرائح الأوزان والتسعير' : 'Weight Brackets'}
+                                  </h3>
+                                  <p className="text-[10px] text-white/30 mt-1">
+                                    {isAr
+                                      ? 'عند تفعيل الوزن: تكلفة الشحن = سعر الشريحة فقط. التكلفة الأساسية للأنواع غير المعتمدة على الوزن.'
+                                      : 'When weight-based: shipping = bracket price only. Base fee applies to non-weight types.'}
+                                  </p>
+                                </div>
                                 <button
                                   onClick={() => {
                                     const newBrackets = [...(activeType.weightBrackets || []), { id: Date.now().toString(), minWeight: 0, maxWeight: 0, price: 0 }];
@@ -1284,7 +1291,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                                       />
                                     </div>
                                     <div className="space-y-1">
-                                      <span className="text-[9px] font-black text-white/20 uppercase tracking-tight">{isAr ? 'سعر إضافي' : 'Surcharge'}</span>
+                                      <span className="text-[9px] font-black text-white/20 uppercase tracking-tight">{isAr ? 'سعر الشحن للشريحة' : 'Bracket shipping price'}</span>
                                       <input
                                         type="number"
                                         value={rule.price}

@@ -1,5 +1,4 @@
 import React, { useState, memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Star, ShieldCheck, Truck, MessageSquare, CheckCircle2, Box, Tag, X, ZoomIn, Settings, Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isAcceptedOfferStatus, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
@@ -120,10 +119,8 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 
     return (
         <>
-            <motion.div
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl p-6 mb-4 relative overflow-hidden group will-change-[transform,opacity,border-color] transition-[border-color,transform,box-shadow,background-color] duration-300 ${isSelected
+            <div
+                className={`rounded-2xl p-6 mb-4 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 ${isSelected
                     ? 'bg-gradient-to-br from-gold-500/10 to-transparent border-2 border-gold-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]'
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
                     } ${disabled ? 'opacity-50 grayscale-[50%] pointer-events-none' : ''}`}
@@ -370,7 +367,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 
                 {/* Image Modal */}
                 {isImageModalOpen && offerImage && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => setIsImageModalOpen(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setIsImageModalOpen(false)}>
                         <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
                             <X size={32} />
                         </button>
@@ -382,7 +379,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                         />
                     </div>
                 )}
-            </motion.div>
+            </div>
         </>
     );
 });

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { OrderActiveSla } from '../../types/orderSla';
 import { useOrderActiveSla } from '../../hooks/useOrderActiveSla';
@@ -24,6 +24,16 @@ const SLA_KEY_MAP: Record<string, string> = {
   'sla.return': 'return',
   'sla.correction': 'correction',
 };
+
+const TERMINAL_STATUSES = new Set([
+  'CANCELLED',
+  'COMPLETED',
+  'CLOSED',
+  'REFUNDED',
+  'RESOLVED',
+  'WARRANTY_EXPIRED',
+  'RETURNED',
+]);
 
 const URGENCY_STYLES = {
   normal: {
@@ -70,6 +80,7 @@ export const OrderStatusCountdown: React.FC<Props> = ({
   const isAr = language === 'ar';
   const resolved = useOrderActiveSla(order);
   const sla = activeSlaProp ?? resolved;
+  const isTerminal = !!(order?.status && TERMINAL_STATUSES.has(String(order.status)));
 
   const endsAtMs = useMemo(
     () => (sla?.endsAt ? new Date(sla.endsAt).getTime() : null),
@@ -79,16 +90,19 @@ export const OrderStatusCountdown: React.FC<Props> = ({
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!endsAtMs) return;
+    if (!endsAtMs || isTerminal) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, [endsAtMs]);
+  }, [endsAtMs, isTerminal]);
 
-  if (!sla || !endsAtMs) return null;
+  if (isTerminal || !sla || !endsAtMs) return null;
 
   const remainingMs = endsAtMs - now;
   const isExpired = remainingMs <= 0 || sla.urgency === 'expired';
-  const urgency = isExpired ? 'expired' : sla.urgency;
+  // Hide countdown once the window has elapsed (parent should refetch to CANCELLED)
+  if (isExpired) return null;
+
+  const urgency = sla.urgency;
   const styles = URGENCY_STYLES[urgency] ?? URGENCY_STYLES.normal;
 
   const slaBucket =
@@ -100,9 +114,7 @@ export const OrderStatusCountdown: React.FC<Props> = ({
     slaBucket?.[labelKey] ??
     (isAr ? 'الوقت المتبقي' : 'Time remaining');
 
-  const { h, m, s } = isExpired
-    ? { h: 0, m: 0, s: 0 }
-    : formatRemaining(remainingMs);
+  const { h, m, s } = formatRemaining(remainingMs);
 
   const progress = sla.progressPercent ?? 0;
   const ringRadius = variant === 'hero' ? 36 : 14;
@@ -114,17 +126,6 @@ export const OrderStatusCountdown: React.FC<Props> = ({
       {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
     </div>
   );
-
-  if (isExpired) {
-    return (
-      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border ${styles.bg} ${className}`}>
-        <AlertCircle size={14} />
-        <span className="text-[10px] font-black uppercase tracking-wider">
-          {slaBucket?.expired ?? (isAr ? 'انتهت المهلة' : 'Expired')}
-        </span>
-      </div>
-    );
-  }
 
   if (variant === 'compact') {
     return (

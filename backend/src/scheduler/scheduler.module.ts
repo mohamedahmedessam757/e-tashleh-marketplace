@@ -16,6 +16,7 @@ import { OfferGovernanceNotifyService } from './offer-governance-notify.service'
 import { MerchantPerformanceModule } from '../merchant-performance/merchant-performance.module';
 import { MerchantPerformanceCronService } from '../merchant-performance/merchant-performance-cron.service';
 import { ViolationsModule } from '../violations/violations.module';
+import { OffersModule } from '../offers/offers.module';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { ViolationsModule } from '../violations/violations.module';
         PaymentsModule,
         MerchantPerformanceModule,
         ViolationsModule,
+        OffersModule,
     ],
     providers: [
         OrderCleanupService, 

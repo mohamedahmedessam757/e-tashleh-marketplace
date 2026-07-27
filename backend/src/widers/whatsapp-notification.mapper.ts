@@ -1,5 +1,35 @@
 export type WhatsAppAudienceRole = 'CUSTOMER' | 'MERCHANT';
 
+/** Explicit WhatsApp routing key — preferred over keyword heuristics. */
+export type WhatsAppEvent =
+    | 'ORDER_CREATED'
+    | 'ORDER_STATUS'
+    | 'OFFER_REVEAL'
+    | 'OFFER_ACCEPTED'
+    | 'OFFER_BIDDING_RESTRICTED'
+    | 'PAYMENT_SUCCESS'
+    | 'INVOICE_ISSUED'
+    | 'SHIPMENT_STATUS'
+    | 'WAYBILL_ISSUED'
+    | 'VERIFICATION'
+    | 'DOCUMENT'
+    | 'STORE_ACTIVATION';
+
+export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
+    'ORDER_CREATED',
+    'ORDER_STATUS',
+    'OFFER_REVEAL',
+    'OFFER_ACCEPTED',
+    'OFFER_BIDDING_RESTRICTED',
+    'PAYMENT_SUCCESS',
+    'INVOICE_ISSUED',
+    'SHIPMENT_STATUS',
+    'WAYBILL_ISSUED',
+    'VERIFICATION',
+    'DOCUMENT',
+    'STORE_ACTIVATION',
+] as const;
+
 export interface NotificationDispatchInput {
     recipientRole: string;
     type?: string;
@@ -13,6 +43,13 @@ export interface NotificationDispatchInput {
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const ORDER_WA_EVENTS = new Set<WhatsAppEvent>([
+    'ORDER_CREATED',
+    'ORDER_STATUS',
+    'OFFER_REVEAL',
+    'OFFER_ACCEPTED',
+]);
 
 export function normalizeWhatsAppRole(role: string): WhatsAppAudienceRole | null {
     const upper = role.toUpperCase();
@@ -46,6 +83,15 @@ export function extractOfferId(metadata?: Record<string, unknown> | null): strin
         return raw;
     }
     return null;
+}
+
+export function extractWaEvent(
+    metadata?: Record<string, unknown> | null,
+): WhatsAppEvent | null {
+    const raw = metadata?.waEvent;
+    if (typeof raw !== 'string') return null;
+    const upper = raw.toUpperCase() as WhatsAppEvent;
+    return (WHATSAPP_EVENTS as readonly string[]).includes(upper) ? upper : null;
 }
 
 function containsAny(haystack: string, needles: string[]): boolean {
@@ -90,6 +136,62 @@ function isPaymentFailure(input: NotificationDispatchInput): boolean {
     return containsAny(blob, ['فشل', 'failed', 'failure']);
 }
 
+function orderFamily(role: WhatsAppAudienceRole): string {
+    return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+}
+
+function shipmentFamily(role: WhatsAppAudienceRole): string {
+    return role === 'CUSTOMER' ? 'txn_shipment_customer' : 'txn_shipment_merchant';
+}
+
+function invoiceFamily(role: WhatsAppAudienceRole): string {
+    return role === 'CUSTOMER' ? 'txn_invoice_customer' : 'txn_invoice_merchant';
+}
+
+function waybillFamily(role: WhatsAppAudienceRole): string {
+    return role === 'CUSTOMER' ? 'txn_waybill_customer' : 'txn_waybill_merchant';
+}
+
+function verificationFamily(role: WhatsAppAudienceRole): string {
+    return role === 'CUSTOMER' ? 'txn_verification_customer' : 'txn_verification_vendor';
+}
+
+/**
+ * Resolve via explicit metadata.waEvent (preferred path).
+ * Returns undefined when no waEvent — caller falls back to type/heuristics.
+ */
+function resolveByWaEvent(
+    waEvent: WhatsAppEvent,
+    role: WhatsAppAudienceRole,
+    opts?: { hasInvoice?: boolean },
+): string | null {
+    switch (waEvent) {
+        case 'STORE_ACTIVATION':
+            return role === 'MERCHANT' ? 'welcome_vendor' : null;
+        case 'DOCUMENT':
+            return role === 'MERCHANT' ? 'txn_document_vendor' : null;
+        case 'WAYBILL_ISSUED':
+            return waybillFamily(role);
+        case 'VERIFICATION':
+            return verificationFamily(role);
+        case 'SHIPMENT_STATUS':
+            return shipmentFamily(role);
+        case 'PAYMENT_SUCCESS':
+        case 'INVOICE_ISSUED':
+            if (opts?.hasInvoice) return invoiceFamily(role);
+            return orderFamily(role);
+        case 'ORDER_CREATED':
+        case 'ORDER_STATUS':
+        case 'OFFER_REVEAL':
+        case 'OFFER_ACCEPTED':
+            return orderFamily(role);
+        case 'OFFER_BIDDING_RESTRICTED':
+            return role === 'MERCHANT' ? 'txn_offer_restriction_vendor' : null;
+        default:
+            return null;
+    }
+}
+
 /**
  * Maps in-app notification → Widers template family base (without _ar/_en suffix).
  */
@@ -100,7 +202,19 @@ export function resolveTemplateFamily(
 ): string | null {
     const type = (input.type ?? '').toUpperCase();
     const docType = String(input.metadata?.docType ?? '');
+    const waEvent = extractWaEvent(input.metadata);
 
+    // Explicit waEvent wins — including DOCUMENT over blocked ALERT/SYSTEM types
+    if (waEvent) {
+        const fromEvent = resolveByWaEvent(waEvent, role, opts);
+        if (fromEvent) return fromEvent;
+        // STORE_ACTIVATION for customer etc. → fall through only if null intentionally
+        if (ORDER_WA_EVENTS.has(waEvent) || waEvent === 'SHIPMENT_STATUS') {
+            return fromEvent;
+        }
+    }
+
+    // Blocked types (unless waEvent DOCUMENT already handled above)
     if (['REFERRAL', 'CHAT', 'FINANCIAL', 'WALLET', 'SYSTEM'].includes(type)) {
         return null;
     }
@@ -115,41 +229,37 @@ export function resolveTemplateFamily(
     }
 
     if (type === 'OFFER') {
-        return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+        return orderFamily(role);
     }
 
     if (type === 'SHIPMENT_UPDATE') {
-        return role === 'CUSTOMER' ? 'txn_shipment_customer' : 'txn_shipment_merchant';
+        return shipmentFamily(role);
     }
 
     if (type === 'PAYMENT' || type === 'payment') {
         if (isPaymentFailure(input)) return null;
         if (opts?.hasInvoice) {
-            return role === 'CUSTOMER' ? 'txn_invoice_customer' : 'txn_invoice_merchant';
+            return invoiceFamily(role);
         }
-        return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+        return orderFamily(role);
     }
 
     if (type === 'ORDER_UPDATE' || type === 'order_update') {
         if (isWaybillNotification(input)) {
-            return role === 'CUSTOMER' ? 'txn_waybill_customer' : 'txn_waybill_merchant';
+            return waybillFamily(role);
         }
         if (isVerificationNotification(input)) {
-            return role === 'CUSTOMER'
-                ? 'txn_verification_customer'
-                : 'txn_verification_vendor';
+            return verificationFamily(role);
         }
-        return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+        return orderFamily(role);
     }
 
     if (type === 'ORDER' || type === 'SYSTEM_ALERT' || type === 'system_alert') {
         if (isVerificationNotification(input)) {
-            return role === 'CUSTOMER'
-                ? 'txn_verification_customer'
-                : 'txn_verification_vendor';
+            return verificationFamily(role);
         }
         if (['ORDER', 'SYSTEM_ALERT', 'system_alert'].includes(type)) {
-            return role === 'CUSTOMER' ? 'txn_order_customer' : 'txn_order_merchant';
+            return orderFamily(role);
         }
     }
 

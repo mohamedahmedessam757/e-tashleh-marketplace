@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrderStatus, ActorType } from '@prisma/client';
 import { getVoluntaryWithdrawEnd } from '../offers/offer-governance.util';
+import { OfferBiddingRestrictionService } from '../offers/offer-bidding-restriction.service';
 
 @Injectable()
 export class OfferGovernanceNotifyService {
@@ -12,7 +13,21 @@ export class OfferGovernanceNotifyService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly notifications: NotificationsService,
+        private readonly biddingRestriction: OfferBiddingRestrictionService,
     ) {}
+
+    @Cron(CronExpression.EVERY_HOUR)
+    async handleExpiredBiddingRestrictions() {
+        if (!(await this.prisma.ensureConnected())) return;
+        try {
+            const lifted = await this.biddingRestriction.clearExpiredRestrictions();
+            if (lifted > 0) {
+                this.logger.log(`Lifted ${lifted} expired offer-bidding restriction(s).`);
+            }
+        } catch (e: any) {
+            this.logger.error(`clearExpiredRestrictions failed: ${e?.message || e}`);
+        }
+    }
 
     @Cron(CronExpression.EVERY_5_MINUTES)
     async handleVoluntaryWithdrawReminders() {

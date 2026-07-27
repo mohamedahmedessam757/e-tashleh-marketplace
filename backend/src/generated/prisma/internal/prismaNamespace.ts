@@ -5196,7 +5196,11 @@ export const StoreScalarFieldEnum = {
   visibilityRate: 'visibilityRate',
   totalOffersSent: 'totalOffersSent',
   editCount: 'editCount',
-  withdrawalCount: 'withdrawalCount'
+  withdrawalCount: 'withdrawalCount',
+  monthlyOfferDeletionCount: 'monthlyOfferDeletionCount',
+  monthlyOfferDeletionMonth: 'monthlyOfferDeletionMonth',
+  offerBiddingRestrictedUntil: 'offerBiddingRestrictedUntil',
+  offerBiddingRestrictionReason: 'offerBiddingRestrictionReason'
 } as const
 
 export type StoreScalarFieldEnum = (typeof StoreScalarFieldEnum)[keyof typeof StoreScalarFieldEnum]

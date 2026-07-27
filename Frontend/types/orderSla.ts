@@ -1,5 +1,5 @@
 export type OrderActiveSlaUrgency = 'normal' | 'warning' | 'critical' | 'expired';
-export type OrderActiveSlaSource = 'config' | 'stored';
+export type OrderActiveSlaSource = 'config' | 'stored' | 'deadline';
 
 export interface OrderActiveSla {
   phase: string;

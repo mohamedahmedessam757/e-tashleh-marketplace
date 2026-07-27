@@ -15,6 +15,8 @@ export interface ShipmentTypeConfig {
   basePrice: number;
   isWeightBound: boolean;
   weightBrackets: WeightBracket[];
+  hasCylinders?: boolean;
+  cylinderRates?: { cylinders: number; price: number }[];
 }
 
 export interface LogisticsConfig {
@@ -109,8 +111,51 @@ export class LogisticsConfigService {
         basePrice: t.basePrice,
         isWeightBound: t.isWeightBound,
         weightBrackets: t.weightBrackets,
+        hasCylinders: Boolean(t.hasCylinders),
+        cylinderRates: t.cylinderRates || [],
       })),
     };
+  }
+
+  /**
+   * Canonical shipping cost used by merchant UI and offer create/update.
+   * - hasCylinders → cylinder rate
+   * - isWeightBound → matched bracket price only (no basePrice); weight<=0 → 0
+   * - else → basePrice only
+   */
+  computeShippingCost(params: {
+    partType?: string | null;
+    weightKg?: number | null;
+    cylinders?: number | null;
+    config?: LogisticsConfig;
+  }): number {
+    const cfg = params.config;
+    if (!cfg) return 0;
+    const typeId = params.partType || 'standard';
+    const shipmentType = cfg.shipmentTypes.find((t) => t.id === typeId);
+    if (!shipmentType) return 0;
+
+    if (shipmentType.hasCylinders) {
+      const rate = (shipmentType.cylinderRates || []).find(
+        (r) => r.cylinders === Number(params.cylinders),
+      );
+      return rate ? Number(rate.price) || 0 : 0;
+    }
+
+    if (shipmentType.isWeightBound) {
+      const w = Number(params.weightKg) || 0;
+      if (!(w > 0)) return 0;
+      const brackets = shipmentType.weightBrackets || [];
+      const bracket = brackets.find((b) => w >= b.minWeight && w <= b.maxWeight);
+      if (bracket) return Number(bracket.price) || 0;
+      if (brackets.length > 0) {
+        const sorted = [...brackets].sort((a, b) => b.maxWeight - a.maxWeight);
+        if (w > sorted[0].maxWeight) return Number(sorted[0].price) || 0;
+      }
+      return 0;
+    }
+
+    return Number(shipmentType.basePrice) || 0;
   }
 
   private merge(fromDb: Partial<LogisticsConfig>): LogisticsConfig {

@@ -378,7 +378,6 @@ export class OrderCleanupService {
                     where: { status: { not: 'rejected' } },
                     select: { id: true, orderPartId: true },
                 },
-                _count: { select: { offers: true } },
             },
         });
 
@@ -389,71 +388,84 @@ export class OrderCleanupService {
                 continue;
             }
             try {
-                this.logger.log(`Revealing offers for order ${order.orderNumber} (ID: ${order.id}). Transitioning to AWAITING_SELECTION.`);
-                
-                await this.ordersService.transitionStatus(
-                    order.id,
-                    OrderStatus.AWAITING_SELECTION,
-                    { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                    'System: Reveal time reached. Transitioning to Selection phase.'
-                );
+                const hasOffers = order.offers.length > 0;
 
-                // [2026] Centralized Detail: Inform Customer about the Reveal
-                if (order._count.offers > 0) {
-                    await this.notificationsService.create({
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
-                        titleAr: 'حان وقت اختيار العروض! 🛒',
-                        titleEn: 'Time to Select Offers! 🛒',
-                        messageAr: `تم انتهاء فترة جمع العروض لطلبك رقم #${order.orderNumber}. يمكنك الآن مراجعة ${order._count.offers} عرض واختيار الأنسب لك.`,
-                        messageEn: `The collection period for your order #${order.orderNumber} has ended. You can now review ${order._count.offers} offers and select the best one.`,
-                        type: 'OFFER',
-                        link: `/dashboard/orders/${order.id}`
-                    });
-
-                    // Multi-part: some parts received no offers — customer can reorder those parts from order details
-                    if (
-                        order.requestType === 'multiple' &&
-                        order.parts.length > 1
-                    ) {
-                        const partIdsWithOffers = new Set(
-                            order.offers
-                                .map((o) => o.orderPartId)
-                                .filter((id): id is string => !!id),
-                        );
-                        const partsWithoutOffers = order.parts.filter(
-                            (p) => !partIdsWithOffers.has(p.id),
-                        );
-
-                        if (
-                            partsWithoutOffers.length > 0 &&
-                            partsWithoutOffers.length < order.parts.length
-                        ) {
-                            const missingCount = partsWithoutOffers.length;
-                            const totalCount = order.parts.length;
-                            await this.notificationsService.create({
-                                recipientId: order.customerId,
-                                recipientRole: 'CUSTOMER',
-                                titleAr: 'قطع بدون عروض في طلبك',
-                                titleEn: 'Parts Without Offers',
-                                messageAr: `لم تصل عروض لـ ${missingCount} من ${totalCount} قطع في الطلب #${order.orderNumber}. يمكنك إعادة طلب هذه القطع من صفحة تفاصيل الطلب بينما يستمر الطلب للقطع الأخرى.`,
-                                messageEn: `No offers were received for ${missingCount} of ${totalCount} parts in order #${order.orderNumber}. You can reorder those parts from the order details page while the rest of your order continues.`,
-                                type: 'system_alert',
-                                link: `/dashboard/orders/${order.id}`,
-                            });
-                        }
-                    }
-                } else {
+                // Zero offers after collection window → cancel immediately (do not open selection SLA)
+                if (!hasOffers) {
+                    this.logger.log(
+                        `No offers for order ${order.orderNumber} (ID: ${order.id}). Cancelling after collection window.`,
+                    );
+                    await this.ordersService.transitionStatus(
+                        order.id,
+                        OrderStatus.CANCELLED,
+                        { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
+                        'System: No offers received after collection window.',
+                    );
                     await this.notificationsService.create({
                         recipientId: order.customerId,
                         recipientRole: 'CUSTOMER',
                         titleAr: 'انتهت مهلة جمع العروض',
                         titleEn: 'Collection Period Ended',
-                        messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية.`,
-                        messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours.`,
+                        messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
+                        messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
                         type: 'system_alert',
-                        link: `/dashboard/orders/${order.id}`
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
                     });
+                    continue;
+                }
+
+                this.logger.log(
+                    `Revealing offers for order ${order.orderNumber} (ID: ${order.id}). Transitioning to AWAITING_SELECTION.`,
+                );
+
+                await this.ordersService.transitionStatus(
+                    order.id,
+                    OrderStatus.AWAITING_SELECTION,
+                    { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
+                    'System: Reveal time reached. Transitioning to Selection phase.',
+                );
+
+                // Customer + bidding merchants already notified via transitionStatus (AWAITING_SELECTION / OFFER_REVEAL)
+
+                // Multi-part: some parts received no offers — customer can reorder those parts from order details
+                if (order.requestType === 'multiple' && order.parts.length > 1) {
+                    const partIdsWithOffers = new Set(
+                        order.offers
+                            .map((o) => o.orderPartId)
+                            .filter((id): id is string => !!id),
+                    );
+                    const partsWithoutOffers = order.parts.filter(
+                        (p) => !partIdsWithOffers.has(p.id),
+                    );
+
+                    if (
+                        partsWithoutOffers.length > 0 &&
+                        partsWithoutOffers.length < order.parts.length
+                    ) {
+                        const missingCount = partsWithoutOffers.length;
+                        const totalCount = order.parts.length;
+                        await this.notificationsService.create({
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'قطع بدون عروض في طلبك',
+                            titleEn: 'Parts Without Offers',
+                            messageAr: `لم تصل عروض لـ ${missingCount} من ${totalCount} قطع في الطلب #${order.orderNumber}. يمكنك إعادة طلب هذه القطع من صفحة تفاصيل الطلب بينما يستمر الطلب للقطع الأخرى.`,
+                            messageEn: `No offers were received for ${missingCount} of ${totalCount} parts in order #${order.orderNumber}. You can reorder those parts from the order details page while the rest of your order continues.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_STATUS',
+                            },
+                        });
+                    }
                 }
             } catch (error) {
                 this.logger.error(`Failed to reveal offers for order ${order.id}: ${error.message}`);
@@ -467,20 +479,54 @@ export class OrderCleanupService {
                 status: OrderStatus.AWAITING_SELECTION,
             },
             include: {
-                _count: {
-                    select: { offers: true }
-                }
-            }
+                offers: {
+                    where: { status: { not: 'rejected' } },
+                    select: { id: true },
+                },
+            },
         });
 
         const durationCfg = await this.orderDurationConfig.getConfig();
 
         for (const order of expiredOrders) {
-            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
+            const hasOffers = order.offers.length > 0;
+            // Heal stuck selection orders that have zero offers (should have been cancelled at reveal)
+            if (hasOffers && !this.orderSla.isSlaExpired(order, durationCfg)) continue;
+
             try {
-                const hasOffers = order._count.offers > 0;
-                this.logger.log(`Expiring order selection period ${order.orderNumber} (ID: ${order.id}) [hasOffers: ${hasOffers}]`);
-                
+                if (!hasOffers) {
+                    this.logger.log(
+                        `Healing zero-offer selection order ${order.orderNumber} (ID: ${order.id}) → CANCELLED`,
+                    );
+                    await this.ordersService.transitionStatus(
+                        order.id,
+                        OrderStatus.CANCELLED,
+                        { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
+                        'System: No offers received after collection window.',
+                    );
+                    await this.notificationsService.create({
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهت مهلة جمع العروض',
+                        titleEn: 'Collection Period Ended',
+                        messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
+                        messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
+                    });
+                    continue;
+                }
+
+                this.logger.log(
+                    `Expiring order selection period ${order.orderNumber} (ID: ${order.id}) [hasOffers: ${hasOffers}]`,
+                );
+
                 await this.ordersService.transitionStatus(
                     order.id,
                     OrderStatus.CANCELLED,
@@ -488,7 +534,6 @@ export class OrderCleanupService {
                     'System: Selection period expired (48h total elapsed). Customer failed to choose an offer.',
                 );
 
-                // Notification
                 await this.notificationsService.create({
                     recipientId: order.customerId,
                     recipientRole: 'CUSTOMER',
@@ -496,7 +541,13 @@ export class OrderCleanupService {
                     titleEn: 'Selection Period Expired',
                     messageAr: `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
                     messageEn: `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
-                    type: 'system_alert'
+                    type: 'system_alert',
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                        status: 'CANCELLED',
+                    },
                 });
             } catch (error) {
                 this.logger.error(`Failed to expire order selection ${order.id}: ${error.message}`);
@@ -509,19 +560,18 @@ export class OrderCleanupService {
             where: {
                 status: OrderStatus.AWAITING_PAYMENT,
             },
-            select: { 
-                id: true, 
-                orderNumber: true, 
+            select: {
+                id: true,
+                orderNumber: true,
                 customerId: true,
                 status: true,
                 createdAt: true,
                 updatedAt: true,
                 paymentDeadlineAt: true,
-                offerAcceptedAt: true,
                 offers: {
                     where: { status: 'accepted' },
-                    select: { storeId: true }
-                }
+                    select: { storeId: true },
+                },
             },
         });
 

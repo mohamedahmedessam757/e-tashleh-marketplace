@@ -3,27 +3,32 @@
 Single source for which in-app events dispatch which Widers template families.
 
 > **June 2026 rebuild:** All templates use Meta/Widers technical names `{family}_ar_v2`.  
-> Widers dashboard may be empty until all 15 are recreated and APPROVED.  
+> Preferred routing uses `metadata.waEvent` (see below). Type/keyword heuristics remain as fallback.  
 > Setup guide: [WIDERS_PHASE0_SETUP_GUIDE.md](WIDERS_PHASE0_SETUP_GUIDE.md)
 
-| Template family | Widers API name (ar) | Trigger |
-|-----------------|----------------------|---------|
-| `auth_otp_customer` | `auth_otp_customer_ar_v2` | OTP via WhatsApp — customer register/login (`otp.service.ts`) |
-| `auth_otp_vendor` | `auth_otp_vendor_ar_v2` | OTP via WhatsApp — vendor register/login |
-| `auth_otp_admin` | `auth_otp_admin_ar_v2` | OTP via WhatsApp — staff 2FA (all admin roles) |
-| `txn_order_customer` | `txn_order_customer_ar_v2` | `OFFER`, `ORDER`, `ORDER_UPDATE`, payment without invoice |
-| `txn_order_merchant` | `txn_order_merchant_ar_v2` | Same as customer, merchant role |
-| `txn_shipment_customer` | `txn_shipment_customer_ar_v2` | `SHIPMENT_UPDATE` — body `{{4}}` = absolute shipping deep-link (`order-details/{id}?tab=waybills`); tracking code appended to `{{3}}` |
-| `txn_shipment_merchant` | `txn_shipment_merchant_ar_v2` | `SHIPMENT_UPDATE` — body `{{4}}` = absolute shipping deep-link (`explore-offer/{id}?tab=waybills`); tracking code appended to `{{3}}` |
-| `txn_invoice_customer` | `txn_invoice_customer_ar_v2` | `payment` + invoice metadata |
-| `txn_invoice_merchant` | `txn_invoice_merchant_ar_v2` | `payment` + invoice metadata |
-| `txn_waybill_customer` | `txn_waybill_customer_ar_v2` | `ORDER_UPDATE` with waybill keywords |
-| `txn_waybill_merchant` | `txn_waybill_merchant_ar_v2` | `ORDER_UPDATE` with waybill keywords |
-| `txn_document_vendor` | `txn_document_vendor_ar_v2` | `DOC_EXPIRY`, `SUCCESS`, document alerts |
-| `txn_verification_customer` | `txn_verification_customer_ar_v2` | `ORDER` / `ORDER_UPDATE` + `metadata.verification` |
-| `txn_verification_vendor` | `txn_verification_vendor_ar_v2` | Same, merchant role |
-| `welcome_customer` | `welcome_customer_ar_v2` | After register — `auth.service.ts` |
-| `welcome_vendor` | `welcome_vendor_ar_v2` | After vendor register (`auth.service`) **and** admin store activation (`stores.service` ACTIVE + `docType: store_activation`) |
+| Template family | Widers API name (ar) | `waEvent` (preferred) | Trigger (fallback) |
+|-----------------|----------------------|------------------------|--------------------|
+| `auth_otp_customer` | `auth_otp_customer_ar_v2` | — (direct OTP) | OTP via WhatsApp — customer register/login (`otp.service.ts`) |
+| `auth_otp_vendor` | `auth_otp_vendor_ar_v2` | — (direct OTP) | OTP via WhatsApp — vendor register/login |
+| `auth_otp_admin` | `auth_otp_admin_ar_v2` | — (direct OTP) | OTP via WhatsApp — staff 2FA (all admin roles) |
+| `txn_order_customer` | `txn_order_customer_ar_v2` | `ORDER_CREATED`, `ORDER_STATUS`, `OFFER_REVEAL`, `OFFER_ACCEPTED` | `OFFER`, `ORDER`, `ORDER_UPDATE`, payment without invoice |
+| `txn_order_merchant` | `txn_order_merchant_ar_v2` | same | Same as customer, merchant role |
+| `txn_shipment_customer` | `txn_shipment_customer_ar_v2` | `SHIPMENT_STATUS` | `SHIPMENT_UPDATE` |
+| `txn_shipment_merchant` | `txn_shipment_merchant_ar_v2` | `SHIPMENT_STATUS` | `SHIPMENT_UPDATE` |
+| `txn_invoice_customer` | `txn_invoice_customer_ar_v2` | `INVOICE_ISSUED` / `PAYMENT_SUCCESS` + invoice | `payment` + invoice metadata |
+| `txn_invoice_merchant` | `txn_invoice_merchant_ar_v2` | `INVOICE_ISSUED` / `PAYMENT_SUCCESS` + invoice | `payment` + invoice metadata |
+| `txn_waybill_customer` | `txn_waybill_customer_ar_v2` | `WAYBILL_ISSUED` | `order_update` + waybill keywords |
+| `txn_waybill_merchant` | `txn_waybill_merchant_ar_v2` | `WAYBILL_ISSUED` | `order_update` + waybill keywords |
+| `txn_document_vendor` | `txn_document_vendor_ar_v2` | `DOCUMENT` | `DOC_EXPIRY`, `SUCCESS`, or `ALERT`/`SYSTEM` **only when** `waEvent=DOCUMENT` |
+| `txn_offer_restriction_vendor` | `txn_offer_restriction_vendor_ar_v2` | `OFFER_BIDDING_RESTRICTED` | Monthly deletion limit (50) / admin bidding restriction — body `{{1}}` name · `{{2}}` store_name · `{{3}}` status_detail |
+| `txn_verification_customer` | `txn_verification_customer_ar_v2` | `VERIFICATION` | `ORDER` / `system_alert` + `metadata.verification` |
+| `txn_verification_vendor` | `txn_verification_vendor_ar_v2` | `VERIFICATION` | Same, merchant role |
+| `welcome_customer` | `welcome_customer_ar_v2` | — (direct) | After register — `auth.service.ts` |
+| `welcome_vendor` | `welcome_vendor_ar_v2` | `STORE_ACTIVATION` | Vendor register **and** store activation (`docType: store_activation`) |
+
+## Allowed `metadata.waEvent` values
+
+`ORDER_CREATED` | `ORDER_STATUS` | `OFFER_REVEAL` | `OFFER_ACCEPTED` | `OFFER_BIDDING_RESTRICTED` | `PAYMENT_SUCCESS` | `INVOICE_ISSUED` | `SHIPMENT_STATUS` | `WAYBILL_ISSUED` | `VERIFICATION` | `DOCUMENT` | `STORE_ACTIVATION`
 
 ## Branding & URLs
 
@@ -37,7 +42,7 @@ Single source for which in-app events dispatch which Widers template families.
 
 ## Intentionally no WhatsApp template
 
-`REFERRAL`, `CHAT`, `FINANCIAL`, `WALLET`, `SYSTEM`, `ALERT`, `SECURITY`, payment failures.
+`REFERRAL`, `CHAT`, `FINANCIAL`, `WALLET`, `SYSTEM`, `ALERT`, `SECURITY`, payment failures — **except** `ALERT`/`SYSTEM` with `waEvent=DOCUMENT` (document reject/reupload).
 
 ## Audit & smoke tests
 
@@ -45,6 +50,7 @@ Single source for which in-app events dispatch which Widers template families.
 - `node backend/scripts/widers-template-audit.mjs`
 - `POST /widers/test/template/:family` (dev/staging)
 - `POST /widers/test/otp` (dev/staging)
+- `POST /widers/test/notification-path` (dev/staging — full NotificationsService → WhatsApp path)
 
 ## GCC phone normalization
 

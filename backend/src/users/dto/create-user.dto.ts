@@ -8,6 +8,10 @@ export class VendorDocumentDto {
 
     @IsString()
     url: string;
+
+    @IsOptional()
+    @IsString()
+    expiresAt?: string;
 }
 
 export class ContractDataDto {

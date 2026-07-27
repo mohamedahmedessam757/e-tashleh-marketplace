@@ -50,31 +50,66 @@ export class OrderSlaService {
 
     switch (status) {
       case OrderStatus.COLLECTING_OFFERS:
-      case OrderStatus.AWAITING_OFFERS:
+      case OrderStatus.AWAITING_OFFERS: {
+        const revealMs = this.toMs(order.revealOffersAt);
+        const createdMs = this.toMs(order.createdAt);
+        if (revealMs != null && createdMs != null) {
+          return this.buildSlaUntil(
+            status,
+            'sla.collectingOffers',
+            createdMs,
+            revealMs,
+          );
+        }
         return this.buildSla(
           status,
           'sla.collectingOffers',
-          this.toMs(order.createdAt),
+          createdMs,
           this.durationConfig.hoursToMs(cfg.offerCollectionHours),
         );
+      }
 
-      case OrderStatus.AWAITING_SELECTION:
+      case OrderStatus.AWAITING_SELECTION: {
+        const deadlineMs = this.toMs(order.selectionDeadlineAt);
+        const startedMs =
+          this.toMs(order.revealOffersAt) ?? this.toMs(order.updatedAt);
+        if (deadlineMs != null && startedMs != null) {
+          return this.buildSlaUntil(
+            status,
+            'sla.selection',
+            startedMs,
+            deadlineMs,
+          );
+        }
         return this.buildSla(
           status,
           'sla.selection',
-          this.toMs(order.revealOffersAt) ?? this.toMs(order.updatedAt),
+          startedMs,
           this.durationConfig.hoursToMs(cfg.offerSelectionHours),
         );
+      }
 
-      case OrderStatus.AWAITING_PAYMENT:
+      case OrderStatus.AWAITING_PAYMENT: {
+        const payDeadlineMs = this.toMs(order.paymentDeadlineAt);
+        const payStartedMs =
+          this.toMs(order.offerAcceptedAt) ??
+          this.toMs(order.updatedAt) ??
+          this.toMs(order.createdAt);
+        if (payDeadlineMs != null && payStartedMs != null) {
+          return this.buildSlaUntil(
+            status,
+            'sla.payment',
+            payStartedMs,
+            payDeadlineMs,
+          );
+        }
         return this.buildSla(
           status,
           'sla.payment',
-          this.toMs(order.offerAcceptedAt) ??
-            this.toMs(order.updatedAt) ??
-            this.toMs(order.createdAt),
+          payStartedMs,
           this.durationConfig.hoursToMs(cfg.paymentTimeoutHours),
         );
+      }
 
       case OrderStatus.PARTIALLY_PAID:
         return this.buildSla(
@@ -182,7 +217,32 @@ export class OrderSlaService {
       return null;
     }
 
-    const endsAtMs = startedAtMs + totalMs;
+    return this.buildSlaUntil(
+      phase,
+      labelKey,
+      startedAtMs,
+      startedAtMs + totalMs,
+      source,
+    );
+  }
+
+  /** Build SLA from explicit start/end timestamps (DB deadline fields). */
+  private buildSlaUntil(
+    phase: string,
+    labelKey: string,
+    startedAtMs: number,
+    endsAtMs: number,
+    source: OrderActiveSlaSource = 'deadline',
+  ): OrderActiveSla | null {
+    if (
+      !Number.isFinite(startedAtMs) ||
+      !Number.isFinite(endsAtMs) ||
+      endsAtMs <= startedAtMs
+    ) {
+      return null;
+    }
+
+    const totalMs = endsAtMs - startedAtMs;
     const now = Date.now();
     const remainingMs = endsAtMs - now;
     const progressPercent = Math.min(

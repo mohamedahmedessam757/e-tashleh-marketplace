@@ -474,9 +474,16 @@ model Store {
   editCount       Int @default(0) @map("edit_count")
   withdrawalCount Int @default(0) @map("withdrawal_count")
 
+  // Monthly deletion governance + offer bidding restriction (2026)
+  monthlyOfferDeletionCount      Int       @default(0) @map("monthly_offer_deletion_count")
+  monthlyOfferDeletionMonth      String?   @map("monthly_offer_deletion_month") // UTC YYYY-MM
+  offerBiddingRestrictedUntil    DateTime? @map("offer_bidding_restricted_until") @db.Timestamptz
+  offerBiddingRestrictionReason  String?   @map("offer_bidding_restriction_reason") @db.Text
+
   @@index([status])
   @@index([suspendedUntil])
   @@index([loyaltyTier, rating])
+  @@index([offerBiddingRestrictedUntil])
   @@map("stores")
 }
 

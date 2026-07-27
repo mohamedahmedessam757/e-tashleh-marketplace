@@ -33,10 +33,24 @@ const buildSla = (
   labelKey: string,
   startedAtMs: number | null,
   totalMs: number,
+  source: OrderActiveSla['source'] = 'config',
 ): OrderActiveSla | null => {
   if (startedAtMs == null || !Number.isFinite(startedAtMs) || totalMs <= 0) return null;
+  return buildSlaUntil(phase, labelKey, startedAtMs, startedAtMs + totalMs, source);
+};
 
-  const endsAtMs = startedAtMs + totalMs;
+const buildSlaUntil = (
+  phase: string,
+  labelKey: string,
+  startedAtMs: number,
+  endsAtMs: number,
+  source: OrderActiveSla['source'] = 'deadline',
+): OrderActiveSla | null => {
+  if (!Number.isFinite(startedAtMs) || !Number.isFinite(endsAtMs) || endsAtMs <= startedAtMs) {
+    return null;
+  }
+
+  const totalMs = endsAtMs - startedAtMs;
   const now = Date.now();
   const remainingMs = endsAtMs - now;
   const progressPercent = Math.min(
@@ -55,7 +69,7 @@ const buildSla = (
     labelKey,
     urgency,
     progressPercent,
-    source: 'config',
+    source,
     startedAt: new Date(startedAtMs).toISOString(),
     totalMs,
   };
@@ -90,24 +104,33 @@ export function resolveOrderActiveSla(
 
   switch (status) {
     case 'COLLECTING_OFFERS':
-    case 'AWAITING_OFFERS':
-      return buildSla(status, 'sla.collectingOffers', toMs(order.createdAt), H(config.offerCollectionHours));
+    case 'AWAITING_OFFERS': {
+      const revealMs = toMs(order.revealOffersAt);
+      const createdMs = toMs(order.createdAt);
+      if (revealMs != null && createdMs != null) {
+        return buildSlaUntil(status, 'sla.collectingOffers', createdMs, revealMs);
+      }
+      return buildSla(status, 'sla.collectingOffers', createdMs, H(config.offerCollectionHours));
+    }
 
-    case 'AWAITING_SELECTION':
-      return buildSla(
-        status,
-        'sla.selection',
-        toMs(order.revealOffersAt) ?? toMs(order.updatedAt),
-        H(config.offerSelectionHours),
-      );
+    case 'AWAITING_SELECTION': {
+      const deadlineMs = toMs(order.selectionDeadlineAt);
+      const startedMs = toMs(order.revealOffersAt) ?? toMs(order.updatedAt);
+      if (deadlineMs != null && startedMs != null) {
+        return buildSlaUntil(status, 'sla.selection', startedMs, deadlineMs);
+      }
+      return buildSla(status, 'sla.selection', startedMs, H(config.offerSelectionHours));
+    }
 
-    case 'AWAITING_PAYMENT':
-      return buildSla(
-        status,
-        'sla.payment',
-        toMs(order.offerAcceptedAt) ?? toMs(order.updatedAt) ?? toMs(order.createdAt),
-        H(config.paymentTimeoutHours),
-      );
+    case 'AWAITING_PAYMENT': {
+      const payDeadlineMs = toMs(order.paymentDeadlineAt);
+      const payStartedMs =
+        toMs(order.offerAcceptedAt) ?? toMs(order.updatedAt) ?? toMs(order.createdAt);
+      if (payDeadlineMs != null && payStartedMs != null) {
+        return buildSlaUntil(status, 'sla.payment', payStartedMs, payDeadlineMs);
+      }
+      return buildSla(status, 'sla.payment', payStartedMs, H(config.paymentTimeoutHours));
+    }
 
     case 'PARTIALLY_PAID':
       return buildSla(

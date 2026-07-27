@@ -5,11 +5,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { StoresModule } from '../stores/stores.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
 
 @Module({
     imports: [PrismaModule, StoresModule, NotificationsModule, AuditLogsModule],
     controllers: [OffersController],
-    providers: [OffersService],
-    exports: [OffersService],
+    providers: [OffersService, OfferBiddingRestrictionService],
+    exports: [OffersService, OfferBiddingRestrictionService],
 })
 export class OffersModule { }

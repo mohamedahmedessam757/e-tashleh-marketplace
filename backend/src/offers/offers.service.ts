@@ -6,6 +6,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType, OrderStatus } from '@prisma/client';
 import { getVoluntaryWithdrawEnd } from './offer-governance.util';
+import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
+import { LogisticsConfigService } from '../common/logistics-config.service';
 
 @Injectable()
 export class OffersService {
@@ -14,6 +16,8 @@ export class OffersService {
         private storesService: StoresService,
         private notificationsService: NotificationsService,
         private auditLogs: AuditLogsService,
+        private biddingRestriction: OfferBiddingRestrictionService,
+        private logisticsConfig: LogisticsConfigService,
     ) { }
 
     async create(userId: string, createOfferDto: CreateOfferDto) {
@@ -23,15 +27,17 @@ export class OffersService {
             throw new NotFoundException('You need a Store to submit offers.');
         }
 
-        // --- 2026 Governance Enforcement: Offer Limit ---
-        // Fetch the latest count and limit from DB to ensure accuracy
-        const storeCheck = await this.prisma.store.findUnique({
+        // --- 2026 Governance Enforcement: Offer Limit + bidding restriction ---
+        const storeCheck = await this.biddingRestriction.ensureMonthBucket(store.id);
+        this.biddingRestriction.assertNotRestricted(storeCheck);
+
+        const dailyCheck = await this.prisma.store.findUnique({
             where: { id: store.id },
             select: { offerLimit: true, dailyOfferCount: true }
         });
 
-        if (storeCheck && storeCheck.offerLimit !== -1 && storeCheck.dailyOfferCount >= storeCheck.offerLimit) {
-            throw new ForbiddenException(`You have reached your daily limit of ${storeCheck.offerLimit} offers. Please try again tomorrow.`);
+        if (dailyCheck && dailyCheck.offerLimit !== -1 && dailyCheck.dailyOfferCount >= dailyCheck.offerLimit) {
+            throw new ForbiddenException(`You have reached your daily limit of ${dailyCheck.offerLimit} offers. Please try again tomorrow.`);
         }
         // ------------------------------------------------
 
@@ -54,19 +60,32 @@ export class OffersService {
             throw new BadRequestException('Bidding time has strictly expired for this order (reveal phase approaching).');
         }
 
-        // --- 2026 Governance: Check if merchant already has a withdrawn offer for this order ---
-        const previousWithdrawn = await this.prisma.offer.findFirst({
-            where: { orderId: orderInfo.id, storeId: store.id, isWithdrawn: true }
+        // Part-level lock: only voluntary withdraw blocks re-bid on that part (not free-window delete)
+        const voluntaryPartLock = await this.prisma.offer.findFirst({
+            where: {
+                storeId: store.id,
+                isWithdrawn: true,
+                withdrawalType: 'voluntary',
+                ...(createOfferDto.orderPartId
+                    ? { orderPartId: createOfferDto.orderPartId }
+                    : { orderId: orderInfo.id, orderPartId: null }),
+            },
         });
-        if (previousWithdrawn) {
-            throw new BadRequestException('You have previously withdrawn an offer for this order and cannot submit another one.');
+        if (voluntaryPartLock) {
+            throw new BadRequestException(
+                'You have voluntarily withdrawn from this part and cannot submit another offer on it.',
+            );
         }
 
-        // 2. Validate max 10 offers per part (if part-level offer)
+        // 2. Validate max 10 offers per part (if part-level offer) — active only
         if (createOfferDto.orderPartId) {
             try {
                 const existingPartOffers = await this.prisma.offer.count({
-                    where: { orderPartId: createOfferDto.orderPartId }
+                    where: {
+                        orderPartId: createOfferDto.orderPartId,
+                        isWithdrawn: false,
+                        status: { notIn: ['withdrawn', 'rejected'] },
+                    }
                 });
                 if (existingPartOffers >= 10) {
                     throw new BadRequestException('Maximum 10 offers per part reached.');
@@ -88,6 +107,23 @@ export class OffersService {
         }
 
         // 3. Build offer data (conditionally include orderPartId)
+        const logistics = await this.logisticsConfig.getConfig();
+        const computedShipping = this.logisticsConfig.computeShippingCost({
+            partType: createOfferDto.partType,
+            weightKg: createOfferDto.weightKg,
+            cylinders: createOfferDto.cylinders,
+            config: logistics,
+        });
+        const clientShipping = Number(createOfferDto.shippingCost ?? 0);
+        if (
+            createOfferDto.shippingCost !== undefined &&
+            Math.abs(clientShipping - computedShipping) > 0.01
+        ) {
+            throw new BadRequestException(
+                `Invalid shipping cost. Expected ${computedShipping} based on logistics settings.`,
+            );
+        }
+
         const offerData: any = {
             offerNumber,
             orderId: createOfferDto.orderId,
@@ -102,7 +138,7 @@ export class OffersService {
             notes: createOfferDto.notes,
             offerImage: createOfferDto.offerImage,
             cylinders: createOfferDto.cylinders,
-            shippingCost: createOfferDto.shippingCost ?? 0,
+            shippingCost: computedShipping,
             canEditUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 Minute window
         };
 
@@ -197,8 +233,8 @@ export class OffersService {
                 recipientRole: 'VENDOR',
                 titleAr: 'تم إرسال عرضك بنجاح ✅',
                 titleEn: 'Offer Submitted Successfully ✅',
-                messageAr: 'لديك 15 دقيقة لتعديل أو حذف عرضك مجاناً. بعدها يمكنك الانسحاب الطوعي من الطلب حتى ساعة قبل مرحلة اختيار العميل. إذا انسحبت لن تتمكن من تقديم عرض على هذا الطلب مرة أخرى.',
-                messageEn: 'You have 15 minutes to edit or delete your offer for free. After that, you may voluntarily withdraw from this request until 1 hour before customer selection. If you withdraw, you cannot bid on this request again.',
+                messageAr: 'لديك 15 دقيقة لتعديل عرضك مجاناً، أو حذفه (يعد ضمن الحد الشهري مع إمكانية إعادة التقديم على نفس القطعة). بعد المهلة يمكنك التراجع/الانسحاب الطوعي حتى ساعة قبل اختيار العميل — الانسحاب يمنع إعادة التقديم على نفس القطعة.',
+                messageEn: 'You have 15 minutes to edit for free, or delete (counts toward the monthly limit; you may re-bid on the same part). After that, voluntary withdraw until 1 hour before selection — withdraw blocks re-bidding on that part only.',
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${orderInfo.id}`
             }).catch(() => {});
@@ -232,10 +268,10 @@ export class OffersService {
     async findMyOffersByOrder(userId: string, orderId: string) {
         const store = await this.storesService.findMyStore(userId);
         if (!store) {
-            return { activeOffers: [], isBlockedFromOrder: false };
+            return { activeOffers: [], isBlockedFromOrder: false, blockedPartIds: [] as string[] };
         }
 
-        const [activeOffers, withdrawnCount] = await Promise.all([
+        const [activeOffers, voluntaryWithdrawn, allWithdrawn] = await Promise.all([
             this.prisma.offer.findMany({
                 where: {
                     orderId,
@@ -247,18 +283,42 @@ export class OffersService {
                 },
                 orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.offer.count({
+            this.prisma.offer.findMany({
+                where: {
+                    orderId,
+                    storeId: store.id,
+                    isWithdrawn: true,
+                    withdrawalType: 'voluntary',
+                },
+                select: { orderPartId: true },
+            }),
+            this.prisma.offer.findMany({
                 where: {
                     orderId,
                     storeId: store.id,
                     isWithdrawn: true,
                 },
+                select: { orderPartId: true, withdrawalType: true },
             }),
         ]);
 
+        const blockedPartIds = voluntaryWithdrawn
+            .map((o) => o.orderPartId)
+            .filter((id): id is string => Boolean(id));
+        // Legacy whole-order block only when voluntary withdraw had no part id
+        const legacyWholeOrderBlock = voluntaryWithdrawn.some((o) => !o.orderPartId);
+
+        const partDeletionCounts: Record<string, number> = {};
+        for (const w of allWithdrawn) {
+            const key = w.orderPartId || '__order__';
+            partDeletionCounts[key] = (partDeletionCounts[key] || 0) + 1;
+        }
+
         return {
             activeOffers,
-            isBlockedFromOrder: withdrawnCount > 0,
+            isBlockedFromOrder: legacyWholeOrderBlock,
+            blockedPartIds,
+            partDeletionCounts,
         };
     }
 
@@ -322,7 +382,6 @@ export class OffersService {
         const data: any = {};
         if (updateDto.unitPrice !== undefined) data.unitPrice = updateDto.unitPrice;
         if (updateDto.weightKg !== undefined) data.weightKg = updateDto.weightKg;
-        if (updateDto.shippingCost !== undefined) data.shippingCost = updateDto.shippingCost;
         if (updateDto.hasWarranty !== undefined) data.hasWarranty = updateDto.hasWarranty;
         if (updateDto.warrantyDuration !== undefined) data.warrantyDuration = updateDto.warrantyDuration;
         if (updateDto.deliveryDays !== undefined) data.deliveryDays = updateDto.deliveryDays;
@@ -331,10 +390,27 @@ export class OffersService {
         if (updateDto.notes !== undefined) data.notes = updateDto.notes;
         if (updateDto.offerImage !== undefined) data.offerImage = updateDto.offerImage;
         if (updateDto.cylinders !== undefined) data.cylinders = updateDto.cylinders;
+
+        const logistics = await this.logisticsConfig.getConfig();
+        const computedShipping = this.logisticsConfig.computeShippingCost({
+            partType: updateDto.partType ?? existing.partType,
+            weightKg: updateDto.weightKg ?? existing.weightKg,
+            cylinders: updateDto.cylinders ?? existing.cylinders,
+            config: logistics,
+        });
+        if (updateDto.shippingCost !== undefined) {
+            const clientShipping = Number(updateDto.shippingCost);
+            if (Math.abs(clientShipping - computedShipping) > 0.01) {
+                throw new BadRequestException(
+                    `Invalid shipping cost. Expected ${computedShipping} based on logistics settings.`,
+                );
+            }
+        }
+        data.shippingCost = computedShipping;
         data.updatedAt = new Date();
 
         const updated = await this.prisma.$transaction(async (tx) => {
-            // Increment edit count for governance tracking
+            // Historical edit counter (does NOT count toward monthly deletion limit)
             await tx.store.update({
                 where: { id: store.id },
                 data: { editCount: { increment: 1 } }
@@ -348,10 +424,6 @@ export class OffersService {
                 }
             });
         });
-
-        // --- 2026 Governance: Threshold Check ---
-        this.checkGovernanceThresholds(store.id, updated.store?.name || 'Vendor', updated.store?.ownerId).catch(() => {});
-        // ----------------------------------------
 
         await this.auditLogs.logAction({
             orderId: existing.orderId,
@@ -398,6 +470,8 @@ export class OffersService {
                 id: true,
                 storeId: true,
                 orderId: true,
+                offerNumber: true,
+                orderPartId: true,
                 isWithdrawn: true,
                 canEditUntil: true,
                 order: {
@@ -464,6 +538,11 @@ export class OffersService {
             });
         });
 
+        await this.biddingRestriction.recordDeletion(store.id, {
+            orderNumber: order.orderNumber,
+            kind: 'VOLUNTARY_WITHDRAW',
+        });
+
         await this.auditLogs.logAction({
             orderId: existing.orderId,
             action: 'VOLUNTARY_WITHDRAW_OFFER',
@@ -477,12 +556,11 @@ export class OffersService {
                 offerNumber: offerMeta?.offerNumber,
                 orderNumber: order.orderNumber,
                 storeId: store.id,
+                orderPartId: existing.orderPartId,
                 modificationKind: 'VOLUNTARY_WITHDRAW',
                 withdrawalType: 'voluntary',
             },
         });
-
-        this.checkGovernanceThresholds(store.id, result.store?.name || store.name, userId).catch(() => {});
 
         await this.notifyAdminsOfferModification({
             storeId: store.id,
@@ -497,10 +575,10 @@ export class OffersService {
             .create({
                 recipientId: userId,
                 recipientRole: 'VENDOR',
-                titleAr: 'تم الانسحاب من الطلب',
-                titleEn: 'Withdrawn from Request',
-                messageAr: `تم الانسحاب من الطلب #${order.orderNumber}. لن تتمكن من تقديم عرض على هذا الطلب مرة أخرى. يمكنك التقديم على طلبات أخرى.`,
-                messageEn: `You withdrew from request #${order.orderNumber}. You cannot submit another offer on this request. You may still bid on other requests.`,
+                titleAr: 'تم التراجع عن العرض',
+                titleEn: 'Offer Withdrawn',
+                messageAr: `تم الانسحاب من القطعة على الطلب #${order.orderNumber}. لن تتمكن من تقديم عرض على هذه القطعة مرة أخرى. يمكنك التقديم على قطع/طلبات أخرى.`,
+                messageEn: `You withdrew from a part on request #${order.orderNumber}. You cannot re-bid on that part. You may still bid on other parts/requests.`,
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${existing.orderId}`,
             })
@@ -579,10 +657,6 @@ export class OffersService {
                 include: { store: { select: { id: true, name: true, ownerId: true } } }
             });
         });
-
-        // --- 2026 Governance: Threshold Check ---
-        this.checkGovernanceThresholds(store.id, result.store?.name || 'Vendor', result.store?.ownerId).catch(() => {});
-        // ----------------------------------------
 
         const orderRow = existing.order
             ? await this.prisma.order.findUnique({
@@ -666,12 +740,28 @@ export class OffersService {
         }
         // ------------------------------------------------------
 
+        // Free-window cancel: soft-delete so monthly/part counters stay auditable.
+        // Does NOT lock the part — merchant may re-bid during collection.
+        const existingFull = await this.prisma.offer.findUnique({
+            where: { id: offerId },
+            select: { orderPartId: true },
+        });
+
         await this.prisma.$transaction(async (tx) => {
-            await tx.store.update({
-                where: { id: store.id },
-                data: { editCount: { increment: 1 } },
+            await tx.offer.update({
+                where: { id: offerId },
+                data: {
+                    status: 'withdrawn',
+                    isWithdrawn: true,
+                    withdrawalType: 'free_window',
+                    updatedAt: new Date(),
+                },
             });
-            await tx.offer.delete({ where: { id: offerId } });
+        });
+
+        await this.biddingRestriction.recordDeletion(store.id, {
+            orderNumber: existing.order?.orderNumber,
+            kind: 'CANCEL',
         });
 
         await this.auditLogs.logAction({
@@ -682,18 +772,18 @@ export class OffersService {
             actorId: userId,
             actorName: store.name,
             previousState: JSON.stringify(existing),
-            newState: 'DELETED',
-            reason: 'Vendor retracted their offer during bidding window',
+            newState: 'WITHDRAWN_FREE_WINDOW',
+            reason: 'Vendor retracted their offer during free edit window',
             metadata: {
                 offerId,
                 offerNumber: existing.offerNumber,
                 orderNumber: existing.order?.orderNumber,
                 storeId: store.id,
+                orderPartId: existingFull?.orderPartId,
                 modificationKind: 'CANCEL',
+                withdrawalType: 'free_window',
             },
         });
-
-        this.checkGovernanceThresholds(store.id, store.name, userId).catch(() => {});
 
         await this.notifyAdminsOfferModification({
             storeId: store.id,
@@ -848,7 +938,7 @@ export class OffersService {
         return { message: 'Offer deleted successfully by admin' };
     }
 
-    /** Notify admins on every offer edit/cancel/withdraw with order # and current mod rate. */
+    /** Notify admins on every offer edit/cancel/withdraw with monthly deletion stats. */
     private async notifyAdminsOfferModification(params: {
         storeId: string;
         storeName: string;
@@ -858,96 +948,40 @@ export class OffersService {
         kind: 'EDIT' | 'CANCEL' | 'VOLUNTARY_WITHDRAW' | 'VIOLATION_WITHDRAW';
     }) {
         try {
-            const stats = await this.prisma.store.findUnique({
-                where: { id: params.storeId },
-                select: { totalOffersSent: true, editCount: true, withdrawalCount: true },
-            });
-            const ratePct =
-                stats && stats.totalOffersSent > 0
-                    ? (
-                          ((stats.editCount + stats.withdrawalCount) / stats.totalOffersSent) *
-                          100
-                      ).toFixed(1)
-                    : '0';
-
+            const stats = await this.biddingRestriction.ensureMonthBucket(params.storeId);
             const kindAr: Record<typeof params.kind, string> = {
                 EDIT: 'تعديل عرض',
-                CANCEL: 'إلغاء عرض (نافذة التعديل المجاني)',
-                VOLUNTARY_WITHDRAW: 'انسحاب طوعي من الطلب',
+                CANCEL: 'إلغاء وحذف عرض (نافذة 15د)',
+                VOLUNTARY_WITHDRAW: 'تراجع / انسحاب طوعي من القطعة',
                 VIOLATION_WITHDRAW: 'سحب عرض (حوكمة)',
             };
             const kindEn: Record<typeof params.kind, string> = {
                 EDIT: 'Offer edited',
-                CANCEL: 'Offer cancelled (free edit window)',
-                VOLUNTARY_WITHDRAW: 'Voluntary withdrawal from request',
+                CANCEL: 'Offer cancelled & deleted (15m window)',
+                VOLUNTARY_WITHDRAW: 'Voluntary withdraw from part',
                 VIOLATION_WITHDRAW: 'Offer withdrawn (governance)',
             };
 
             const offerRef = params.offerNumber ? ` · عرض ${params.offerNumber}` : '';
+            const monthly = stats.monthlyOfferDeletionCount ?? 0;
 
             await this.notificationsService.notifyAdmins({
                 titleAr: `حوكمة عروض — ${params.storeName}`,
                 titleEn: `Offer governance — ${params.storeName}`,
-                messageAr: `${kindAr[params.kind]} على الطلب #${params.orderNumber}${offerRef}. معدل التعديل الحالي: ${ratePct}% (${stats?.editCount ?? 0} تعديل + ${stats?.withdrawalCount ?? 0} سحب / ${stats?.totalOffersSent ?? 0} عرض).`,
-                messageEn: `${kindEn[params.kind]} on order #${params.orderNumber}${params.offerNumber ? ` (offer ${params.offerNumber})` : ''}. Current modification rate: ${ratePct}% (${stats?.editCount ?? 0} edits + ${stats?.withdrawalCount ?? 0} withdrawals / ${stats?.totalOffersSent ?? 0} offers).`,
+                messageAr: `${kindAr[params.kind]} على الطلب #${params.orderNumber}${offerRef}. حذف/انسحاب هذا الشهر: ${monthly}/50.`,
+                messageEn: `${kindEn[params.kind]} on order #${params.orderNumber}${params.offerNumber ? ` (offer ${params.offerNumber})` : ''}. Monthly deletions/withdrawals: ${monthly}/50.`,
                 type: 'GOVERNANCE_ALERT',
                 link: `/admin/stores/${params.storeId}`,
                 metadata: {
                     ...params,
-                    modificationRatePercent: Number(ratePct),
-                    editCount: stats?.editCount,
-                    withdrawalCount: stats?.withdrawalCount,
-                    totalOffersSent: stats?.totalOffersSent,
+                    monthlyOfferDeletionCount: monthly,
+                    monthlyOfferDeletionMonth: stats.monthlyOfferDeletionMonth,
+                    offerBiddingRestrictedUntil: stats.offerBiddingRestrictedUntil,
                     occurredAt: new Date().toISOString(),
                 },
             });
         } catch (e) {
             console.error('notifyAdminsOfferModification failed', e);
-        }
-    }
-
-    /**
-     * Internal 2026 Governance logic: Monitors store modification/withdrawal rates.
-     * Triggers admin alerts and merchant warnings if rate > 5%.
-     */
-    private async checkGovernanceThresholds(storeId: string, storeName: string, ownerId?: string) {
-        try {
-            const store = await this.prisma.store.findUnique({
-                where: { id: storeId },
-                select: { totalOffersSent: true, editCount: true, withdrawalCount: true }
-            });
-
-            if (!store || store.totalOffersSent < 20) return; // Minimum sample size of 20 to avoid early noise
-
-            const modificationRate = (store.editCount + store.withdrawalCount) / store.totalOffersSent;
-
-            if (modificationRate > 0.05) {
-                // 1. Notify Admins about potential governance abuse
-                await this.notificationsService.notifyAdmins({
-                    titleAr: 'تنبيه حوكمة: تجاوز حد التعديلات ⚠️',
-                    titleEn: 'Governance Alert: Modification Threshold Exceeded ⚠️',
-                    messageAr: `المتجر "${storeName}" تجاوز نسبة 5% في تعديل أو سحب العروض (النسبة الحالية: ${(modificationRate * 100).toFixed(1)}%). يرجى مراجعة نشاط المتجر.`,
-                    messageEn: `Store "${storeName}" has exceeded the 5% threshold for offer modifications/withdrawals (Current rate: ${(modificationRate * 100).toFixed(1)}%). Please review store activity.`,
-                    type: 'GOVERNANCE_ALERT',
-                    metadata: { storeId, modificationRate, totalOffers: store.totalOffersSent }
-                });
-
-                // 2. Notify Merchant as a formal warning
-                if (ownerId) {
-                    await this.notificationsService.create({
-                        recipientId: ownerId,
-                        recipientRole: 'VENDOR',
-                        titleAr: 'تحذير حوكمة: تجاوز سقف التعديلات المسموح ⚠️',
-                        titleEn: 'Governance Warning: Modification Threshold Reached ⚠️',
-                        messageAr: `لقد تجاوزت نسبة 5% في تعديل أو سحب العروض. تكرار هذا النمط قد يؤدي لتقييد ظهور عروضك أو تعليق الحساب لمراجعة الجودة.`,
-                        messageEn: `You have reached the 5% threshold for offer modifications/withdrawals. Repeating this pattern may lead to visibility restrictions or account suspension for quality review.`,
-                        type: 'ALERT',
-                        link: '/dashboard/merchant/profile'
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Governance threshold check failed:', error);
         }
     }
 }

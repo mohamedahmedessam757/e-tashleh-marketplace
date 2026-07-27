@@ -104,6 +104,18 @@ export class UsersService {
             if (!existing) isUnique = true;
           }
 
+          const licenseExpiryRaw =
+            createUserDto.contractData?.secondPartyData?.licenseExpiry ||
+            createUserDto.documents?.find((d) => d.type === 'LICENSE')?.expiresAt ||
+            null;
+          const licenseExpiryDate = licenseExpiryRaw
+            ? new Date(String(licenseExpiryRaw))
+            : null;
+          const licenseExpiryValid =
+            licenseExpiryDate && !Number.isNaN(licenseExpiryDate.getTime())
+              ? licenseExpiryDate
+              : null;
+
           const store = await tx.store.create({
             data: {
               ownerId: user.id,
@@ -121,6 +133,7 @@ export class UsersService {
               customModel: createUserDto.customModel || null,
               contractId: createUserDto.contractData?.contractId || createUserDto.contractId || null,
               contractAcceptedAt: (createUserDto.contractData || createUserDto.contractId) ? new Date() : null,
+              licenseExpiry: licenseExpiryValid,
             }
           });
 
@@ -146,12 +159,21 @@ export class UsersService {
           // Create Store Documents if provided
           if (createUserDto.documents && createUserDto.documents.length > 0) {
             await tx.storeDocument.createMany({
-              data: createUserDto.documents.map(doc => ({
-                storeId: store.id,
-                docType: doc.type,
-                fileUrl: doc.url,
-                status: 'pending'
-              }))
+              data: createUserDto.documents.map(doc => {
+                const raw =
+                  doc.expiresAt ||
+                  (doc.type === 'LICENSE' ? licenseExpiryRaw : null);
+                const parsed = raw ? new Date(String(raw)) : null;
+                const expiresAt =
+                  parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+                return {
+                  storeId: store.id,
+                  docType: doc.type,
+                  fileUrl: doc.url,
+                  status: 'pending',
+                  expiresAt,
+                };
+              })
             });
           }
 

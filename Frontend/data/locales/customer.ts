@@ -35,7 +35,9 @@ export const customer = {
       status: {
         AWAITING_OFFERS: 'بانتظار العروض',
         COLLECTING_OFFERS: 'جارى جمع أفضل العروض',
+        AWAITING_SELECTION: 'بانتظار اختيار العرض',
         AWAITING_PAYMENT: 'بانتظار الدفع',
+        PARTIALLY_PAID: 'مدفوع جزئياً',
         PREPARATION: 'قيد التجهيز',
         VERIFICATION: 'قيد فحص القطعة',
         VERIFICATION_SUCCESS: 'توثيق ناجح',
@@ -1023,7 +1025,9 @@ export const customer = {
       status: {
         AWAITING_OFFERS: 'Awaiting Offers',
         COLLECTING_OFFERS: 'Collecting Best Offers',
+        AWAITING_SELECTION: 'Awaiting Your Selection',
         AWAITING_PAYMENT: 'Awaiting Payment',
+        PARTIALLY_PAID: 'Partially Paid',
         PREPARATION: 'Preparation',
         VERIFICATION: 'Part Inspection',
         VERIFICATION_SUCCESS: 'Verification Approved',

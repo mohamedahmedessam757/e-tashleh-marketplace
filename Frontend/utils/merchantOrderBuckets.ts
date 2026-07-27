@@ -1,11 +1,55 @@
 import type { Order } from '../stores/useOrderStore';
 
-/** Open marketplace orders a merchant can still engage with */
+/** Open marketplace orders a merchant can still bid on (selection phase is closed) */
 export const MERCHANT_MARKETPLACE_OPEN_STATUSES = [
     'AWAITING_OFFERS',
     'COLLECTING_OFFERS',
-    'AWAITING_SELECTION',
 ] as const;
+
+/** Statuses that must never appear as "incoming" discovery for a merchant */
+export const MERCHANT_INCOMING_EXCLUDED_STATUSES = [
+    'AWAITING_SELECTION',
+    'AWAITING_PAYMENT',
+    'PARTIALLY_PAID',
+    'CANCELLED',
+    'COMPLETED',
+    'DELIVERED',
+    'RETURNED',
+    'REFUNDED',
+    'CLOSED',
+] as const;
+
+/**
+ * Strict eligibility for "الطلبات الواردة" / incoming marketplace cards.
+ * Bidding closed (selection+) or offersStopAt elapsed → never show to new bidders.
+ */
+export function isEligibleMerchantIncomingOrder(order: {
+    status?: string | null;
+    offersStopAt?: string | Date | null;
+    revealOffersAt?: string | Date | null;
+    createdAt?: string | Date | null;
+    date?: string | Date | null;
+}): boolean {
+    const status = String(order?.status || '').toUpperCase();
+    if (!(MERCHANT_MARKETPLACE_OPEN_STATUSES as readonly string[]).includes(status)) {
+        return false;
+    }
+    if ((MERCHANT_INCOMING_EXCLUDED_STATUSES as readonly string[]).includes(status)) {
+        return false;
+    }
+
+    const now = Date.now();
+    if (order.offersStopAt) {
+        const stop = new Date(order.offersStopAt).getTime();
+        if (!Number.isNaN(stop) && stop <= now) return false;
+    } else if (order.revealOffersAt) {
+        // Fallback: if stop missing, hide once reveal/selection window starts
+        const reveal = new Date(order.revealOffersAt).getTime();
+        if (!Number.isNaN(reveal) && reveal <= now) return false;
+    }
+
+    return true;
+}
 
 /** Bidding / payment negotiation phase */
 export const MERCHANT_NEGOTIATING_STATUSES = [

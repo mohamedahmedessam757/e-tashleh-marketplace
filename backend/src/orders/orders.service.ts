@@ -183,7 +183,7 @@ export class OrdersService {
                 messageEn: `Thank you for your trust! Order #${orderNumber} is now under review, and we'll bring you the best offers soon.`,
                 type: 'ORDER',
                 link: `/dashboard/orders`,
-                metadata: { orderId: result.id, orderNumber }
+                metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' }
             });
 
             // Notify Admin
@@ -223,7 +223,7 @@ export class OrdersService {
                         messageEn: merchantMessageEn,
                         type: 'ORDER',
                         link: `/merchant/orders/${result.id}`,
-                        metadata: { orderId: result.id, orderNumber }
+                        metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' }
                     });
                 }
             }
@@ -269,34 +269,73 @@ export class OrdersService {
                 } : {};
                 // ------------------------------------------------------------
 
+                // Marketplace discovery: ONLY open bidding. Never AWAITING_SELECTION/PAYMENT.
+                // Prior bids still appear via offers.some / acceptedOffer / storeId below.
+                const now = new Date();
                 where.OR = [
                     {
-                        status: { in: [OrderStatus.AWAITING_OFFERS, OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_SELECTION, OrderStatus.AWAITING_PAYMENT] },
-                        // For AWAITING_PAYMENT/SELECTION, only show if some parts STILL need offers
-                        parts: {
-                            some: {
-                                offers: {
-                                    none: { status: 'accepted' }
-                                }
-                            }
-                        },
                         AND: [
-                            hasMakes ? {
-                                OR: store.selectedMakes.map(make => ({
-                                    vehicleMake: { equals: make, mode: 'insensitive' }
-                                }))
-                            } : {},
-                            hasModels ? {
-                                OR: store.selectedModels.map(model => ({
-                                    vehicleModel: { equals: model, mode: 'insensitive' }
-                                }))
-                            } : {},
-                            visibilityFilter // Apply visibility restriction here
-                        ]
+                            {
+                                status: {
+                                    in: [OrderStatus.AWAITING_OFFERS, OrderStatus.COLLECTING_OFFERS],
+                                },
+                            },
+                            {
+                                status: {
+                                    notIn: [
+                                        OrderStatus.AWAITING_SELECTION,
+                                        OrderStatus.AWAITING_PAYMENT,
+                                        OrderStatus.PARTIALLY_PAID,
+                                        OrderStatus.CANCELLED,
+                                    ],
+                                },
+                            },
+                            {
+                                OR: [
+                                    { offersStopAt: { gt: now } },
+                                    // Legacy rows without stop: hide once reveal started
+                                    {
+                                        AND: [
+                                            { offersStopAt: null },
+                                            {
+                                                OR: [
+                                                    { revealOffersAt: null },
+                                                    { revealOffersAt: { gt: now } },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            {
+                                parts: {
+                                    some: {
+                                        offers: {
+                                            none: { status: 'accepted' },
+                                        },
+                                    },
+                                },
+                            },
+                            hasMakes
+                                ? {
+                                      OR: store.selectedMakes.map((make) => ({
+                                          vehicleMake: { equals: make, mode: 'insensitive' as const },
+                                      })),
+                                  }
+                                : {},
+                            hasModels
+                                ? {
+                                      OR: store.selectedModels.map((model) => ({
+                                          vehicleModel: { equals: model, mode: 'insensitive' as const },
+                                      })),
+                                  }
+                                : {},
+                            visibilityFilter,
+                        ],
                     },
                     { storeId: storeId },
                     { acceptedOffer: { storeId: storeId } },
-                    { offers: { some: { storeId: storeId } } }
+                    { offers: { some: { storeId: storeId } } },
                 ];
             } else {
                 where.offers = { some: { store: { ownerId: user.id } } };
@@ -683,17 +722,33 @@ export class OrdersService {
         // 3. Notification: Notify Customer & Merchant (Async)
         try {
             const statusMessagesAr: Record<string, string> = {
+                [OrderStatus.AWAITING_SELECTION]: 'حان وقت الاختيار! 🛒 راجع العروض المتاحة واختر الأنسب لك قبل انتهاء المهلة.',
                 [OrderStatus.PREPARATION]: 'بدأ الحماس! 🔥 القِطع الخاصة بك قيد التجهيز الآن بكل عناية.',
+                [OrderStatus.DELAYED_PREPARATION]: 'تأخير في التجهيز ⏳ نعمل على تسريع تجهيز طلبك، شكراً لصبرك.',
+                [OrderStatus.VERIFICATION]: 'طلبك قيد فحص القطعة والتوثيق 🔬 سنُعلمك بالنتيجة قريباً.',
+                [OrderStatus.VERIFICATION_SUCCESS]: 'تم اعتماد التوثيق بنجاح ✅ طلبك يتقدم للمرحلة التالية.',
+                [OrderStatus.NON_MATCHING]: 'نتيجة الفحص: غير مطابق ⚠️ يرجى متابعة التعليمات لتصحيح الطلب.',
+                [OrderStatus.CORRECTION_PERIOD]: 'أنت في فترة التصحيح 🛠️ يرجى استكمال المطلوب قبل انتهاء المهلة.',
                 [OrderStatus.SHIPPED]: 'انطلقت إليك! 🚀 طلبك الآن في الطريق، استعد لاستلام الجودة.',
                 [OrderStatus.DELIVERED]: 'وصلت الأمانة! 🏠 نأمل أن تنال إعجابك، يومك سعيد بقطعك الجديدة.',
+                [OrderStatus.COMPLETED]: 'اكتمل طلبك بنجاح 🎉 شكراً لثقتك بمنصة إي-تشليح.',
+                [OrderStatus.CLOSED]: 'تم إغلاق الطلب. يمكنك دائماً إنشاء طلب جديد عند الحاجة.',
                 [OrderStatus.CANCELLED]: 'تم إلغاء طلبك بنجاح. نتمنى خدمتك في أقرب وقت ممكن.',
                 [OrderStatus.AWAITING_PAYMENT]: 'اختيار موفق! 👌 يرجى إتمام عملية الدفع لنبدأ في تجهيز طلبك فوراً.',
                 [OrderStatus.RETURNED]: 'حقك محفوظ 🤝 تمت الموافقة على طلب الإرجاع الخاص بك، سنقوم باللازم فوراً.'
             };
             const statusMessagesEn: Record<string, string> = {
+                [OrderStatus.AWAITING_SELECTION]: 'Time to choose! 🛒 Review available offers and pick the best one before the deadline.',
                 [OrderStatus.PREPARATION]: 'The excitement begins! 🔥 Your items are being carefully prepared now.',
+                [OrderStatus.DELAYED_PREPARATION]: 'Preparation delay ⏳ We are speeding up your order — thank you for your patience.',
+                [OrderStatus.VERIFICATION]: 'Your order is under part verification 🔬 We will update you soon.',
+                [OrderStatus.VERIFICATION_SUCCESS]: 'Verification approved ✅ Your order is moving to the next step.',
+                [OrderStatus.NON_MATCHING]: 'Verification result: non-matching ⚠️ Please follow correction instructions.',
+                [OrderStatus.CORRECTION_PERIOD]: 'You are in the correction window 🛠️ Complete the required steps before the deadline.',
                 [OrderStatus.SHIPPED]: 'On its way! 🚀 Your order is now shipped and heading to you.',
                 [OrderStatus.DELIVERED]: 'Delivered! 🏠 We hope you love it. Have a great day with your new items!',
+                [OrderStatus.COMPLETED]: 'Your order is complete 🎉 Thank you for trusting E-TASHLEH.',
+                [OrderStatus.CLOSED]: 'This order has been closed. You can create a new request anytime.',
                 [OrderStatus.CANCELLED]: 'Your order has been cancelled. We look forward to serving you again soon.',
                 [OrderStatus.AWAITING_PAYMENT]: 'Great choice! 👌 Please complete payment to start processing your order right away.',
                 [OrderStatus.RETURNED]: 'Your rights are protected 🤝 Your return request has been approved.'
@@ -711,8 +766,17 @@ export class OrdersService {
                 this.afterOrderReachedCompletion(orderId);
             }
 
-            // 3.1 Notify Customer
-            if (statusMessagesAr[newStatus]) {
+            const verificationStatuses = new Set<OrderStatus>([
+                OrderStatus.VERIFICATION,
+                OrderStatus.VERIFICATION_SUCCESS,
+                OrderStatus.NON_MATCHING,
+                OrderStatus.CORRECTION_PERIOD,
+            ]);
+            // 3.1 Notify Customer (system CANCELLED uses cleanup-specific copy — skip generic here)
+            const skipSystemCancelCustomer =
+                newStatus === OrderStatus.CANCELLED && actor.type === ActorType.SYSTEM;
+            if (statusMessagesAr[newStatus] && !skipSystemCancelCustomer) {
+                const isVerificationStatus = verificationStatuses.has(newStatus);
                 await this.notifications.create({
                     recipientId: order.customerId,
                     recipientRole: 'CUSTOMER',
@@ -722,7 +786,12 @@ export class OrdersService {
                     messageEn: statusMessagesEn[newStatus],
                     type: 'ORDER',
                     link: `/dashboard/orders/${order.id}`,
-                    metadata: { orderId: order.id, status: newStatus }
+                    metadata: {
+                        orderId: order.id,
+                        status: newStatus,
+                        waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
+                        ...(isVerificationStatus ? { verification: true } : {}),
+                    },
                 });
             }
 
@@ -731,7 +800,7 @@ export class OrdersService {
                 const biddingMerchants = await this.prisma.offer.findMany({
                     where: { orderId: order.id },
                     select: { store: { select: { ownerId: true } } },
-                    distinct: ['storeId']
+                    distinct: ['storeId'],
                 });
 
                 for (const bidder of biddingMerchants) {
@@ -745,37 +814,48 @@ export class OrdersService {
                             messageEn: `The collection period has ended. The order is now open for selection, and your offer is under review.`,
                             type: 'ORDER',
                             link: `/merchant/orders/${order.id}`,
-                            metadata: { orderId: order.id, status: newStatus }
+                            metadata: { orderId: order.id, status: newStatus, waEvent: 'OFFER_REVEAL' },
                         }).catch(() => {});
                     }
                 }
             }
 
-            // 3.2 Notify Merchant (if order is assigned to one via acceptedOffer)
-            if (order.acceptedOfferId && ([OrderStatus.PREPARATION, OrderStatus.CANCELLED, OrderStatus.RETURNED] as OrderStatus[]).includes(newStatus)) {
-                // Determine Merchant's User ID (ownerId)
+            // 3.2 Notify Merchant (accepted offer — broader lifecycle coverage)
+            const merchantNotifyStatuses: OrderStatus[] = [
+                OrderStatus.PREPARATION,
+                OrderStatus.DELAYED_PREPARATION,
+                OrderStatus.VERIFICATION,
+                OrderStatus.VERIFICATION_SUCCESS,
+                OrderStatus.NON_MATCHING,
+                OrderStatus.CORRECTION_PERIOD,
+                OrderStatus.SHIPPED,
+                OrderStatus.DELIVERED,
+                OrderStatus.CANCELLED,
+                OrderStatus.RETURNED,
+                OrderStatus.COMPLETED,
+            ];
+            if (order.acceptedOfferId && merchantNotifyStatuses.includes(newStatus)) {
                 let merchantOwnerId = null;
-                const orderWithRelations = order as any; // Cast to access included relations safely
+                const orderWithRelations = order as any;
 
                 if (orderWithRelations.offers && orderWithRelations.offers.length > 0) {
-                    const accepted = orderWithRelations.offers.find(o => o.id === order.acceptedOfferId);
+                    const accepted = orderWithRelations.offers.find((o) => o.id === order.acceptedOfferId);
                     if (accepted && accepted.store) merchantOwnerId = accepted.store.ownerId;
                 } else if (orderWithRelations.acceptedOffer && orderWithRelations.acceptedOffer.store) {
                     merchantOwnerId = orderWithRelations.acceptedOffer.store.ownerId;
                 } else {
-                    // Fallback fetch
                     const offerFetch = await this.prisma.offer.findUnique({
                         where: { id: order.acceptedOfferId },
-                        include: { store: true }
+                        include: { store: true },
                     });
                     if (offerFetch?.store?.ownerId) merchantOwnerId = offerFetch.store.ownerId;
                 }
 
                 if (merchantOwnerId) {
-                    let mTitleAr = `تحديث بخصوص الطلب #${order.orderNumber}`;
-                    let mTitleEn = `Update for Order #${order.orderNumber}`;
-                    let mMsgAr = '';
-                    let mMsgEn = '';
+                    const mTitleAr = `تحديث بخصوص الطلب #${order.orderNumber}`;
+                    const mTitleEn = `Update for Order #${order.orderNumber}`;
+                    let mMsgAr = statusMessagesAr[newStatus] || `تم تحديث حالة الطلب إلى ${newStatus}.`;
+                    let mMsgEn = statusMessagesEn[newStatus] || `Order status updated to ${newStatus}.`;
 
                     if (newStatus === OrderStatus.PREPARATION) {
                         mMsgAr = 'تم تأكيد الدفع من العميل. يرجى البدء بتجهيز الشحنة.';
@@ -788,19 +868,24 @@ export class OrdersService {
                         mMsgEn = 'The order status was updated to (Returned).';
                     }
 
-                    if (mMsgAr) {
-                        await this.notifications.create({
-                            recipientId: merchantOwnerId,
-                            recipientRole: 'MERCHANT',
-                            titleAr: mTitleAr,
-                            titleEn: mTitleEn,
-                            messageAr: mMsgAr,
-                            messageEn: mMsgEn,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${order.id}`,
-                            metadata: { orderId: order.id, status: newStatus }
-                        });
-                    }
+                    const isVerificationStatus = verificationStatuses.has(newStatus);
+
+                    await this.notifications.create({
+                        recipientId: merchantOwnerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: mTitleAr,
+                        titleEn: mTitleEn,
+                        messageAr: mMsgAr,
+                        messageEn: mMsgEn,
+                        type: 'ORDER',
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            status: newStatus,
+                            waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
+                            ...(isVerificationStatus ? { verification: true } : {}),
+                        },
+                    });
                 }
             }
 
@@ -940,7 +1025,7 @@ export class OrdersService {
 
                 // Notify Winning Merchant
                 if (offer.store?.ownerId) {
-                    this.notifications.create({
+                    await this.notifications.create({
                         recipientId: offer.store.ownerId,
                         recipientRole: 'MERCHANT',
                         titleAr: 'عُرضك تم قبوله!',
@@ -948,13 +1033,18 @@ export class OrdersService {
                         messageAr: `وافق العميل للتو على عرضك للطلب #${order.orderNumber}. بانتظار إتمام عملية الدفع.`,
                         messageEn: `The customer just accepted your offer for Order #${order.orderNumber}. Awaiting payment.`,
                         type: 'ORDER',
-                        link: `/dashboard/orders/${order.id}`,
-                        metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            offerId,
+                            waEvent: 'OFFER_ACCEPTED',
+                        },
                     }).catch(e => console.error('Failed to notify merchant of acceptance', e));
                 }
 
                 // Notify customer — awaiting payment (WhatsApp via NotificationsService)
-                this.notifications.create({
+                await this.notifications.create({
                     recipientId: customerId,
                     recipientRole: 'CUSTOMER',
                     titleAr: 'تم قبول العرض — بانتظار الدفع',
@@ -963,7 +1053,12 @@ export class OrdersService {
                     messageEn: `An offer was accepted for Order #${order.orderNumber}. Please complete payment within the deadline.`,
                     type: 'ORDER',
                     link: `/dashboard/orders/${order.id}`,
-                    metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        offerId,
+                        waEvent: 'OFFER_ACCEPTED',
+                    },
                 }).catch(e => console.error('Failed to notify customer of acceptance', e));
 
                 // Notify Losing Merchants (Reject Offers)
@@ -1091,7 +1186,7 @@ export class OrdersService {
 
         // Notify winner
         if (acceptedOffer.store?.ownerId) {
-            this.notifications.create({
+            await this.notifications.create({
                 recipientId: acceptedOffer.store.ownerId,
                 recipientRole: 'MERCHANT',
                 titleAr: 'عُرضك تم قبوله!',
@@ -1099,13 +1194,18 @@ export class OrdersService {
                 messageAr: `وافق العميل للتو على عرضك للقطعة في الطلب #${order.orderNumber}.`,
                 messageEn: `The customer just accepted your offer for a part in Order #${order.orderNumber}.`,
                 type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId },
+                link: `/merchant/orders/${order.id}`,
+                metadata: {
+                    orderId: order.id,
+                    orderNumber: order.orderNumber,
+                    offerId,
+                    waEvent: 'OFFER_ACCEPTED',
+                },
             }).catch(e => console.error('Failed to notify merchant', e));
         }
 
         // Notify customer — part accepted / awaiting payment
-        this.notifications.create({
+        await this.notifications.create({
             recipientId: customerId,
             recipientRole: 'CUSTOMER',
             titleAr: 'تم قبول عرض — بانتظار الدفع',
@@ -1114,7 +1214,13 @@ export class OrdersService {
             messageEn: `An offer was accepted for a part in Order #${order.orderNumber}. You can proceed to payment.`,
             type: 'ORDER',
             link: `/dashboard/orders/${order.id}`,
-            metadata: { orderId: order.id, orderNumber: order.orderNumber, offerId, partId },
+            metadata: {
+                orderId: order.id,
+                orderNumber: order.orderNumber,
+                offerId,
+                partId,
+                waEvent: 'OFFER_ACCEPTED',
+            },
         }).catch(e => console.error('Failed to notify customer of part acceptance', e));
 
         // Notify losers
@@ -2388,7 +2494,8 @@ export class OrdersService {
                         titleAr: 'تم قبول مطابقة القطعة', titleEn: 'Part Verification Approved',
                         messageAr: `تم اعتماد توثيق «${partName}» للطلب #${order.orderNumber}. يمكنك تسليمها للإدارة ومتابعة الشحن.`,
                         messageEn: `Verification for "${partName}" (#${order.orderNumber}) approved. You can hand over to admin.`,
-                        link: `/merchant/orders/${order.id}`
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
                 } else if (!isPerOfferReview && newRejectionCount >= 2) {
                     await this.notifications.create({
@@ -2396,14 +2503,16 @@ export class OrdersService {
                         titleAr: '❌ رفض نهائي وإلغاء الطلب', titleEn: '❌ Final Rejection & Order Cancelled',
                         messageAr: `تم رفض مطابقة الطلب #${order.orderNumber} للمرة الثانية. تم إلغاء الطلب وسحب المبلغ.`,
                         messageEn: `Order #${order.orderNumber} verification rejected twice. Order cancelled.`,
-                        link: `/merchant/orders/${order.id}`
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
                     await this.notifications.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER', type: 'system_alert',
                         titleAr: '❌ إلغاء الطلب لعدم المطابقة', titleEn: '❌ Order Cancelled due to Non-Matching',
                         messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. سيتم استرجاع مبلغك قريباً.`,
                         messageEn: `Your order #${order.orderNumber} was cancelled due to non-matching part. Refund will be processed soon.`,
-                        link: `/customer/orders/${order.id}`
+                        link: `/customer/orders/${order.id}`,
+                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
                 } else {
                     const reasonSnippet = data.rejectionReason
@@ -2411,10 +2520,11 @@ export class OrdersService {
                         : '';
                     await this.notifications.create({
                         recipientId: merchantUserId, recipientRole: 'MERCHANT', type: 'system_alert',
-                        titleAr: '⚠️ رفض مطابقة القطعة - مطلوب تصحيح', titleEn: '⚠️ Verification Rejected - Correction Required',
+                        titleAr: 'مطلوب تصحيح التوثيق', titleEn: 'Verification correction required',
                         messageAr: `تم رفض توثيق «${partName}» للطلب #${order.orderNumber}${reasonSnippet}. يرجى تصحيح القطعة وإعادة التوثيق.`,
-                        messageEn: `Verification for "${partName}" (#${order.orderNumber}) was rejected${reasonSnippet}. Please correct and re-submit verification.`,
-                        link: `/merchant/orders/${order.id}`
+                        messageEn: `Verification for "${partName}" (#${order.orderNumber}) was rejected${reasonSnippet}. Please correct and resubmit.`,
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
                 }
             }

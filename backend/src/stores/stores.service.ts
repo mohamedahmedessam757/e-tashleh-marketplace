@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadStoreDocumentDto } from './dto/upload-store-document.dto';
 import { Prisma, StoreStatus, OrderStatus, StoreSubscriptionTier } from '@prisma/client';
@@ -150,6 +150,35 @@ export class StoresService {
 
         const hasActiveBusiness = activeBusinessCount > 0;
 
+        let parsedExpiry: Date | null = null;
+        if (dto.expiresAt) {
+            const d = new Date(dto.expiresAt);
+            if (Number.isNaN(d.getTime())) {
+                throw new BadRequestException('Invalid document expiry date');
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (d < today) {
+                throw new BadRequestException('Document expiry date must be today or in the future');
+            }
+            parsedExpiry = d;
+        }
+
+        const existingDoc = await this.prisma.storeDocument.findUnique({
+            where: { storeId_docType: { storeId: store.id, docType: dto.docType } },
+            select: { id: true, fileUrl: true },
+        });
+        const isReupload =
+            Boolean(existingDoc?.fileUrl) ||
+            store.status === StoreStatus.ACTIVE ||
+            store.status === StoreStatus.PENDING_REVIEW ||
+            store.status === StoreStatus.LICENSE_EXPIRED;
+        if (isReupload && !parsedExpiry) {
+            throw new BadRequestException(
+                'Document expiry date is required when uploading or replacing a store document',
+            );
+        }
+
         // 2. Upsert document
         const doc = await this.prisma.storeDocument.upsert({
             where: { storeId_docType: { storeId: store.id, docType: dto.docType } },
@@ -160,6 +189,7 @@ export class StoresService {
                 reuploadMessage: null,
                 adminName: null,
                 adminSignature: null,
+                ...(parsedExpiry ? { expiresAt: parsedExpiry } : {}),
                 updatedAt: new Date(),
             },
             create: {
@@ -167,8 +197,16 @@ export class StoresService {
                 docType: dto.docType,
                 fileUrl: dto.fileUrl,
                 status: 'pending',
+                ...(parsedExpiry ? { expiresAt: parsedExpiry } : {}),
             },
         });
+
+        if (dto.docType === 'LICENSE' && parsedExpiry) {
+            await this.prisma.store.update({
+                where: { id: store.id },
+                data: { licenseExpiry: parsedExpiry },
+            });
+        }
 
         // Audit Log (2026 Vendor Compliance)
         await this.auditLogs.logAction({
@@ -176,7 +214,11 @@ export class StoresService {
             action: 'DOC_UPLOAD',
             actorType: 'VENDOR',
             actorId: userId,
-            metadata: { storeId: store.id, docType: dto.docType }
+            metadata: {
+                storeId: store.id,
+                docType: dto.docType,
+                expiresAt: parsedExpiry?.toISOString() || null,
+            }
         });
 
         // 3. Conditional Review Transition (Graceful Governance)
@@ -217,25 +259,36 @@ export class StoresService {
                 titleAr: hasActiveBusiness ? 'تحديث مستندات قانونية - المراجعة مجدولة' : 'تحديث مستندات قانونية - متجر معلق',
                 titleEn: hasActiveBusiness ? 'Legal Docs Updated - Review Queued' : 'Legal Docs Updated - Store Suspended',
                 messageAr: hasActiveBusiness 
-                    ? `قام المتجر (${store.name}) بتحديث مستندات (${dto.docType}). المتجر لديه طلبات نشطة، لذا المراجعة مجدولة.`
-                    : `قام المتجر (${store.name}) بتحديث مستندات (${dto.docType}). تم تعليق المتجر للمراجعة.`,
+                    ? `قام المتجر (${store.name}) بتحديث مستندات (${dto.docType})${parsedExpiry ? ` — ينتهي: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}. المتجر لديه طلبات نشطة، لذا المراجعة مجدولة.`
+                    : `قام المتجر (${store.name}) بتحديث مستندات (${dto.docType})${parsedExpiry ? ` — ينتهي: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}. تم تعليق المتجر للمراجعة.`,
                 messageEn: hasActiveBusiness
-                    ? `Store (${store.name}) updated documents (${dto.docType}). Store has active orders, review is queued.`
-                    : `Store (${store.name}) updated documents (${dto.docType}). Store suspended for review.`,
-                type: 'SYSTEM',
+                    ? `Store (${store.name}) updated documents (${dto.docType})${parsedExpiry ? ` — expires: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}. Store has active orders, review is queued.`
+                    : `Store (${store.name}) updated documents (${dto.docType})${parsedExpiry ? ` — expires: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}. Store suspended for review.`,
+                type: 'ALERT',
                 link: `/admin/stores/${store.id}`,
-                metadata: { storeId: store.id, docType: dto.docType, hasActiveBusiness }
+                metadata: {
+                    storeId: store.id,
+                    docType: dto.docType,
+                    hasActiveBusiness,
+                    expiresAt: parsedExpiry?.toISOString() || null,
+                    priority: 'urgent',
+                }
             }).catch(() => {});
         } else {
             // Notify Admin about standard document upload
             this.notificationsService.notifyAdmins({
                 titleAr: 'مستند جديد قيد المراجعة',
                 titleEn: 'New Document Pending Review',
-                messageAr: `رفع المتجر (${store.name}) مستنداً جديداً: ${dto.docType}`,
-                messageEn: `Store (${store.name}) uploaded a new document: ${dto.docType}`,
-                type: 'SYSTEM',
+                messageAr: `رفع المتجر (${store.name}) مستنداً جديداً: ${dto.docType}${parsedExpiry ? ` — ينتهي: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}`,
+                messageEn: `Store (${store.name}) uploaded a new document: ${dto.docType}${parsedExpiry ? ` — expires: ${parsedExpiry.toISOString().slice(0, 10)}` : ''}`,
+                type: 'ALERT',
                 link: `/admin/stores/${store.id}`,
-                metadata: { storeId: store.id, docType: dto.docType }
+                metadata: {
+                    storeId: store.id,
+                    docType: dto.docType,
+                    expiresAt: parsedExpiry?.toISOString() || null,
+                    priority: 'urgent',
+                }
             }).catch(() => {});
         }
 
@@ -462,8 +515,14 @@ export class StoresService {
                 totalOffersSent: modTotal,
                 editCount: store.editCount || 0,
                 withdrawalCount: store.withdrawalCount || 0,
+                monthlyOfferDeletionCount: store.monthlyOfferDeletionCount || 0,
+                monthlyOfferDeletionMonth: store.monthlyOfferDeletionMonth || null,
+                offerBiddingRestrictedUntil: store.offerBiddingRestrictedUntil || null,
+                offerBiddingRestrictionReason: store.offerBiddingRestrictionReason || null,
+                monthlyDeletionLimit: 50,
+                monthlyDeletionWarnAt: 35,
                 modificationRatePercent,
-                exceedsThreshold: modificationRatePercent > 5,
+                exceedsThreshold: (store.monthlyOfferDeletionCount || 0) >= 35,
                 events: modificationLogs.map((log) => {
                     const meta = (log.metadata || {}) as Record<string, unknown>;
                     return {
@@ -507,14 +566,41 @@ export class StoresService {
             include: { owner: true }
         });
 
-        // Bulk Approve Documents if Store is activated
+        // Bulk Approve Documents if Store is activated — keep real expiry dates
         if (status === StoreStatus.ACTIVE) {
-            const nextYear = new Date();
-            nextYear.setDate(nextYear.getDate() + 365);
-            await this.prisma.storeDocument.updateMany({
+            const pendingDocs = await this.prisma.storeDocument.findMany({
                 where: { storeId: id, status: 'pending' },
-                data: { status: 'approved', expiresAt: nextYear, updatedAt: new Date() }
+                select: { id: true, docType: true, expiresAt: true },
             });
+            const contract = await this.prisma.contractAcceptance.findFirst({
+                where: { storeId: id, status: 'ACTIVE' },
+                orderBy: { acceptedAt: 'desc' },
+                select: { secondPartyData: true },
+            });
+            const storeRow = await this.prisma.store.findUnique({
+                where: { id },
+                select: { licenseExpiry: true },
+            });
+            const contractLicense =
+                (contract?.secondPartyData as any)?.licenseExpiry ||
+                storeRow?.licenseExpiry ||
+                null;
+
+            for (const doc of pendingDocs) {
+                let expiresAt = doc.expiresAt;
+                if (!expiresAt && doc.docType === 'LICENSE' && contractLicense) {
+                    const d = new Date(contractLicense);
+                    if (!Number.isNaN(d.getTime())) expiresAt = d;
+                }
+                await this.prisma.storeDocument.update({
+                    where: { id: doc.id },
+                    data: {
+                        status: 'approved',
+                        ...(expiresAt ? { expiresAt } : {}),
+                        updatedAt: new Date(),
+                    },
+                });
+            }
 
             // Notify Merchant — await so WhatsApp dispatch completes
             if (result.ownerId) {
@@ -527,7 +613,7 @@ export class StoresService {
                     messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
                     type: 'SUCCESS',
                     link: '/dashboard/merchant/store',
-                    metadata: { docType: 'store_activation', storeId: id },
+                    metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
                 }).catch(e => console.error('Failed to send store activation notification', e));
             }
         }
@@ -544,7 +630,7 @@ export class StoresService {
                     messageEn: `We regret to inform you that your request was rejected. Reason: ${reason || 'Please review documents and try again with a new account'}.`,
                     type: 'SUCCESS',
                     link: '/auth/register',
-                    metadata: { docType: 'store_rejection', storeId: id },
+                    metadata: { docType: 'store_rejection', storeId: id, waEvent: 'DOCUMENT' },
                 }).catch(e => console.error('Failed to send store rejection notification', e));
             }
         }
@@ -650,9 +736,32 @@ export class StoresService {
         };
 
         if (status === 'approved' || status === 'ACTIVE') {
-            const nextYear = new Date();
-            nextYear.setDate(nextYear.getDate() + 365);
-            dataToUpdate.expiresAt = nextYear;
+            // Preserve existing expiresAt; for LICENSE fallback to store/contract license expiry
+            const existingDoc = await this.prisma.storeDocument.findFirst({
+                where: { storeId, docType: docType as any },
+                select: { expiresAt: true },
+            });
+            if (!existingDoc?.expiresAt && (docType === 'LICENSE' || docType === 'license')) {
+                const storeMeta = await this.prisma.store.findUnique({
+                    where: { id: storeId },
+                    select: {
+                        licenseExpiry: true,
+                        contractAcceptances: {
+                            where: { status: 'ACTIVE' },
+                            orderBy: { acceptedAt: 'desc' },
+                            take: 1,
+                            select: { secondPartyData: true },
+                        },
+                    },
+                });
+                const fromContract =
+                    (storeMeta?.contractAcceptances?.[0]?.secondPartyData as any)?.licenseExpiry;
+                const raw = storeMeta?.licenseExpiry || fromContract;
+                if (raw) {
+                    const d = new Date(raw);
+                    if (!Number.isNaN(d.getTime())) dataToUpdate.expiresAt = d;
+                }
+            }
             dataToUpdate.reuploadRequested = false;
         }
 
@@ -702,7 +811,7 @@ export class StoresService {
                     messageEn: `Your document (${docType}) has been successfully reviewed and approved by administration.`,
                     type: 'SUCCESS',
                     link: '/dashboard/merchant/store',
-                    metadata: { docType },
+                    metadata: { docType, waEvent: 'DOCUMENT' },
                 }).catch(() => {});
             } else if (isReupload || isRejected) {
                 this.notificationsService.create({
@@ -718,7 +827,7 @@ export class StoresService {
                         : `Your document (${docType}) was rejected by the administration. Reason: ${reason || 'Please review and re-upload'}.`,
                     type: isReupload ? 'ALERT' : 'SYSTEM',
                     link: '/dashboard/merchant/store',
-                    metadata: { docType },
+                    metadata: { docType, waEvent: 'DOCUMENT' },
                 }).catch(e => console.error('Failed to notify merchant of document status update', e));
             }
         }
@@ -812,7 +921,8 @@ export class StoresService {
                 messageAr: `تم إيقاف حسابك لعدم تجديد المستندات الأساسية بعد فترة السماح (15 يوماً). يرجى رفع المستندات المجددة.`,
                 messageEn: `Your account has been suspended for not renewing mandatory documents after the 15-day grace period. Please upload renewed documents.`,
                 type: 'DOC_EXPIRY',
-                link: '/dashboard/merchant/store'
+                link: '/dashboard/merchant/store',
+                metadata: { waEvent: 'DOCUMENT', docType: 'license_expiry' },
             }).catch(() => {});
 
             // Notify Admin about Expiry Suspension
@@ -853,7 +963,8 @@ export class StoresService {
                         messageAr: `يوجد لديك مستندات تقترب من الإنتهاء أو في فترة السماح. يرجى تحديثها لتجنب إيقاف الحساب.`,
                         messageEn: `You have documents expiring soon or in grace period. Please update them to avoid suspension.`,
                         type: 'DOC_EXPIRY',
-                        link: '/dashboard/merchant/store'
+                        link: '/dashboard/merchant/store',
+                        metadata: { waEvent: 'DOCUMENT', docType: 'expiry_warning' },
                     }).catch(() => {});
                 }
             }
@@ -873,6 +984,12 @@ export class StoresService {
                 totalOffersSent: store.totalOffersSent,
                 editCount: store.editCount,
                 withdrawalCount: store.withdrawalCount,
+                monthlyOfferDeletionCount: store.monthlyOfferDeletionCount ?? 0,
+                monthlyOfferDeletionMonth: store.monthlyOfferDeletionMonth ?? null,
+                offerBiddingRestrictedUntil: store.offerBiddingRestrictedUntil ?? null,
+                offerBiddingRestrictionReason: store.offerBiddingRestrictionReason ?? null,
+                monthlyDeletionLimit: 50,
+                monthlyDeletionWarnAt: 35,
                 violationScore: store.owner?.violationScore || 0
             },
             weeklyEarnings,
@@ -885,16 +1002,65 @@ export class StoresService {
         withdrawalsFrozen?: boolean;
         withdrawalFreezeNote?: string;
         adminSignatureImage?: string; // Maps to signature field in DB
+        adminSignatureName?: string;
+        adminSignatureType?: 'DRAWN' | 'TYPED';
+        adminSignatureText?: string;
         visibilityRestricted?: boolean;
         visibilityNote?: string;
         visibilitySignature?: string;
         visibilityRate?: number;
+        offerBiddingRestrictionDays?: number | null;
+        offerBiddingRestrictionReason?: string | null;
+        clearOfferBiddingRestriction?: boolean;
     }) {
         const store = await this.prisma.store.findUnique({ 
             where: { id },
             include: { owner: true }
         });
         if (!store) throw new NotFoundException('Store not found');
+
+        const isBiddingMutation =
+            data.clearOfferBiddingRestriction === true ||
+            (data.offerBiddingRestrictionDays !== undefined &&
+                data.offerBiddingRestrictionDays !== null);
+
+        if (isBiddingMutation && !String(data.adminSignatureName || '').trim()) {
+            throw new BadRequestException(
+                'Admin signature name is required for offer bidding restriction changes',
+            );
+        }
+
+        let offerBiddingRestrictedUntil = store.offerBiddingRestrictedUntil;
+        let offerBiddingRestrictionReason = store.offerBiddingRestrictionReason;
+
+        if (data.clearOfferBiddingRestriction) {
+            offerBiddingRestrictedUntil = null;
+            offerBiddingRestrictionReason = null;
+        } else if (
+            data.offerBiddingRestrictionDays !== undefined &&
+            data.offerBiddingRestrictionDays !== null
+        ) {
+            const days = Math.max(0, Math.floor(Number(data.offerBiddingRestrictionDays)));
+            if (days === 0) {
+                offerBiddingRestrictedUntil = null;
+                offerBiddingRestrictionReason = null;
+            } else {
+                offerBiddingRestrictedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+                offerBiddingRestrictionReason =
+                    data.offerBiddingRestrictionReason ??
+                    store.offerBiddingRestrictionReason ??
+                    `Admin restriction (${days} days)`;
+            }
+        } else if (data.offerBiddingRestrictionReason !== undefined) {
+            offerBiddingRestrictionReason = data.offerBiddingRestrictionReason;
+        }
+
+        const wasBiddingRestricted =
+            !!store.offerBiddingRestrictedUntil &&
+            new Date(store.offerBiddingRestrictedUntil) > new Date();
+        const willBeBiddingRestricted =
+            !!offerBiddingRestrictedUntil &&
+            new Date(offerBiddingRestrictedUntil) > new Date();
 
         const updated = await this.prisma.store.update({
             where: { id },
@@ -904,6 +1070,8 @@ export class StoresService {
                 visibilityNote: data.visibilityNote ?? store.visibilityNote,
                 visibilitySignature: data.visibilitySignature ?? store.visibilitySignature,
                 visibilityRate: data.visibilityRate ?? store.visibilityRate,
+                offerBiddingRestrictedUntil,
+                offerBiddingRestrictionReason,
                 owner: {
                     update: {
                         withdrawalsFrozen: data.withdrawalsFrozen ?? undefined,
@@ -916,6 +1084,12 @@ export class StoresService {
             include: { owner: true }
         });
 
+        const signatureMeta = {
+            adminSignatureName: data.adminSignatureName || null,
+            adminSignatureType: data.adminSignatureType || null,
+            hasSignatureImage: Boolean(data.adminSignatureImage),
+        };
+
         // --- Task 12.1: Log Action ---
         await this.auditLogs.logAction({
             action: 'STORE_RESTRICTIONS_UPDATE',
@@ -923,8 +1097,108 @@ export class StoresService {
             actorType: 'ADMIN',
             actorId: adminId,
             reason: 'Administrative store restriction update',
-            metadata: { storeId: id, ...data }
+            metadata: {
+                storeId: id,
+                offerLimit: data.offerLimit,
+                withdrawalsFrozen: data.withdrawalsFrozen,
+                visibilityRestricted: data.visibilityRestricted,
+                visibilityRate: data.visibilityRate,
+                offerBiddingRestrictionDays: data.offerBiddingRestrictionDays,
+                clearOfferBiddingRestriction: data.clearOfferBiddingRestriction,
+                ...signatureMeta,
+            }
         });
+
+        if (willBeBiddingRestricted && !wasBiddingRestricted) {
+            const days =
+                data.offerBiddingRestrictionDays != null
+                    ? Math.max(1, Math.floor(Number(data.offerBiddingRestrictionDays)))
+                    : 5;
+            const untilIso = updated.offerBiddingRestrictedUntil?.toISOString();
+            const untilLabel = updated.offerBiddingRestrictedUntil
+                ? updated.offerBiddingRestrictedUntil.toLocaleString('ar-EG')
+                : untilIso;
+            const statusDetailAr = `تقييد إداري لتقديم العروض لمدة ${days} أيام حتى ${untilLabel}.`;
+            const statusDetailEn = `Admin offer-bidding restriction for ${days} days until ${untilIso}.`;
+
+            await this.auditLogs.logAction({
+                action: 'OFFER_BIDDING_RESTRICTED',
+                entity: 'STORE',
+                actorType: 'ADMIN',
+                actorId: adminId,
+                reason: offerBiddingRestrictionReason || `Admin restriction (${days} days)`,
+                metadata: {
+                    storeId: id,
+                    store_name: updated.name,
+                    days,
+                    until: untilIso,
+                    source: 'ADMIN',
+                    ...signatureMeta,
+                },
+            });
+
+            if (updated.ownerId) {
+                await this.notificationsService
+                    .create({
+                        recipientId: updated.ownerId,
+                        recipientRole: 'VENDOR',
+                        titleAr: 'تقييد تقديم العروض (إدارة)',
+                        titleEn: 'Offer Bidding Restricted (Admin)',
+                        messageAr: `قامت الإدارة بتقييد تقديم العروض على متجرك "${updated.name}" لمدة ${days} أيام (حتى ${untilLabel}).`,
+                        messageEn: `Admin restricted offer bidding on "${updated.name}" for ${days} days (until ${untilIso}).`,
+                        type: 'GOVERNANCE_ALERT',
+                        link: '/dashboard/merchant/home',
+                        metadata: {
+                            waEvent: 'OFFER_BIDDING_RESTRICTED',
+                            storeId: id,
+                            store_name: updated.name,
+                            days,
+                            until: untilIso,
+                            status_detail: statusDetailAr,
+                            status_detail_en: statusDetailEn,
+                            source: 'ADMIN',
+                        },
+                    })
+                    .catch(() => {});
+            }
+        } else if (wasBiddingRestricted && !willBeBiddingRestricted) {
+            await this.auditLogs.logAction({
+                action: 'OFFER_BIDDING_RESTRICTION_LIFTED',
+                entity: 'STORE',
+                actorType: 'ADMIN',
+                actorId: adminId,
+                reason: 'Admin lifted offer bidding restriction',
+                metadata: {
+                    storeId: id,
+                    store_name: updated.name,
+                    source: 'ADMIN',
+                    ...signatureMeta,
+                },
+            });
+
+            if (updated.ownerId) {
+                await this.notificationsService
+                    .create({
+                        recipientId: updated.ownerId,
+                        recipientRole: 'VENDOR',
+                        titleAr: 'تم رفع تقييد تقديم العروض',
+                        titleEn: 'Offer Bidding Restriction Lifted',
+                        messageAr: `قامت الإدارة برفع تقييد تقديم العروض عن متجرك "${updated.name}".`,
+                        messageEn: `Admin lifted your offer bidding restriction on "${updated.name}".`,
+                        type: 'ORDER',
+                        link: '/dashboard/merchant/marketplace',
+                        metadata: {
+                            waEvent: 'ORDER_STATUS',
+                            storeId: id,
+                            store_name: updated.name,
+                            status: 'RESTRICTION_LIFTED',
+                            status_detail: 'تم رفع تقييد تقديم العروض',
+                            source: 'ADMIN',
+                        },
+                    })
+                    .catch(() => {});
+            }
+        }
 
         // --- Restriction Notifications ---
         if (data.withdrawalsFrozen) {
@@ -991,7 +1265,9 @@ export class StoresService {
                 visibilityRestricted: false,
                 visibilityRate: 100,
                 visibilityNote: '',
-                visibilitySignature: signatureData?.adminSignatureImage || null
+                visibilitySignature: signatureData?.adminSignatureImage || null,
+                offerBiddingRestrictedUntil: null,
+                offerBiddingRestrictionReason: null,
             },
             include: {
                 owner: {

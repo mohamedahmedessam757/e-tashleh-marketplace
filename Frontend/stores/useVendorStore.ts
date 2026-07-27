@@ -81,6 +81,12 @@ export interface PerformanceMetrics {
   totalOffersSent: number;
   editCount: number;
   withdrawalCount: number;
+  monthlyOfferDeletionCount?: number;
+  monthlyOfferDeletionMonth?: string | null;
+  offerBiddingRestrictedUntil?: string | Date | null;
+  offerBiddingRestrictionReason?: string | null;
+  monthlyDeletionLimit?: number;
+  monthlyDeletionWarnAt?: number;
   violationScore: number;
 }
 
@@ -175,7 +181,7 @@ export interface VendorState {
   updateDocumentStatus: (key: keyof VendorState['documents'], status: DocState['status'], progress?: number) => void;
   updateDocumentMetadata: (key: keyof VendorState['documents'], data: Partial<DocState>) => void;
   setDocumentFile: (key: keyof VendorState['documents'], file: File) => void;
-  uploadDocument: (key: keyof VendorState['documents'], file: File) => Promise<void>;
+  uploadDocument: (key: keyof VendorState['documents'], file: File, expiresAt?: string) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   simulateUpload: (key: keyof VendorState['documents']) => void;
   reset: () => void;
@@ -260,6 +266,10 @@ export const useVendorStore = create<VendorState>()(
     totalOffersSent: 0,
     editCount: 0,
     withdrawalCount: 0,
+    monthlyOfferDeletionCount: 0,
+    offerBiddingRestrictedUntil: null,
+    monthlyDeletionLimit: 50,
+    monthlyDeletionWarnAt: 35,
     violationScore: 0
   },
 
@@ -383,7 +393,7 @@ export const useVendorStore = create<VendorState>()(
   },
 
   // REAL DOCUMENT UPLOAD & SYNC
-  uploadDocument: async (key: keyof VendorState['documents'], file: File) => {
+  uploadDocument: async (key: keyof VendorState['documents'], file: File, expiresAt?: string) => {
     // 2026 Security: File size limit 5MB for documents
     if (file.size > 5 * 1024 * 1024) {
       useNotificationStore.getState().addNotification({ 
@@ -438,7 +448,8 @@ export const useVendorStore = create<VendorState>()(
 
           await client.post('/stores/onboarding/documents', {
             docType: docTypeMap[key],
-            fileUrl: publicUrl
+            fileUrl: publicUrl,
+            ...(expiresAt ? { expiresAt } : {}),
           });
         } catch (syncError) {
           console.warn('Backend sync failed (possibly expired token). File is safe in Supabase and will be linked on final registration.', syncError);
@@ -450,7 +461,8 @@ export const useVendorStore = create<VendorState>()(
       updateDocumentMetadata(key, {
         lastUpdated: new Date().toISOString(),
         fileUrl: publicUrl,
-        fileName: fileName
+        fileName: fileName,
+        ...(expiresAt ? { expiryDate: expiresAt } : {}),
       });
 
     } catch (error) {
