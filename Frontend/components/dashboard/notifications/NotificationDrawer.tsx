@@ -1,5 +1,4 @@
-
-import React, { memo, useMemo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell, CheckCircle2, DollarSign, MessageSquare, AlertTriangle, Package, RotateCcw, Truck, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -17,185 +16,207 @@ interface NotificationDrawerProps {
     role: 'customer' | 'merchant' | 'admin' | string;
 }
 
-// 1. Memoized Notification Item for Performance (2026 Optimization)
-const NotificationItem = memo(({ 
-    notif, 
-    language, 
-    onClick 
-}: { 
-    notif: Notification; 
-    language: string; 
-    onClick: () => void;
-}) => {
-    const getIcon = (type: NotificationType | string) => {
-        switch (type) {
-            case 'OFFER': return <MessageSquare size={18} className="text-blue-400" />;
-            case 'ORDER': return <CheckCircle2 size={18} className="text-green-400" />;
-            case 'PAYMENT': return <DollarSign size={18} className="text-gold-400" />;
-            case 'SHIPPING': return <Truck size={18} className="text-purple-400" />;
-            case 'DELIVERED': return <Package size={18} className="text-emerald-400" />;
-            case 'RATE': return <Bell size={18} className="text-yellow-400" />;
-            case 'DISPUTE': return <AlertTriangle size={18} className="text-red-400" />;
-            case 'RETURN': return <RotateCcw size={18} className="text-orange-400" />;
-            case 'DOC_EXPIRY': return <AlertTriangle size={18} className="text-orange-400" />;
-            case 'SECURITY': return <AlertTriangle size={18} className="text-red-500" />;
-            case 'VIOLATION':
-            case 'LOYALTY_REVIEW':
-            case 'CHAT_VIOLATION':
-                return <ShieldAlert size={18} className="text-amber-400" />;
-            default: return <Bell size={18} />;
-        }
-    };
+const ICON_BY_TYPE: Record<string, React.ReactNode> = {
+    OFFER: <MessageSquare size={18} className="text-blue-400" />,
+    ORDER: <CheckCircle2 size={18} className="text-green-400" />,
+    PAYMENT: <DollarSign size={18} className="text-gold-400" />,
+    SHIPPING: <Truck size={18} className="text-purple-400" />,
+    DELIVERED: <Package size={18} className="text-emerald-400" />,
+    RATE: <Bell size={18} className="text-yellow-400" />,
+    DISPUTE: <AlertTriangle size={18} className="text-red-400" />,
+    RETURN: <RotateCcw size={18} className="text-orange-400" />,
+    DOC_EXPIRY: <AlertTriangle size={18} className="text-orange-400" />,
+    SECURITY: <AlertTriangle size={18} className="text-red-500" />,
+    VIOLATION: <ShieldAlert size={18} className="text-amber-400" />,
+    LOYALTY_REVIEW: <ShieldAlert size={18} className="text-amber-400" />,
+    CHAT_VIOLATION: <ShieldAlert size={18} className="text-amber-400" />,
+};
+
+const DEFAULT_ICON = <Bell size={18} />;
+
+function getNotifIcon(type: NotificationType | string) {
+    return ICON_BY_TYPE[String(type || '').toUpperCase()] || DEFAULT_ICON;
+}
+
+function formatNotifTime(iso: string, language: string): string {
+    try {
+        return new Date(iso).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    } catch {
+        return '';
+    }
+}
+
+/** Plain DOM row — no per-item Framer motion (keeps drawer open cheap). */
+const NotificationItem = memo(function NotificationItem({
+    notif,
+    language,
+    onSelect,
+}: {
+    notif: Notification;
+    language: string;
+    onSelect: (notif: Notification) => void;
+}) {
+    const unreadDotSide = language === 'ar' ? 'left-4' : 'right-4';
 
     return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={onClick}
-            className={`p-4 hover:bg-white/5 cursor-pointer transition-all duration-200 relative group border-b border-white/5 ${!notif.isRead ? 'bg-gold-500/[0.03]' : ''}`}
-            style={{ willChange: 'transform, opacity' }}
+        <div
+            onClick={() => onSelect(notif)}
+            className={`p-4 hover:bg-white/5 cursor-pointer transition-colors duration-150 relative group border-b border-white/5 ${!notif.isRead ? 'bg-gold-500/[0.03]' : ''}`}
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '0 88px' }}
         >
             {!notif.isRead && (
-                <div className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} w-2 h-2 rounded-full bg-gold-500 shadow-[0_0_8px_rgba(212,175,55,0.6)]`} />
+                <div
+                    className={`absolute top-4 ${unreadDotSide} w-2 h-2 rounded-full bg-gold-500 shadow-[0_0_8px_rgba(212,175,55,0.6)]`}
+                />
             )}
             <div className="flex gap-3">
                 <div className="mt-1 p-2 rounded-xl bg-[#0F0E0C] border border-white/10 h-fit group-hover:border-gold-500/30 transition-colors">
-                    {getIcon(notif.type)}
+                    {getNotifIcon(notif.type)}
                 </div>
-                <div className="flex-1">
-                    <h4 className={`text-sm font-bold mb-1 transition-colors ${!notif.isRead ? 'text-white' : 'text-white/60 group-hover:text-white/80'}`}>
+                <div className="flex-1 min-w-0">
+                    <h4
+                        className={`text-sm font-bold mb-1 transition-colors ${!notif.isRead ? 'text-white' : 'text-white/60 group-hover:text-white/80'}`}
+                    >
                         {language === 'ar' ? notif.titleAr : notif.titleEn}
                     </h4>
                     <p className="text-xs text-white/50 leading-relaxed line-clamp-2 group-hover:text-white/70 transition-colors">
                         {language === 'ar' ? notif.messageAr : notif.messageEn}
                     </p>
-
                     <div className="flex items-center justify-between mt-2">
                         <span className="text-[10px] text-white/30 font-medium">
-                            {new Date(notif.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {formatNotifTime(notif.createdAt, language)}
                         </span>
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 });
 
-NotificationItem.displayName = 'NotificationItem';
-
-export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, onClose, onNavigate, role }) => {
+export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
+    isOpen,
+    onClose,
+    onNavigate,
+    role,
+}) => {
     const { t, language } = useLanguage();
-    const { notifications, dismissNotification, markAsRead, markAllAsRead, shouldShowAsPopup, isLoading } = useNotificationStore();
+    const notifications = useNotificationStore((s) => s.notifications);
+    const dismissNotification = useNotificationStore((s) => s.dismissNotification);
+    const markAsRead = useNotificationStore((s) => s.markAsRead);
+    const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+    const shouldShowAsPopup = useNotificationStore((s) => s.shouldShowAsPopup);
+    const isLoading = useNotificationStore((s) => s.isLoading);
 
-    const handleNotifClick = async (notif: Notification) => {
-        const uid = getCurrentUserId();
-        if (uid && !notif.isRead) {
-            if (shouldShowAsPopup(notif)) {
-                await dismissNotification(notif.id);
-            } else {
-                await markAsRead(notif.id, uid);
-            }
-        }
+    const unreadCount = useMemo(
+        () => notifications.reduce((n, item) => n + (item.isRead ? 0 : 1), 0),
+        [notifications],
+    );
+    const hasUnread = unreadCount > 0;
+    const isAr = language === 'ar';
 
-        const nav = resolveNotificationNavigation(notif);
-        if (nav) {
-            if (nav.context) {
-                setViolationNavContext(nav.context);
+    const handleNotifClick = useCallback(
+        async (notif: Notification) => {
+            const uid = getCurrentUserId();
+            if (uid && !notif.isRead) {
+                if (shouldShowAsPopup(notif)) {
+                    await dismissNotification(notif.id);
+                } else {
+                    await markAsRead(notif.id, uid);
+                }
             }
-            if (notif.metadata?.orderId) {
-                onNavigate('order-details', notif.metadata.orderId);
-            } else if (notif.metadata?.caseId) {
-                const detailPath = role === 'admin' ? 'admin-dispute-details' : 'dispute-details';
-                onNavigate(detailPath, notif.metadata.caseId);
-            } else {
-                onNavigate(nav.path);
-            }
-            onClose();
-            return;
-        }
-    };
 
-    // 2026 High-Performance Animation Variants
-    const drawerVariants = {
-        closed: { 
-            x: language === 'ar' ? '-100%' : '100%',
-            transition: { type: 'tween', duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+            const nav = resolveNotificationNavigation(notif);
+            if (nav) {
+                if (nav.context) {
+                    setViolationNavContext(nav.context);
+                }
+                if (notif.metadata?.orderId) {
+                    onNavigate('order-details', notif.metadata.orderId);
+                } else if (notif.metadata?.caseId) {
+                    const detailPath = role === 'admin' ? 'admin-dispute-details' : 'dispute-details';
+                    onNavigate(detailPath, notif.metadata.caseId);
+                } else {
+                    onNavigate(nav.path);
+                }
+                onClose();
+            }
         },
-        open: { 
-            x: 0,
-            transition: { type: 'tween', duration: 0.4, ease: [0, 0, 0.2, 1] }
-        }
-    };
+        [dismissNotification, markAsRead, shouldShowAsPopup, onNavigate, onClose, role],
+    );
+
+    const handleMarkAll = useCallback(() => {
+        const uid = getCurrentUserId();
+        if (uid) markAllAsRead(uid, role);
+    }, [markAllAsRead, role]);
+
+    // Single light slide — no spring, no blur, no per-row layout animations
+    const slideFrom = isAr ? '-100%' : '100%';
 
     return (
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] overflow-hidden">
-                    {/* Backdrop - Separate for better perf */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
-                        style={{ willChange: 'opacity' }}
+                        className="absolute inset-0 bg-black/60"
                     />
 
-                    {/* Drawer */}
                     <motion.div
-                        variants={drawerVariants}
-                        initial="closed"
-                        animate="open"
-                        exit="closed"
-                        className={`absolute top-0 bottom-0 ${language === 'ar' ? 'left-0' : 'right-0'} w-full max-w-[400px] bg-[#0A0A0A] border-x border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[110] flex flex-col`}
-                        style={{ willChange: 'transform' }}
+                        initial={{ x: slideFrom }}
+                        animate={{ x: 0 }}
+                        exit={{ x: slideFrom }}
+                        transition={{ type: 'tween', duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+                        className={`absolute top-0 bottom-0 ${isAr ? 'left-0' : 'right-0'} w-full max-w-[400px] bg-[#0A0A0A] border-x border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[110] flex flex-col`}
                     >
-                        {/* Header */}
                         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0F0E0C]">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <Bell className="text-gold-500" size={24} />
-                                    {notifications.some(n => !n.isRead) && (
+                                    {hasUnread && (
                                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-[#0F0E0C] rounded-full" />
                                     )}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-xl tracking-tight">{t.dashboard.notifications.title}</h3>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">Real-time Updates</p>
+                                    <h3 className="font-bold text-white text-xl tracking-tight">
+                                        {t.dashboard.notifications.title}
+                                    </h3>
+                                    <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">
+                                        Real-time Updates
+                                    </p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={onClose} 
-                                className="p-2 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-all duration-200 active:scale-95"
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="p-2 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-colors duration-150 active:scale-95"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        {/* Actions Bar */}
                         <div className="px-6 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                             <span className="text-[11px] text-white/30 font-medium">
-                                {notifications.filter(n => !n.isRead).length} {language === 'ar' ? 'تنبيهات جديدة' : 'New Alerts'}
+                                {unreadCount} {isAr ? 'تنبيهات جديدة' : 'New Alerts'}
                             </span>
                             <button
-                                onClick={() => {
-                                    const uid = getCurrentUserId();
-                                    if (uid) markAllAsRead(uid, role);
-                                }}
+                                type="button"
+                                onClick={handleMarkAll}
                                 className="text-[11px] text-gold-400 hover:text-gold-300 font-bold uppercase tracking-wider transition-colors active:opacity-50"
                             >
                                 {t.dashboard.notifications.markAllRead}
                             </button>
                         </div>
 
-                        {/* Notifications List */}
-                        <div className="flex-1 overflow-y-auto scrollbar-hide py-2">
+                        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-2">
                             {isLoading && notifications.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full space-y-4">
                                     <div className="w-10 h-10 border-2 border-gold-500/20 border-t-gold-500 rounded-full animate-spin" />
@@ -209,24 +230,21 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
                                 </div>
                             ) : (
                                 <div className="flex flex-col">
-                                    <AnimatePresence initial={false}>
-                                        {notifications.map((notif) => (
-                                            <NotificationItem
-                                                key={notif.id}
-                                                notif={notif}
-                                                language={language}
-                                                onClick={() => handleNotifClick(notif)}
-                                            />
-                                        ))}
-                                    </AnimatePresence>
+                                    {notifications.map((notif) => (
+                                        <NotificationItem
+                                            key={notif.id}
+                                            notif={notif}
+                                            language={language}
+                                            onSelect={handleNotifClick}
+                                        />
+                                    ))}
                                 </div>
                             )}
                         </div>
-                        
-                        {/* Footer - 2026 Premium Finish */}
+
                         <div className="p-4 border-t border-white/5 bg-white/[0.01] text-center">
                             <p className="text-[10px] text-white/20 font-medium tracking-tighter">
-                                {language === 'ar' ? 'مركز التنبيهات الذكي 2026' : 'SMART NOTIFICATION CENTER 2026'}
+                                {isAr ? 'مركز التنبيهات الذكي 2026' : 'SMART NOTIFICATION CENTER 2026'}
                             </p>
                         </div>
                     </motion.div>
