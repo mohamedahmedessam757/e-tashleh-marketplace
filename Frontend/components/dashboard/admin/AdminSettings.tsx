@@ -44,7 +44,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
 
   const {
     isAttachmentsEnabled, setAttachmentsEnabled,
-    isAccountDeletionEnabled,
+    isAccountDeletionEnabled, setAccountDeletionEnabled,
     isLoading: isPlatformLoading,
     fetchSettings, subscribeToSettings: subscribeToPlatformSettings
   } = usePlatformSettingsStore();
@@ -64,6 +64,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
   const [activeShipmentTypeId, setActiveShipmentTypeId] = useState<string>('standard');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [togglingFlag, setTogglingFlag] = useState<string | null>(null);
 
   // Local state for forms
   const [formData, setFormData] = useState(typeof systemConfig === 'string' ? JSON.parse(systemConfig) : JSON.parse(JSON.stringify(systemConfig)));
@@ -230,8 +231,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
       } else if (section === 'content') {
         success = await saveVendorContract(contractDraft);
       } else {
-        await saveSystemSetting('ALLOW_CUSTOMER_ACCOUNT_DELETION', deletionDraft, audit);
-        await saveSystemSetting('CHAT_ATTACHMENTS_ENABLED', attachmentsDraft, audit);
+        // Feature flags persist immediately on toggle — only save system_config here
         success = await saveSystemSetting('system_config', formData, audit);
       }
 
@@ -249,6 +249,118 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const flashSaveOk = () => {
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
+
+  /** Instant ON/OFF for platform feature flags (attachments + account deletion) */
+  const persistFeatureFlag = async (
+    key: 'CHAT_ATTACHMENTS_ENABLED' | 'ALLOW_CUSTOMER_ACCOUNT_DELETION',
+    next: boolean,
+  ) => {
+    if (togglingFlag) return;
+    const prevAttach = attachmentsDraft;
+    const prevDeletion = deletionDraft;
+
+    if (key === 'CHAT_ATTACHMENTS_ENABLED') {
+      setAttachmentsDraft(next);
+      setAttachmentsEnabled(next);
+    } else {
+      setDeletionDraft(next);
+      setAccountDeletionEnabled(next);
+    }
+
+    setTogglingFlag(key);
+    try {
+      const ok = await saveSystemSetting(key, next);
+      if (!ok) {
+        if (key === 'CHAT_ATTACHMENTS_ENABLED') {
+          setAttachmentsDraft(prevAttach);
+          setAttachmentsEnabled(prevAttach);
+        } else {
+          setDeletionDraft(prevDeletion);
+          setAccountDeletionEnabled(prevDeletion);
+        }
+        return;
+      }
+      await fetchSettings();
+      flashSaveOk();
+    } catch (err) {
+      console.error('Feature flag save failed', err);
+      if (key === 'CHAT_ATTACHMENTS_ENABLED') {
+        setAttachmentsDraft(prevAttach);
+        setAttachmentsEnabled(prevAttach);
+      } else {
+        setDeletionDraft(prevDeletion);
+        setAccountDeletionEnabled(prevDeletion);
+      }
+    } finally {
+      setTogglingFlag(null);
+    }
+  };
+
+  /** Instant ON/OFF for preferences step inside system_config.general */
+  const persistPreferencesStep = async (next: boolean) => {
+    if (togglingFlag) return;
+    const prev = Boolean(formData.general?.enablePreferencesStep);
+    const nextForm = {
+      ...formData,
+      general: { ...formData.general, enablePreferencesStep: next },
+    };
+    setFormData(nextForm);
+    setTogglingFlag('ENABLE_PREFERENCES_STEP');
+    try {
+      const ok = await saveSystemSetting('system_config', nextForm);
+      if (!ok) {
+        setFormData({
+          ...formData,
+          general: { ...formData.general, enablePreferencesStep: prev },
+        });
+        return;
+      }
+      flashSaveOk();
+    } catch (err) {
+      console.error('Preferences step save failed', err);
+      setFormData({
+        ...formData,
+        general: { ...formData.general, enablePreferencesStep: prev },
+      });
+    } finally {
+      setTogglingFlag(null);
+    }
+  };
+
+  const renderOnOffToggle = (
+    checked: boolean,
+    onChange: (next: boolean) => void,
+    accent: 'gold' | 'red',
+    busy: boolean,
+  ) => {
+    const onColor = accent === 'red' ? 'peer-checked:bg-red-500' : 'peer-checked:bg-gold-500';
+    const onLabel = accent === 'red' ? 'text-red-400' : 'text-gold-500';
+    return (
+      <div dir="ltr" className="flex items-center gap-3 shrink-0">
+        <span className={`text-[10px] font-black uppercase tracking-widest min-w-[2rem] text-center ${!checked ? 'text-white/70' : 'text-white/20'}`}>
+          {isAr ? 'إيقاف' : 'OFF'}
+        </span>
+        <label className={`relative inline-flex items-center ${busy ? 'opacity-50 pointer-events-none' : 'cursor-pointer'} scale-110`}>
+          <input
+            type="checkbox"
+            checked={checked}
+            disabled={busy}
+            onChange={(e) => onChange(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className={`w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all ${onColor}`} />
+        </label>
+        <span className={`text-[10px] font-black uppercase tracking-widest min-w-[2rem] text-center ${checked ? onLabel : 'text-white/20'}`}>
+          {isAr ? 'تشغيل' : 'ON'}
+        </span>
+      </div>
+    );
   };
 
   const confirmSettingsAudit = async (audit: SettingsAuditPayload) => {
@@ -533,22 +645,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                                 <RefreshCw size={16} className="text-gold-500/50 animate-spin" />
                               </div>
                             ) : (
-                              <label className="relative inline-flex items-center cursor-pointer scale-110">
-                                <input
-                                  type="checkbox"
-                                  checked={attachmentsDraft}
-                                  onChange={(e) => {
-                                    setAttachmentsDraft(e.target.checked);
-                                  }}
-                                  className="sr-only peer"
-                                />
-                                <div className="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-gold-500 shadow-[0_0_15px_rgba(234,179,8,0)] peer-checked:shadow-[0_0_15px_rgba(234,179,8,0.2)]"></div>
-                              </label>
+                              renderOnOffToggle(
+                                attachmentsDraft,
+                                (next) => void persistFeatureFlag('CHAT_ATTACHMENTS_ENABLED', next),
+                                'gold',
+                                togglingFlag === 'CHAT_ATTACHMENTS_ENABLED',
+                              )
                             )}
                           </div>
                         </div>
 
-                        {/* 2026 Customer Account Deletion Toggle — saves with Save button */}
+                        {/* 2026 Customer Account Deletion Toggle — instant persist */}
                         <div className="p-8 rounded-3xl bg-red-500/[0.03] border border-red-500/10 shadow-inner group hover:border-red-500/30 transition-all mb-4">
                           <div className="flex items-center justify-between gap-6">
                             <div className="flex items-center gap-4">
@@ -569,17 +676,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                                 <RefreshCw size={16} className="text-red-500/50 animate-spin" />
                               </div>
                             ) : (
-                              <label className="relative inline-flex items-center cursor-pointer scale-110">
-                                <input
-                                  type="checkbox"
-                                  checked={deletionDraft}
-                                  onChange={(e) => {
-                                    setDeletionDraft(e.target.checked);
-                                  }}
-                                  className="sr-only peer"
-                                />
-                                <div className="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0)] peer-checked:shadow-[0_0_15px_rgba(239,68,68,0.2)]"></div>
-                              </label>
+                              renderOnOffToggle(
+                                deletionDraft,
+                                (next) => void persistFeatureFlag('ALLOW_CUSTOMER_ACCOUNT_DELETION', next),
+                                'red',
+                                togglingFlag === 'ALLOW_CUSTOMER_ACCOUNT_DELETION',
+                              )
                             )}
                           </div>
                         </div>
@@ -594,10 +696,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                                   : 'Toggle new/used part preferences step for customers.'}
                               </p>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer scale-110">
-                              <input type="checkbox" checked={formData.general?.enablePreferencesStep || false} onChange={(e) => updateField('general', 'enablePreferencesStep', e.target.checked)} className="sr-only peer" />
-                              <div className="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-gold-500"></div>
-                            </label>
+                            {renderOnOffToggle(
+                              Boolean(formData.general?.enablePreferencesStep),
+                              (next) => void persistPreferencesStep(next),
+                              'gold',
+                              togglingFlag === 'ENABLE_PREFERENCES_STEP',
+                            )}
                           </div>
                         </div>
 

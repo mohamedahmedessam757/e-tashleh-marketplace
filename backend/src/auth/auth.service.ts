@@ -691,6 +691,17 @@ export class AuthService {
     }
 
     async deleteAccount(userId: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true },
+        });
+        if (user?.role === 'CUSTOMER') {
+            const deletionAllowed = await this.platformSettings.isAccountDeletionEnabled();
+            if (!deletionAllowed) {
+                throw new ForbiddenException('Customer account self-deletion is currently disabled by the platform');
+            }
+        }
+
         // Optional Prisma delete if RLS/Triggers don't auto-cascade
         try {
             await this.prisma.user.delete({ where: { id: userId } });

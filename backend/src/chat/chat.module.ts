@@ -9,9 +9,10 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { JwtAuthSharedModule } from '../auth/jwt-auth-shared.module';
 import { ViolationsModule } from '../violations/violations.module';
 import { LlmModule } from '../llm/llm.module';
+import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
 
 @Module({
-    imports: [JwtAuthSharedModule, NotificationsModule, AuditLogsModule, ViolationsModule, LlmModule],
+    imports: [JwtAuthSharedModule, NotificationsModule, AuditLogsModule, ViolationsModule, LlmModule, PlatformSettingsModule],
     controllers: [ChatController, PublicChatController],
     providers: [ChatService, PrismaService, ChatGateway],
     exports: [ChatService, ChatGateway],

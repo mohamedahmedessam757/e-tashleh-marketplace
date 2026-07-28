@@ -61,10 +61,16 @@ export class AppController {
         ]);
 
         const status = (statusSetting?.settingValue ?? {}) as Record<string, unknown>;
-        const company = ((configRow?.settingValue as Record<string, unknown>)?.company ?? {}) as Record<string, unknown>;
+        const configValue = (configRow?.settingValue ?? {}) as Record<string, unknown>;
+        const company = (configValue.company ?? {}) as Record<string, unknown>;
+        const generalCfg = (configValue.general ?? {}) as Record<string, unknown>;
 
         return {
-            general: this.platformBranding.getPublicSnapshot(branding),
+            general: {
+                ...this.platformBranding.getPublicSnapshot(branding),
+                // Customer create-order wizard reads this; default ON when unset
+                enablePreferencesStep: generalCfg.enablePreferencesStep !== false,
+            },
             orderDurations,
             logistics: this.logisticsConfig.getPublicSnapshot(logistics),
             company: {

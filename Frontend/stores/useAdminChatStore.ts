@@ -266,7 +266,8 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
                 const optimisticMsg: AdminChatMessage = {
                     id: `temp-${Date.now()}`,
                     chatId,
-                    senderId: 'admin_optimistic', 
+                    senderId: 'admin_optimistic',
+                    senderRole: 'ADMIN',
                     text,
                     createdAt: new Date().toISOString(),
                     isRead: true,

@@ -862,7 +862,21 @@ export const useAdminStore = create<AdminState>()(
             const sameFinancial =
               JSON.stringify(prev?.financial ?? null) ===
               JSON.stringify(config?.financial ?? null);
+            const samePrefs =
+              prev?.general?.enablePreferencesStep === config?.general?.enablePreferencesStep;
+
             if (sameLogistics && sameFinancial) {
+              if (!samePrefs && config?.general) {
+                set({
+                  systemConfig: {
+                    ...prev,
+                    general: {
+                      ...prev.general,
+                      enablePreferencesStep: config.general.enablePreferencesStep,
+                    },
+                  },
+                });
+              }
               return;
             }
 

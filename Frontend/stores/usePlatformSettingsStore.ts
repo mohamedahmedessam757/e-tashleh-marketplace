@@ -3,11 +3,12 @@ import { supabase } from '../services/supabase';
 import { API_URL } from '../services/api/config';
 
 // 2026: Robust boolean parser for Supabase jsonb values
-// Handles: true, 'true', "true", 1, and their false equivalents
+// Handles: true, 'true', "true", 1, { value: true }, and their false equivalents
 const parseBool = (val: any): boolean => {
     if (typeof val === 'boolean') return val;
     if (typeof val === 'string') return val.toLowerCase() === 'true';
     if (typeof val === 'number') return val !== 0;
+    if (val && typeof val === 'object' && 'value' in val) return parseBool(val.value);
     return false;
 };
 

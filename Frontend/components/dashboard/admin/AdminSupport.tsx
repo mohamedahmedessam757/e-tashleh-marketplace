@@ -489,40 +489,45 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
               </div>
             )}
 
-            {/* Chat Body */}
+            {/* Chat Body — dir=ltr on rows so staff/other sides stay physical L/R under RTL UI */}
             <div className={`flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar ${isAr ? 'text-right' : 'text-left'}`}>
               <AnimatePresence mode="popLayout">
               {activeChat.messages?.map((msg) => {
-                // Absolute Alignment: Admin on the Right, Other on the Left
-                const isAdmin = msg.senderRole === 'ADMIN' || msg.senderId === 'admin_optimistic' || (msg.senderId && msg.senderId !== activeChat.customerId && msg.senderId !== activeChat.vendorOwnerId);
-                
-                // In RTL (Arabic): justify-start is Right, justify-end is Left.
-                // In LTR (English): justify-start is Left, justify-end is Right.
-                const alignmentClass = isAdmin 
-                    ? (isAr ? 'justify-start' : 'justify-end') 
-                    : (isAr ? 'justify-end' : 'justify-start');
+                const me = getCurrentUser();
+                const role = String(msg.senderRole || '').toUpperCase();
+                const isStaffRole = role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPPORT';
+                const isCounterpartyRole = role === 'CUSTOMER' || role === 'VENDOR' || role === 'MERCHANT';
+                const isStaffMessage =
+                  msg.senderId === 'admin_optimistic' ||
+                  (me?.id != null && msg.senderId === me.id) ||
+                  isStaffRole ||
+                  (!isCounterpartyRole &&
+                    !!msg.senderId &&
+                    msg.senderId !== activeChat.customerId &&
+                    msg.senderId !== activeChat.vendorOwnerId);
 
                 return (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     key={msg.id} 
-                    className={`flex ${alignmentClass}`}
+                    dir="ltr"
+                    className={`flex w-full ${isStaffMessage ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[75%] group relative ${isAdmin ? 'items-end' : 'items-start'}`}>
-                      <div className={`p-4 rounded-2xl ${isAdmin ? 'bg-gold-500 text-[#1A1814] rounded-tr-none' : 'bg-white/5 border border-white/5 text-white rounded-tl-none'}`}>
+                    <div className={`max-w-[75%] group relative ${isStaffMessage ? 'items-end' : 'items-start'}`}>
+                      <div className={`p-4 rounded-2xl ${isStaffMessage ? 'bg-gold-500 text-[#1A1814] rounded-tr-none' : 'bg-white/5 border border-white/5 text-white rounded-tl-none'}`}>
                         {msg.mediaUrl && (
                           <div className="mb-3">
                             {renderMedia(msg.mediaUrl, msg.mediaType)}
                           </div>
                         )}
-                        <p className="text-sm font-medium leading-relaxed mb-1 whitespace-pre-wrap">
+                        <p className="text-sm font-medium leading-relaxed mb-1 whitespace-pre-wrap" dir={isAr ? 'rtl' : 'ltr'}>
                           {activeChat.adminTranslationEnabledAt && msg.translatedText ? msg.translatedText : msg.text}
                         </p>
                         {activeChat.adminTranslationEnabledAt && msg.translatedText && (
                             <p className="text-[10px] text-black/40 italic font-medium">Original: {msg.text}</p>
                         )}
-                        <div className={`text-[9px] mt-2 font-bold uppercase tracking-widest opacity-40 ${isAdmin ? 'text-black' : 'text-white'}`}>
+                        <div className={`text-[9px] mt-2 font-bold uppercase tracking-widest opacity-40 ${isStaffMessage ? 'text-black' : 'text-white'}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>

@@ -32,15 +32,36 @@ export class PlatformSettingsService {
     private readonly platformBranding: PlatformBrandingService,
   ) {}
 
+  private parseBoolSetting(setting: unknown, defaultVal: boolean): boolean {
+    if (setting === undefined || setting === null) return defaultVal;
+    if (typeof setting === 'boolean') return setting;
+    if (typeof setting === 'string') return setting.toLowerCase() === 'true';
+    if (typeof setting === 'number') return setting !== 0;
+    if (typeof setting === 'object' && setting !== null && 'value' in (setting as object)) {
+      return this.parseBoolSetting((setting as { value: unknown }).value, defaultVal);
+    }
+    return defaultVal;
+  }
+
   /**
    * Helper to check if account deletion is enabled globally
    */
   async isAccountDeletionEnabled(): Promise<boolean> {
     try {
       const setting = await this.getSetting(PlatformSettingsService.KEYS.ALLOW_CUSTOMER_ACCOUNT_DELETION);
-      return setting === 'true' || setting === true;
+      return this.parseBoolSetting(setting, true);
     } catch (e) {
       return true; // Default to true if setting not found
+    }
+  }
+
+  /** Global switch for customer/merchant chat file attachments */
+  async isChatAttachmentsEnabled(): Promise<boolean> {
+    try {
+      const setting = await this.getSetting(PlatformSettingsService.KEYS.CHAT_ATTACHMENTS_ENABLED);
+      return this.parseBoolSetting(setting, true);
+    } catch (e) {
+      return true;
     }
   }
 

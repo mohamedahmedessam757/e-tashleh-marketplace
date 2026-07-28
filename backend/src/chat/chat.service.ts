@@ -7,6 +7,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { OrderStatus, ActorType, ViolationTargetType } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
 import { OpenRouterService } from '../llm/openrouter.service';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import {
     normalizeSearchQuery,
     resolveUserIds,
@@ -31,6 +32,7 @@ export class ChatService {
         private auditLogsService: AuditLogsService,
         private violationsService: ViolationsService,
         private openRouterService: OpenRouterService,
+        private platformSettings: PlatformSettingsService,
     ) { }
 
     async createOrGetChat(orderId: string, vendorId: string, customerId: string) {
@@ -405,6 +407,15 @@ export class ChatService {
     }
 
     async sendMessage(chatId: string, senderId: string | null, text: string, senderRole?: string, mediaUrl?: string, mediaType?: string, mediaName?: string, priority?: string, subject?: string) {
+        const roleUpper = String(senderRole || '').toUpperCase();
+        const isStaffSender = roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPPORT';
+        if (mediaUrl && !isStaffSender) {
+            const attachmentsAllowed = await this.platformSettings.isChatAttachmentsEnabled();
+            if (!attachmentsAllowed) {
+                throw new ForbiddenException('Chat attachments are currently disabled by the platform');
+            }
+        }
+
         let chat = await this.prisma.orderChat.findUnique({ 
             where: { id: chatId },
             include: { 
