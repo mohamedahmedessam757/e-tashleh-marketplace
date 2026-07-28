@@ -170,28 +170,45 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
     );
   }
 
-  // Smart Chat Logic Checks — Hard Gate: closed/expired never reopen via orderStatus
+  // Smart Chat Logic — cancelled/completed stay open; 24h expiry only for offer phase
   const chatStatus = displayChat.status;
+  const keepOpenOrderStatuses = ['CANCELLED', 'COMPLETED', 'WARRANTY_ACTIVE'];
+  const isPostLifecycleOpen =
+    !!orderStatus && keepOpenOrderStatuses.includes(orderStatus);
+
+  // Stale "expired" while order is cancelled/completed → treat as active (backend heals on init/send)
+  const effectiveChatStatus =
+    chatStatus === 'expired' && isPostLifecycleOpen ? 'active' : chatStatus;
+
   const isTerminalChatStatus =
-    chatStatus === 'closed' ||
-    chatStatus === 'expired' ||
-    chatStatus === 'closed_others';
+    effectiveChatStatus === 'closed' ||
+    effectiveChatStatus === 'expired' ||
+    effectiveChatStatus === 'closed_others';
+
+  const fulfillmentOpenStatuses = [
+    'AWAITING_OFFERS',
+    'COLLECTING_OFFERS',
+    'AWAITING_SELECTION',
+    'AWAITING_PAYMENT',
+    'PREPARATION',
+    'DELAYED_PREPARATION',
+    'SHIPPED',
+    'DELIVERED',
+    'VERIFICATION',
+    'VERIFICATION_SUCCESS',
+    'VERIFICATION_FAILED',
+    'READY_FOR_SHIPPING',
+    ...keepOpenOrderStatuses,
+  ];
+
   const isChatActive =
     !isTerminalChatStatus &&
-    (chatStatus === 'active' ||
-      (!!orderStatus &&
-        [
-          'AWAITING_OFFERS',
-          'COLLECTING_OFFERS',
-          'AWAITING_SELECTION',
-          'AWAITING_PAYMENT',
-          'PREPARATION',
-          'SHIPPED',
-        ].includes(orderStatus)));
+    (effectiveChatStatus === 'active' ||
+      (!!orderStatus && fulfillmentOpenStatuses.includes(orderStatus)));
 
   const isOrderCompletedLock =
     isOrderChat &&
-    chatStatus === 'closed' &&
+    effectiveChatStatus === 'closed' &&
     orderChat?.type !== 'support' &&
     !!orderStatus &&
     ['COMPLETED', 'WARRANTY_ACTIVE'].includes(orderStatus);
@@ -499,7 +516,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
         )}
 
         {/* Status Indicators in Chat Stream */}
-        {chatStatus === 'expired' && (!orderStatus || orderStatus === 'AWAITING_OFFERS') && (
+        {effectiveChatStatus === 'expired' && (!orderStatus || orderStatus === 'AWAITING_OFFERS' || orderStatus === 'COLLECTING_OFFERS' || orderStatus === 'AWAITING_SELECTION') && (
           <div className="flex justify-center my-4">
             <span className="text-xs text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 flex items-center gap-1">
               <Clock size={12} />
@@ -508,7 +525,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           </div>
         )}
 
-        {chatStatus === 'closed' && (
+        {effectiveChatStatus === 'closed' && (
           <div className="flex justify-center my-4">
             <span className="text-xs text-gray-400 bg-gray-500/10 px-3 py-1 rounded-full border border-gray-500/20 flex items-center gap-1">
               <CheckCircle2 size={12} />
@@ -604,7 +621,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
         ) : (
           /* Locked State UI */
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-3 text-center">
-            {chatStatus === 'expired' ? (
+            {effectiveChatStatus === 'expired' ? (
               <>
                 <Clock className="text-red-400" size={24} />
                 <div>

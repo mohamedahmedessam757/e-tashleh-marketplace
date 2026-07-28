@@ -1,6 +1,9 @@
 /**
  * Pure helper: whether vendor–customer order chat should lock when an order
  * reaches a completion-like status (no open dispute/return).
+ *
+ * Product rule (2026): cancelled / completed chats stay OPEN so parties can
+ * still communicate. Auto-lock on completion is disabled.
  */
 
 export type ChatCompletionLockReason = 'ORDER_COMPLETED';
@@ -30,25 +33,14 @@ export function isOpenReturnStatus(status: string | null | undefined): boolean {
   return !(CLOSED_RETURN_STATUSES as readonly string[]).includes(status);
 }
 
-export function shouldLockChatOnCompletion(input: {
+/**
+ * Always keep chat open on completion/cancel — do not auto-lock.
+ * Dispute/return helpers above remain for other governance callers.
+ */
+export function shouldLockChatOnCompletion(_input: {
   orderStatus: string;
   disputeStatuses?: Array<string | null | undefined>;
   returnStatuses?: Array<string | null | undefined>;
 }): { shouldLock: boolean; reason: ChatCompletionLockReason | null } {
-  const isCompletionLike = (
-    COMPLETION_LIKE_ORDER_STATUSES as readonly string[]
-  ).includes(input.orderStatus);
-
-  if (!isCompletionLike) {
-    return { shouldLock: false, reason: null };
-  }
-
-  const hasOpenDispute = (input.disputeStatuses ?? []).some(isOpenDisputeStatus);
-  const hasOpenReturn = (input.returnStatuses ?? []).some(isOpenReturnStatus);
-
-  if (hasOpenDispute || hasOpenReturn) {
-    return { shouldLock: false, reason: null };
-  }
-
-  return { shouldLock: true, reason: 'ORDER_COMPLETED' };
+  return { shouldLock: false, reason: null };
 }

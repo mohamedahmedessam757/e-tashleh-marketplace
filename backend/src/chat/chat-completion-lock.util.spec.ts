@@ -4,26 +4,30 @@ import {
   isOpenDisputeStatus,
   isOpenReturnStatus,
 } from './chat-completion-lock.util';
+import {
+  isOfferPhaseOrderStatus,
+  shouldKeepOrderChatOpen,
+} from './chat-offer-expiry.util';
 
 describe('shouldLockChatOnCompletion', () => {
-  it('locks when COMPLETED with no disputes/returns', () => {
+  it('never auto-locks on COMPLETED (chat stays open)', () => {
     expect(
       shouldLockChatOnCompletion({
         orderStatus: 'COMPLETED',
         disputeStatuses: [],
         returnStatuses: [],
       }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+    ).toEqual({ shouldLock: false, reason: null });
   });
 
-  it('locks when WARRANTY_ACTIVE (completion with warranty)', () => {
+  it('never auto-locks on WARRANTY_ACTIVE', () => {
     expect(
       shouldLockChatOnCompletion({
         orderStatus: 'WARRANTY_ACTIVE',
         disputeStatuses: ['RESOLVED'],
         returnStatuses: ['CLOSED'],
       }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+    ).toEqual({ shouldLock: false, reason: null });
   });
 
   it('does not lock when order is not completed', () => {
@@ -32,26 +36,6 @@ describe('shouldLockChatOnCompletion', () => {
         orderStatus: 'DELIVERED',
         disputeStatuses: [],
         returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: false, reason: null });
-  });
-
-  it('does not lock when an open dispute exists', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'COMPLETED',
-        disputeStatuses: ['OPEN'],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: false, reason: null });
-  });
-
-  it('does not lock when an open return exists', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'COMPLETED',
-        disputeStatuses: [],
-        returnStatuses: ['PENDING'],
       }),
     ).toEqual({ shouldLock: false, reason: null });
   });
@@ -66,5 +50,22 @@ describe('shouldLockChatOnCompletion', () => {
     expect(isOpenReturnStatus('CANCELLED')).toBe(false);
     expect(isOpenReturnStatus('REJECTED')).toBe(false);
     expect(isOpenReturnStatus('APPROVED')).toBe(true);
+  });
+});
+
+describe('chat offer-phase expiry helpers', () => {
+  it('marks bidding/selection as offer phase', () => {
+    expect(isOfferPhaseOrderStatus('AWAITING_OFFERS')).toBe(true);
+    expect(isOfferPhaseOrderStatus('COLLECTING_OFFERS')).toBe(true);
+    expect(isOfferPhaseOrderStatus('AWAITING_SELECTION')).toBe(true);
+    expect(isOfferPhaseOrderStatus('CANCELLED')).toBe(false);
+    expect(isOfferPhaseOrderStatus('COMPLETED')).toBe(false);
+  });
+
+  it('keeps chat open for cancelled/completed', () => {
+    expect(shouldKeepOrderChatOpen('CANCELLED')).toBe(true);
+    expect(shouldKeepOrderChatOpen('COMPLETED')).toBe(true);
+    expect(shouldKeepOrderChatOpen('WARRANTY_ACTIVE')).toBe(true);
+    expect(shouldKeepOrderChatOpen('AWAITING_OFFERS')).toBe(false);
   });
 });

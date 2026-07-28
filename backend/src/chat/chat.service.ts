@@ -16,6 +16,10 @@ import {
     mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
 import { shouldLockChatOnCompletion } from './chat-completion-lock.util';
+import {
+    isOfferPhaseOrderStatus,
+    shouldKeepOrderChatOpen,
+} from './chat-offer-expiry.util';
 
 @Injectable()
 export class ChatService {
@@ -58,24 +62,64 @@ export class ChatService {
             }
         }
 
-        // Rule: 24h Expiry check
-        // [2026 Update] Chat stays open during AWAITING_SELECTION until selectionDeadlineAt
+        // Rule: Cancelled / completed / warranty — chat stays OPEN (heal stale EXPIRED/CLOSED)
+        if (shouldKeepOrderChatOpen(order.status)) {
+            const existingKeepOpen = await this.prisma.orderChat.findUnique({
+                where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
+            });
+            if (existingKeepOpen) {
+                if (existingKeepOpen.status === 'EXPIRED' || existingKeepOpen.status === 'CLOSED') {
+                    await this.prisma.orderChat.update({
+                        where: { id: existingKeepOpen.id },
+                        data: { status: 'OPEN', expiryAt: null },
+                    });
+                }
+            } else {
+                await this.prisma.orderChat.create({
+                    data: {
+                        orderId,
+                        vendorId,
+                        customerId,
+                        type: 'order',
+                        status: 'OPEN',
+                        expiryAt: null,
+                    },
+                });
+            }
+            // Fall through to normal full fetch below via re-read
+            const kept = await this.prisma.orderChat.findUnique({
+                where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
+            });
+            if (!kept) throw new NotFoundException('Chat not found');
+            const fullKept = await this.prisma.orderChat.findUnique({
+                where: { id: kept.id },
+                include: {
+                    vendor: { select: { name: true, logo: true, storeCode: true } },
+                    customer: { select: { name: true, avatar: true } },
+                    order: { select: { orderNumber: true, partName: true } },
+                    messages: { orderBy: { createdAt: 'asc' } },
+                },
+            });
+            if (!fullKept) throw new NotFoundException('Chat not found');
+            return this.mapChatToDto(fullKept);
+        }
+
+        // Rule: 24h / selection Expiry — ONLY while still in offer/selection phases
+        // (never expire chats for cancelled/completed or post-acceptance fulfillment)
         const now = new Date();
         const orderCreated = new Date(order.createdAt);
         const diffHours = (now.getTime() - orderCreated.getTime()) / (1000 * 60 * 60);
 
         let isExpired = false;
-        if (!order.acceptedOfferId) {
+        if (!order.acceptedOfferId && isOfferPhaseOrderStatus(order.status)) {
             if (order.status === OrderStatus.AWAITING_SELECTION) {
-                // If in selection phase, check the specific deadline
                 if (order.selectionDeadlineAt && now > new Date(order.selectionDeadlineAt)) {
                     isExpired = true;
                 } else if (!order.selectionDeadlineAt && diffHours > 48) {
-                    // Fallback for selection phase: 48h from creation (24h collecting + 24h selection)
+                    // Fallback: 48h from creation (24h collecting + 24h selection)
                     isExpired = true;
                 }
             } else if (diffHours > 24) {
-                // Default 24h expiry for initial phases (AWAITING_OFFERS, etc.)
                 isExpired = true;
             }
         }
@@ -106,8 +150,7 @@ export class ChatService {
         });
 
         if (!chat) {
-            // Default expiry matches logic? Or maybe we set static expiry?
-            // "If 24h passed ... chat closed" -> implies expiry is at Order.createdAt + 24h
+            // Default expiry only meaningful during offer phase
             const expiryDate = new Date(orderCreated.getTime() + 24 * 60 * 60 * 1000);
 
             chat = await this.prisma.orderChat.create({
@@ -138,16 +181,35 @@ export class ChatService {
     }
 
     async getChatById(id: string) {
-        const chat = await this.prisma.orderChat.findUnique({
+        let chat = await this.prisma.orderChat.findUnique({
             where: { id },
             include: {
                 vendor: { select: { name: true, logo: true, id: true, storeCode: true, ownerId: true } },
                 customer: { select: { name: true, avatar: true, id: true } },
-                order: { select: { orderNumber: true, partName: true, id: true } },
+                order: { select: { orderNumber: true, partName: true, id: true, status: true } },
                 messages: { orderBy: { createdAt: 'asc' } }
             }
         });
         if (!chat) throw new NotFoundException('Chat not found');
+
+        // Heal stale EXPIRED/CLOSED for cancelled/completed orders
+        if (
+            chat.type === 'order' &&
+            shouldKeepOrderChatOpen(chat.order?.status) &&
+            (chat.status === 'EXPIRED' || chat.status === 'CLOSED')
+        ) {
+            chat = await this.prisma.orderChat.update({
+                where: { id: chat.id },
+                data: { status: 'OPEN', expiryAt: null },
+                include: {
+                    vendor: { select: { name: true, logo: true, id: true, storeCode: true, ownerId: true } },
+                    customer: { select: { name: true, avatar: true, id: true } },
+                    order: { select: { orderNumber: true, partName: true, id: true, status: true } },
+                    messages: { orderBy: { createdAt: 'asc' } },
+                },
+            });
+        }
+
         return this.mapChatToDto(chat);
     }
 
@@ -159,7 +221,7 @@ export class ChatService {
         const baseInclude = {
             customer: { select: { id: true, name: true, avatar: true, email: true, phone: true } },
             vendor: { select: { id: true, name: true, logo: true, storeCode: true, ownerId: true } },
-            order: { select: { orderNumber: true, partName: true, id: true } },
+            order: { select: { orderNumber: true, partName: true, id: true, status: true } },
             messages: { 
                 where: { isDeletedByAdmin: false },
                 orderBy: { createdAt: 'desc' as const }, 
@@ -260,6 +322,26 @@ export class ChatService {
             });
         }
 
+        // Heal stale EXPIRED/CLOSED chats for cancelled/completed orders (list accuracy)
+        const healIds = (chats as any[])
+            .filter(
+                (c) =>
+                    c.type === 'order' &&
+                    shouldKeepOrderChatOpen(c.order?.status) &&
+                    (c.status === 'EXPIRED' || c.status === 'CLOSED'),
+            )
+            .map((c) => c.id as string);
+
+        if (healIds.length > 0) {
+            await this.prisma.orderChat.updateMany({
+                where: { id: { in: healIds } },
+                data: { status: 'OPEN', expiryAt: null },
+            });
+            for (const c of chats as any[]) {
+                if (healIds.includes(c.id)) c.status = 'OPEN';
+            }
+        }
+
         return chats.map((chat: any) => ({
             ...this.mapChatToDto(chat),
             lastMessage: chat.messages?.[0]?.text || '',
@@ -323,14 +405,37 @@ export class ChatService {
     }
 
     async sendMessage(chatId: string, senderId: string | null, text: string, senderRole?: string, mediaUrl?: string, mediaType?: string, mediaName?: string, priority?: string, subject?: string) {
-        const chat = await this.prisma.orderChat.findUnique({ 
+        let chat = await this.prisma.orderChat.findUnique({ 
             where: { id: chatId },
             include: { 
                 customer: { select: { id: true, name: true } }, 
-                vendor: { select: { id: true, name: true, ownerId: true } } 
+                vendor: { select: { id: true, name: true, ownerId: true } },
+                order: { select: { id: true, status: true } },
             } 
         });
         if (!chat) throw new NotFoundException('Chat not found');
+
+        // Cancelled / completed: reopen before send if stale EXPIRED/CLOSED
+        if (
+            chat.type === 'order' &&
+            shouldKeepOrderChatOpen(chat.order?.status) &&
+            (chat.status === 'EXPIRED' || chat.status === 'CLOSED')
+        ) {
+            chat = await this.prisma.orderChat.update({
+                where: { id: chat.id },
+                data: { status: 'OPEN', expiryAt: null },
+                include: {
+                    customer: { select: { id: true, name: true } },
+                    vendor: { select: { id: true, name: true, ownerId: true } },
+                    order: { select: { id: true, status: true } },
+                },
+            });
+            this.chatGateway.server.to(chatId).emit('chatStatusChanged', {
+                chatId,
+                status: 'OPEN',
+                reason: 'REOPENED_POST_LIFECYCLE',
+            });
+        }
 
         if (chat.status === 'CLOSED' || chat.status === 'EXPIRED') {
             throw new ForbiddenException(`Chat is ${chat.status}`);
