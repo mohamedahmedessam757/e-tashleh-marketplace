@@ -10,7 +10,7 @@ import {
     Wallet, Smartphone, Tablet, Monitor, Verified, Shield, Award, TrendingUp,
     Clock, ShieldAlert, ShoppingCart, Package, Sliders, Loader2, Lock, RotateCcw,
     MessageSquare, Truck, AlertOctagon, Scale, Gavel, Trophy, PlusCircle, AlertTriangle,
-    Link as LinkIcon, ArrowUpRight, RefreshCw, Edit3, Undo2
+    Link as LinkIcon, ArrowUpRight, RefreshCw, Edit3, Undo2, History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storesApi } from '../../../services/api/stores';
@@ -28,6 +28,8 @@ import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
 import { computeOfferFinalPrice } from '../../../utils/offerPricing';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
+import { AdminStoreOfferHistory } from './AdminStoreOfferHistory';
+import { consumeStoreProfileNavContext } from '../../../utils/violationNavigation';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 
 interface AdminStoreProfileProps {
@@ -81,7 +83,8 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
     const canViewTab = useAdminPermissionsStore(s => s.canViewTab);
 
     // Tab State (Defined early to be used in effects)
-    const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'disputes' | 'reviews' | 'financial' | 'sessions' | 'contract' | 'restrictions'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'disputes' | 'reviews' | 'financial' | 'sessions' | 'contract' | 'restrictions'>('overview');
+    const [offerHighlightId, setOfferHighlightId] = useState<string | null>(null);
     const [hasPendingContractAmendment, setHasPendingContractAmendment] = useState(false);
 
     // Local state for modal
@@ -104,6 +107,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         const allTabs = [
             { id: 'overview', icon: Activity, label: t.admin.storeProfile.tabs.overview, permissionKey: 'OVERVIEW' },
             { id: 'orders', icon: CreditCard, label: t.admin.storeProfile.tabs.orders, permissionKey: 'ORDERS' },
+            { id: 'offers', icon: History, label: t.admin.storeProfile.tabs.offers, permissionKey: 'ORDERS' },
             { id: 'disputes', icon: XCircle, label: t.admin.storeProfile.tabs.disputes, permissionKey: 'DISPUTES' },
             { id: 'reviews', icon: Star, label: t.admin.storeProfile.tabs.reviews, permissionKey: 'REVIEWS' },
             { id: 'financial', icon: Wallet, label: t.admin.storeProfile.tabs.financial, permissionKey: 'FINANCIAL' },
@@ -117,6 +121,45 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         }));
     }, [canViewTab, isAr, t]);
 
+    // Auto-switch logic: honor ?tab= / session nav, else pick first allowed tab.
+    // Re-apply on deep-link events so notifications work while already on this profile.
+    React.useEffect(() => {
+        const applyNav = (consumeCtx: boolean) => {
+            const params = typeof window !== 'undefined'
+                ? new URLSearchParams(window.location.search)
+                : null;
+            const ctx = consumeCtx ? consumeStoreProfileNavContext() : null;
+            const tabParam = params?.get('tab') || ctx?.tab || null;
+            const highlight = params?.get('highlight') || ctx?.highlightId || null;
+            if (highlight) setOfferHighlightId(String(highlight));
+
+            if (tabParam) {
+                const requested = visibleTabs.find((t) => t.id === tabParam && !t.isLocked);
+                if (requested) {
+                    setActiveTab(requested.id as typeof activeTab);
+                    return;
+                }
+            }
+            // Only fall back to first allowed on initial mount (when still default overview locked)
+            const current = visibleTabs.find((t) => t.id === activeTab && !t.isLocked);
+            if (!current) {
+                const firstAllowed = visibleTabs.find((t) => !t.isLocked);
+                if (firstAllowed) setActiveTab(firstAllowed.id as typeof activeTab);
+            }
+        };
+
+        applyNav(true);
+
+        const onDeepLink = () => applyNav(true);
+        window.addEventListener('popstate', onDeepLink);
+        window.addEventListener('admin-store-profile-deep-link', onDeepLink);
+        return () => {
+            window.removeEventListener('popstate', onDeepLink);
+            window.removeEventListener('admin-store-profile-deep-link', onDeepLink);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- activeTab intentionally omitted to avoid loop
+    }, [visibleTabs]);
+
     const scrollToGovernance = () => {
         setActiveTab('restrictions');
         setTimeout(() => {
@@ -124,19 +167,12 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         }, 150);
     };
 
-    // Auto-switch logic: honor ?tab= URL param, else pick first allowed tab
-    React.useEffect(() => {
-        const tabParam = typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('tab')
-            : null;
-        const requested = visibleTabs.find((t) => t.id === tabParam && !t.isLocked);
-        const firstAllowed = visibleTabs.find((t) => !t.isLocked);
-        if (requested) {
-            setActiveTab(requested.id as typeof activeTab);
-        } else if (firstAllowed) {
-            setActiveTab(firstAllowed.id as typeof activeTab);
-        }
-    }, [visibleTabs]);
+    const scrollToOffers = () => {
+        setActiveTab('offers');
+        setTimeout(() => {
+            document.getElementById('store-offers-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+    };
 
     const [banType, setBanType] = useState<'BLOCKED' | 'SUSPENDED'>('SUSPENDED');
     const [suspensionDays, setSuspensionDays] = useState(7);
@@ -1059,10 +1095,10 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                             </div>
                         </div>
                         <button
-                            onClick={scrollToGovernance}
+                            onClick={scrollToOffers}
                             className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/10 transition-all"
                         >
-                            {isAr ? 'عرض التفاصيل' : 'View details'}
+                            {isAr ? 'سجل العروض' : 'Offer history'}
                         </button>
                     </div>
                 </motion.div>
@@ -1909,6 +1945,19 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                         </div>
                                     )}
                                 </div>
+                            )}
+
+                            {activeTab === 'offers' && (
+                                <BlurredSection
+                                    isBlurred={isSectionBlurred('STORE_PROFILE', 'ORDERS')}
+                                    title={isAr ? 'سجل العروض' : 'Offer History'}
+                                >
+                                    <AdminStoreOfferHistory
+                                        vendor={vendor}
+                                        onNavigate={onNavigate}
+                                        highlightId={offerHighlightId}
+                                    />
+                                </BlurredSection>
                             )}
 
                             {activeTab === 'disputes' && (

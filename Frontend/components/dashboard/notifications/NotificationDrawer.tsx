@@ -7,12 +7,13 @@ import { getCurrentUserId } from '../../../utils/auth';
 import {
     resolveNotificationNavigation,
     setViolationNavContext,
+    setStoreProfileNavContext,
 } from '../../../utils/violationNavigation';
 
 interface NotificationDrawerProps {
     isOpen: boolean;
     onClose: () => void;
-    onNavigate: (path: string, id?: string) => void;
+    onNavigate: (path: string, id?: string, search?: string) => void;
     role: 'customer' | 'merchant' | 'admin' | string;
 }
 
@@ -135,9 +136,13 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 if (nav.context) {
                     setViolationNavContext(nav.context);
                 }
+                if (nav.storeProfile) {
+                    setStoreProfileNavContext(nav.storeProfile);
+                }
 
                 let path = nav.path;
                 let id = nav.id || (notif.metadata?.orderId as string | undefined) || (notif.metadata?.caseId as string | undefined);
+                let search = nav.search;
 
                 if (path === 'order-details' || path === 'orders') {
                     if (role === 'admin') path = 'admin-order-details';
@@ -148,12 +153,13 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 } else if (path === 'store-profile' && role !== 'admin') {
                     path = 'profile';
                     id = undefined;
+                    search = undefined;
                 } else if (path === 'profile' && role === 'admin' && notif.metadata?.storeId) {
                     path = 'store-profile';
                     id = String(notif.metadata.storeId);
                 }
 
-                onNavigate(path, id);
+                onNavigate(path, id, search);
                 onClose();
             }
         },

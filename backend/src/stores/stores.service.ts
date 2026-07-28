@@ -374,8 +374,19 @@ export class StoresService {
                     } 
                 },
                 offers: {
-                    orderBy: { createdAt: 'desc' },
-                    take: 10
+                    orderBy: { updatedAt: 'desc' },
+                    take: 80,
+                    include: {
+                        order: {
+                            select: {
+                                id: true,
+                                orderNumber: true,
+                                status: true,
+                                createdAt: true,
+                            },
+                        },
+                        orderPart: { select: { id: true, name: true } },
+                    },
                 },
                 documents: true,
                 contractAcceptances: {
@@ -419,14 +430,33 @@ export class StoresService {
                     select: { id: true, unitPrice: true, shippingCost: true, status: true, storeId: true }
                 },
                 offers: {
-                    where: { storeId: id }, // Fetch this store's specific offer(s)
-                    select: { 
-                        id: true, unitPrice: true, shippingCost: true, status: true, createdAt: true,
+                    where: { storeId: id }, // this store's offers (active + withdrawn)
+                    orderBy: { updatedAt: 'desc' },
+                    select: {
+                        id: true,
+                        offerNumber: true,
+                        unitPrice: true,
+                        shippingCost: true,
+                        status: true,
+                        isWithdrawn: true,
+                        withdrawalType: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        condition: true,
+                        hasWarranty: true,
+                        warrantyDuration: true,
+                        deliveryDays: true,
+                        offerImage: true,
+                        weightKg: true,
+                        partType: true,
+                        notes: true,
+                        cylinders: true,
+                        orderPartId: true,
                         payments: {
                             where: { status: 'SUCCESS' },
-                            select: { totalAmount: true }
-                        }
-                    }
+                            select: { totalAmount: true },
+                        },
+                    },
                 },
                 disputes: { select: { id: true, status: true, reason: true, createdAt: true } },
                 returns: { select: { id: true, status: true, reason: true, createdAt: true } }

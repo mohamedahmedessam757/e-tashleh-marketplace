@@ -347,11 +347,24 @@ export const admin = {
       tabs: {
         overview: 'نظرة عامة',
         orders: 'الطلبات',
+        offers: 'سجل العروض',
         disputes: 'النزاعات والشكاوى',
         reviews: 'التقييمات',
         financial: 'السجل المالي',
         sessions: 'الجلسات والأمان',
         contract: 'بيانات العقد'
+      },
+      offerHistory: {
+        title: 'سجل عروض المتجر',
+        subtitle: 'كل العروض النشطة والمعدَّلة والملغاة لكل طلب — بنفس شكل كرت العرض للعميل.',
+        filterAll: 'الكل',
+        filterActive: 'نشط',
+        filterWithdrawn: 'ملغى/منسحب',
+        filterEdited: 'معدَّل',
+        offersCount: 'عرض',
+        empty: 'لا توجد عروض مسجّلة لهذا المتجر',
+        openOrder: 'الطلب',
+        events: 'أحداث',
       },
       financial: {
         available: 'الرصيد المتاح',
@@ -1872,11 +1885,24 @@ export const admin = {
       tabs: {
         overview: 'Overview',
         orders: 'Orders',
+        offers: 'Offer History',
         disputes: 'Disputes & Claims',
         reviews: 'Reviews',
         financial: 'Financial Journal',
         sessions: 'Sessions & Security',
         contract: 'Contract Details'
+      },
+      offerHistory: {
+        title: 'Store Offer History',
+        subtitle: 'All active, edited, and cancelled offers per order — same card design as the customer view.',
+        filterAll: 'All',
+        filterActive: 'Active',
+        filterWithdrawn: 'Withdrawn',
+        filterEdited: 'Edited',
+        offersCount: 'offers',
+        empty: 'No offers recorded for this store',
+        openOrder: 'Order',
+        events: 'events',
       },
       financial: {
         available: 'Available Balance',

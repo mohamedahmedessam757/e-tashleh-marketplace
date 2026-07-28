@@ -3,7 +3,7 @@
  * Supports per-part evaluation for multi-part orders.
  */
 
-import { isRejectedOfferStatus } from './offerStatusHelpers';
+import { isVisibleMarketplaceOffer } from './offerStatusHelpers';
 
 export type OrderExpiryScenario = 'no_offers' | 'selection_expired';
 
@@ -42,7 +42,7 @@ export function getVisibleOffersForPart(
   if (!offers?.length) return [];
   return offers.filter(
     (o) =>
-      !isRejectedOfferStatus(o.status) &&
+      isVisibleMarketplaceOffer(o) &&
       (String(o.orderPartId) === String(partId) ||
         (!o.orderPartId && isSinglePartOrder)),
   );

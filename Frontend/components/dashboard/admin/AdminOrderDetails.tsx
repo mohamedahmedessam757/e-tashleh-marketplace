@@ -36,6 +36,7 @@ import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPending
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
 import { computeShipmentDeliverySummary } from '../../../utils/offerFulfillmentHelpers';
 import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
+import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
 
 interface AdminOrderDetailsProps {
     orderId: any;
@@ -636,8 +637,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         />
                     )}
 
-                    {/* STATE: AWAITING OFFERS - Only show if NO offers yet */}
-                    {order.status === 'AWAITING_OFFERS' && !isExpired && (!order.offers || order.offers.filter((o: any) => o.status !== 'rejected').length === 0) && (
+                    {/* STATE: AWAITING OFFERS - Only show if NO active offers yet */}
+                    {order.status === 'AWAITING_OFFERS' && !isExpired && (!order.offers || order.offers.filter((o: any) => isActiveMerchantOffer(o)).length === 0) && (
                         <GlassCard className="flex flex-col items-center justify-center text-center py-16 border-dashed border-white/10 bg-white/5">
                             <div className="w-20 h-20 bg-[#1A1814] rounded-full flex items-center justify-center mb-6 relative">
                                 <div className="absolute inset-0 bg-gold-500 rounded-full opacity-20 animate-ping" />
@@ -660,8 +661,11 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
                             <div className="space-y-4">
                                 {order.parts.map((p: any, idx: number) => {
-                                    const partOffers = (order.offers || [])
-                                        .filter((o: any) => o.orderPartId === p.id); // Show ALL offers for admin
+                                    // Active marketplace offers only — withdrawn/cancelled/deleted stay in audit history
+                                    const partOffers = (order.offers || []).filter(
+                                        (o: any) =>
+                                            o.orderPartId === p.id && isActiveMerchantOffer(o),
+                                    );
 
                                     const hasOffers = partOffers.length > 0;
                                     const primaryOffer = partOffers.find((o: any) =>
@@ -847,7 +851,11 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     partDescription={drawerPart.description}
                                     partImage={drawerPart.image}
                                     partIndex={drawerPart.index}
-                                    offers={(order.offers || []).filter((o: any) => o.orderPartId === drawerPart.id)}
+                                    offers={(order.offers || []).filter(
+                                        (o: any) =>
+                                            o.orderPartId === drawerPart.id &&
+                                            isActiveMerchantOffer(o),
+                                    )}
                                     selectedOffer={null}
                                     onAcceptOffer={noOp}
                                     onChat={noOp}
@@ -871,8 +879,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         </div>
                     )}
 
-                    {/* General Offers (Unlinked) */}
-                    {order.offers && order.offers.filter((o: any) => !o.orderPartId && o.status !== 'rejected').length > 0 && (
+                    {/* General Offers (Unlinked) — active only */}
+                    {order.offers && order.offers.filter((o: any) => !o.orderPartId && isActiveMerchantOffer(o)).length > 0 && (
                         <div className="space-y-4 mt-8">
                             <h3 className="text-white font-bold flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-gold-500 rounded-full" />
@@ -880,7 +888,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             </h3>
                             <div className="space-y-4">
                                 {order.offers
-                                    .filter((o: any) => !o.orderPartId && o.status !== 'rejected')
+                                    .filter((o: any) => !o.orderPartId && isActiveMerchantOffer(o))
                                     .slice(0, 10)
                                     .map((offer: any) => (
                                         <div key={offer.id} className="relative">
@@ -889,7 +897,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                 storeName={offer.merchantName}
                                                 rating={offer.storeRating || 0}
                                                 reviewCount={offer.storeReviewCount || 0}
-                                                unitPrice={offer.unitPrice || offer.price}
+                                                price={resolveDisplayFinalPrice(offer, financial)}
+                                                unitPrice={offer.unitPrice || 0}
                                                 isSelected={order.acceptedOffers?.some((acc: any) => acc.id === offer.id) || order.acceptedOffer?.id === offer.id}
                                                 onAccept={noOp}
                                                 onChat={noOp}

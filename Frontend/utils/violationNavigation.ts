@@ -1,15 +1,25 @@
 export const VIOLATION_NAV_KEY = 'violation_nav';
 export const STORE_LIST_FILTER_KEY = 'admin_store_list_filter';
+export const STORE_PROFILE_NAV_KEY = 'admin_store_profile_nav';
 
 export interface ViolationNavContext {
   tab?: string;
   highlightId?: string;
 }
 
+export interface StoreProfileNavContext {
+  tab?: string;
+  highlightId?: string;
+  orderId?: string;
+}
+
 export interface NotificationNavResult {
   path: string;
   id?: string;
   context?: ViolationNavContext;
+  /** Extra query for deep-links e.g. ?tab=offers&highlight=... */
+  search?: string;
+  storeProfile?: StoreProfileNavContext;
 }
 
 export function setViolationNavContext(ctx: ViolationNavContext): void {
@@ -51,6 +61,25 @@ export function consumeAdminStoreListFilter(): 'all' | 'pending' | 'license' | n
   }
 }
 
+export function setStoreProfileNavContext(ctx: StoreProfileNavContext): void {
+  try {
+    sessionStorage.setItem(STORE_PROFILE_NAV_KEY, JSON.stringify(ctx));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function consumeStoreProfileNavContext(): StoreProfileNavContext | null {
+  try {
+    const raw = sessionStorage.getItem(STORE_PROFILE_NAV_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(STORE_PROFILE_NAV_KEY);
+    return JSON.parse(raw) as StoreProfileNavContext;
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeNotificationLink(link: string): string {
   return link
     .replace(/^\/dashboard\//, '')
@@ -84,13 +113,15 @@ export function resolveNotificationNavigation(
     violationId ||
     penaltyId ||
     appealId ||
-    tab ||
     type === 'VIOLATION' ||
     type === 'LOYALTY_REVIEW' ||
     type === 'CHAT_VIOLATION'
   ) {
     const resolvedTab =
-      tab ||
+      (typeof meta.tab === 'string' &&
+      ['violations', 'penalties', 'appeals', 'loyalty_reviews'].includes(meta.tab)
+        ? meta.tab
+        : undefined) ||
       (penaltyId ? 'penalties' : undefined) ||
       (appealId ? 'appeals' : undefined) ||
       (type === 'LOYALTY_REVIEW' ? 'loyalty_reviews' : undefined) ||
@@ -103,6 +134,31 @@ export function resolveNotificationNavigation(
         highlightId: violationId || penaltyId || appealId,
       },
     };
+  }
+
+  // Offer governance → store profile offers history (before generic orderId)
+  const offerKind = typeof meta.kind === 'string' ? meta.kind : '';
+  if (
+    type === 'GOVERNANCE_ALERT' ||
+    ['EDIT', 'CANCEL', 'VOLUNTARY_WITHDRAW', 'VIOLATION_WITHDRAW'].includes(offerKind)
+  ) {
+    const highlightId =
+      uuidFrom(meta.highlightId) || uuidFrom(meta.offerId) || orderId;
+    if (storeId) {
+      const q = new URLSearchParams();
+      q.set('tab', 'offers');
+      if (highlightId) q.set('highlight', highlightId);
+      return {
+        path: 'store-profile',
+        id: storeId,
+        search: `?${q.toString()}`,
+        storeProfile: {
+          tab: 'offers',
+          highlightId: highlightId || undefined,
+          orderId: orderId || undefined,
+        },
+      };
+    }
   }
 
   // Document / license expiry — merchant profile docs, admin store profile

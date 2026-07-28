@@ -458,6 +458,7 @@ export class OffersService {
             storeName: updated.store?.name || store.name,
             orderId: existing.orderId,
             orderNumber: existing.order?.orderNumber || existing.orderId,
+            offerId,
             offerNumber: existing.offerNumber,
             kind: 'EDIT',
         });
@@ -576,6 +577,7 @@ export class OffersService {
             storeName: result.store?.name || store.name,
             orderId: existing.orderId,
             orderNumber: order.orderNumber,
+            offerId,
             offerNumber: offerMeta?.offerNumber,
             kind: 'VOLUNTARY_WITHDRAW',
         });
@@ -700,6 +702,7 @@ export class OffersService {
             storeName: result.store?.name || store.name,
             orderId: existing.orderId,
             orderNumber: orderRow?.orderNumber || existing.orderId,
+            offerId,
             offerNumber: offerNum?.offerNumber,
             kind: 'VIOLATION_WITHDRAW',
         });
@@ -799,6 +802,7 @@ export class OffersService {
             storeName: store.name,
             orderId: existing.orderId,
             orderNumber: existing.order?.orderNumber || existing.orderId,
+            offerId,
             offerNumber: existing.offerNumber,
             kind: 'CANCEL',
         });
@@ -953,6 +957,7 @@ export class OffersService {
         storeName: string;
         orderId: string;
         orderNumber: string;
+        offerId?: string | null;
         offerNumber?: string | null;
         kind: 'EDIT' | 'CANCEL' | 'VOLUNTARY_WITHDRAW' | 'VIOLATION_WITHDRAW';
     }) {
@@ -980,9 +985,17 @@ export class OffersService {
                 messageAr: `${kindAr[params.kind]} على الطلب #${params.orderNumber}${offerRef}. حذف/انسحاب هذا الشهر: ${monthly}/50.`,
                 messageEn: `${kindEn[params.kind]} on order #${params.orderNumber}${params.offerNumber ? ` (offer ${params.offerNumber})` : ''}. Monthly deletions/withdrawals: ${monthly}/50.`,
                 type: 'GOVERNANCE_ALERT',
-                link: `/admin/stores/${params.storeId}`,
+                link: `/admin/stores/${params.storeId}?tab=offers${params.offerId ? `&highlight=${params.offerId}` : ''}`,
                 metadata: {
-                    ...params,
+                    storeId: params.storeId,
+                    storeName: params.storeName,
+                    orderId: params.orderId,
+                    orderNumber: params.orderNumber,
+                    offerId: params.offerId || null,
+                    offerNumber: params.offerNumber || null,
+                    kind: params.kind,
+                    tab: 'offers',
+                    highlightId: params.offerId || params.orderId,
                     monthlyOfferDeletionCount: monthly,
                     monthlyOfferDeletionMonth: stats.monthlyOfferDeletionMonth,
                     offerBiddingRestrictedUntil: stats.offerBiddingRestrictedUntil,

@@ -198,8 +198,12 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
         // Listen for internal navigation events
         const handleInternalNav = (e: any) => {
-            const { path, id, tab } = e.detail;
-            const search = tab ? `?tab=${encodeURIComponent(tab)}` : undefined;
+            const { path, id, tab, highlight } = e.detail || {};
+            const params = new URLSearchParams();
+            if (tab) params.set('tab', String(tab));
+            if (highlight) params.set('highlight', String(highlight));
+            const qs = params.toString();
+            const search = qs ? `?${qs}` : undefined;
             if (onNavigate) {
                 onNavigate(path, id, search);
             }
@@ -214,12 +218,30 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     }, [debouncedRange, fetchDashboardStats, subscribeToStats, unsubscribeFromStats, currentAdmin?.role]);
 
     // Helper for internal nav bubbling
-    const navigate = (path: string, id?: any, tab?: string) => {
-        const search = tab ? `?tab=${encodeURIComponent(tab)}` : undefined;
+    // 3rd arg may be a raw query (`?tab=offers&highlight=...`) from NotificationDrawer,
+    // or a tab id when called from admin UI (with optional 4th highlight).
+    const navigate = (path: string, id?: any, tabOrSearch?: string, highlight?: string) => {
+        let search: string | undefined;
+        let tab: string | undefined;
+        if (tabOrSearch?.startsWith('?')) {
+            search = tabOrSearch;
+        } else {
+            tab = tabOrSearch;
+            const params = new URLSearchParams();
+            if (tab) params.set('tab', tab);
+            if (highlight) params.set('highlight', highlight);
+            const qs = params.toString();
+            search = qs ? `?${qs}` : undefined;
+        }
         if (onNavigate) {
             onNavigate(path, id, search);
         } else {
-            window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id, tab } }));
+            window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id, tab, highlight } }));
+        }
+        if (path === 'store-profile') {
+            queueMicrotask(() => {
+                window.dispatchEvent(new CustomEvent('admin-store-profile-deep-link'));
+            });
         }
     };
 

@@ -201,10 +201,14 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     const [warrantyFilter, setWarrantyFilter] = useState<OfferWarrantyFilter>('all');
     const [acceptLoadingOfferId, setAcceptLoadingOfferId] = React.useState<string | null>(null);
     const [acceptSuccessMsg, setAcceptSuccessMsg] = React.useState<string | null>(null);
-    const isRejectedOfferStatus = (status?: string) => String(status || '').toUpperCase() === 'REJECTED';
+    const isHiddenOffer = (o: { status?: string; isWithdrawn?: boolean }) => {
+        if (o.isWithdrawn) return true;
+        const s = String(o.status || '').toUpperCase();
+        return s === 'REJECTED' || s === 'WITHDRAWN' || s === 'CANCELLED';
+    };
 
     const baseOffers = useMemo(
-        () => offers.filter((o) => !isRejectedOfferStatus(o.status)).slice(0, 10),
+        () => offers.filter((o) => !isHiddenOffer(o)).slice(0, 10),
         [offers],
     );
     const displayedOffers = useMemo(

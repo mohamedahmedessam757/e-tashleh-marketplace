@@ -1,11 +1,11 @@
+import { isVisibleMarketplaceOffer } from './offerStatusHelpers';
+
 /** Offer still counts as "submitted by this merchant" on marketplace cards */
 export function isActiveMerchantOffer(offer: {
     isWithdrawn?: boolean;
     status?: string;
 }): boolean {
-    if (offer.isWithdrawn) return false;
-    const status = String(offer.status ?? '').toLowerCase();
-    return status !== 'withdrawn' && status !== 'rejected';
+    return isVisibleMarketplaceOffer(offer);
 }
 
 export function getActiveOffersForStore<

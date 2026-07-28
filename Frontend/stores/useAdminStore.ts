@@ -469,6 +469,7 @@ export interface AdminState {
   unsubscribeFromStores: () => void;
 
   storeProfileSubscription: any;
+  storeProfileSubscribedId: string | null;
   subscribeToStoreProfile: (id: string) => void;
   unsubscribeFromStoreProfile: () => void;
 
@@ -1428,52 +1429,59 @@ export const useAdminStore = create<AdminState>()(
       },
 
       storeProfileSubscription: null,
+      storeProfileSubscribedId: null as string | null,
 
       subscribeToStoreProfile: (id: string) => {
-        const { storeProfileSubscription, fetchStoreProfile, silentFetchStoreProfile } = get();
-        if (storeProfileSubscription) return; 
+        const {
+          storeProfileSubscription,
+          storeProfileSubscribedId,
+          fetchStoreProfile,
+          silentFetchStoreProfile,
+          unsubscribeFromStoreProfile,
+        } = get();
+        if (storeProfileSubscription && storeProfileSubscribedId === id) return;
+        if (storeProfileSubscription) unsubscribeFromStoreProfile();
 
-        fetchStoreProfile(id); 
+        fetchStoreProfile(id);
+
+        const refresh = () => silentFetchStoreProfile(id);
 
         const channel = supabase.channel(`admin-store-profile-${id}`)
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'stores', filter: `id=eq.${id}` },
-            () => {
-              silentFetchStoreProfile(id);
-            }
+            refresh,
           )
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'store_documents', filter: `store_id=eq.${id}` },
-            () => {
-              silentFetchStoreProfile(id);
-            }
+            refresh,
           )
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'orders', filter: `store_id=eq.${id}` },
-            () => {
-              silentFetchStoreProfile(id);
-            }
+            refresh,
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'offers', filter: `store_id=eq.${id}` },
+            refresh,
           )
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'reviews', filter: `store_id=eq.${id}` },
-            () => {
-              silentFetchStoreProfile(id);
-            }
+            refresh,
           )
           .subscribe();
 
-        set({ storeProfileSubscription: channel });
+        set({ storeProfileSubscription: channel, storeProfileSubscribedId: id });
       },
 
       unsubscribeFromStoreProfile: () => {
         const { storeProfileSubscription } = get();
         if (storeProfileSubscription) {
           supabase.removeChannel(storeProfileSubscription);
-          set({ storeProfileSubscription: null });
+          set({ storeProfileSubscription: null, storeProfileSubscribedId: null });
         }
       },
 
@@ -2358,6 +2366,7 @@ export const useAdminStore = create<AdminState>()(
           subscription, 
           storeSubscription, 
           storeProfileSubscription, 
+          storeProfileSubscribedId,
           withdrawalSubscription,
           financialSubscription,
           financialFeedSubscription,

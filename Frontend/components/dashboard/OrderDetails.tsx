@@ -16,7 +16,7 @@ import { useChatStore } from '../../stores/useChatStore';
 import { useOrderStore, Order, OrderOffer } from '../../stores/useOrderStore';
 import { useOrderById } from '../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../hooks/useOrderRealtimeSync';
-import { isAcceptedOfferStatus, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
+import { isAcceptedOfferStatus, isVisibleMarketplaceOffer } from '../../utils/offerStatusHelpers';
 import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
 import { writeCreateOrderPrefill } from '../../stores/useCreateOrderStore';
 import { useOrderChatStore } from '../../stores/useOrderChatStore';
@@ -260,7 +260,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     useEffect(() => {
         if (!order) return;
 
-        const visible = order.offers?.filter((o: any) => !isRejectedOfferStatus(o.status)) || [];
+                const visible = order.offers?.filter((o: any) => isVisibleMarketplaceOffer(o)) || [];
         const accepted = order.offers?.filter((o: any) => isAcceptedOfferStatus(o.status)) || [];
         const scenario = getOrderExpiryScenario({
             order: {
@@ -346,7 +346,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     if (!order) return <div className="text-white text-center py-10">{t.dashboard.common?.notFound || 'Order not found'}</div>;
 
-    const visibleOffers = order.offers?.filter((o: any) => !isRejectedOfferStatus(o.status)) || [];
+    const visibleOffers = order.offers?.filter((o: any) => isVisibleMarketplaceOffer(o)) || [];
     const acceptedOffers = order.offers?.filter((o: any) => isAcceptedOfferStatus(o.status)) || [];
     const orderExpiryContext = {
         status: order.status,
@@ -634,7 +634,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
             // If the drawer is open and there are no more offers, close it
             if (drawerPart) {
-                const remainingOffers = order.offers.filter((o: any) => o.orderPartId === drawerPart.id && o.id !== offerToReject.id && !isRejectedOfferStatus(o.status));
+                const remainingOffers = order.offers.filter((o: any) => o.orderPartId === drawerPart.id && o.id !== offerToReject.id && isVisibleMarketplaceOffer(o));
                 if (remainingOffers.length === 0) {
                     setDrawerPart(null);
                 }
@@ -1403,7 +1403,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             <div className="space-y-4">
                                 {order.parts.map((p, idx) => {
                                     const partOffers = order.offers
-                                        .filter((o: any) => (o.orderPartId === p.id || (!o.orderPartId && order.parts.length === 1)) && !isRejectedOfferStatus(o.status))
+                                        .filter((o: any) => (o.orderPartId === p.id || (!o.orderPartId && order.parts.length === 1)) && isVisibleMarketplaceOffer(o))
                                         .slice(0, 10); // Hard cap: max 10
 
                                     const hasOffers = partOffers.length > 0;
@@ -1612,7 +1612,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     offers={order.offers.filter(
                                         (o: any) =>
                                             String(o.orderPartId) === String(drawerPart.id) &&
-                                            !isRejectedOfferStatus(o.status),
+                                            isVisibleMarketplaceOffer(o),
                                     )}
                                     selectedOffer={
                                         order.offers.find(
@@ -1631,7 +1631,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     )}
 
                     {/* General Offers (Unlinked) */}
-                    {order.offers.filter(o => !o.orderPartId && !isRejectedOfferStatus(o.status)).length > 0 && (
+                    {order.offers.filter(o => !o.orderPartId && isVisibleMarketplaceOffer(o)).length > 0 && (
                         <div className="space-y-4">
                             <h3 className="text-white font-bold flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-gold-500 rounded-full" />
@@ -1639,7 +1639,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             </h3>
                             <div className="space-y-4">
                                 {order.offers
-                                    .filter(o => !o.orderPartId && !isRejectedOfferStatus(o.status))
+                                    .filter(o => !o.orderPartId && isVisibleMarketplaceOffer(o))
                                     .slice(0, 10)
                                     .map(offer => (
                                         <div key={offer.id} className="relative">

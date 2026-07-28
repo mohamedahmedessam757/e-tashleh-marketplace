@@ -327,10 +327,14 @@ function AppContent() {
   // Handle Custom Events for Admin Navigation bubbling up
   useEffect(() => {
     const handleAdminNav = (e: any) => {
-      const { path, id } = e.detail;
+      const { path, id, tab, highlight } = e.detail || {};
       setDashboardPath(path);
-      setViewId(id || null); // 2026 Navigation Fix: Clear ID if not explicitly provided in the event
-      pushView('dashboard', path, id);
+      setViewId(id || null);
+      const params = new URLSearchParams();
+      if (tab) params.set('tab', String(tab));
+      if (highlight) params.set('highlight', String(highlight));
+      const qs = params.toString();
+      pushView('dashboard', path, id, qs ? `?${qs}` : undefined);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     window.addEventListener('admin-nav', handleAdminNav);
@@ -559,6 +563,11 @@ function AppContent() {
     setViewId(id || null);
     pushView('dashboard', path, id, search);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (path === 'store-profile') {
+      queueMicrotask(() => {
+        window.dispatchEvent(new CustomEvent('admin-store-profile-deep-link'));
+      });
+    }
   };
 
   const handleDashboardBack = () => {
