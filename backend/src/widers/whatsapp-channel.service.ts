@@ -200,8 +200,9 @@ export class WhatsAppChannelService {
             true,
         );
 
-        void this.messageLog
-            .logOutbound({
+        // Await log write — void was dropping outbound rows when the HTTP request ended.
+        try {
+            await this.messageLog.logOutbound({
                 phone: ctx.phone,
                 templateName: definition.name,
                 templateLanguage: definition.language,
@@ -213,12 +214,12 @@ export class WhatsAppChannelService {
                     orderId: ctx.orderId,
                     offerId: ctx.offerId,
                 },
-            })
-            .catch((err) =>
-                this.logger.warn(
-                    `Failed to persist WhatsApp message log: ${err instanceof Error ? err.message : err}`,
-                ),
+            });
+        } catch (err) {
+            this.logger.warn(
+                `Failed to persist WhatsApp message log: ${err instanceof Error ? err.message : err}`,
             );
+        }
 
         if (!result.success) {
             return {
@@ -275,8 +276,8 @@ export class WhatsAppChannelService {
             false,
         );
 
-        void this.messageLog
-            .logOutbound({
+        try {
+            await this.messageLog.logOutbound({
                 phone,
                 templateName,
                 templateLanguage: lang,
@@ -290,12 +291,12 @@ export class WhatsAppChannelService {
                     buttonParamCount: 1,
                     nameProvided: Boolean(name?.trim()),
                 },
-            })
-            .catch((err) =>
-                this.logger.warn(
-                    `Failed to persist WhatsApp OTP log: ${err instanceof Error ? err.message : err}`,
-                ),
+            });
+        } catch (err) {
+            this.logger.warn(
+                `Failed to persist WhatsApp OTP log: ${err instanceof Error ? err.message : err}`,
             );
+        }
 
         return {
             sent: Boolean(result.success),
@@ -307,14 +308,41 @@ export class WhatsAppChannelService {
 
     /**
      * Phase 5 — dispatch transactional WhatsApp after in-app notification persist.
-     * Fire-and-forget safe: never throws to caller.
+     * Callers MUST await this — fire-and-forget drops sends when the HTTP response ends.
      */
     async maybeSend(params: WhatsAppMaybeSendParams): Promise<void> {
+        const persistSkip = async (reason: string, phone?: string, family?: string) => {
+            this.logger.warn(
+                `WhatsApp maybeSend skip: ${reason} (recipient=${params.recipientId} type=${params.type ?? ''} waEvent=${String(params.metadata?.waEvent ?? '')})`,
+            );
+            try {
+                await this.messageLog.logOutbound({
+                    phone,
+                    templateName: family ? `${family}:skipped` : `skipped:${reason}`,
+                    templateLanguage: 'ar',
+                    recipientUserId: params.recipientId,
+                    notificationId: params.notificationId,
+                    sendResult: { success: false, error: `skipped:${reason}` },
+                    metadata: {
+                        skipped: true,
+                        skipReason: reason,
+                        type: params.type,
+                        waEvent: params.metadata?.waEvent,
+                    },
+                });
+            } catch (err) {
+                this.logger.warn(
+                    `Failed to persist WhatsApp skip log: ${err instanceof Error ? err.message : err}`,
+                );
+            }
+        };
+
         if (!this.config.enabled) {
-            this.logger.warn(`WhatsApp maybeSend skip: disabled (recipient=${params.recipientId})`);
+            await persistSkip('disabled');
             return;
         }
         if (!isWhatsAppEligibleRole(params.recipientRole)) {
+            // Admins/support intentionally never get WA — warn only, no DB spam
             this.logger.warn(
                 `WhatsApp maybeSend skip: role (${params.recipientRole}) recipient=${params.recipientId}`,
             );
@@ -323,9 +351,7 @@ export class WhatsAppChannelService {
 
         const audienceRole = normalizeWhatsAppRole(params.recipientRole);
         if (!audienceRole) {
-            this.logger.warn(
-                `WhatsApp maybeSend skip: role_normalize (${params.recipientRole}) recipient=${params.recipientId}`,
-            );
+            await persistSkip('role_normalize');
             return;
         }
 
@@ -343,19 +369,17 @@ export class WhatsAppChannelService {
             });
 
             if (!user?.phone) {
-                this.logger.warn(`WhatsApp maybeSend skip: no_phone recipient=${params.recipientId}`);
+                await persistSkip('no_phone');
                 return;
             }
             if (user.whatsappOptIn === false) {
-                this.logger.warn(`WhatsApp maybeSend skip: opt_out recipient=${params.recipientId}`);
+                await persistSkip('opt_out');
                 return;
             }
 
             const normalizedPhone = resolveUserPhone(user.phone, user.countryCode);
             if (!normalizedPhone) {
-                this.logger.warn(
-                    `WhatsApp maybeSend skip: phone_normalize recipient=${params.recipientId}`,
-                );
+                await persistSkip('phone_normalize');
                 return;
             }
 
@@ -371,9 +395,7 @@ export class WhatsAppChannelService {
                 hasInvoice: invoiceContext.hasInvoice,
             });
             if (!family) {
-                this.logger.warn(
-                    `WhatsApp maybeSend skip: family_null type=${params.type ?? ''} waEvent=${String(params.metadata?.waEvent ?? '')} recipient=${params.recipientId}`,
-                );
+                await persistSkip('family_null', normalizedPhone);
                 return;
             }
 
@@ -421,7 +443,7 @@ export class WhatsAppChannelService {
                 fields.status_detail = statusDetail;
             }
 
-            // txn_offer_restriction_vendor_ar_v2:
+            // txn_offer_restriction_vendor_ar_v2 / txn_violation_*:
             // {{1}} name · {{2}} store_name · {{3}} status_detail
             if (family.startsWith('txn_offer_restriction_') || family.startsWith('txn_violation_')) {
                 const metaStore =
@@ -472,6 +494,22 @@ export class WhatsAppChannelService {
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.logger.warn(`WhatsApp maybeSend error for ${params.recipientId}: ${message}`);
+            try {
+                await this.messageLog.logOutbound({
+                    templateName: 'error',
+                    templateLanguage: 'ar',
+                    recipientUserId: params.recipientId,
+                    notificationId: params.notificationId,
+                    sendResult: { success: false, error: message },
+                    metadata: {
+                        error: true,
+                        type: params.type,
+                        waEvent: params.metadata?.waEvent,
+                    },
+                });
+            } catch {
+                /* ignore secondary log failure */
+            }
         }
     }
 

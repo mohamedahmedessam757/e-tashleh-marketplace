@@ -9,7 +9,7 @@ import type { MetaStatusError } from './widers-webhook.types';
 import { formatWidersError, isWidersSendSuccess } from './widers-template-components.util';
 
 export interface LogOutboundParams {
-    phone: string;
+    phone?: string;
     templateName: string;
     templateLanguage: string;
     recipientUserId?: string;

@@ -13,7 +13,8 @@ export class WidersConfig {
     readonly webhookSecret: string | undefined;
 
     constructor(private readonly config: ConfigService) {
-        this.enabled = this.config.get<string>('WIDERS_ENABLED') === 'true';
+        const rawEnabled = this.config.get<string>('WIDERS_ENABLED')?.trim().toLowerCase();
+        this.enabled = rawEnabled === 'true' || rawEnabled === '1' || rawEnabled === 'yes';
         this.apiToken = this.config.get<string>('WIDERS_API_TOKEN')?.trim();
         this.apiBaseUrl = (
             this.config.get<string>('WIDERS_API_BASE_URL')?.trim() ||

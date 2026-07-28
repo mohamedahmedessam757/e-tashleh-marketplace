@@ -212,20 +212,24 @@ export class OrdersService {
             if (matchingStores.length > 0) {
                 const merchantMessageAr = `طلب جديد لسيارة ${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel}. هل تتوفر لديك القطعة؟ قدم عرضك الآن!`;
                 const merchantMessageEn = `New request for ${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel}. Do you have the part? Submit your offer now!`;
-                
-                for (const store of matchingStores) {
-                    await this.notifications.create({
-                        recipientId: store.ownerId,
-                        recipientRole: 'MERCHANT',
-                        titleAr: 'فرصة بيع جديدة! 💰',
-                        titleEn: 'New Sales Opportunity! 💰',
-                        messageAr: merchantMessageAr,
-                        messageEn: merchantMessageEn,
-                        type: 'ORDER',
-                        link: `/merchant/orders/${result.id}`,
-                        metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' }
-                    });
-                }
+
+                // Parallel so WhatsApp dispatches complete before the HTTP response ends
+                // (sequential await of N merchants was too slow / easy to drop).
+                await Promise.allSettled(
+                    matchingStores.map((store) =>
+                        this.notifications.create({
+                            recipientId: store.ownerId,
+                            recipientRole: 'MERCHANT',
+                            titleAr: 'فرصة بيع جديدة! 💰',
+                            titleEn: 'New Sales Opportunity! 💰',
+                            messageAr: merchantMessageAr,
+                            messageEn: merchantMessageEn,
+                            type: 'ORDER',
+                            link: `/merchant/orders/${result.id}`,
+                            metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' },
+                        }),
+                    ),
+                );
             }
         } catch (e) {
             console.error('Failed to send notification', e);
