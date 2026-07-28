@@ -25,21 +25,30 @@ export interface TemplateAuditReport {
 
 /** Maps template family base → notification/code events that dispatch it */
 export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
-    auth_otp_customer: ['otp.service:REGISTER whatsapp customer'],
-    auth_otp_vendor: ['otp.service:REGISTER whatsapp vendor'],
+    auth_otp_customer: ['otp.service:REGISTER/LOGIN whatsapp customer'],
+    auth_otp_vendor: ['otp.service:REGISTER/LOGIN whatsapp vendor'],
     auth_otp_admin: ['otp.service:LOGIN staff (ADMIN/SUPER_ADMIN/SUPPORT/VERIFICATION_OFFICER/ACCOUNTANT)'],
-    txn_order_customer: ['OFFER', 'ORDER', 'ORDER_UPDATE', 'payment (no invoice)'],
-    txn_order_merchant: ['OFFER', 'ORDER', 'ORDER_UPDATE', 'payment (no invoice)'],
-    txn_shipment_customer: ['SHIPMENT_UPDATE'],
-    txn_shipment_merchant: ['SHIPMENT_UPDATE'],
-    txn_invoice_customer: ['payment + invoice'],
-    txn_invoice_merchant: ['payment + invoice'],
-    txn_waybill_customer: ['ORDER_UPDATE (waybill keywords)'],
-    txn_waybill_merchant: ['ORDER_UPDATE (waybill keywords)'],
-    txn_document_vendor: ['DOC_EXPIRY', 'SUCCESS', 'document notifications'],
+    txn_order_customer: [
+        'waEvent:ORDER_CREATED|ORDER_STATUS|OFFER_REVEAL|OFFER_ACCEPTED|PAYMENT_SUCCESS',
+        'type:ORDER / ORDER_UPDATE / OFFER',
+    ],
+    txn_order_merchant: [
+        'waEvent:ORDER_CREATED|ORDER_STATUS|OFFER_REVEAL|OFFER_ACCEPTED|PAYMENT_SUCCESS',
+        'type:ORDER / ORDER_UPDATE / OFFER',
+    ],
+    txn_shipment_customer: ['waEvent:SHIPMENT_STATUS', 'type:SHIPMENT_UPDATE'],
+    txn_shipment_merchant: ['waEvent:SHIPMENT_STATUS', 'type:SHIPMENT_UPDATE'],
+    txn_invoice_customer: ['waEvent:INVOICE_ISSUED + hasInvoice', 'type:payment + invoice'],
+    txn_invoice_merchant: ['waEvent:INVOICE_ISSUED + hasInvoice', 'type:payment + invoice'],
+    txn_waybill_customer: ['waEvent:WAYBILL_ISSUED'],
+    txn_waybill_merchant: ['waEvent:WAYBILL_ISSUED'],
+    txn_document_vendor: [
+        'waEvent:DOCUMENT',
+        'DOC_EXPIRY / SUCCESS document / store rejection|approve|reupload',
+    ],
     txn_offer_restriction_vendor: [
         'waEvent:OFFER_BIDDING_RESTRICTED',
-        'offer-bidding-restriction / offer-governance-notify',
+        'offer-bidding-restriction / stores admin restrict',
     ],
     txn_violation_customer: [
         'waEvent:VIOLATION_ISSUED',
@@ -49,12 +58,16 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
         'waEvent:VIOLATION_ISSUED',
         'violations.service:issue / auto-penalty / admin-penalty / fraud (MERCHANT)',
     ],
-    txn_verification_customer: ['ORDER/ORDER_UPDATE + metadata.verification'],
-    txn_verification_vendor: ['ORDER/ORDER_UPDATE + metadata.verification'],
-    welcome_customer: ['auth.service:register CUSTOMER'],
+    txn_verification_customer: ['waEvent:VERIFICATION', 'ORDER + metadata.verification'],
+    txn_verification_vendor: [
+        'waEvent:VERIFICATION',
+        'ORDER + metadata.verification',
+        'orders.service:markAsPrepared',
+    ],
+    welcome_customer: ['auth.service:register CUSTOMER → sendByFamily'],
     welcome_vendor: [
-        'auth.service:register VENDOR',
-        'stores.service:updateStatus ACTIVE (docType store_activation)',
+        'auth.service:register VENDOR → sendByFamily',
+        'waEvent:STORE_ACTIVATION (stores.service ACTIVE)',
     ],
 };
 

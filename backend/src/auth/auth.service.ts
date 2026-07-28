@@ -252,11 +252,13 @@ export class AuthService {
             );
         }
         const user = await this.usersService.create(createUserDto);
-        void this.deliverPostRegistrationWhatsApp(user).catch((err) =>
+        try {
+            await this.deliverPostRegistrationWhatsApp(user);
+        } catch (err) {
             this.logger.warn(
                 `Post-registration WhatsApp flow failed for ${user.id}: ${err instanceof Error ? err.message : err}`,
-            ),
-        );
+            );
+        }
         return user;
     }
 

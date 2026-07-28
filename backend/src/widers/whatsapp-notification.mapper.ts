@@ -258,13 +258,21 @@ export function resolveTemplateFamily(
         return orderFamily(role);
     }
 
-    if (type === 'ORDER' || type === 'SYSTEM_ALERT' || type === 'system_alert') {
+    // ORDER → txn_order_* (or verification when flagged)
+    if (type === 'ORDER') {
         if (isVerificationNotification(input)) {
             return verificationFamily(role);
         }
-        if (['ORDER', 'SYSTEM_ALERT', 'system_alert'].includes(type)) {
-            return orderFamily(role);
+        return orderFamily(role);
+    }
+
+    // SYSTEM_ALERT without explicit waEvent must NOT become txn_order_* (spam / wrong template).
+    // Intentional WA uses metadata.waEvent (ORDER_STATUS, VERIFICATION, …) handled above.
+    if (type === 'SYSTEM_ALERT' || type === 'system_alert') {
+        if (isVerificationNotification(input)) {
+            return verificationFamily(role);
         }
+        return null;
     }
 
     if (['ALERT', 'SECURITY'].includes(type)) {

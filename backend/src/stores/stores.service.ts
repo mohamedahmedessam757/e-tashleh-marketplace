@@ -621,7 +621,7 @@ export class StoresService {
         // Handle Rejection
         if (status === StoreStatus.REJECTED) {
              if (result.ownerId) {
-                this.notificationsService.create({
+                await this.notificationsService.create({
                     recipientId: result.ownerId,
                     recipientRole: 'MERCHANT',
                     titleAr: 'تم رفض طلب إنشاء المتجر',
@@ -802,7 +802,7 @@ export class StoresService {
             const isRejected = status === 'rejected' || status === 'REJECTED';
 
             if (isApproved) {
-                this.notificationsService.create({
+                await this.notificationsService.create({
                     recipientId: store.ownerId,
                     recipientRole: 'MERCHANT',
                     titleAr: '🎉 تم اعتماد المستند بنجاح',
@@ -814,7 +814,7 @@ export class StoresService {
                     metadata: { docType, waEvent: 'DOCUMENT' },
                 }).catch(() => {});
             } else if (isReupload || isRejected) {
-                this.notificationsService.create({
+                await this.notificationsService.create({
                     recipientId: store.ownerId,
                     recipientRole: 'MERCHANT',
                     titleAr: isReupload ? 'مستند يحتاج إلى إعادة رفع' : 'تم رفض المستند',
@@ -913,7 +913,7 @@ export class StoresService {
                 where: { id: store.id },
                 data: { status: StoreStatus.LICENSE_EXPIRED }
             });
-            this.notificationsService.create({
+            await this.notificationsService.create({
                 recipientId: store.ownerId,
                 recipientRole: 'MERCHANT',
                 titleAr: 'إيقاف الحساب بسبب انتهاء المستندات',
@@ -955,7 +955,7 @@ export class StoresService {
                 });
 
                 if (!recentAlert) {
-                    this.notificationsService.create({
+                    await this.notificationsService.create({
                         recipientId: store.ownerId,
                         recipientRole: 'MERCHANT',
                         titleAr: 'تنبيه مستندات المتجر',
@@ -1185,14 +1185,13 @@ export class StoresService {
                         titleEn: 'Offer Bidding Restriction Lifted',
                         messageAr: `قامت الإدارة برفع تقييد تقديم العروض عن متجرك "${updated.name}".`,
                         messageEn: `Admin lifted your offer bidding restriction on "${updated.name}".`,
-                        type: 'ORDER',
+                        type: 'GOVERNANCE_ALERT',
                         link: '/dashboard/merchant/marketplace',
                         metadata: {
-                            waEvent: 'ORDER_STATUS',
+                            // No dedicated lift template — in-app only (avoid wrong txn_order_*)
                             storeId: id,
                             store_name: updated.name,
                             status: 'RESTRICTION_LIFTED',
-                            status_detail: 'تم رفع تقييد تقديم العروض',
                             source: 'ADMIN',
                         },
                     })

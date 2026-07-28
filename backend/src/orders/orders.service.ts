@@ -1077,7 +1077,7 @@ export class OrdersService {
 
                 for (const losingOffer of losingOffers) {
                     if (losingOffer.store?.ownerId) {
-                        this.notifications.create({
+                        await this.notifications.create({
                             recipientId: losingOffer.store.ownerId,
                             recipientRole: 'MERCHANT',
                             titleAr: 'تم رفض عرضك',
@@ -1085,7 +1085,12 @@ export class OrdersService {
                             messageAr: `نأسف، لقد قام العميل باختيار عرض آخر للطلب #${order.orderNumber}. حظاً أوفر المرة القادمة!`,
                             messageEn: `Sorry, the customer selected another offer for Order #${order.orderNumber}. Better luck next time!`,
                             type: 'ORDER',
-                            link: `/dashboard/orders/${order.id}`
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_STATUS',
+                            },
                         }).catch(e => console.error('Failed to notify merchant of explicit rejection', e));
                     }
                 }
@@ -1230,7 +1235,7 @@ export class OrdersService {
         // Notify losers
         for (const losingOffer of losingOffers) {
             if (losingOffer.store?.ownerId) {
-                this.notifications.create({
+                await this.notifications.create({
                     recipientId: losingOffer.store.ownerId,
                     recipientRole: 'MERCHANT',
                     titleAr: 'تم رفض عرضك',
@@ -1238,7 +1243,12 @@ export class OrdersService {
                     messageAr: `نأسف، لقد قام العميل باختيار عرض آخر للقطعة في الطلب #${order.orderNumber}. حظاً أوفر!`,
                     messageEn: `Sorry, the customer selected another offer for a part in Order #${order.orderNumber}. Better luck!`,
                     type: 'ORDER',
-                    link: `/dashboard/orders/${order.id}`
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                    },
                 }).catch(e => console.error('Failed to notify merchant', e));
             }
         }
@@ -1258,14 +1268,21 @@ export class OrdersService {
             select: { orderNumber: true },
         });
 
-        this.notifications.notifyMerchantByStoreId(storeId, {
-            titleAr: 'توثيق حالة القطعة إلزامي!',
-            titleEn: 'Part Verification Required!',
-            messageAr: `تم تجهيز قطعتك في الطلب #${order?.orderNumber || orderId}. يرجى رفع التوثيق للمتابعة.`,
-            messageEn: `Your part on order #${order?.orderNumber || orderId} is prepared. Please upload verification.`,
-            type: 'ORDER',
-            link: `/merchant/orders/${orderId}`,
-        }).catch((e) => console.error('Failed to notify merchant upon preparation', e));
+        await this.notifications
+            .notifyMerchantByStoreId(storeId, {
+                titleAr: 'توثيق حالة القطعة إلزامي!',
+                titleEn: 'Part Verification Required!',
+                messageAr: `تم تجهيز قطعتك في الطلب #${order?.orderNumber || orderId}. يرجى رفع التوثيق للمتابعة.`,
+                messageEn: `Your part on order #${order?.orderNumber || orderId} is prepared. Please upload verification.`,
+                type: 'ORDER',
+                link: `/merchant/orders/${orderId}`,
+                metadata: {
+                    orderId,
+                    verification: true,
+                    waEvent: 'VERIFICATION',
+                },
+            })
+            .catch((e) => console.error('Failed to notify merchant upon preparation', e));
 
         return this.prisma.order.findUnique({ where: { id: orderId } });
     }
@@ -1329,7 +1346,7 @@ export class OrdersService {
 
         // 4. Optionally notify the merchant about the specific rejection reason
         if (offer.store?.ownerId) {
-            this.notifications.create({
+            await this.notifications.create({
                 recipientId: offer.store.ownerId,
                 recipientRole: 'MERCHANT',
                 titleAr: 'تم رفض عرضك',
@@ -1337,7 +1354,12 @@ export class OrdersService {
                 messageAr: `قام العميل برفض عرضك الخاص بالطلب #${order.orderNumber}. السبب: ${reason}`,
                 messageEn: `The customer rejected your offer for Order #${order.orderNumber}. Reason: ${reason}`,
                 type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`
+                link: `/dashboard/orders/${order.id}`,
+                metadata: {
+                    orderId: order.id,
+                    orderNumber: order.orderNumber,
+                    waEvent: 'ORDER_STATUS',
+                },
             }).catch(e => console.error('Failed to notify merchant of specific rejection', e));
         }
 

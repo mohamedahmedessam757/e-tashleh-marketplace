@@ -339,6 +339,28 @@ describe('resolveTemplateFamily', () => {
       ).toBeNull();
     });
 
+    it('SYSTEM_ALERT without waEvent stays null (no false txn_order)', () => {
+      expect(
+        resolveTemplateFamily({ ...base, type: 'SYSTEM_ALERT' }, 'CUSTOMER'),
+      ).toBeNull();
+      expect(
+        resolveTemplateFamily({ ...base, type: 'system_alert' }, 'MERCHANT'),
+      ).toBeNull();
+    });
+
+    it('SYSTEM_ALERT + ORDER_STATUS waEvent still maps to txn_order_*', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'system_alert',
+            metadata: { waEvent: 'ORDER_STATUS' },
+          },
+          'CUSTOMER',
+        ),
+      ).toBe('txn_order_customer');
+    });
+
     it('VIOLATION type without waEvent does not send (e.g. drop/admin-only)', () => {
       expect(
         resolveTemplateFamily({ ...base, type: 'VIOLATION' }, 'CUSTOMER'),

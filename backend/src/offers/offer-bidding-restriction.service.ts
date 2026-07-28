@@ -262,14 +262,12 @@ export class OfferBiddingRestrictionService {
                     titleEn: 'Offer Bidding Restriction Lifted',
                     messageAr: `تم رفع تقييد تقديم العروض عن متجرك "${store.name}". يمكنك تقديم عروض جديدة مرة أخرى.`,
                     messageEn: `Offer bidding restriction on "${store.name}" has been lifted. You can submit new offers again.`,
-                    type: 'ORDER',
+                    type: 'GOVERNANCE_ALERT',
                     link: '/dashboard/merchant/marketplace',
                     metadata: {
-                        waEvent: 'ORDER_STATUS',
+                        // No dedicated lift template — in-app only (avoid wrong txn_order_*)
                         storeId,
                         status: 'RESTRICTION_LIFTED',
-                        order_number: store.id.slice(0, 8),
-                        status_detail: 'تم رفع تقييد تقديم العروض',
                     },
                 })
                 .catch(() => {});
