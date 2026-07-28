@@ -26,6 +26,7 @@ import { printHtml } from '../../../utils/print';
 import { renderToString } from 'react-dom/server';
 import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
+import { computeOfferFinalPrice } from '../../../utils/offerPricing';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 
@@ -42,6 +43,10 @@ type OfferGovernanceEvent = {
     orderNumber?: string | null;
     offerNumber?: string | null;
     timestamp: string;
+    previousUnitPrice?: number | null;
+    previousShipping?: number | null;
+    newUnitPrice?: number | null;
+    newShipping?: number | null;
 };
 
 function formatGovTimestamp(ts: string, isAr: boolean) {
@@ -1807,8 +1812,15 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                     return total + (offer.payments?.reduce((sum: number, p: any) => sum + Number(p.totalAmount || 0), 0) || 0);
                                                 }, 0);
 
-                                                // Quote fallback: sum of all quotes (unit price + shipping) for all parts offered
-                                                const quotesTotal = myOffers.reduce((sum: number, offer: any) => sum + Number(offer.unitPrice || 0) + Number(offer.shippingCost || 0), 0);
+                                                const quotesTotal = myOffers.reduce((sum: number, offer: any) => {
+                                                    return (
+                                                        sum +
+                                                        computeOfferFinalPrice({
+                                                            unitPrice: offer.unitPrice,
+                                                            shippingCost: offer.shippingCost,
+                                                        }).finalPrice
+                                                    );
+                                                }, 0);
 
                                                 // Store share is prioritized as the actual paid amount, fallback to offer quote, fallback to 0
                                                 const storeShare = paymentsTotal > 0 ? paymentsTotal : quotesTotal;
@@ -2776,6 +2788,22 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                                             <p className="text-[10px] text-white/40 mt-0.5" dir="ltr">
                                                                                 {formatGovTimestamp(evt.timestamp, isAr)}
                                                                             </p>
+                                                                            {(evt.previousUnitPrice != null || evt.newUnitPrice != null) && (
+                                                                                <p className="text-[10px] text-white/45 mt-1 font-mono" dir="ltr">
+                                                                                    {evt.previousUnitPrice != null
+                                                                                        ? `${Number(evt.previousUnitPrice) + Number(evt.previousShipping || 0)}+fee`
+                                                                                        : '—'}
+                                                                                    {' → '}
+                                                                                    <span className="text-gold-400">
+                                                                                        {evt.newUnitPrice != null
+                                                                                            ? `${Number(evt.newUnitPrice) + Number(evt.newShipping || 0)}+fee`
+                                                                                            : (isAr ? 'منسحب/محذوف' : 'withdrawn')}
+                                                                                    </span>
+                                                                                    <span className="text-white/30 ms-2">
+                                                                                        (part {evt.previousUnitPrice ?? '—'}→{evt.newUnitPrice ?? '—'})
+                                                                                    </span>
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     {evt.orderId && onNavigate && (

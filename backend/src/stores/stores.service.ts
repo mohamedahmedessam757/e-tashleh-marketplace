@@ -525,6 +525,29 @@ export class StoresService {
                 exceedsThreshold: (store.monthlyOfferDeletionCount || 0) >= 35,
                 events: modificationLogs.map((log) => {
                     const meta = (log.metadata || {}) as Record<string, unknown>;
+                    let previousUnitPrice: number | null = null;
+                    let previousShipping: number | null = null;
+                    let newUnitPrice: number | null = null;
+                    let newShipping: number | null = null;
+                    try {
+                        if (log.previousState && String(log.previousState).startsWith('{')) {
+                            const prev = JSON.parse(String(log.previousState));
+                            previousUnitPrice = prev?.unitPrice != null ? Number(prev.unitPrice) : null;
+                            previousShipping = prev?.shippingCost != null ? Number(prev.shippingCost) : null;
+                        }
+                    } catch { /* ignore */ }
+                    try {
+                        if (log.newState && String(log.newState).startsWith('{')) {
+                            const next = JSON.parse(String(log.newState));
+                            newUnitPrice = next?.unitPrice != null ? Number(next.unitPrice) : null;
+                            newShipping = next?.shippingCost != null ? Number(next.shippingCost) : null;
+                        }
+                    } catch { /* ignore */ }
+                    if (meta.previousUnitPrice != null) previousUnitPrice = Number(meta.previousUnitPrice);
+                    if (meta.previousShipping != null) previousShipping = Number(meta.previousShipping);
+                    if (meta.newUnitPrice != null) newUnitPrice = Number(meta.newUnitPrice);
+                    if (meta.newShipping != null) newShipping = Number(meta.newShipping);
+
                     return {
                         id: log.id,
                         action: log.action,
@@ -538,6 +561,10 @@ export class StoresService {
                         offerId: (meta.offerId as string) ?? null,
                         timestamp: log.timestamp,
                         actorName: log.actorName,
+                        previousUnitPrice,
+                        previousShipping,
+                        newUnitPrice,
+                        newShipping,
                     };
                 }),
             },

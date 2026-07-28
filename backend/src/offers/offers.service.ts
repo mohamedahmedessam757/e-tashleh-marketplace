@@ -444,6 +444,10 @@ export class OffersService {
                 storeId: store.id,
                 modificationKind: 'EDIT',
                 changes: data,
+                previousUnitPrice: Number(existing.unitPrice),
+                previousShipping: Number(existing.shippingCost),
+                newUnitPrice: Number(updated.unitPrice),
+                newShipping: Number(updated.shippingCost),
             },
         });
 

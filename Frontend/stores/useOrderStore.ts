@@ -9,6 +9,8 @@ import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../utils/orderSla';
 import { resolveOrderActiveSla } from '../utils/resolveOrderActiveSla';
 import type { OrderActiveSla } from '../types/orderSla';
 import { formatApiErrorMessage } from '../utils/formatApiErrorMessage';
+import { computeOfferFinalPrice } from '../utils/offerPricing';
+import { useAdminStore } from './useAdminStore';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -208,6 +210,19 @@ export interface Order {
     offers?: OrderOffer[];
     acceptedOffer?: OrderOffer; // Back-compat: First accepted offer
     acceptedOffers?: OrderOffer[]; // New: List of all accepted/paid offers
+    /** Offer create/edit/withdraw audit trail (admin detail). */
+    auditLogs?: Array<{
+        id: string;
+        action: string;
+        actorType?: string;
+        actorName?: string;
+        timestamp: string;
+        reason?: string | null;
+        previousState?: string | null;
+        newState?: string | null;
+        metadata?: Record<string, unknown> | null;
+        orderId?: string | null;
+    }>;
     _count?: {
         offers?: number;
     };
@@ -408,11 +423,23 @@ export const mapRealtimeOrderRow = (row: Record<string, unknown>): Partial<Order
 const mergeOfferLists = (
     existing?: OrderOffer[],
     incoming?: OrderOffer[],
+    opts?: { trustIncoming?: boolean },
 ): OrderOffer[] | undefined => {
     if (incoming === undefined) return existing;
-    // List payloads often omit offers — keep detail we already loaded
+    // Detail fetch: trust API payload even when empty (all offers withdrawn/deleted).
+    if (opts?.trustIncoming) return incoming;
+    // List payloads often omit / filter offers — keep detail we already loaded.
     if (!incoming.length) return existing?.length ? existing : [];
-    return incoming.map((inc) => {
+
+    const incomingIds = new Set(incoming.map((o) => String(o.id)));
+    // Preserve withdrawn/rejected from prior detail that list endpoints filter out
+    const preserved = (existing || []).filter((o) => {
+        if (incomingIds.has(String(o.id))) return false;
+        const st = String(o.status || '').toLowerCase();
+        return !!o.isWithdrawn || st === 'withdrawn' || st === 'rejected';
+    });
+
+    const merged = incoming.map((inc) => {
         const prev = existing?.find((o) => String(o.id) === String(inc.id));
         if (!prev) return inc;
         return {
@@ -423,12 +450,22 @@ const mergeOfferLists = (
             storeReviewCount: inc.storeReviewCount || prev.storeReviewCount,
             storeLogo: inc.storeLogo || prev.storeLogo,
             isWithdrawn: inc.isWithdrawn ?? prev.isWithdrawn,
+            unitPrice: inc.unitPrice ?? prev.unitPrice,
+            shippingCost: inc.shippingCost ?? prev.shippingCost,
+            price: inc.price ?? prev.price,
         };
     });
+    return [...merged, ...preserved];
 };
 
-const mergeOrderPreservingDetails = (existing: Order, incoming: Order): Order => {
-    const mergedOffers = mergeOfferLists(existing.offers, incoming.offers);
+const mergeOrderPreservingDetails = (
+    existing: Order,
+    incoming: Order,
+    opts?: { trustOffers?: boolean },
+): Order => {
+    const mergedOffers = mergeOfferLists(existing.offers, incoming.offers, {
+        trustIncoming: opts?.trustOffers,
+    });
 
     const mergedParts = incoming.parts?.map((inc) => {
         const prev = existing.parts?.find((p) => String(p.id) === String(inc.id));
@@ -450,6 +487,7 @@ const mergeOrderPreservingDetails = (existing: Order, incoming: Order): Order =>
         ),
         offers: mergedOffers,
         parts: mergedParts,
+        auditLogs: incoming.auditLogs ?? existing.auditLogs,
         invoices:
             incoming.invoices?.length ? incoming.invoices : existing.invoices,
         shippingWaybills:
@@ -668,7 +706,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 const existingIndex = state.orders.findIndex(o => String(o.id) === String(id));
                 if (existingIndex > -1) {
                     const newOrders = [...state.orders];
-                    newOrders[existingIndex] = mergeOrderPreservingDetails(state.orders[existingIndex], mappedOrder);
+                    newOrders[existingIndex] = mergeOrderPreservingDetails(
+                        state.orders[existingIndex],
+                        mappedOrder,
+                        { trustOffers: true },
+                    );
                     return { orders: newOrders };
                 }
                 return { orders: [mappedOrder, ...state.orders] };
@@ -825,11 +867,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     storeLogo: offer.store?.logo || null,
                     storeCity: offer.store?.city || 'Saudi Arabia',
                     price: (() => {
-                        const base = Number(offer.unitPrice || 0);
-                        const shipping = Number(offer.shippingCost || 0);
-                        const percentCommission = Math.round(base * 0.25);
-                        const commission = base > 0 ? Math.max(percentCommission, 100) : 0;
-                        return base + shipping + commission;
+                        const financial = useAdminStore.getState().systemConfig?.financial;
+                        return computeOfferFinalPrice(
+                            {
+                                unitPrice: offer.unitPrice,
+                                shippingCost: offer.shippingCost,
+                            },
+                            financial,
+                        ).finalPrice;
                     })(),
                     unitPrice: Number(offer.unitPrice || 0),
                     shippingCost: Number(offer.shippingCost || 0),
@@ -869,14 +914,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     customerCode: o.customer.id ? `CUS-${o.customer.id.substring(0, 6).toUpperCase()}` : undefined
                 } : undefined,
                 price: o.totalAmount ? Number(o.totalAmount) : (() => {
+                    const financial = useAdminStore.getState().systemConfig?.financial;
                     const allAccepted = o.offers?.filter((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())) || [];
                     if (allAccepted.length > 0) {
                         return allAccepted.reduce((total: number, of: any) => {
-                            const base = Number(of.unitPrice || 0);
-                            const shipping = Number(of.shippingCost || 0);
-                            const percentCommission = Math.round(base * 0.25);
-                            const commission = base > 0 ? Math.max(percentCommission, 100) : 0;
-                            return total + base + shipping + commission;
+                            return total + computeOfferFinalPrice(
+                                { unitPrice: of.unitPrice, shippingCost: of.shippingCost },
+                                financial,
+                            ).finalPrice;
                         }, 0);
                     }
                     return 0;
@@ -885,6 +930,20 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 acceptedOffer: o.offers?.find((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())),
                 acceptedOffers: o.offers?.filter((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())),
                 verificationDocuments: normalizeVerificationDocuments(o.verificationDocuments),
+                auditLogs: Array.isArray(o.auditLogs)
+                    ? o.auditLogs.map((log: any) => ({
+                          id: String(log.id),
+                          action: String(log.action || ''),
+                          actorType: log.actorType,
+                          actorName: log.actorName,
+                          timestamp: log.timestamp || log.createdAt,
+                          reason: log.reason ?? null,
+                          previousState: log.previousState ?? null,
+                          newState: log.newState ?? null,
+                          metadata: log.metadata ?? null,
+                          orderId: log.orderId ?? null,
+                      }))
+                    : undefined,
                 verificationSubmittedAt: o.verificationSubmittedAt,
                 correctionDeadlineAt: o.correctionDeadlineAt,
                 shipments: o.shipments || [],

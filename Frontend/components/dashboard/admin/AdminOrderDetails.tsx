@@ -16,7 +16,8 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import {
     ChevronLeft, ChevronRight, User, Store, DollarSign, Settings2, ShieldAlert,
     AlertTriangle, Clock, PlayCircle, Search, Package, Eye, Truck, Calendar, FileText, MapPin, X,
-    Edit2, Trash2, Ban, Copy, CheckCircle2, MessageSquare, Info, CreditCard, Box, XCircle, RotateCcw, AlertOctagon, Award, Zap
+    Edit2, Trash2, Ban, Copy, CheckCircle2, MessageSquare, Info, CreditCard, Box, XCircle, RotateCcw, AlertOctagon, Award, Zap,
+    History, RefreshCw,
 } from 'lucide-react';
 import { VerificationReviewPanel } from './VerificationReviewPanel';
 import { VerificationTaskManager } from './VerificationTaskManager';
@@ -34,6 +35,7 @@ import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
 import { computeShipmentDeliverySummary } from '../../../utils/offerFulfillmentHelpers';
+import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
 
 interface AdminOrderDetailsProps {
     orderId: any;
@@ -213,6 +215,34 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
     const order = useOrderById(orderId ? String(orderId) : undefined);
     useOrderRealtimeSync(orderId ? String(orderId) : undefined);
+    const financial = useAdminStore((s) => s.systemConfig?.financial);
+
+    // Belt-and-suspenders: poll while admin stays on this order (covers RLS/realtime gaps)
+    useEffect(() => {
+        if (!orderId) return;
+        const id = String(orderId);
+        const tick = () => {
+            void fetchOrder(id).catch(() => {});
+        };
+        const timer = window.setInterval(tick, 12_000);
+        return () => window.clearInterval(timer);
+    }, [orderId, fetchOrder]);
+
+    const offerModificationLogs = useMemo(() => {
+        const OFFER_ACTIONS = new Set([
+            'UPDATE_OFFER',
+            'CANCEL_OFFER_VENDOR',
+            'VOLUNTARY_WITHDRAW_OFFER',
+            'WITHDRAW_OFFER',
+            'ADMIN_DELETE_OFFER',
+            'CREATE_OFFER',
+        ]);
+        const logs = order?.auditLogs || [];
+        return logs
+            .filter((l) => OFFER_ACTIONS.has(String(l.action || '')))
+            .slice(0, 40);
+    }, [order?.auditLogs]);
+
     const fulfillmentSummary = useOrderFulfillmentSummary(
         orderId ? String(orderId) : undefined,
         order,
@@ -764,7 +794,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                                                         rating={o.storeRating || 0}
                                                                                         storeCity={o.storeCity}
                                                                                         reviewCount={o.storeReviewCount || 0}
-                                                                                        price={o.unitPrice || o.price || 0}
+                                                                                        price={resolveDisplayFinalPrice(o, financial)}
                                                                                         unitPrice={o.unitPrice || 0}
                                                                                         condition={o.condition || ''}
                                                                                         warranty={o.warranty || false}
@@ -1131,6 +1161,115 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         </GlassCard>
                     )}
 
+                    {/* Offer modification history for this order */}
+                    <GlassCard className="p-6 bg-[#1A1814] border-blue-500/15">
+                        <div className="flex items-center justify-between gap-3 mb-4 border-b border-white/5 pb-2">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <History size={16} className="text-blue-400" />
+                                {isAr ? 'سجل تعديلات العروض' : 'Offer modification history'}
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => orderId && void fetchOrder(String(orderId))}
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                                title={isAr ? 'تحديث' : 'Refresh'}
+                            >
+                                <RefreshCw size={14} />
+                            </button>
+                        </div>
+                        {offerModificationLogs.length === 0 ? (
+                            <p className="text-xs text-white/30 italic text-center py-6">
+                                {isAr ? 'لا توجد تعديلات/حذف مسجّلة لهذا الطلب بعد' : 'No offer edits/withdrawals logged for this order yet'}
+                            </p>
+                        ) : (
+                            <div className="space-y-2 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
+                                {offerModificationLogs.map((log) => {
+                                    const action = String(log.action || '');
+                                    let prev: any = null;
+                                    let next: any = null;
+                                    try {
+                                        prev = log.previousState ? JSON.parse(String(log.previousState)) : null;
+                                    } catch { /* ignore */ }
+                                    try {
+                                        next =
+                                            log.newState && String(log.newState).startsWith('{')
+                                                ? JSON.parse(String(log.newState))
+                                                : null;
+                                    } catch { /* ignore */ }
+                                    const meta = (log.metadata || {}) as Record<string, any>;
+                                    const prevBreakdown = prev
+                                        ? computeOfferFinalPrice(
+                                              { unitPrice: prev.unitPrice, shippingCost: prev.shippingCost },
+                                              financial,
+                                          )
+                                        : null;
+                                    const nextBreakdown = next
+                                        ? computeOfferFinalPrice(
+                                              { unitPrice: next.unitPrice, shippingCost: next.shippingCost },
+                                              financial,
+                                          )
+                                        : null;
+                                    const kindLabel =
+                                        action === 'UPDATE_OFFER'
+                                            ? isAr ? 'تعديل' : 'Edit'
+                                            : action === 'CANCEL_OFFER_VENDOR'
+                                              ? isAr ? 'إلغاء' : 'Cancel'
+                                              : action.includes('WITHDRAW')
+                                                ? isAr ? 'انسحاب' : 'Withdraw'
+                                                : action.includes('DELETE')
+                                                  ? isAr ? 'حذف إداري' : 'Admin delete'
+                                                  : action;
+                                    return (
+                                        <div
+                                            key={log.id}
+                                            className="p-3 rounded-xl border border-white/5 bg-white/[0.03] space-y-1.5"
+                                        >
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-300">
+                                                    {kindLabel}
+                                                </span>
+                                                <span className="text-[10px] text-white/35 font-mono" dir="ltr">
+                                                    {new Date(log.timestamp).toLocaleString(isAr ? 'ar-EG' : 'en-GB')}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-white/70">
+                                                {log.actorName || '—'}
+                                                {(meta.offerNumber || next?.offerNumber || prev?.offerNumber) && (
+                                                    <span className="text-white/40 font-mono ms-2">
+                                                        #{meta.offerNumber || next?.offerNumber || prev?.offerNumber}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            {(prevBreakdown || nextBreakdown) && (
+                                                <p className="text-[11px] text-white/50 font-mono" dir="ltr">
+                                                    {prevBreakdown
+                                                        ? `${prevBreakdown.finalPrice.toFixed(0)} AED`
+                                                        : '—'}
+                                                    {' → '}
+                                                    <span className="text-gold-400 font-bold">
+                                                        {nextBreakdown
+                                                            ? `${nextBreakdown.finalPrice.toFixed(0)} AED`
+                                                            : action.includes('WITHDRAW') || action.includes('CANCEL') || action.includes('DELETE')
+                                                              ? isAr
+                                                                ? 'محذوف/منسحب'
+                                                                : 'removed'
+                                                              : '—'}
+                                                    </span>
+                                                    {nextBreakdown && (
+                                                        <span className="text-white/30 ms-2">
+                                                            (part {nextBreakdown.unitPrice} + ship {nextBreakdown.shippingCost} + fee{' '}
+                                                            {nextBreakdown.commission})
+                                                        </span>
+                                                    )}
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </GlassCard>
+
                     {/* Financial Summary (Improved) */}
                     <GlassCard className="p-6 bg-[#1A1814] border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)]">
                         <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/5 pb-2 flex items-center gap-2">
@@ -1141,11 +1280,11 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         {order.acceptedOffers && order.acceptedOffers.length > 0 ? (
                             <div className="space-y-4">
                                 {order.acceptedOffers.map((offer: any, idx: number) => {
-                                    const base = Number(offer.unitPrice || 0);
-                                    const shipping = Number(offer.shippingCost || 0);
-                                    const percentCommission = Math.round(base * 0.25);
-                                    const commission = base > 0 ? Math.max(percentCommission, 100) : 0;
-                                    const partTotal = base + shipping + commission;
+                                    const { unitPrice: base, shippingCost: shipping, commission, finalPrice: partTotal } =
+                                        computeOfferFinalPrice(
+                                            { unitPrice: offer.unitPrice, shippingCost: offer.shippingCost },
+                                            financial,
+                                        );
 
                                     // Real Part Name Lookup
                                     const matchedPart = order.parts?.find((p: any) => p.id === offer.orderPartId);

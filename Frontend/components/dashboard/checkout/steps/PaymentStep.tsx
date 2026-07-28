@@ -16,6 +16,7 @@ import {
   isOfferConsideredPaid,
 } from '../../../../utils/checkoutPaymentHelpers';
 import { formatApiErrorMessage } from '../../../../utils/formatApiErrorMessage';
+import { computeOfferFinalPrice } from '../../../../utils/offerPricing';
 
 export const PaymentStep: React.FC = () => {
   const { t, language } = useLanguage();
@@ -504,7 +505,14 @@ export const PaymentStep: React.FC = () => {
           const imageToShow = merchantImage || customerImage;
 
           // Price for display
-          const price = Number(offer.price || offer.unitPrice || 0);
+          const price = Number(
+            offer.price != null && Number(offer.price) > 0
+              ? offer.price
+              : computeOfferFinalPrice({
+                    unitPrice: offer.unitPrice,
+                    shippingCost: offer.shippingCost,
+                }).finalPrice,
+          );
 
           return (
             <div

@@ -71,6 +71,11 @@ CREATE POLICY "Customers see offers on their orders" ON offers
     EXISTS (SELECT 1 FROM orders WHERE id = offers.order_id AND customer_id = auth.uid())
   );
 
+CREATE POLICY "Admins see all offers" ON offers
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('ADMIN', 'SUPER_ADMIN', 'SUPPORT'))
+  );
+
 -- ➤ AUDIT LOGS: Admins only.
 CREATE POLICY "Admins read audit logs" ON audit_logs
   FOR SELECT USING (
