@@ -240,19 +240,34 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
 
             await storesApi.updateStatus(vendorId, newStatus, reason, suspendedUntil);
 
-            const msg = newStatus === 'ACTIVE' ? 'Store Approved Successfully' :
-                newStatus === 'REJECTED' ? 'Store Rejected Successfully' :
-                    newStatus === 'SUSPENDED' ? `Store Suspended for ${days} days` :
-                        'Store Blocked Successfully';
+            const msg =
+                newStatus === 'ACTIVE'
+                    ? (isAr ? 'تم تنشيط المتجر بنجاح' : 'Store activated successfully')
+                    : newStatus === 'REJECTED'
+                      ? (isAr ? 'تم رفض المتجر بنجاح' : 'Store rejected successfully')
+                      : newStatus === 'SUSPENDED'
+                        ? (isAr ? `تم إيقاف المتجر لمدة ${days} يوم` : `Store suspended for ${days} days`)
+                        : (isAr ? 'تم حظر المتجر بنجاح' : 'Store blocked successfully');
             window.alert(msg);
 
             setIsRejectModalOpen(false);
             setIsBanModalOpen(false);
             setRejectionReason('');
-            silentFetchStoreProfile(vendorId);
-        } catch (error) {
+            await silentFetchStoreProfile(vendorId);
+        } catch (error: any) {
             console.error(error);
-            window.alert('Failed to update status');
+            // Status may have already been persisted while a side-effect timed out —
+            // refresh so the UI reflects the real store state.
+            try {
+                await silentFetchStoreProfile(vendorId);
+            } catch {
+                /* ignore refresh errors */
+            }
+            const serverMsg =
+                error?.response?.data?.message ||
+                error?.message ||
+                (isAr ? 'فشل تحديث حالة المتجر' : 'Failed to update status');
+            window.alert(Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg));
         } finally {
             setIsUpdating(false);
             setPendingStatusUpdate(null);
@@ -3196,8 +3211,9 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                 )}
             </AnimatePresence>
 
+            {isSignatureModalOpen && (
             <AdminSignatureModal
-                isOpen={isSignatureModalOpen}
+                isOpen
                 onClose={() => {
                     setIsSignatureModalOpen(false);
                     setPendingRestrictionAction(null);
@@ -3222,6 +3238,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                             : (isAr ? 'يرجى التوقيع للمتابعة وتطبيق القيود على هذا المتجر' : 'Please sign to proceed and apply restrictions to this store')
                 }
             />
+            )}
 
             <AdminInitiateChatModal
                 isOpen={isChatModalOpen}
@@ -3242,8 +3259,9 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                 docTitle={reuploadModal.title}
             />
 
+            {isDocSignatureModalOpen && (
             <AdminSignatureModal
-                isOpen={isDocSignatureModalOpen}
+                isOpen
                 onClose={() => {
                     setIsDocSignatureModalOpen(false);
                     setPendingDocAction(null);
@@ -3256,6 +3274,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     : (isAr ? `يرجى كتابة سبب الرفض والتوقيع لإبلاغ التاجر بخصوص مستند ${selectedDoc?.title}.` : `Please provide rejection reason and sign for ${selectedDoc?.title}.`)
                 }
             />
+            )}
 
         </div>
     );

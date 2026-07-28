@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadStoreDocumentDto } from './dto/upload-store-document.dto';
-import { Prisma, StoreStatus, OrderStatus, StoreSubscriptionTier } from '@prisma/client';
+import { Prisma, StoreStatus, OrderStatus, StoreSubscriptionTier, ActorType } from '@prisma/client';
 import { normalizeSearchQuery, resolveStoreIds } from '../common/search/admin-entity-search.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -612,142 +612,174 @@ export class StoresService {
             status === StoreStatus.BLOCKED ||
             status === StoreStatus.SUSPENDED;
 
+        // 1) Persist status first — this is the source of truth for the HTTP response.
         const result = await this.prisma.store.update({
             where: { id },
-            data: { 
-                status, 
+            data: {
+                status,
                 rejectionReason: shouldPersistReason ? (reason ?? null) : null,
                 suspendedUntil: status === StoreStatus.SUSPENDED ? suspendedUntil : null,
-                updatedAt: new Date() 
+                updatedAt: new Date(),
             },
-            include: { owner: true }
+            select: {
+                id: true,
+                name: true,
+                status: true,
+                ownerId: true,
+                suspendedUntil: true,
+                rejectionReason: true,
+            },
         });
 
-        // Bulk Approve Documents if Store is activated — keep real expiry dates
-        if (status === StoreStatus.ACTIVE) {
-            const pendingDocs = await this.prisma.storeDocument.findMany({
-                where: { storeId: id, status: 'pending' },
-                select: { id: true, docType: true, expiresAt: true },
-            });
-            const contract = await this.prisma.contractAcceptance.findFirst({
-                where: { storeId: id, status: 'ACTIVE' },
-                orderBy: { acceptedAt: 'desc' },
-                select: { secondPartyData: true },
-            });
-            const storeRow = await this.prisma.store.findUnique({
-                where: { id },
-                select: { licenseExpiry: true },
-            });
-            const contractLicense =
-                (contract?.secondPartyData as any)?.licenseExpiry ||
-                storeRow?.licenseExpiry ||
-                null;
-
-            for (const doc of pendingDocs) {
-                let expiresAt = doc.expiresAt;
-                if (!expiresAt && doc.docType === 'LICENSE' && contractLicense) {
-                    const d = new Date(contractLicense);
-                    if (!Number.isNaN(d.getTime())) expiresAt = d;
-                }
-                await this.prisma.storeDocument.update({
-                    where: { id: doc.id },
-                    data: {
-                        status: 'approved',
-                        ...(expiresAt ? { expiresAt } : {}),
-                        updatedAt: new Date(),
-                    },
+        // 2) Side-effects must never turn a successful activation into a client "Failed to update status".
+        //    WhatsApp / sockets / audit failures are logged and continue.
+        try {
+            if (status === StoreStatus.ACTIVE) {
+                const pendingDocs = await this.prisma.storeDocument.findMany({
+                    where: { storeId: id, status: 'pending' },
+                    select: { id: true, docType: true, expiresAt: true },
                 });
+                const contract = await this.prisma.contractAcceptance.findFirst({
+                    where: { storeId: id, status: 'ACTIVE' },
+                    orderBy: { acceptedAt: 'desc' },
+                    select: { secondPartyData: true },
+                });
+                const storeRow = await this.prisma.store.findUnique({
+                    where: { id },
+                    select: { licenseExpiry: true },
+                });
+                const contractLicense =
+                    (contract?.secondPartyData as any)?.licenseExpiry ||
+                    storeRow?.licenseExpiry ||
+                    null;
+
+                for (const doc of pendingDocs) {
+                    let expiresAt = doc.expiresAt;
+                    if (!expiresAt && doc.docType === 'LICENSE' && contractLicense) {
+                        const d = new Date(contractLicense);
+                        if (!Number.isNaN(d.getTime())) expiresAt = d;
+                    }
+                    await this.prisma.storeDocument.update({
+                        where: { id: doc.id },
+                        data: {
+                            status: 'approved',
+                            ...(expiresAt ? { expiresAt } : {}),
+                            updatedAt: new Date(),
+                        },
+                    });
+                }
+
+                // Fire-and-forget: do not await WhatsApp on the admin HTTP path
+                if (result.ownerId) {
+                    void this.notificationsService
+                        .create({
+                            recipientId: result.ownerId,
+                            recipientRole: 'MERCHANT',
+                            titleAr: 'تم تفعيل متجرك المشترك!',
+                            titleEn: 'Your store has been activated!',
+                            messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
+                            messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
+                            type: 'SUCCESS',
+                            link: '/dashboard/merchant/profile',
+                            metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
+                        })
+                        .catch((e) => console.error('Failed to send store activation notification', e));
+                }
             }
 
-            // Notify Merchant — await so WhatsApp dispatch completes
-            if (result.ownerId) {
-                await this.notificationsService.create({
-                    recipientId: result.ownerId,
-                    recipientRole: 'MERCHANT',
-                    titleAr: 'تم تفعيل متجرك المشترك!',
-                    titleEn: 'Your store has been activated!',
-                    messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
-                    messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
-                    type: 'SUCCESS',
-                    link: '/dashboard/merchant/profile',
-                    metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
-                }).catch(e => console.error('Failed to send store activation notification', e));
+            if (status === StoreStatus.REJECTED && result.ownerId) {
+                void this.notificationsService
+                    .create({
+                        recipientId: result.ownerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: 'تم رفض طلب إنشاء المتجر',
+                        titleEn: 'Store registration request rejected',
+                        messageAr: `نأسف لإبلاغك بأنه تم رفض طلبك. السبب: ${reason || 'يرجى مراجعة المستندات والمحاولة مرة أخرى بحساب جديد'}.`,
+                        messageEn: `We regret to inform you that your request was rejected. Reason: ${reason || 'Please review documents and try again with a new account'}.`,
+                        type: 'SUCCESS',
+                        link: '/auth/register',
+                        metadata: { docType: 'store_rejection', storeId: id, waEvent: 'DOCUMENT' },
+                    })
+                    .catch((e) => console.error('Failed to send store rejection notification', e));
             }
-        }
 
-        // Handle Rejection
-        if (status === StoreStatus.REJECTED) {
-             if (result.ownerId) {
-                await this.notificationsService.create({
-                    recipientId: result.ownerId,
-                    recipientRole: 'MERCHANT',
-                    titleAr: 'تم رفض طلب إنشاء المتجر',
-                    titleEn: 'Store registration request rejected',
-                    messageAr: `نأسف لإبلاغك بأنه تم رفض طلبك. السبب: ${reason || 'يرجى مراجعة المستندات والمحاولة مرة أخرى بحساب جديد'}.`,
-                    messageEn: `We regret to inform you that your request was rejected. Reason: ${reason || 'Please review documents and try again with a new account'}.`,
-                    type: 'SUCCESS',
-                    link: '/auth/register',
-                    metadata: { docType: 'store_rejection', storeId: id, waEvent: 'DOCUMENT' },
-                }).catch(e => console.error('Failed to send store rejection notification', e));
+            if (status === StoreStatus.SUSPENDED && result.ownerId) {
+                const untilLabel = suspendedUntil
+                    ? new Date(suspendedUntil).toLocaleString('ar-EG', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                      })
+                    : '';
+                void this.notificationsService
+                    .create({
+                        recipientId: result.ownerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: '⏸️ تم إيقاف متجرك مؤقتاً',
+                        titleEn: '⏸️ Your Store Has Been Temporarily Suspended',
+                        messageAr: `تم إيقاف متجر (${result.name}) مؤقتاً.${untilLabel ? ` ينتهي الإيقاف في: ${untilLabel}.` : ''} السبب: ${reason || 'قرار إداري'}.`,
+                        messageEn: `Store (${result.name}) has been temporarily suspended.${untilLabel ? ` Suspension ends: ${untilLabel}.` : ''} Reason: ${reason || 'Administrative decision'}.`,
+                        type: 'SECURITY',
+                        link: '/dashboard/merchant/profile',
+                    })
+                    .catch((e) => console.error('Failed to send store suspension notification', e));
             }
-        }
 
-        // Notify Merchant on suspension or permanent block
-        if (status === StoreStatus.SUSPENDED && result.ownerId) {
-            const untilLabel = suspendedUntil
-                ? new Date(suspendedUntil).toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                : '';
-            this.notificationsService.create({
-                recipientId: result.ownerId,
-                recipientRole: 'MERCHANT',
-                titleAr: '⏸️ تم إيقاف متجرك مؤقتاً',
-                titleEn: '⏸️ Your Store Has Been Temporarily Suspended',
-                messageAr: `تم إيقاف متجر (${result.name}) مؤقتاً.${untilLabel ? ` ينتهي الإيقاف في: ${untilLabel}.` : ''} السبب: ${reason || 'قرار إداري'}.`,
-                messageEn: `Store (${result.name}) has been temporarily suspended.${untilLabel ? ` Suspension ends: ${untilLabel}.` : ''} Reason: ${reason || 'Administrative decision'}.`,
-                type: 'SECURITY',
-                link: '/dashboard/merchant/profile'
-            }).catch(e => console.error('Failed to send store suspension notification', e));
-        }
-
-        if (status === StoreStatus.BLOCKED && result.ownerId) {
-            this.notificationsService.create({
-                recipientId: result.ownerId,
-                recipientRole: 'MERCHANT',
-                titleAr: '⛔ تم حظر متجرك بشكل دائم',
-                titleEn: '⛔ Your Store Has Been Permanently Blocked',
-                messageAr: `تم حظر متجر (${result.name}) بشكل دائم. السبب: ${reason || 'قرار إداري'}. يرجى التواصل مع الدعم الفني.`,
-                messageEn: `Store (${result.name}) has been permanently blocked. Reason: ${reason || 'Administrative decision'}. Please contact support.`,
-                type: 'SECURITY',
-                link: '/dashboard/merchant/profile'
-            }).catch(e => console.error('Failed to send store block notification', e));
-        }
-
-        // --- Task 12.1: Log Status Change with Store Metadata ---
-        await this.auditLogs.logAction({
-            action: 'STORE_STATUS_CHANGE',
-            entity: 'STORE',
-            actorType: 'ADMIN',
-            actorId: adminId,
-            reason: reason || 'Manual Admin Update',
-            metadata: { 
-                storeId: id, 
-                storeName: result.name, // Added for global transparency
-                newStatus: status,
-                suspendedUntil: suspendedUntil 
+            if (status === StoreStatus.BLOCKED && result.ownerId) {
+                void this.notificationsService
+                    .create({
+                        recipientId: result.ownerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: '⛔ تم حظر متجرك بشكل دائم',
+                        titleEn: '⛔ Your Store Has Been Permanently Blocked',
+                        messageAr: `تم حظر متجر (${result.name}) بشكل دائم. السبب: ${reason || 'قرار إداري'}. يرجى التواصل مع الدعم الفني.`,
+                        messageEn: `Store (${result.name}) has been permanently blocked. Reason: ${reason || 'Administrative decision'}. Please contact support.`,
+                        type: 'SECURITY',
+                        link: '/dashboard/merchant/profile',
+                    })
+                    .catch((e) => console.error('Failed to send store block notification', e));
             }
-        });
 
-        // --- Notify Admin Group (Oversight) ---
-        await this.notificationsService.notifyAdmins({
-            titleAr: `تحديث حالة متجر: ${status} 🏪`,
-            titleEn: `Store Status Updated: ${status} 🏪`,
-            messageAr: `تم تغيير حالة متجر (${result.name}) إلى ${status}. السبب: ${reason || 'تحديث إداري'}`,
-            messageEn: `Store (${result.name}) status changed to ${status}. Reason: ${reason || 'Admin update'}`,
-            type: 'SYSTEM',
-            metadata: { storeId: id, status }
-        });
+            await this.auditLogs.logAction({
+                action: 'STORE_STATUS_CHANGE',
+                entity: 'STORE',
+                actorType: ActorType.ADMIN,
+                actorId: adminId,
+                reason: reason || 'Manual Admin Update',
+                metadata: {
+                    storeId: id,
+                    storeName: result.name,
+                    newStatus: status,
+                    suspendedUntil: suspendedUntil,
+                },
+            });
 
-        return result;
+            await this.notificationsService.notifyAdmins({
+                titleAr: `تحديث حالة متجر: ${status} 🏪`,
+                titleEn: `Store Status Updated: ${status} 🏪`,
+                messageAr: `تم تغيير حالة متجر (${result.name}) إلى ${status}. السبب: ${reason || 'تحديث إداري'}`,
+                messageEn: `Store (${result.name}) status changed to ${status}. Reason: ${reason || 'Admin update'}`,
+                type: 'SYSTEM',
+                metadata: { storeId: id, status },
+            });
+        } catch (sideEffectError) {
+            console.error(
+                `Store status updated to ${status} but post-update side effects failed (storeId=${id}):`,
+                sideEffectError,
+            );
+        }
+
+        // Lean serializable payload (avoid Prisma Decimal / nested owner serialization issues)
+        return {
+            id: result.id,
+            name: result.name,
+            status: result.status,
+            suspendedUntil: result.suspendedUntil,
+            rejectionReason: result.rejectionReason,
+            message: 'Status updated successfully',
+        };
     }
 
     async updateAdminNotes(adminId: string, id: string, notes: string) {
