@@ -3,6 +3,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { PlatformBrandingService } from './common/platform-branding.service';
 import { OrderDurationConfigService } from './common/order-duration-config.service';
 import { LogisticsConfigService } from './common/logistics-config.service';
+import { PlatformSettingsService } from './platform-settings/platform-settings.service';
 
 @Controller()
 export class AppController {
@@ -11,6 +12,7 @@ export class AppController {
         private readonly platformBranding: PlatformBrandingService,
         private readonly orderDurationConfig: OrderDurationConfigService,
         private readonly logisticsConfig: LogisticsConfigService,
+        private readonly platformSettings: PlatformSettingsService,
     ) {}
 
     @Get()
@@ -50,26 +52,25 @@ export class AppController {
     }
 
     @Get('system/public-config')
-    @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    @Header('Cache-Control', 'no-store')
     async getPublicConfig() {
-        const [branding, orderDurations, logistics, statusSetting, configRow] = await Promise.all([
+        const [branding, orderDurations, logistics, statusSetting, configRow, preferencesEnabled] = await Promise.all([
             this.platformBranding.getConfig(),
             this.orderDurationConfig.getConfig(),
             this.logisticsConfig.getConfig(),
             this.prisma.platformSettings.findUnique({ where: { settingKey: 'system_status' } }),
             this.prisma.platformSettings.findUnique({ where: { settingKey: 'system_config' } }),
+            this.platformSettings.isPreferencesStepEnabled(),
         ]);
 
         const status = (statusSetting?.settingValue ?? {}) as Record<string, unknown>;
         const configValue = (configRow?.settingValue ?? {}) as Record<string, unknown>;
         const company = (configValue.company ?? {}) as Record<string, unknown>;
-        const generalCfg = (configValue.general ?? {}) as Record<string, unknown>;
 
         return {
             general: {
                 ...this.platformBranding.getPublicSnapshot(branding),
-                // Customer create-order wizard reads this; default ON when unset
-                enablePreferencesStep: generalCfg.enablePreferencesStep !== false,
+                enablePreferencesStep: preferencesEnabled,
             },
             orderDurations,
             logistics: this.logisticsConfig.getPublicSnapshot(logistics),
@@ -102,33 +103,9 @@ export class AppController {
     }
 
     @Get('system/feature-flags')
+    @Header('Cache-Control', 'no-store')
     async getFeatureFlags() {
-        const settings = await this.prisma.platformSettings.findMany({
-            where: {
-                settingKey: {
-                    in: ['CHAT_ATTACHMENTS_ENABLED', 'ALLOW_CUSTOMER_ACCOUNT_DELETION']
-                }
-            }
-        });
-        
-        const getVal = (key: string, defaultVal: boolean) => {
-            const s = settings.find(x => x.settingKey === key);
-            if (s) {
-                if (typeof s.settingValue === 'boolean') return s.settingValue;
-                if (typeof s.settingValue === 'string') return s.settingValue.toLowerCase() === 'true';
-                if (typeof s.settingValue === 'object' && s.settingValue !== null) {
-                    const obj = s.settingValue as any;
-                    if ('value' in obj) return obj.value;
-                }
-                return Boolean(s.settingValue);
-            }
-            return defaultVal;
-        };
-
-        return {
-            CHAT_ATTACHMENTS_ENABLED: getVal('CHAT_ATTACHMENTS_ENABLED', true),
-            ALLOW_CUSTOMER_ACCOUNT_DELETION: getVal('ALLOW_CUSTOMER_ACCOUNT_DELETION', true)
-        };
+        return this.platformSettings.getPublicFeatureFlags();
     }
 
 }

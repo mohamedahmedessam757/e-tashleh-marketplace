@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { useCreateOrderStore, consumeCreateOrderPrefill } from '../../../stores/useCreateOrderStore';
-import { useAdminStore } from '../../../stores/useAdminStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
+import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { VehicleDetailsStep } from './steps/VehicleDetailsStep';
 import { PartDetailsStep } from './steps/PartDetailsStep';
@@ -20,7 +20,12 @@ interface CreateOrderWizardProps {
 
 export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete, onNavigate }) => {
   const { step, setStep, submitOrder, reset, prefillVehicle, vehicle, parts, preferences, setShowErrors, requestType } = useCreateOrderStore();
-  const { systemConfig, fetchPublicConfig } = useAdminStore(); // Hook into admin config
+  const {
+    isPreferencesStepEnabled,
+    isLoading: isFeatureFlagsLoading,
+    fetchSettings: fetchFeatureFlags,
+    subscribeToSettings: subscribeFeatureFlags,
+  } = usePlatformSettingsStore();
   const { addNotification } = useNotificationStore();
   const { t, language } = useLanguage();
 
@@ -42,12 +47,23 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     } else {
       reset();
     }
-    fetchPublicConfig();
+    void fetchFeatureFlags();
+    const unsub = subscribeFeatureFlags();
     setIsReady(true);
-  }, [fetchPublicConfig, prefillVehicle, reset]);
+    return () => {
+      unsub();
+    };
+  }, [fetchFeatureFlags, subscribeFeatureFlags, prefillVehicle, reset]);
 
-  // Use Dynamic Config
-  const SHOW_PREFERENCES_STEP = systemConfig.general.enablePreferencesStep;
+  // Wait for flags so we never flash the step when admin has it OFF
+  const SHOW_PREFERENCES_STEP = !isFeatureFlagsLoading && isPreferencesStepEnabled === true;
+
+  // If admin disables preferences while customer is mid-wizard on step 3, skip ahead
+  useEffect(() => {
+    if (!SHOW_PREFERENCES_STEP && step === 3) {
+      setStep(4);
+    }
+  }, [SHOW_PREFERENCES_STEP, step, setStep]);
 
   const steps = [
     { id: 1, title: t.dashboard.createOrder.steps.vehicle },
@@ -159,7 +175,11 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
           <motion.div
             className="h-full bg-gradient-to-r from-gold-600 to-gold-400 shadow-[0_0_10px_#A88B3E]"
             initial={{ width: '0%' }}
-            animate={{ width: isReady ? `${((step - 1) / 3) * 100}%` : '0%' }}
+            animate={{
+              width: isReady
+                ? `${(Math.max(steps.findIndex((s) => s.id === step), 0) / Math.max(steps.length - 1, 1)) * 100}%`
+                : '0%',
+            }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
         </div>
@@ -199,7 +219,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
           <AnimatePresence mode="wait">
             {step === 1 && <VehicleDetailsStep key="step1" />}
             {step === 2 && <PartDetailsStep key="step2" />}
-            {step === 3 && <PreferencesStep key="step3" />}
+            {step === 3 && SHOW_PREFERENCES_STEP && <PreferencesStep key="step3" />}
             {step === 4 && <ReviewStep key="step4" onConfirm={handleSubmit} />}
           </AnimatePresence>
         </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Car, Package, Settings, AlertCircle, Loader2, Truck, Video } from 'lucide-react';
 import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
-import { useAdminStore } from '../../../../stores/useAdminStore';
+import { usePlatformSettingsStore } from '../../../../stores/usePlatformSettingsStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
 
@@ -12,7 +12,7 @@ interface ReviewStepProps {
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
     const { vehicle, parts, requestType, shippingType, preferences, updatePreferences, isSubmitting } = useCreateOrderStore();
-    const { systemConfig } = useAdminStore();
+    const { isPreferencesStepEnabled } = usePlatformSettingsStore();
     const { t, language } = useLanguage();
     const isRTL = language === 'ar';
 
@@ -138,7 +138,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                             />
                         )}
                         {/* Show Condition ONLY if Preferences Step is Enabled */}
-                        {systemConfig.general.enablePreferencesStep && (
+                        {isPreferencesStepEnabled && (
                             <SummaryItem
                                 icon={Settings}
                                 label={t.dashboard.createOrder.prefs.condition}

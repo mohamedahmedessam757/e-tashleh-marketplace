@@ -45,6 +45,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
   const {
     isAttachmentsEnabled, setAttachmentsEnabled,
     isAccountDeletionEnabled, setAccountDeletionEnabled,
+    isPreferencesStepEnabled, setPreferencesStepEnabled,
     isLoading: isPlatformLoading,
     fetchSettings, subscribeToSettings: subscribeToPlatformSettings
   } = usePlatformSettingsStore();
@@ -256,21 +257,36 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
     setTimeout(() => setShowSuccess(false), 2000);
   };
 
-  /** Instant ON/OFF for platform feature flags (attachments + account deletion) */
+  /** Instant ON/OFF for platform feature flags */
   const persistFeatureFlag = async (
-    key: 'CHAT_ATTACHMENTS_ENABLED' | 'ALLOW_CUSTOMER_ACCOUNT_DELETION',
+    key: 'CHAT_ATTACHMENTS_ENABLED' | 'ALLOW_CUSTOMER_ACCOUNT_DELETION' | 'ENABLE_PREFERENCES_STEP',
     next: boolean,
   ) => {
     if (togglingFlag) return;
     const prevAttach = attachmentsDraft;
     const prevDeletion = deletionDraft;
+    const prevPrefs = isPreferencesStepEnabled;
 
     if (key === 'CHAT_ATTACHMENTS_ENABLED') {
       setAttachmentsDraft(next);
       setAttachmentsEnabled(next);
-    } else {
+    } else if (key === 'ALLOW_CUSTOMER_ACCOUNT_DELETION') {
       setDeletionDraft(next);
       setAccountDeletionEnabled(next);
+    } else {
+      setPreferencesStepEnabled(next);
+      setFormData((fd: any) => ({
+        ...fd,
+        general: { ...fd.general, enablePreferencesStep: next },
+      }));
+      // Keep in-memory systemConfig in sync for any legacy readers in this session
+      const cfg = useAdminStore.getState().systemConfig;
+      useAdminStore.setState({
+        systemConfig: {
+          ...cfg,
+          general: { ...cfg.general, enablePreferencesStep: next },
+        },
+      });
     }
 
     setTogglingFlag(key);
@@ -280,12 +296,26 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
         if (key === 'CHAT_ATTACHMENTS_ENABLED') {
           setAttachmentsDraft(prevAttach);
           setAttachmentsEnabled(prevAttach);
-        } else {
+        } else if (key === 'ALLOW_CUSTOMER_ACCOUNT_DELETION') {
           setDeletionDraft(prevDeletion);
           setAccountDeletionEnabled(prevDeletion);
+        } else {
+          setPreferencesStepEnabled(prevPrefs);
+          setFormData((fd: any) => ({
+            ...fd,
+            general: { ...fd.general, enablePreferencesStep: prevPrefs },
+          }));
+          const cfg = useAdminStore.getState().systemConfig;
+          useAdminStore.setState({
+            systemConfig: {
+              ...cfg,
+              general: { ...cfg.general, enablePreferencesStep: prevPrefs },
+            },
+          });
         }
         return;
       }
+
       await fetchSettings();
       flashSaveOk();
     } catch (err) {
@@ -293,41 +323,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
       if (key === 'CHAT_ATTACHMENTS_ENABLED') {
         setAttachmentsDraft(prevAttach);
         setAttachmentsEnabled(prevAttach);
-      } else {
+      } else if (key === 'ALLOW_CUSTOMER_ACCOUNT_DELETION') {
         setDeletionDraft(prevDeletion);
         setAccountDeletionEnabled(prevDeletion);
+      } else {
+        setPreferencesStepEnabled(prevPrefs);
+        setFormData((fd: any) => ({
+          ...fd,
+          general: { ...fd.general, enablePreferencesStep: prevPrefs },
+        }));
       }
-    } finally {
-      setTogglingFlag(null);
-    }
-  };
-
-  /** Instant ON/OFF for preferences step inside system_config.general */
-  const persistPreferencesStep = async (next: boolean) => {
-    if (togglingFlag) return;
-    const prev = Boolean(formData.general?.enablePreferencesStep);
-    const nextForm = {
-      ...formData,
-      general: { ...formData.general, enablePreferencesStep: next },
-    };
-    setFormData(nextForm);
-    setTogglingFlag('ENABLE_PREFERENCES_STEP');
-    try {
-      const ok = await saveSystemSetting('system_config', nextForm);
-      if (!ok) {
-        setFormData({
-          ...formData,
-          general: { ...formData.general, enablePreferencesStep: prev },
-        });
-        return;
-      }
-      flashSaveOk();
-    } catch (err) {
-      console.error('Preferences step save failed', err);
-      setFormData({
-        ...formData,
-        general: { ...formData.general, enablePreferencesStep: prev },
-      });
     } finally {
       setTogglingFlag(null);
     }
@@ -697,10 +702,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                               </p>
                             </div>
                             {renderOnOffToggle(
-                              Boolean(formData.general?.enablePreferencesStep),
-                              (next) => void persistPreferencesStep(next),
+                              isPreferencesStepEnabled,
+                              (next) => void persistFeatureFlag('ENABLE_PREFERENCES_STEP', next),
                               'gold',
-                              togglingFlag === 'ENABLE_PREFERENCES_STEP',
+                              togglingFlag === 'ENABLE_PREFERENCES_STEP' || isPlatformLoading,
                             )}
                           </div>
                         </div>

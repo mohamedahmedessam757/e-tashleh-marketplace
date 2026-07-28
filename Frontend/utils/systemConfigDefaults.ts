@@ -237,6 +237,9 @@ export function mergeSystemConfig(api: Partial<SystemConfig> | null | undefined)
       const o = over[key];
       if (o === undefined || o === null) {
         out[key] = b;
+      } else if (typeof o === 'boolean' || typeof o === 'number') {
+        // Preserve explicit false / 0 — do not treat as empty
+        out[key] = o;
       } else if (typeof o === 'object' && !Array.isArray(o) && typeof b === 'object' && b !== null && !Array.isArray(b)) {
         out[key] = merge(b as Record<string, unknown>, o as Record<string, unknown>);
       } else if (!isEmpty(o)) {

@@ -19,6 +19,7 @@ export class PlatformSettingsService {
   static readonly KEYS = {
     CHAT_ATTACHMENTS_ENABLED: 'CHAT_ATTACHMENTS_ENABLED',
     ALLOW_CUSTOMER_ACCOUNT_DELETION: 'ALLOW_CUSTOMER_ACCOUNT_DELETION',
+    ENABLE_PREFERENCES_STEP: 'ENABLE_PREFERENCES_STEP',
     SYSTEM_CONFIG: 'system_config',
     SYSTEM_STATUS: 'system_status',
   };
@@ -60,9 +61,43 @@ export class PlatformSettingsService {
     try {
       const setting = await this.getSetting(PlatformSettingsService.KEYS.CHAT_ATTACHMENTS_ENABLED);
       return this.parseBoolSetting(setting, true);
-    } catch (e) {
+    } catch {
       return true;
     }
+  }
+
+  /** Global switch for customer create-order preferences step (new/used) */
+  async isPreferencesStepEnabled(): Promise<boolean> {
+    try {
+      const setting = await this.getSetting(PlatformSettingsService.KEYS.ENABLE_PREFERENCES_STEP);
+      return this.parseBoolSetting(setting, true);
+    } catch {
+      // Backward-compat: older installs stored the flag inside system_config.general
+      try {
+        const config = (await this.getSetting(PlatformSettingsService.KEYS.SYSTEM_CONFIG)) as Record<string, unknown>;
+        const general = (config?.general ?? {}) as Record<string, unknown>;
+        return general.enablePreferencesStep !== false;
+      } catch {
+        return true;
+      }
+    }
+  }
+
+  async getPublicFeatureFlags(): Promise<{
+    CHAT_ATTACHMENTS_ENABLED: boolean;
+    ALLOW_CUSTOMER_ACCOUNT_DELETION: boolean;
+    ENABLE_PREFERENCES_STEP: boolean;
+  }> {
+    const [attachments, deletion, preferences] = await Promise.all([
+      this.isChatAttachmentsEnabled(),
+      this.isAccountDeletionEnabled(),
+      this.isPreferencesStepEnabled(),
+    ]);
+    return {
+      CHAT_ATTACHMENTS_ENABLED: attachments,
+      ALLOW_CUSTOMER_ACCOUNT_DELETION: deletion,
+      ENABLE_PREFERENCES_STEP: preferences,
+    };
   }
 
   /**
