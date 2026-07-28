@@ -70,6 +70,10 @@ export interface VendorSettings {
 export interface PerformanceMetrics {
   responseSpeed: number; // in hours
   prepSpeed: number; // in hours
+  hasResponseSpeed?: boolean;
+  hasPrepSpeed?: boolean;
+  responseSpeedSamples?: number;
+  prepSpeedSamples?: number;
   acceptanceRate: number; // percentage
   complaintRate: number; // percentage
   rating: number; // 0-5
@@ -258,11 +262,13 @@ export const useVendorStore = create<VendorState>()(
   },
 
   performance: {
-    responseSpeed: 2.5,
-    prepSpeed: 20,
-    acceptanceRate: 85,
-    complaintRate: 1.2,
-    rating: 4.8,
+    responseSpeed: 0,
+    prepSpeed: 0,
+    hasResponseSpeed: false,
+    hasPrepSpeed: false,
+    acceptanceRate: 0,
+    complaintRate: 0,
+    rating: 0,
     totalOffersSent: 0,
     editCount: 0,
     withdrawalCount: 0,
@@ -873,9 +879,11 @@ export const useVendorStore = create<VendorState>()(
       performance: {
         responseSpeed: 0,
         prepSpeed: 0,
-        acceptanceRate: 100,
+        hasResponseSpeed: false,
+        hasPrepSpeed: false,
+        acceptanceRate: 0,
         complaintRate: 0,
-        rating: 5.0,
+        rating: 0,
         totalOffersSent: 0,
         editCount: 0,
         withdrawalCount: 0,

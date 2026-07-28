@@ -527,6 +527,8 @@ export class StoresService {
               })
             : [];
 
+        const operationalKpis = await this.computeOperationalKpis(id, store.rating);
+
         const enrichedStore = {
             ...store,
             owner: s.owner ? {
@@ -541,6 +543,8 @@ export class StoresService {
             frozenBalance: Number(store.frozenBalance),
             lifetimeEarnings: Number(store.lifetimeEarnings),
             performanceScore: calculatedScore,
+            operationalKpis,
+            rating: Number(store.rating) || 0,
             offerGovernance: {
                 totalOffersSent: modTotal,
                 editCount: store.editCount || 0,
@@ -924,6 +928,81 @@ export class StoresService {
         return updated;
     }
 
+    /**
+     * Real operational KPIs for a store (merchant + admin profiles).
+     * - responseSpeed: avg hours from order created → offer submitted
+     * - prepSpeed: avg hours from successful payment → offer preparedAt
+     * - acceptanceRate: accepted offers / total offers
+     */
+    private async computeOperationalKpis(storeId: string, storeRating?: number | Prisma.Decimal | null) {
+        const round1 = (n: number) => Math.round(n * 10) / 10;
+        const avgHours = (samples: number[]): number | null => {
+            if (!samples.length) return null;
+            return round1(samples.reduce((a, b) => a + b, 0) / samples.length);
+        };
+
+        const [totalOffers, acceptedOffers, recentOffers] = await Promise.all([
+            this.prisma.offer.count({ where: { storeId } }),
+            this.prisma.offer.count({ where: { storeId, status: 'accepted' } }),
+            this.prisma.offer.findMany({
+                where: { storeId, isWithdrawn: false },
+                orderBy: { createdAt: 'desc' },
+                take: 200,
+                select: {
+                    createdAt: true,
+                    preparedAt: true,
+                    order: { select: { createdAt: true } },
+                    payments: {
+                        where: { status: 'SUCCESS' },
+                        orderBy: { paidAt: 'asc' },
+                        take: 1,
+                        select: { paidAt: true, createdAt: true },
+                    },
+                },
+            }),
+        ]);
+
+        const responseSamples: number[] = [];
+        const prepSamples: number[] = [];
+        const MS_PER_HOUR = 3_600_000;
+
+        for (const offer of recentOffers) {
+            const orderCreated = offer.order?.createdAt?.getTime();
+            const offerCreated = offer.createdAt.getTime();
+            if (orderCreated && offerCreated >= orderCreated) {
+                responseSamples.push((offerCreated - orderCreated) / MS_PER_HOUR);
+            }
+
+            if (offer.preparedAt) {
+                const paid = offer.payments[0];
+                const paidAt = (paid?.paidAt || paid?.createdAt)?.getTime();
+                const preparedAt = offer.preparedAt.getTime();
+                if (paidAt && preparedAt >= paidAt) {
+                    prepSamples.push((preparedAt - paidAt) / MS_PER_HOUR);
+                }
+            }
+        }
+
+        const responseSpeed = avgHours(responseSamples);
+        const prepSpeed = avgHours(prepSamples);
+        const acceptanceRate =
+            totalOffers > 0 ? Math.round((acceptedOffers / totalOffers) * 100) : 0;
+        const rating = Number(storeRating ?? 0) || 0;
+
+        return {
+            responseSpeed: responseSpeed ?? 0,
+            prepSpeed: prepSpeed ?? 0,
+            hasResponseSpeed: responseSpeed != null,
+            hasPrepSpeed: prepSpeed != null,
+            responseSpeedSamples: responseSamples.length,
+            prepSpeedSamples: prepSamples.length,
+            acceptanceRate,
+            rating: Math.round(rating * 10) / 10,
+            totalOffers,
+            acceptedOffers,
+        };
+    }
+
     async getDashboardStats(userId: string) {
         const store = await this.findMyStore(userId);
 
@@ -962,11 +1041,9 @@ export class StoresService {
             }
         });
 
-        // 2. KPIs
-        const totalOffers = await this.prisma.offer.count({ where: { storeId: store.id } });
-        const acceptedOffers = await this.prisma.offer.count({ where: { storeId: store.id, status: 'accepted' } });
-
-        const acceptanceRate = totalOffers > 0 ? Math.round((acceptedOffers / totalOffers) * 100) : 0;
+        // 2. KPIs (real operational averages — no mocks)
+        const operationalKpis = await this.computeOperationalKpis(store.id, store.rating);
+        const acceptanceRate = operationalKpis.acceptanceRate;
 
         // Active Orders
         const activeOrdersCount = await this.prisma.order.count({
@@ -1089,10 +1166,14 @@ export class StoresService {
 
         return {
             performance: {
-                responseSpeed: 1.5, // Mock realistic average for M1
-                prepSpeed: 24, // Mock realistic average for M1
+                responseSpeed: operationalKpis.responseSpeed,
+                prepSpeed: operationalKpis.prepSpeed,
+                hasResponseSpeed: operationalKpis.hasResponseSpeed,
+                hasPrepSpeed: operationalKpis.hasPrepSpeed,
+                responseSpeedSamples: operationalKpis.responseSpeedSamples,
+                prepSpeedSamples: operationalKpis.prepSpeedSamples,
                 acceptanceRate,
-                rating: Number(store.rating) || 0.0,
+                rating: operationalKpis.rating,
                 loyaltyTier: store.loyaltyTier,
                 performanceScore: Number(store.performanceScore),
                 completedOrdersCount: store.completedOrdersCount,

@@ -1335,6 +1335,74 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                 </div>
             </div>
 
+            {/* Operational KPIs — same metrics as merchant profile (live from offers/payments) */}
+            {(() => {
+                const k = vendor.operationalKpis || {};
+                const kpiCopy = (t.admin.storeProfile as any).operationalKpi || {};
+                const cards = [
+                    {
+                        label: kpiCopy.responseSpeed || (isAr ? 'سرعة الرد' : 'Response Speed'),
+                        value: k.hasResponseSpeed ? `${k.responseSpeed}h` : '—',
+                        status: !k.hasResponseSpeed ? 'neutral' : Number(k.responseSpeed) < 4 ? 'good' : 'bad',
+                    },
+                    {
+                        label: kpiCopy.prepSpeed || (isAr ? 'سرعة التجهيز' : 'Prep Speed'),
+                        value: k.hasPrepSpeed ? `${k.prepSpeed}h` : '—',
+                        status: !k.hasPrepSpeed ? 'neutral' : Number(k.prepSpeed) < 24 ? 'good' : 'bad',
+                    },
+                    {
+                        label: kpiCopy.acceptanceRate || (isAr ? 'معدل القبول' : 'Acceptance Rate'),
+                        value: `${k.acceptanceRate ?? 0}%`,
+                        status: Number(k.acceptanceRate ?? 0) > 50 ? 'good' : 'bad',
+                    },
+                    {
+                        label: kpiCopy.rating || (isAr ? 'تقييم العملاء' : 'Customer Rating'),
+                        value: Number(k.rating ?? vendor.rating ?? 0).toFixed(1),
+                        status: Number(k.rating ?? vendor.rating ?? 0) > 4.5 ? 'good' : 'risk',
+                    },
+                ];
+                return (
+                    <GlassCard className="p-5 border-white/5 bg-[#141210]/
+                        <div className="flex items-center justify-between mb-4 px-1">
+                            <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                <Activity size={16} className="text-gold-500" />
+                                {kpiCopy.title || t.admin.storeProfile.kpi}
+                            </h3>
+                            <span className="text-[10px] text-white/30 font-bold">
+                                {(!k.hasResponseSpeed && !k.hasPrepSpeed)
+                                    ? (kpiCopy.noData || (isAr ? 'لا توجد بيانات كافية بعد' : 'Not enough data yet'))
+                                    : null}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            {cards.map((kpi) => (
+                                <div
+                                    key={kpi.label}
+                                    className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center"
+                                >
+                                    <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1">
+                                        {kpi.label}
+                                    </div>
+                                    <div
+                                        className={`text-lg font-black tabular-nums ${
+                                            kpi.status === 'good'
+                                                ? 'text-green-400'
+                                                : kpi.status === 'risk'
+                                                  ? 'text-yellow-400'
+                                                  : kpi.status === 'neutral'
+                                                    ? 'text-white/40'
+                                                    : 'text-red-400'
+                                        }`}
+                                    >
+                                        {kpi.value}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </GlassCard>
+                );
+            })()}
+
             {/* NEW: Administrative Restriction Banners (2026 Admin Visibility) */}
             {(currentStoreProfile?.owner?.withdrawalsFrozen || (currentStoreProfile?.offerLimit && currentStoreProfile?.offerLimit !== -1) || currentStoreProfile?.visibilityRestricted) && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

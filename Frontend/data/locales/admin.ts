@@ -344,6 +344,14 @@ export const admin = {
       title: 'ملف المتجر',
       kpi: 'مؤشرات الأداء',
       docs: 'المستندات والتراخيص',
+      operationalKpi: {
+        title: 'مؤشرات أداء المتجر',
+        responseSpeed: 'سرعة الرد',
+        prepSpeed: 'سرعة التجهيز',
+        acceptanceRate: 'معدل القبول',
+        rating: 'تقييم العملاء',
+        noData: 'لا توجد بيانات كافية بعد',
+      },
       tabs: {
         overview: 'نظرة عامة',
         orders: 'الطلبات',
@@ -1882,6 +1890,14 @@ export const admin = {
       title: 'Store Profile',
       kpi: 'Performance Indicators',
       docs: 'Docs & Licenses',
+      operationalKpi: {
+        title: 'Store Performance KPIs',
+        responseSpeed: 'Response Speed',
+        prepSpeed: 'Prep Speed',
+        acceptanceRate: 'Acceptance Rate',
+        rating: 'Customer Rating',
+        noData: 'Not enough data yet',
+      },
       tabs: {
         overview: 'Overview',
         orders: 'Orders',

@@ -33,7 +33,7 @@ export const MerchantProfile: React.FC = () => {
         updateVendorProfile, uploadLogo, uploadDocument,
         contractAcceptance, contractAcceptances, pendingContractChanges,
         fetchPendingContractChanges, submitContractChange,
-        connectStripe, openStripeDashboard
+        connectStripe, openStripeDashboard, fetchDashboardStats
     } = useVendorStore();
 
     const { fetchImpactRules, impactRules } = useReviewStore();
@@ -57,6 +57,7 @@ export const MerchantProfile: React.FC = () => {
 
     useEffect(() => {
         fetchVendorProfile();
+        fetchDashboardStats();
         fetchPendingContractChanges();
         fetchImpactRules();
         if (makes.length === 0) {
@@ -66,7 +67,7 @@ export const MerchantProfile: React.FC = () => {
         return () => {
             unsubscribeFromCatalog();
         };
-    }, [fetchVendorProfile, fetchPendingContractChanges, fetchImpactRules, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
+    }, [fetchVendorProfile, fetchDashboardStats, fetchPendingContractChanges, fetchImpactRules, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
 
     const handleSubmitContractAmendment = async (data: SecondPartyData) => {
         await submitContractChange(data as Record<string, string>);
@@ -535,30 +536,39 @@ export const MerchantProfile: React.FC = () => {
                                         {[
                                             { 
                                                 label: t.dashboard.merchant.kpi.responseSpeed, 
-                                                value: `${performance.responseSpeed}h`, 
-                                                status: performance.responseSpeed < 4 ? 'good' : 'bad' 
+                                                value: performance?.hasResponseSpeed
+                                                    ? `${performance.responseSpeed}h`
+                                                    : '—',
+                                                status: !performance?.hasResponseSpeed
+                                                    ? 'neutral'
+                                                    : performance.responseSpeed < 4 ? 'good' : 'bad',
                                             },
                                             { 
                                                 label: t.dashboard.merchant.kpi.prepSpeed, 
-                                                value: `${performance.prepSpeed}h`, 
-                                                status: performance.prepSpeed < 24 ? 'good' : 'bad' 
+                                                value: performance?.hasPrepSpeed
+                                                    ? `${performance.prepSpeed}h`
+                                                    : '—',
+                                                status: !performance?.hasPrepSpeed
+                                                    ? 'neutral'
+                                                    : performance.prepSpeed < 24 ? 'good' : 'bad',
                                             },
                                             { 
                                                 label: t.dashboard.merchant.kpi.acceptanceRate, 
-                                                value: `${performance.acceptanceRate}%`, 
-                                                status: performance.acceptanceRate > 50 ? 'good' : 'bad' 
+                                                value: `${performance?.acceptanceRate ?? 0}%`, 
+                                                status: (performance?.acceptanceRate ?? 0) > 50 ? 'good' : 'bad',
                                             },
                                             { 
                                                 label: t.dashboard.merchant.kpi.rating, 
-                                                value: performance.rating, 
-                                                status: performance.rating > 4.5 ? 'good' : 'risk' 
-                                            }
+                                                value: Number(performance?.rating ?? 0).toFixed(1), 
+                                                status: (performance?.rating ?? 0) > 4.5 ? 'good' : 'risk',
+                                            },
                                         ].map((kpi, idx) => (
                                             <div key={idx} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center group/kpi hover:border-gold-500/20 transition-all">
                                                 <div className="text-[9px] text-white/40 uppercase tracking-wider mb-1 group-hover/kpi:text-gold-500/60 transition-colors">{kpi.label}</div>
                                                 <div className={`text-base font-bold ${
                                                     kpi.status === 'good' ? 'text-green-400' : 
-                                                    kpi.status === 'risk' ? 'text-yellow-400' : 'text-red-400'
+                                                    kpi.status === 'risk' ? 'text-yellow-400' :
+                                                    kpi.status === 'neutral' ? 'text-white/40' : 'text-red-400'
                                                 }`}>
                                                     {kpi.value}
                                                 </div>
