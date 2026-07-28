@@ -2,6 +2,7 @@ import {
   resolveTemplateFamily,
   type NotificationDispatchInput,
 } from './whatsapp-notification.mapper';
+import { getTemplateDefinition, resolveTemplateName } from './template-registry';
 
 describe('resolveTemplateFamily', () => {
   const base: NotificationDispatchInput = {
@@ -293,10 +294,80 @@ describe('resolveTemplateFamily', () => {
       ).toBe('txn_offer_restriction_vendor');
     });
 
+    it('VIOLATION_ISSUED → txn_violation_customer', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'VIOLATION',
+            metadata: { waEvent: 'VIOLATION_ISSUED' },
+          },
+          'CUSTOMER',
+        ),
+      ).toBe('txn_violation_customer');
+    });
+
+    it('VIOLATION_ISSUED → txn_violation_vendor', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'VIOLATION',
+            metadata: { waEvent: 'VIOLATION_ISSUED' },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_violation_vendor');
+    });
+
+    it('ALERT + VIOLATION_ISSUED waEvent still maps (waEvent wins)', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'alert',
+            metadata: { waEvent: 'VIOLATION_ISSUED' },
+          },
+          'CUSTOMER',
+        ),
+      ).toBe('txn_violation_customer');
+    });
+
     it('ALERT without DOCUMENT waEvent stays null', () => {
       expect(
         resolveTemplateFamily({ ...base, type: 'ALERT' }, 'MERCHANT'),
       ).toBeNull();
     });
+
+    it('VIOLATION type without waEvent does not send (e.g. drop/admin-only)', () => {
+      expect(
+        resolveTemplateFamily({ ...base, type: 'VIOLATION' }, 'CUSTOMER'),
+      ).toBeNull();
+      expect(
+        resolveTemplateFamily({ ...base, type: 'VIOLATION' }, 'MERCHANT'),
+      ).toBeNull();
+    });
+  });
+});
+
+describe('txn_violation registry contract (Widers body slots)', () => {
+  it('customer: name → {{1}}, status_detail → {{2}}, static button, _ar_v2 name', () => {
+    const name = resolveTemplateName('txn_violation_customer', 'ar');
+    expect(name).toBe('txn_violation_customer_ar_v2');
+    const def = getTemplateDefinition(name);
+    expect(def).toBeDefined();
+    expect(def!.bodyFields).toEqual(['name', 'status_detail']);
+    expect(def!.buttonUrlDynamic).toBe(false);
+    expect(def!.buttonSuffixPattern).toBe('violations');
+  });
+
+  it('vendor: name → {{1}}, store_name → {{2}}, status_detail → {{3}}', () => {
+    const name = resolveTemplateName('txn_violation_vendor', 'ar');
+    expect(name).toBe('txn_violation_vendor_ar_v2');
+    const def = getTemplateDefinition(name);
+    expect(def).toBeDefined();
+    expect(def!.bodyFields).toEqual(['name', 'store_name', 'status_detail']);
+    expect(def!.buttonUrlDynamic).toBe(false);
+    expect(def!.buttonSuffixPattern).toBe('violations');
   });
 });

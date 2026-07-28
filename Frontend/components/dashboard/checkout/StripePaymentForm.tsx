@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   PaymentElement,
   useStripe,
@@ -18,7 +18,6 @@ interface StripePaymentFormProps {
   amount: number;
   savedPaymentMethodId?: string | null;
   onSwitchToNewCard?: () => void;
-  /** Called when saved pm_* is rejected by Stripe so wallet can be cleaned */
   onStalePaymentMethod?: (paymentMethodId: string) => void | Promise<void>;
 }
 
@@ -112,7 +111,7 @@ const CheckoutForm: React.FC<StripePaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {!savedPaymentMethodId ? (
-        <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-3">
+        <div className="space-y-3">
           <PaymentElement options={{ layout: 'tabs' }} />
           <p className="text-[11px] text-white/40 text-center">
             {isAr
@@ -148,7 +147,7 @@ const CheckoutForm: React.FC<StripePaymentFormProps> = ({
       <button
         type="submit"
         disabled={!stripe || isProcessing}
-        className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
+        className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-colors relative overflow-hidden group ${
           isProcessing
             ? 'bg-gold-500/20 text-gold-300 cursor-wait'
             : 'bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black shadow-[0_8px_30px_rgb(212,175,55,0.2)]'
@@ -156,7 +155,6 @@ const CheckoutForm: React.FC<StripePaymentFormProps> = ({
       >
         {isProcessing ? (
           <>
-            <div className="absolute inset-0 bg-white/10 animate-pulse" />
             <Loader2 size={20} className="animate-spin" />
             <span className="relative z-10">
               {isAr ? 'جاري معالجة الدفع...' : 'Processing Payment...'}
@@ -164,7 +162,7 @@ const CheckoutForm: React.FC<StripePaymentFormProps> = ({
           </>
         ) : (
           <>
-            <Lock size={18} className="group-hover:scale-110 transition-transform" />
+            <Lock size={18} />
             <span className="relative z-10">
               {savedPaymentMethodId
                 ? isAr
@@ -186,58 +184,52 @@ const CheckoutForm: React.FC<StripePaymentFormProps> = ({
   );
 };
 
+const STRIPE_APPEARANCE = {
+  theme: 'night' as const,
+  variables: {
+    colorPrimary: '#D4AF37',
+    colorBackground: '#1A1A1A',
+    colorText: '#ffffff',
+    colorDanger: '#ef4444',
+    colorTextPlaceholder: '#71717A',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    spacingUnit: '5px',
+    borderRadius: '16px',
+  },
+  rules: {
+    '.Tab': {
+      border: '1px solid rgba(212, 175, 55, 0.1)',
+      backgroundColor: '#121212',
+    },
+    '.Tab--selected': {
+      borderColor: '#D4AF37',
+      backgroundColor: 'rgba(212, 175, 55, 0.05)',
+    },
+    '.Input': {
+      backgroundColor: '#121212',
+      border: '1px solid rgba(255, 255, 255, 0.05)',
+      padding: '12px',
+    },
+    '.Input:focus': {
+      borderColor: '#D4AF37',
+      boxShadow: '0 0 0 3px rgba(212, 175, 55, 0.1)',
+    },
+  },
+};
+
 export const StripePaymentForm: React.FC<StripePaymentFormProps> = (props) => {
-  const appearance = {
-    theme: 'night' as const,
-    variables: {
-      colorPrimary: '#D4AF37',
-      colorBackground: '#1A1A1A',
-      colorText: '#ffffff',
-      colorDanger: '#ef4444',
-      colorTextPlaceholder: '#71717A',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      spacingUnit: '5px',
-      borderRadius: '16px',
-    },
-    rules: {
-      '.Tab': {
-        border: '1px solid rgba(212, 175, 55, 0.1)',
-        backgroundColor: '#121212',
-        transition: 'all 0.3s ease',
-        boxShadow:
-          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      },
-      '.Tab:hover': {
-        borderColor: '#D4AF37',
-        transform: 'translateY(-1px)',
-      },
-      '.Tab--selected': {
-        borderColor: '#D4AF37',
-        backgroundColor: 'rgba(212, 175, 55, 0.05)',
-        boxShadow: '0 0 15px rgba(212, 175, 55, 0.15)',
-      },
-      '.Input': {
-        backgroundColor: '#121212',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        padding: '12px',
-      },
-      '.Input:focus': {
-        borderColor: '#D4AF37',
-        boxShadow: '0 0 0 3px rgba(212, 175, 55, 0.1)',
-      },
-    },
-  };
+  const elementsOptions = useMemo(
+    () => ({
+      clientSecret: props.clientSecret,
+      appearance: STRIPE_APPEARANCE,
+      loader: 'auto' as const,
+    }),
+    [props.clientSecret],
+  );
 
   return (
-    <div className="mt-4 animate-in fade-in zoom-in-95 duration-300">
-      <Elements
-        stripe={stripePromise}
-        options={{
-          clientSecret: props.clientSecret,
-          appearance,
-          loader: 'auto',
-        }}
-      >
+    <div className="mt-4">
+      <Elements stripe={stripePromise} options={elementsOptions}>
         <CheckoutForm {...props} />
       </Elements>
     </div>

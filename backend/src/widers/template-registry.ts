@@ -169,6 +169,22 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
+    // Violations & penalties
+    // Customer: {{1}} name · {{2}} status_detail
+    def('txn_violation_customer', 'ar', 'customer', ['name', 'status_detail'], {
+        headerText: 'تنبيه مخالفة',
+        buttonLabel: 'عرض المخالفات',
+        buttonSuffixPattern: 'violations',
+        buttonUrlDynamic: false,
+    }),
+    // Vendor: {{1}} name · {{2}} store_name · {{3}} status_detail
+    def('txn_violation_vendor', 'ar', 'merchant', ['name', 'store_name', 'status_detail'], {
+        headerText: 'تنبيه مخالفة للمتجر',
+        buttonLabel: 'عرض المخالفات',
+        buttonSuffixPattern: 'violations',
+        buttonUrlDynamic: false,
+    }),
+
     // Part verification
     def('txn_verification_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
         headerText: 'توثيق الطلب',

@@ -310,6 +310,7 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                 </div>
 
                 <GlassCard
+                    enableBlur={false}
                     className={`flex flex-col p-8 border-gold-500/20 ${
                         step === 1 ? 'min-h-0' : 'min-h-[400px] justify-between'
                     }`}

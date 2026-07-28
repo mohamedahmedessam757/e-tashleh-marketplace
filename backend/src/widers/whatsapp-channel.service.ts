@@ -423,17 +423,19 @@ export class WhatsAppChannelService {
 
             // txn_offer_restriction_vendor_ar_v2:
             // {{1}} name · {{2}} store_name · {{3}} status_detail
-            if (family.startsWith('txn_offer_restriction_')) {
+            if (family.startsWith('txn_offer_restriction_') || family.startsWith('txn_violation_')) {
                 const metaStore =
                     typeof params.metadata?.store_name === 'string'
                         ? params.metadata.store_name
                         : typeof params.metadata?.storeName === 'string'
                           ? params.metadata.storeName
                           : '';
-                fields.store_name = truncateWhatsAppParam(
-                    metaStore.trim() || user.store?.name || user.name || 'متجر',
-                    60,
-                );
+                if (family.startsWith('txn_violation_vendor') || family.startsWith('txn_offer_restriction_')) {
+                    fields.store_name = truncateWhatsAppParam(
+                        metaStore.trim() || user.store?.name || user.name || 'متجر',
+                        60,
+                    );
+                }
                 const metaDetailKey = lang === 'en' ? 'status_detail_en' : 'status_detail';
                 const metaDetailRaw =
                     typeof params.metadata?.[metaDetailKey] === 'string'

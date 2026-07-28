@@ -7,6 +7,7 @@ export type WhatsAppEvent =
     | 'OFFER_REVEAL'
     | 'OFFER_ACCEPTED'
     | 'OFFER_BIDDING_RESTRICTED'
+    | 'VIOLATION_ISSUED'
     | 'PAYMENT_SUCCESS'
     | 'INVOICE_ISSUED'
     | 'SHIPMENT_STATUS'
@@ -21,6 +22,7 @@ export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'OFFER_REVEAL',
     'OFFER_ACCEPTED',
     'OFFER_BIDDING_RESTRICTED',
+    'VIOLATION_ISSUED',
     'PAYMENT_SUCCESS',
     'INVOICE_ISSUED',
     'SHIPMENT_STATUS',
@@ -187,6 +189,8 @@ function resolveByWaEvent(
             return orderFamily(role);
         case 'OFFER_BIDDING_RESTRICTED':
             return role === 'MERCHANT' ? 'txn_offer_restriction_vendor' : null;
+        case 'VIOLATION_ISSUED':
+            return role === 'MERCHANT' ? 'txn_violation_vendor' : 'txn_violation_customer';
         default:
             return null;
     }

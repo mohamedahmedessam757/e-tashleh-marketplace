@@ -94,6 +94,46 @@ export class ViolationsService {
     return targetType === ViolationTargetType.MERCHANT ? 'MERCHANT' : 'CUSTOMER';
   }
 
+  /** Compact bilingual detail for WhatsApp txn_violation_* (no emojis). */
+  private buildViolationWaDetails(params: {
+    nameAr: string;
+    nameEn: string;
+    points?: number;
+    fineAmount?: number;
+    extraAr?: string;
+    extraEn?: string;
+  }) {
+    const pts = params.points != null ? params.points : null;
+    const fine = params.fineAmount != null ? Number(params.fineAmount) : 0;
+    const status_detail = [
+      params.nameAr,
+      pts != null ? `النقاط: ${pts}` : null,
+      fine > 0 ? `الغرامة: ${fine} درهم` : null,
+      params.extraAr || null,
+    ]
+      .filter(Boolean)
+      .join('. ');
+    const status_detail_en = [
+      params.nameEn,
+      pts != null ? `Points: ${pts}` : null,
+      fine > 0 ? `Fine: ${fine} AED` : null,
+      params.extraEn || null,
+    ]
+      .filter(Boolean)
+      .join('. ');
+    return { status_detail, status_detail_en };
+  }
+
+  private async resolveStoreName(storeId?: string | null, tx?: any): Promise<string | undefined> {
+    if (!storeId) return undefined;
+    const db = tx || this.prisma;
+    const store = await db.store.findUnique({
+      where: { id: storeId },
+      select: { name: true },
+    });
+    return store?.name || undefined;
+  }
+
   private computePenaltyExpiresAt(
     action: PenaltyActionType,
     threshold?: { suspendDurationDays?: number | null } | null,
@@ -391,17 +431,35 @@ export class ViolationsService {
         metadata: { violationId: violation.id, points, fineAmount, source, code: vType.code },
       }, itx);
 
-      // 7. Notification (Bilingual)
+      // 7. Notification (Bilingual) + WhatsApp via waEvent VIOLATION_ISSUED
+      const storeName =
+        targetType === ViolationTargetType.MERCHANT
+          ? await this.resolveStoreName(targetStoreId, itx)
+          : undefined;
+      const waDetails = this.buildViolationWaDetails({
+        nameAr: vType.nameAr,
+        nameEn: vType.nameEn,
+        points,
+        fineAmount,
+      });
       await this.notifications.create({
         recipientId: targetUserId,
         recipientRole: this.recipientRoleForTarget(targetType),
-        type: 'alert',
-        titleAr: 'مخالفة جديدة مسجلة 🚨',
-        titleEn: 'New Violation Recorded 🚨',
+        type: 'VIOLATION',
+        titleAr: 'مخالفة جديدة مسجلة',
+        titleEn: 'New Violation Recorded',
         messageAr: `تم تسجيل مخالفة "${vType.nameAr}" بحق حسابك. النقاط المسجلة: ${points}${fineAmount > 0 ? `، الغرامة: ${fineAmount} درهم` : ''}.`,
         messageEn: `A violation "${vType.nameEn}" has been recorded. Points: ${points}${fineAmount > 0 ? `, Fine: ${fineAmount} AED` : ''}.`,
         link: 'violations',
-        metadata: { violationId: violation.id, points, fineAmount, tab: 'history' },
+        metadata: {
+          waEvent: 'VIOLATION_ISSUED',
+          violationId: violation.id,
+          points,
+          fineAmount,
+          tab: 'history',
+          ...(storeName ? { store_name: storeName } : {}),
+          ...waDetails,
+        },
       });
 
       // 7.1 Notify Admin Group (Oversight)
@@ -610,13 +668,27 @@ export class ViolationsService {
         await this.notifications.create({
           recipientId: userId,
           recipientRole: this.recipientRoleForTarget(targetType),
-          type: 'alert',
-          titleAr: 'تنبيه: تطبيق عقوبة تلقائية ⚠️',
-          titleEn: 'Automatic Penalty Applied ⚠️',
+          type: 'VIOLATION',
+          titleAr: 'تنبيه: تطبيق عقوبة تلقائية',
+          titleEn: 'Automatic Penalty Applied',
           messageAr: `تم تطبيق إجراء إداري (${threshold.nameAr}) تلقائياً بسبب تجاوز حد النقاط.`,
           messageEn: `An administrative action (${threshold.nameEn}) was applied automatically due to points threshold.`,
           link: 'violations',
-          metadata: { tab: 'history', penaltyId: penalty.id, action: threshold.action },
+          metadata: {
+            waEvent: 'VIOLATION_ISSUED',
+            tab: 'history',
+            penaltyId: penalty.id,
+            action: threshold.action,
+            ...(storeId
+              ? { store_name: (await this.resolveStoreName(storeId, prisma)) || undefined }
+              : {}),
+            ...this.buildViolationWaDetails({
+              nameAr: threshold.nameAr,
+              nameEn: threshold.nameEn,
+              extraAr: 'عقوبة تلقائية بسبب تجاوز حد النقاط',
+              extraEn: 'Automatic penalty due to points threshold',
+            }),
+          },
         });
       }
     }
@@ -804,13 +876,30 @@ export class ViolationsService {
         await this.notifications.create({
           recipientId: penalty.targetUserId,
           recipientRole: this.recipientRoleForTarget(penalty.targetType),
-          type: 'alert',
-          titleAr: 'تنبيه إداري: تطبيق عقوبة ⚠️',
-          titleEn: 'Admin Alert: Penalty Applied ⚠️',
+          type: 'VIOLATION',
+          titleAr: 'تنبيه إداري: تطبيق عقوبة',
+          titleEn: 'Admin Alert: Penalty Applied',
           messageAr: `تم تطبيق إجراء إداري بحق حسابك (${penalty.threshold?.nameAr}). السبب: تجاوز حد النقاط.`,
           messageEn: `An administrative action has been applied to your account (${penalty.threshold?.nameEn}) due to points threshold.`,
           link: 'violations',
-          metadata: { penaltyId: id, action: penalty.action, tab: 'history' },
+          metadata: {
+            waEvent: 'VIOLATION_ISSUED',
+            penaltyId: id,
+            action: penalty.action,
+            tab: 'history',
+            ...(penalty.targetStoreId
+              ? {
+                  store_name:
+                    (await this.resolveStoreName(penalty.targetStoreId, tx)) || undefined,
+                }
+              : {}),
+            ...this.buildViolationWaDetails({
+              nameAr: penalty.threshold?.nameAr || 'عقوبة',
+              nameEn: penalty.threshold?.nameEn || 'Penalty',
+              extraAr: 'تم تطبيق العقوبة بواسطة الإدارة',
+              extraEn: 'Penalty applied by admin',
+            }),
+          },
         });
       }
 
@@ -1046,13 +1135,24 @@ export class ViolationsService {
       await this.notifications.create({
         recipientId: input.targetUserId,
         recipientRole: 'MERCHANT',
-        type: 'alert',
+        type: 'VIOLATION',
         titleAr: 'سجل مخالفة احتيال — للمراجعة',
         titleEn: 'Fraud Violation Record — For Review',
         messageAr: `تم تسجيل مخالفة احتيال بحق حسابك بمبلغ ${input.penaltyAmount} درهم. راجع صفحة المخالفات للتفاصيل.`,
         messageEn: `A fraud violation was recorded for ${input.penaltyAmount} AED. See the violations page for details.`,
         link: 'violations',
-        metadata: { violationId: violation.id, caseId: input.caseId, tab: 'history' },
+        metadata: {
+          waEvent: 'VIOLATION_ISSUED',
+          violationId: violation.id,
+          caseId: input.caseId,
+          tab: 'history',
+          store_name: (await this.resolveStoreName(input.targetStoreId)) || undefined,
+          ...this.buildViolationWaDetails({
+            nameAr: 'مخالفة احتيال',
+            nameEn: 'Fraud violation',
+            fineAmount: input.penaltyAmount,
+          }),
+        },
       });
 
       await this.notifications.notifyAdmins({

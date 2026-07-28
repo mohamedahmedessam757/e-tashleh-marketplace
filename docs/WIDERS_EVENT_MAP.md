@@ -21,6 +21,8 @@ Single source for which in-app events dispatch which Widers template families.
 | `txn_waybill_merchant` | `txn_waybill_merchant_ar_v2` | `WAYBILL_ISSUED` | `order_update` + waybill keywords |
 | `txn_document_vendor` | `txn_document_vendor_ar_v2` | `DOCUMENT` | `DOC_EXPIRY`, `SUCCESS`, or `ALERT`/`SYSTEM` **only when** `waEvent=DOCUMENT` |
 | `txn_offer_restriction_vendor` | `txn_offer_restriction_vendor_ar_v2` | `OFFER_BIDDING_RESTRICTED` | Monthly deletion limit (50) / admin bidding restriction — body `{{1}}` name · `{{2}}` store_name · `{{3}}` status_detail |
+| `txn_violation_customer` | `txn_violation_customer_ar_v2` | `VIOLATION_ISSUED` | New violation / penalty notify to customer — body `{{1}}` name · `{{2}}` status_detail |
+| `txn_violation_vendor` | `txn_violation_vendor_ar_v2` | `VIOLATION_ISSUED` | New violation / penalty notify to merchant — body `{{1}}` name · `{{2}}` store_name · `{{3}}` status_detail |
 | `txn_verification_customer` | `txn_verification_customer_ar_v2` | `VERIFICATION` | `ORDER` / `system_alert` + `metadata.verification` |
 | `txn_verification_vendor` | `txn_verification_vendor_ar_v2` | `VERIFICATION` | Same, merchant role |
 | `welcome_customer` | `welcome_customer_ar_v2` | — (direct) | After register — `auth.service.ts` |
@@ -28,7 +30,7 @@ Single source for which in-app events dispatch which Widers template families.
 
 ## Allowed `metadata.waEvent` values
 
-`ORDER_CREATED` | `ORDER_STATUS` | `OFFER_REVEAL` | `OFFER_ACCEPTED` | `OFFER_BIDDING_RESTRICTED` | `PAYMENT_SUCCESS` | `INVOICE_ISSUED` | `SHIPMENT_STATUS` | `WAYBILL_ISSUED` | `VERIFICATION` | `DOCUMENT` | `STORE_ACTIVATION`
+`ORDER_CREATED` | `ORDER_STATUS` | `OFFER_REVEAL` | `OFFER_ACCEPTED` | `OFFER_BIDDING_RESTRICTED` | `VIOLATION_ISSUED` | `PAYMENT_SUCCESS` | `INVOICE_ISSUED` | `SHIPMENT_STATUS` | `WAYBILL_ISSUED` | `VERIFICATION` | `DOCUMENT` | `STORE_ACTIVATION`
 
 ## Branding & URLs
 
@@ -42,7 +44,9 @@ Single source for which in-app events dispatch which Widers template families.
 
 ## Intentionally no WhatsApp template
 
-`REFERRAL`, `CHAT`, `FINANCIAL`, `WALLET`, `SYSTEM`, `ALERT`, `SECURITY`, payment failures — **except** `ALERT`/`SYSTEM` with `waEvent=DOCUMENT` (document reject/reupload).
+`REFERRAL`, `CHAT`, `FINANCIAL`, `WALLET`, `SYSTEM`, `ALERT`, `SECURITY`, payment failures — **except**:
+- `ALERT`/`SYSTEM` with `waEvent=DOCUMENT` (document reject/reupload)
+- `ALERT`/`VIOLATION` with `waEvent=VIOLATION_ISSUED` (violations & penalties — see [WIDERS_VIOLATION_TEMPLATES.md](WIDERS_VIOLATION_TEMPLATES.md))
 
 ## Audit & smoke tests
 

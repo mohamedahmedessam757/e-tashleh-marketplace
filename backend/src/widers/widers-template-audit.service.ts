@@ -37,6 +37,18 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
     txn_waybill_customer: ['ORDER_UPDATE (waybill keywords)'],
     txn_waybill_merchant: ['ORDER_UPDATE (waybill keywords)'],
     txn_document_vendor: ['DOC_EXPIRY', 'SUCCESS', 'document notifications'],
+    txn_offer_restriction_vendor: [
+        'waEvent:OFFER_BIDDING_RESTRICTED',
+        'offer-bidding-restriction / offer-governance-notify',
+    ],
+    txn_violation_customer: [
+        'waEvent:VIOLATION_ISSUED',
+        'violations.service:issue / auto-penalty / admin-penalty (CUSTOMER)',
+    ],
+    txn_violation_vendor: [
+        'waEvent:VIOLATION_ISSUED',
+        'violations.service:issue / auto-penalty / admin-penalty / fraud (MERCHANT)',
+    ],
     txn_verification_customer: ['ORDER/ORDER_UPDATE + metadata.verification'],
     txn_verification_vendor: ['ORDER/ORDER_UPDATE + metadata.verification'],
     welcome_customer: ['auth.service:register CUSTOMER'],

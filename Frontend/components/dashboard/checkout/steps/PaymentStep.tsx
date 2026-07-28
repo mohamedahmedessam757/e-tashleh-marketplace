@@ -171,7 +171,7 @@ export const PaymentStep: React.FC = () => {
         if (cards.length > 0) {
           const defaultCard = cards.find(c => c.isDefault) || cards[0];
           setSelectedCardId(defaultCard.id);
-          setUseNewCard(!defaultCard.stripePaymentMethodId);
+          setUseNewCard(false);
         } else {
           setSelectedCardId(null);
           setUseNewCard(true);
@@ -326,7 +326,7 @@ export const PaymentStep: React.FC = () => {
   };
 
   const selectedSavedCard = selectedCardId
-    ? savedCards.find((c) => c.id === selectedCardId)
+    ? savedCards.find((c) => String(c.id) === String(selectedCardId))
     : null;
   const activeSavedPaymentMethodId =
     !useNewCard && selectedSavedCard?.stripePaymentMethodId
@@ -415,17 +415,12 @@ export const PaymentStep: React.FC = () => {
       <AnimatePresence>
         {successMessage && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -20 }}
-            className="bg-green-500/10 border-2 border-green-500/30 rounded-2xl p-6 text-green-400 text-sm font-bold text-center shadow-[0_0_30px_rgba(34,197,94,0.15)] relative overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="bg-green-500/10 border-2 border-green-500/30 rounded-2xl p-6 text-green-400 text-sm font-bold text-center shadow-[0_0_30px_rgba(34,197,94,0.15)]"
           >
-            <motion.div 
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none"
-            />
             <div className="flex flex-col items-center gap-2">
               <CheckCircle2 size={32} className="text-green-400 mb-1" />
               <span className="text-lg">{successMessage}</span>
@@ -438,9 +433,10 @@ export const PaymentStep: React.FC = () => {
       <AnimatePresence>
         {!isOnline && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-400 text-sm font-bold flex items-center gap-3 shadow-lg"
           >
             <WifiOff size={18} className="animate-pulse" />
@@ -452,9 +448,10 @@ export const PaymentStep: React.FC = () => {
 
         {paymentError && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm font-bold flex flex-col md:flex-row items-center gap-3 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
           >
             <div className="flex items-center gap-2 flex-1">
@@ -510,30 +507,24 @@ export const PaymentStep: React.FC = () => {
           const price = Number(offer.price || offer.unitPrice || 0);
 
           return (
-            <motion.div
+            <div
               key={offer.id}
-              layout
-              whileHover={{ y: isPaid ? 0 : -4 }}
-              className={`rounded-2xl border overflow-hidden transition-all duration-500 relative ${isPaid
+              className={`rounded-2xl border overflow-hidden transition-colors duration-200 relative ${isPaid
                 ? 'bg-green-500/5 border-green-500/30 shadow-none'
                 : isReadyToPay
                   ? 'bg-[#1a1508] border-gold-500/50 shadow-[0_20px_50px_rgba(212,175,55,0.15)]'
-                  : 'bg-[#121212] border-[#2b271d] hover:border-gold-500/30 hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]'
+                  : 'bg-[#121212] border-[#2b271d] hover:border-gold-500/30'
                 }`}
             >
               {isProcessing && activePaymentOfferId === offer.id && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-center justify-center"
-                >
+                <div className="absolute inset-0 z-50 bg-black/40 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-3">
                     <Loader2 className="animate-spin text-gold-500" size={40} />
                     <span className="text-gold-500 font-bold text-xs animate-pulse uppercase tracking-widest">
                       {isAr ? 'جاري المعالجة...' : 'Processing...'}
                     </span>
                   </div>
-                </motion.div>
+                </div>
               )}
               {/* ── Top Header ── */}
               <div
@@ -627,14 +618,8 @@ export const PaymentStep: React.FC = () => {
               </div>
 
               {/* ── Expanded Section ── */}
-              <AnimatePresence>
-                {isExpanded && !isPaid && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden bg-black/20"
-                  >
+              {isExpanded && !isPaid && (
+                  <div className="bg-black/20">
                     <div className="px-5 pb-6 pt-2 space-y-4">
                       {/* ── Saved Cards Quick Select ── */}
                       {savedCards.length > 0 && !isPaid && (
@@ -649,42 +634,46 @@ export const PaymentStep: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                            {savedCards.map((card) => (
-                              <motion.button
+                            {savedCards.map((card) => {
+                              const isSelected =
+                                !useNewCard && String(selectedCardId) === String(card.id);
+                              return (
+                              <button
                                 key={card.id}
                                 type="button"
-                                whileHover={{ y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => {
-                                  setSelectedCardId(card.id);
-                                  setUseNewCard(!card.stripePaymentMethodId);
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setSelectedCardId(String(card.id));
+                                  setUseNewCard(false);
                                 }}
-                                className={`flex-shrink-0 flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${
-                                  !useNewCard && selectedCardId === card.id
+                                className={`flex-shrink-0 flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-colors duration-150 active:scale-[0.98] ${
+                                  isSelected
                                     ? 'bg-gold-500/10 border-gold-500 shadow-[0_0_15px_rgba(212,175,55,0.1)]'
                                     : 'bg-white/5 border-white/5 hover:border-white/10'
                                 }`}
                               >
                                 <div className={`w-7 h-4 rounded flex items-center justify-center text-[7px] font-bold uppercase ${
-                                  card.brand === 'visa' ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white'
+                                  String(card.brand).toLowerCase() === 'visa' ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white'
                                 }`}>
                                   {card.brand}
                                 </div>
                                 <p className="text-xs font-bold text-white">•••• {card.last4}</p>
-                                {!useNewCard && selectedCardId === card.id && (
+                                {isSelected && (
                                   <CheckCircle2 size={12} className="text-gold-500" />
                                 )}
-                              </motion.button>
-                            ))}
-                            <motion.button
+                              </button>
+                              );
+                            })}
+                            <button
                               type="button"
-                              whileHover={{ y: -2 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setUseNewCard(true);
                                 setSelectedCardId(null);
                               }}
-                              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed transition-all duration-300 ${
+                              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed transition-colors duration-150 active:scale-[0.98] ${
                                 useNewCard
                                   ? 'bg-gold-500/10 border-gold-500 text-gold-400'
                                   : 'bg-white/[0.02] border-white/10 text-white/50 hover:border-gold-500/40 hover:text-gold-400'
@@ -694,7 +683,7 @@ export const PaymentStep: React.FC = () => {
                               <span className="text-xs font-bold whitespace-nowrap">
                                 {isAr ? 'بطاقة جديدة' : 'New Card'}
                               </span>
-                            </motion.button>
+                            </button>
                           </div>
                           {!useNewCard && selectedSavedCard && !selectedSavedCard.stripePaymentMethodId && (
                             <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
@@ -708,9 +697,8 @@ export const PaymentStep: React.FC = () => {
                       )}
 
                       {!effectiveActivePaymentOfferId ? (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                        <button
+                          type="button"
                           onClick={() => handlePreparePayment(offer.id)}
                           className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 bg-[length:200%_auto] hover:bg-right transition-all text-black font-extrabold text-sm shadow-[0_10px_20px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2 active:scale-[0.98]"
                         >
@@ -719,7 +707,7 @@ export const PaymentStep: React.FC = () => {
                             ? (isAr ? 'متابعة الدفع' : 'Continue to Payment')
                             : (isAr ? 'تأكيد الدفع بالبطاقة المختارة' : 'Confirm & Pay with Selected Card')
                           } — AED {price.toLocaleString()}
-                        </motion.button>
+                        </button>
                       ) : effectiveActivePaymentOfferId === offer.id ? (
                         <div>
                           {isPreparing ? (
@@ -792,10 +780,9 @@ export const PaymentStep: React.FC = () => {
                         </p>
                       )}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                  </div>
+              )}
+            </div>
           );
         })}
       </div>
