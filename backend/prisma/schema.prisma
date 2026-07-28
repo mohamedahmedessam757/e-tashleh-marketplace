@@ -365,8 +365,15 @@ enum StoreSubscriptionTier {
 }
 
 model UserSettings {
-  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String  @unique @map("user_id") @db.Uuid
+  /// Primary key matches live DB (`user_id`) — there is no separate `id` column.
+  userId            String  @id @map("user_id") @db.Uuid
+  language          String?
+  currency          String?
+  notificationsEmail  Boolean? @map("notifications_email")
+  notificationsPush   Boolean? @map("notifications_push")
+  notificationsSms    Boolean? @map("notifications_sms")
+  notificationsOffers Boolean? @map("notifications_offers")
+  theme             String?
   autoTranslateChat Boolean @default(false) @map("auto_translate_chat")
   preferredLanguage String  @default("ar") @map("preferred_language") @db.VarChar(8)
 

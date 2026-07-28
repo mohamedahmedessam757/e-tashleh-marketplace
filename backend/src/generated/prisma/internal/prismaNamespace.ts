@@ -5131,8 +5131,14 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 
 
 export const UserSettingsScalarFieldEnum = {
-  id: 'id',
   userId: 'userId',
+  language: 'language',
+  currency: 'currency',
+  notificationsEmail: 'notificationsEmail',
+  notificationsPush: 'notificationsPush',
+  notificationsSms: 'notificationsSms',
+  notificationsOffers: 'notificationsOffers',
+  theme: 'theme',
   autoTranslateChat: 'autoTranslateChat',
   preferredLanguage: 'preferredLanguage',
   createdAt: 'createdAt',

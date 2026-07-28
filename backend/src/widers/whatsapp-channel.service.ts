@@ -363,7 +363,6 @@ export class WhatsAppChannelService {
                     countryCode: true,
                     name: true,
                     whatsappOptIn: true,
-                    settings: { select: { preferredLanguage: true } },
                     store: { select: { name: true } },
                 },
             });
@@ -383,6 +382,20 @@ export class WhatsAppChannelService {
                 return;
             }
 
+            // Prefer user_settings.preferred_language; never block WA if settings join fails
+            let preferredLanguage: string | null = null;
+            try {
+                const settings = await this.prisma.userSettings.findUnique({
+                    where: { userId: params.recipientId },
+                    select: { preferredLanguage: true },
+                });
+                preferredLanguage = settings?.preferredLanguage ?? null;
+            } catch (settingsErr) {
+                this.logger.warn(
+                    `WhatsApp language lookup failed for ${params.recipientId}: ${settingsErr instanceof Error ? settingsErr.message : settingsErr}`,
+                );
+            }
+
             const orderId = extractOrderId(params.metadata, params.link);
             const offerId = extractOfferId(params.metadata);
             const invoiceContext = await this.resolveInvoiceContext(
@@ -399,7 +412,7 @@ export class WhatsAppChannelService {
                 return;
             }
 
-            const lang = this.resolveLanguage(user.settings?.preferredLanguage);
+            const lang = this.resolveLanguage(preferredLanguage);
             const statusDetail = lang === 'en' ? params.messageEn : params.messageAr;
             const orderNumber = await this.resolveOrderNumber(orderId, params);
 

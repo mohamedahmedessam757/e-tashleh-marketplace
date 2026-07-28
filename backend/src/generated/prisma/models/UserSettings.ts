@@ -25,8 +25,14 @@ export type AggregateUserSettings = {
 }
 
 export type UserSettingsMinAggregateOutputType = {
-  id: string | null
   userId: string | null
+  language: string | null
+  currency: string | null
+  notificationsEmail: boolean | null
+  notificationsPush: boolean | null
+  notificationsSms: boolean | null
+  notificationsOffers: boolean | null
+  theme: string | null
   autoTranslateChat: boolean | null
   preferredLanguage: string | null
   createdAt: Date | null
@@ -34,8 +40,14 @@ export type UserSettingsMinAggregateOutputType = {
 }
 
 export type UserSettingsMaxAggregateOutputType = {
-  id: string | null
   userId: string | null
+  language: string | null
+  currency: string | null
+  notificationsEmail: boolean | null
+  notificationsPush: boolean | null
+  notificationsSms: boolean | null
+  notificationsOffers: boolean | null
+  theme: string | null
   autoTranslateChat: boolean | null
   preferredLanguage: string | null
   createdAt: Date | null
@@ -43,8 +55,14 @@ export type UserSettingsMaxAggregateOutputType = {
 }
 
 export type UserSettingsCountAggregateOutputType = {
-  id: number
   userId: number
+  language: number
+  currency: number
+  notificationsEmail: number
+  notificationsPush: number
+  notificationsSms: number
+  notificationsOffers: number
+  theme: number
   autoTranslateChat: number
   preferredLanguage: number
   createdAt: number
@@ -54,8 +72,14 @@ export type UserSettingsCountAggregateOutputType = {
 
 
 export type UserSettingsMinAggregateInputType = {
-  id?: true
   userId?: true
+  language?: true
+  currency?: true
+  notificationsEmail?: true
+  notificationsPush?: true
+  notificationsSms?: true
+  notificationsOffers?: true
+  theme?: true
   autoTranslateChat?: true
   preferredLanguage?: true
   createdAt?: true
@@ -63,8 +87,14 @@ export type UserSettingsMinAggregateInputType = {
 }
 
 export type UserSettingsMaxAggregateInputType = {
-  id?: true
   userId?: true
+  language?: true
+  currency?: true
+  notificationsEmail?: true
+  notificationsPush?: true
+  notificationsSms?: true
+  notificationsOffers?: true
+  theme?: true
   autoTranslateChat?: true
   preferredLanguage?: true
   createdAt?: true
@@ -72,8 +102,14 @@ export type UserSettingsMaxAggregateInputType = {
 }
 
 export type UserSettingsCountAggregateInputType = {
-  id?: true
   userId?: true
+  language?: true
+  currency?: true
+  notificationsEmail?: true
+  notificationsPush?: true
+  notificationsSms?: true
+  notificationsOffers?: true
+  theme?: true
   autoTranslateChat?: true
   preferredLanguage?: true
   createdAt?: true
@@ -154,8 +190,14 @@ export type UserSettingsGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 export type UserSettingsGroupByOutputType = {
-  id: string
   userId: string
+  language: string | null
+  currency: string | null
+  notificationsEmail: boolean | null
+  notificationsPush: boolean | null
+  notificationsSms: boolean | null
+  notificationsOffers: boolean | null
+  theme: string | null
   autoTranslateChat: boolean
   preferredLanguage: string
   createdAt: Date
@@ -184,8 +226,14 @@ export type UserSettingsWhereInput = {
   AND?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   OR?: Prisma.UserSettingsWhereInput[]
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
-  id?: Prisma.UuidFilter<"UserSettings"> | string
   userId?: Prisma.UuidFilter<"UserSettings"> | string
+  language?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  currency?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  notificationsEmail?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsPush?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsSms?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsOffers?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  theme?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   autoTranslateChat?: Prisma.BoolFilter<"UserSettings"> | boolean
   preferredLanguage?: Prisma.StringFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
@@ -194,8 +242,14 @@ export type UserSettingsWhereInput = {
 }
 
 export type UserSettingsOrderByWithRelationInput = {
-  id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  language?: Prisma.SortOrderInput | Prisma.SortOrder
+  currency?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsPush?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsSms?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsOffers?: Prisma.SortOrderInput | Prisma.SortOrder
+  theme?: Prisma.SortOrderInput | Prisma.SortOrder
   autoTranslateChat?: Prisma.SortOrder
   preferredLanguage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -204,21 +258,33 @@ export type UserSettingsOrderByWithRelationInput = {
 }
 
 export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
-  id?: string
   userId?: string
   AND?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   OR?: Prisma.UserSettingsWhereInput[]
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
+  language?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  currency?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  notificationsEmail?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsPush?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsSms?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  notificationsOffers?: Prisma.BoolNullableFilter<"UserSettings"> | boolean | null
+  theme?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   autoTranslateChat?: Prisma.BoolFilter<"UserSettings"> | boolean
   preferredLanguage?: Prisma.StringFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "userId">
+}, "userId">
 
 export type UserSettingsOrderByWithAggregationInput = {
-  id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  language?: Prisma.SortOrderInput | Prisma.SortOrder
+  currency?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsPush?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsSms?: Prisma.SortOrderInput | Prisma.SortOrder
+  notificationsOffers?: Prisma.SortOrderInput | Prisma.SortOrder
+  theme?: Prisma.SortOrderInput | Prisma.SortOrder
   autoTranslateChat?: Prisma.SortOrder
   preferredLanguage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -232,8 +298,14 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   AND?: Prisma.UserSettingsScalarWhereWithAggregatesInput | Prisma.UserSettingsScalarWhereWithAggregatesInput[]
   OR?: Prisma.UserSettingsScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserSettingsScalarWhereWithAggregatesInput | Prisma.UserSettingsScalarWhereWithAggregatesInput[]
-  id?: Prisma.UuidWithAggregatesFilter<"UserSettings"> | string
   userId?: Prisma.UuidWithAggregatesFilter<"UserSettings"> | string
+  language?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
+  currency?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
+  notificationsEmail?: Prisma.BoolNullableWithAggregatesFilter<"UserSettings"> | boolean | null
+  notificationsPush?: Prisma.BoolNullableWithAggregatesFilter<"UserSettings"> | boolean | null
+  notificationsSms?: Prisma.BoolNullableWithAggregatesFilter<"UserSettings"> | boolean | null
+  notificationsOffers?: Prisma.BoolNullableWithAggregatesFilter<"UserSettings"> | boolean | null
+  theme?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   autoTranslateChat?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   preferredLanguage?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
@@ -241,7 +313,13 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
 }
 
 export type UserSettingsCreateInput = {
-  id?: string
+  language?: string | null
+  currency?: string | null
+  notificationsEmail?: boolean | null
+  notificationsPush?: boolean | null
+  notificationsSms?: boolean | null
+  notificationsOffers?: boolean | null
+  theme?: string | null
   autoTranslateChat?: boolean
   preferredLanguage?: string
   createdAt?: Date | string
@@ -250,8 +328,14 @@ export type UserSettingsCreateInput = {
 }
 
 export type UserSettingsUncheckedCreateInput = {
-  id?: string
   userId: string
+  language?: string | null
+  currency?: string | null
+  notificationsEmail?: boolean | null
+  notificationsPush?: boolean | null
+  notificationsSms?: boolean | null
+  notificationsOffers?: boolean | null
+  theme?: string | null
   autoTranslateChat?: boolean
   preferredLanguage?: string
   createdAt?: Date | string
@@ -259,7 +343,13 @@ export type UserSettingsUncheckedCreateInput = {
 }
 
 export type UserSettingsUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -268,8 +358,14 @@ export type UserSettingsUpdateInput = {
 }
 
 export type UserSettingsUncheckedUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -277,8 +373,14 @@ export type UserSettingsUncheckedUpdateInput = {
 }
 
 export type UserSettingsCreateManyInput = {
-  id?: string
   userId: string
+  language?: string | null
+  currency?: string | null
+  notificationsEmail?: boolean | null
+  notificationsPush?: boolean | null
+  notificationsSms?: boolean | null
+  notificationsOffers?: boolean | null
+  theme?: string | null
   autoTranslateChat?: boolean
   preferredLanguage?: string
   createdAt?: Date | string
@@ -286,7 +388,13 @@ export type UserSettingsCreateManyInput = {
 }
 
 export type UserSettingsUpdateManyMutationInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -294,8 +402,14 @@ export type UserSettingsUpdateManyMutationInput = {
 }
 
 export type UserSettingsUncheckedUpdateManyInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -308,8 +422,14 @@ export type UserSettingsNullableScalarRelationFilter = {
 }
 
 export type UserSettingsCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  language?: Prisma.SortOrder
+  currency?: Prisma.SortOrder
+  notificationsEmail?: Prisma.SortOrder
+  notificationsPush?: Prisma.SortOrder
+  notificationsSms?: Prisma.SortOrder
+  notificationsOffers?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
   autoTranslateChat?: Prisma.SortOrder
   preferredLanguage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -317,8 +437,14 @@ export type UserSettingsCountOrderByAggregateInput = {
 }
 
 export type UserSettingsMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  language?: Prisma.SortOrder
+  currency?: Prisma.SortOrder
+  notificationsEmail?: Prisma.SortOrder
+  notificationsPush?: Prisma.SortOrder
+  notificationsSms?: Prisma.SortOrder
+  notificationsOffers?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
   autoTranslateChat?: Prisma.SortOrder
   preferredLanguage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -326,8 +452,14 @@ export type UserSettingsMaxOrderByAggregateInput = {
 }
 
 export type UserSettingsMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  language?: Prisma.SortOrder
+  currency?: Prisma.SortOrder
+  notificationsEmail?: Prisma.SortOrder
+  notificationsPush?: Prisma.SortOrder
+  notificationsSms?: Prisma.SortOrder
+  notificationsOffers?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
   autoTranslateChat?: Prisma.SortOrder
   preferredLanguage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,8 +498,18 @@ export type UserSettingsUncheckedUpdateOneWithoutUserNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserSettingsUpdateToOneWithWhereWithoutUserInput, Prisma.UserSettingsUpdateWithoutUserInput>, Prisma.UserSettingsUncheckedUpdateWithoutUserInput>
 }
 
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
+}
+
 export type UserSettingsCreateWithoutUserInput = {
-  id?: string
+  language?: string | null
+  currency?: string | null
+  notificationsEmail?: boolean | null
+  notificationsPush?: boolean | null
+  notificationsSms?: boolean | null
+  notificationsOffers?: boolean | null
+  theme?: string | null
   autoTranslateChat?: boolean
   preferredLanguage?: string
   createdAt?: Date | string
@@ -375,7 +517,13 @@ export type UserSettingsCreateWithoutUserInput = {
 }
 
 export type UserSettingsUncheckedCreateWithoutUserInput = {
-  id?: string
+  language?: string | null
+  currency?: string | null
+  notificationsEmail?: boolean | null
+  notificationsPush?: boolean | null
+  notificationsSms?: boolean | null
+  notificationsOffers?: boolean | null
+  theme?: string | null
   autoTranslateChat?: boolean
   preferredLanguage?: string
   createdAt?: Date | string
@@ -399,7 +547,13 @@ export type UserSettingsUpdateToOneWithWhereWithoutUserInput = {
 }
 
 export type UserSettingsUpdateWithoutUserInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -407,7 +561,13 @@ export type UserSettingsUpdateWithoutUserInput = {
 }
 
 export type UserSettingsUncheckedUpdateWithoutUserInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationsEmail?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsPush?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsSms?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  notificationsOffers?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  theme?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoTranslateChat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,8 +577,14 @@ export type UserSettingsUncheckedUpdateWithoutUserInput = {
 
 
 export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
   userId?: boolean
+  language?: boolean
+  currency?: boolean
+  notificationsEmail?: boolean
+  notificationsPush?: boolean
+  notificationsSms?: boolean
+  notificationsOffers?: boolean
+  theme?: boolean
   autoTranslateChat?: boolean
   preferredLanguage?: boolean
   createdAt?: boolean
@@ -427,8 +593,14 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
 }, ExtArgs["result"]["userSettings"]>
 
 export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
   userId?: boolean
+  language?: boolean
+  currency?: boolean
+  notificationsEmail?: boolean
+  notificationsPush?: boolean
+  notificationsSms?: boolean
+  notificationsOffers?: boolean
+  theme?: boolean
   autoTranslateChat?: boolean
   preferredLanguage?: boolean
   createdAt?: boolean
@@ -437,8 +609,14 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 }, ExtArgs["result"]["userSettings"]>
 
 export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
   userId?: boolean
+  language?: boolean
+  currency?: boolean
+  notificationsEmail?: boolean
+  notificationsPush?: boolean
+  notificationsSms?: boolean
+  notificationsOffers?: boolean
+  theme?: boolean
   autoTranslateChat?: boolean
   preferredLanguage?: boolean
   createdAt?: boolean
@@ -447,15 +625,21 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 }, ExtArgs["result"]["userSettings"]>
 
 export type UserSettingsSelectScalar = {
-  id?: boolean
   userId?: boolean
+  language?: boolean
+  currency?: boolean
+  notificationsEmail?: boolean
+  notificationsPush?: boolean
+  notificationsSms?: boolean
+  notificationsOffers?: boolean
+  theme?: boolean
   autoTranslateChat?: boolean
   preferredLanguage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "autoTranslateChat" | "preferredLanguage" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId" | "language" | "currency" | "notificationsEmail" | "notificationsPush" | "notificationsSms" | "notificationsOffers" | "theme" | "autoTranslateChat" | "preferredLanguage" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 export type UserSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -472,8 +656,17 @@ export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: string
+    /**
+     * Primary key matches live DB (`user_id`) — there is no separate `id` column.
+     */
     userId: string
+    language: string | null
+    currency: string | null
+    notificationsEmail: boolean | null
+    notificationsPush: boolean | null
+    notificationsSms: boolean | null
+    notificationsOffers: boolean | null
+    theme: string | null
     autoTranslateChat: boolean
     preferredLanguage: string
     createdAt: Date
@@ -561,8 +754,8 @@ export interface UserSettingsDelegate<ExtArgs extends runtime.Types.Extensions.I
    * // Get first 10 UserSettings
    * const userSettings = await prisma.userSettings.findMany({ take: 10 })
    * 
-   * // Only select the `id`
-   * const userSettingsWithIdOnly = await prisma.userSettings.findMany({ select: { id: true } })
+   * // Only select the `userId`
+   * const userSettingsWithUserIdOnly = await prisma.userSettings.findMany({ select: { userId: true } })
    * 
    */
   findMany<T extends UserSettingsFindManyArgs>(args?: Prisma.SelectSubset<T, UserSettingsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSettingsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -606,9 +799,9 @@ export interface UserSettingsDelegate<ExtArgs extends runtime.Types.Extensions.I
    *   ]
    * })
    * 
-   * // Create many UserSettings and only return the `id`
-   * const userSettingsWithIdOnly = await prisma.userSettings.createManyAndReturn({
-   *   select: { id: true },
+   * // Create many UserSettings and only return the `userId`
+   * const userSettingsWithUserIdOnly = await prisma.userSettings.createManyAndReturn({
+   *   select: { userId: true },
    *   data: [
    *     // ... provide data here
    *   ]
@@ -697,9 +890,9 @@ export interface UserSettingsDelegate<ExtArgs extends runtime.Types.Extensions.I
    *   ]
    * })
    * 
-   * // Update zero or more UserSettings and only return the `id`
-   * const userSettingsWithIdOnly = await prisma.userSettings.updateManyAndReturn({
-   *   select: { id: true },
+   * // Update zero or more UserSettings and only return the `userId`
+   * const userSettingsWithUserIdOnly = await prisma.userSettings.updateManyAndReturn({
+   *   select: { userId: true },
    *   where: {
    *     // ... provide filter here
    *   },
@@ -902,8 +1095,14 @@ export interface Prisma__UserSettingsClient<T, Null = never, ExtArgs extends run
  * Fields of the UserSettings model
  */
 export interface UserSettingsFieldRefs {
-  readonly id: Prisma.FieldRef<"UserSettings", 'String'>
   readonly userId: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly language: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly currency: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly notificationsEmail: Prisma.FieldRef<"UserSettings", 'Boolean'>
+  readonly notificationsPush: Prisma.FieldRef<"UserSettings", 'Boolean'>
+  readonly notificationsSms: Prisma.FieldRef<"UserSettings", 'Boolean'>
+  readonly notificationsOffers: Prisma.FieldRef<"UserSettings", 'Boolean'>
+  readonly theme: Prisma.FieldRef<"UserSettings", 'String'>
   readonly autoTranslateChat: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly preferredLanguage: Prisma.FieldRef<"UserSettings", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserSettings", 'DateTime'>

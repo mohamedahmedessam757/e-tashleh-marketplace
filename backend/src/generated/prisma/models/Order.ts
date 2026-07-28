@@ -1241,10 +1241,6 @@ export type EnumOrderStatusFieldUpdateOperationsInput = {
   set?: $Enums.OrderStatus
 }
 
-export type NullableBoolFieldUpdateOperationsInput = {
-  set?: boolean | null
-}
-
 export type OrderCreateNestedOneWithoutVerificationDocumentsInput = {
   create?: Prisma.XOR<Prisma.OrderCreateWithoutVerificationDocumentsInput, Prisma.OrderUncheckedCreateWithoutVerificationDocumentsInput>
   connectOrCreate?: Prisma.OrderCreateOrConnectWithoutVerificationDocumentsInput
