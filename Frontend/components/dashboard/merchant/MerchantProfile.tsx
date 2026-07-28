@@ -454,7 +454,7 @@ export const MerchantProfile: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {vendorStatus === 'PENDING_REVIEW' ? (
+                        {vendorStatus === 'PENDING_REVIEW' && (
                             <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex items-start gap-3 animate-pulse">
                                 <Shield className="text-orange-500 mt-0.5" size={20} />
                                 <div>
@@ -468,14 +468,6 @@ export const MerchantProfile: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                        ) : (
-                            <LicenseExpiryBanner
-                                compact
-                                onNavigate={() => {
-                                    const el = document.getElementById('merchant-docs-section');
-                                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                            />
                         )}
 
                         <div className="grid lg:grid-cols-3 gap-8">
