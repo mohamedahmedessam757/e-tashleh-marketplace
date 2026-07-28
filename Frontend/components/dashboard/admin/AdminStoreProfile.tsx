@@ -1335,24 +1335,25 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                 </div>
             </div>
 
-            {/* Operational KPIs — same metrics as merchant profile (live from offers/payments) */}
+            {/* Operational KPIs - same metrics as merchant profile (live from offers/payments) */}
             {(() => {
                 const k = vendor.operationalKpis || {};
                 const kpiCopy = (t.admin.storeProfile as any).operationalKpi || {};
+                const dash = '-';
                 const cards = [
                     {
                         label: kpiCopy.responseSpeed || (isAr ? 'سرعة الرد' : 'Response Speed'),
-                        value: k.hasResponseSpeed ? `${k.responseSpeed}h` : '—',
+                        value: k.hasResponseSpeed ? String(k.responseSpeed) + 'h' : dash,
                         status: !k.hasResponseSpeed ? 'neutral' : Number(k.responseSpeed) < 4 ? 'good' : 'bad',
                     },
                     {
                         label: kpiCopy.prepSpeed || (isAr ? 'سرعة التجهيز' : 'Prep Speed'),
-                        value: k.hasPrepSpeed ? `${k.prepSpeed}h` : '—',
+                        value: k.hasPrepSpeed ? String(k.prepSpeed) + 'h' : dash,
                         status: !k.hasPrepSpeed ? 'neutral' : Number(k.prepSpeed) < 24 ? 'good' : 'bad',
                     },
                     {
                         label: kpiCopy.acceptanceRate || (isAr ? 'معدل القبول' : 'Acceptance Rate'),
-                        value: `${k.acceptanceRate ?? 0}%`,
+                        value: String(k.acceptanceRate ?? 0) + '%',
                         status: Number(k.acceptanceRate ?? 0) > 50 ? 'good' : 'bad',
                     },
                     {
@@ -1362,7 +1363,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     },
                 ];
                 return (
-                    <GlassCard className="p-5 border-white/5 bg-[#141210]/
+                    <GlassCard className="p-5 border-white/5" style={{ backgroundColor: '#141210' }}>
                         <div className="flex items-center justify-between mb-4 px-1">
                             <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                 <Activity size={16} className="text-gold-500" />
@@ -1384,15 +1385,16 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                         {kpi.label}
                                     </div>
                                     <div
-                                        className={`text-lg font-black tabular-nums ${
-                                            kpi.status === 'good'
+                                        className={
+                                            'text-lg font-black tabular-nums ' +
+                                            (kpi.status === 'good'
                                                 ? 'text-green-400'
                                                 : kpi.status === 'risk'
                                                   ? 'text-yellow-400'
                                                   : kpi.status === 'neutral'
                                                     ? 'text-white/40'
-                                                    : 'text-red-400'
-                                        }`}
+                                                    : 'text-red-400')
+                                        }
                                     >
                                         {kpi.value}
                                     </div>
