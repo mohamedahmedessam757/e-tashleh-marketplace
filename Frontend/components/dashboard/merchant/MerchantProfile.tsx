@@ -197,7 +197,7 @@ export const MerchantProfile: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <LicenseExpiryBanner onNavigate={() => setActiveProfileTab('contract')} />
+            <LicenseExpiryBanner onNavigate={() => setActiveProfileTab('info')} />
             <div className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20">
@@ -1143,32 +1143,37 @@ export const MerchantProfile: React.FC = () => {
                                 onSubmit={handleSubmitContractAmendment}
                             />
                         )}
-
-                        <MerchantDocumentUploadModal
-                            isOpen={Boolean(docUploadModal)}
-                            onClose={() => setDocUploadModal(null)}
-                            docKey={docUploadModal?.key || 'cr'}
-                            docTitle={docUploadModal?.title || ''}
-                            initialExpiry={
-                                docUploadModal
-                                    ? (documents as any)?.[docUploadModal.key]?.expiryDate ||
-                                      (docUploadModal.key === 'license'
-                                          ? contractAcceptance?.secondPartyData?.licenseExpiry
-                                          : null)
-                                    : null
-                            }
-                            requiresLegalConfirm={
-                                docUploadModal?.key === 'cr' || docUploadModal?.key === 'license'
-                            }
-                            onSubmit={async ({ file, expiresAt }) => {
-                                if (!docUploadModal) return;
-                                await uploadDocument(docUploadModal.key as any, file, expiresAt);
-                                await fetchVendorProfile();
-                            }}
-                        />
                         </motion.div>
                         )}
                     </AnimatePresence>
+
+                    <MerchantDocumentUploadModal
+                        isOpen={Boolean(docUploadModal)}
+                        onClose={() => setDocUploadModal(null)}
+                        docKey={docUploadModal?.key || 'cr'}
+                        docTitle={docUploadModal?.title || ''}
+                        initialExpiry={
+                            docUploadModal
+                                ? (documents as any)?.[docUploadModal.key]?.expiryDate ||
+                                  (docUploadModal.key === 'license'
+                                      ? contractAcceptance?.secondPartyData?.licenseExpiry
+                                      : null)
+                                : null
+                        }
+                        currentFileUrl={
+                            docUploadModal
+                                ? (documents as any)?.[docUploadModal.key]?.fileUrl || null
+                                : null
+                        }
+                        requiresLegalConfirm={
+                            docUploadModal?.key === 'cr' || docUploadModal?.key === 'license'
+                        }
+                        onSubmit={async ({ file, expiresAt }) => {
+                            if (!docUploadModal) return;
+                            await uploadDocument(docUploadModal.key as any, file, expiresAt);
+                            await fetchVendorProfile();
+                        }}
+                    />
         </div>
     );
 };

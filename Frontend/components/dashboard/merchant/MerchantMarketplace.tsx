@@ -10,9 +10,9 @@ import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
 import { SubmitOfferModal } from './SubmitOfferModal';
 import { CountdownTimer } from '../OrderDetails';
-import { getDynamicOrderDeadline, isOrderExpired } from '../../../utils/dateUtils';
+import { isVisibleOnMerchantIncomingPage } from '../../../utils/merchantOrderBuckets';
 import { getActiveOffersForStore } from '../../../utils/merchantOffers';
-import { isEligibleMerchantIncomingOrder } from '../../../utils/merchantOrderBuckets';
+import { getDynamicOrderDeadline, isOrderExpired } from '../../../utils/dateUtils';
 
 interface MerchantMarketplaceProps {
     onNavigate?: (path: string, id?: any) => void;
@@ -20,7 +20,7 @@ interface MerchantMarketplaceProps {
 
 export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
-    const { orders, addOfferToOrder } = useOrderStore();
+    const { orders, addOfferToOrder, fetchOrders } = useOrderStore();
     const { vendorStatus, storeInfo, storeId, visibilityRestricted, visibilityRate, visibilityNote, performance } = useVendorStore();
     const monthlyDeletions = performance?.monthlyOfferDeletionCount ?? 0;
     const biddingUntil = performance?.offerBiddingRestrictedUntil
@@ -30,6 +30,61 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
     const nearDeletionLimit = monthlyDeletions >= (performance?.monthlyDeletionWarnAt ?? 35);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+
+    useEffect(() => {
+        void fetchOrders().catch(() => {});
+    }, [fetchOrders]);
+
+    // Active marketplace + my involved orders (hide terminal + lost bids)
+    const activeRequests = useMemo(() => {
+        return orders.filter((o) => {
+            const make = (o.vehicle?.make || o.car || '').toLowerCase();
+            const model = (o.vehicle?.model || '').toLowerCase();
+            const selectedMakesLower = (storeInfo?.selectedMakes || []).map((m: string) => m.toLowerCase());
+            const selectedModelsLower = (storeInfo?.selectedModels || []).map((m: string) => m.toLowerCase());
+            const hasMakes = selectedMakesLower.length > 0;
+            const hasModels = selectedModelsLower.length > 0;
+            const matchesSpecialization =
+                (!hasMakes || selectedMakesLower.includes(make)) &&
+                (!hasModels || selectedModelsLower.includes(model));
+
+            return isVisibleOnMerchantIncomingPage(o, storeId, {
+                isExpired: isOrderExpired(o),
+                matchesSpecialization,
+            });
+        });
+    }, [orders, storeId, storeInfo?.selectedMakes, storeInfo?.selectedModels]);
+
+    // Compute unique car makes dynamically
+    const dynamicFilters = useMemo(() => {
+        const makes = new Set<string>();
+        activeRequests.forEach(req => {
+            const make = req.vehicle?.make || req.car;
+            if (make && typeof make === 'string') makes.add(make);
+        });
+        const filtersArr = Array.from(makes).map(make => ({ id: make, label: make }));
+        return [{ id: 'all', label: t.dashboard.merchant.marketplace.filters.all }, ...filtersArr];
+    }, [activeRequests, t.dashboard.merchant.marketplace.filters.all]);
+
+    // Search & Filter Logic
+    const openRequests = activeRequests.filter(o => {
+        const make = (o.vehicle?.make || o.car || '').toLowerCase();
+
+        // 3. Standard Search filters
+        const matchesSearch = (
+            o.part?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            o.id?.toString().includes(searchQuery) ||
+            o.car?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            make.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        const matchesViewFilter = (activeFilter === 'all' || make?.toLowerCase() === activeFilter.toLowerCase());
+
+        return matchesSearch && matchesViewFilter;
+    });
+
+    const isAr = language === 'ar';
+    const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
 
     // LICENSE CHECK
     if (vendorStatus === 'LICENSE_EXPIRED') {
@@ -51,92 +106,6 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
             </div>
         );
     }
-
-    // Incoming marketplace ONLY: open bidding + stop time not elapsed.
-    // Never show AWAITING_SELECTION / payment / fulfillment here.
-    const activeRequests = useMemo(() => {
-        return orders.filter((o) => isEligibleMerchantIncomingOrder(o));
-    }, [orders]);
-
-    // Compute unique car makes dynamically
-    const dynamicFilters = useMemo(() => {
-        const makes = new Set<string>();
-        activeRequests.forEach(req => {
-            const make = req.vehicle?.make || req.car;
-            if (make && typeof make === 'string') makes.add(make);
-        });
-        const filtersArr = Array.from(makes).map(make => ({ id: make, label: make }));
-        return [{ id: 'all', label: t.dashboard.merchant.marketplace.filters.all }, ...filtersArr];
-    }, [activeRequests, t.dashboard.merchant.marketplace.filters.all]);
-
-    // Search & Filter Logic
-    const openRequests = activeRequests.filter(o => {
-        // 1. Specialization Filtering (Relaxed & Case-Insensitive)
-        const make = (o.vehicle?.make || o.car || '').toLowerCase();
-        const model = (o.vehicle?.model || '').toLowerCase();
-        
-        const selectedMakesLower = (storeInfo?.selectedMakes || []).map((m: string) => m.toLowerCase());
-        const selectedModelsLower = (storeInfo?.selectedModels || []).map((m: string) => m.toLowerCase());
-        
-        const hasMakes = selectedMakesLower.length > 0;
-        const hasModels = selectedModelsLower.length > 0;
-
-        // If merchant has specializations, check matching
-        const matchesSpecialization = !hasMakes || selectedMakesLower.includes(make);
-        const matchesModel = !hasModels || selectedModelsLower.includes(model);
-
-        // 2. Advanced Logic: Visibility overrides
-        const myOffers = getActiveOffersForStore(o.offers, storeId);
-        const hasOfferByMe = myOffers.length > 0;
-        const hasAcceptedByMe = myOffers.some((of: any) => of.status === 'accepted' || of.status === 'ACCEPTED');
-
-        const partsCount = (o.parts || []).length;
-        const partsWithAcceptedOffer = (o.parts || []).filter((part: any) => {
-            return (o.offers || []).some((of: any) =>
-                (of.orderPartId === part.id || of.order_part_id === part.id) && 
-                (of.status === 'accepted' || of.status === 'ACCEPTED')
-            );
-        });
-
-        // Determine if everything is taken
-        const allPartsTaken = partsCount > 0
-            ? partsWithAcceptedOffer.length === partsCount
-            : (o.offers || []).some((of: any) => of.status === 'accepted' || of.status === 'ACCEPTED');
-
-        const isClosedStatus = ['COMPLETED', 'DELIVERED', 'CANCELLED', 'RETURNED'].includes(o.status);
-        const isExpired = isOrderExpired(o);
-        
-        // VISIBILITY RULES:
-        // - Hide if status is definitively closed (COMPLETED etc.)
-        if (isClosedStatus) return false;
-        
-        let shouldShowByVisibility = false;
-        if (hasOfferByMe) {
-            // If I have an offer, ignore expiration and specialization (to track follow-up).
-            // But hide if ALL parts are taken by others AND I didn't win anything.
-            shouldShowByVisibility = !(allPartsTaken && !hasAcceptedByMe);
-        } else {
-            // If no offer yet: MUST NOT be expired, MUST match both Make and Model specialization, and MUST have open parts
-            shouldShowByVisibility = !isExpired && matchesSpecialization && matchesModel && !allPartsTaken;
-        }
-
-        if (!shouldShowByVisibility) return false;
-
-        // 3. Standard Search filters
-        const matchesSearch = (
-            o.part?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            o.id?.toString().includes(searchQuery) ||
-            o.car?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            make.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        const matchesViewFilter = (activeFilter === 'all' || make?.toLowerCase() === activeFilter.toLowerCase());
-
-        return matchesSearch && matchesViewFilter;
-    });
-
-    const isAr = language === 'ar';
-    const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
 
     const handleOpenExplore = (request: any) => {
         if (onNavigate) {

@@ -6,22 +6,22 @@ export const MERCHANT_MARKETPLACE_OPEN_STATUSES = [
     'COLLECTING_OFFERS',
 ] as const;
 
-/** Statuses that must never appear as "incoming" discovery for a merchant */
-export const MERCHANT_INCOMING_EXCLUDED_STATUSES = [
-    'AWAITING_SELECTION',
-    'AWAITING_PAYMENT',
-    'PARTIALLY_PAID',
-    'CANCELLED',
+/** Terminal / finished — hide from Incoming Orders */
+export const MERCHANT_INCOMING_TERMINAL_STATUSES = [
     'COMPLETED',
     'DELIVERED',
+    'CANCELLED',
     'RETURNED',
     'REFUNDED',
     'CLOSED',
+    'WARRANTY_ACTIVE',
+    'WARRANTY_EXPIRED',
+    'RESOLVED',
 ] as const;
 
 /**
- * Strict eligibility for "الطلبات الواردة" / incoming marketplace cards.
- * Bidding closed (selection+) or offersStopAt elapsed → never show to new bidders.
+ * Discovery-only: new bids still open.
+ * Used by Merchant Home "new requests" count — not the full Incoming page.
  */
 export function isEligibleMerchantIncomingOrder(order: {
     status?: string | null;
@@ -34,22 +34,100 @@ export function isEligibleMerchantIncomingOrder(order: {
     if (!(MERCHANT_MARKETPLACE_OPEN_STATUSES as readonly string[]).includes(status)) {
         return false;
     }
-    if ((MERCHANT_INCOMING_EXCLUDED_STATUSES as readonly string[]).includes(status)) {
-        return false;
-    }
 
     const now = Date.now();
     if (order.offersStopAt) {
         const stop = new Date(order.offersStopAt).getTime();
         if (!Number.isNaN(stop) && stop <= now) return false;
     } else if (order.revealOffersAt) {
-        // Fallback: if stop missing, hide once reveal/selection window starts
         const reveal = new Date(order.revealOffersAt).getTime();
         if (!Number.isNaN(reveal) && reveal <= now) return false;
     }
 
     return true;
 }
+
+/**
+ * Incoming Orders page visibility:
+ * - Show open bidding discovery (not expired)
+ * - Show orders where this merchant already has an active offer / won
+ * - Hide terminal finished statuses
+ * - Hide lost bids (all parts taken by others, merchant won none)
+ */
+export function isVisibleOnMerchantIncomingPage(
+    order: Order,
+    storeId: string | null | undefined,
+    opts?: {
+        isExpired?: boolean;
+        matchesSpecialization?: boolean;
+    },
+): boolean {
+    const status = String(order?.status || '').toUpperCase();
+    if ((MERCHANT_INCOMING_TERMINAL_STATUSES as readonly string[]).includes(status)) {
+        return false;
+    }
+
+    const myStore = storeId ? String(storeId) : '';
+    const offers = order.offers || [];
+    const myOffers = myStore
+        ? offers.filter(
+              (of: any) =>
+                  String(of.storeId) === myStore &&
+                  String(of.status || '').toLowerCase() !== 'withdrawn' &&
+                  String(of.status || '').toLowerCase() !== 'rejected',
+          )
+        : [];
+    const hasOfferByMe = myOffers.length > 0;
+    const hasAcceptedByMe = myOffers.some((of: any) => {
+        const s = String(of.status || '').toUpperCase();
+        return s === 'ACCEPTED' || s === 'PAID' || s === 'FULFILLING';
+    });
+    const wonViaOrder =
+        !!myStore &&
+        (String((order as any).merchantId || '') === myStore ||
+            String(order.acceptedOffer?.storeId || '') === myStore ||
+            String((order as any).storeId || '') === myStore);
+
+    const parts = order.parts || [];
+    const partsCount = parts.length;
+    const partsWithAcceptedOffer = parts.filter((part: any) =>
+        offers.some(
+            (of: any) =>
+                (of.orderPartId === part.id || of.order_part_id === part.id) &&
+                String(of.status || '').toUpperCase() === 'ACCEPTED',
+        ),
+    );
+    const allPartsTaken =
+        partsCount > 0
+            ? partsWithAcceptedOffer.length === partsCount
+            : offers.some((of: any) => String(of.status || '').toUpperCase() === 'ACCEPTED');
+
+    // Lost bid: everything taken by others and I didn't win
+    if (allPartsTaken && !hasAcceptedByMe && !wonViaOrder) {
+        return false;
+    }
+
+    if (hasOfferByMe || hasAcceptedByMe || wonViaOrder) {
+        return true;
+    }
+
+    // Discovery path for merchants who have not bid yet
+    if (!isEligibleMerchantIncomingOrder(order)) return false;
+    if (opts?.isExpired) return false;
+    if (opts?.matchesSpecialization === false) return false;
+    if (allPartsTaken) return false;
+    return true;
+}
+
+/** @deprecated Use MERCHANT_INCOMING_TERMINAL_STATUSES — kept for older imports */
+export const MERCHANT_INCOMING_EXCLUDED_STATUSES = [
+    'CANCELLED',
+    'COMPLETED',
+    'DELIVERED',
+    'RETURNED',
+    'REFUNDED',
+    'CLOSED',
+] as const;
 
 /** Bidding / payment negotiation phase */
 export const MERCHANT_NEGOTIATING_STATUSES = [
