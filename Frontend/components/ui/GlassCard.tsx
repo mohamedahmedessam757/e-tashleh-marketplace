@@ -7,6 +7,7 @@ interface GlassCardProps {
   onClick?: () => void;
   enableHover?: boolean;
   enableBlur?: boolean;
+  id?: string;
 }
 
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
@@ -15,11 +16,13 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
   delay = 0,
   onClick,
   enableHover = true,
-  enableBlur = true
+  enableBlur = true,
+  id,
 }, ref) => {
   const skipEntranceAnim = className.includes('no-entrance-anim');
   return (
     <div
+      id={id}
       ref={ref}
       onClick={onClick}
       style={{ animationDelay: skipEntranceAnim ? undefined : `${delay}s` }}

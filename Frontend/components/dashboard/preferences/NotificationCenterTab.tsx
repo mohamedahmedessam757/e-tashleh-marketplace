@@ -11,7 +11,7 @@ import {
 
 interface NotificationCenterTabProps {
     role?: 'customer' | 'merchant' | 'admin' | string;
-    onNavigate?: (path: string, id?: number) => void;
+    onNavigate?: (path: string, id?: string | number) => void;
 }
 
 export const NotificationCenterTab: React.FC<NotificationCenterTabProps> = ({ role = 'customer', onNavigate }) => {
@@ -89,13 +89,19 @@ export const NotificationCenterTab: React.FC<NotificationCenterTabProps> = ({ ro
                                         const nav = resolveNotificationNavigation(notif);
                                         if (!nav) return;
                                         if (nav.context) setViolationNavContext(nav.context);
-                                        if (notif.metadata?.orderId) {
-                                            onNavigate('order-details', notif.metadata.orderId);
-                                        } else if (notif.metadata?.caseId) {
-                                            onNavigate('dispute-details', notif.metadata.caseId);
-                                        } else {
-                                            onNavigate(nav.path);
+
+                                        let path = nav.path;
+                                        let id =
+                                            nav.id ||
+                                            (notif.metadata?.orderId as string | undefined) ||
+                                            (notif.metadata?.caseId as string | undefined);
+
+                                        if (path === 'store-profile') {
+                                            path = 'profile';
+                                            id = undefined;
                                         }
+
+                                        onNavigate(path, id);
                                     }}
                                     className={`p-5 hover:bg-white/5 cursor-pointer transition-colors relative flex gap-4 ${!notif.isRead ? 'bg-gold-500/5' : ''}`}
                                 >

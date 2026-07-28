@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { useNotificationStore } from './useNotificationStore';
 import { supabase } from '../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { daysUntilLicenseExpiry, parseLicenseDate } from '../utils/licenseExpiry';
+import { resolveEarliestDocumentExpiry } from '../utils/licenseExpiry';
 
 /** Ref-count: multiple components may request vendor profile realtime. */
 let vendorProfileRealtimeRefCount = 0;
@@ -670,34 +670,27 @@ export const useVendorStore = create<VendorState>()(
   // --- THE LICENSE WATCHDOG LOGIC ---
   checkLicenseStatus: () => {
     const state = get();
-    const license = state.documents.license;
-    const contractExpiry = state.contractAcceptance?.secondPartyData?.licenseExpiry;
-    const expiryRaw = license.expiryDate || contractExpiry;
-
-    // Only check if active or already expired (to re-activate)
     if (['PENDING_DOCUMENTS', 'PENDING_REVIEW', 'IDLE'].includes(state.vendorStatus)) return;
 
-    if (expiryRaw) {
-      const expiry = parseLicenseDate(expiryRaw);
-      if (!expiry) return;
-      const diffDays = daysUntilLicenseExpiry(expiry);
+    const earliest = resolveEarliestDocumentExpiry(state.documents, state.contractAcceptance);
+    if (!earliest) return;
 
-      if (diffDays <= 0 && state.vendorStatus !== 'LICENSE_EXPIRED') {
-        // EXPIRED: Block Access
-        set({ vendorStatus: 'LICENSE_EXPIRED' });
-        state.updateDocumentStatus('license', 'expired');
-        useNotificationStore.getState().addNotification({
-          type: 'docExpiry',
-          titleKey: 'docExpiry',
-          message: 'CRITICAL: License Expired. Account Restricted.',
-          priority: 'urgent',
-          linkTo: 'docs'
-        });
-      } else if (diffDays > 0 && state.vendorStatus === 'LICENSE_EXPIRED') {
-        // RENEWED: Restore Access
-        set({ vendorStatus: 'ACTIVE' });
-        state.updateDocumentStatus('license', 'approved');
+    const diffDays = earliest.daysLeft;
+
+    if (diffDays < -15 && state.vendorStatus !== 'LICENSE_EXPIRED') {
+      set({ vendorStatus: 'LICENSE_EXPIRED' });
+      if (earliest.key !== 'license_fallback') {
+        state.updateDocumentStatus(earliest.key as any, 'expired');
       }
+      useNotificationStore.getState().addNotification({
+        type: 'docExpiry',
+        titleKey: 'docExpiry',
+        message: 'CRITICAL: Document expired past grace. Account restricted.',
+        priority: 'urgent',
+        linkTo: 'profile',
+      });
+    } else if (diffDays > 0 && state.vendorStatus === 'LICENSE_EXPIRED') {
+      set({ vendorStatus: 'ACTIVE' });
     }
   },
 

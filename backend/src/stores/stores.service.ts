@@ -238,7 +238,7 @@ export class StoresService {
                     messageAr: 'لقد قمت بتحديث مستندات قانونية هامة. تم تعليق حسابك مؤقتاً حتى يقوم المسؤول بمراجعة التحديثات وتفعيل المتجر.',
                     messageEn: 'You have updated important legal documents. Your account is temporarily suspended until an admin reviews the updates.',
                     type: 'SYSTEM',
-                    link: '/dashboard/merchant/store'
+                    link: '/dashboard/merchant/profile'
                 }).catch(() => {});
             } else {
                 // Active orders exist: Queue review for later to prevent business interruption
@@ -250,7 +250,7 @@ export class StoresService {
                     messageAr: 'تم استلام المستندات بنجاح. نظراً لوجود طلبات نشطة، سيتم بدء المراجعة الرسمية وتعليق الحساب للمراجعة فور اكتمال طلباتك الحالية لضمان استمرارية عملك.',
                     messageEn: 'Documents received successfully. Due to active orders, formal review and suspension will begin once your current orders are fulfilled to ensure business continuity.',
                     type: 'ALERT',
-                    link: '/dashboard/merchant/store'
+                    link: '/dashboard/merchant/profile'
                 }).catch(() => {});
             }
 
@@ -612,7 +612,7 @@ export class StoresService {
                     messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
                     messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
                     type: 'SUCCESS',
-                    link: '/dashboard/merchant/store',
+                    link: '/dashboard/merchant/profile',
                     metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
                 }).catch(e => console.error('Failed to send store activation notification', e));
             }
@@ -648,7 +648,7 @@ export class StoresService {
                 messageAr: `تم إيقاف متجر (${result.name}) مؤقتاً.${untilLabel ? ` ينتهي الإيقاف في: ${untilLabel}.` : ''} السبب: ${reason || 'قرار إداري'}.`,
                 messageEn: `Store (${result.name}) has been temporarily suspended.${untilLabel ? ` Suspension ends: ${untilLabel}.` : ''} Reason: ${reason || 'Administrative decision'}.`,
                 type: 'SECURITY',
-                link: '/dashboard/merchant/store'
+                link: '/dashboard/merchant/profile'
             }).catch(e => console.error('Failed to send store suspension notification', e));
         }
 
@@ -661,7 +661,7 @@ export class StoresService {
                 messageAr: `تم حظر متجر (${result.name}) بشكل دائم. السبب: ${reason || 'قرار إداري'}. يرجى التواصل مع الدعم الفني.`,
                 messageEn: `Store (${result.name}) has been permanently blocked. Reason: ${reason || 'Administrative decision'}. Please contact support.`,
                 type: 'SECURITY',
-                link: '/dashboard/merchant/store'
+                link: '/dashboard/merchant/profile'
             }).catch(e => console.error('Failed to send store block notification', e));
         }
 
@@ -810,7 +810,7 @@ export class StoresService {
                     messageAr: `تمت مراجعة واعتماد مستندك (${docType}) من قبل الإدارة بنجاح.`,
                     messageEn: `Your document (${docType}) has been successfully reviewed and approved by administration.`,
                     type: 'SUCCESS',
-                    link: '/dashboard/merchant/store',
+                    link: '/dashboard/merchant/profile',
                     metadata: { docType, waEvent: 'DOCUMENT' },
                 }).catch(() => {});
             } else if (isReupload || isRejected) {
@@ -826,7 +826,7 @@ export class StoresService {
                         ? `Admin (${adminName || 'System'}) requested re-upload for (${docType}). Reason: ${reason || 'Please review'}.`
                         : `Your document (${docType}) was rejected by the administration. Reason: ${reason || 'Please review and re-upload'}.`,
                     type: isReupload ? 'ALERT' : 'SYSTEM',
-                    link: '/dashboard/merchant/store',
+                    link: '/dashboard/merchant/profile',
                     metadata: { docType, waEvent: 'DOCUMENT' },
                 }).catch(e => console.error('Failed to notify merchant of document status update', e));
             }
@@ -921,19 +921,19 @@ export class StoresService {
                 messageAr: `تم إيقاف حسابك لعدم تجديد المستندات الأساسية بعد فترة السماح (15 يوماً). يرجى رفع المستندات المجددة.`,
                 messageEn: `Your account has been suspended for not renewing mandatory documents after the 15-day grace period. Please upload renewed documents.`,
                 type: 'DOC_EXPIRY',
-                link: '/dashboard/merchant/store',
-                metadata: { waEvent: 'DOCUMENT', docType: 'license_expiry' },
+                link: '/dashboard/merchant/profile',
+                metadata: { waEvent: 'DOCUMENT', docType: 'license_expiry', storeId: store.id },
             }).catch(() => {});
 
             // Notify Admin about Expiry Suspension
             this.notificationsService.notifyAdmins({
-                titleAr: 'إيقاف متجر (انتهاء مستندات)',
-                titleEn: 'Store Suspended (Expired Docs)',
+                titleAr: `عاجل: إيقاف متجر (${store.name})`,
+                titleEn: `Urgent: Store suspended (${store.name})`,
                 messageAr: `تم إيقاف المتجر (${store.name}) تلقائياً بسبب انتهاء صلاحية المستندات وفترة السماح.`,
                 messageEn: `Store (${store.name}) was automatically suspended due to expired documents and grace period.`,
                 type: 'DOC_EXPIRY',
                 link: `/admin/stores/${store.id}`,
-                metadata: { storeId: store.id }
+                metadata: { storeId: store.id, storeName: store.name }
             }).catch(() => {});
         } else {
             // Check for upcoming expiries (30 days or in grace period)
@@ -945,6 +945,12 @@ export class StoresService {
             });
             
             if (warningDocs.length > 0) {
+                const soonest = warningDocs
+                    .map(d => ({ d, days: Math.ceil((new Date(d.expiresAt!).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) }))
+                    .sort((a, b) => a.days - b.days)[0];
+                const daysLeft = soonest?.days ?? 0;
+                const inGrace = daysLeft <= 0;
+
                 // Throttle notifications to once a week
                 const recentAlert = await this.prisma.notification.findFirst({
                     where: {
@@ -958,13 +964,35 @@ export class StoresService {
                     await this.notificationsService.create({
                         recipientId: store.ownerId,
                         recipientRole: 'MERCHANT',
-                        titleAr: 'تنبيه مستندات المتجر',
-                        titleEn: 'Store Documents Alert',
-                        messageAr: `يوجد لديك مستندات تقترب من الإنتهاء أو في فترة السماح. يرجى تحديثها لتجنب إيقاف الحساب.`,
-                        messageEn: `You have documents expiring soon or in grace period. Please update them to avoid suspension.`,
+                        titleAr: inGrace ? 'عاجل: مستند منتهٍ — فترة السماح' : 'تنبيه عاجل: مستندات ستنتهي قريباً',
+                        titleEn: inGrace ? 'Urgent: Document expired — grace period' : 'Urgent: Documents expiring soon',
+                        messageAr: inGrace
+                            ? `انتهت صلاحية مستنداتك. متبقي ${15 + daysLeft} يوم قبل تجميد الحساب تلقائياً. حدّث المستندات فوراً.`
+                            : `مستنداتك تنتهي خلال ${daysLeft} يوم. حدّثها الآن لتجنب تقييد/تجميد الحساب.`,
+                        messageEn: inGrace
+                            ? `Your documents expired. ${15 + daysLeft} day(s) left before auto-freeze. Update documents now.`
+                            : `Your documents expire in ${daysLeft} day(s). Update them now to avoid account restriction.`,
                         type: 'DOC_EXPIRY',
-                        link: '/dashboard/merchant/store',
-                        metadata: { waEvent: 'DOCUMENT', docType: 'expiry_warning' },
+                        link: '/dashboard/merchant/profile',
+                        metadata: { waEvent: 'DOCUMENT', docType: 'expiry_warning', storeId: store.id },
+                    }).catch(() => {});
+
+                    this.notificationsService.notifyAdmins({
+                        titleAr: inGrace
+                            ? `عاجل: فترة سماح — ${store.name}`
+                            : `تحذير مستندات — ${store.name}`,
+                        titleEn: inGrace
+                            ? `Urgent: Grace period — ${store.name}`
+                            : `Document warning — ${store.name}`,
+                        messageAr: inGrace
+                            ? `المتجر (${store.name}) انتهت مستنداته وهو في فترة السماح (${15 + daysLeft} يوم قبل التجميد).`
+                            : `المتجر (${store.name}) تنتهي مستنداته خلال ${daysLeft} يوم.`,
+                        messageEn: inGrace
+                            ? `Store (${store.name}) documents expired; grace period (${15 + daysLeft}d until freeze).`
+                            : `Store (${store.name}) documents expire in ${daysLeft} day(s).`,
+                        type: 'DOC_EXPIRY',
+                        link: `/admin/stores/${store.id}`,
+                        metadata: { storeId: store.id, storeName: store.name, daysLeft },
                     }).catch(() => {});
                 }
             }
@@ -1352,5 +1380,132 @@ export class StoresService {
 
         await this.merchantPerformance.recalculateAndPersist(storeId);
         return updated;
+    }
+
+    /**
+     * Cron / batch: enforce document expiry across all active stores
+     * (auto LICENSE_EXPIRED after 15-day grace + weekly warning notifications).
+     */
+    async scanDocumentExpiries(): Promise<{ scanned: number; suspended: number; warned: number }> {
+        const stores = await this.prisma.store.findMany({
+            where: {
+                status: {
+                    in: [StoreStatus.ACTIVE, StoreStatus.PENDING_REVIEW, StoreStatus.LICENSE_EXPIRED],
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+                ownerId: true,
+                status: true,
+                documents: {
+                    select: { expiresAt: true, status: true, docType: true },
+                },
+            },
+        });
+
+        let suspended = 0;
+        let warned = 0;
+        const currentDate = new Date();
+
+        for (const store of stores) {
+            let shouldAutoSuspend = false;
+            for (const doc of store.documents) {
+                if (!doc.expiresAt || doc.status !== 'approved') continue;
+                const diffDays = Math.ceil(
+                    (new Date(doc.expiresAt).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+                );
+                if (diffDays < -15) shouldAutoSuspend = true;
+            }
+
+            if (shouldAutoSuspend && ['ACTIVE', 'PENDING_REVIEW'].includes(store.status)) {
+                await this.prisma.store.update({
+                    where: { id: store.id },
+                    data: { status: StoreStatus.LICENSE_EXPIRED },
+                });
+                await this.notificationsService.create({
+                    recipientId: store.ownerId,
+                    recipientRole: 'MERCHANT',
+                    titleAr: 'إيقاف الحساب بسبب انتهاء المستندات',
+                    titleEn: 'Account Suspended due to Expired Documents',
+                    messageAr:
+                        'تم إيقاف حسابك لعدم تجديد المستندات الأساسية بعد فترة السماح (15 يوماً). يرجى رفع المستندات المجددة.',
+                    messageEn:
+                        'Your account has been suspended for not renewing mandatory documents after the 15-day grace period. Please upload renewed documents.',
+                    type: 'DOC_EXPIRY',
+                    link: '/dashboard/merchant/profile',
+                    metadata: { waEvent: 'DOCUMENT', docType: 'license_expiry', storeId: store.id },
+                }).catch(() => {});
+                this.notificationsService.notifyAdmins({
+                    titleAr: `عاجل: إيقاف متجر (${store.name})`,
+                    titleEn: `Urgent: Store suspended (${store.name})`,
+                    messageAr: `تم إيقاف المتجر (${store.name}) تلقائياً بسبب انتهاء صلاحية المستندات وفترة السماح.`,
+                    messageEn: `Store (${store.name}) was automatically suspended due to expired documents and grace period.`,
+                    type: 'DOC_EXPIRY',
+                    link: `/admin/stores/${store.id}`,
+                    metadata: { storeId: store.id, storeName: store.name },
+                }).catch(() => {});
+                suspended += 1;
+                continue;
+            }
+
+            const warningDocs = store.documents.filter((doc) => {
+                if (!doc.expiresAt || doc.status !== 'approved') return false;
+                const diffDays = Math.ceil(
+                    (new Date(doc.expiresAt).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+                );
+                return diffDays <= 30 && diffDays >= -15;
+            });
+            if (warningDocs.length === 0) continue;
+
+            const soonestDays = Math.min(
+                ...warningDocs.map((d) =>
+                    Math.ceil((new Date(d.expiresAt!).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)),
+                ),
+            );
+            const inGrace = soonestDays <= 0;
+
+            const recentAlert = await this.prisma.notification.findFirst({
+                where: {
+                    recipientId: store.ownerId,
+                    type: 'DOC_EXPIRY',
+                    createdAt: { gte: new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000) },
+                },
+            });
+            if (recentAlert) continue;
+
+            await this.notificationsService.create({
+                recipientId: store.ownerId,
+                recipientRole: 'MERCHANT',
+                titleAr: inGrace ? 'عاجل: مستند منتهٍ — فترة السماح' : 'تنبيه عاجل: مستندات ستنتهي قريباً',
+                titleEn: inGrace ? 'Urgent: Document expired — grace period' : 'Urgent: Documents expiring soon',
+                messageAr: inGrace
+                    ? `انتهت صلاحية مستنداتك. متبقي ${15 + soonestDays} يوم قبل تجميد الحساب تلقائياً.`
+                    : `مستنداتك تنتهي خلال ${soonestDays} يوم. حدّثها لتجنب تقييد الحساب.`,
+                messageEn: inGrace
+                    ? `Documents expired. ${15 + soonestDays} day(s) left before auto-freeze.`
+                    : `Documents expire in ${soonestDays} day(s). Update to avoid restriction.`,
+                type: 'DOC_EXPIRY',
+                link: '/dashboard/merchant/profile',
+                metadata: { waEvent: 'DOCUMENT', docType: 'expiry_warning', storeId: store.id },
+            }).catch(() => {});
+
+            this.notificationsService.notifyAdmins({
+                titleAr: inGrace ? `عاجل: فترة سماح — ${store.name}` : `تحذير مستندات — ${store.name}`,
+                titleEn: inGrace ? `Urgent: Grace period — ${store.name}` : `Document warning — ${store.name}`,
+                messageAr: inGrace
+                    ? `المتجر (${store.name}) في فترة السماح (${15 + soonestDays} يوم قبل التجميد).`
+                    : `المتجر (${store.name}) تنتهي مستنداته خلال ${soonestDays} يوم.`,
+                messageEn: inGrace
+                    ? `Store (${store.name}) in grace (${15 + soonestDays}d until freeze).`
+                    : `Store (${store.name}) documents expire in ${soonestDays} day(s).`,
+                type: 'DOC_EXPIRY',
+                link: `/admin/stores/${store.id}`,
+                metadata: { storeId: store.id, storeName: store.name, daysLeft: soonestDays },
+            }).catch(() => {});
+            warned += 1;
+        }
+
+        return { scanned: stores.length, suspended, warned };
     }
 }

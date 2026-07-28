@@ -15,6 +15,14 @@ import { ContractAmendmentModal } from './ContractAmendmentModal';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
 import { MerchantDocumentUploadModal, type MerchantDocKey } from './MerchantDocumentUploadModal';
 import type { SecondPartyData } from '../../../utils/contractBaker';
+import {
+    daysUntilLicenseExpiry,
+    formatRemainingCountdown,
+    getDocumentFreezeDeadline,
+    getRemainingParts,
+    isDocRowUrgent,
+    parseLicenseDate,
+} from '../../../utils/licenseExpiry';
 
 export const MerchantProfile: React.FC = () => {
     const { t, language } = useLanguage();
@@ -197,7 +205,17 @@ export const MerchantProfile: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <LicenseExpiryBanner onNavigate={() => setActiveProfileTab('info')} />
+            <LicenseExpiryBanner
+                onNavigate={() => {
+                    setActiveProfileTab('info');
+                    window.setTimeout(() => {
+                        document.getElementById('merchant-docs-section')?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                        });
+                    }, 120);
+                }}
+            />
             <div className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20">
@@ -436,72 +454,29 @@ export const MerchantProfile: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {(() => {
-                            const getDaysLeft = (expiryDate?: string) => {
-                                if (!expiryDate) return 999;
-                                const diff = new Date(expiryDate).getTime() - new Date().getTime();
-                                return Math.ceil(diff / (1000 * 60 * 60 * 24));
-                            };
-
-                            const minDaysLeft = Math.min(
-                                ...['cr', 'license', 'id', 'iban', 'authLetter'].map(
-                                    key => getDaysLeft(documents[key as keyof typeof documents]?.expiryDate)
-                                )
-                            );
-
-                            if (vendorStatus === 'PENDING_REVIEW') {
-                                return (
-                                    <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex items-start gap-3 animate-pulse">
-                                        <Shield className="text-orange-500 mt-0.5" size={20} />
-                                        <div>
-                                            <h4 className="text-sm font-bold text-orange-500 mb-1">
-                                                {language === 'ar' ? 'حسابك قيد المراجعة المؤقتة' : 'Account Temporarily Under Review'}
-                                            </h4>
-                                            <p className="text-xs text-orange-400/80 leading-relaxed">
-                                                {language === 'ar' 
-                                                    ? 'لقد قمت بتحديث مستندات قانونية هامة. تم إيقاف الحساب مؤقتاً في انتظار موافقة الإدارة.' 
-                                                    : 'You have updated important legal documents. The account is temporarily suspended pending admin approval.'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            }
-
-                            if (minDaysLeft <= 0 && minDaysLeft >= -15) {
-                                return (
-                                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 animate-pulse">
-                                        <Shield className="text-red-500 mt-0.5" size={20} />
-                                        <div>
-                                            <h4 className="text-sm font-bold text-red-500 mb-1">
-                                                {language === 'ar' ? 'تنبيه: فترة السماح تنتهي قريباً' : 'Alert: Grace Period Ending Soon'}
-                                            </h4>
-                                            <p className="text-xs text-red-400/80 leading-relaxed">
-                                                {language === 'ar' 
-                                                    ? `لقد انتهت صلاحية أحد المستندات. لديك ${15 + minDaysLeft} يوم لتحديثها قبل إيقاف الحساب نهائياً.` 
-                                                    : `One of your documents has expired. You have ${15 + minDaysLeft} days to update them before account suspension.`}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            } else if (minDaysLeft > 0 && minDaysLeft <= 30) {
-                                return (
-                                    <div className="bg-gold-500/10 border border-gold-500/20 p-4 rounded-xl flex items-start gap-3">
-                                        <Clock className="text-gold-500 mt-0.5" size={20} />
-                                        <div>
-                                            <h4 className="text-sm font-bold text-gold-500 mb-1">
-                                                {language === 'ar' ? 'تنبيه: مستندات ستنتهي قريباً' : 'Alert: Documents Expiring Soon'}
-                                            </h4>
-                                            <p className="text-xs text-gold-500/70 leading-relaxed">
-                                                {language === 'ar' 
-                                                    ? `يرجى تجديد مستنداتك وتراخيصك خلال ${minDaysLeft} يوم لتجنب أي إيقاف للخدمة.` 
-                                                    : `Please renew your documents within ${minDaysLeft} days to avoid any service interruption.`}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            }
-                            return null;
-                        })()}
+                        {vendorStatus === 'PENDING_REVIEW' ? (
+                            <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex items-start gap-3 animate-pulse">
+                                <Shield className="text-orange-500 mt-0.5" size={20} />
+                                <div>
+                                    <h4 className="text-sm font-bold text-orange-500 mb-1">
+                                        {language === 'ar' ? 'حسابك قيد المراجعة المؤقتة' : 'Account Temporarily Under Review'}
+                                    </h4>
+                                    <p className="text-xs text-orange-400/80 leading-relaxed">
+                                        {language === 'ar'
+                                            ? 'لقد قمت بتحديث مستندات قانونية هامة. تم إيقاف الحساب مؤقتاً في انتظار موافقة الإدارة.'
+                                            : 'You have updated important legal documents. The account is temporarily suspended pending admin approval.'}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <LicenseExpiryBanner
+                                compact
+                                onNavigate={() => {
+                                    const el = document.getElementById('merchant-docs-section');
+                                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }}
+                            />
+                        )}
 
                         <div className="grid lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-1 space-y-6">
@@ -761,7 +736,7 @@ export const MerchantProfile: React.FC = () => {
                                     </div>
                                 </GlassCard>
 
-                                <GlassCard className="p-8 bg-gradient-to-b from-[#1A1814]/50 to-transparent relative z-[1]">
+                                <GlassCard id="merchant-docs-section" className="p-8 bg-gradient-to-b from-[#1A1814]/50 to-transparent relative z-[1] scroll-mt-24">
                                     <div className="flex items-center justify-between mb-8">
                                         <h3 className="text-lg font-bold text-white flex items-center gap-3">
                                             <FileText size={20} className="text-gold-500" />
@@ -780,61 +755,88 @@ export const MerchantProfile: React.FC = () => {
                                         ].map((docItem) => {
                                             const doc = documents[docItem.key as keyof typeof documents];
                                             let displayStatus = doc?.status || 'empty';
-                                            
-                                            const daysLeft = doc?.expiryDate ? Math.ceil((new Date(doc.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 999;
-                                            
+
+                                            const expiry = parseLicenseDate(doc?.expiryDate);
+                                            const daysLeft = expiry ? daysUntilLicenseExpiry(expiry) : 999;
+                                            const freezeParts = expiry
+                                                ? getRemainingParts(getDocumentFreezeDeadline(expiry))
+                                                : null;
+                                            const urgent = isDocRowUrgent(daysLeft, displayStatus);
+
                                             if (displayStatus === 'approved' && daysLeft <= 0) {
                                                 displayStatus = 'expired';
                                             }
 
-                                            const dateLabel = doc?.expiryDate 
-                                                ? (language === 'ar' ? 'ينتهي في: ' : 'Expires: ') + new Date(doc.expiryDate).toLocaleDateString('en-GB')
-                                                : doc?.lastUpdated 
-                                                    ? new Date(doc.lastUpdated).toLocaleDateString('en-GB') 
+                                            const dateLabel = expiry
+                                                ? (language === 'ar' ? 'ينتهي في: ' : 'Expires: ') +
+                                                  expiry.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-GB')
+                                                : doc?.lastUpdated
+                                                    ? new Date(doc.lastUpdated).toLocaleDateString('en-GB')
                                                     : '---';
 
                                             const activeOrdersCount = performance?.activeOrdersCount || 0;
                                             const hasActiveBusiness = activeOrdersCount > 0;
 
                                             return (
-                                                <div key={docItem.key} className={`group/doc relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-white/[0.02] rounded-2xl border border-white/5 hover:border-white/10 transition-all hover:bg-white/[0.04] ${
-                                                    displayStatus === 'reupload_requested' ? 'shadow-[0_0_20px_rgba(239,68,68,0.3)] border-red-500/40' : ''
-                                                }`}>
+                                                <div
+                                                    key={docItem.key}
+                                                    className={`group/doc relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border transition-all ${
+                                                        urgent || displayStatus === 'expired' || displayStatus === 'reupload_requested'
+                                                            ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_28px_rgba(239,68,68,0.45)] animate-pulse'
+                                                            : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]'
+                                                    }`}
+                                                >
                                                     <div className="flex items-center gap-4 min-w-0">
                                                         <div className={`p-3 rounded-xl ${
-                                                            displayStatus === 'approved' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
-                                                            displayStatus === 'expired' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                                                            (displayStatus === 'rejected' || displayStatus === 'reupload_requested') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-                                                            'bg-white/5 text-white/30 border border-white/10'
+                                                            displayStatus === 'expired' || urgent
+                                                                ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                                                                : displayStatus === 'approved'
+                                                                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                                                  : (displayStatus === 'rejected' || displayStatus === 'reupload_requested')
+                                                                    ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                                                    : 'bg-white/5 text-white/30 border border-white/10'
                                                         }`}>
                                                             <FileText size={20} />
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="text-sm font-bold text-white mb-1">{docItem.label}</div>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex flex-wrap items-center gap-2">
                                                                 <span className={`text-[9px] px-2 py-0.5 rounded-full border uppercase font-bold tracking-tight ${
-                                                                    displayStatus === 'approved' ? 'text-green-400 bg-green-500/5 border-green-500/20' :
-                                                                    displayStatus === 'expired' ? 'text-orange-400 bg-orange-500/5 border-orange-500/20 animate-pulse' :
+                                                                    displayStatus === 'approved' && !urgent ? 'text-green-400 bg-green-500/5 border-green-500/20' :
+                                                                    displayStatus === 'expired' || urgent ? 'text-red-300 bg-red-500/10 border-red-500/30 animate-pulse' :
                                                                     displayStatus === 'pending' || displayStatus === 'uploading' ? 'text-blue-400 bg-blue-500/5 border-blue-500/20' :
                                                                     (displayStatus === 'rejected' || displayStatus === 'reupload_requested') ? 'text-red-400 bg-red-500/5 border-red-500/20' :
                                                                     'text-white/20 bg-white/5 border-white/10'
                                                                 }`}>
-                                                                    {displayStatus === 'approved' ? (language === 'ar' ? 'مفعل' : 'Active') : 
+                                                                    {displayStatus === 'approved' && urgent
+                                                                        ? (language === 'ar' ? 'ينتهي قريباً' : 'Expiring Soon')
+                                                                        : displayStatus === 'approved' ? (language === 'ar' ? 'مفعل' : 'Active') :
                                                                      displayStatus === 'expired' ? (language === 'ar' ? 'منتهي الصلاحية' : 'Expired') :
-                                                                     displayStatus === 'pending' ? (language === 'ar' ? 'بانتظار الموافقة' : 'Pending Approval') : 
+                                                                     displayStatus === 'pending' ? (language === 'ar' ? 'بانتظار الموافقة' : 'Pending Approval') :
                                                                      displayStatus === 'uploading' ? (language === 'ar' ? 'جاري الرفع' : 'Uploading') :
-                                                                     displayStatus === 'rejected' ? (language === 'ar' ? 'مرفوض' : 'Rejected') : 
+                                                                     displayStatus === 'rejected' ? (language === 'ar' ? 'مرفوض' : 'Rejected') :
                                                                      displayStatus === 'reupload_requested' ? (language === 'ar' ? 'مطلوب إعادة رفع' : 'Re-upload Requested') :
                                                                      (language === 'ar' ? 'غير متوفر' : 'Not Provided')}
                                                                 </span>
                                                                 <span className="text-[10px] text-white/20">•</span>
-                                                                <span className="text-[10px] text-white/30 font-mono italic">{dateLabel}</span>
-                                                                {doc?.expiryDate && daysLeft !== 999 && (
+                                                                <span className={`text-[10px] font-mono italic ${urgent ? 'text-red-200/80' : 'text-white/30'}`}>{dateLabel}</span>
+                                                                {expiry && daysLeft !== 999 && (
                                                                     <>
                                                                         <span className="text-[10px] text-white/20">•</span>
-                                                                        <span className={`text-[10px] font-bold ${daysLeft <= 30 ? 'text-gold-500' : 'text-green-400/80'}`}>
-                                                                            {language === 'ar' ? `متبقي ${daysLeft} يوم` : `${daysLeft} days left`}
+                                                                        <span className={`text-[10px] font-bold ${urgent || daysLeft <= 30 ? 'text-red-300' : 'text-green-400/80'}`}>
+                                                                            {daysLeft <= 0
+                                                                                ? (language === 'ar' ? 'منتهي' : 'Expired')
+                                                                                : (language === 'ar' ? `متبقي ${daysLeft} يوم` : `${daysLeft} days left`)}
                                                                             {displayStatus === 'pending' ? (language === 'ar' ? ' (قيد المراجعة)' : ' (pending)') : ''}
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                                {freezeParts && urgent && (
+                                                                    <>
+                                                                        <span className="text-[10px] text-white/20">•</span>
+                                                                        <span className="text-[10px] font-black text-red-400 tabular-nums">
+                                                                            {language === 'ar' ? 'تجميد خلال ' : 'Freeze in '}
+                                                                            {formatRemainingCountdown(freezeParts, language === 'ar')}
                                                                         </span>
                                                                     </>
                                                                 )}
@@ -862,7 +864,7 @@ export const MerchantProfile: React.FC = () => {
                                                                 })
                                                             }
                                                             className={`p-2.5 rounded-xl transition-all relative group/btn cursor-pointer ${
-                                                            displayStatus === 'expired' || displayStatus === 'rejected' || displayStatus === 'reupload_requested' || displayStatus === 'empty'
+                                                            displayStatus === 'expired' || displayStatus === 'rejected' || displayStatus === 'reupload_requested' || displayStatus === 'empty' || urgent
                                                                 ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20'
                                                                 : 'bg-gold-500/5 hover:bg-gold-500/10 text-gold-500/40 hover:text-gold-500 border border-transparent'
                                                         }`} title={

@@ -13,10 +13,12 @@ import { WarrantyExpirationService } from './warranty-expiration.service';
 import { WithdrawalReminderService } from './withdrawal-reminder.service';
 import { MerchantGovernanceService } from './merchant-governance.service';
 import { OfferGovernanceNotifyService } from './offer-governance-notify.service';
+import { DocumentExpiryService } from './document-expiry.service';
 import { MerchantPerformanceModule } from '../merchant-performance/merchant-performance.module';
 import { MerchantPerformanceCronService } from '../merchant-performance/merchant-performance-cron.service';
 import { ViolationsModule } from '../violations/violations.module';
 import { OffersModule } from '../offers/offers.module';
+import { StoresModule } from '../stores/stores.module';
 
 @Module({
     imports: [
@@ -28,11 +30,12 @@ import { OffersModule } from '../offers/offers.module';
         MerchantPerformanceModule,
         ViolationsModule,
         OffersModule,
+        StoresModule,
     ],
     providers: [
-        OrderCleanupService, 
-        EscrowCronService, 
-        StoreSuspensionService, 
+        OrderCleanupService,
+        EscrowCronService,
+        StoreSuspensionService,
         ViolationDecayService,
         SecurityMaintenanceService,
         WarrantyExpirationService,
@@ -40,6 +43,7 @@ import { OffersModule } from '../offers/offers.module';
         MerchantGovernanceService,
         MerchantPerformanceCronService,
         OfferGovernanceNotifyService,
+        DocumentExpiryService,
     ],
 })
-export class SchedulerModule { }
+export class SchedulerModule {}

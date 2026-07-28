@@ -112,11 +112,34 @@ export class DashboardService {
             }),
             this.prisma.store.count({
                 where: {
-                    licenseExpiry: { lte: thirtyDaysFromNow, gte: now },
+                    OR: [
+                        { licenseExpiry: { lte: thirtyDaysFromNow, gte: now } },
+                        {
+                            documents: {
+                                some: {
+                                    status: 'approved',
+                                    expiresAt: { lte: thirtyDaysFromNow, gte: now },
+                                },
+                            },
+                        },
+                    ],
                 },
             }),
             this.prisma.store.count({
-                where: { licenseExpiry: { lt: now } },
+                where: {
+                    OR: [
+                        { status: StoreStatus.LICENSE_EXPIRED },
+                        { licenseExpiry: { lt: now } },
+                        {
+                            documents: {
+                                some: {
+                                    status: 'approved',
+                                    expiresAt: { lt: now },
+                                },
+                            },
+                        },
+                    ],
+                },
             }),
             this.prisma.order.count({
                 where: {
@@ -203,10 +226,10 @@ export class DashboardService {
                 : null,
             expiringLicensesCount > 0
                 ? {
-                      type: 'warning',
+                      type: 'error',
                       code: 'LICENSE_EXPIRING',
                       count: expiringLicensesCount,
-                      priority: 'medium',
+                      priority: 'high',
                   }
                 : null,
             expiredLicensesCount > 0

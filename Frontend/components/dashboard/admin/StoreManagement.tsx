@@ -5,6 +5,7 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AdminSearchInput } from './AdminSearchInput';
 import { Store, Filter, Eye, User, Mail, Calendar, ChevronRight, Hash } from 'lucide-react';
+import { consumeAdminStoreListFilter } from '../../../utils/violationNavigation';
 
 interface StoreManagementProps {
     onNavigate?: (path: string, id: any) => void;
@@ -13,12 +14,14 @@ interface StoreManagementProps {
 export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { stores, subscribeToStores, unsubscribeFromStores, isLoadingStores, fetchAllStores } = useAdminStore();
-    const [filter, setFilter] = useState<'all' | 'pending'>('all');
+    const [filter, setFilter] = useState<'all' | 'pending' | 'license'>('all');
     const [search, setSearch] = useState('');
 
     const isAr = language === 'ar';
 
     useEffect(() => {
+        const preset = consumeAdminStoreListFilter();
+        if (preset) setFilter(preset);
         subscribeToStores();
         return () => unsubscribeFromStores();
     }, []);
@@ -28,8 +31,19 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
     }, [search, fetchAllStores]);
 
     const filteredStores = stores.filter(store => {
-        const matchesFilter = filter === 'all' || (filter === 'pending' && (store.status === 'PENDING_REVIEW' || store.status === 'PENDING_DOCUMENTS'));
-        return matchesFilter;
+        if (filter === 'pending') {
+            return store.status === 'PENDING_REVIEW' || store.status === 'PENDING_DOCUMENTS';
+        }
+        if (filter === 'license') {
+            if (store.status === 'LICENSE_EXPIRED') return true;
+            const expiry = store.licenseExpiry ? new Date(store.licenseExpiry).getTime() : NaN;
+            if (!Number.isNaN(expiry)) {
+                const days = Math.ceil((expiry - Date.now()) / (1000 * 60 * 60 * 24));
+                return days <= 30;
+            }
+            return false;
+        }
+        return true;
     });
 
     const getStatusBadge = (status: string) => {
@@ -82,6 +96,12 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
                             className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all duration-300 ${filter === 'pending' ? 'bg-gold-500 text-white shadow-lg shadow-gold-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                         >
                             {isAr ? 'قيد الانتظار' : 'Pending'}
+                        </button>
+                        <button 
+                            onClick={() => setFilter('license')} 
+                            className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all duration-300 ${filter === 'license' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                        >
+                            {isAr ? 'رخص/مستندات' : 'Licenses'}
                         </button>
                     </div>
                 </GlassCard>

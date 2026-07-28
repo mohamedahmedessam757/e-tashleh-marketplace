@@ -99,7 +99,11 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
                         {t.dashboard.merchant.alerts.restrictedDesc}
                     </p>
                 </div>
-                <button className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold flex items-center gap-2 transition-colors">
+                <button
+                    type="button"
+                    onClick={() => onNavigate?.('profile')}
+                    className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold flex items-center gap-2 transition-colors"
+                >
                     <FileText size={18} />
                     {t.dashboard.merchant.alerts.updateLicense}
                 </button>

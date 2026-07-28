@@ -56,11 +56,18 @@ export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ on
         const nav = resolveNotificationNavigation(notif);
         if (!nav) return;
         if (nav.context) setViolationNavContext(nav.context);
-        if (notif.metadata?.orderId) {
-            onNavigate('orders', notif.metadata.orderId);
-        } else {
-            onNavigate(nav.path);
+
+        let path = nav.path;
+        let id = nav.id || (notif.metadata?.orderId as string | undefined);
+
+        if (path === 'order-details' || path === 'orders') {
+            path = id ? 'explore-offer' : 'active-orders';
+        } else if (path === 'store-profile') {
+            path = 'profile';
+            id = undefined;
         }
+
+        onNavigate(path, id);
     };
 
     return (

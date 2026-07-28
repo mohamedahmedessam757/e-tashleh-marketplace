@@ -4,6 +4,7 @@ import { GlassCard } from '../../ui/GlassCard';
 import { Clock, ChevronRight, BellRing, AlertOctagon } from 'lucide-react';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { setAdminStoreListFilter } from '../../../utils/violationNavigation';
 
 export const AdminAlerts: React.FC = () => {
     const { t, language } = useLanguage();
@@ -38,11 +39,15 @@ export const AdminAlerts: React.FC = () => {
                     break;
                 case 'LICENSE_EXPIRING':
                     title = t.admin.alerts.types.license_expiry;
-                    msg = isAr ? `${a.count} متاجر تنتهي رخصها قريباً` : `${a.count} Stores Expiring Soon`;
+                    msg = isAr
+                        ? `عاجل: ${a.count} متجر(متاجر) مستنداتها/رخصها تنتهي خلال 30 يوماً — راجع المتاجر فوراً`
+                        : `Urgent: ${a.count} store(s) have documents/licenses expiring within 30 days`;
                     break;
                 case 'LICENSE_EXPIRED':
                     title = t.admin.alerts.types.license_expired;
-                    msg = isAr ? `${a.count} متاجر انتهت رخصها وتحتاج متابعة` : `${a.count} Stores Expired`;
+                    msg = isAr
+                        ? `حرج: ${a.count} متجر(متاجر) انتهت مستنداتها وتحتاج متابعة/تقييد`
+                        : `Critical: ${a.count} store(s) have expired documents needing follow-up`;
                     break;
                 case 'DISPUTES_OPEN':
                     title = t.admin.alerts.types.dispute;
@@ -80,7 +85,8 @@ export const AdminAlerts: React.FC = () => {
                 break;
             case 'LICENSE_EXPIRED':
             case 'LICENSE_EXPIRING':
-                navigate('users'); // Store management
+                setAdminStoreListFilter('license');
+                navigate('users');
                 break;
             case 'LATE_RESPONSE':
             case 'LATE_PREP':
@@ -117,26 +123,30 @@ export const AdminAlerts: React.FC = () => {
                         <p className="text-white/60 text-sm">{t.admin.alerts.noAlerts}</p>
                     </div>
                 ) : (
-                    alerts.map((alert, idx) => (
+                    alerts.map((alert, idx) => {
+                        const isLicense =
+                            alert.id === 'LICENSE_EXPIRED' || alert.id === 'LICENSE_EXPIRING';
+                        const isCritical =
+                            alert.type === 'error' || alert.priority === 'critical' || isLicense;
+                        return (
                         <div
                             key={alert.id + idx}
                             onClick={() => handleAlertClick(alert.id)}
                             className={`
                             relative p-4 rounded-xl border flex items-center gap-4 transition-all hover:translate-x-1 cursor-pointer group
-                            ${alert.type === 'error'
-                                    ? 'bg-gradient-to-r from-red-900/20 to-transparent border-red-500/30'
+                            ${isCritical
+                                    ? 'bg-gradient-to-r from-red-900/35 to-transparent border-red-500/50 shadow-[0_0_24px_rgba(239,68,68,0.25)]'
                                     : 'bg-gradient-to-r from-orange-900/20 to-transparent border-orange-500/30'}
                         `}
                         >
-                            {/* Left Color Bar */}
-                            <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full ${alert.type === 'error' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                            <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full ${isCritical ? 'bg-red-500' : 'bg-orange-500'}`} />
 
-                            <div className={`p-3 rounded-full shrink-0 ${alert.type === 'error' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                                {alert.type === 'error' ? <AlertOctagon size={20} /> : <Clock size={20} />}
+                            <div className={`p-3 rounded-full shrink-0 ${isCritical ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                                {isCritical ? <AlertOctagon size={20} /> : <Clock size={20} />}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <h4 className={`text-sm font-bold truncate ${alert.type === 'error' ? 'text-red-200' : 'text-orange-200'}`}>
+                                <h4 className={`text-sm font-bold truncate ${isCritical ? 'text-red-200' : 'text-orange-200'}`}>
                                     {alert.title}
                                 </h4>
                                 <p className="text-xs text-white/50 mt-1 truncate">{alert.msg}</p>
@@ -148,7 +158,8 @@ export const AdminAlerts: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </GlassCard>
