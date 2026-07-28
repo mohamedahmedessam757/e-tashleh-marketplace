@@ -52,8 +52,56 @@ export function canSelectOfferForShipping(
 }
 
 export function merchantCanMarkPrepared(fulfillmentStatus?: string): boolean {
-    const s = String(fulfillmentStatus || '').toUpperCase();
-    return !s || s === 'IN_PREPARATION' || s === 'AWAITING_PAYMENT';
+    // Hard gate: payment must have moved the offer into IN_PREPARATION first.
+    // Never allow Prepare while still AWAITING_PAYMENT (or missing status).
+    return String(fulfillmentStatus || '').toUpperCase() === 'IN_PREPARATION';
+}
+
+export function normalizeOfferFulfillmentStatus(status?: string | null): OfferFulfillmentStatus {
+    const s = String(status || '').toUpperCase();
+    if (s && s in FULFILLMENT_RANK) return s as OfferFulfillmentStatus;
+    return 'AWAITING_PAYMENT';
+}
+
+/**
+ * Merchant-facing order timeline status from this merchant's accepted offers.
+ * Payment stays active until every accepted offer for this store is paid
+ * (fulfillment past AWAITING_PAYMENT). Preparation is never shown as current
+ * while any offer is still unpaid.
+ */
+export function resolveMerchantTimelineFromOffers(
+    offerStatuses: Array<string | null | undefined>,
+    fallbackOrderStatus?: string | null,
+): string {
+    if (!offerStatuses.length) {
+        return String(fallbackOrderStatus || 'AWAITING_PAYMENT').toUpperCase();
+    }
+
+    const statuses = offerStatuses.map((s) => normalizeOfferFulfillmentStatus(s));
+    const active = statuses.filter((s) => s !== 'CANCELLED');
+    if (active.length === 0) {
+        return String(fallbackOrderStatus || 'CANCELLED').toUpperCase();
+    }
+
+    const unpaid = active.filter((s) => s === 'AWAITING_PAYMENT');
+    if (unpaid.length > 0) {
+        const anyPaid = active.some((s) => getFulfillmentRank(s) >= FULFILLMENT_RANK.IN_PREPARATION);
+        return anyPaid ? 'PARTIALLY_PAID' : 'AWAITING_PAYMENT';
+    }
+
+    if (active.some((s) => s === 'IN_PREPARATION')) return 'PREPARATION';
+    if (active.some((s) => s === 'PREPARED')) return 'PREPARED';
+    if (active.some((s) => s === 'VERIFICATION')) return 'VERIFICATION';
+    if (active.some((s) => s === 'VERIFICATION_SUCCESS')) return 'VERIFICATION_SUCCESS';
+    if (active.some((s) => s === 'READY_FOR_SHIPPING')) return 'READY_FOR_SHIPPING';
+    if (active.every((s) => s === 'DELIVERED')) return 'DELIVERED';
+    if (active.every((s) => s === 'SHIPPED' || s === 'DELIVERED')) return 'SHIPPED';
+
+    return String(fallbackOrderStatus || active[0]).toUpperCase();
+}
+
+export function isOfferPaidForFulfillment(fulfillmentStatus?: string | null): boolean {
+    return getFulfillmentRank(fulfillmentStatus) >= FULFILLMENT_RANK.IN_PREPARATION;
 }
 
 export function merchantCanSubmitVerification(fulfillmentStatus?: string): boolean {
@@ -303,7 +351,7 @@ export function allShipmentBatchesDelivered(
 }
 
 export function getFulfillmentRank(status?: string): number {
-    const key = String(status || 'IN_PREPARATION').toUpperCase() as OfferFulfillmentStatus;
+    const key = normalizeOfferFulfillmentStatus(status);
     return FULFILLMENT_RANK[key] ?? 0;
 }
 

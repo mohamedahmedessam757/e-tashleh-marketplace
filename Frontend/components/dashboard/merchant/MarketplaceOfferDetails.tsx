@@ -33,11 +33,14 @@ import {
     getFulfillmentLabel,
     getFulfillmentRank,
     getVerificationDocForOffer,
+    isOfferPaidForFulfillment,
     merchantCanMarkPrepared,
     merchantCanSubmitVerification,
     merchantCanRequestReadyForShipping,
     merchantOfferVerificationPending,
     merchantOfferAdminRejected,
+    normalizeOfferFulfillmentStatus,
+    resolveMerchantTimelineFromOffers,
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow } from '../../../utils/offerGovernance';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
@@ -324,6 +327,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         () => merchantAcceptedOffers.filter((o) => merchantCanMarkPrepared(o.fulfillmentStatus)),
         [merchantAcceptedOffers],
     );
+    const offersAwaitingCustomerPayment = useMemo(
+        () =>
+            merchantAcceptedOffers.filter(
+                (o) => normalizeOfferFulfillmentStatus(o.fulfillmentStatus) === 'AWAITING_PAYMENT',
+            ),
+        [merchantAcceptedOffers],
+    );
     const offersNeedingVerification = useMemo(
         () => merchantAcceptedOffers.filter((o) => merchantCanSubmitVerification(o.fulfillmentStatus)),
         [merchantAcceptedOffers],
@@ -462,18 +472,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     /** Timeline reflects this merchant's parts, not the whole multi-vendor order. */
     const merchantTimelineStatus = useMemo((): StatusType => {
-        if (merchantAcceptedOffers.length === 0) return (order?.status || 'PREPARATION') as StatusType;
-        const statuses = merchantAcceptedOffers.map((o) =>
-            String(o.fulfillmentStatus || 'IN_PREPARATION').toUpperCase(),
-        );
-        if (statuses.some((s) => s === 'AWAITING_PAYMENT' || s === 'IN_PREPARATION')) return 'PREPARATION';
-        if (statuses.some((s) => s === 'PREPARED')) return 'PREPARED';
-        if (statuses.some((s) => s === 'VERIFICATION')) return 'VERIFICATION';
-        if (statuses.some((s) => s === 'VERIFICATION_SUCCESS')) return 'VERIFICATION_SUCCESS';
-        if (statuses.some((s) => s === 'READY_FOR_SHIPPING')) return 'READY_FOR_SHIPPING';
-        if (statuses.every((s) => s === 'DELIVERED')) return 'DELIVERED';
-        if (statuses.every((s) => s === 'SHIPPED' || s === 'DELIVERED')) return 'SHIPPED';
-        return (order?.status || 'PREPARATION') as StatusType;
+        if (merchantAcceptedOffers.length === 0) {
+            return (order?.status || 'AWAITING_PAYMENT') as StatusType;
+        }
+        return resolveMerchantTimelineFromOffers(
+            merchantAcceptedOffers.map((o) => o.fulfillmentStatus),
+            order?.status,
+        ) as StatusType;
     }, [merchantAcceptedOffers, order?.status]);
 
     const merchantFulfillmentSummary = useMemo(() => {
@@ -488,16 +493,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             readyForShipping: 0,
             shipped: 0,
             inCart: 0,
+            awaitingPayment: 0,
         };
         for (const o of merchantAcceptedOffers) {
-            const s = String(o.fulfillmentStatus || 'IN_PREPARATION').toUpperCase();
-            if (s === 'AWAITING_PAYMENT' || s === 'IN_PREPARATION') stepCounts.preparation++;
+            const s = normalizeOfferFulfillmentStatus(o.fulfillmentStatus);
+            if (s === 'AWAITING_PAYMENT') stepCounts.awaitingPayment++;
+            else if (s === 'IN_PREPARATION') stepCounts.preparation++;
             else if (s === 'PREPARED') stepCounts.prepared++;
             else if (s === 'VERIFICATION') stepCounts.verification++;
             else if (s === 'VERIFICATION_SUCCESS') stepCounts.handoverPending++;
             else if (s === 'READY_FOR_SHIPPING') stepCounts.readyForShipping++;
-            else if (s === 'SHIPPED') stepCounts.shipped++;
-            else if (s === 'DELIVERED') stepCounts.shipped++;
+            else if (s === 'SHIPPED' || s === 'DELIVERED') stepCounts.shipped++;
         }
         return { total, stepCounts };
     }, [merchantAcceptedOffers, fulfillmentSummary]);
@@ -1558,6 +1564,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                                                         {partOffer && String(partOffer.status).toLowerCase() === 'accepted' && (
                                                             <div className="mt-4 flex flex-wrap gap-2">
+                                                                {normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'AWAITING_PAYMENT' && (
+                                                                    <span className="px-4 py-2 rounded-lg text-xs font-bold bg-orange-500/10 text-orange-300 border border-orange-500/25 flex items-center gap-1.5">
+                                                                        <DollarSign size={14} />
+                                                                        {isAr ? 'مقفل — بانتظار دفع العميل' : 'Locked — awaiting customer payment'}
+                                                                    </span>
+                                                                )}
                                                                 {merchantCanMarkPrepared(partOffer.fulfillmentStatus) && (
                                                                     <button
                                                                         type="button"
@@ -1851,9 +1863,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         )}
 
                         {merchantAcceptedOffers.length > 0 &&
-                            !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'CANCELLED'].includes(
-                                order.status,
-                            ) && (
+                            merchantAcceptedOffers.some((o) => isOfferPaidForFulfillment(o.fulfillmentStatus)) && (
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
                                     <div>
                                         <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-white/40 mb-2">
@@ -1913,6 +1923,26 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     )}
                                 </div>
                             )}
+
+                        {offersAwaitingCustomerPayment.length > 0 && (
+                            <div className="text-center space-y-4 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-6">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto border bg-orange-500/10 border-orange-500/30">
+                                    <DollarSign size={28} className="text-orange-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-orange-300">
+                                    {isAr ? 'بانتظار دفع العميل' : 'Awaiting customer payment'}
+                                </h3>
+                                <p className="text-white/60 text-sm px-2 leading-relaxed">
+                                    {isAr
+                                        ? offersAwaitingCustomerPayment.length === merchantAcceptedOffers.length
+                                            ? 'تم قبول عرضك. التجهيز والتوثيق مقفلان حتى يكتمل دفع العميل لهذه القطع.'
+                                            : `بعض قطعك (${offersAwaitingCustomerPayment.length}) ما زالت بانتظار الدفع. يمكن تجهيز القطع المدفوعة فقط.`
+                                        : offersAwaitingCustomerPayment.length === merchantAcceptedOffers.length
+                                          ? 'Your offer was accepted. Preparation and verification stay locked until the customer pays for these parts.'
+                                          : `${offersAwaitingCustomerPayment.length} of your parts are still unpaid. You can prepare paid parts only.`}
+                                </p>
+                            </div>
+                        )}
 
                         {offersNeedingPrepare.length > 0 && (
                             <div className="text-center space-y-4">
@@ -2133,6 +2163,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                                         switch (order.status) {
                                             case 'AWAITING_PAYMENT':
+                                            case 'PARTIALLY_PAID':
+                                                // Dedicated unpaid card above already covers this when offers await payment
+                                                if (offersAwaitingCustomerPayment.length > 0) return null;
                                                 return {
                                                     icon: <DollarSign size={28} className="text-orange-500" />,
                                                     title: isAr ? s.AWAITING_PAYMENT.title : s.AWAITING_PAYMENT.enTitle,

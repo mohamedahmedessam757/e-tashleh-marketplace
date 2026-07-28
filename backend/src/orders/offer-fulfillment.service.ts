@@ -368,6 +368,14 @@ export class OfferFulfillmentService {
         if (!order) throw new NotFoundException('Order not found');
 
         if (
+            offer.fulfillmentStatus === OfferFulfillmentStatus.AWAITING_PAYMENT ||
+            !this.hasSuccessfulPayment(offer)
+        ) {
+            throw new BadRequestException(
+                'Offer must be paid by the customer before preparation. Fulfillment is locked while awaiting payment.',
+            );
+        }
+        if (
             offer.fulfillmentStatus !== OfferFulfillmentStatus.IN_PREPARATION &&
             offer.fulfillmentStatus !== OfferFulfillmentStatus.PREPARED
         ) {
@@ -780,8 +788,12 @@ export class OfferFulfillmentService {
                     ar: 'وصلت — مهلة الإرجاع/النزاع نشطة',
                     en: 'Delivered — return/dispute window active',
                 };
-            case OfferFulfillmentStatus.IN_PREPARATION:
             case OfferFulfillmentStatus.AWAITING_PAYMENT:
+                return {
+                    ar: 'بانتظار دفع العميل',
+                    en: 'Awaiting customer payment',
+                };
+            case OfferFulfillmentStatus.IN_PREPARATION:
                 return {
                     ar: 'بانتظار تجهيز التاجر',
                     en: 'Awaiting merchant preparation',
