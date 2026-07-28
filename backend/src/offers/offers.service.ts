@@ -344,6 +344,8 @@ export class OffersService {
                 partType: true,
                 weightKg: true,
                 cylinders: true,
+                unitPrice: true,
+                shippingCost: true,
                 order: { select: { orderNumber: true } },
             },
         });
