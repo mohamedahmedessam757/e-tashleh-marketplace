@@ -342,7 +342,10 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                         )}
 
                         {/* Offers List */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/40 scrollbar-none custom-scrollbar">
+                        <div
+                            className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-8 bg-black/40 scrollbar-none custom-scrollbar"
+                            style={{ WebkitOverflowScrolling: 'touch', contain: 'content' }}
+                        >
                             <div className="max-w-4xl mx-auto w-full space-y-6">
                                 {displayedOffers.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-white/30 py-20">
@@ -369,8 +372,8 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                 ) : (
                                     <div className="space-y-4">
                                             {displayedOffers.map(offer => (
+                                                <div key={offer.id} className="contain-paint content-visibility-auto" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 280px' }}>
                                                 <OfferCard
-                                                    key={offer.id}
                                                     {...offer}
                                                     storeName={offer.merchantName}
                                                     rating={offer.storeRating || 0}
@@ -396,6 +399,7 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                                         acceptLoadingOfferId === String(offer.id)
                                                     }
                                                 />
+                                                </div>
                                             ))}
                                         </div>
                                 )}

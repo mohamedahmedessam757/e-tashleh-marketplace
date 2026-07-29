@@ -100,31 +100,51 @@ const AdminHomeSkeleton = () => (
 // --- KPI CARD COMPONENT (MEMOIZED & ANIMATED) ---
 const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, children }: any) => {
     const [displayValue, setDisplayValue] = useState(0);
+    const hasAnimatedRef = React.useRef(false);
     const targetValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) : value;
     const unit = typeof value === 'string' ? value.replace(/[0-9.,\s]/g, '') : '';
 
     useEffect(() => {
         if (loading) return;
-        let start = displayValue;
+        const prefersReduced =
+            typeof window !== 'undefined' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // After first count-up, snap to new values without restarting rAF (avoids scroll jank on realtime refresh)
+        if (hasAnimatedRef.current || prefersReduced) {
+            setDisplayValue(Math.floor(targetValue) || 0);
+            hasAnimatedRef.current = true;
+            return;
+        }
+
+        let start = 0;
         const end = targetValue;
-        const duration = 800; // 0.8s for smooth count
+        const duration = 800;
         const startTime = performance.now();
+        let rafId = 0;
 
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const easeOutQuad = (t: number) => t * (2 - t);
             const current = Math.floor(start + (end - start) * easeOutQuad(progress));
-            
             setDisplayValue(current);
-            if (progress < 1) requestAnimationFrame(animate);
+            if (progress < 1) {
+                rafId = requestAnimationFrame(animate);
+            } else {
+                hasAnimatedRef.current = true;
+            }
         };
 
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(rafId);
     }, [targetValue, loading]);
 
     return (
-        <GlassCard className="relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-all duration-500 min-h-[140px]">
+        <GlassCard
+            enableBlur={false}
+            className="relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-all duration-500 min-h-[140px] bg-[#1A1814]/90 contain-paint"
+        >
             {loading ? (
                 <div className="space-y-4">
                     <div className="w-16 h-3 bg-white/10 rounded-full animate-pulse" />
@@ -545,7 +565,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             {/* MAIN ANALYTICS SECTION */}
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Sales Chart (Large) */}
-                <GlassCard className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/80">
+                <GlassCard enableBlur={false} className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/90 contain-paint">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
                             <h3 className="text-lg font-bold text-white mb-1">
@@ -596,7 +616,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                 {/* Side Column: Alerts & Status */}
                 <div className="space-y-6">
                     {/* Status Donut */}
-                    <GlassCard className="p-6 bg-[#1A1814]/80 flex flex-col items-center justify-between min-h-[420px] relative overflow-hidden border-white/5">
+                    <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col items-center justify-between min-h-[420px] relative overflow-hidden border-white/5 contain-paint">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 blur-3xl rounded-full -mr-16 -mt-16" />
                         
                         <div className="w-full flex justify-between items-start mb-6">
@@ -639,7 +659,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
             {/* BOTTOM SECTION: Top Stores & Alerts */}
             <div className="grid lg:grid-cols-3 gap-6">
-                <GlassCard className="p-6 bg-[#1A1814]/80 flex flex-col min-h-[400px]">
+                <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col min-h-[400px] contain-paint">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold text-white">{t.admin.charts.topStores}</h3>
                         <button 
@@ -718,7 +738,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             </div>
 
             {/* RECENT ORDERS TABLE - REDESIGNED 2026 */}
-            <GlassCard className="p-0 overflow-hidden bg-[#1A1814]/90 border-white/10 relative">
+            <GlassCard enableBlur={false} className="p-0 overflow-hidden bg-[#1A1814]/95 border-white/10 relative contain-paint">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/20 to-transparent" />
                 
                 <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">

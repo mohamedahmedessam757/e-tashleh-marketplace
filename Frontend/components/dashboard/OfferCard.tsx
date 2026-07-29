@@ -2,6 +2,7 @@ import React, { useState, memo, useMemo } from 'react';
 import { Star, ShieldCheck, Truck, MessageSquare, CheckCircle2, Box, Tag, X, ZoomIn, Settings, Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isAcceptedOfferStatus, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
+import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
 
 export interface OfferProps {
     id: number | string;
@@ -296,12 +297,12 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 
                 {/* Actions */}
                 <div className="flex justify-end items-center gap-3 mt-4">
-                    {/* Persistent Chat Button (Visible before and after acceptance) */}
-                    {status !== 'rejected' && (
+                    {/* Chat — hidden when order chat is locked (cancel/complete/warranty) */}
+                    {status !== 'rejected' && !isOrderChatClosedStatus(orderStatus) && (
                         <button
                             onClick={onChat}
-                            disabled={acceptLoading}
-                            className={`px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-colors flex items-center gap-2 ${acceptLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                            disabled={acceptLoading || disabled}
+                            className={`px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-colors flex items-center gap-2 ${acceptLoading || disabled ? 'opacity-50 pointer-events-none' : ''}`}
                         >
                             <MessageSquare size={18} />
                             <span>{offersT?.chat || 'Chat'}</span>

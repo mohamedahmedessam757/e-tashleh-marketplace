@@ -16,6 +16,7 @@ import { Badge } from '../../ui/Badge';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../../utils/auth';
 import { AdminSearchInput } from './AdminSearchInput';
+import { supabase } from '../../../services/supabase';
 import {
   AdminVerificationTasksFilter,
   VERIFICATION_TASK_DECISION_LABEL,
@@ -65,9 +66,9 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
   const isOfficer = viewerRole === 'VERIFICATION_OFFICER';
   const isAdminViewer = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'].includes(viewerRole);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (opts?: { silent?: boolean }) => {
     try {
-      setLoading(true);
+      if (!opts?.silent) setLoading(true);
       setFetchError(null);
       let data: unknown[] = [];
       if (isOfficer) {
@@ -88,13 +89,56 @@ export const VerificationTasksDashboard: React.FC<VerificationTasksDashboardProp
       setFetchError(error?.response?.data?.message || error?.message || 'Failed to load tasks');
       setTasks([]);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, [isOfficer, isAdminViewer, search]);
 
   useEffect(() => {
     void fetchTasks();
   }, [fetchTasks]);
+
+  // Realtime: refresh list when verification_tasks change (officer-scoped or admin-wide)
+  useEffect(() => {
+    if (!isOfficer && !isAdminViewer) return;
+    const userId = getCurrentUser()?.id;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const silentRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        void fetchTasks({ silent: true });
+      }, 600);
+    };
+
+    const channelName = isOfficer && userId
+      ? `verification-tasks:officer:${userId}`
+      : 'verification-tasks:admin-dashboard';
+
+    let channel = supabase.channel(channelName);
+    if (isOfficer && userId) {
+      channel = channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'verification_tasks',
+          filter: `officer_id=eq.${userId}`,
+        },
+        silentRefresh,
+      );
+    } else {
+      channel = channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'verification_tasks' },
+        silentRefresh,
+      );
+    }
+    channel.subscribe();
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [isOfficer, isAdminViewer, fetchTasks]);
 
   const counts = useMemo(() => countVerificationTasksByAdminFilter(tasks), [tasks]);
 
