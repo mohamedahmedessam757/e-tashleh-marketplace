@@ -208,6 +208,20 @@ export const common = {
       claim: 'استبدال القطعة',
       days: 'يوم',
       hours: 'س'
+    },
+    connectivity: {
+      offlineTitle: 'لا يوجد اتصال بالإنترنت',
+      offlineBody: 'تحقق من اتصالك. الطلبات والدفع والخدمات قد لا تعمل حتى يعود الاتصال.',
+      weakTitle: 'الاتصال ضعيف',
+      weakBody: 'شبكتك بطيئة. تجنّب الدفع أو إرسال طلبات مهمة حتى يتحسن الاتصال.',
+      weakDismiss: 'إخفاء',
+      platformTitle: 'المنصة أو قاعدة البيانات غير متاحة',
+      platformBody: 'نواجه مشكلة مؤقتة في الخوادم. أعد المحاولة بعد لحظات — الطلبات والدفع قد تتأثر.',
+      maintenanceTitle: 'وضع الصيانة',
+      maintenanceBody: 'النظام قيد الصيانة حالياً. بعض الخدمات قد تكون غير متاحة مؤقتاً.',
+      recoveredTitle: 'عاد الاتصال',
+      recoveredBody: 'تم استعادة الخدمة بنجاح.',
+      retry: 'إعادة المحاولة',
     }
   },
   en: {
@@ -435,6 +449,20 @@ export const common = {
       claim: 'REPLACE PART',
       days: 'd',
       hours: 'h'
+    },
+    connectivity: {
+      offlineTitle: 'No internet connection',
+      offlineBody: 'Check your connection. Orders, payments, and services may not work until you are back online.',
+      weakTitle: 'Weak connection',
+      weakBody: 'Your network is slow. Avoid payments or critical orders until the connection improves.',
+      weakDismiss: 'Dismiss',
+      platformTitle: 'Platform or database unavailable',
+      platformBody: 'We are experiencing a temporary server issue. Please retry shortly — orders and payments may be affected.',
+      maintenanceTitle: 'Maintenance mode',
+      maintenanceBody: 'The system is under maintenance. Some services may be temporarily unavailable.',
+      recoveredTitle: 'Connection restored',
+      recoveredBody: 'Service is back online.',
+      retry: 'Retry',
     }
   }
 };
