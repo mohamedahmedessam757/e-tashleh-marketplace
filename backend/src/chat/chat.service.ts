@@ -19,7 +19,7 @@ import {
 import { shouldLockChatOnCompletion } from './chat-completion-lock.util';
 import {
     isOfferPhaseOrderStatus,
-    shouldKeepOrderChatOpen,
+    shouldCloseOrderChat,
 } from './chat-offer-expiry.util';
 
 @Injectable()
@@ -64,16 +64,21 @@ export class ChatService {
             }
         }
 
-        // Rule: Cancelled / completed / warranty — chat stays OPEN (heal stale EXPIRED/CLOSED)
-        if (shouldKeepOrderChatOpen(order.status)) {
-            const existingKeepOpen = await this.prisma.orderChat.findUnique({
+        // Rule: Cancelled / completed / warranty — order chat must stay CLOSED (no reopen)
+        if (shouldCloseOrderChat(order.status)) {
+            const existingClosed = await this.prisma.orderChat.findUnique({
                 where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
             });
-            if (existingKeepOpen) {
-                if (existingKeepOpen.status === 'EXPIRED' || existingKeepOpen.status === 'CLOSED') {
+            if (existingClosed) {
+                if (existingClosed.status === 'OPEN') {
                     await this.prisma.orderChat.update({
-                        where: { id: existingKeepOpen.id },
-                        data: { status: 'OPEN', expiryAt: null },
+                        where: { id: existingClosed.id },
+                        data: { status: 'CLOSED' },
+                    });
+                    this.chatGateway.server.to(existingClosed.id).emit('chatStatusChanged', {
+                        chatId: existingClosed.id,
+                        status: 'CLOSED',
+                        reason: 'ORDER_COMPLETED',
                     });
                 }
             } else {
@@ -83,12 +88,11 @@ export class ChatService {
                         vendorId,
                         customerId,
                         type: 'order',
-                        status: 'OPEN',
-                        expiryAt: null,
+                        status: 'CLOSED',
+                        expiryAt: new Date(),
                     },
                 });
             }
-            // Fall through to normal full fetch below via re-read
             const kept = await this.prisma.orderChat.findUnique({
                 where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
             });
@@ -194,21 +198,26 @@ export class ChatService {
         });
         if (!chat) throw new NotFoundException('Chat not found');
 
-        // Heal stale EXPIRED/CLOSED for cancelled/completed orders
+        // Close order chat when order is in terminal lock statuses (no reopen)
         if (
             chat.type === 'order' &&
-            shouldKeepOrderChatOpen(chat.order?.status) &&
-            (chat.status === 'EXPIRED' || chat.status === 'CLOSED')
+            shouldCloseOrderChat(chat.order?.status) &&
+            chat.status === 'OPEN'
         ) {
             chat = await this.prisma.orderChat.update({
                 where: { id: chat.id },
-                data: { status: 'OPEN', expiryAt: null },
+                data: { status: 'CLOSED' },
                 include: {
                     vendor: { select: { name: true, logo: true, id: true, storeCode: true, ownerId: true } },
                     customer: { select: { name: true, avatar: true, id: true } },
                     order: { select: { orderNumber: true, partName: true, id: true, status: true } },
                     messages: { orderBy: { createdAt: 'asc' } },
                 },
+            });
+            this.chatGateway.server.to(id).emit('chatStatusChanged', {
+                chatId: id,
+                status: 'CLOSED',
+                reason: 'ORDER_COMPLETED',
             });
         }
 
@@ -324,23 +333,30 @@ export class ChatService {
             });
         }
 
-        // Heal stale EXPIRED/CLOSED chats for cancelled/completed orders (list accuracy)
-        const healIds = (chats as any[])
+        // Close OPEN chats whose orders are in terminal lock statuses (list accuracy)
+        const closeIds = (chats as any[])
             .filter(
                 (c) =>
                     c.type === 'order' &&
-                    shouldKeepOrderChatOpen(c.order?.status) &&
-                    (c.status === 'EXPIRED' || c.status === 'CLOSED'),
+                    shouldCloseOrderChat(c.order?.status) &&
+                    c.status === 'OPEN',
             )
             .map((c) => c.id as string);
 
-        if (healIds.length > 0) {
+        if (closeIds.length > 0) {
             await this.prisma.orderChat.updateMany({
-                where: { id: { in: healIds } },
-                data: { status: 'OPEN', expiryAt: null },
+                where: { id: { in: closeIds } },
+                data: { status: 'CLOSED' },
             });
             for (const c of chats as any[]) {
-                if (healIds.includes(c.id)) c.status = 'OPEN';
+                if (closeIds.includes(c.id)) c.status = 'CLOSED';
+            }
+            for (const chatId of closeIds) {
+                this.chatGateway.server.to(chatId).emit('chatStatusChanged', {
+                    chatId,
+                    status: 'CLOSED',
+                    reason: 'ORDER_COMPLETED',
+                });
             }
         }
 
@@ -426,26 +442,25 @@ export class ChatService {
         });
         if (!chat) throw new NotFoundException('Chat not found');
 
-        // Cancelled / completed: reopen before send if stale EXPIRED/CLOSED
-        if (
-            chat.type === 'order' &&
-            shouldKeepOrderChatOpen(chat.order?.status) &&
-            (chat.status === 'EXPIRED' || chat.status === 'CLOSED')
-        ) {
-            chat = await this.prisma.orderChat.update({
-                where: { id: chat.id },
-                data: { status: 'OPEN', expiryAt: null },
-                include: {
-                    customer: { select: { id: true, name: true } },
-                    vendor: { select: { id: true, name: true, ownerId: true } },
-                    order: { select: { id: true, status: true } },
-                },
-            });
-            this.chatGateway.server.to(chatId).emit('chatStatusChanged', {
-                chatId,
-                status: 'OPEN',
-                reason: 'REOPENED_POST_LIFECYCLE',
-            });
+        // Terminal order statuses: force CLOSED and reject send (order chats only)
+        if (chat.type === 'order' && shouldCloseOrderChat(chat.order?.status)) {
+            if (chat.status !== 'CLOSED') {
+                chat = await this.prisma.orderChat.update({
+                    where: { id: chat.id },
+                    data: { status: 'CLOSED' },
+                    include: {
+                        customer: { select: { id: true, name: true } },
+                        vendor: { select: { id: true, name: true, ownerId: true } },
+                        order: { select: { id: true, status: true } },
+                    },
+                });
+                this.chatGateway.server.to(chatId).emit('chatStatusChanged', {
+                    chatId,
+                    status: 'CLOSED',
+                    reason: 'ORDER_COMPLETED',
+                });
+            }
+            throw new ForbiddenException('Chat is CLOSED');
         }
 
         if (chat.status === 'CLOSED' || chat.status === 'EXPIRED') {

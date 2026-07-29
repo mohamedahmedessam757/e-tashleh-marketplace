@@ -252,15 +252,33 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
             });
 
         } catch (error: any) {
+            const statusCode = error.response?.status;
             const errorMessage = error.response?.data?.message || error.message;
             console.error('Failed to send message:', errorMessage);
-            // Revert optimistic message on failure
+            const isChatClosed =
+                statusCode === 403 &&
+                typeof errorMessage === 'string' &&
+                /chat is (closed|expired)/i.test(errorMessage);
+
+            // Revert optimistic message on failure; lock UI if backend closed the chat
             set((state) => ({
                 error: errorMessage,
-                activeChat: state.activeChat ? {
-                    ...state.activeChat,
-                    messages: state.activeChat.messages.filter(m => m.id !== tempId)
-                } : null
+                activeChat: state.activeChat
+                    ? {
+                          ...state.activeChat,
+                          status: isChatClosed
+                              ? ('CLOSED' as const)
+                              : state.activeChat.status,
+                          messages: state.activeChat.messages.filter((m) => m.id !== tempId),
+                      }
+                    : null,
+                chats: isChatClosed
+                    ? state.chats.map((c) =>
+                          c.id === state.activeChat?.id
+                              ? { ...c, status: 'CLOSED' as const }
+                              : c,
+                      )
+                    : state.chats,
             }));
             throw new Error(errorMessage);
         }

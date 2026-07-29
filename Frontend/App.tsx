@@ -4,6 +4,7 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { PlatformErrorBoundary } from './components/PlatformErrorBoundary';
 import { initPlatformErrorReporter } from './utils/platformErrorReporter';
 import { usePublicSystemStatus } from './hooks/usePublicSystemStatus';
+import { ConnectivityCapsule } from './components/ui/ConnectivityCapsule';
 import { LoadingScreen } from './components/LoadingScreen';
 import { RoleSelectionScreen } from './components/RoleSelectionScreen';
 import { Navbar } from './components/Navbar';
@@ -985,6 +986,7 @@ function App() {
   return (
     <LanguageProvider>
       <PlatformErrorBoundary>
+        <ConnectivityCapsule />
         <AppContent />
       </PlatformErrorBoundary>
     </LanguageProvider>

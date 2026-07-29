@@ -12,6 +12,7 @@ import { client as api } from '../../../services/api/client';
 import { useOrderStore } from '../../../stores/useOrderStore'; // ADDED
 import { Badge } from '../../ui/Badge'; // ADDED
 import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
+import { isOrderChatClosedStatus } from '../../../utils/orderChatLock';
 
 interface ChatWindowProps {
   onNavigateToCheckout: () => void;
@@ -170,20 +171,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
     );
   }
 
-  // Smart Chat Logic — cancelled/completed stay open; 24h expiry only for offer phase
+  // Smart Chat Logic — lock on cancel/complete/warranty; support chats unaffected
   const chatStatus = displayChat.status;
-  const keepOpenOrderStatuses = ['CANCELLED', 'COMPLETED', 'WARRANTY_ACTIVE'];
-  const isPostLifecycleOpen =
-    !!orderStatus && keepOpenOrderStatuses.includes(orderStatus);
+  const isSupportChat = orderChat?.type === 'support' || displayChat?.type === 'support';
+  const isOrderStatusLocked =
+    isOrderChat &&
+    !isSupportChat &&
+    isOrderChatClosedStatus(orderStatus);
 
-  // Stale "expired" while order is cancelled/completed → treat as active (backend heals on init/send)
-  const effectiveChatStatus =
-    chatStatus === 'expired' && isPostLifecycleOpen ? 'active' : chatStatus;
+  const effectiveChatStatus = isOrderStatusLocked ? 'closed' : chatStatus;
 
   const isTerminalChatStatus =
     effectiveChatStatus === 'closed' ||
     effectiveChatStatus === 'expired' ||
-    effectiveChatStatus === 'closed_others';
+    effectiveChatStatus === 'closed_others' ||
+    isOrderStatusLocked;
 
   const fulfillmentOpenStatuses = [
     'AWAITING_OFFERS',
@@ -194,11 +196,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
     'DELAYED_PREPARATION',
     'SHIPPED',
     'DELIVERED',
+    'PARTIALLY_DELIVERED',
     'VERIFICATION',
     'VERIFICATION_SUCCESS',
     'VERIFICATION_FAILED',
     'READY_FOR_SHIPPING',
-    ...keepOpenOrderStatuses,
   ];
 
   const isChatActive =
@@ -208,10 +210,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
 
   const isOrderCompletedLock =
     isOrderChat &&
-    effectiveChatStatus === 'closed' &&
-    orderChat?.type !== 'support' &&
-    !!orderStatus &&
-    ['COMPLETED', 'WARRANTY_ACTIVE'].includes(orderStatus);
+    !isSupportChat &&
+    isOrderChatClosedStatus(orderStatus);
 
   const handleSend = async () => {
     if ((!text.trim() && !pendingAttachment) || !isChatActive || isUploading) return;
@@ -532,7 +532,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
               {orderChat?.type === 'support'
                 ? (language === 'ar' ? 'تم إغلاق المحادثة (تم حل المشكلة)' : 'Chat Closed (Issue Resolved)')
                 : isOrderCompletedLock
-                  ? (language === 'ar' ? 'تم إغلاق المحادثة (الطلب مكتمل)' : 'Chat Closed (Order Completed)')
+                  ? (language === 'ar'
+                      ? (orderStatus === 'CANCELLED'
+                          ? 'تم إغلاق المحادثة (الطلب ملغى)'
+                          : orderStatus === 'WARRANTY_EXPIRED'
+                            ? 'تم إغلاق المحادثة (انتهت مدة الضمان)'
+                            : orderStatus === 'WARRANTY_ACTIVE'
+                              ? 'تم إغلاق المحادثة (فترة الضمان)'
+                              : 'تم إغلاق المحادثة (الطلب مكتمل)')
+                      : (orderStatus === 'CANCELLED'
+                          ? 'Chat Closed (Order Cancelled)'
+                          : orderStatus === 'WARRANTY_EXPIRED'
+                            ? 'Chat Closed (Warranty Expired)'
+                            : orderStatus === 'WARRANTY_ACTIVE'
+                              ? 'Chat Closed (Warranty Period)'
+                              : 'Chat Closed (Order Completed)'))
                   : (language === 'ar' ? 'تم إغلاق المحادثة (تم قبول عرض آخر)' : 'Chat Closed (Offer Accepted Elsewhere)')
               }
             </span>
@@ -645,7 +659,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
                     {orderChat?.type === 'support'
                       ? (language === 'ar' ? 'تم إغلاق هذه المحادثة لأن المشكلة الخاصة بك قد حُلّت بنجاح.' : 'This chat is closed because your issue has been successfully resolved.')
                       : isOrderCompletedLock
-                        ? (language === 'ar' ? 'تم إغلاق هذه المحادثة لأن الطلب اكتمل. يمكنك متابعة الدعم عبر مركز المساعدة إن لزم.' : 'This chat is closed because the order is completed. Use support if you still need help.')
+                        ? (language === 'ar'
+                            ? (orderStatus === 'CANCELLED'
+                                ? ((t.dashboard as any).chat?.closedCancelled || 'تم إغلاق هذه المحادثة لأن الطلب ملغى. لا يمكن إرسال رسائل جديدة.')
+                                : orderStatus === 'WARRANTY_EXPIRED'
+                                  ? ((t.dashboard as any).chat?.closedWarrantyExpired || 'تم إغلاق هذه المحادثة لانتهاء مدة الضمان.')
+                                  : orderStatus === 'WARRANTY_ACTIVE'
+                                    ? ((t.dashboard as any).chat?.closedWarranty || 'تم إغلاق هذه المحادثة لأن الطلب في فترة الضمان.')
+                                    : ((t.dashboard as any).chat?.closedCompleted || 'تم إغلاق هذه المحادثة لأن الطلب اكتمل. يمكنك متابعة الدعم عبر مركز المساعدة إن لزم.'))
+                            : (orderStatus === 'CANCELLED'
+                                ? ((t.dashboard as any).chat?.closedCancelled || 'This chat is closed because the order was cancelled. New messages are not allowed.')
+                                : orderStatus === 'WARRANTY_EXPIRED'
+                                  ? ((t.dashboard as any).chat?.closedWarrantyExpired || 'This chat is closed because the warranty period has ended.')
+                                  : orderStatus === 'WARRANTY_ACTIVE'
+                                    ? ((t.dashboard as any).chat?.closedWarranty || 'This chat is closed because the order is in the warranty period.')
+                                    : ((t.dashboard as any).chat?.closedCompleted || 'This chat is closed because the order is completed. Use support if you still need help.')))
                         : (language === 'ar' ? 'تم إغلاق هذه المحادثة بسبب قبولك لعرض آخر لهذا الطلب.' : 'This chat is closed because you accepted another offer for this order.')
                     }
                   </p>

@@ -38,6 +38,7 @@ import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { useResolutionStore } from '../../stores/useResolutionStore';
 import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
+import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
 import { resolveReviewTarget } from '../../utils/reviewHelpers';
 import { parseImageList, resolveMediaSrc, resolvePartPrimaryImage } from '../../utils/partMedia';
 import { ordersApi } from '../../services/api/orders';
@@ -247,6 +248,26 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         if (!order || order.status !== 'SHIPPED') return false;
         return allShipmentBatchesDelivered(order.shipments);
     }, [order?.status, order?.shipments]);
+
+    const drawerOffers = useMemo(() => {
+        if (!drawerPart || !order?.offers) return [];
+        return order.offers.filter(
+            (o: any) =>
+                String(o.orderPartId) === String(drawerPart.id) &&
+                isVisibleMarketplaceOffer(o),
+        );
+    }, [drawerPart, order?.offers]);
+
+    const drawerSelectedOfferId = useMemo(() => {
+        if (!drawerPart || !order?.offers) return null;
+        return (
+            order.offers.find(
+                (o: any) =>
+                    String(o.orderPartId) === String(drawerPart.id) &&
+                    isAcceptedOfferStatus(o.status),
+            )?.id ?? null
+        );
+    }, [drawerPart, order?.offers]);
 
     // Re-check selection/offer/collection deadlines while customer stays on the page
     useEffect(() => {
@@ -558,6 +579,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     };
 
     const handleChat = async (offer: any) => {
+        if (isOrderChatClosedStatus(order.status)) {
+            useNotificationStore.getState().addNotification({
+                type: 'SYSTEM',
+                titleAr: 'المحادثة مغلقة',
+                titleEn: 'Chat Closed',
+                messageAr: 'لا يمكن فتح المحادثة لأن الطلب ملغى أو مكتمل أو في فترة الضمان.',
+                messageEn: 'Chat is unavailable because this order is cancelled, completed, or in the warranty period.',
+                recipientRole: 'CUSTOMER'
+            });
+            return;
+        }
         setChatLoading(true);
         try {
             // Resolve the vendor/store ID from multiple potential fields
@@ -703,16 +735,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         d.setHours(d.getHours() + 48);
         return d.toISOString();
     };
-
-    const getReturnDeadline = () => {
-        if (isMultiPartOrder) return '';
-        if (order.status !== 'DELIVERED' && order.status !== 'DELIVERED_TO_CUSTOMER') return '';
-        const baseDate = order.deliveredAt || order.updatedAt;
-        if (!baseDate) return '';
-        const d = new Date(baseDate);
-        d.setHours(d.getHours() + POST_DELIVERY_RETURN_DISPUTE_HOURS);
-        return d.toISOString();
-    }
 
     const handleConfirmDelivery = async () => {
         setIsConfirmingDelivery(true);
@@ -907,6 +929,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) && (
                         <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
                     )}
+                    {!isMultiPartOrder &&
+                        ['DELIVERED', 'PARTIALLY_DELIVERED', 'DELIVERED_TO_CUSTOMER'].includes(order.status) && (
+                        <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
+                    )}
                 </div>
 
                 <MerchantHandoverPendingBanner
@@ -1010,17 +1036,29 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                             {/* Return / Dispute — single-item orders only (multi-part uses PartReturnWindowCard) */}
                             {!isMultiPartOrder && isDeliveredLike && (
-                                <button
-                                    onClick={() => {
-                                        setResolutionPart(null);
-                                        setReturnInitialReason(undefined);
-                                        setShowReturnModal(true);
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 rounded-lg transition-all font-bold text-sm"
-                                >
-                                    <RefreshCcw size={16} />
-                                    {t.dashboard.resolution.newReturn}
-                                </button>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setResolutionPart(null);
+                                            setReturnInitialReason(undefined);
+                                            setShowReturnModal(true);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 rounded-lg transition-all font-bold text-sm"
+                                    >
+                                        <RefreshCcw size={16} />
+                                        {t.dashboard.resolution.newReturn}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setResolutionPart(null);
+                                            setShowDisputeModal(true);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded-lg transition-all font-bold text-sm"
+                                    >
+                                        <AlertTriangle size={16} />
+                                        {t.dashboard.resolution.newDispute}
+                                    </button>
+                                </div>
                             )}
 
                             {isMultiPartOrder && eligibleResolutionParts.length > 0 && (
@@ -1034,19 +1072,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 >
                                     <RefreshCcw size={16} />
                                     {language === 'ar' ? 'طلب إرجاع (اختر قطعة)' : 'Request Return (select part)'}
-                                </button>
-                            )}
-
-                            {!isMultiPartOrder && isDeliveredLike && (
-                                <button
-                                    onClick={() => {
-                                        setResolutionPart(null);
-                                        setShowDisputeModal(true);
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded-lg transition-all font-bold text-sm"
-                                >
-                                    <AlertTriangle size={16} />
-                                    {t.dashboard.resolution.newDispute}
                                 </button>
                             )}
 
@@ -1609,18 +1634,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     partDescription={drawerPart.description}
                                     partImage={drawerPart.image}
                                     partIndex={drawerPart.index}
-                                    offers={order.offers.filter(
-                                        (o: any) =>
-                                            String(o.orderPartId) === String(drawerPart.id) &&
-                                            isVisibleMarketplaceOffer(o),
-                                    )}
-                                    selectedOffer={
-                                        order.offers.find(
-                                            (o: any) =>
-                                                String(o.orderPartId) === String(drawerPart.id) &&
-                                                isAcceptedOfferStatus(o.status),
-                                        )?.id ?? null
-                                    }
+                                    offers={drawerOffers}
+                                    selectedOffer={drawerSelectedOfferId}
                                     onAcceptOffer={handleAcceptOffer}
                                     onChat={handleChat}
                                     onRejectOffer={(offer) => setOfferToReject(offer)}

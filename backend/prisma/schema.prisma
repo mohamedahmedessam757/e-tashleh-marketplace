@@ -125,7 +125,7 @@ model OtpChallenge {
   email      String?
   channel    String    @default("whatsapp") @db.VarChar(16)
   purpose    String    @db.VarChar(32)
-  role       String?   @db.VarChar(16)
+  role       String?   @db.VarChar(32)
   codeHash   String    @map("code_hash")
   expiresAt  DateTime  @map("expires_at") @db.Timestamptz
   attempts   Int       @default(0)

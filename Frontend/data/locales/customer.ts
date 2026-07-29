@@ -346,7 +346,11 @@ export const customer = {
       orderContext: 'سياق الطلب',
       translationOn: 'الترجمة مفعلة',
       translate: 'ترجمة النص',
-      someoneTyping: 'شخص ما يكتب الآن...'
+      someoneTyping: 'شخص ما يكتب الآن...',
+      closedCancelled: 'تم إغلاق هذه المحادثة لأن الطلب ملغى. لا يمكن إرسال رسائل جديدة.',
+      closedCompleted: 'تم إغلاق هذه المحادثة لأن الطلب اكتمل. يمكنك متابعة الدعم عبر مركز المساعدة إن لزم.',
+      closedWarranty: 'تم إغلاق هذه المحادثة لأن الطلب في فترة الضمان.',
+      closedWarrantyExpired: 'تم إغلاق هذه المحادثة لانتهاء مدة الضمان.',
     },
     checkout: {
       title: 'إتمام الطلب',
@@ -1339,7 +1343,11 @@ export const customer = {
       orderContext: 'Order Context',
       translationOn: 'Translation ON',
       translate: 'Translate',
-      someoneTyping: 'Someone is typing...'
+      someoneTyping: 'Someone is typing...',
+      closedCancelled: 'This chat is closed because the order was cancelled. New messages are not allowed.',
+      closedCompleted: 'This chat is closed because the order is completed. Use support if you still need help.',
+      closedWarranty: 'This chat is closed because the order is in the warranty period.',
+      closedWarrantyExpired: 'This chat is closed because the warranty period has ended.',
     },
     checkout: {
       title: 'Checkout',

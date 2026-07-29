@@ -52,10 +52,10 @@ export class OrdersService {
         private orderSla: OrderSlaService,
     ) { }
 
-    /** Side-effects when an order reaches COMPLETED from any code path. */
+    /** Side-effects when an order reaches a chat-lock terminal status. */
     afterOrderReachedCompletion(orderId: string) {
         this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
-            console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
+            console.error(`Failed to lock chat on terminal status for order ${orderId}:`, err);
         });
     }
 
@@ -767,6 +767,16 @@ export class OrdersService {
                 this.loyaltyService.processReferralReward(orderId).catch(err => {
                     console.error(`Failed to process referral reward for order ${orderId}:`, err);
                 });
+            }
+
+            // Lock vendor–customer chat on terminal statuses (cancel / complete / warranty)
+            const chatLockStatuses: OrderStatus[] = [
+                OrderStatus.COMPLETED,
+                OrderStatus.CANCELLED,
+                OrderStatus.WARRANTY_ACTIVE,
+                OrderStatus.WARRANTY_EXPIRED,
+            ];
+            if (chatLockStatuses.includes(newStatus) || chatLockStatuses.includes((result as any).status)) {
                 this.afterOrderReachedCompletion(orderId);
             }
 

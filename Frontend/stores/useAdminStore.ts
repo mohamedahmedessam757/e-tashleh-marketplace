@@ -1380,29 +1380,36 @@ export const useAdminStore = create<AdminState>()(
         const { subscription, silentFetchDashboardStats } = get();
         if (subscription) return;
 
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        const debouncedFetch = () => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            silentFetchDashboardStats();
+          }, 1500);
+        };
+
         const channel = supabase.channel('admin-stats-realtime')
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'orders' },
-            () => {
-              silentFetchDashboardStats();
-            }
+            debouncedFetch,
           )
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'users' },
-            () => {
-              silentFetchDashboardStats();
-            }
+            debouncedFetch,
           )
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'stores' },
-            () => {
-              silentFetchDashboardStats();
-            }
+            debouncedFetch,
           )
           .subscribe();
+
+        // Attach timer cleanup on channel so unsubscribe can clear it
+        (channel as any).__statsDebounceClear = () => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+        };
 
         set({ subscription: channel });
       },
@@ -1410,6 +1417,7 @@ export const useAdminStore = create<AdminState>()(
       unsubscribeFromStats: () => {
         const { subscription } = get();
         if (subscription) {
+          (subscription as any).__statsDebounceClear?.();
           supabase.removeChannel(subscription);
           set({ subscription: null });
         }

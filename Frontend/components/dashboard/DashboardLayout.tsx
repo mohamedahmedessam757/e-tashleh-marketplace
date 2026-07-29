@@ -357,7 +357,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <main className="flex-1 flex flex-col min-h-screen w-full transition-all duration-300">
 
         {/* Top Header */}
-        <header className="sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
+        <header className="sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
 
           {/* Hamburger Menu & Brand */}
           <div className="flex items-center gap-4">

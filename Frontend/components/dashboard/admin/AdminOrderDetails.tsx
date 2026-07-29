@@ -296,6 +296,15 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
     const { adminUpdateOffer, adminDeleteOffer } = useOrderStore();
 
+    const adminDrawerOffers = useMemo(() => {
+        if (!drawerPart) return [];
+        return (order?.offers || []).filter(
+            (o: any) =>
+                o.orderPartId === drawerPart.id &&
+                isActiveMerchantOffer(o),
+        );
+    }, [drawerPart, order?.offers]);
+
     // Permissions
     const isAdmin = currentAdmin?.role === 'ADMIN' || currentAdmin?.role === 'SUPER_ADMIN';
     const isSuper = currentAdmin?.role === 'SUPER_ADMIN';
@@ -851,11 +860,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     partDescription={drawerPart.description}
                                     partImage={drawerPart.image}
                                     partIndex={drawerPart.index}
-                                    offers={(order.offers || []).filter(
-                                        (o: any) =>
-                                            o.orderPartId === drawerPart.id &&
-                                            isActiveMerchantOffer(o),
-                                    )}
+                                    offers={adminDrawerOffers}
                                     selectedOffer={null}
                                     onAcceptOffer={noOp}
                                     onChat={noOp}
