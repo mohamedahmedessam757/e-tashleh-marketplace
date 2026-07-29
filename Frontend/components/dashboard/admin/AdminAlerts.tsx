@@ -99,12 +99,12 @@ export const AdminAlerts: React.FC = () => {
     };
 
     return (
-        <GlassCard className="h-full bg-[#1A1814]/80 flex flex-col p-6">
+        <GlassCard enableBlur={false} className="h-full bg-[#1A1814]/80 flex flex-col p-6 no-entrance-anim contain-paint">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-white font-bold flex items-center gap-3">
                     <div className="relative">
                         <BellRing className="text-gold-500" size={24} />
-                        {alerts.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />}
+                        {alerts.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full" />}
                         {alerts.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#1A1814]" />}
                     </div>
                     {t.admin.alerts.title}

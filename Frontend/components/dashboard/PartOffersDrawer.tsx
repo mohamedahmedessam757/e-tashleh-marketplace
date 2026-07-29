@@ -1,5 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition, memo } from 'react';
 import { X, Package, Tag, ArrowUpDown, Shield, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { OfferCard } from './OfferCard';
 import { OrderOffer } from '../../stores/useOrderStore';
@@ -35,7 +34,7 @@ interface OfferFiltersBarProps {
     hasActiveFilters: boolean;
 }
 
-const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
+const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
     isAr,
     displayedCount,
     totalCount,
@@ -48,7 +47,6 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
 }) => (
     <div className="px-4 md:px-6 py-4 border-b border-white/5 bg-gradient-to-b from-[#1A1814] to-[#13110E] shrink-0">
         <div className="max-w-4xl mx-auto space-y-3">
-            {/* Top row: title + count + reset */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
@@ -72,23 +70,19 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                         {isAr ? `الحد الأقصى 10` : `Max 10`}
                     </span>
                     {hasActiveFilters && (
-                        <motion.button
+                        <button
                             type="button"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
                             onClick={onReset}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-gold-300 bg-gold-500/10 border border-gold-500/25 hover:bg-gold-500/20 transition-colors"
                         >
                             <RotateCcw size={11} />
                             {isAr ? 'إعادة ضبط' : 'Reset'}
-                        </motion.button>
+                        </button>
                     )}
                 </div>
             </div>
 
-            {/* Filter groups */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Price sort — segmented control */}
                 <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <ArrowUpDown size={12} className="text-gold-500/70" />
@@ -104,7 +98,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => onPriceSort(opt.id)}
-                                    className={`relative flex-1 z-10 py-2 px-1 rounded-lg text-[11px] font-bold transition-colors duration-200 ${
+                                    className={`relative flex-1 z-10 py-2 px-1 rounded-lg text-[11px] font-bold transition-colors duration-150 ${
                                         active ? 'text-black' : 'text-white/45 hover:text-white/70'
                                     }`}
                                 >
@@ -120,7 +114,6 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                     </div>
                 </div>
 
-                {/* Warranty — chip row */}
                 <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <Shield size={12} className="text-gold-500/70" />
@@ -136,7 +129,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => onWarrantyFilter(opt.id)}
-                                    className={`relative overflow-hidden px-3.5 py-2 rounded-xl text-[11px] font-bold transition-all duration-200 border ${
+                                    className={`relative overflow-hidden px-3.5 py-2 rounded-xl text-[11px] font-bold transition-colors duration-150 border ${
                                         active
                                             ? 'border-gold-500/50 text-gold-100 shadow-[0_0_20px_rgba(212,175,55,0.12)]'
                                             : 'border-white/[0.08] bg-white/[0.02] text-white/40 hover:border-white/15 hover:text-white/65'
@@ -159,7 +152,64 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = ({
             </div>
         </div>
     </div>
-);
+));
+
+OfferFiltersBar.displayName = 'OfferFiltersBar';
+
+type OfferHandlers = {
+    accept: (offer: OrderOffer) => void;
+    chat: (offer: OrderOffer) => void;
+    reject: (offer: OrderOffer) => void;
+};
+
+interface OfferRowProps {
+    offer: OrderOffer;
+    isSelected: boolean;
+    disabled: boolean;
+    readOnly?: boolean;
+    orderStatus?: string;
+    acceptLoading: boolean;
+    handlersRef: React.MutableRefObject<OfferHandlers>;
+}
+
+const OfferRow = memo(function OfferRow({
+    offer,
+    isSelected,
+    disabled,
+    readOnly,
+    orderStatus,
+    acceptLoading,
+    handlersRef,
+}: OfferRowProps) {
+    return (
+        <div
+            className="[content-visibility:auto] [contain-intrinsic-size:auto_280px] contain-paint"
+        >
+            <OfferCard
+                {...offer}
+                storeName={offer.merchantName}
+                rating={offer.storeRating || 0}
+                reviewCount={offer.storeReviewCount || 0}
+                unitPrice={offer.unitPrice || offer.price}
+                isSelected={isSelected}
+                onAccept={() => handlersRef.current.accept(offer)}
+                onChat={() => handlersRef.current.chat(offer)}
+                onReject={() => handlersRef.current.reject(offer)}
+                disabled={disabled}
+                readOnly={readOnly}
+                orderStatus={orderStatus}
+                acceptLoading={acceptLoading}
+            />
+        </div>
+    );
+}, (prev, next) => (
+    prev.offer === next.offer &&
+    prev.isSelected === next.isSelected &&
+    prev.disabled === next.disabled &&
+    prev.readOnly === next.readOnly &&
+    prev.orderStatus === next.orderStatus &&
+    prev.acceptLoading === next.acceptLoading
+));
 
 interface PartOffersDrawerProps {
     isOpen: boolean;
@@ -199,8 +249,11 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     const isAr = language === 'ar';
     const [priceSort, setPriceSort] = useState<OfferPriceSort>('default');
     const [warrantyFilter, setWarrantyFilter] = useState<OfferWarrantyFilter>('all');
-    const [acceptLoadingOfferId, setAcceptLoadingOfferId] = React.useState<string | null>(null);
-    const [acceptSuccessMsg, setAcceptSuccessMsg] = React.useState<string | null>(null);
+    const [acceptLoadingOfferId, setAcceptLoadingOfferId] = useState<string | null>(null);
+    const [acceptSuccessMsg, setAcceptSuccessMsg] = useState<string | null>(null);
+    // Paint shell first, then offer list — snappier open
+    const [listReady, setListReady] = useState(false);
+
     const isHiddenOffer = (o: { status?: string; isWithdrawn?: boolean }) => {
         if (o.isWithdrawn) return true;
         const s = String(o.status || '').toUpperCase();
@@ -219,11 +272,20 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     const hasActiveFilters = priceSort !== 'default' || warrantyFilter !== 'all';
 
     const resetFilters = useCallback(() => {
-        setPriceSort('default');
-        setWarrantyFilter('all');
+        startTransition(() => {
+            setPriceSort('default');
+            setWarrantyFilter('all');
+        });
     }, []);
 
-    // Memoize handlers to prevent OfferCard re-renders
+    const handlePriceSort = useCallback((v: OfferPriceSort) => {
+        startTransition(() => setPriceSort(v));
+    }, []);
+
+    const handleWarrantyFilter = useCallback((v: OfferWarrantyFilter) => {
+        startTransition(() => setWarrantyFilter(v));
+    }, []);
+
     const handleAccept = useCallback(async (offer: any) => {
         setAcceptLoadingOfferId(String(offer.id));
         setAcceptSuccessMsg(null);
@@ -244,170 +306,203 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
         onClose();
     }, [onChat, onClose]);
 
-    React.useEffect(() => {
-        if (!isOpen) setAcceptSuccessMsg(null);
+    const handlersRef = useRef<OfferHandlers>({
+        accept: handleAccept,
+        chat: handleChat,
+        reject: onRejectOffer,
+    });
+    handlersRef.current = {
+        accept: handleAccept,
+        chat: handleChat,
+        reject: onRejectOffer,
+    };
+
+    useEffect(() => {
+        if (!isOpen) {
+            setAcceptSuccessMsg(null);
+            setListReady(false);
+            return;
+        }
+        let cancelled = false;
+        let id2 = 0;
+        const id1 = requestAnimationFrame(() => {
+            id2 = requestAnimationFrame(() => {
+                if (!cancelled) setListReady(true);
+            });
+        });
+        return () => {
+            cancelled = true;
+            cancelAnimationFrame(id1);
+            if (id2) cancelAnimationFrame(id2);
+        };
     }, [isOpen]);
 
+    // Lock body scroll while drawer is open
+    useEffect(() => {
+        if (!isOpen) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <motion.div
-                        key="backdrop"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 z-[60] bg-black/70"
-                    />
+        <>
+            {/* Backdrop — CSS only (faster than framer on open) */}
+            <div
+                role="presentation"
+                onClick={onClose}
+                className="fixed inset-0 z-[60] bg-black/70 animate-modal-snap-in"
+            />
 
-                    {/* Full-Screen Page Modal */}
-                    <motion.div
-                        key="drawer"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ duration: 0.18, ease: 'easeOut' }}
-                        className="fixed inset-0 md:inset-6 lg:inset-10 z-[70] flex flex-col bg-[#13110E] md:rounded-3xl border border-white/5 shadow-2xl overflow-hidden"
-                    >
-                        {/* Header */}
-                        <div className="flex items-center gap-4 p-6 border-b border-white/5 bg-[#1A1814] shrink-0">
-                            {/* Part Image */}
-                            <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
-                                {partImage ? (
-                                    <img src={partImage} alt={partName} className="w-full h-full object-cover" />
-                                ) : (
-                                    <Package size={22} className="text-white/30" />
-                                )}
-                            </div>
-
-                            {/* Part Info */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-[10px] font-mono text-gold-500/60 uppercase tracking-wider">
-                                        {isAr ? `قطعة ${partIndex + 1}` : `Part ${partIndex + 1}`}
-                                    </span>
-                                </div>
-                                <h2 className="text-white font-bold text-lg leading-tight truncate">{partName}</h2>
-                                {partDescription && (
-                                    <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{partDescription}</p>
-                                )}
-                            </div>
-
-                            {/* Offer Count Badge */}
-                            <div className="flex items-center gap-3">
-                                <div className="flex flex-col items-center">
-                                    <div className="w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/30 flex items-center justify-center font-bold text-gold-400 text-lg">
-                                        {displayedOffers.length}
-                                    </div>
-                                    <span className="text-[10px] text-white/40 mt-1 uppercase tracking-tighter">
-                                        {isAr ? 'عرض' : displayedOffers.length === 1 ? 'Offer' : 'Offers'}
-                                    </span>
-                                </div>
-
-                                {/* Close Button */}
-                                <button
-                                    onClick={onClose}
-                                    className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <OfferFiltersBar
-                            isAr={isAr}
-                            displayedCount={displayedOffers.length}
-                            totalCount={baseOffers.length}
-                            priceSort={priceSort}
-                            warrantyFilter={warrantyFilter}
-                            onPriceSort={setPriceSort}
-                            onWarrantyFilter={setWarrantyFilter}
-                            onReset={resetFilters}
-                            hasActiveFilters={hasActiveFilters}
-                        />
-
-                        {acceptSuccessMsg && (
-                            <div className="mx-4 md:mx-8 mt-4 p-4 rounded-2xl border border-green-500/30 bg-green-500/10 text-green-300 text-sm font-bold flex items-center justify-between gap-3">
-                                <span>{acceptSuccessMsg}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setAcceptSuccessMsg(null)}
-                                    className="text-[11px] uppercase tracking-wider text-green-200/70 hover:text-white shrink-0"
-                                >
-                                    {isAr ? 'إخفاء' : 'Dismiss'}
-                                </button>
-                            </div>
+            {/* Full-Screen Page Modal */}
+            <div
+                role="dialog"
+                aria-modal="true"
+                className="fixed inset-0 md:inset-6 lg:inset-10 z-[70] flex flex-col bg-[#13110E] md:rounded-3xl border border-white/5 shadow-2xl overflow-hidden animate-modal-snap-in"
+            >
+                {/* Header */}
+                <div className="flex items-center gap-4 p-6 border-b border-white/5 bg-[#1A1814] shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                        {partImage ? (
+                            <img
+                                src={partImage}
+                                alt={partName}
+                                className="w-full h-full object-cover"
+                                loading="eager"
+                                decoding="async"
+                            />
+                        ) : (
+                            <Package size={22} className="text-white/30" />
                         )}
+                    </div>
 
-                        {/* Offers List */}
-                        <div
-                            className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-8 bg-black/40 scrollbar-none custom-scrollbar"
-                            style={{ WebkitOverflowScrolling: 'touch', contain: 'content' }}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-[10px] font-mono text-gold-500/60 uppercase tracking-wider">
+                                {isAr ? `قطعة ${partIndex + 1}` : `Part ${partIndex + 1}`}
+                            </span>
+                        </div>
+                        <h2 className="text-white font-bold text-lg leading-tight truncate">{partName}</h2>
+                        {partDescription && (
+                            <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{partDescription}</p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/30 flex items-center justify-center font-bold text-gold-400 text-lg">
+                                {displayedOffers.length}
+                            </div>
+                            <span className="text-[10px] text-white/40 mt-1 uppercase tracking-tighter">
+                                {isAr ? 'عرض' : displayedOffers.length === 1 ? 'Offer' : 'Offers'}
+                            </span>
+                        </div>
+
+                        <button
+                            onClick={onClose}
+                            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                         >
-                            <div className="max-w-4xl mx-auto w-full space-y-6">
-                                {displayedOffers.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-white/30 py-20">
-                                        <Package size={64} className="mb-6 opacity-30" />
-                                        <p className="text-xl font-medium">
-                                            {hasActiveFilters
-                                                ? isAr
-                                                    ? 'لا توجد عروض تطابق الفلتر'
-                                                    : 'No offers match your filters'
-                                                : isAr
-                                                  ? 'لا توجد عروض لهذه القطعة'
-                                                  : 'No offers for this part yet'}
-                                        </p>
-                                        {hasActiveFilters && (
-                                            <button
-                                                type="button"
-                                                onClick={resetFilters}
-                                                className="mt-4 px-4 py-2 rounded-xl text-sm font-bold text-gold-300 border border-gold-500/30 hover:bg-gold-500/10 transition-colors"
-                                            >
-                                                {isAr ? 'مسح الفلاتر' : 'Clear filters'}
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                            {displayedOffers.map(offer => (
-                                                <div key={offer.id} className="contain-paint content-visibility-auto" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 280px' }}>
-                                                <OfferCard
-                                                    {...offer}
-                                                    storeName={offer.merchantName}
-                                                    rating={offer.storeRating || 0}
-                                                    reviewCount={offer.storeReviewCount || 0}
-                                                    unitPrice={offer.unitPrice || offer.price}
-                                                    isSelected={
-                                                        selectedOffer != null &&
-                                                        String(selectedOffer) === String(offer.id)
-                                                    }
-                                                    onAccept={() => handleAccept(offer)}
-                                                    onChat={() => handleChat(offer)}
-                                                    onReject={() => onRejectOffer(offer)}
-                                                    disabled={
-                                                        !readOnly &&
-                                                        (disabled ||
-                                                            (acceptLoadingOfferId !== null &&
-                                                                acceptLoadingOfferId !== String(offer.id)))
-                                                    }
-                                                    readOnly={readOnly}
-                                                    orderStatus={orderStatus}
-                                                    acceptLoading={
-                                                        acceptLoadingOfferId !== null &&
-                                                        acceptLoadingOfferId === String(offer.id)
-                                                    }
-                                                />
-                                                </div>
-                                            ))}
-                                        </div>
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                <OfferFiltersBar
+                    isAr={isAr}
+                    displayedCount={displayedOffers.length}
+                    totalCount={baseOffers.length}
+                    priceSort={priceSort}
+                    warrantyFilter={warrantyFilter}
+                    onPriceSort={handlePriceSort}
+                    onWarrantyFilter={handleWarrantyFilter}
+                    onReset={resetFilters}
+                    hasActiveFilters={hasActiveFilters}
+                />
+
+                {acceptSuccessMsg && (
+                    <div className="mx-4 md:mx-8 mt-4 p-4 rounded-2xl border border-green-500/30 bg-green-500/10 text-green-300 text-sm font-bold flex items-center justify-between gap-3 shrink-0">
+                        <span>{acceptSuccessMsg}</span>
+                        <button
+                            type="button"
+                            onClick={() => setAcceptSuccessMsg(null)}
+                            className="text-[11px] uppercase tracking-wider text-green-200/70 hover:text-white shrink-0"
+                        >
+                            {isAr ? 'إخفاء' : 'Dismiss'}
+                        </button>
+                    </div>
+                )}
+
+                {/* Offers List */}
+                <div
+                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-8 bg-black/40 scrollbar-none custom-scrollbar touch-pan-y"
+                    style={{ WebkitOverflowScrolling: 'touch', contain: 'content' }}
+                >
+                    <div className="max-w-4xl mx-auto w-full space-y-4">
+                        {!listReady ? (
+                            <div className="space-y-4 py-2">
+                                {[0, 1].map((i) => (
+                                    <div
+                                        key={i}
+                                        className="h-48 rounded-2xl bg-white/5 border border-white/5 animate-pulse"
+                                    />
+                                ))}
+                            </div>
+                        ) : displayedOffers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-white/30 py-20">
+                                <Package size={64} className="mb-6 opacity-30" />
+                                <p className="text-xl font-medium">
+                                    {hasActiveFilters
+                                        ? isAr
+                                            ? 'لا توجد عروض تطابق الفلتر'
+                                            : 'No offers match your filters'
+                                        : isAr
+                                          ? 'لا توجد عروض لهذه القطعة'
+                                          : 'No offers for this part yet'}
+                                </p>
+                                {hasActiveFilters && (
+                                    <button
+                                        type="button"
+                                        onClick={resetFilters}
+                                        className="mt-4 px-4 py-2 rounded-xl text-sm font-bold text-gold-300 border border-gold-500/30 hover:bg-gold-500/10 transition-colors"
+                                    >
+                                        {isAr ? 'مسح الفلاتر' : 'Clear filters'}
+                                    </button>
                                 )}
                             </div>
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                        ) : (
+                            displayedOffers.map((offer) => (
+                                <OfferRow
+                                    key={offer.id}
+                                    offer={offer}
+                                    isSelected={
+                                        selectedOffer != null &&
+                                        String(selectedOffer) === String(offer.id)
+                                    }
+                                    disabled={
+                                        !readOnly &&
+                                        Boolean(
+                                            disabled ||
+                                                (acceptLoadingOfferId !== null &&
+                                                    acceptLoadingOfferId !== String(offer.id)),
+                                        )
+                                    }
+                                    readOnly={readOnly}
+                                    orderStatus={orderStatus}
+                                    acceptLoading={
+                                        acceptLoadingOfferId !== null &&
+                                        acceptLoadingOfferId === String(offer.id)
+                                    }
+                                    handlersRef={handlersRef}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };

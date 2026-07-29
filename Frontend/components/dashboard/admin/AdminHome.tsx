@@ -1,8 +1,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
-import { Users, Store, Activity, DollarSign, Package, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, MoreHorizontal, ShieldCheck, CheckCircle2, Download, Filter, Search, Plus, Trash2, Edit, Car, User } from 'lucide-react';
+import { Users, Store, Activity, DollarSign, Package, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, ShieldCheck, CheckCircle2, Car, User } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -49,7 +48,7 @@ interface AdminHomeProps {
 
 // Ultra-Modern 2026 Skeleton Pre-loader (No flashes, extremely fast structural rendering)
 const AdminHomeSkeleton = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-10">
+    <div className="space-y-8 pb-10">
         {/* HEADER HEADER SKELETON */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-gradient-to-r from-[#1A1814] to-transparent p-6 rounded-3xl border border-white/5">
             <div className="space-y-3 w-full max-w-sm">
@@ -66,7 +65,7 @@ const AdminHomeSkeleton = () => (
         {/* KPI GRID SKELETON */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
-                <GlassCard key={i} className="p-5 border-white/5">
+                <GlassCard key={i} enableBlur={false} className="p-5 border-white/5 no-entrance-anim">
                     <div className="flex justify-between items-start">
                         <div className="space-y-3 w-full">
                             <div className="w-16 h-3 bg-white/10 rounded-full animate-pulse"></div>
@@ -80,14 +79,14 @@ const AdminHomeSkeleton = () => (
 
         {/* CHARTS SKELETON */}
         <div className="grid lg:grid-cols-3 gap-6">
-            <GlassCard className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/80 min-h-[400px] justify-between">
+            <GlassCard enableBlur={false} className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/80 min-h-[400px] justify-between no-entrance-anim">
                 <div className="flex justify-between w-full">
                     <div className="w-32 h-6 bg-white/10 rounded-xl animate-pulse"></div>
                     <div className="w-24 h-8 bg-white/10 rounded-xl animate-pulse"></div>
                 </div>
                 <div className="w-full h-[300px] bg-white/5 rounded-xl animate-pulse mt-8"></div>
             </GlassCard>
-            <GlassCard className="p-6 bg-[#1A1814]/80 flex flex-col items-center justify-center min-h-[400px]">
+            <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/80 flex flex-col items-center justify-center min-h-[400px] no-entrance-anim">
                 <div className="w-48 h-48 rounded-full bg-white/5 animate-pulse"></div>
                 <div className="w-full grid grid-cols-2 gap-3 mt-8">
                     {[...Array(4)].map((_, i) => <div key={i} className="w-full h-8 bg-white/10 rounded-xl animate-pulse"></div>)}
@@ -143,7 +142,7 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
     return (
         <GlassCard
             enableBlur={false}
-            className="relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-all duration-500 min-h-[140px] bg-[#1A1814]/90 contain-paint"
+            className="relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-[border-color,background-color] duration-300 min-h-[140px] bg-[#1A1814]/90 contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_140px]"
         >
             {loading ? (
                 <div className="space-y-4">
@@ -152,9 +151,15 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
                     <div className="w-20 h-3 bg-white/5 rounded-full animate-pulse" />
                 </div>
             ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-                    <div className={`absolute top-0 right-0 p-20 rounded-full blur-3xl opacity-10 bg-${color.split('-')[1]}-500 group-hover:opacity-20 transition-opacity`} />
-                    <div className="relative z-10 flex justify-between items-start">
+                <div className="animate-in fade-in duration-300">
+                    {/* Radial glow without CSS filter blur (keeps look, avoids scroll paint cost) */}
+                    <div
+                        className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-20 group-hover:opacity-30 transition-opacity pointer-events-none"
+                        style={{
+                            background: `radial-gradient(circle, currentColor 0%, transparent 70%)`,
+                        }}
+                    />
+                    <div className={`relative z-10 flex justify-between items-start ${color}`}>
                         <div>
                             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">{label}</p>
                             <h3 className="text-2xl lg:text-3xl font-bold text-white font-mono tracking-tight">
@@ -173,7 +178,7 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
                         </span>
                         <span className="text-[10px] text-white/30">vs last period</span>
                     </div>
-                </motion.div>
+                </div>
             )}
         </GlassCard>
     );
@@ -503,7 +508,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     const recentOrders = dashboardStats.recentOrders ?? [];
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-10">
+        <div className="space-y-8 pb-10 [contain:layout_style]">
 
             {/* HEADER */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-gradient-to-r from-[#1A1814] to-transparent p-6 rounded-3xl border border-white/5">
@@ -565,7 +570,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             {/* MAIN ANALYTICS SECTION */}
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Sales Chart (Large) */}
-                <GlassCard enableBlur={false} className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/90 contain-paint">
+                <GlassCard enableBlur={false} className="lg:col-span-2 p-6 md:p-8 flex flex-col bg-[#1A1814]/90 contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
                             <h3 className="text-lg font-bold text-white mb-1">
@@ -599,11 +604,11 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
                     <div className="flex-1 w-full min-h-[300px] relative">
                         {isLoadingStats && (
-                            <div className="absolute inset-0 z-20 bg-black/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <div className="absolute inset-0 z-20 bg-black/40 rounded-xl flex items-center justify-center">
                                 <div className="w-12 h-12 border-4 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
                             </div>
                         )}
-                        <div className={`w-full h-[300px] transition-all duration-700 ${isLoadingStats ? 'opacity-30 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
+                        <div className={`w-full h-[300px] transition-opacity duration-300 ${isLoadingStats ? 'opacity-40' : 'opacity-100'}`}>
                             <BarChart
                                 data={chartsData.salesTrendData}
                                 height={300}
@@ -616,8 +621,11 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                 {/* Side Column: Alerts & Status */}
                 <div className="space-y-6">
                     {/* Status Donut */}
-                    <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col items-center justify-between min-h-[420px] relative overflow-hidden border-white/5 contain-paint">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 blur-3xl rounded-full -mr-16 -mt-16" />
+                    <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col items-center justify-between min-h-[420px] relative overflow-hidden border-white/5 contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
+                        <div
+                            className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-40 pointer-events-none"
+                            style={{ background: 'radial-gradient(circle, rgba(168,139,62,0.18) 0%, transparent 70%)' }}
+                        />
                         
                         <div className="w-full flex justify-between items-start mb-6">
                             <div>
@@ -659,7 +667,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
             {/* BOTTOM SECTION: Top Stores & Alerts */}
             <div className="grid lg:grid-cols-3 gap-6">
-                <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col min-h-[400px] contain-paint">
+                <GlassCard enableBlur={false} className="p-6 bg-[#1A1814]/90 flex flex-col min-h-[400px] contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_400px]">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold text-white">{t.admin.charts.topStores}</h3>
                         <button 
@@ -738,7 +746,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             </div>
 
             {/* RECENT ORDERS TABLE - REDESIGNED 2026 */}
-            <GlassCard enableBlur={false} className="p-0 overflow-hidden bg-[#1A1814]/95 border-white/10 relative contain-paint">
+            <GlassCard enableBlur={false} className="p-0 overflow-hidden bg-[#1A1814]/95 border-white/10 relative contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_360px]">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/20 to-transparent" />
                 
                 <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">

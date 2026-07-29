@@ -121,7 +121,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     return (
         <>
             <div
-                className={`rounded-2xl p-6 mb-4 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 ${isSelected
+                className={`rounded-2xl p-6 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 contain-paint ${isSelected
                     ? 'bg-gradient-to-br from-gold-500/10 to-transparent border-2 border-gold-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]'
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
                     } ${disabled ? 'opacity-50 grayscale-[50%] pointer-events-none' : ''}`}
@@ -133,7 +133,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                         {/* Store Logo */}
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center font-bold text-white text-xl overflow-hidden shrink-0">
                             {storeLogo ? (
-                                <img src={storeLogo} alt="Store" className="w-full h-full object-cover" />
+                                <img src={storeLogo} alt="Store" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             ) : (
                                 <ShieldCheck size={18} className="text-gold-400/40" />
                             )}
@@ -169,7 +169,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                             onClick={() => setIsImageModalOpen(true)}
                             className="w-24 h-24 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 shadow-lg cursor-pointer relative group/image"
                         >
-                            <img src={offerImage} alt="Offer Part" className="w-full h-full object-cover" />
+                            <img src={offerImage} alt="Offer Part" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
                                 <ZoomIn className="text-white" size={24} />
                             </div>

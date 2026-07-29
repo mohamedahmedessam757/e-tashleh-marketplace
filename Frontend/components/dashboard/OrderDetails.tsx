@@ -249,6 +249,26 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         return allShipmentBatchesDelivered(order.shipments);
     }, [order?.status, order?.shipments]);
 
+    const drawerOffers = useMemo(() => {
+        if (!drawerPart || !order?.offers) return [];
+        return order.offers.filter(
+            (o: any) =>
+                String(o.orderPartId) === String(drawerPart.id) &&
+                isVisibleMarketplaceOffer(o),
+        );
+    }, [drawerPart, order?.offers]);
+
+    const drawerSelectedOfferId = useMemo(() => {
+        if (!drawerPart || !order?.offers) return null;
+        return (
+            order.offers.find(
+                (o: any) =>
+                    String(o.orderPartId) === String(drawerPart.id) &&
+                    isAcceptedOfferStatus(o.status),
+            )?.id ?? null
+        );
+    }, [drawerPart, order?.offers]);
+
     // Re-check selection/offer/collection deadlines while customer stays on the page
     useEffect(() => {
         if (!order) return;
@@ -1614,18 +1634,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     partDescription={drawerPart.description}
                                     partImage={drawerPart.image}
                                     partIndex={drawerPart.index}
-                                    offers={order.offers.filter(
-                                        (o: any) =>
-                                            String(o.orderPartId) === String(drawerPart.id) &&
-                                            isVisibleMarketplaceOffer(o),
-                                    )}
-                                    selectedOffer={
-                                        order.offers.find(
-                                            (o: any) =>
-                                                String(o.orderPartId) === String(drawerPart.id) &&
-                                                isAcceptedOfferStatus(o.status),
-                                        )?.id ?? null
-                                    }
+                                    offers={drawerOffers}
+                                    selectedOffer={drawerSelectedOfferId}
                                     onAcceptOffer={handleAcceptOffer}
                                     onChat={handleChat}
                                     onRejectOffer={(offer) => setOfferToReject(offer)}
