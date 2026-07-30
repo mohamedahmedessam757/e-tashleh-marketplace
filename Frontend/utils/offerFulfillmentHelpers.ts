@@ -269,6 +269,7 @@ export function getOrderTimelineStepIndex(status?: string): number {
         case 'OUT_FOR_DELIVERY':
         case 'DELIVERY_ATTEMPTED':
             return 5;
+        case 'PARTIALLY_DELIVERED':
         case 'DELIVERED':
         case 'DELIVERED_TO_CUSTOMER':
         case 'COMPLETED':

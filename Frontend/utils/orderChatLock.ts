@@ -1,4 +1,6 @@
-/** Order statuses where vendor–customer order chat must be locked (UI + API). */
+/** Order statuses where vendor–customer order chat must be locked (UI + API).
+ * Keep in parity with backend CHAT_CLOSE_ORDER_STATUSES (chat-offer-expiry.util.ts).
+ */
 export const ORDER_CHAT_CLOSED_STATUSES = [
   'CANCELLED',
   'COMPLETED',

@@ -20,6 +20,11 @@ import { OrderStateMachine } from './fsm/order-state-machine.service';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import { ChatService } from '../chat/chat.service';
 import { aggregateMultiItemDeliveryStatus } from './offer-resolution.helpers';
+import {
+    calculateWarrantyEndDate,
+    resolveCompletionWarranty,
+} from './warranty-activation.util';
+import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     [OfferFulfillmentStatus.AWAITING_PAYMENT]: 0,
@@ -151,9 +156,22 @@ export class OfferFulfillmentService {
             // Multi-part orders follow the slowest offer; backward steps are valid
             // (e.g. VERIFICATION → PREPARED when one part is approved but others are not verified yet).
 
+            const now = new Date();
+            const warranty = resolveCompletionWarranty(allAccepted, now, nextStatus);
+            const effectiveStatus = warranty.effectiveStatus;
+
             await this.prisma.order.update({
                 where: { id: orderId },
-                data: { status: nextStatus },
+                data: {
+                    status: effectiveStatus,
+                    updatedAt: now,
+                    ...(warranty.activate
+                        ? {
+                              warranty_active_at: now,
+                              warranty_end_at: warranty.endAt,
+                          }
+                        : {}),
+                },
             });
 
             await this.auditLogs.logAction({
@@ -164,7 +182,7 @@ export class OfferFulfillmentService {
                 actorId: 'FULFILLMENT_ENGINE',
                 actorName: 'Offer Fulfillment',
                 previousState: order.status,
-                newState: nextStatus,
+                newState: effectiveStatus,
                 reason: 'Recomputed from per-offer fulfillment statuses',
             });
 
@@ -173,7 +191,7 @@ export class OfferFulfillmentService {
                 orderId,
                 orderNumber: order.orderNumber,
                 customerId: order.customerId,
-                newStatus: nextStatus,
+                newStatus: effectiveStatus,
                 paidOffers,
             }).catch((err) => {
                 console.error(
@@ -182,11 +200,13 @@ export class OfferFulfillmentService {
                 );
             });
 
-            if (nextStatus === OrderStatus.COMPLETED) {
+            if (shouldCloseOrderChat(effectiveStatus)) {
                 this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
                     console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
                 });
             }
+
+            return effectiveStatus;
         }
 
         return nextStatus;
@@ -207,6 +227,7 @@ export class OfferFulfillmentService {
         OrderStatus.PARTIALLY_DELIVERED,
         OrderStatus.DELIVERED,
         OrderStatus.COMPLETED,
+        OrderStatus.WARRANTY_ACTIVE,
         OrderStatus.CANCELLED,
     ]);
 
@@ -235,6 +256,7 @@ export class OfferFulfillmentService {
             [OrderStatus.PARTIALLY_DELIVERED]: 'تم تسليم جزء من قطع طلبك.',
             [OrderStatus.DELIVERED]: 'تم تسليم طلبك.',
             [OrderStatus.COMPLETED]: 'اكتمل طلبك بنجاح.',
+            [OrderStatus.WARRANTY_ACTIVE]: 'تم تفعيل الضمان على طلبك. يمكنك متابعة مدة الحماية من تفاصيل الطلب.',
             [OrderStatus.CANCELLED]: 'تم إلغاء الطلب.',
         };
         const messagesEn: Partial<Record<OrderStatus, string>> = {
@@ -251,6 +273,7 @@ export class OfferFulfillmentService {
             [OrderStatus.PARTIALLY_DELIVERED]: 'Some parts of your order were delivered.',
             [OrderStatus.DELIVERED]: 'Your order has been delivered.',
             [OrderStatus.COMPLETED]: 'Your order is complete.',
+            [OrderStatus.WARRANTY_ACTIVE]: 'Warranty is now active on your order. Track remaining protection from order details.',
             [OrderStatus.CANCELLED]: 'The order was cancelled.',
         };
 
@@ -956,7 +979,7 @@ export class OfferFulfillmentService {
                 offer.hasWarranty && offer.warrantyDuration
                     ? {
                           warrantyActiveAt: now,
-                          warrantyEndAt: this.calculateWarrantyEndDate(
+                          warrantyEndAt: calculateWarrantyEndDate(
                               now,
                               offer.warrantyDuration,
                           ),
@@ -1025,25 +1048,5 @@ export class OfferFulfillmentService {
             hasOpenCase,
             warrantyEndAt: offer.warrantyEndAt?.toISOString() ?? null,
         };
-    }
-
-    private calculateWarrantyEndDate(startDate: Date, duration: string): Date {
-        const date = new Date(startDate);
-        const d = duration.toLowerCase();
-
-        if (d.includes('day')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '0', 10);
-            date.setDate(date.getDate() + num);
-        } else if (d.includes('month')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '1', 10);
-            date.setMonth(date.getMonth() + num);
-        } else if (d.includes('year')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '1', 10);
-            date.setFullYear(date.getFullYear() + num);
-        } else {
-            date.setDate(date.getDate() + 15);
-        }
-
-        return date;
     }
 }

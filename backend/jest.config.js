@@ -9,6 +9,7 @@ module.exports = {
         '**/widers-template-components.util.spec.ts',
         '**/invoice-snapshot.util.spec.ts',
         '**/chat-completion-lock.util.spec.ts',
+        '**/warranty-activation.util.spec.ts',
         '**/escrow-release-eligibility.util.spec.ts',
         '**/whatsapp-notification.mapper.spec.ts',
         '**/shipment-follow-url.util.spec.ts',

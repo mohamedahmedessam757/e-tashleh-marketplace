@@ -68,6 +68,11 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const isPrepared = currentStatus === 'PREPARED';
   const activeIndex = getOrderTimelineStepIndex(currentStatus);
   const isCancelled = currentStatus === 'CANCELLED';
+  const isTerminalDeliveryDone = [
+    'COMPLETED',
+    'WARRANTY_ACTIVE',
+    'WARRANTY_EXPIRED',
+  ].includes(String(currentStatus || '').toUpperCase());
 
   // Line runs center→center of first/last circles (not container edges)
   const sideInset = `calc(100% / ${n} / 2)`;
@@ -75,7 +80,9 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const filledWidth =
     isCancelled || activeIndex <= 0
       ? '0px'
-      : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
+      : isTerminalDeliveryDone
+        ? trackSpan
+        : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
 
   return (
     <div className="w-full py-8 px-2 sm:px-4 isolate" dir={isAr ? 'rtl' : 'ltr'}>
@@ -102,8 +109,13 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
         <div className="relative z-[1] flex h-10 w-full">
           {steps.map((step, idx) => {
-            const isCompleted = idx < activeIndex && !isCancelled;
-            const isCurrent = idx === activeIndex && !isCancelled;
+            const isCompleted =
+              !isCancelled &&
+              (idx < activeIndex ||
+                (isTerminalDeliveryDone && idx === activeIndex));
+            // Gold current border only while delivery is still in progress (e.g. DELIVERED)
+            const isCurrent =
+              idx === activeIndex && !isCancelled && !isTerminalDeliveryDone;
             const isCurrentDelayed = isCurrent && isDelayed;
 
             return (
