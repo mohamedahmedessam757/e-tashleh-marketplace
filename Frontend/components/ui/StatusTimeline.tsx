@@ -69,9 +69,13 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const activeIndex = getOrderTimelineStepIndex(currentStatus);
   const isCancelled = currentStatus === 'CANCELLED';
   const isTerminalDeliveryDone = [
+    'DELIVERED',
     'COMPLETED',
     'WARRANTY_ACTIVE',
     'WARRANTY_EXPIRED',
+    'RETURNED',
+    'REFUNDED',
+    'RESOLVED',
   ].includes(String(currentStatus || '').toUpperCase());
 
   // Line runs center→center of first/last circles (not container edges)

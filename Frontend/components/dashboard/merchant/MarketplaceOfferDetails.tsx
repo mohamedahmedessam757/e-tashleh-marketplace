@@ -328,11 +328,25 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         [merchantAcceptedOffers],
     );
     const offersAwaitingCustomerPayment = useMemo(
-        () =>
-            merchantAcceptedOffers.filter(
+        () => {
+            const terminal = [
+                'COMPLETED',
+                'WARRANTY_ACTIVE',
+                'WARRANTY_EXPIRED',
+                'DELIVERED',
+                'RETURNED',
+                'REFUNDED',
+                'RESOLVED',
+                'CANCELLED',
+            ];
+            if (order?.status && terminal.includes(String(order.status).toUpperCase())) {
+                return [];
+            }
+            return merchantAcceptedOffers.filter(
                 (o) => normalizeOfferFulfillmentStatus(o.fulfillmentStatus) === 'AWAITING_PAYMENT',
-            ),
-        [merchantAcceptedOffers],
+            );
+        },
+        [merchantAcceptedOffers, order?.status],
     );
     const offersNeedingVerification = useMemo(
         () => merchantAcceptedOffers.filter((o) => merchantCanSubmitVerification(o.fulfillmentStatus)),
@@ -503,7 +517,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             else if (s === 'VERIFICATION') stepCounts.verification++;
             else if (s === 'VERIFICATION_SUCCESS') stepCounts.handoverPending++;
             else if (s === 'READY_FOR_SHIPPING') stepCounts.readyForShipping++;
-            else if (s === 'SHIPPED' || s === 'DELIVERED') stepCounts.shipped++;
+            else if (s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED') stepCounts.shipped++;
         }
         return { total, stepCounts };
     }, [merchantAcceptedOffers, fulfillmentSummary]);
@@ -940,8 +954,29 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                         // If the order has progressed to checkout/shipping
                         if (isProgressive) {
-                            // Check if the merchant has at least one accepted offer on this order
                             const hasAccepted = myOffers.some(o => o.status === 'accepted');
+                            const DONE_STATUSES = [
+                                'DELIVERED',
+                                'COMPLETED',
+                                'WARRANTY_ACTIVE',
+                                'WARRANTY_EXPIRED',
+                                'RETURNED',
+                                'REFUNDED',
+                            ];
+                            if (DONE_STATUSES.includes(order.status)) {
+                                return (
+                                    <div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
+                                        <CheckCircle2 size={16} />
+                                        <span className="font-bold text-sm">
+                                            {order.status === 'WARRANTY_ACTIVE'
+                                                ? (isAr ? 'مكتمل — الضمان نشط' : 'Completed — Warranty Active')
+                                                : order.status === 'WARRANTY_EXPIRED'
+                                                  ? (isAr ? 'مكتمل — انتهى الضمان' : 'Completed — Warranty Expired')
+                                                  : (isAr ? 'مكتمل' : 'Completed')}
+                                        </span>
+                                    </div>
+                                );
+                            }
                             return (
                                 <div className={`flex items-center gap-2 ${hasAccepted ? 'text-green-400' : 'text-white/60'}`}>
                                     {hasAccepted ? (order.status === 'PREPARED' ? <Package size={16} /> : <CheckCircle2 size={16} />) : <AlertTriangle size={16} />}
@@ -2235,13 +2270,42 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     borderColor: 'border-cyan-500/20'
                                                 };
                                             case 'DELIVERED':
-                                            case 'COMPLETED':
                                                 return {
                                                     icon: <Package size={28} className="text-green-400" />,
                                                     title: isAr ? s.DELIVERED.title : s.DELIVERED.enTitle,
                                                     desc: isAr ? s.DELIVERED.desc : s.DELIVERED.enDesc,
                                                     bgColor: 'bg-green-500/10',
                                                     borderColor: 'border-green-500/20'
+                                                };
+                                            case 'COMPLETED':
+                                                return {
+                                                    icon: <CheckCircle2 size={28} className="text-emerald-400" />,
+                                                    title: isAr ? 'اكتمل الطلب' : 'Order Completed',
+                                                    desc: isAr
+                                                        ? 'تم تسليم القطع وإتمام الطلب بنجاح. شكراً لتعاملك مع المنصة!'
+                                                        : 'Parts delivered and order finalized. Thank you for working with us!',
+                                                    bgColor: 'bg-emerald-500/10',
+                                                    borderColor: 'border-emerald-500/20'
+                                                };
+                                            case 'WARRANTY_ACTIVE':
+                                                return {
+                                                    icon: <Shield size={28} className="text-emerald-400" />,
+                                                    title: isAr ? 'الضمان نشط' : 'Warranty Active',
+                                                    desc: isAr
+                                                        ? 'الطلب مكتمل والضمان ساري. تواصل معنا في حال وجود أي مشكلة.'
+                                                        : 'Order complete and warranty is active. Contact us if any issue arises.',
+                                                    bgColor: 'bg-emerald-500/10',
+                                                    borderColor: 'border-emerald-500/20',
+                                                };
+                                            case 'WARRANTY_EXPIRED':
+                                                return {
+                                                    icon: <ShieldCheck size={28} className="text-white/40" />,
+                                                    title: isAr ? 'انتهى الضمان' : 'Warranty Expired',
+                                                    desc: isAr
+                                                        ? 'اكتمل الطلب وانتهت فترة الضمان.'
+                                                        : 'Order completed and warranty has ended.',
+                                                    bgColor: 'bg-white/5',
+                                                    borderColor: 'border-white/10',
                                                 };
                                             default:
                                                 if (hasSubmittedAny) {
@@ -2286,7 +2350,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 })()}
 
                                 {(() => {
-                                    const progressiveStates = ['AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURNED'];
+                                    const progressiveStates = ['AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
                                     const isProgressive = progressiveStates.includes(order.status);
 
                                     if (order.status === 'VERIFICATION' || order.status === 'CORRECTION_SUBMITTED') {

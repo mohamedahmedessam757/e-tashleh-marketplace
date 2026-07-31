@@ -14,9 +14,17 @@ describe('calculateWarrantyEndDate', () => {
     expect(end.getDate()).toBe(15);
   });
 
-  it('defaults unknown format to +15 days', () => {
-    const start = new Date(2026, 0, 1, 0, 0, 0);
+  it('treats bare Arabic شهر as 1 month', () => {
+    const start = new Date(2026, 0, 15, 12, 0, 0);
     const end = calculateWarrantyEndDate(start, 'شهر');
+    expect(end.getFullYear()).toBe(2026);
+    expect(end.getMonth()).toBe(1);
+    expect(end.getDate()).toBe(15);
+  });
+
+  it('defaults truly unknown format to +15 days', () => {
+    const start = new Date(2026, 0, 1, 0, 0, 0);
+    const end = calculateWarrantyEndDate(start, 'custom-warranty');
     expect(end.getTime() - start.getTime()).toBe(15 * 24 * 60 * 60 * 1000);
   });
 });
