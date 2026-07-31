@@ -9,6 +9,10 @@ interface FileUploaderProps {
     maxSize?: number; // in bytes
 }
 
+type PreviewItem = { file: File; url: string; type: 'image' | 'video'; key: string };
+
+const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
+
 export const FileUploader: React.FC<FileUploaderProps> = ({
     onFilesSelected,
     maxFiles = 5,
@@ -18,42 +22,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     },
     maxSize = 50 * 1024 * 1024 // 50MB default
 }) => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<{ file: File; url: string; type: 'image' | 'video' }[]>([]);
-    const previewsRef = useRef(previews);
-    previewsRef.current = previews;
+    const [previews, setPreviews] = useState<PreviewItem[]>([]);
+    const previewsRef = useRef<PreviewItem[]>([]);
+    const onFilesSelectedRef = useRef(onFilesSelected);
+    onFilesSelectedRef.current = onFilesSelected;
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-        setFiles((prevFiles) => {
-            const newFiles = [...prevFiles, ...acceptedFiles].slice(0, maxFiles);
-            onFilesSelected(newFiles);
-
-            const newPreviews = acceptedFiles.map((file) => ({
-                file,
-                url: URL.createObjectURL(file),
-                type: (file.type.startsWith('video') ? 'video' : 'image') as 'image' | 'video',
-            }));
-
-            setPreviews((prev) => [...prev, ...newPreviews].slice(0, maxFiles));
-            return newFiles;
-        });
-    }, [maxFiles, onFilesSelected]);
-
-    const removeFile = useCallback((index: number) => {
-        setPreviews((prevPreviews) => {
-            const removed = prevPreviews[index];
-            if (removed) URL.revokeObjectURL(removed.url);
-            const newPreviews = prevPreviews.filter((_, i) => i !== index);
-
-            setFiles((prevFiles) => {
-                const newFiles = prevFiles.filter((_, i) => i !== index);
-                onFilesSelected(newFiles);
-                return newFiles;
-            });
-
-            return newPreviews;
-        });
-    }, [onFilesSelected]);
+    useEffect(() => {
+        previewsRef.current = previews;
+        onFilesSelectedRef.current(previews.map((p) => p.file));
+    }, [previews]);
 
     useEffect(() => {
         return () => {
@@ -61,16 +38,56 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         };
     }, []);
 
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        if (!acceptedFiles.length) return;
+
+        const prev = previewsRef.current;
+        const remaining = maxFiles - prev.length;
+        if (remaining <= 0) return;
+
+        const seen = new Set(prev.map((p) => p.key));
+        const toAdd: PreviewItem[] = [];
+
+        for (const file of acceptedFiles) {
+            if (toAdd.length >= remaining) break;
+            const key = fileKey(file);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            toAdd.push({
+                file,
+                key,
+                url: URL.createObjectURL(file),
+                type: file.type.startsWith('video') ? 'video' : 'image',
+            });
+        }
+
+        if (toAdd.length === 0) return;
+
+        const next = [...prev, ...toAdd];
+        previewsRef.current = next;
+        setPreviews(next);
+    }, [maxFiles]);
+
+    const removeFile = useCallback((index: number) => {
+        const prev = previewsRef.current;
+        const removed = prev[index];
+        if (removed) URL.revokeObjectURL(removed.url);
+        const next = prev.filter((_, i) => i !== index);
+        previewsRef.current = next;
+        setPreviews(next);
+    }, []);
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept,
         maxSize,
         maxFiles,
+        multiple: true,
     });
 
     return (
         <div className="space-y-4">
-            {files.length < maxFiles && (
+            {previews.length < maxFiles && (
                 <div
                     {...getRootProps()}
                     className={`
@@ -95,7 +112,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {previews.map((preview, index) => (
                         <div
-                            key={`${preview.url}-${index}`}
+                            key={preview.key}
                             className="relative group rounded-lg overflow-hidden border border-white/10 aspect-square bg-black/40"
                         >
                             {preview.type === 'video' ? (
