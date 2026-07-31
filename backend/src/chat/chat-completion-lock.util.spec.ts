@@ -8,67 +8,51 @@ import {
   isOfferPhaseOrderStatus,
   shouldKeepOrderChatOpen,
   shouldCloseOrderChat,
+  CHAT_CLOSE_ORDER_STATUSES,
 } from './chat-offer-expiry.util';
 
+/** Mirror of Frontend/utils/orderChatLock.ts — keep in sync. */
+const FE_ORDER_CHAT_CLOSED_STATUSES = [
+  'CANCELLED',
+  'COMPLETED',
+  'WARRANTY_ACTIVE',
+  'WARRANTY_EXPIRED',
+] as const;
+
 describe('shouldLockChatOnCompletion', () => {
-  it('locks on COMPLETED when no open dispute/return', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'COMPLETED',
-        disputeStatuses: [],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+  it('locks on COMPLETED', () => {
+    expect(shouldLockChatOnCompletion({ orderStatus: 'COMPLETED' })).toEqual({
+      shouldLock: true,
+      reason: 'ORDER_COMPLETED',
+    });
   });
 
-  it('locks on WARRANTY_ACTIVE when cases closed', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'WARRANTY_ACTIVE',
-        disputeStatuses: ['RESOLVED'],
-        returnStatuses: ['CLOSED'],
-      }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+  it('locks on WARRANTY_ACTIVE', () => {
+    expect(shouldLockChatOnCompletion({ orderStatus: 'WARRANTY_ACTIVE' })).toEqual({
+      shouldLock: true,
+      reason: 'ORDER_COMPLETED',
+    });
   });
 
   it('locks on CANCELLED', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'CANCELLED',
-        disputeStatuses: [],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+    expect(shouldLockChatOnCompletion({ orderStatus: 'CANCELLED' })).toEqual({
+      shouldLock: true,
+      reason: 'ORDER_COMPLETED',
+    });
   });
 
   it('locks on WARRANTY_EXPIRED', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'WARRANTY_EXPIRED',
-        disputeStatuses: [],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+    expect(shouldLockChatOnCompletion({ orderStatus: 'WARRANTY_EXPIRED' })).toEqual({
+      shouldLock: true,
+      reason: 'ORDER_COMPLETED',
+    });
   });
 
   it('does not lock when order is DELIVERED (return window)', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'DELIVERED',
-        disputeStatuses: [],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: false, reason: null });
-  });
-
-  it('locks COMPLETED even when an open dispute exists (terminal lock rule)', () => {
-    expect(
-      shouldLockChatOnCompletion({
-        orderStatus: 'COMPLETED',
-        disputeStatuses: ['OPEN'],
-        returnStatuses: [],
-      }),
-    ).toEqual({ shouldLock: true, reason: 'ORDER_COMPLETED' });
+    expect(shouldLockChatOnCompletion({ orderStatus: 'DELIVERED' })).toEqual({
+      shouldLock: false,
+      reason: null,
+    });
   });
 
   it('treats RESOLVED/CLOSED disputes as closed', () => {
@@ -107,5 +91,11 @@ describe('chat offer-phase expiry helpers', () => {
     expect(shouldCloseOrderChat('WARRANTY_EXPIRED')).toBe(true);
     expect(shouldCloseOrderChat('DELIVERED')).toBe(false);
     expect(shouldCloseOrderChat('AWAITING_SELECTION')).toBe(false);
+  });
+
+  it('stays in parity with Frontend orderChatLock mirror list', () => {
+    expect([...CHAT_CLOSE_ORDER_STATUSES].sort()).toEqual(
+      [...FE_ORDER_CHAT_CLOSED_STATUSES].sort(),
+    );
   });
 });

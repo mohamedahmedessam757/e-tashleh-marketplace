@@ -919,9 +919,8 @@ export class ChatService {
     }
 
     /**
-     * Lock winning vendor–customer order chat when the order reaches COMPLETED
-     * (or WARRANTY_ACTIVE after completion) and there is no open dispute/return.
-     * Does not touch support chats. Does not reopen later if a dispute opens.
+     * Lock winning vendor–customer order chat when the order reaches a terminal
+     * close status (cancel / complete / warranty). Does not touch support chats.
      */
     async lockOrderVendorChatOnCompletion(orderId: string): Promise<{ locked: number }> {
         const order = await this.prisma.order.findUnique({
@@ -929,16 +928,12 @@ export class ChatService {
             select: {
                 id: true,
                 status: true,
-                disputes: { select: { status: true } },
-                returns: { select: { status: true } },
             },
         });
         if (!order) return { locked: 0 };
 
         const { shouldLock, reason } = shouldLockChatOnCompletion({
             orderStatus: order.status,
-            disputeStatuses: order.disputes.map((d) => d.status),
-            returnStatuses: order.returns.map((r) => r.status),
         });
         if (!shouldLock || !reason) return { locked: 0 };
 

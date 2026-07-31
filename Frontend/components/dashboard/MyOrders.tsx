@@ -10,6 +10,7 @@ import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { Order } from '../../types';
 import { OrderCountdown } from '../ui/OrderCountdown';
 import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
+import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { isOrderExpired } from '../../utils/dateUtils';
 import { useProfileStore } from '../../stores/useProfileStore';
 import { ShieldAlert, AlertTriangle, Info } from 'lucide-react';
@@ -340,6 +341,15 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                             !(order.offers?.some((o) => o.status !== 'rejected'))
                                                         ) && (
                                                         <OrderStatusCountdown order={order} variant="compact" className="mt-1" />
+                                                    )}
+
+                                                    {order.warranty_end_at &&
+                                                        (order.status === 'WARRANTY_ACTIVE' ||
+                                                            order.status === 'COMPLETED') && (
+                                                        <WarrantyProtectionCard
+                                                            order={order}
+                                                            variant="compact"
+                                                        />
                                                     )}
 
                                                     {/* New Offers Count */}

@@ -269,6 +269,7 @@ export function useConnectivityStatus(): ConnectivityStatus {
   }, [applyResolved, evaluateHealthyPath]);
 
   const scheduleNext = useCallback(() => {
+    if (!mountedRef.current) return;
     clearPoll();
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
       return;

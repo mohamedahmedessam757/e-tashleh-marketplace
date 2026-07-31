@@ -27,6 +27,8 @@ import {
   resolveStoreIds,
   resolveUserIds,
 } from '../common/search/admin-entity-search.util';
+import { resolveCompletionWarranty } from './warranty-activation.util';
+import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 
 @Injectable()
 export class OrdersService {
@@ -636,23 +638,11 @@ export class OrdersService {
         const result = await this.prisma.$transaction(async (tx) => {
             // New 2026 Logic: Check all accepted offers for warranty (Multi-part support)
             const acceptedOffers = order.offers?.filter(o => ['accepted', 'ACCEPTED'].includes(o.status)) || [];
-            const hasAnyWarranty = acceptedOffers.some(o => o.hasWarranty && o.warrantyDuration && o.warrantyDuration !== 'no');
-            
-            let finalWarrantyEnd: Date | undefined = undefined;
-            if (newStatus === OrderStatus.COMPLETED && hasAnyWarranty) {
-                const durations = acceptedOffers
-                    .filter(o => o.hasWarranty && o.warrantyDuration && o.warrantyDuration !== 'no')
-                    .map(o => this.calculateWarrantyEndDate(new Date(), o.warrantyDuration));
-                
-                if (durations.length > 0) {
-                    finalWarrantyEnd = new Date(Math.max(...durations.map(d => d.getTime())));
-                }
-            }
-
-            const isTransitioningToWarranty = newStatus === OrderStatus.COMPLETED && hasAnyWarranty;
-
-            const effectiveStatus = isTransitioningToWarranty ? OrderStatus.WARRANTY_ACTIVE : newStatus;
             const now = new Date();
+            const warranty = resolveCompletionWarranty(acceptedOffers, now, newStatus);
+            const effectiveStatus = warranty.effectiveStatus;
+            const isTransitioningToWarranty = warranty.activate;
+
             const isFirstDeliveredTransition =
                 newStatus === OrderStatus.DELIVERED &&
                 effectiveStatus === OrderStatus.DELIVERED &&
@@ -664,7 +654,7 @@ export class OrdersService {
                     status: effectiveStatus,
                     updatedAt: now,
                     warranty_active_at: isTransitioningToWarranty ? now : undefined,
-                    warranty_end_at: isTransitioningToWarranty ? finalWarrantyEnd : undefined,
+                    warranty_end_at: isTransitioningToWarranty ? warranty.endAt : undefined,
                     selectionDeadlineAt,
                     deliveredAt: isFirstDeliveredTransition ? now : undefined,
                 },
@@ -702,13 +692,15 @@ export class OrdersService {
                 actorId: actor.id,
                 actorName: actor.name,
                 previousState: order.status,
-                newState: newStatus,
+                newState: effectiveStatus,
                 reason,
                 metadata,
             }, tx);
 
             return updatedOrder;
         }, { timeout: 15000 });
+
+        const notifyStatus = (result as Order).status;
 
         if (
             result.status === OrderStatus.COMPLETED ||
@@ -736,6 +728,7 @@ export class OrdersService {
                 [OrderStatus.SHIPPED]: 'انطلقت إليك! 🚀 طلبك الآن في الطريق، استعد لاستلام الجودة.',
                 [OrderStatus.DELIVERED]: 'وصلت الأمانة! 🏠 نأمل أن تنال إعجابك، يومك سعيد بقطعك الجديدة.',
                 [OrderStatus.COMPLETED]: 'اكتمل طلبك بنجاح 🎉 شكراً لثقتك بمنصة إي-تشليح.',
+                [OrderStatus.WARRANTY_ACTIVE]: 'تم تفعيل الضمان على طلبك 🛡️ يمكنك متابعة مدة الحماية من تفاصيل الطلب.',
                 [OrderStatus.CLOSED]: 'تم إغلاق الطلب. يمكنك دائماً إنشاء طلب جديد عند الحاجة.',
                 [OrderStatus.CANCELLED]: 'تم إلغاء طلبك بنجاح. نتمنى خدمتك في أقرب وقت ممكن.',
                 [OrderStatus.AWAITING_PAYMENT]: 'اختيار موفق! 👌 يرجى إتمام عملية الدفع لنبدأ في تجهيز طلبك فوراً.',
@@ -752,6 +745,7 @@ export class OrdersService {
                 [OrderStatus.SHIPPED]: 'On its way! 🚀 Your order is now shipped and heading to you.',
                 [OrderStatus.DELIVERED]: 'Delivered! 🏠 We hope you love it. Have a great day with your new items!',
                 [OrderStatus.COMPLETED]: 'Your order is complete 🎉 Thank you for trusting E-TASHLEH.',
+                [OrderStatus.WARRANTY_ACTIVE]: 'Warranty is now active on your order 🛡️ Track remaining protection from order details.',
                 [OrderStatus.CLOSED]: 'This order has been closed. You can create a new request anytime.',
                 [OrderStatus.CANCELLED]: 'Your order has been cancelled. We look forward to serving you again soon.',
                 [OrderStatus.AWAITING_PAYMENT]: 'Great choice! 👌 Please complete payment to start processing your order right away.',
@@ -770,13 +764,7 @@ export class OrdersService {
             }
 
             // Lock vendor–customer chat on terminal statuses (cancel / complete / warranty)
-            const chatLockStatuses: OrderStatus[] = [
-                OrderStatus.COMPLETED,
-                OrderStatus.CANCELLED,
-                OrderStatus.WARRANTY_ACTIVE,
-                OrderStatus.WARRANTY_EXPIRED,
-            ];
-            if (chatLockStatuses.includes(newStatus) || chatLockStatuses.includes((result as any).status)) {
+            if (shouldCloseOrderChat(newStatus) || shouldCloseOrderChat(notifyStatus)) {
                 this.afterOrderReachedCompletion(orderId);
             }
 
@@ -788,21 +776,21 @@ export class OrdersService {
             ]);
             // 3.1 Notify Customer (system CANCELLED uses cleanup-specific copy — skip generic here)
             const skipSystemCancelCustomer =
-                newStatus === OrderStatus.CANCELLED && actor.type === ActorType.SYSTEM;
-            if (statusMessagesAr[newStatus] && !skipSystemCancelCustomer) {
-                const isVerificationStatus = verificationStatuses.has(newStatus);
+                notifyStatus === OrderStatus.CANCELLED && actor.type === ActorType.SYSTEM;
+            if (statusMessagesAr[notifyStatus] && !skipSystemCancelCustomer) {
+                const isVerificationStatus = verificationStatuses.has(notifyStatus);
                 await this.notifications.create({
                     recipientId: order.customerId,
                     recipientRole: 'CUSTOMER',
                     titleAr: 'تحديث حالة الطلب #' + order.orderNumber,
                     titleEn: 'Order Status Update #' + order.orderNumber,
-                    messageAr: statusMessagesAr[newStatus],
-                    messageEn: statusMessagesEn[newStatus],
+                    messageAr: statusMessagesAr[notifyStatus],
+                    messageEn: statusMessagesEn[notifyStatus],
                     type: 'ORDER',
                     link: `/dashboard/orders/${order.id}`,
                     metadata: {
                         orderId: order.id,
-                        status: newStatus,
+                        status: notifyStatus,
                         waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
                         ...(isVerificationStatus ? { verification: true } : {}),
                     },
@@ -847,8 +835,9 @@ export class OrdersService {
                 OrderStatus.CANCELLED,
                 OrderStatus.RETURNED,
                 OrderStatus.COMPLETED,
+                OrderStatus.WARRANTY_ACTIVE,
             ];
-            if (order.acceptedOfferId && merchantNotifyStatuses.includes(newStatus)) {
+            if (order.acceptedOfferId && merchantNotifyStatuses.includes(notifyStatus)) {
                 let merchantOwnerId = null;
                 const orderWithRelations = order as any;
 
@@ -868,21 +857,21 @@ export class OrdersService {
                 if (merchantOwnerId) {
                     const mTitleAr = `تحديث بخصوص الطلب #${order.orderNumber}`;
                     const mTitleEn = `Update for Order #${order.orderNumber}`;
-                    let mMsgAr = statusMessagesAr[newStatus] || `تم تحديث حالة الطلب إلى ${newStatus}.`;
-                    let mMsgEn = statusMessagesEn[newStatus] || `Order status updated to ${newStatus}.`;
+                    let mMsgAr = statusMessagesAr[notifyStatus] || `تم تحديث حالة الطلب إلى ${notifyStatus}.`;
+                    let mMsgEn = statusMessagesEn[notifyStatus] || `Order status updated to ${notifyStatus}.`;
 
-                    if (newStatus === OrderStatus.PREPARATION) {
+                    if (notifyStatus === OrderStatus.PREPARATION) {
                         mMsgAr = 'تم تأكيد الدفع من العميل. يرجى البدء بتجهيز الشحنة.';
                         mMsgEn = 'Customer payment confirmed. Please begin preparing the shipment.';
-                    } else if (newStatus === OrderStatus.CANCELLED) {
+                    } else if (notifyStatus === OrderStatus.CANCELLED) {
                         mMsgAr = 'تم توقيف أو إلغاء الطلب من قبل النظام أو العميل.';
                         mMsgEn = 'The order was cancelled by the system or customer.';
-                    } else if (newStatus === OrderStatus.RETURNED) {
+                    } else if (notifyStatus === OrderStatus.RETURNED) {
                         mMsgAr = 'تم تحديث حالة الطلب إلى (مرتجع).';
                         mMsgEn = 'The order status was updated to (Returned).';
                     }
 
-                    const isVerificationStatus = verificationStatuses.has(newStatus);
+                    const isVerificationStatus = verificationStatuses.has(notifyStatus);
 
                     await this.notifications.create({
                         recipientId: merchantOwnerId,
@@ -895,7 +884,7 @@ export class OrdersService {
                         link: `/merchant/orders/${order.id}`,
                         metadata: {
                             orderId: order.id,
-                            status: newStatus,
+                            status: notifyStatus,
                             waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
                             ...(isVerificationStatus ? { verification: true } : {}),
                         },
@@ -907,11 +896,11 @@ export class OrdersService {
             await this.notifications.notifyAdmins({
                 titleAr: `تحديث حالة الطلب #${order.orderNumber}`,
                 titleEn: `Order #${order.orderNumber} Status Updated`,
-                messageAr: `تغيرت حالة الطلب إلى: ${newStatus}. المنفذ: ${actor.name || actor.type}`,
-                messageEn: `Order status changed to: ${newStatus}. Actor: ${actor.name || actor.type}`,
+                messageAr: `تغيرت حالة الطلب إلى: ${notifyStatus}. المنفذ: ${actor.name || actor.type}`,
+                messageEn: `Order status changed to: ${notifyStatus}. Actor: ${actor.name || actor.type}`,
                 type: 'ORDER',
                 link: `/admin/orders/${order.id}`,
-                metadata: { orderId: order.id, status: newStatus, actor: actor.type }
+                metadata: { orderId: order.id, status: notifyStatus, actor: actor.type }
             });
 
             // --- 2026 Selection Context: Chat System Message ---
@@ -3002,27 +2991,6 @@ export class OrdersService {
         }, {} as Record<string, any>);
 
         return Object.values(cartsByCustomer);
-    }
-
-    private calculateWarrantyEndDate(startDate: Date, duration: string): Date {
-        const date = new Date(startDate);
-        const d = duration.toLowerCase();
-        
-        if (d.includes('day')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '0');
-            date.setDate(date.getDate() + num);
-        } else if (d.includes('month')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '1');
-            date.setMonth(date.getMonth() + num);
-        } else if (d.includes('year')) {
-            const num = parseInt(d.match(/\d+/)?.[0] || '1');
-            date.setFullYear(date.getFullYear() + num);
-        } else {
-            // Default 15 days if format unknown but exists
-            date.setDate(date.getDate() + 15);
-        }
-        
-        return date;
     }
 
     private async releaseHeldEscrowForOrder(orderId: string): Promise<void> {

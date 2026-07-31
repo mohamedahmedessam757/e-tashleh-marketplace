@@ -838,7 +838,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             )}
 
             {/* Premium Warranty Protection Hub (2026) */}
-            {order.status === 'WARRANTY_ACTIVE' && order.warranty_end_at && (
+            {order.warranty_end_at &&
+                (order.status === 'WARRANTY_ACTIVE' ||
+                    order.status === 'COMPLETED') && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}

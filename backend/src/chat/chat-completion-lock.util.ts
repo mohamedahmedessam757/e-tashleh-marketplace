@@ -20,14 +20,6 @@ export const CLOSED_RETURN_STATUSES = [
   'COMPLETED',
 ] as const;
 
-/** Order statuses that mean the order has finished / warranty / cancelled. */
-export const COMPLETION_LIKE_ORDER_STATUSES = [
-  'COMPLETED',
-  'WARRANTY_ACTIVE',
-  'WARRANTY_EXPIRED',
-  'CANCELLED',
-] as const;
-
 export function isOpenDisputeStatus(status: string | null | undefined): boolean {
   if (!status) return true;
   return !(CLOSED_DISPUTE_STATUSES as readonly string[]).includes(status);
@@ -44,8 +36,6 @@ export function isOpenReturnStatus(status: string | null | undefined): boolean {
  */
 export function shouldLockChatOnCompletion(input: {
   orderStatus: string;
-  disputeStatuses?: Array<string | null | undefined>;
-  returnStatuses?: Array<string | null | undefined>;
 }): { shouldLock: boolean; reason: ChatCompletionLockReason | null } {
   if (!shouldCloseOrderChat(input.orderStatus)) {
     return { shouldLock: false, reason: null };

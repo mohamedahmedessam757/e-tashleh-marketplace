@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
-import { ShipmentStatus, ActorType, Prisma } from '@prisma/client';
+import { ShipmentStatus, ActorType, Prisma, OrderStatus } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UsersService } from '../users/users.service';
 import {
@@ -13,6 +13,7 @@ import {
   normalizeSearchQuery,
   resolveOrderIds,
 } from '../common/search/admin-entity-search.util';
+import { resolveCompletionWarranty } from '../orders/warranty-activation.util';
 
 // Premium Bilingual status labels for notifications (Enthusiastic & Clear)
 const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
@@ -393,14 +394,33 @@ export class ShipmentsService {
             );
         }
 
-        // 2026 Logic: When return to customer is completed -> mark order as COMPLETED
+        // 2026 Logic: When return to customer is completed -> mark order COMPLETED (or WARRANTY_ACTIVE)
         if ((newStatus as string) === 'RETURN_COMPLETED_TO_CUSTOMER' && shipment.order) {
+            const acceptedOffers = await this.prisma.offer.findMany({
+                where: {
+                    orderId: shipment.orderId,
+                    status: { in: ['accepted', 'ACCEPTED'] },
+                },
+                select: { hasWarranty: true, warrantyDuration: true },
+            });
+            const now = new Date();
+            const warranty = resolveCompletionWarranty(
+                acceptedOffers,
+                now,
+                OrderStatus.COMPLETED,
+            );
             await this.prisma.order.update({
                 where: { id: shipment.orderId },
-                data: { 
-                    status: 'COMPLETED',
-                    updatedAt: new Date()
-                }
+                data: {
+                    status: warranty.effectiveStatus,
+                    updatedAt: now,
+                    ...(warranty.activate
+                        ? {
+                              warranty_active_at: now,
+                              warranty_end_at: warranty.endAt,
+                          }
+                        : {}),
+                },
             });
             this.ordersService.afterOrderReachedCompletion(shipment.orderId);
         }

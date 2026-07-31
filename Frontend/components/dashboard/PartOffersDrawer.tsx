@@ -253,6 +253,12 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
     const [acceptSuccessMsg, setAcceptSuccessMsg] = useState<string | null>(null);
     // Paint shell first, then offer list — snappier open
     const [listReady, setListReady] = useState(false);
+    const dialogRef = useRef<HTMLDivElement>(null);
+    const closeBtnRef = useRef<HTMLButtonElement>(null);
+    const titleId = useMemo(
+        () => `part-offers-drawer-title-${partIndex}`,
+        [partIndex],
+    );
 
     const isHiddenOffer = (o: { status?: string; isWithdrawn?: boolean }) => {
         if (o.isWithdrawn) return true;
@@ -347,6 +353,57 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
         };
     }, [isOpen]);
 
+    // Escape + focus trap/restore
+    useEffect(() => {
+        if (!isOpen) return;
+        const previousFocus = document.activeElement as HTMLElement | null;
+        const focusClose = () => {
+            closeBtnRef.current?.focus();
+        };
+        // Defer so dialog is in the DOM
+        const t = window.setTimeout(focusClose, 0);
+
+        const getFocusable = () => {
+            const root = dialogRef.current;
+            if (!root) return [] as HTMLElement[];
+            return Array.from(
+                root.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+                ),
+            ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                onClose();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const focusable = getFocusable();
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement as HTMLElement | null;
+            if (e.shiftKey) {
+                if (active === first || !dialogRef.current?.contains(active)) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else if (active === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => {
+            window.clearTimeout(t);
+            window.removeEventListener('keydown', onKeyDown);
+            previousFocus?.focus?.();
+        };
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     return (
@@ -360,8 +417,10 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
 
             {/* Full-Screen Page Modal */}
             <div
+                ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby={titleId}
                 className="fixed inset-0 md:inset-6 lg:inset-10 z-[70] flex flex-col bg-[#13110E] md:rounded-3xl border border-white/5 shadow-2xl overflow-hidden animate-modal-snap-in"
             >
                 {/* Header */}
@@ -386,7 +445,12 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                                 {isAr ? `قطعة ${partIndex + 1}` : `Part ${partIndex + 1}`}
                             </span>
                         </div>
-                        <h2 className="text-white font-bold text-lg leading-tight truncate">{partName}</h2>
+                        <h2
+                            id={titleId}
+                            className="text-white font-bold text-lg leading-tight truncate"
+                        >
+                            {partName}
+                        </h2>
                         {partDescription && (
                             <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{partDescription}</p>
                         )}
@@ -403,7 +467,10 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                         </div>
 
                         <button
+                            ref={closeBtnRef}
+                            type="button"
                             onClick={onClose}
+                            aria-label={isAr ? 'إغلاق' : 'Close'}
                             className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                         >
                             <X size={18} />
