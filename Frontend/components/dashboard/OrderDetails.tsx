@@ -1641,7 +1641,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     onAcceptOffer={handleAcceptOffer}
                                     onChat={handleChat}
                                     onRejectOffer={(offer) => setOfferToReject(offer)}
-                                    disabled={isExpired || ['CANCELLED', 'COMPLETED', 'REJECTED'].includes(order.status)}
+                                    orderStatus={order.status}
+                                    disabled={
+                                        isExpired ||
+                                        isOrderChatClosedStatus(order.status) ||
+                                        ['CANCELLED', 'COMPLETED', 'REJECTED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'].includes(order.status)
+                                    }
                                 />
                             )}
                         </div>
@@ -1670,11 +1675,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     onAccept={() => handleAcceptOffer(offer)}
                                                     onChat={() => handleChat(offer)}
                                                     onReject={() => setOfferToReject(offer)}
+                                                    orderStatus={order.status}
                                                     acceptLoading={
                                                         acceptLoadingOfferId !== null &&
                                                         acceptLoadingOfferId === String(offer.id)
                                                     }
-                                                    disabled={isExpired || ['CANCELLED', 'COMPLETED', 'REJECTED'].includes(order.status) || acceptLoadingOfferId !== null}
+                                                    disabled={
+                                                        isExpired ||
+                                                        isOrderChatClosedStatus(order.status) ||
+                                                        ['CANCELLED', 'COMPLETED', 'REJECTED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'].includes(order.status) ||
+                                                        acceptLoadingOfferId !== null
+                                                    }
                                                 />
                                             {/* Disable Cover during loading */}
                                             {acceptLoadingOfferId !== null && acceptLoadingOfferId !== offer.id && (
