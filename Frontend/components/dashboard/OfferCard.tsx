@@ -297,16 +297,34 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 
                 {/* Actions */}
                 <div className="flex justify-end items-center gap-3 mt-4">
-                    {/* Chat — hidden when order chat is locked (cancel/complete/warranty) */}
-                    {status !== 'rejected' && !isOrderChatClosedStatus(orderStatus) && (
-                        <button
-                            onClick={onChat}
-                            disabled={acceptLoading || disabled}
-                            className={`px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-colors flex items-center gap-2 ${acceptLoading || disabled ? 'opacity-50 pointer-events-none' : ''}`}
-                        >
-                            <MessageSquare size={18} />
-                            <span>{offersT?.chat || 'Chat'}</span>
-                        </button>
+                    {/* Chat — locked (non-clickable) when order is cancel/complete/warranty */}
+                    {status !== 'rejected' && (
+                        isOrderChatClosedStatus(orderStatus) ? (
+                            <button
+                                type="button"
+                                disabled
+                                aria-disabled="true"
+                                title={
+                                    language === 'ar'
+                                        ? 'المحادثة مغلقة لأن الطلب مكتمل أو في فترة الضمان'
+                                        : 'Chat is closed for completed or warranty orders'
+                                }
+                                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/30 opacity-50 cursor-not-allowed pointer-events-none flex items-center gap-2"
+                            >
+                                <MessageSquare size={18} />
+                                <span>{offersT?.chat || 'Chat'}</span>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={onChat}
+                                disabled={acceptLoading || disabled}
+                                className={`px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-colors flex items-center gap-2 ${acceptLoading || disabled ? 'opacity-50 pointer-events-none' : ''}`}
+                            >
+                                <MessageSquare size={18} />
+                                <span>{offersT?.chat || 'Chat'}</span>
+                            </button>
+                        )
                     )}
 
                     {/* Status Banners or Action Buttons */}
