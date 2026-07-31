@@ -6,7 +6,7 @@
 require('dotenv').config();
 
 const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = process.env.OPENROUTER_MODEL || 'qwen/qwen3.5-flash-02-23';
+const MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash-lite';
 
 async function complete(messages, maxTokens) {
     const apiKey = process.env.OPENROUTER_API_KEY;

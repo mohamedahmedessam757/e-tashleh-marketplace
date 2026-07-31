@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'qwen/qwen3.5-flash-02-23';
+const DEFAULT_MODEL = 'google/gemini-3.5-flash-lite';
 /** Prevent cost/abuse via oversized chat payloads sent to the LLM provider */
 const MAX_INPUT_CHARS = 8_000;
 /** Cap stored translation length (DB + UI) */
