@@ -47,6 +47,8 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
         if (!order.warranty_end_at) return;
 
         const target = new Date(order.warranty_end_at!).getTime();
+        // Compact UI shows d/h/m only — tick every 30s to keep lists light
+        const tickMs = variant === 'compact' ? 30_000 : 1_000;
 
         const calculate = () => {
             const now = Date.now();
@@ -61,7 +63,6 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((diff % (1000 * 60)) / 1000);
                 
-                // Only update if time parts changed to save CPU
                 setTimeLeft(prev => {
                     if (prev?.s === s && prev?.m === m && prev?.h === h && prev?.d === d) return prev;
                     return { d, h, m, s };
@@ -71,9 +72,9 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
         };
 
         calculate();
-        const interval = setInterval(calculate, 1000);
+        const interval = setInterval(calculate, tickMs);
         return () => clearInterval(interval);
-    }, [order.warranty_end_at]);
+    }, [order.warranty_end_at, variant]);
 
     // Helper to calculate expiration for individual parts - Master Sync Logic 2026
     const calculatePartExpiry = (durationStr: string) => {
@@ -118,13 +119,13 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
 
     if (variant === 'compact') {
         return (
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md transition-all ${
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md shrink-0 tabular-nums ${
                 isExpired 
                 ? 'bg-white/5 border-white/10 text-white/30' 
                 : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
             }`}>
-                <Shield size={12} className={!isExpired ? 'animate-pulse' : ''} />
-                <span className="text-[10px] font-black font-mono tracking-tighter">
+                <Shield size={12} className={!isExpired ? 'animate-pulse shrink-0' : 'shrink-0'} />
+                <span className="text-[10px] font-black font-mono tracking-tighter whitespace-nowrap">
                     {isExpired 
                         ? (isAr ? 'منتهي' : 'EXPIRED') 
                         : timeLeft ? `${timeLeft.d}d ${timeLeft.h}h ${timeLeft.m}m` : '...'

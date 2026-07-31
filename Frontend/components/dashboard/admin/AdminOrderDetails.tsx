@@ -424,7 +424,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
                     <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-1">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
                                 <h1 className="text-2xl font-bold text-white">
                                     {(order.parts && order.parts.length > 1)
                                         ? (isAr ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
@@ -437,17 +437,19 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         totalCount={multiItemCompletion.totalCount}
                                     />
                                 )}
-                                {order.warranty_end_at && (
-                                    <WarrantyProtectionCard 
-                                        order={order} 
-                                        variant="compact"
-                                        role="admin"
-                                    />
-                                )}
                                 {order.shipments && order.shipments.length > 0 && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
                                     <Badge status={order.shipments[0].status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                                 )}
                             </div>
+                            {(order.warranty_end_at || order.status === 'WARRANTY_ACTIVE') && (
+                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                    <WarrantyProtectionCard
+                                        order={order}
+                                        variant="compact"
+                                        role="admin"
+                                    />
+                                </div>
+                            )}
                             <div className="text-white/60 text-sm flex flex-wrap items-center gap-2">
                                 <span>{(t.dashboard.orders as any)?.orderId || 'Order #'} {formatOrderDisplayId(order)}</span>
                                 <span>•</span>

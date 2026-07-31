@@ -849,13 +849,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 {isAr ? 'تفاصيل طلب العميل' : 'Customer Request Details'}
                             </h1>
                             <Badge status={order.status} />
-                            {order.warranty_end_at && (
-                                <WarrantyProtectionCard 
-                                    order={order} 
-                                    variant="compact"
-                                    role="merchant"
-                                />
-                            )}
                             {shipment && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
                                 <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                             )}
@@ -863,6 +856,15 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 #{order.id}
                             </span>
                         </div>
+                        {order.warranty_end_at && (
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <WarrantyProtectionCard
+                                    order={order}
+                                    variant="compact"
+                                    role="merchant"
+                                />
+                            </div>
+                        )}
                         <p className="text-white/50 text-sm flex items-center gap-4">
                             <span className="flex items-center gap-1"><Calendar size={14} /> {order.date}</span>
                             <span className="text-white/20 px-2">•</span>
