@@ -88,6 +88,12 @@ const TERMINAL_ORDER_STATUSES = new Set([
     'RESOLVED',
 ]);
 
+const CORRECTION_ORDER_STATUSES = new Set([
+    'NON_MATCHING',
+    'CORRECTION_PERIOD',
+    'CORRECTION_SUBMITTED',
+]);
+
 /**
  * Merchant-facing order timeline status from this merchant's accepted offers.
  * Payment stays active until every accepted offer for this store is paid
@@ -101,6 +107,10 @@ export function resolveMerchantTimelineFromOffers(
 ): string {
     const fallback = String(fallbackOrderStatus || '').toUpperCase();
     if (fallback && TERMINAL_ORDER_STATUSES.has(fallback)) {
+        return fallback;
+    }
+    // Correction-family is order-level SSOT (admin reject / merchant resubmit)
+    if (fallback && CORRECTION_ORDER_STATUSES.has(fallback)) {
         return fallback;
     }
 
@@ -159,10 +169,10 @@ export function merchantOfferAdminRejected(
     fulfillmentStatus?: string,
     doc?: Pick<VerificationDocSummary, 'adminStatus'>,
 ): boolean {
-    return (
-        String(fulfillmentStatus || '').toUpperCase() === 'PREPARED' &&
-        String(doc?.adminStatus || '').toUpperCase() === 'REJECTED'
-    );
+    if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;
+    const fs = String(fulfillmentStatus || '').toUpperCase();
+    // Reject path keeps VERIFICATION (legacy rows may still be PREPARED)
+    return fs === 'VERIFICATION' || fs === 'PREPARED';
 }
 
 export function getVerificationDocForOffer(

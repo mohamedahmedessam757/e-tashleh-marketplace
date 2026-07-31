@@ -1134,7 +1134,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 merchantAcceptedOffers.length > 0
                                     ? merchantTimelineStatus
                                     : order.status,
-                            ) && <VerificationPhaseBanner className="mb-6" />}
+                            ) && (
+                                <VerificationPhaseBanner
+                                    className="mb-6"
+                                    status={
+                                        merchantAcceptedOffers.length > 0
+                                            ? merchantTimelineStatus
+                                            : order.status
+                                    }
+                                />
+                            )}
                             <StatusTimeline
                                 currentStatus={
                                     merchantAcceptedOffers.length > 0
@@ -2255,13 +2264,32 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                 };
                                             }
                                             case 'NON_MATCHING':
-                                            case 'CORRECTION_PERIOD':
                                                 return {
                                                     icon: <AlertTriangle size={28} className="text-red-400" />,
                                                     title: isAr ? s.NON_MATCHING.title : s.NON_MATCHING.enTitle,
                                                     desc: isAr ? s.NON_MATCHING.desc : s.NON_MATCHING.enDesc,
                                                     bgColor: 'bg-red-500/10',
                                                     borderColor: 'border-red-500/20'
+                                                };
+                                            case 'CORRECTION_PERIOD':
+                                                return {
+                                                    icon: <AlertTriangle size={28} className="text-orange-400" />,
+                                                    title: isAr ? 'فترة التصحيح — إعادة المطابقة' : 'Correction window — re-matching',
+                                                    desc: isAr
+                                                        ? 'لديك مهلة لتصحيح القطعة وإعادة التوثيق قبل انتهاء العدّاد.'
+                                                        : 'You have a deadline to correct the part and resubmit verification.',
+                                                    bgColor: 'bg-orange-500/10',
+                                                    borderColor: 'border-orange-500/25'
+                                                };
+                                            case 'CORRECTION_SUBMITTED':
+                                                return {
+                                                    icon: <Clock size={28} className="text-blue-400" />,
+                                                    title: isAr ? 'تم إرسال التصحيح' : 'Correction submitted',
+                                                    desc: isAr
+                                                        ? 'بانتظار مراجعة الإدارة للتوثيق المصحّح.'
+                                                        : 'Awaiting admin review of the corrected verification.',
+                                                    bgColor: 'bg-blue-500/10',
+                                                    borderColor: 'border-blue-500/25'
                                                 };
                                             case 'SHIPPED':
                                                 return {

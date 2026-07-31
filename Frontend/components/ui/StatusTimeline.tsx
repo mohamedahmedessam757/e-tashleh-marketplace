@@ -66,6 +66,12 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const n = steps.length;
   const isDelayed = currentStatus === 'DELAYED_PREPARATION';
   const isPrepared = currentStatus === 'PREPARED';
+  const statusUpper = String(currentStatus || '').toUpperCase();
+  const isRematching = [
+    'NON_MATCHING',
+    'CORRECTION_PERIOD',
+    'CORRECTION_SUBMITTED',
+  ].includes(statusUpper);
   const activeIndex = getOrderTimelineStepIndex(currentStatus);
   const isCancelled = currentStatus === 'CANCELLED';
   const isTerminalDeliveryDone = [
@@ -211,7 +217,12 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   {isAr ? '(متأخر)' : '(Delayed)'}
                 </span>
               )}
-              {isPrepared && (idx === 3 || idx === activeIndex) && (
+              {isRematching && idx === 4 && (
+                <span className="block text-[9px] text-orange-400 font-bold text-center mt-0.5">
+                  {isAr ? 'إعادة المطابقة' : 'Re-matching'}
+                </span>
+              )}
+              {isPrepared && !isRematching && (idx === 3 || idx === activeIndex) && (
                 <span className="block text-[9px] text-green-400/70 font-normal text-center mt-0.5">
                   {isAr ? '(تم)' : '(Done)'}
                 </span>
@@ -224,6 +235,14 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
       {isCancelled && (
         <div className="mt-4 text-center text-red-400 text-sm font-bold bg-red-500/10 py-2 rounded-lg border border-red-500/20">
           {isAr ? 'تم إلغاء هذا الطلب' : 'This order has been cancelled'}
+        </div>
+      )}
+
+      {isRematching && (
+        <div className="mt-4 text-center text-orange-300 text-sm font-bold bg-orange-500/10 py-2 rounded-lg border border-orange-500/25">
+          {statusUpper === 'CORRECTION_SUBMITTED'
+            ? (isAr ? 'تم إرسال التصحيح — بانتظار مراجعة الإدارة' : 'Correction submitted — awaiting admin review')
+            : (isAr ? 'مطلوب إعادة المطابقة — التاجر في فترة التصحيح' : 'Re-matching required — merchant is in the correction window')}
         </div>
       )}
 

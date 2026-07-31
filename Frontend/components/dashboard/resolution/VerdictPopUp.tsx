@@ -27,7 +27,15 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
     const [dismissing, setDismissing] = useState(false);
 
     const pickNextPopup = useCallback(() => {
-        return notifications.find((n) => shouldShowAsPopup(n)) ?? null;
+        // Verification correction has its own dedicated merchant popup
+        return (
+            notifications.find((n) => {
+                if (!shouldShowAsPopup(n)) return false;
+                const meta = n.metadata || {};
+                if (meta.verificationCorrection || meta.verification) return false;
+                return true;
+            }) ?? null
+        );
     }, [notifications, shouldShowAsPopup]);
 
     useEffect(() => {

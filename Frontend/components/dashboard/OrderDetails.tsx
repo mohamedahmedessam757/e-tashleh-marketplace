@@ -1121,7 +1121,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     {!['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
                         <div className="p-6">
                             {shouldShowVerificationBanner(order.status) && (
-                                <VerificationPhaseBanner className="mb-6" />
+                                <VerificationPhaseBanner className="mb-6" status={order.status} />
                             )}
                             <div className="flex justify-between items-center mb-6">
                                 <StatusTimeline

@@ -522,7 +522,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         return !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
                             <div className="p-6">
                                 {shouldShowVerificationBanner(order.status) && (
-                                    <VerificationPhaseBanner className="mb-6" />
+                                    <VerificationPhaseBanner className="mb-6" status={order.status} />
                                 )}
                                 <div className="flex justify-between items-center mb-6">
                                     <StatusTimeline
@@ -558,7 +558,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         ) : (
                             <div className="p-6">
                                 {shouldShowVerificationBanner(order.status) && (
-                                    <VerificationPhaseBanner className="mb-6" />
+                                    <VerificationPhaseBanner className="mb-6" status={order.status} />
                                 )}
                                 <StatusTimeline
                                     currentStatus={order.status}

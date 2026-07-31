@@ -173,13 +173,24 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     if (!userId || notification.isRead) return false;
     if (isPopupDismissed(userId, notification.id)) return false;
     const popupTypes = new Set(['DISPUTE', 'SECURITY', 'PAYMENT']);
-    return popupTypes.has(String(notification.type || '').toUpperCase());
+    const type = String(notification.type || '').toUpperCase();
+    if (popupTypes.has(type)) return true;
+    // Merchant verification correction — show detailed popup (not drawer-only)
+    const meta = notification.metadata || {};
+    if (
+      meta.verificationCorrection === true ||
+      (meta.verification === true &&
+        (type === 'SYSTEM' || type === 'SYSTEM_ALERT') &&
+        String(notification.recipientRole || '').toUpperCase() === 'MERCHANT')
+    ) {
+      return true;
+    }
+    return false;
   },
 
   markAllAsRead: async (userId: string, _role: string) => {
-    const popupTypes = new Set(['DISPUTE', 'SECURITY', 'PAYMENT']);
     get().notifications.forEach((n) => {
-      if (!n.isRead && popupTypes.has(String(n.type || '').toUpperCase())) {
+      if (!n.isRead && get().shouldShowAsPopup(n)) {
         addDismissedPopupId(userId, n.id);
       }
     });
@@ -317,6 +328,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           unreadCount: mapped.isRead ? state.unreadCount : state.unreadCount + 1,
         };
       });
+
+      // Verification reject/approve: refresh active order immediately (don't wait for debounce)
+      const meta = mapped.metadata || {};
+      if (meta.verification && meta.orderId) {
+        void import('./useOrderStore').then(({ useOrderStore }) => {
+          const store = useOrderStore.getState();
+          const oid = String(meta.orderId);
+          if (store.activeOrderId && String(store.activeOrderId) === oid) {
+            void store.fetchOrder(oid);
+          } else {
+            void store.silentFetch();
+          }
+        });
+      }
     };
 
     // Listen for standard notifications
