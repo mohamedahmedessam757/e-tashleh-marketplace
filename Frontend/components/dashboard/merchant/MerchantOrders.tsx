@@ -333,26 +333,29 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
                         )}
 
                         {tabId === 'DELIVERED' && (
-                            <div className="pt-2 border-t border-white/5 mt-auto">
-                                <div className="flex items-center gap-2 text-[10px] text-white/30 font-mono mb-3">
-                                    <Calendar size={12} />
-                                    {isAr ? 'سلمت يوم:' : 'Delivered:'} {new Date(order.deliveredAt || order.updatedAt).toLocaleDateString()}
-                                    <div className="mx-2">•</div>
-                                    <OrderStatusCountdown order={order} variant="compact" />
+                            <div className="pt-3 border-t border-white/5 mt-auto">
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="flex items-center gap-2 text-[10px] text-white/30 font-mono min-w-0">
+                                        <Calendar size={12} className="shrink-0" />
+                                        <span className="truncate">
+                                            {isAr ? 'سلمت يوم:' : 'Delivered:'}{' '}
+                                            {new Date(order.deliveredAt || order.updatedAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    {order.warranty_end_at ? (
+                                        <div className="shrink-0 ms-auto">
+                                            <WarrantyProtectionCard
+                                                order={order}
+                                                variant="compact"
+                                                role="merchant"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-white/20 italic shrink-0">
+                                            {isAr ? 'بدون ضمان' : 'No Warranty'}
+                                        </span>
+                                    )}
                                 </div>
-                                {order.warranty_end_at ? (
-                                    <div className="flex justify-center mt-2">
-                                        <WarrantyProtectionCard
-                                            order={order}
-                                            variant="compact"
-                                            role="merchant"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="text-[10px] text-white/20 text-center bg-white/2 py-2 rounded-lg border border-dashed border-white/5 italic">
-                                        {isAr ? 'بدون ضمان' : 'No Warranty'}
-                                    </div>
-                                )}
                             </div>
                         )}
 
