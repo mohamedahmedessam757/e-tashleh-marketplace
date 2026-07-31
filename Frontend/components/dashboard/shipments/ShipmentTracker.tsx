@@ -30,7 +30,7 @@ export const returnStatuses = [
     'RETURN_COMPLETED_TO_CUSTOMER',
 ];
 
-// Combined for index calculation
+// Combined for return-journey index calculation
 export const allShipmentStatuses = [...shipmentStatuses, ...returnStatuses];
 
 export const statusTranslations: Record<string, { ar: string, en: string }> = {
@@ -70,12 +70,15 @@ interface ShipmentTrackerProps {
     variant?: 'customer' | 'admin';
 }
 
-export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, variant = 'customer' }) => {
+export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, variant = 'admin' }) => {
     const { language } = useLanguage();
     const isAr = language === 'ar';
 
-    const getStatusIndex = (st: string) => allShipmentStatuses.indexOf(st);
-    const currentIndex = getStatusIndex(status);
+    const isReturnJourney = returnStatuses.includes(status);
+    const displayStatuses = isReturnJourney ? allShipmentStatuses : shipmentStatuses;
+    const currentIndex = displayStatuses.indexOf(status);
+    const isForwardDelivered =
+        !isReturnJourney && status === 'DELIVERED_TO_CUSTOMER';
 
     const isCustomsDelay = status === 'CUSTOMS_CLEARANCE' || status === 'CUSTOMS_DELAY';
 
@@ -110,10 +113,12 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, varian
 
             <div className="bg-[#151310]/50 backdrop-blur-sm p-8 rounded-2xl border border-white/5 overflow-x-auto custom-scrollbar">
                 <div className="flex items-center min-w-max px-4">
-                    {allShipmentStatuses.map((st, idx) => {
+                    {displayStatuses.map((st, idx) => {
                         const isActive = currentIndex >= idx;
-                        const isCurrent = status === st;
-                        const isCompleted = currentIndex > idx;
+                        const isCurrent = status === st && !isForwardDelivered;
+                        const isCompleted =
+                            currentIndex > idx ||
+                            (isForwardDelivered && idx <= currentIndex);
 
                         return (
                             <div key={st} className="flex items-center">
@@ -145,10 +150,10 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, varian
                                 </div>
 
                                 {/* Connection Line */}
-                                {idx < allShipmentStatuses.length - 1 && (
+                                {idx < displayStatuses.length - 1 && (
                                     <div className="w-12 h-px relative flex-shrink-0 -translate-y-4">
                                         <div className="absolute inset-x-0 h-px bg-white/5" />
-                                        {isCompleted && (
+                                        {(currentIndex > idx || isForwardDelivered) && (
                                             <div className={`absolute inset-y-0 h-px ${lineActiveClass}`} style={{ width: '100%' }} />
                                         )}
                                     </div>

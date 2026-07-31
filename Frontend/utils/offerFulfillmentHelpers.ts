@@ -7,6 +7,7 @@ export type OfferFulfillmentStatus =
     | 'READY_FOR_SHIPPING'
     | 'SHIPPED'
     | 'DELIVERED'
+    | 'COMPLETED'
     | 'CANCELLED';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
@@ -18,6 +19,7 @@ const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     READY_FOR_SHIPPING: 50,
     SHIPPED: 60,
     DELIVERED: 70,
+    COMPLETED: 80,
     CANCELLED: -1,
 };
 
@@ -34,6 +36,7 @@ export function getFulfillmentLabel(
         READY_FOR_SHIPPING: { ar: 'جاهز للشحن', en: 'Ready for shipping' },
         SHIPPED: { ar: 'تم الشحن', en: 'Shipped' },
         DELIVERED: { ar: 'تم التسليم', en: 'Delivered' },
+        COMPLETED: { ar: 'مكتمل', en: 'Completed' },
         CANCELLED: { ar: 'ملغى', en: 'Cancelled' },
     };
     const entry = labels[String(status || '').toUpperCase()];
@@ -60,27 +63,55 @@ export function merchantCanMarkPrepared(fulfillmentStatus?: string): boolean {
 export function normalizeOfferFulfillmentStatus(status?: string | null): OfferFulfillmentStatus {
     const s = String(status || '').toUpperCase();
     if (s && s in FULFILLMENT_RANK) return s as OfferFulfillmentStatus;
+    // Order-level / post-delivery terminals that may appear on offer records
+    if (
+        [
+            'WARRANTY_ACTIVE',
+            'WARRANTY_EXPIRED',
+            'RETURNED',
+            'REFUNDED',
+            'RESOLVED',
+            'DISPUTED',
+        ].includes(s)
+    ) {
+        return 'DELIVERED';
+    }
     return 'AWAITING_PAYMENT';
 }
+
+const TERMINAL_ORDER_STATUSES = new Set([
+    'COMPLETED',
+    'WARRANTY_ACTIVE',
+    'WARRANTY_EXPIRED',
+    'RETURNED',
+    'REFUNDED',
+    'RESOLVED',
+]);
 
 /**
  * Merchant-facing order timeline status from this merchant's accepted offers.
  * Payment stays active until every accepted offer for this store is paid
  * (fulfillment past AWAITING_PAYMENT). Preparation is never shown as current
  * while any offer is still unpaid.
+ * Terminal order status is ground truth and cannot be overridden by offer drift.
  */
 export function resolveMerchantTimelineFromOffers(
     offerStatuses: Array<string | null | undefined>,
     fallbackOrderStatus?: string | null,
 ): string {
+    const fallback = String(fallbackOrderStatus || '').toUpperCase();
+    if (fallback && TERMINAL_ORDER_STATUSES.has(fallback)) {
+        return fallback;
+    }
+
     if (!offerStatuses.length) {
-        return String(fallbackOrderStatus || 'AWAITING_PAYMENT').toUpperCase();
+        return fallback || 'AWAITING_PAYMENT';
     }
 
     const statuses = offerStatuses.map((s) => normalizeOfferFulfillmentStatus(s));
     const active = statuses.filter((s) => s !== 'CANCELLED');
     if (active.length === 0) {
-        return String(fallbackOrderStatus || 'CANCELLED').toUpperCase();
+        return fallback || 'CANCELLED';
     }
 
     const unpaid = active.filter((s) => s === 'AWAITING_PAYMENT');
@@ -94,10 +125,14 @@ export function resolveMerchantTimelineFromOffers(
     if (active.some((s) => s === 'VERIFICATION')) return 'VERIFICATION';
     if (active.some((s) => s === 'VERIFICATION_SUCCESS')) return 'VERIFICATION_SUCCESS';
     if (active.some((s) => s === 'READY_FOR_SHIPPING')) return 'READY_FOR_SHIPPING';
-    if (active.every((s) => s === 'DELIVERED')) return 'DELIVERED';
-    if (active.every((s) => s === 'SHIPPED' || s === 'DELIVERED')) return 'SHIPPED';
+    if (active.every((s) => s === 'DELIVERED' || s === 'COMPLETED')) {
+        return fallback && TERMINAL_ORDER_STATUSES.has(fallback) ? fallback : 'DELIVERED';
+    }
+    if (active.every((s) => s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED')) {
+        return 'SHIPPED';
+    }
 
-    return String(fallbackOrderStatus || active[0]).toUpperCase();
+    return fallback || active[0];
 }
 
 export function isOfferPaidForFulfillment(fulfillmentStatus?: string | null): boolean {

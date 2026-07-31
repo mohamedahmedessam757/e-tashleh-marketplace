@@ -11,20 +11,37 @@ export type CompletionWarrantyResult = {
   effectiveStatus: OrderStatus;
 };
 
-/** Shared warranty end-date parser (day / month / year; unknown → +15 days). */
+/** Shared warranty end-date parser (day / month / year; AR synonyms; unknown → +15 days). */
 export function calculateWarrantyEndDate(startDate: Date, duration: string): Date {
   const date = new Date(startDate);
-  const d = String(duration || '').toLowerCase();
+  const raw = String(duration || '').trim();
+  const d = raw.toLowerCase();
+  const digits = parseInt(raw.match(/\d+/)?.[0] || '', 10);
 
-  if (d.includes('day')) {
-    const num = parseInt(d.match(/\d+/)?.[0] || '0', 10);
-    date.setDate(date.getDate() + num);
-  } else if (d.includes('month')) {
-    const num = parseInt(d.match(/\d+/)?.[0] || '1', 10);
-    date.setMonth(date.getMonth() + num);
-  } else if (d.includes('year')) {
-    const num = parseInt(d.match(/\d+/)?.[0] || '1', 10);
-    date.setFullYear(date.getFullYear() + num);
+  // Arabic bare forms (UI often shows «شهر» for 1 month)
+  if (/شهرين|شهران/.test(raw)) {
+    date.setMonth(date.getMonth() + 2);
+    return date;
+  }
+  if (/سنة|عام/.test(raw) && !/\d/.test(raw)) {
+    date.setFullYear(date.getFullYear() + 1);
+    return date;
+  }
+  if (/شهر/.test(raw) && !/\d/.test(raw)) {
+    date.setMonth(date.getMonth() + 1);
+    return date;
+  }
+  if (/يوم/.test(raw) && !/\d/.test(raw)) {
+    date.setDate(date.getDate() + 1);
+    return date;
+  }
+
+  if (d.includes('day') || raw.includes('يوم')) {
+    date.setDate(date.getDate() + (Number.isFinite(digits) ? digits : 0));
+  } else if (d.includes('month') || raw.includes('شهر')) {
+    date.setMonth(date.getMonth() + (Number.isFinite(digits) ? digits : 1));
+  } else if (d.includes('year') || raw.includes('سنة') || raw.includes('عام')) {
+    date.setFullYear(date.getFullYear() + (Number.isFinite(digits) ? digits : 1));
   } else {
     date.setDate(date.getDate() + 15);
   }
