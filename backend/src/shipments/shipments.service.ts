@@ -14,6 +14,7 @@ import {
   resolveOrderIds,
 } from '../common/search/admin-entity-search.util';
 import { resolveCompletionWarranty } from '../orders/warranty-activation.util';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 
 // Premium Bilingual status labels for notifications (Enthusiastic & Clear)
 const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
@@ -28,7 +29,7 @@ const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
     AT_LOCAL_WAREHOUSE:        { ar: 'وصلت إلى مدينتك! 🌆 الشحنة الآن في مستودع الشحن المحلي بانتظار خروج المندوب.', en: 'Reached your city! 🌆 Shipment is at the local warehouse awaiting delivery.' },
     OUT_FOR_DELIVERY:          { ar: 'استعد للاستلام! 🛵 المندوب في الطريق إليك اليوم، يرجى التواجد.', en: 'Get ready! 🛵 The courier is on the way to you today, please be available.' },
     DELIVERY_ATTEMPTED:        { ar: 'حاولنا الوصول إليك 🔔 ولكن لم نتمكن من التسليم. سنعيد المحاولة قريباً.', en: 'We tried to reach you 🔔 but could not deliver. We will retry soon.' },
-    DELIVERED_TO_CUSTOMER:     { ar: 'تم التسليم بنجاح! ✅ نأمل أن تكون تجربتك معنا رائعة، يومك سعيد.', en: 'Delivered successfully! ✅ We hope you had a great experience with us.' },
+    DELIVERED_TO_CUSTOMER:     { ar: 'تم التسليم بنجاح! ✅ بدأت مهلة الإرجاع/النزاع — راجع تفاصيل الطلب.', en: 'Delivered successfully! ✅ Your return/dispute window has started — check order details.' },
     
     // New Return & Warranty Journey 2026
     RETURN_LABEL_ISSUED:       { ar: 'يتم أصدار بوليصة أرجاع للمنتج 📄', en: 'Return label has been successfully issued for the product 📄' },
@@ -150,6 +151,7 @@ export class ShipmentsService {
         private notifications: NotificationsService,
         private auditLogs: AuditLogsService,
         private users: UsersService,
+        private orderDurationConfig: OrderDurationConfigService,
         @Inject(forwardRef(() => OrdersService))
         private ordersService: OrdersService,
     ) {}
@@ -732,21 +734,36 @@ export class ShipmentsService {
             customsSuffixEn,
         );
 
+        let customerMessageAr = bodies.customer.ar;
+        let customerMessageEn = bodies.customer.en;
+        if (status === ShipmentStatus.DELIVERED_TO_CUSTOMER) {
+            const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+            const noteAr = note ? `\n${note}` : '';
+            const noteEn = note ? `\n${note}` : '';
+            customerMessageAr = `طلب #${order.orderNumber}: تم التسليم بنجاح! ✅ لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع.${noteAr}`;
+            customerMessageEn = `Order #${order.orderNumber}: Delivered successfully! ✅ You have ${returnHours} hours to request a return or open a dispute.${noteEn}`;
+        }
+
         const shipmentMeta = {
             orderId: order.id,
             orderNumber: order.orderNumber,
             waEvent: 'SHIPMENT_STATUS',
             status,
             ...(trackingNumber ? { trackingNumber } : {}),
+            ...(status === ShipmentStatus.DELIVERED_TO_CUSTOMER ? { graceWindow: true } : {}),
         };
 
         await this.notifications.create({
             recipientId: order.customerId,
             recipientRole: 'CUSTOMER',
-            titleAr: 'تحديث شحنتك 🚚',
-            titleEn: 'Your shipment update 🚚',
-            messageAr: bodies.customer.ar,
-            messageEn: bodies.customer.en,
+            titleAr: status === ShipmentStatus.DELIVERED_TO_CUSTOMER
+                ? 'بدأت مهلة الإرجاع / النزاع'
+                : 'تحديث شحنتك 🚚',
+            titleEn: status === ShipmentStatus.DELIVERED_TO_CUSTOMER
+                ? 'Return / dispute window started'
+                : 'Your shipment update 🚚',
+            messageAr: customerMessageAr,
+            messageEn: customerMessageEn,
             type: 'SHIPMENT_UPDATE',
             link: `/customer/orders/${order.id}`,
             metadata: shipmentMeta,
