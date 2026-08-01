@@ -152,6 +152,26 @@ export class OfferFulfillmentService {
             paidOffers,
         );
 
+        // Correction-family is owned by admin review / merchant resubmit — never let
+        // min-rank aggregation wipe NON_MATCHING / CORRECTION_* back to PREPARED.
+        const correctionFamily = new Set<OrderStatus>([
+            OrderStatus.NON_MATCHING,
+            OrderStatus.CORRECTION_PERIOD,
+            OrderStatus.CORRECTION_SUBMITTED,
+        ]);
+        const aggregateDowngrade = new Set<OrderStatus>([
+            OrderStatus.PREPARATION,
+            OrderStatus.DELAYED_PREPARATION,
+            OrderStatus.PREPARED,
+            OrderStatus.VERIFICATION,
+        ]);
+        if (
+            correctionFamily.has(order.status) &&
+            aggregateDowngrade.has(nextStatus)
+        ) {
+            return order.status;
+        }
+
         if (order.status !== nextStatus) {
             // Multi-part orders follow the slowest offer; backward steps are valid
             // (e.g. VERIFICATION → PREPARED when one part is approved but others are not verified yet).
@@ -341,7 +361,8 @@ export class OfferFulfillmentService {
             [OrderStatus.PREPARED]: OfferFulfillmentStatus.PREPARED,
             [OrderStatus.VERIFICATION]: OfferFulfillmentStatus.VERIFICATION,
             [OrderStatus.CORRECTION_SUBMITTED]: OfferFulfillmentStatus.VERIFICATION,
-            [OrderStatus.NON_MATCHING]: OfferFulfillmentStatus.PREPARED,
+            [OrderStatus.NON_MATCHING]: OfferFulfillmentStatus.VERIFICATION,
+            [OrderStatus.CORRECTION_PERIOD]: OfferFulfillmentStatus.VERIFICATION,
             [OrderStatus.VERIFICATION_SUCCESS]:
                 OfferFulfillmentStatus.VERIFICATION_SUCCESS,
             [OrderStatus.READY_FOR_SHIPPING]:
@@ -620,9 +641,10 @@ export class OfferFulfillmentService {
         await this.prisma.offer.update({
             where: { id: offerId },
             data: {
+                // Reject keeps VERIFICATION so aggregate cannot collapse order back to PREPARED
                 fulfillmentStatus: approved
                     ? OfferFulfillmentStatus.VERIFICATION_SUCCESS
-                    : OfferFulfillmentStatus.PREPARED,
+                    : OfferFulfillmentStatus.VERIFICATION,
             },
         });
 

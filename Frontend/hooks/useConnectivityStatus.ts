@@ -34,6 +34,10 @@ const POLL_OK_MS = 20_000;
 const POLL_BAD_MS = 5_000;
 const PROBE_TIMEOUT_MS = 4000;
 const CONFIRM_GAP_MS = 400;
+/** Soft client blips need longer confirmation to avoid false platform_down */
+const SOFT_CONFIRM_GAP_MS = 1800;
+const SOFT_FAIL_STREAK_REQUIRED = 3;
+const CONNECTION_CHANGE_DEBOUNCE_MS = 2000;
 
 type NavConnection = {
   effectiveType?: string;
@@ -66,6 +70,27 @@ function isHealthProblem(health: {
 }): boolean {
   return (
     health.degraded ||
+    health.errorKind === 'network' ||
+    health.errorKind === 'timeout' ||
+    health.errorKind === 'http' ||
+    health.errorKind === 'parse'
+  );
+}
+
+function isHardHealthFailure(health: {
+  degraded: boolean;
+  database: string;
+}): boolean {
+  return health.degraded || health.database === 'unreachable';
+}
+
+function isSoftHealthFailure(health: {
+  degraded: boolean;
+  database: string;
+  errorKind: string | null;
+}): boolean {
+  if (isHardHealthFailure(health)) return false;
+  return (
     health.errorKind === 'network' ||
     health.errorKind === 'timeout' ||
     health.errorKind === 'http' ||
@@ -221,41 +246,61 @@ export function useConnectivityStatus(): ConnectivityStatus {
       }
 
       if (isHealthProblem(health)) {
-        failStreakRef.current += 1;
-        const confirmed =
-          health.degraded ||
-          failStreakRef.current >= 2 ||
-          levelRef.current === 'platform_down';
-
-        if (confirmed) {
+        // Hard: Nest/Prisma reports DB unreachable or degraded — surface immediately
+        if (isHardHealthFailure(health)) {
+          failStreakRef.current = 0;
           weakSinceRef.current = null;
           applyResolved('platform_down', {
             rttMs: health.rttMs,
-            platformCause: platformCauseFrom(health),
+            platformCause: 'database',
           });
           return;
         }
 
-        // First unconfirmed failure — quick confirm probe (anti-flicker)
-        await new Promise((r) => setTimeout(r, CONFIRM_GAP_MS));
-        if (!mountedRef.current) return;
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-          applyResolved('offline');
+        // Soft: browser timeout/network during nav/uploads — require sustained failures
+        if (isSoftHealthFailure(health)) {
+          failStreakRef.current += 1;
+          if (
+            failStreakRef.current < SOFT_FAIL_STREAK_REQUIRED &&
+            levelRef.current !== 'platform_down'
+          ) {
+            return;
+          }
+
+          await new Promise((r) => setTimeout(r, SOFT_CONFIRM_GAP_MS));
+          if (!mountedRef.current) return;
+          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            applyResolved('offline');
+            return;
+          }
+
+          const confirmHealth = await probeHealth(API_URL, PROBE_TIMEOUT_MS);
+          if (isHardHealthFailure(confirmHealth) || isHealthProblem(confirmHealth)) {
+            weakSinceRef.current = null;
+            applyResolved('platform_down', {
+              rttMs: confirmHealth.rttMs,
+              platformCause: platformCauseFrom(confirmHealth),
+            });
+            return;
+          }
+
+          failStreakRef.current = 0;
+          evaluateHealthyPath(confirmHealth.rttMs);
           return;
         }
 
+        // Fallback (legacy path)
+        failStreakRef.current += 1;
+        await new Promise((r) => setTimeout(r, CONFIRM_GAP_MS));
+        if (!mountedRef.current) return;
         const confirmHealth = await probeHealth(API_URL, PROBE_TIMEOUT_MS);
         if (isHealthProblem(confirmHealth)) {
-          failStreakRef.current += 1;
-          weakSinceRef.current = null;
           applyResolved('platform_down', {
             rttMs: confirmHealth.rttMs,
             platformCause: platformCauseFrom(confirmHealth),
           });
           return;
         }
-
-        // Transient blip recovered — continue as healthy
         failStreakRef.current = 0;
         evaluateHealthyPath(confirmHealth.rttMs);
         return;
@@ -334,8 +379,12 @@ export function useConnectivityStatus(): ConnectivityStatus {
     document.addEventListener('visibilitychange', onVisibility);
 
     const conn = (navigator as Navigator & { connection?: NavConnection }).connection;
+    let connectionChangeTimer: ReturnType<typeof setTimeout> | null = null;
     const onConnectionChange = () => {
-      void runProbe().finally(() => scheduleNext());
+      if (connectionChangeTimer) clearTimeout(connectionChangeTimer);
+      connectionChangeTimer = setTimeout(() => {
+        void runProbe().finally(() => scheduleNext());
+      }, CONNECTION_CHANGE_DEBOUNCE_MS);
     };
     conn?.addEventListener?.('change', onConnectionChange);
 
@@ -344,6 +393,7 @@ export function useConnectivityStatus(): ConnectivityStatus {
     return () => {
       mountedRef.current = false;
       clearPoll();
+      if (connectionChangeTimer) clearTimeout(connectionChangeTimer);
       if (recoveredTimerRef.current) clearTimeout(recoveredTimerRef.current);
       window.removeEventListener('offline', onOffline);
       window.removeEventListener('online', onOnline);

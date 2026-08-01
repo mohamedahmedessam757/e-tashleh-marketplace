@@ -2386,7 +2386,7 @@ export class OrdersService {
             : null;
         let newRejectionCount = order.rejectionCount;
 
-        if (decision === 'REJECTED' && !isPerOfferReview) {
+        if (decision === 'REJECTED') {
             newRejectionCount += 1;
             if (newRejectionCount >= 2) {
                 newOrderStatus = OrderStatus.CANCELLED;
@@ -2454,10 +2454,24 @@ export class OrdersService {
                 latestDoc.offerId,
                 decision === 'APPROVED',
             );
-            const refreshed = await this.prisma.order.findUnique({
-                where: { id: orderId },
-            });
-            if (refreshed) newOrderStatus = refreshed.status;
+
+            // Per-offer path skipped the order update in the txn above — enforce
+            // correction SSOT here so aggregate cannot leave the order as PREPARED.
+            if (decision === 'REJECTED') {
+                await this.prisma.order.update({
+                    where: { id: orderId },
+                    data: {
+                        status: newOrderStatus,
+                        correctionDeadlineAt: correctionDeadline,
+                        rejectionCount: newRejectionCount,
+                    },
+                });
+            } else {
+                const refreshed = await this.prisma.order.findUnique({
+                    where: { id: orderId },
+                });
+                if (refreshed) newOrderStatus = refreshed.status;
+            }
         }
 
         const paidOffers =
@@ -2522,7 +2536,7 @@ export class OrdersService {
                         link: `/merchant/orders/${order.id}`,
                         metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
-                } else if (!isPerOfferReview && newRejectionCount >= 2) {
+                } else if (newRejectionCount >= 2) {
                     await this.notifications.create({
                         recipientId: merchantUserId, recipientRole: 'MERCHANT', type: 'system_alert',
                         titleAr: '❌ رفض نهائي وإلغاء الطلب', titleEn: '❌ Final Rejection & Order Cancelled',
@@ -2549,7 +2563,17 @@ export class OrdersService {
                         messageAr: `تم رفض توثيق «${partName}» للطلب #${order.orderNumber}${reasonSnippet}. يرجى تصحيح القطعة وإعادة التوثيق.`,
                         messageEn: `Verification for "${partName}" (#${order.orderNumber}) was rejected${reasonSnippet}. Please correct and resubmit.`,
                         link: `/merchant/orders/${order.id}`,
-                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+                        metadata: {
+                            orderId: order.id,
+                            offerId: latestDoc.offerId || undefined,
+                            partName,
+                            rejectionReason: data.rejectionReason || null,
+                            correctionDeadlineAt: correctionDeadline?.toISOString() || null,
+                            orderNumber: order.orderNumber,
+                            verification: true,
+                            verificationCorrection: true,
+                            waEvent: 'VERIFICATION',
+                        },
                     });
                 }
             }

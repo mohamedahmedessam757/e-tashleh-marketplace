@@ -16,6 +16,7 @@ import { useAdminPermissionsStore } from '../../stores/useAdminPermissionsStore'
 import { NotificationDrawer } from './notifications/NotificationDrawer';
 import { NavigationDrawer } from './NavigationDrawer';
 import { VerdictPopUp } from './resolution/VerdictPopUp';
+import { VerificationCorrectionPopup } from './merchant/VerificationCorrectionPopup';
 import { RestrictionAlertBanner } from './shared/RestrictionAlertBanner';
 import { getCurrentUserId } from '../../utils/auth';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
@@ -500,6 +501,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       </main>
       <VerdictPopUp onNavigate={onNavigate} />
+      <VerificationCorrectionPopup onNavigate={onNavigate} />
     </div>
   );
 };
