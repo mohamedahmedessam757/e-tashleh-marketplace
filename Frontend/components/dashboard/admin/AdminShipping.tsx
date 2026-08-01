@@ -12,6 +12,7 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import { OrderCountdown } from '../../ui/OrderCountdown';
 import { ShipmentBatchCard } from '../shared/ShipmentBatchCard';
 import { AdminSearchInput } from './AdminSearchInput';
+import { resolveOrderTimelineStatus } from '../../../utils/offerFulfillmentHelpers';
 
 function shipmentMatchesQuery(s: Shipment, query: string): boolean {
     const q = query.toLowerCase().trim();
@@ -420,7 +421,14 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
                                     <MapPin size={18} className="text-purple-400"/> 
                                     {isAr ? 'نظرة عامة على حالة الطلب' : 'Order Status Overview'}
                                 </h3>
-                                <StatusTimeline currentStatus={selectedShipment.status as any} />
+                                <StatusTimeline
+                                    currentStatus={
+                                        resolveOrderTimelineStatus(
+                                            (selectedShipment.order as any)?.status,
+                                            selectedShipment.status,
+                                        ) as any
+                                    }
+                                />
                             </div>
                             
                             <div className="p-8 bg-black/20">

@@ -59,17 +59,18 @@ export class OrderCleanupService {
         await this.handleSingleItemOrderAutoCompletion();
     }
 
-    /** Remind customers 2 hours before per-offer return window expires */
+    /** Remind customers ~2 hours before per-offer return window expires (with catch-up) */
     @Cron(CronExpression.EVERY_30_MINUTES)
     async handleOfferReturnWindowReminder() {
         if (!(await this.prisma.ensureConnected())) return;
 
         const windowMs = await this.orderDurationConfig.getReturnDisputeMs();
-        const returnHours = await this.orderDurationConfig.getReturnWindowHours();
         const reminderLeadMs = 2 * 60 * 60 * 1000;
+        const minRemainingMs = 15 * 60 * 1000;
         const now = Date.now();
-        const reminderStart = new Date(now + reminderLeadMs - 15 * 60 * 1000);
-        const reminderEnd = new Date(now + reminderLeadMs + 15 * 60 * 1000);
+        // Ideal band: T-2h ±15m. Catch-up: any window ending within the next 2h15m (until 15m left)
+        const catchUpEnd = new Date(now + reminderLeadMs + 15 * 60 * 1000);
+        const catchUpStart = new Date(now + minRemainingMs);
 
         const offers = await this.prisma.offer.findMany({
             where: {
@@ -86,7 +87,7 @@ export class OrderCleanupService {
         for (const offer of offers) {
             if (!offer.deliveredAt) continue;
             const windowEndsAt = new Date(offer.deliveredAt.getTime() + windowMs);
-            if (windowEndsAt < reminderStart || windowEndsAt > reminderEnd) continue;
+            if (windowEndsAt < catchUpStart || windowEndsAt > catchUpEnd) continue;
 
             const hasCase = await this.offerFulfillment.hasOpenCaseForOffer(
                 offer.id,
@@ -104,16 +105,24 @@ export class OrderCleanupService {
             });
             if (existing) continue;
 
+            const remainingMs = windowEndsAt.getTime() - now;
+            const remainingHours = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
             const partName = offer.orderPart?.name || 'Part';
             await this.notificationsService.create({
                 recipientId: offer.order.customerId,
                 recipientRole: 'CUSTOMER',
                 titleAr: 'تذكير: مهلة الإرجاع/النزاع تنتهي قريباً',
                 titleEn: 'Reminder: return/dispute window ending soon',
-                messageAr: `تبقى ساعتان على انتهاء مهلة الإرجاع/النزاع للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
-                messageEn: `2 hours left to request a return or dispute for "${partName}" in order #${offer.order.orderNumber}.`,
+                messageAr: `تبقى حوالي ${remainingHours} ساعة على انتهاء مهلة الإرجاع/النزاع للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
+                messageEn: `About ${remainingHours} hour(s) left to request a return or dispute for "${partName}" in order #${offer.order.orderNumber}.`,
                 type: 'system_alert',
                 link: `/dashboard/orders/${offer.orderId}?${dedupeKey}=1`,
+                metadata: {
+                    offerId: offer.id,
+                    orderId: offer.orderId,
+                    waEvent: 'ORDER_STATUS',
+                    graceWindowReminder: true,
+                },
             });
         }
     }
@@ -170,6 +179,12 @@ export class OrderCleanupService {
                     messageEn: `The ${returnHours}-hour return/dispute window for "${partName}" in order #${offer.order.orderNumber} has expired.`,
                     type: 'system_alert',
                     link: `/dashboard/orders/${offer.orderId}`,
+                    metadata: {
+                        offerId: offer.id,
+                        orderId: offer.orderId,
+                        waEvent: 'ORDER_STATUS',
+                        graceWindowExpired: true,
+                    },
                 });
             } catch (err) {
                 this.logger.error(`Failed to auto-complete offer ${offer.id}:`, err);
@@ -228,7 +243,12 @@ export class OrderCleanupService {
                     messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع (${hoursLabel} ساعة).`,
                     messageEn: `Order #${order.orderNumber} has been completed because the ${hoursLabel}-hour return/dispute window has expired.`,
                     type: 'system_alert',
-                    link: `/dashboard/orders`
+                    link: `/dashboard/orders`,
+                    metadata: {
+                        orderId: order.id,
+                        waEvent: 'ORDER_STATUS',
+                        graceWindowExpired: true,
+                    },
                 });
 
                 // Notify Vendor (if applicable)

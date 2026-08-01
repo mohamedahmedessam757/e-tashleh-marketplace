@@ -77,6 +77,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const statusKey = String(currentStatus || '').toUpperCase();
   const isTerminalDeliveryDone = [
     'DELIVERED',
+    'DELIVERED_TO_CUSTOMER',
     'COMPLETED',
     'WARRANTY_ACTIVE',
     'WARRANTY_EXPIRED',

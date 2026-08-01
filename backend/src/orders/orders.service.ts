@@ -798,13 +798,21 @@ export class OrdersService {
                 notifyStatus === OrderStatus.CANCELLED && actor.type === ActorType.SYSTEM;
             if (statusMessagesAr[notifyStatus] && !skipSystemCancelCustomer) {
                 const isVerificationStatus = verificationStatuses.has(notifyStatus);
+                let messageAr = statusMessagesAr[notifyStatus];
+                let messageEn = statusMessagesEn[notifyStatus];
+                // Include return/dispute grace window on delivery (was missing — only partial multi-item mentioned it)
+                if (notifyStatus === OrderStatus.DELIVERED) {
+                    const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+                    messageAr = `وصلت الأمانة! 🏠 لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع إن لزم الأمر. نأمل أن تنال إعجابك.`;
+                    messageEn = `Delivered! 🏠 You have ${returnHours} hours to request a return or open a dispute if needed. We hope you love it!`;
+                }
                 await this.notifications.create({
                     recipientId: order.customerId,
                     recipientRole: 'CUSTOMER',
                     titleAr: 'تحديث حالة الطلب #' + order.orderNumber,
                     titleEn: 'Order Status Update #' + order.orderNumber,
-                    messageAr: statusMessagesAr[notifyStatus],
-                    messageEn: statusMessagesEn[notifyStatus],
+                    messageAr,
+                    messageEn,
                     type: 'ORDER',
                     link: `/dashboard/orders/${order.id}`,
                     metadata: {
@@ -812,6 +820,7 @@ export class OrdersService {
                         status: notifyStatus,
                         waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
                         ...(isVerificationStatus ? { verification: true } : {}),
+                        ...(notifyStatus === OrderStatus.DELIVERED ? { graceWindow: true } : {}),
                     },
                 });
             }
@@ -2823,6 +2832,7 @@ export class OrdersService {
                 },
             });
             // Legacy/single-shipment: offers without cartShipmentId on one-shipment orders
+            // Do not require SHIPPED/READY — otherwise deliveredAt stays null and grace reminders never fire
             if (shipments.length === 1) {
                 await this.prisma.offer.updateMany({
                     where: {
@@ -2830,12 +2840,6 @@ export class OrdersService {
                         status: { in: ['accepted', 'ACCEPTED'] },
                         cartShipmentId: null,
                         deliveredAt: null,
-                        fulfillmentStatus: {
-                            in: [
-                                OfferFulfillmentStatus.SHIPPED,
-                                OfferFulfillmentStatus.READY_FOR_SHIPPING,
-                            ],
-                        },
                     },
                     data: {
                         fulfillmentStatus: OfferFulfillmentStatus.DELIVERED,
@@ -2881,10 +2885,10 @@ export class OrdersService {
         const isMulti = this.offerFulfillment.isMultiItemOrder(order);
 
         if (allDelivered) {
-            if (
-                order.status !== OrderStatus.DELIVERED &&
-                !terminal.includes(order.status)
-            ) {
+            const wasAlreadyDelivered =
+                order.status === OrderStatus.DELIVERED ||
+                terminal.includes(order.status);
+            if (!wasAlreadyDelivered) {
                 await this.transitionStatus(
                     orderId,
                     OrderStatus.DELIVERED,
@@ -2898,6 +2902,38 @@ export class OrdersService {
                 );
             } else if (isMulti) {
                 await this.offerFulfillment.recomputeOrderStatus(orderId);
+            }
+
+            // Dedicated grace-window alert for multi-item (single-item covered by DELIVERED status message)
+            if (isMulti && !wasAlreadyDelivered) {
+                const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+                const deliveredOffers = await this.prisma.offer.findMany({
+                    where: {
+                        orderId,
+                        deliveredAt: { gte: new Date(now.getTime() - 60000) },
+                        fulfillmentStatus: OfferFulfillmentStatus.DELIVERED,
+                    },
+                    include: { orderPart: true },
+                });
+                for (const offer of deliveredOffers) {
+                    const partName = offer.orderPart?.name || 'Part';
+                    await this.notifications.create({
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: `وصلت قطعة: ${partName}`,
+                        titleEn: `Part delivered: ${partName}`,
+                        messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                        messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                        type: 'ORDER',
+                        link: `/dashboard/orders/${orderId}`,
+                        metadata: {
+                            offerId: offer.id,
+                            orderPartId: offer.orderPartId,
+                            waEvent: 'ORDER_STATUS',
+                            graceWindow: true,
+                        },
+                    }).catch(() => {});
+                }
             }
             return;
         }
@@ -2950,7 +2986,12 @@ export class OrdersService {
                             messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
                             type: 'ORDER',
                             link: `/dashboard/orders/${orderId}`,
-                            metadata: { offerId: offer.id, orderPartId: offer.orderPartId },
+                            metadata: {
+                                offerId: offer.id,
+                                orderPartId: offer.orderPartId,
+                                waEvent: 'ORDER_STATUS',
+                                graceWindow: true,
+                            },
                         }).catch(() => {});
                     }
                 }
