@@ -160,3 +160,39 @@ export function getFieldPhotoUrlsFromTask(task: {
   if (fromRows.length) return fromRows;
   return asImageUrls(task.officerPhotos);
 }
+
+const REUSABLE_FIELD_TASK_STATUSES = [
+  'PENDING_ASSIGNMENT',
+  'ASSIGNED',
+  'LINK_SENT',
+  'IN_PROGRESS',
+  'PENDING',
+] as const;
+
+/** Active cycle that can be assigned / linked / started (not a submitted report). */
+export function isReusableFieldTask(task: {
+  status?: string | null;
+  completedAt?: string | Date | null;
+  decision?: string | null;
+} | null | undefined): boolean {
+  if (!task?.status) return false;
+  if (task.completedAt || task.decision) return false;
+  return (REUSABLE_FIELD_TASK_STATUSES as readonly string[]).includes(task.status);
+}
+
+export function canGenerateVerificationLink(task: {
+  status?: string | null;
+  officerId?: string | null;
+  completedAt?: string | Date | null;
+  decision?: string | null;
+} | null | undefined): boolean {
+  if (!task?.officerId || task.completedAt || task.decision) return false;
+  return ['ASSIGNED', 'LINK_SENT', 'IN_PROGRESS'].includes(String(task.status || ''));
+}
+
+export type AdminReviewInfo = {
+  decision: 'APPROVED' | 'REJECTED' | null;
+  reason?: string | null;
+  at?: string | null;
+  source?: 'FIELD' | 'DOCUMENT' | null;
+} | null;

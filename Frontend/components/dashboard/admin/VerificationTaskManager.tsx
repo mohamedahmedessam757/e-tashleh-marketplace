@@ -16,7 +16,12 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { supabase } from '../../../services/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
-import { VERIFICATION_TASK_STATUS_LABEL, taskHasFieldOfficerReport } from './verification/verificationTaskHelpers';
+import {
+  VERIFICATION_TASK_STATUS_LABEL,
+  taskHasFieldOfficerReport,
+  isReusableFieldTask,
+  canGenerateVerificationLink,
+} from './verification/verificationTaskHelpers';
 import { FieldVerificationReportPanel } from './verification/FieldVerificationReportPanel';
 
 type AssignMode = 'single' | 'per_part';
@@ -27,8 +32,6 @@ interface VerificationTaskManagerProps {
   parts?: any[];
   verificationDocuments?: any[];
 }
-
-const TERMINAL = ['ADMIN_APPROVED', 'ADMIN_REJECTED', 'CANCELLED'];
 
 function resolvePartName(offer: any, parts?: any[]) {
   const partId = offer?.orderPartId || offer?.order_part_id;
@@ -88,6 +91,7 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [openingReportTaskId, setOpeningReportTaskId] = useState<string | null>(null);
+  const [adminReviewTaskId, setAdminReviewTaskId] = useState<string | null>(null);
 
   const fetchInFlight = useRef(false);
   const mountedRef = useRef(true);
@@ -118,12 +122,15 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
 
   const openTaskForOffer = useCallback(
     (offerId: string) => {
-      const byOffer = tasks.find(
-        (t) => t.offerId === offerId && !TERMINAL.includes(t.status),
-      );
-      if (byOffer) return byOffer;
+      const reusableForOffer = tasks
+        .filter((t) => t.offerId === offerId && isReusableFieldTask(t))
+        .sort((a, b) => (b.cycleNumber || 0) - (a.cycleNumber || 0));
+      if (reusableForOffer[0]) return reusableForOffer[0];
       if (partTargets.length === 1) {
-        return tasks.find((t) => !t.offerId && !TERMINAL.includes(t.status));
+        const reusableSingle = tasks
+          .filter((t) => !t.offerId && isReusableFieldTask(t))
+          .sort((a, b) => (b.cycleNumber || 0) - (a.cycleNumber || 0));
+        return reusableSingle[0];
       }
       return undefined;
     },
@@ -235,12 +242,53 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
       flashMessage(isAr ? 'تم إنشاء الرابط والـ QR' : 'Link & QR generated');
     } catch (err: any) {
       console.error(err);
+      const code = err?.response?.data?.message;
       flashMessage(
-        err?.response?.data?.message ||
-          (isAr ? 'فشل — تأكد من الإسناد أولاً' : 'Failed — assign officer first'),
+        code === 'LINK_GEN_NOT_ALLOWED'
+          ? isAr
+            ? 'لا يمكن إنشاء رابط لمهمة مكتملة أو بانتظار الإدارة'
+            : 'Cannot generate a link for a completed or awaiting-admin task'
+          : code ||
+              (isAr ? 'فشل — تأكد من الإسناد أولاً' : 'Failed — assign officer first'),
       );
     } finally {
       setGeneratingTaskId(null);
+    }
+  };
+
+  const handleAdminFieldReview = async (
+    taskId: string,
+    approved: boolean,
+    reason?: string,
+  ) => {
+    if (!approved && !reason?.trim()) {
+      flashMessage(isAr ? 'سبب الرفض مطلوب' : 'Rejection reason is required');
+      return;
+    }
+    setAdminReviewTaskId(taskId);
+    try {
+      await verificationTasksApi.adminFieldReview(taskId, {
+        approved,
+        reason: reason?.trim() || undefined,
+      });
+      await fetchTasks({ silent: true });
+      flashMessage(
+        approved
+          ? isAr
+            ? 'تم اعتماد تقرير الميدان وقفل الرابط'
+            : 'Field report approved — link closed'
+          : isAr
+            ? 'تم الرفض وإنشاء دورة مطابقة جديدة'
+            : 'Rejected — new rematch cycle created',
+      );
+    } catch (err: any) {
+      console.error(err);
+      flashMessage(
+        err?.response?.data?.message ||
+          (isAr ? 'فشل قرار الميدان' : 'Field review failed'),
+      );
+    } finally {
+      setAdminReviewTaskId(null);
     }
   };
 
@@ -513,7 +561,7 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
               </button>
             )}
 
-            {activeTask && (
+            {activeTask && canGenerateVerificationLink(activeTask) && (
               <button
                 type="button"
                 onClick={() => handleGenerateLink(activeTask.id)}
@@ -527,6 +575,13 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
                 )}
                 {isAr ? `إنشاء رابط و QR (${durationHours}س)` : `Generate link & QR (${durationHours}h)`}
               </button>
+            )}
+            {activeTask && activeTask.officerId && !canGenerateVerificationLink(activeTask) && (
+              <p className="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+                {isAr
+                  ? 'لا يمكن إنشاء رابط لهذه المهمة (مكتملة أو بانتظار الإدارة). استخدم الدورة الجديدة بعد الرفض.'
+                  : 'Cannot generate a link for this task (completed or awaiting admin). Use the new cycle after rejection.'}
+              </p>
             )}
 
             {activeToken && activeUrl && activeTask && (
@@ -612,12 +667,24 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
             const partName =
               t.offer?.orderPart?.name ||
               resolvePartName(offers.find((o) => o.id === t.offerId) || {}, parts);
+            const activeReusable = activeOffer ? openTaskForOffer(activeOffer.id) : undefined;
             const variant = ['AWAITING_ADMIN_APPROVAL', 'AWAITING_CORRECTION'].includes(t.status)
               ? ('pending' as const)
-              : ('current' as const);
+              : activeReusable && t.id !== activeReusable.id
+                ? ('previous' as const)
+                : ['ADMIN_APPROVED', 'ADMIN_REJECTED'].includes(t.status)
+                  ? ('previous' as const)
+                  : ('current' as const);
             return (
               <div key={t.id}>
-                <p className="text-sm font-bold text-gold-400 mb-2">{partName}</p>
+                <p className="text-sm font-bold text-gold-400 mb-2">
+                  {partName}
+                  {t.cycleNumber != null ? (
+                    <span className="text-white/40 font-normal ml-2 mr-2">
+                      · {isAr ? 'دورة' : 'Cycle'} {t.cycleNumber}
+                    </span>
+                  ) : null}
+                </p>
                 <FieldVerificationReportPanel
                   task={t}
                   isAr={isAr}
@@ -625,6 +692,12 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
                   openingReportTaskId={openingReportTaskId}
                   reportBusy={openingReportTaskId !== null}
                   onOpenReport={(id) => void openFieldReport(id)}
+                  onAdminFieldReview={
+                    variant === 'pending'
+                      ? (approved, reason) => handleAdminFieldReview(t.id, approved, reason)
+                      : undefined
+                  }
+                  adminReviewBusy={adminReviewTaskId === t.id}
                 />
               </div>
             );

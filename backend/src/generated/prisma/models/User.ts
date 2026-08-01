@@ -661,6 +661,7 @@ export type UserWhereInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskListRelationFilter
   verificationTasksCreated?: Prisma.VerificationTaskListRelationFilter
   verificationLinksCreated?: Prisma.VerificationLinkListRelationFilter
+  verificationLinksAssigned?: Prisma.VerificationLinkListRelationFilter
   verificationActivityLogs?: Prisma.VerificationActivityLogListRelationFilter
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoListRelationFilter
   shippingWaybills?: Prisma.ShippingWaybillListRelationFilter
@@ -773,6 +774,7 @@ export type UserOrderByWithRelationInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskOrderByRelationAggregateInput
   verificationTasksCreated?: Prisma.VerificationTaskOrderByRelationAggregateInput
   verificationLinksCreated?: Prisma.VerificationLinkOrderByRelationAggregateInput
+  verificationLinksAssigned?: Prisma.VerificationLinkOrderByRelationAggregateInput
   verificationActivityLogs?: Prisma.VerificationActivityLogOrderByRelationAggregateInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoOrderByRelationAggregateInput
   shippingWaybills?: Prisma.ShippingWaybillOrderByRelationAggregateInput
@@ -888,6 +890,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   verificationTasksAssigned?: Prisma.VerificationTaskListRelationFilter
   verificationTasksCreated?: Prisma.VerificationTaskListRelationFilter
   verificationLinksCreated?: Prisma.VerificationLinkListRelationFilter
+  verificationLinksAssigned?: Prisma.VerificationLinkListRelationFilter
   verificationActivityLogs?: Prisma.VerificationActivityLogListRelationFilter
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoListRelationFilter
   shippingWaybills?: Prisma.ShippingWaybillListRelationFilter
@@ -1119,6 +1122,7 @@ export type UserCreateInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -1231,6 +1235,7 @@ export type UserUncheckedCreateInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -1341,6 +1346,7 @@ export type UserUpdateInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -1453,6 +1459,7 @@ export type UserUncheckedUpdateInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -2714,6 +2721,12 @@ export type UserCreateNestedOneWithoutVerificationLinksCreatedInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
+export type UserCreateNestedOneWithoutVerificationLinksAssignedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksAssignedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutVerificationLinksAssignedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
 export type UserUpdateOneWithoutVerificationLinksCreatedNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksCreatedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksCreatedInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutVerificationLinksCreatedInput
@@ -2722,6 +2735,16 @@ export type UserUpdateOneWithoutVerificationLinksCreatedNestedInput = {
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutVerificationLinksCreatedInput, Prisma.UserUpdateWithoutVerificationLinksCreatedInput>, Prisma.UserUncheckedUpdateWithoutVerificationLinksCreatedInput>
+}
+
+export type UserUpdateOneWithoutVerificationLinksAssignedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksAssignedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutVerificationLinksAssignedInput
+  upsert?: Prisma.UserUpsertWithoutVerificationLinksAssignedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutVerificationLinksAssignedInput, Prisma.UserUpdateWithoutVerificationLinksAssignedInput>, Prisma.UserUncheckedUpdateWithoutVerificationLinksAssignedInput>
 }
 
 export type UserCreateNestedOneWithoutVerificationActivityLogsInput = {
@@ -2846,6 +2869,7 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -2957,6 +2981,7 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -3082,6 +3107,7 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -3193,6 +3219,7 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -3302,6 +3329,7 @@ export type UserCreateWithoutReferredUsersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -3413,6 +3441,7 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -3527,6 +3556,7 @@ export type UserCreateWithoutReferredByInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -3637,6 +3667,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -3768,6 +3799,7 @@ export type UserUpdateWithoutReferredUsersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -3879,6 +3911,7 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -4062,6 +4095,7 @@ export type UserCreateWithoutSettingsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -4173,6 +4207,7 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -4298,6 +4333,7 @@ export type UserUpdateWithoutSettingsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -4409,6 +4445,7 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -4518,6 +4555,7 @@ export type UserCreateWithoutStoreInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -4629,6 +4667,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -4754,6 +4793,7 @@ export type UserUpdateWithoutStoreInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -4865,6 +4905,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -4974,6 +5015,7 @@ export type UserCreateWithoutOrdersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -5085,6 +5127,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -5210,6 +5253,7 @@ export type UserUpdateWithoutOrdersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -5321,6 +5365,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -5430,6 +5475,7 @@ export type UserCreateWithoutVerificationReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -5541,6 +5587,7 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -5666,6 +5713,7 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -5777,6 +5825,7 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -5887,6 +5936,7 @@ export type UserCreateWithoutStaticPagesUpdatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -5998,6 +6048,7 @@ export type UserUncheckedCreateWithoutStaticPagesUpdatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -6123,6 +6174,7 @@ export type UserUpdateWithoutStaticPagesUpdatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -6234,6 +6286,7 @@ export type UserUncheckedUpdateWithoutStaticPagesUpdatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -6343,6 +6396,7 @@ export type UserCreateWithoutAnnouncementsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -6454,6 +6508,7 @@ export type UserUncheckedCreateWithoutAnnouncementsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -6579,6 +6634,7 @@ export type UserUpdateWithoutAnnouncementsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -6690,6 +6746,7 @@ export type UserUncheckedUpdateWithoutAnnouncementsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -6798,6 +6855,7 @@ export type UserCreateWithoutNotificationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -6909,6 +6967,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -7034,6 +7093,7 @@ export type UserUpdateWithoutNotificationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -7145,6 +7205,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -7254,6 +7315,7 @@ export type UserCreateWithoutReturnsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -7365,6 +7427,7 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -7490,6 +7553,7 @@ export type UserUpdateWithoutReturnsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -7601,6 +7665,7 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -7710,6 +7775,7 @@ export type UserCreateWithoutDisputesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -7821,6 +7887,7 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -7946,6 +8013,7 @@ export type UserUpdateWithoutDisputesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -8057,6 +8125,7 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -8167,6 +8236,7 @@ export type UserCreateWithoutCaseMessagesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -8278,6 +8348,7 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -8403,6 +8474,7 @@ export type UserUpdateWithoutCaseMessagesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -8514,6 +8586,7 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -8622,6 +8695,7 @@ export type UserCreateWithoutOrderChatsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -8733,6 +8807,7 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -8858,6 +8933,7 @@ export type UserUpdateWithoutOrderChatsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -8969,6 +9045,7 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -9078,6 +9155,7 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -9189,6 +9267,7 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -9314,6 +9393,7 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -9425,6 +9505,7 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -9534,6 +9615,7 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -9645,6 +9727,7 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -9770,6 +9853,7 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -9881,6 +9965,7 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -9990,6 +10075,7 @@ export type UserCreateWithoutSecurityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -10101,6 +10187,7 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -10226,6 +10313,7 @@ export type UserUpdateWithoutSecurityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -10337,6 +10425,7 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -10446,6 +10535,7 @@ export type UserCreateWithoutSessionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -10557,6 +10647,7 @@ export type UserUncheckedCreateWithoutSessionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -10682,6 +10773,7 @@ export type UserUpdateWithoutSessionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -10793,6 +10885,7 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -10902,6 +10995,7 @@ export type UserCreateWithoutPaymentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -11013,6 +11107,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -11138,6 +11233,7 @@ export type UserUpdateWithoutPaymentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -11249,6 +11345,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -11359,6 +11456,7 @@ export type UserCreateWithoutWalletTransactionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -11470,6 +11568,7 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -11595,6 +11694,7 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -11706,6 +11806,7 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -11814,6 +11915,7 @@ export type UserCreateWithoutInvoicesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -11925,6 +12027,7 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -12050,6 +12153,7 @@ export type UserUpdateWithoutInvoicesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -12161,6 +12265,7 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -12270,6 +12375,7 @@ export type UserCreateWithoutCardsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -12381,6 +12487,7 @@ export type UserUncheckedCreateWithoutCardsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -12506,6 +12613,7 @@ export type UserUpdateWithoutCardsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -12617,6 +12725,7 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -12726,6 +12835,7 @@ export type UserCreateWithoutCreatedContractsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -12837,6 +12947,7 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -12962,6 +13073,7 @@ export type UserUpdateWithoutCreatedContractsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -13073,6 +13185,7 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -13182,6 +13295,7 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -13293,6 +13407,7 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -13407,6 +13522,7 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -13518,6 +13634,7 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -13643,6 +13760,7 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -13754,6 +13872,7 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -13874,6 +13993,7 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -13985,6 +14105,7 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -14095,6 +14216,7 @@ export type UserCreateWithoutShippingWaybillsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
@@ -14206,6 +14328,7 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
@@ -14331,6 +14454,7 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
@@ -14442,6 +14566,7 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
@@ -14551,6 +14676,7 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -14662,6 +14788,7 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -14787,6 +14914,7 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -14898,6 +15026,7 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -15007,6 +15136,7 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -15118,6 +15248,7 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -15243,6 +15374,7 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -15354,6 +15486,7 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -15463,6 +15596,7 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -15574,6 +15708,7 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -15699,6 +15834,7 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -15810,6 +15946,7 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -15919,6 +16056,7 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -16030,6 +16168,7 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -16144,6 +16283,7 @@ export type UserCreateWithoutProcessedWithdrawalsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -16255,6 +16395,7 @@ export type UserUncheckedCreateWithoutProcessedWithdrawalsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -16380,6 +16521,7 @@ export type UserUpdateWithoutWithdrawalRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -16491,6 +16633,7 @@ export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -16611,6 +16754,7 @@ export type UserUpdateWithoutProcessedWithdrawalsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -16722,6 +16866,7 @@ export type UserUncheckedUpdateWithoutProcessedWithdrawalsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -16831,6 +16976,7 @@ export type UserCreateWithoutPlatformErrorsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -16942,6 +17088,7 @@ export type UserUncheckedCreateWithoutPlatformErrorsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -17056,6 +17203,7 @@ export type UserCreateWithoutPlatformErrorsResolvedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -17167,6 +17315,7 @@ export type UserUncheckedCreateWithoutPlatformErrorsResolvedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -17292,6 +17441,7 @@ export type UserUpdateWithoutPlatformErrorsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -17403,6 +17553,7 @@ export type UserUncheckedUpdateWithoutPlatformErrorsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -17523,6 +17674,7 @@ export type UserUpdateWithoutPlatformErrorsResolvedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -17634,6 +17786,7 @@ export type UserUncheckedUpdateWithoutPlatformErrorsResolvedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -17743,6 +17896,7 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -17854,6 +18008,7 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -17979,6 +18134,7 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -18090,6 +18246,7 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -18199,6 +18356,7 @@ export type UserCreateWithoutViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -18310,6 +18468,7 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -18424,6 +18583,7 @@ export type UserCreateWithoutIssuedViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -18535,6 +18695,7 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -18660,6 +18821,7 @@ export type UserUpdateWithoutViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -18771,6 +18933,7 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -18891,6 +19054,7 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -19002,6 +19166,7 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -19111,6 +19276,7 @@ export type UserCreateWithoutViolationAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -19222,6 +19388,7 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -19336,6 +19503,7 @@ export type UserCreateWithoutReviewedAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -19447,6 +19615,7 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -19572,6 +19741,7 @@ export type UserUpdateWithoutViolationAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -19683,6 +19853,7 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -19803,6 +19974,7 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -19914,6 +20086,7 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -20023,6 +20196,7 @@ export type UserCreateWithoutPenaltyActionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -20134,6 +20308,7 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -20248,6 +20423,7 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -20359,6 +20535,7 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -20484,6 +20661,7 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -20595,6 +20773,7 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -20715,6 +20894,7 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -20826,6 +21006,7 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -20935,6 +21116,7 @@ export type UserCreateWithoutScoreLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -21046,6 +21228,7 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -21171,6 +21354,7 @@ export type UserUpdateWithoutScoreLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -21282,6 +21466,7 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -21391,6 +21576,7 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -21502,6 +21688,7 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -21627,6 +21814,7 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -21738,6 +21926,7 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -21847,6 +22036,7 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -21958,6 +22148,7 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -22072,6 +22263,7 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -22183,6 +22375,7 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -22308,6 +22501,7 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -22419,6 +22613,7 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -22539,6 +22734,7 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -22650,6 +22846,7 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -22759,6 +22956,7 @@ export type UserCreateWithoutRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -22870,6 +23068,7 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -22984,6 +23183,7 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -23095,6 +23295,7 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -23220,6 +23421,7 @@ export type UserUpdateWithoutRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -23331,6 +23533,7 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -23451,6 +23654,7 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -23562,6 +23766,7 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -23671,6 +23876,7 @@ export type UserCreateWithoutAdminPermissionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -23782,6 +23988,7 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -23896,6 +24103,7 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -24007,6 +24215,7 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -24121,6 +24330,7 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -24232,6 +24442,7 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -24357,6 +24568,7 @@ export type UserUpdateWithoutAdminPermissionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -24468,6 +24680,7 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -24588,6 +24801,7 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -24699,6 +24913,7 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -24819,6 +25034,7 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -24930,6 +25146,7 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -25038,6 +25255,7 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -25149,6 +25367,7 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -25263,6 +25482,7 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -25374,6 +25594,7 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -25499,6 +25720,7 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -25610,6 +25832,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -25730,6 +25953,7 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -25841,6 +26065,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -25951,6 +26176,7 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
@@ -26062,6 +26288,7 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
@@ -26187,6 +26414,7 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
@@ -26298,6 +26526,7 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
@@ -26406,6 +26635,7 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -26517,6 +26747,7 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -26556,6 +26787,233 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
 export type UserCreateOrConnectWithoutVerificationLinksCreatedInput = {
   where: Prisma.UserWhereUniqueInput
   create: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksCreatedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksCreatedInput>
+}
+
+export type UserCreateWithoutVerificationLinksAssignedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutVerificationLinksAssignedInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutVerificationLinksAssignedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksAssignedInput>
 }
 
 export type UserUpsertWithoutVerificationLinksCreatedInput = {
@@ -26642,6 +27100,7 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -26753,6 +27212,240 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUpsertWithoutVerificationLinksAssignedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedUpdateWithoutVerificationLinksAssignedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedCreateWithoutVerificationLinksAssignedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutVerificationLinksAssignedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutVerificationLinksAssignedInput, Prisma.UserUncheckedUpdateWithoutVerificationLinksAssignedInput>
+}
+
+export type UserUpdateWithoutVerificationLinksAssignedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutVerificationLinksAssignedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -26863,6 +27556,7 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
@@ -26974,6 +27668,7 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
@@ -27099,6 +27794,7 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
@@ -27210,6 +27906,7 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
   whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
@@ -27319,6 +28016,7 @@ export type UserCreateWithoutFinancialSettlementsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -27430,6 +28128,7 @@ export type UserUncheckedCreateWithoutFinancialSettlementsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -27555,6 +28254,7 @@ export type UserUpdateWithoutFinancialSettlementsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -27666,6 +28366,7 @@ export type UserUncheckedUpdateWithoutFinancialSettlementsInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -27775,6 +28476,7 @@ export type UserCreateWithoutFinancialAdjustmentsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
@@ -27886,6 +28588,7 @@ export type UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
@@ -28011,6 +28714,7 @@ export type UserUpdateWithoutFinancialAdjustmentsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -28122,6 +28826,7 @@ export type UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -28286,6 +28991,7 @@ export type UserUpdateWithoutReferredByInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
@@ -28396,6 +29102,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
   verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
   verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
   verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
@@ -28512,6 +29219,7 @@ export type UserCountOutputType = {
   verificationTasksAssigned: number
   verificationTasksCreated: number
   verificationLinksCreated: number
+  verificationLinksAssigned: number
   verificationActivityLogs: number
   verificationTaskPhotos: number
   shippingWaybills: number
@@ -28567,6 +29275,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   verificationTasksAssigned?: boolean | UserCountOutputTypeCountVerificationTasksAssignedArgs
   verificationTasksCreated?: boolean | UserCountOutputTypeCountVerificationTasksCreatedArgs
   verificationLinksCreated?: boolean | UserCountOutputTypeCountVerificationLinksCreatedArgs
+  verificationLinksAssigned?: boolean | UserCountOutputTypeCountVerificationLinksAssignedArgs
   verificationActivityLogs?: boolean | UserCountOutputTypeCountVerificationActivityLogsArgs
   verificationTaskPhotos?: boolean | UserCountOutputTypeCountVerificationTaskPhotosArgs
   shippingWaybills?: boolean | UserCountOutputTypeCountShippingWaybillsArgs
@@ -28742,6 +29451,13 @@ export type UserCountOutputTypeCountVerificationTasksCreatedArgs<ExtArgs extends
  * UserCountOutputType without action
  */
 export type UserCountOutputTypeCountVerificationLinksCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.VerificationLinkWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountVerificationLinksAssignedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.VerificationLinkWhereInput
 }
 
@@ -29052,6 +29768,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   verificationTasksAssigned?: boolean | Prisma.User$verificationTasksAssignedArgs<ExtArgs>
   verificationTasksCreated?: boolean | Prisma.User$verificationTasksCreatedArgs<ExtArgs>
   verificationLinksCreated?: boolean | Prisma.User$verificationLinksCreatedArgs<ExtArgs>
+  verificationLinksAssigned?: boolean | Prisma.User$verificationLinksAssignedArgs<ExtArgs>
   verificationActivityLogs?: boolean | Prisma.User$verificationActivityLogsArgs<ExtArgs>
   verificationTaskPhotos?: boolean | Prisma.User$verificationTaskPhotosArgs<ExtArgs>
   shippingWaybills?: boolean | Prisma.User$shippingWaybillsArgs<ExtArgs>
@@ -29283,6 +30000,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   verificationTasksAssigned?: boolean | Prisma.User$verificationTasksAssignedArgs<ExtArgs>
   verificationTasksCreated?: boolean | Prisma.User$verificationTasksCreatedArgs<ExtArgs>
   verificationLinksCreated?: boolean | Prisma.User$verificationLinksCreatedArgs<ExtArgs>
+  verificationLinksAssigned?: boolean | Prisma.User$verificationLinksAssignedArgs<ExtArgs>
   verificationActivityLogs?: boolean | Prisma.User$verificationActivityLogsArgs<ExtArgs>
   verificationTaskPhotos?: boolean | Prisma.User$verificationTaskPhotosArgs<ExtArgs>
   shippingWaybills?: boolean | Prisma.User$shippingWaybillsArgs<ExtArgs>
@@ -29351,6 +30069,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     verificationTasksAssigned: Prisma.$VerificationTaskPayload<ExtArgs>[]
     verificationTasksCreated: Prisma.$VerificationTaskPayload<ExtArgs>[]
     verificationLinksCreated: Prisma.$VerificationLinkPayload<ExtArgs>[]
+    verificationLinksAssigned: Prisma.$VerificationLinkPayload<ExtArgs>[]
     verificationActivityLogs: Prisma.$VerificationActivityLogPayload<ExtArgs>[]
     verificationTaskPhotos: Prisma.$VerificationTaskPhotoPayload<ExtArgs>[]
     shippingWaybills: Prisma.$ShippingWaybillPayload<ExtArgs>[]
@@ -29856,6 +30575,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   verificationTasksAssigned<T extends Prisma.User$verificationTasksAssignedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationTasksAssignedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationTasksCreated<T extends Prisma.User$verificationTasksCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationTasksCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationLinksCreated<T extends Prisma.User$verificationLinksCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationLinksCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  verificationLinksAssigned<T extends Prisma.User$verificationLinksAssignedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationLinksAssignedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationActivityLogs<T extends Prisma.User$verificationActivityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationActivityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationTaskPhotos<T extends Prisma.User$verificationTaskPhotosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationTaskPhotosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationTaskPhotoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shippingWaybills<T extends Prisma.User$shippingWaybillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shippingWaybillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShippingWaybillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -30847,6 +31567,30 @@ export type User$verificationTasksCreatedArgs<ExtArgs extends runtime.Types.Exte
  * User.verificationLinksCreated
  */
 export type User$verificationLinksCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the VerificationLink
+   */
+  select?: Prisma.VerificationLinkSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the VerificationLink
+   */
+  omit?: Prisma.VerificationLinkOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VerificationLinkInclude<ExtArgs> | null
+  where?: Prisma.VerificationLinkWhereInput
+  orderBy?: Prisma.VerificationLinkOrderByWithRelationInput | Prisma.VerificationLinkOrderByWithRelationInput[]
+  cursor?: Prisma.VerificationLinkWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.VerificationLinkScalarFieldEnum | Prisma.VerificationLinkScalarFieldEnum[]
+}
+
+/**
+ * User.verificationLinksAssigned
+ */
+export type User$verificationLinksAssignedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the VerificationLink
    */

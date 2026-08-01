@@ -41,6 +41,20 @@ type VerificationTaskPhotoRepo = {
 };
 
 const TERMINAL_TASK_STATUSES = ['ADMIN_APPROVED', 'ADMIN_REJECTED', 'CANCELLED'] as const;
+const REUSABLE_TASK_STATUSES = ['PENDING_ASSIGNMENT', 'ASSIGNED', 'LINK_SENT', 'IN_PROGRESS'] as const;
+const LINK_GENERATABLE_STATUSES = ['ASSIGNED', 'LINK_SENT', 'IN_PROGRESS'] as const;
+
+function isReusableTask(task: {
+  status: string;
+  completedAt?: Date | null;
+  decision?: string | null;
+}): boolean {
+  return (
+    (REUSABLE_TASK_STATUSES as readonly string[]).includes(task.status) &&
+    !task.completedAt &&
+    !task.decision
+  );
+}
 
 const VERIFICATION_ORDER_INCLUDE = {
   customer: { select: { id: true, name: true, email: true, phone: true } },
@@ -122,7 +136,7 @@ export class VerificationTasksService {
     return rows;
   }
 
-    async assignTask(dto: CreateTaskDto, adminId: string) {
+  async assignTask(dto: CreateTaskDto, adminId: string) {
     const order = await this.prisma.order.findUnique({ where: { id: dto.orderId } });
     if (!order) throw new NotFoundException('Order not found');
 
@@ -133,21 +147,48 @@ export class VerificationTasksService {
       if (!offer) throw new BadRequestException('Offer does not belong to this order');
     }
 
-    const openTask = await this.prisma.verificationTask.findFirst({
+    const candidate = await this.prisma.verificationTask.findFirst({
       where: {
         orderId: dto.orderId,
         offerId: dto.offerId ?? null,
-        status: { notIn: [...TERMINAL_TASK_STATUSES, 'CANCELLED'] },
+        status: { in: [...REUSABLE_TASK_STATUSES] },
+        completedAt: null,
+        decision: null,
       },
       orderBy: { cycleNumber: 'desc' },
     });
+    const openTask = candidate && isReusableTask(candidate) ? candidate : null;
 
     const result = await this.prisma.$transaction(async (tx) => {
       if (openTask) {
+        const previousOfficerId = openTask.officerId;
+        const nextOfficerId = dto.officerId ?? openTask.officerId;
+        const officerChanged =
+          !!dto.officerId && !!previousOfficerId && dto.officerId !== previousOfficerId;
+
+        if (officerChanged) {
+          await tx.verificationLink.updateMany({
+            where: { taskId: openTask.id, isActive: true },
+            data: { isActive: false },
+          });
+          await tx.verificationActivityLog.create({
+            data: {
+              taskId: openTask.id,
+              officerId: dto.officerId,
+              action: 'LINK_REVOKED',
+              metadata: {
+                reason: 'REASSIGN',
+                previousOfficerId,
+                newOfficerId: dto.officerId,
+              } as Prisma.InputJsonValue,
+            },
+          });
+        }
+
         const task = await tx.verificationTask.update({
           where: { id: openTask.id },
           data: {
-            officerId: dto.officerId ?? openTask.officerId,
+            officerId: nextOfficerId,
             assignedById: adminId,
             status: dto.officerId ? 'ASSIGNED' : openTask.status,
             assignedAt: dto.officerId ? new Date() : openTask.assignedAt,
@@ -203,7 +244,7 @@ export class VerificationTasksService {
         messageAr: `تم إسناد مهمة مطابقة جديدة للطلب #${order.orderNumber} إليك.`,
         messageEn: `A new verification task for Order #${order.orderNumber} has been assigned to you.`,
         type: 'system',
-        link: `/admin/verification-tasks/${result.id}`
+        link: `/admin/verification-tasks/${result.id}`,
       });
     }
 
@@ -220,11 +261,13 @@ export class VerificationTasksService {
       where: {
         orderId,
         offerId,
-        status: { notIn: [...TERMINAL_TASK_STATUSES, 'CANCELLED'] },
+        status: { in: [...REUSABLE_TASK_STATUSES] },
+        completedAt: null,
+        decision: null,
       },
       orderBy: { cycleNumber: 'desc' },
     });
-    if (existing) return existing;
+    if (existing && isReusableTask(existing)) return existing;
 
     const task = await this.prisma.verificationTask.create({
       data: {
@@ -244,6 +287,125 @@ export class VerificationTasksService {
     return task;
   }
 
+  /**
+   * Start a fresh empty rematch cycle after admin rejects a field task.
+   * Idempotent: returns an existing successor if one was already created.
+   */
+  async startNewCycle(params: {
+    orderId: string;
+    offerId?: string | null;
+    previousTaskId: string;
+    adminId?: string;
+  }) {
+    const previous = await this.prisma.verificationTask.findUnique({
+      where: { id: params.previousTaskId },
+    });
+    if (!previous) throw new NotFoundException('Previous verification task not found');
+    if (previous.orderId !== params.orderId) {
+      throw new BadRequestException('Previous task does not belong to this order');
+    }
+
+    const offerId = params.offerId !== undefined ? params.offerId : previous.offerId;
+
+    return this.prisma.$transaction(async (tx) => {
+      const byPrevious = await tx.verificationTask.findFirst({
+        where: {
+          orderId: params.orderId,
+          offerId: offerId ?? null,
+          previousTaskId: params.previousTaskId,
+        },
+        orderBy: { cycleNumber: 'desc' },
+      });
+      if (byPrevious) {
+        await tx.order.update({
+          where: { id: params.orderId },
+          data: { verificationTaskId: byPrevious.id },
+        });
+        return byPrevious;
+      }
+
+      const newerReusable = await tx.verificationTask.findFirst({
+        where: {
+          orderId: params.orderId,
+          offerId: offerId ?? null,
+          cycleNumber: { gt: previous.cycleNumber },
+          status: { in: [...REUSABLE_TASK_STATUSES] },
+          completedAt: null,
+          decision: null,
+        },
+        orderBy: { cycleNumber: 'desc' },
+      });
+      if (newerReusable && isReusableTask(newerReusable)) {
+        await tx.order.update({
+          where: { id: params.orderId },
+          data: { verificationTaskId: newerReusable.id },
+        });
+        return newerReusable;
+      }
+
+      await tx.verificationLink.updateMany({
+        where: { taskId: params.previousTaskId, isActive: true },
+        data: { isActive: false },
+      });
+
+      const newTask = await tx.verificationTask.create({
+        data: {
+          orderId: params.orderId,
+          offerId: offerId ?? null,
+          officerId: null,
+          assignedById: params.adminId ?? null,
+          status: 'PENDING_ASSIGNMENT',
+          assignedAt: null,
+          cycleNumber: previous.cycleNumber + 1,
+          previousTaskId: params.previousTaskId,
+          decision: null,
+          decisionReason: null,
+          officerNotes: null,
+          officerPhotos: [],
+          reportUrl: null,
+          completedAt: null,
+          startedAt: null,
+          startLat: null,
+          startLng: null,
+          endLat: null,
+          endLng: null,
+        },
+      });
+
+      await tx.order.update({
+        where: { id: params.orderId },
+        data: { verificationTaskId: newTask.id },
+      });
+
+      await tx.verificationActivityLog.create({
+        data: {
+          taskId: params.previousTaskId,
+          action: 'CORRECTION_REQUESTED',
+          metadata: {
+            reason: 'ADMIN_REJECTED_REMATCH',
+            newTaskId: newTask.id,
+            previousTaskId: params.previousTaskId,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.verificationActivityLog.create({
+        data: {
+          taskId: newTask.id,
+          officerId: null,
+          action: 'TASK_CREATED',
+          metadata: {
+            reason: 'ADMIN_REJECTED_REMATCH',
+            previousTaskId: params.previousTaskId,
+            cycleNumber: newTask.cycleNumber,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      return newTask;
+    });
+  }
+
   async generateLink(taskId: string, adminId: string, durationHours: number = 24) {
     const task = await this.prisma.verificationTask.findUnique({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Task not found');
@@ -252,16 +414,22 @@ export class VerificationTasksService {
         'Assign a verification officer before generating a link',
       );
     }
+    if (
+      !(LINK_GENERATABLE_STATUSES as readonly string[]).includes(task.status) ||
+      task.completedAt ||
+      task.decision
+    ) {
+      throw new BadRequestException('LINK_GEN_NOT_ALLOWED');
+    }
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + durationHours);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // Expire previous active links for this task
       await tx.verificationLink.updateMany({
         where: { taskId, isActive: true },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       const link = await tx.verificationLink.create({
@@ -271,23 +439,23 @@ export class VerificationTasksService {
           expiresAt,
           maxDurationHours: durationHours,
           createdById: adminId,
-          qrCodeData: `vlink:${token}`, // A format the frontend can easily read
-        }
+          assignedOfficerId: task.officerId,
+          qrCodeData: `vlink:${token}`,
+        },
       });
 
       await tx.verificationActivityLog.create({
         data: {
           taskId,
           action: 'LINK_GENERATED',
-          metadata: { tokenId: link.id, expiresAt }
-        }
+          metadata: { tokenId: link.id, expiresAt, assignedOfficerId: task.officerId },
+        },
       });
-      
-      // Also update task status if it wasn't started
+
       if (task.status === 'ASSIGNED' || task.status === 'PENDING_ASSIGNMENT') {
         await tx.verificationTask.update({
-            where: { id: taskId },
-            data: { status: 'LINK_SENT' }
+          where: { id: taskId },
+          data: { status: 'LINK_SENT' },
         });
       }
 
@@ -316,11 +484,11 @@ export class VerificationTasksService {
         },
       },
     });
-    if (!link) throw new NotFoundException('Invalid link');
-    if (!link.isActive) throw new BadRequestException('Link has been deactivated');
-    if (new Date() > link.expiresAt) throw new BadRequestException('Link has expired');
+    if (!link) throw new NotFoundException('LINK_NOT_FOUND');
+    if (!link.isActive) throw new BadRequestException('LINK_INACTIVE');
+    if (new Date() > link.expiresAt) throw new BadRequestException('LINK_EXPIRED');
     if (TERMINAL_TASK_STATUSES.includes(link.task.status as typeof TERMINAL_TASK_STATUSES[number])) {
-      throw new BadRequestException('Task is already closed');
+      throw new BadRequestException('LINK_CLOSED_BY_ADMIN');
     }
     return link;
   }
@@ -456,13 +624,14 @@ export class VerificationTasksService {
   ) {
     const link = await this.findLinkOrThrow(token);
 
+    if (link.assignedOfficerId && link.assignedOfficerId !== officerId) {
+      throw new ForbiddenException('LINK_WRONG_OFFICER');
+    }
     if (link.task.officerId && link.task.officerId !== officerId) {
-      throw new ForbiddenException('Task is assigned to another officer');
+      throw new ForbiddenException('LINK_WRONG_OFFICER');
     }
     if (!link.task.officerId) {
-      throw new ForbiddenException(
-        'This verification link is not assigned to any officer yet. Contact admin.',
-      );
+      throw new ForbiddenException('LINK_INACTIVE');
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -920,6 +1089,157 @@ export class VerificationTasksService {
     });
   }
 
+  /**
+   * After document or field admin decision: stamp task, revoke links,
+   * log admin reason, and start an empty rematch cycle on reject (idempotent).
+   */
+  async applyAdminDecisionSideEffects(params: {
+    orderId: string;
+    offerId?: string | null;
+    taskId?: string | null;
+    approved: boolean;
+    reason?: string | null;
+    adminId: string;
+    orderCancelled: boolean;
+    source: 'FIELD' | 'DOCUMENT';
+  }) {
+    const decidedStatuses = [
+      'AWAITING_ADMIN_APPROVAL',
+      'AWAITING_CORRECTION',
+      'ADMIN_APPROVED',
+      'ADMIN_REJECTED',
+      'IN_PROGRESS',
+      'LINK_SENT',
+      'ASSIGNED',
+    ];
+
+    const decidedTaskWhere = (offerId?: string | null): Prisma.VerificationTaskWhereInput => ({
+      orderId: params.orderId,
+      ...(offerId ? { offerId } : {}),
+      AND: [
+        {
+          OR: [
+            { decision: { not: null } },
+            { completedAt: { not: null } },
+            { status: { in: decidedStatuses } },
+          ],
+        },
+        {
+          NOT: {
+            AND: [
+              { status: 'PENDING_ASSIGNMENT' },
+              { decision: null },
+              { completedAt: null },
+            ],
+          },
+        },
+      ],
+    });
+
+    let taskId = params.taskId ?? null;
+
+    // Prefer offer-scoped decided/in-flight task (never stamp a fresh empty rematch cycle).
+    if (params.offerId) {
+      const byOffer = await this.prisma.verificationTask.findFirst({
+        where: decidedTaskWhere(params.offerId),
+        orderBy: { cycleNumber: 'desc' },
+        select: { id: true },
+      });
+      if (byOffer) taskId = byOffer.id;
+    }
+
+    if (taskId) {
+      const probe = await this.prisma.verificationTask.findUnique({
+        where: { id: taskId },
+        select: { id: true, status: true, decision: true, completedAt: true },
+      });
+      // Ignore pointer if it already points at a brand-new empty rematch row.
+      if (
+        probe &&
+        probe.status === 'PENDING_ASSIGNMENT' &&
+        !probe.decision &&
+        !probe.completedAt
+      ) {
+        taskId = null;
+      }
+    }
+
+    if (!taskId) {
+      const fallback = await this.prisma.verificationTask.findFirst({
+        where: decidedTaskWhere(params.offerId ?? undefined),
+        orderBy: { cycleNumber: 'desc' },
+        select: { id: true },
+      });
+      taskId = fallback?.id ?? null;
+    }
+
+    if (!taskId) return null;
+
+    const task = await this.prisma.verificationTask.findUnique({
+      where: { id: taskId },
+      select: { id: true, status: true, orderId: true, offerId: true },
+    });
+    if (!task) return null;
+
+    const nextStatus = params.approved ? 'ADMIN_APPROVED' : 'ADMIN_REJECTED';
+    const alreadyTerminal = (TERMINAL_TASK_STATUSES as readonly string[]).includes(task.status);
+    if (!alreadyTerminal || task.status !== nextStatus) {
+      if (!alreadyTerminal) {
+        await this.prisma.verificationTask.update({
+          where: { id: taskId },
+          data: { status: nextStatus },
+        });
+      }
+    }
+
+    await this.deactivateTaskLinks(taskId);
+
+    const action =
+      params.source === 'FIELD'
+        ? params.approved
+          ? 'ADMIN_FIELD_APPROVED'
+          : 'ADMIN_FIELD_REJECTED'
+        : params.approved
+          ? 'ADMIN_APPROVED'
+          : 'ADMIN_REJECTED';
+
+    // Avoid duplicate admin decision logs when field review already wrote one.
+    const recent = await this.prisma.verificationActivityLog.findFirst({
+      where: {
+        taskId,
+        action: { in: ['ADMIN_FIELD_APPROVED', 'ADMIN_FIELD_REJECTED', 'ADMIN_APPROVED', 'ADMIN_REJECTED'] },
+        createdAt: { gte: new Date(Date.now() - 15_000) },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!recent) {
+      await this.prisma.verificationActivityLog.create({
+        data: {
+          taskId,
+          officerId: null,
+          action,
+          metadata: {
+            adminId: params.adminId,
+            reason: params.reason ?? null,
+            source: params.source,
+          } as Prisma.InputJsonValue,
+        },
+      });
+    }
+
+    let newCycle: { id: string } | null = null;
+    if (!params.approved && !params.orderCancelled) {
+      newCycle = await this.startNewCycle({
+        orderId: params.orderId,
+        offerId: task.offerId ?? params.offerId ?? null,
+        previousTaskId: taskId,
+        adminId: params.adminId,
+      });
+    }
+
+    return { taskId, newCycleId: newCycle?.id ?? null };
+  }
+
   private adminTasksListInclude() {
     return {
       officer: { select: { id: true, name: true, email: true } },
@@ -1010,7 +1330,7 @@ export class VerificationTasksService {
   }
 
   async getTasksByOrder(orderId: string) {
-    return this.prisma.verificationTask.findMany({
+    const tasks = await this.prisma.verificationTask.findMany({
       where: { orderId },
       include: {
         officer: { select: { id: true, name: true, email: true } },
@@ -1029,6 +1349,56 @@ export class VerificationTasksService {
       },
       orderBy: [{ createdAt: 'desc' }, { cycleNumber: 'desc' }],
     });
+
+    const ids = tasks.map((t) => t.id);
+    const adminLogs =
+      ids.length > 0
+        ? await this.prisma.verificationActivityLog.findMany({
+            where: {
+              taskId: { in: ids },
+              action: {
+                in: [
+                  'ADMIN_FIELD_APPROVED',
+                  'ADMIN_FIELD_REJECTED',
+                  'ADMIN_APPROVED',
+                  'ADMIN_REJECTED',
+                ],
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            select: { taskId: true, action: true, metadata: true, createdAt: true },
+          })
+        : [];
+
+    const adminReviewByTask = new Map<
+      string,
+      {
+        decision: 'APPROVED' | 'REJECTED';
+        reason: string | null;
+        at: string;
+        source: 'FIELD' | 'DOCUMENT';
+      }
+    >();
+    for (const log of adminLogs) {
+      if (adminReviewByTask.has(log.taskId)) continue;
+      const meta = (log.metadata ?? {}) as { reason?: string | null; source?: string };
+      const approved =
+        log.action === 'ADMIN_FIELD_APPROVED' || log.action === 'ADMIN_APPROVED';
+      adminReviewByTask.set(log.taskId, {
+        decision: approved ? 'APPROVED' : 'REJECTED',
+        reason: typeof meta.reason === 'string' ? meta.reason : null,
+        at: log.createdAt.toISOString(),
+        source:
+          log.action.startsWith('ADMIN_FIELD_') || meta.source === 'FIELD'
+            ? 'FIELD'
+            : 'DOCUMENT',
+      });
+    }
+
+    return tasks.map((t) => ({
+      ...t,
+      adminReview: adminReviewByTask.get(t.id) ?? null,
+    }));
   }
 
   /** Tasks where the field officer finished and an admin must confirm (match or non-match). */
@@ -1137,10 +1507,28 @@ export class VerificationTasksService {
           taskId,
           officerId: null,
           action: dto.approved ? 'ADMIN_FIELD_APPROVED' : 'ADMIN_FIELD_REJECTED',
-          metadata: { adminId, reason: dto.reason ?? null } as Prisma.InputJsonValue,
+          metadata: {
+            adminId,
+            reason: dto.reason ?? null,
+            source: 'FIELD',
+          } as Prisma.InputJsonValue,
         },
       });
+
+      await tx.verificationLink.updateMany({
+        where: { taskId, isActive: true },
+        data: { isActive: false },
+      });
     });
+
+    if (!dto.approved && newOrderStatus !== OrderStatus.CANCELLED) {
+      await this.startNewCycle({
+        orderId: task.orderId,
+        offerId: task.offerId,
+        previousTaskId: taskId,
+        adminId,
+      });
+    }
 
     if (
       newOrderStatus === OrderStatus.VERIFICATION_SUCCESS &&
@@ -1247,6 +1635,61 @@ export class VerificationTasksService {
       },
     });
 
+    const historyIds = orderTaskHistory.map((h) => h.id);
+    const adminLogs =
+      historyIds.length > 0
+        ? await this.prisma.verificationActivityLog.findMany({
+            where: {
+              taskId: { in: historyIds },
+              action: {
+                in: [
+                  'ADMIN_FIELD_APPROVED',
+                  'ADMIN_FIELD_REJECTED',
+                  'ADMIN_APPROVED',
+                  'ADMIN_REJECTED',
+                ],
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            select: {
+              taskId: true,
+              action: true,
+              metadata: true,
+              createdAt: true,
+            },
+          })
+        : [];
+
+    const adminReviewByTask = new Map<
+      string,
+      {
+        decision: 'APPROVED' | 'REJECTED';
+        reason: string | null;
+        at: string;
+        source: 'FIELD' | 'DOCUMENT';
+      }
+    >();
+    for (const log of adminLogs) {
+      if (adminReviewByTask.has(log.taskId)) continue;
+      const meta = (log.metadata ?? {}) as { reason?: string | null; source?: string };
+      const approved =
+        log.action === 'ADMIN_FIELD_APPROVED' || log.action === 'ADMIN_APPROVED';
+      adminReviewByTask.set(log.taskId, {
+        decision: approved ? 'APPROVED' : 'REJECTED',
+        reason: typeof meta.reason === 'string' ? meta.reason : null,
+        at: log.createdAt.toISOString(),
+        source:
+          log.action.startsWith('ADMIN_FIELD_') || meta.source === 'FIELD'
+            ? 'FIELD'
+            : 'DOCUMENT',
+      });
+    }
+
+    const enrichedHistory = orderTaskHistory.map((h) => ({
+      ...h,
+      adminReview: adminReviewByTask.get(h.id) ?? null,
+    }));
+
     const merchantDoc = this.resolveMerchantDocForTask(task, task.order);
     const resolvedStore = task.order.store ?? merchantDoc?.store ?? null;
     const partLabel = this.resolvePartLabelFromTask(task, task.order);
@@ -1258,7 +1701,7 @@ export class VerificationTasksService {
       order: { ...task.order, store: resolvedStore },
       activeLink,
       sessionDeadline,
-      orderTaskHistory,
+      orderTaskHistory: enrichedHistory,
     };
   }
 
