@@ -30,9 +30,10 @@ import { ShipmentTracker } from '../shipments/ShipmentTracker';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import {
-    getFulfillmentLabel,
     getFulfillmentRank,
+    getMerchantFulfillmentDisplayLabel,
     getVerificationDocForOffer,
+    isCorrectionFamilyOrderStatus,
     isOfferPaidForFulfillment,
     merchantCanMarkPrepared,
     merchantCanSubmitVerification,
@@ -353,8 +354,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         [merchantAcceptedOffers],
     );
     const offersUnderVerificationReview = useMemo(
-        () => merchantAcceptedOffers.filter((o) => merchantOfferVerificationPending(o.fulfillmentStatus)),
-        [merchantAcceptedOffers],
+        () =>
+            merchantAcceptedOffers.filter((o) =>
+                merchantOfferVerificationPending(o.fulfillmentStatus, order?.status),
+            ),
+        [merchantAcceptedOffers, order?.status],
     );
     const offersVerificationApproved = useMemo(
         () =>
@@ -478,11 +482,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const verificationExistingData = useMemo(() => {
         if (!verificationOfferId) return undefined;
         const offer = merchantAcceptedOffers.find((o) => o.id === verificationOfferId);
-        if (!offer || !merchantOfferVerificationPending(offer.fulfillmentStatus)) {
+        if (!offer || !merchantOfferVerificationPending(offer.fulfillmentStatus, order?.status)) {
             return undefined;
         }
         return getVerificationDocForOffer(order?.verificationDocuments, verificationOfferId);
-    }, [verificationOfferId, merchantAcceptedOffers, order?.verificationDocuments]);
+    }, [verificationOfferId, merchantAcceptedOffers, order?.verificationDocuments, order?.status]);
 
     /** Timeline reflects this merchant's parts, not the whole multi-vendor order. */
     const merchantTimelineStatus = useMemo((): StatusType => {
@@ -889,12 +893,34 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             );
                         }
 
-                        // VERIFICATION: pending admin review
-                        if (order.status === 'VERIFICATION' || order.status === 'CORRECTION_SUBMITTED') {
+                        // VERIFICATION: pending admin review (first pass only)
+                        if (order.status === 'VERIFICATION') {
                             return (
                                 <div className="flex items-center gap-2 text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-xl">
                                     <CheckCircle2 size={16} />
                                     <span className="font-bold text-sm">{isAr ? 'قيد مراجعة الإدارة' : 'Under Admin Review'}</span>
+                                </div>
+                            );
+                        }
+
+                        if (order.status === 'CORRECTION_PERIOD') {
+                            return (
+                                <div className="flex items-center gap-2 text-orange-400 bg-orange-500/10 border border-orange-500/20 px-4 py-2 rounded-xl">
+                                    <AlertTriangle size={16} className="animate-pulse" />
+                                    <span className="font-bold text-sm">
+                                        {isAr ? 'فترة التصحيح — إعادة المطابقة' : 'Correction — rematch'}
+                                    </span>
+                                </div>
+                            );
+                        }
+
+                        if (order.status === 'CORRECTION_SUBMITTED') {
+                            return (
+                                <div className="flex items-center gap-2 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl">
+                                    <Clock size={16} />
+                                    <span className="font-bold text-sm">
+                                        {isAr ? 'تم إرسال التصحيح' : 'Correction submitted'}
+                                    </span>
                                 </div>
                             );
                         }
@@ -1516,10 +1542,14 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     getFulfillmentRank('VERIFICATION_SUCCESS');
                                                                 const isPartInReview = merchantOfferVerificationPending(
                                                                     partOffer.fulfillmentStatus,
+                                                                    order?.status,
                                                                 );
+                                                                const isPartInCorrection =
+                                                                    !isPartVerified &&
+                                                                    isCorrectionFamilyOrderStatus(order?.status);
                                                                 return (
                                                                 <div className={`rounded-lg px-2 py-1.5 border col-span-2 sm:col-span-3 ${
-                                                                    isPartRejected
+                                                                    isPartRejected || isPartInCorrection
                                                                         ? 'bg-red-500/10 border-red-500/25'
                                                                         : isPartInReview
                                                                         ? 'bg-amber-500/10 border-amber-500/25'
@@ -1528,7 +1558,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                           : 'bg-blue-500/10 border-blue-500/20'
                                                                 }`}>
                                                                     <span className={`text-[10px] block font-bold flex items-center gap-1 ${
-                                                                        isPartRejected
+                                                                        isPartRejected || isPartInCorrection
                                                                             ? 'text-red-400'
                                                                             : isPartInReview
                                                                             ? 'text-amber-400'
@@ -1536,7 +1566,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                               ? 'text-green-400'
                                                                               : 'text-blue-400'
                                                                     }`}>
-                                                                        {isPartRejected && <XCircle size={12} />}
+                                                                        {(isPartRejected || isPartInCorrection) && <XCircle size={12} />}
                                                                         {isPartInReview && <Clock size={12} />}
                                                                         {isPartVerified && <CheckCircle2 size={12} />}
                                                                         {isAr ? 'حالة التجهيز' : 'Fulfillment'}
@@ -1544,7 +1574,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     <span className="text-sm font-bold text-white">
                                                                         {isPartRejected
                                                                             ? (isAr ? 'مرفوض — مطلوب إعادة التوثيق' : 'Rejected — re-verify required')
-                                                                            : getFulfillmentLabel(partOffer.fulfillmentStatus, isAr)}
+                                                                            : getMerchantFulfillmentDisplayLabel(
+                                                                                  partOffer.fulfillmentStatus,
+                                                                                  order?.status,
+                                                                                  isAr,
+                                                                              )}
                                                                     </span>
                                                                     {isPartRejected && partVerificationDoc?.adminRejectionReason && (
                                                                         <p className="text-[11px] text-red-300/90 mt-1 line-clamp-2">
@@ -1628,10 +1662,36 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         {isAr ? 'تأكيد تجهيز هذه القطعة' : 'Mark this part prepared'}
                                                                     </button>
                                                                 )}
-                                                                {merchantOfferVerificationPending(partOffer.fulfillmentStatus) && (
+                                                                {merchantOfferVerificationPending(
+                                                                    partOffer.fulfillmentStatus,
+                                                                    order?.status,
+                                                                ) && (
                                                                     <span className="px-4 py-2 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/25 flex items-center gap-1.5">
                                                                         <Clock size={14} />
                                                                         {isAr ? 'التوثيق قيد مراجعة الإدارة' : 'Verification under admin review'}
+                                                                    </span>
+                                                                )}
+                                                                {isCorrectionFamilyOrderStatus(order?.status) &&
+                                                                    String(order?.status).toUpperCase() !==
+                                                                        'CORRECTION_SUBMITTED' &&
+                                                                    getFulfillmentRank(partOffer.fulfillmentStatus) <
+                                                                        getFulfillmentRank('VERIFICATION_SUCCESS') && (
+                                                                    <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5">
+                                                                        <AlertTriangle size={14} />
+                                                                        {isAr
+                                                                            ? 'مطلوب إعادة التوثيق — فترة التصحيح'
+                                                                            : 'Correction required — rematch'}
+                                                                    </span>
+                                                                )}
+                                                                {String(order?.status).toUpperCase() ===
+                                                                    'CORRECTION_SUBMITTED' &&
+                                                                    getFulfillmentRank(partOffer.fulfillmentStatus) <
+                                                                        getFulfillmentRank('VERIFICATION_SUCCESS') && (
+                                                                    <span className="px-4 py-2 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25 flex items-center gap-1.5">
+                                                                        <Clock size={14} />
+                                                                        {isAr
+                                                                            ? 'تم إرسال التصحيح — بانتظار المراجعة'
+                                                                            : 'Correction submitted — awaiting review'}
                                                                     </span>
                                                                 )}
                                                                 {(() => {
@@ -1939,6 +1999,20 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                             {isAr ? 'قيد المراجعة' : 'in review'}
                                                         </span>
                                                     )}
+                                                    {isCorrectionFamilyOrderStatus(order?.status) &&
+                                                        merchantPartsUnderReviewCount === 0 &&
+                                                        merchantPartsVerifiedCount === 0 && (
+                                                        <span className="text-orange-400">
+                                                            {merchantAcceptedOffers.length}/{merchantAcceptedOffers.length}{' '}
+                                                            {String(order?.status).toUpperCase() === 'CORRECTION_SUBMITTED'
+                                                                ? isAr
+                                                                    ? 'تصحيح مُرسل'
+                                                                    : 'correction sent'
+                                                                : isAr
+                                                                  ? 'إعادة مطابقة'
+                                                                  : 'rematch'}
+                                                        </span>
+                                                    )}
                                                     {merchantPartsUnderReviewCount > 0 &&
                                                         merchantPartsVerifiedCount > 0 && (
                                                             <span className="text-white/30 mx-1">·</span>
@@ -1950,7 +2024,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                         </span>
                                                     )}
                                                     {merchantPartsUnderReviewCount === 0 &&
-                                                        merchantPartsVerifiedCount === 0 && (
+                                                        merchantPartsVerifiedCount === 0 &&
+                                                        !isCorrectionFamilyOrderStatus(order?.status) && (
                                                             <span className="text-white/40">
                                                                 0/{merchantAcceptedOffers.length}
                                                             </span>
@@ -2237,7 +2312,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     borderColor: 'border-amber-500/20'
                                                 };
                                             case 'VERIFICATION':
-                                            case 'CORRECTION_SUBMITTED':
                                                 return {
                                                     icon: <Clock size={28} className="text-amber-500" />,
                                                     title: isAr ? s.VERIFICATION.title : s.VERIFICATION.enTitle,
@@ -2383,10 +2457,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     const progressiveStates = ['AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
                                     const isProgressive = progressiveStates.includes(order.status);
 
-                                    if (order.status === 'VERIFICATION' || order.status === 'CORRECTION_SUBMITTED') {
+                                    if (order.status === 'VERIFICATION') {
                                         return (
                                             <button disabled className="w-full py-4 rounded-xl font-bold text-amber-500/80 bg-amber-500/10 cursor-not-allowed border border-amber-500/20">
                                                 {isAr ? 'في انتظار مراجعة الإدارة' : 'Pending Admin Review'}
+                                            </button>
+                                        );
+                                    }
+
+                                    if (order.status === 'CORRECTION_SUBMITTED') {
+                                        return (
+                                            <button disabled className="w-full py-4 rounded-xl font-bold text-blue-400/80 bg-blue-500/10 cursor-not-allowed border border-blue-500/20">
+                                                {isAr ? 'تم إرسال التصحيح — بانتظار المراجعة' : 'Correction submitted — awaiting review'}
                                             </button>
                                         );
                                     }

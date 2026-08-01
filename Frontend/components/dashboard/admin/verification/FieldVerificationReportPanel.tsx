@@ -32,9 +32,6 @@ interface FieldVerificationReportPanelProps {
   openingReportTaskId?: string | null;
   reportBusy?: boolean;
   onOpenReport: (taskId: string) => void;
-  /** Optional admin field approve/reject actions (pending reports only). */
-  onAdminFieldReview?: (approved: boolean, reason?: string) => void | Promise<void>;
-  adminReviewBusy?: boolean;
 }
 
 export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanelProps> = ({
@@ -44,11 +41,7 @@ export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanel
   openingReportTaskId,
   reportBusy,
   onOpenReport,
-  onAdminFieldReview,
-  adminReviewBusy,
 }) => {
-  const [rejectReason, setRejectReason] = React.useState('');
-  const [showRejectBox, setShowRejectBox] = React.useState(false);
   const fieldPhotoUrls = getFieldPhotoUrlsFromTask(task);
   const isOpening = reportBusy && openingReportTaskId === task.id;
   const adminReview = task.adminReview;
@@ -76,8 +69,8 @@ export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanel
   const subtitle =
     variant === 'pending'
       ? isAr
-        ? 'راجع الأدلة والتقرير. الاعتماد من لوحة «توثيق القطعة» أعلاه.'
-        : 'Review evidence and report. Approve from the part verification panel above.'
+        ? 'راجع الأدلة والتقرير. الاعتماد أو الرفض من لوحة «توثيق القطعة» أعلاه فقط (مع السبب والصور/الفيديو).'
+        : 'Review evidence and report. Approve or reject only from the part verification panel above (with reason and photos/video).'
       : variant === 'previous'
         ? isAr
           ? 'سجل ثابت — لا يُحذف بعد بدء دورة مطابقة جديدة.'
@@ -211,66 +204,12 @@ export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanel
         {task.completedAt ? (
           <span className="text-xs text-white/40 self-center">
             {isAr ? 'اكتمل:' : 'Completed:'}{' '}
-            {new Date(task.completedAt).toLocaleString(isAr ? 'ar-EG' : 'en-US')}
+            {new Date(task.completedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
+            {' '}
+            {new Date(task.completedAt).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
           </span>
         ) : null}
       </div>
-
-      {variant === 'pending' && onAdminFieldReview && (
-        <div className="space-y-3 pt-2 border-t border-white/10">
-          <p className="text-xs text-white/50">
-            {isAr
-              ? 'قرار المطابقة الميدانية: الاعتماد يقفل الرابط. الرفض يقفل الرابط وينشئ دورة مطابقة جديدة فارغة.'
-              : 'Field decision: approve closes the link. Reject closes the link and opens a fresh empty rematch cycle.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={adminReviewBusy}
-              onClick={() => void onAdminFieldReview(true)}
-              className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-sm font-bold disabled:opacity-50 min-h-[44px]"
-            >
-              {isAr ? 'اعتماد تقرير الميدان' : 'Approve field report'}
-            </button>
-            <button
-              type="button"
-              disabled={adminReviewBusy}
-              onClick={() => setShowRejectBox((v) => !v)}
-              className="px-4 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 text-sm font-bold disabled:opacity-50 min-h-[44px]"
-            >
-              {isAr ? 'رفض وإعادة مطابقة' : 'Reject & rematch'}
-            </button>
-          </div>
-          {showRejectBox && (
-            <div className="space-y-2">
-              <label className="block text-xs text-white/50 font-bold">
-                {isAr ? 'سبب الرفض (إلزامي)' : 'Rejection reason (required)'}
-              </label>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-                className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-400/50"
-                placeholder={isAr ? 'اكتب سبب رفض المطابقة الميدانية...' : 'Write why the field report is rejected...'}
-              />
-              <button
-                type="button"
-                disabled={adminReviewBusy || !rejectReason.trim()}
-                onClick={() => void onAdminFieldReview(false, rejectReason.trim())}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold disabled:opacity-50 min-h-[44px]"
-              >
-                {adminReviewBusy
-                  ? isAr
-                    ? 'جاري التنفيذ...'
-                    : 'Working...'
-                  : isAr
-                    ? 'تأكيد الرفض وإنشاء دورة جديدة'
-                    : 'Confirm reject & create new cycle'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

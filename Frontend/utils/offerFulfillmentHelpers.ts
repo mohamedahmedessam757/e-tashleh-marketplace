@@ -94,6 +94,10 @@ const CORRECTION_ORDER_STATUSES = new Set([
     'CORRECTION_SUBMITTED',
 ]);
 
+/** Order-level correction / rematch family (SSOT for merchant badges). */
+export function isCorrectionFamilyOrderStatus(orderStatus?: string | null): boolean {
+    return CORRECTION_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
+}
 /**
  * Merchant-facing order timeline status from this merchant's accepted offers.
  * Payment stays active until every accepted offer for this store is paid
@@ -153,8 +157,37 @@ export function merchantCanSubmitVerification(fulfillmentStatus?: string): boole
     return String(fulfillmentStatus || '').toUpperCase() === 'PREPARED';
 }
 
-export function merchantOfferVerificationPending(fulfillmentStatus?: string): boolean {
+/**
+ * True only while the offer is in first-pass admin verification review.
+ * During correction/rematch (order-level), fulfillment often stays VERIFICATION —
+ * that must NOT read as "under review".
+ */
+export function merchantOfferVerificationPending(
+    fulfillmentStatus?: string,
+    orderStatus?: string | null,
+): boolean {
+    if (isCorrectionFamilyOrderStatus(orderStatus)) return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'VERIFICATION';
+}
+
+/** Merchant-facing fulfillment label that respects correction/rematch order status. */
+export function getMerchantFulfillmentDisplayLabel(
+    fulfillmentStatus: string | undefined,
+    orderStatus: string | null | undefined,
+    isAr: boolean,
+): string {
+    const os = String(orderStatus || '').toUpperCase();
+    if (os === 'CORRECTION_PERIOD' || os === 'NON_MATCHING') {
+        return isAr
+            ? 'مطلوب إعادة التوثيق — فترة التصحيح'
+            : 'Correction required — rematch';
+    }
+    if (os === 'CORRECTION_SUBMITTED') {
+        return isAr
+            ? 'تم إرسال التصحيح — بانتظار المراجعة'
+            : 'Correction submitted — awaiting review';
+    }
+    return getFulfillmentLabel(fulfillmentStatus, isAr);
 }
 
 export type VerificationDocSummary = {
@@ -209,6 +242,7 @@ export function buildFulfillmentStepHint(
     } | null | undefined,
     stepIndex: number,
     isAr: boolean,
+    orderStatus?: string | null,
 ): string | undefined {
     if (!summary || summary.total <= 1) return undefined;
     const { total, stepCounts } = summary;
@@ -227,6 +261,13 @@ export function buildFulfillmentStepHint(
             return `${stepCounts.preparation}/${total} ${isAr ? 'في التجهيز' : 'in prep'}`;
         }
         case 4: {
+            if (isCorrectionFamilyOrderStatus(orderStatus)) {
+                const os = String(orderStatus || '').toUpperCase();
+                if (os === 'CORRECTION_SUBMITTED') {
+                    return `${total}/${total} ${isAr ? 'تصحيح مُرسل' : 'correction sent'}`;
+                }
+                return `${total}/${total} ${isAr ? 'إعادة مطابقة' : 'rematch'}`;
+            }
             const inReview = stepCounts.verification ?? 0;
             if (inReview > 0) {
                 return `${inReview}/${total} ${isAr ? 'قيد المراجعة' : 'under review'}`;
