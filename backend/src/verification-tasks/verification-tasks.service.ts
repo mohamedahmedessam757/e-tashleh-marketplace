@@ -490,6 +490,13 @@ export class VerificationTasksService {
     if (TERMINAL_TASK_STATUSES.includes(link.task.status as typeof TERMINAL_TASK_STATUSES[number])) {
       throw new BadRequestException('LINK_CLOSED_BY_ADMIN');
     }
+    // Defense-in-depth: after officer submit, link must not reopen the awaiting report.
+    if (
+      link.task.status === 'AWAITING_ADMIN_APPROVAL' ||
+      link.task.status === 'AWAITING_CORRECTION'
+    ) {
+      throw new BadRequestException('LINK_INACTIVE');
+    }
     return link;
   }
 
@@ -1108,9 +1115,6 @@ export class VerificationTasksService {
       'AWAITING_CORRECTION',
       'ADMIN_APPROVED',
       'ADMIN_REJECTED',
-      'IN_PROGRESS',
-      'LINK_SENT',
-      'ASSIGNED',
     ];
 
     const decidedTaskWhere = (offerId?: string | null): Prisma.VerificationTaskWhereInput => ({
@@ -1124,10 +1128,11 @@ export class VerificationTasksService {
             { status: { in: decidedStatuses } },
           ],
         },
+        // Never target a fresh rematch row (empty / not yet submitted).
         {
           NOT: {
             AND: [
-              { status: 'PENDING_ASSIGNMENT' },
+              { status: { in: ['PENDING_ASSIGNMENT', 'ASSIGNED', 'LINK_SENT', 'IN_PROGRESS'] } },
               { decision: null },
               { completedAt: null },
             ],
@@ -1522,12 +1527,17 @@ export class VerificationTasksService {
     });
 
     if (!dto.approved && newOrderStatus !== OrderStatus.CANCELLED) {
-      await this.startNewCycle({
-        orderId: task.orderId,
-        offerId: task.offerId,
-        previousTaskId: taskId,
-        adminId,
-      });
+      // Rematch only when admin rejection means the field visit must be redone
+      // (officer MATCHING rejected → CORRECTION_PERIOD). Admin override of
+      // officer NON_MATCHING returns order to VERIFICATION without a new cycle.
+      if (newOrderStatus === OrderStatus.CORRECTION_PERIOD) {
+        await this.startNewCycle({
+          orderId: task.orderId,
+          offerId: task.offerId,
+          previousTaskId: taskId,
+          adminId,
+        });
+      }
     }
 
     if (
