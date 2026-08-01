@@ -145,19 +145,29 @@ export function resolveMerchantTimelineFromOffers(
         return anyPaid ? 'PARTIALLY_PAID' : 'AWAITING_PAYMENT';
     }
 
-    if (active.some((s) => s === 'IN_PREPARATION')) return 'PREPARATION';
-    if (active.some((s) => s === 'PREPARED')) return 'PREPARED';
-    if (active.some((s) => s === 'VERIFICATION')) return 'VERIFICATION';
-    if (active.some((s) => s === 'VERIFICATION_SUCCESS')) return 'VERIFICATION_SUCCESS';
-    if (active.some((s) => s === 'READY_FOR_SHIPPING')) return 'READY_FOR_SHIPPING';
-    if (active.every((s) => s === 'DELIVERED' || s === 'COMPLETED')) {
-        return fallback && TERMINAL_ORDER_STATUSES.has(fallback) ? fallback : 'DELIVERED';
-    }
-    if (active.every((s) => s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED')) {
-        return 'SHIPPED';
+    let fromOffers: string;
+    if (active.some((s) => s === 'IN_PREPARATION')) fromOffers = 'PREPARATION';
+    else if (active.some((s) => s === 'PREPARED')) fromOffers = 'PREPARED';
+    else if (active.some((s) => s === 'VERIFICATION')) fromOffers = 'VERIFICATION';
+    else if (active.some((s) => s === 'VERIFICATION_SUCCESS')) fromOffers = 'VERIFICATION_SUCCESS';
+    else if (active.some((s) => s === 'READY_FOR_SHIPPING')) fromOffers = 'READY_FOR_SHIPPING';
+    else if (active.every((s) => s === 'DELIVERED' || s === 'COMPLETED')) {
+        fromOffers =
+            fallback && TERMINAL_ORDER_STATUSES.has(fallback) ? fallback : 'DELIVERED';
+    } else if (active.every((s) => s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED')) {
+        fromOffers = 'SHIPPED';
+    } else {
+        fromOffers = fallback || active[0];
     }
 
-    return fallback || active[0];
+    // Order-level SSOT wins when offers lag after rematch/admin approve
+    if (fallback) {
+        const orderStep = getOrderTimelineStepIndex(fallback);
+        const offerStep = getOrderTimelineStepIndex(fromOffers);
+        if (orderStep > offerStep) return fallback;
+    }
+
+    return fromOffers;
 }
 
 export function isOfferPaidForFulfillment(fulfillmentStatus?: string | null): boolean {
@@ -183,6 +193,8 @@ export function merchantOfferVerificationPending(
 ): boolean {
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     if (isCorrectionFamilyOrderStatus(orderStatus)) return false;
+    // Order already past inspection — ignore stale offer.fulfillmentStatus=VERIFICATION
+    if (isPostVerificationSuccessOrderStatus(orderStatus)) return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'VERIFICATION';
 }
 
@@ -205,6 +217,21 @@ export function getMerchantFulfillmentDisplayLabel(
         return isAr
             ? 'تم إرسال التصحيح — بانتظار المراجعة'
             : 'Correction submitted — awaiting review';
+    }
+    // Order ahead of offer row (rematch approve lag) — show order-level success label
+    if (
+        isPostVerificationSuccessOrderStatus(os) &&
+        getFulfillmentRank(fulfillmentStatus) < FULFILLMENT_RANK.VERIFICATION_SUCCESS
+    ) {
+        if (os === 'READY_FOR_SHIPPING' || getOrderTimelineStepIndex(os) >= 5) {
+            if (os === 'SHIPPED' || os === 'PARTIALLY_SHIPPED') {
+                return getFulfillmentLabel('SHIPPED', isAr);
+            }
+            if (os === 'READY_FOR_SHIPPING') {
+                return getFulfillmentLabel('READY_FOR_SHIPPING', isAr);
+            }
+            return getFulfillmentLabel('VERIFICATION_SUCCESS', isAr);
+        }
     }
     return getFulfillmentLabel(fulfillmentStatus, isAr);
 }
@@ -239,6 +266,10 @@ const POST_VERIFICATION_SUCCESS_STATUSES = new Set([
     'DELIVERED_TO_CUSTOMER',
 ]);
 
+export function isPostVerificationSuccessOrderStatus(orderStatus?: string | null): boolean {
+    return POST_VERIFICATION_SUCCESS_STATUSES.has(String(orderStatus || '').toUpperCase());
+}
+
 export function merchantOfferAdminRejected(
     fulfillmentStatus?: string,
     doc?: Pick<VerificationDocSummary, 'adminStatus'>,
@@ -247,7 +278,7 @@ export function merchantOfferAdminRejected(
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     // Correction already sent — hide rematch CTAs while awaiting admin review
     if (String(orderStatus || '').toUpperCase() === 'CORRECTION_SUBMITTED') return false;
-    if (POST_VERIFICATION_SUCCESS_STATUSES.has(String(orderStatus || '').toUpperCase())) {
+    if (isPostVerificationSuccessOrderStatus(orderStatus)) {
         return false;
     }
     if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;

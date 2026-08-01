@@ -41,6 +41,7 @@ import {
     merchantCanRequestReadyForShipping,
     merchantOfferVerificationPending,
     merchantOfferAdminRejected,
+    isPostVerificationSuccessOrderStatus,
     normalizeOfferFulfillmentStatus,
     resolveMerchantTimelineFromOffers,
 } from '../../../utils/offerFulfillmentHelpers';
@@ -384,12 +385,20 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     );
     const offersVerificationApproved = useMemo(
         () =>
-            merchantAcceptedOffers.filter(
-                (o) =>
+            merchantAcceptedOffers.filter((o) => {
+                if (isPostVerificationSuccessOrderStatus(order?.status)) {
+                    // Offer row may lag after rematch approve — treat prepared+ as approved
+                    return (
+                        getFulfillmentRank(o.fulfillmentStatus) >=
+                        getFulfillmentRank('PREPARED')
+                    );
+                }
+                return (
                     getFulfillmentRank(o.fulfillmentStatus) >=
-                    getFulfillmentRank('VERIFICATION_SUCCESS'),
-            ),
-        [merchantAcceptedOffers],
+                    getFulfillmentRank('VERIFICATION_SUCCESS')
+                );
+            }),
+        [merchantAcceptedOffers, order?.status],
     );
     const offersRejectedVerification = useMemo(
         () =>
@@ -485,10 +494,19 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     const merchantPartsVerifiedCount = useMemo(
         () =>
-            merchantAcceptedOffers.filter((o) =>
-                getFulfillmentRank(o.fulfillmentStatus) >= getFulfillmentRank('VERIFICATION_SUCCESS'),
-            ).length,
-        [merchantAcceptedOffers],
+            merchantAcceptedOffers.filter((o) => {
+                if (isPostVerificationSuccessOrderStatus(order?.status)) {
+                    return (
+                        getFulfillmentRank(o.fulfillmentStatus) >=
+                        getFulfillmentRank('PREPARED')
+                    );
+                }
+                return (
+                    getFulfillmentRank(o.fulfillmentStatus) >=
+                    getFulfillmentRank('VERIFICATION_SUCCESS')
+                );
+            }).length,
+        [merchantAcceptedOffers, order?.status],
     );
 
     const merchantPrepProgressPct = useMemo(() => {
@@ -2369,14 +2387,26 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     bgColor: 'bg-amber-500/10',
                                                     borderColor: 'border-amber-500/20'
                                                 };
-                                            case 'VERIFICATION_SUCCESS':
+                                            case 'VERIFICATION_SUCCESS': {
+                                                // Waybill/shipment already past request — show handover truth, not "please request"
+                                                if (handoverPhase !== 'awaiting_waybill') {
+                                                    const dynamic = handoverCopy;
+                                                    return {
+                                                        icon: <Truck size={28} className="text-blue-400" />,
+                                                        title: dynamic.title,
+                                                        desc: dynamic.desc,
+                                                        bgColor: 'bg-blue-500/10',
+                                                        borderColor: 'border-blue-500/20',
+                                                    };
+                                                }
                                                 return {
                                                     icon: <CheckCircle2 size={28} className="text-green-400" />,
                                                     title: isAr ? s.VERIFICATION_SUCCESS.title : s.VERIFICATION_SUCCESS.enTitle,
                                                     desc: isAr ? s.VERIFICATION_SUCCESS.desc : s.VERIFICATION_SUCCESS.enDesc,
                                                     bgColor: 'bg-green-500/10',
-                                                    borderColor: 'border-green-500/20'
+                                                    borderColor: 'border-green-500/20',
                                                 };
+                                            }
                                             case 'READY_FOR_SHIPPING': {
                                                 const dynamic = handoverCopy;
                                                 return {
@@ -2533,15 +2563,33 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                         );
                                     }
 
-                                    if (order.status === 'READY_FOR_SHIPPING') {
+                                    if (
+                                        order.status === 'READY_FOR_SHIPPING' ||
+                                        order.status === 'VERIFICATION_SUCCESS'
+                                    ) {
+                                        const handoverDone = handoverPhase !== 'awaiting_waybill';
                                         return (
-                                            <button 
+                                            <button
                                                 disabled
-                                                className="w-full py-4 rounded-xl font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-all flex flex-col items-center justify-center gap-1 group shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                                                className={`w-full py-4 rounded-xl font-bold border transition-all flex flex-col items-center justify-center gap-1 group ${
+                                                    handoverDone
+                                                        ? 'text-green-400 bg-green-500/10 border-green-500/25'
+                                                        : 'text-blue-400 bg-blue-500/10 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                                                }`}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <Truck className="w-5 h-5 inline group-hover:translate-x-1 transition-transform" />
-                                                    <span>{handoverCopy.actionLabel}</span>
+                                                    {handoverDone ? (
+                                                        <CheckCircle2 className="w-5 h-5 inline" />
+                                                    ) : (
+                                                        <Truck className="w-5 h-5 inline group-hover:translate-x-1 transition-transform" />
+                                                    )}
+                                                    <span>
+                                                        {handoverDone
+                                                            ? handoverCopy.actionLabel
+                                                            : isAr
+                                                              ? 'بانتظار طلب التسليم للإدارة'
+                                                              : 'Awaiting handover request'}
+                                                    </span>
                                                 </div>
                                             </button>
                                         );

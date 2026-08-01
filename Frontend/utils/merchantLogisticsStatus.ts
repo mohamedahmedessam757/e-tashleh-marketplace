@@ -92,11 +92,11 @@ export function getMerchantHandoverStatusCopy(
             };
         case 'at_hub':
             return {
-                title: isAr ? 'الشحنة لدى مركز التجميع' : 'Shipment at hub',
+                title: isAr ? 'تم التسليم للإدارة' : 'Handed over to management',
                 desc: isAr
-                    ? `تم استلام الشحنة${shipmentLabel ? `: ${shipmentLabel}` : ''}. جاري تجهيزها للشحن.`
-                    : `Shipment received${shipmentLabel ? `: ${shipmentLabel}` : ''}. Processing for dispatch.`,
-                actionLabel: shipmentLabel || (isAr ? 'الشحنة لدى المركز' : 'At hub'),
+                    ? `تم تسليم القطعة واستلامها في مركز التجميع${shipmentLabel ? ` (${shipmentLabel})` : ''}. جاري تجهيزها للشحن.`
+                    : `Part handed over and received at the hub${shipmentLabel ? ` (${shipmentLabel})` : ''}. Processing for dispatch.`,
+                actionLabel: isAr ? 'تم التسليم للإدارة' : 'Delivered to management',
             };
         case 'waybill_issued':
             return {
