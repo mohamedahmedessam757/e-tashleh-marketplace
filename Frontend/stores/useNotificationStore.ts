@@ -175,13 +175,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const popupTypes = new Set(['DISPUTE', 'SECURITY', 'PAYMENT']);
     const type = String(notification.type || '').toUpperCase();
     if (popupTypes.has(type)) return true;
-    // Merchant verification correction — show detailed popup (not drawer-only)
+    // Merchant verification correction — detailed popup (approve uses VerdictPopUp / SYSTEM)
     const meta = notification.metadata || {};
+    if (meta.verificationCorrection === true) {
+      return true;
+    }
+    // Verification approve / other system alerts for merchant with a link
     if (
-      meta.verificationCorrection === true ||
-      (meta.verification === true &&
-        (type === 'SYSTEM' || type === 'SYSTEM_ALERT') &&
-        String(notification.recipientRole || '').toUpperCase() === 'MERCHANT')
+      meta.verification === true &&
+      (type === 'SYSTEM' || type === 'SYSTEM_ALERT') &&
+      String(notification.recipientRole || '').toUpperCase() === 'MERCHANT'
     ) {
       return true;
     }

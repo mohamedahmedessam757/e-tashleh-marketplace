@@ -11,6 +11,7 @@ import { assertVerificationTaskAccess } from './verification-task-access';
 import { UploadsService, VERIFICATION_FIELD_PHOTOS_BUCKET } from '../uploads/uploads.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import { EscrowService } from '../payments/escrow.service';
+import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import * as crypto from 'crypto';
 import {
   isUuid,
@@ -127,6 +128,8 @@ export class VerificationTasksService {
     private waybillsService: WaybillsService,
     @Inject(forwardRef(() => EscrowService))
     private escrowService: EscrowService,
+    @Inject(forwardRef(() => OfferFulfillmentService))
+    private offerFulfillment: OfferFulfillmentService,
   ) {}
 
   private get verificationTaskPhotoRows(): VerificationTaskPhotoRepo {
@@ -1543,6 +1546,22 @@ export class VerificationTasksService {
       }
     }
 
+    // Sync offer fulfillment + clear stale REJECTED docs so merchant UI advances
+    if (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS) {
+      try {
+        await this.syncOfferAndDocsAfterVerificationSuccess({
+          orderId: task.orderId,
+          offerId: task.offerId,
+          adminId,
+          storeIdHint: task.order.verificationDocuments?.[0]?.storeId ?? null,
+        });
+      } catch (syncErr) {
+        this.logger.warn(
+          `Field approve fulfillment sync failed: ${syncErr instanceof Error ? syncErr.message : syncErr}`,
+        );
+      }
+    }
+
     if (
       newOrderStatus === OrderStatus.VERIFICATION_SUCCESS &&
       this.waybillsService.shouldAutoIssueOnVerification(task.order)
@@ -1815,6 +1834,70 @@ export class VerificationTasksService {
     return { success: true };
   }
 
+  /**
+   * After MATCHING/rematch admin approve: advance offer fulfillment and retire stale REJECTED docs
+   * so merchant explore UI leaves the re-verify path.
+   */
+  private async syncOfferAndDocsAfterVerificationSuccess(params: {
+    orderId: string;
+    offerId?: string | null;
+    adminId: string;
+    storeIdHint?: string | null;
+  }) {
+    let offerId = params.offerId ?? null;
+    let storeId = params.storeIdHint ?? null;
+
+    if (offerId) {
+      const offer = await this.prisma.offer.findFirst({
+        where: { id: offerId, orderId: params.orderId },
+        select: { id: true, storeId: true },
+      });
+      if (offer) storeId = offer.storeId;
+      else offerId = null;
+    }
+
+    if (!offerId) {
+      const paid = await this.offerFulfillment.getPaidAcceptedOffers(params.orderId);
+      const scoped = storeId ? paid.filter((o) => o.storeId === storeId) : paid;
+      if (scoped.length === 1) {
+        offerId = scoped[0].id;
+        storeId = scoped[0].storeId;
+      } else if (!storeId && paid.length === 1) {
+        offerId = paid[0].id;
+        storeId = paid[0].storeId;
+      }
+    }
+
+    if (offerId) {
+      await this.offerFulfillment.applyVerificationDecision(params.orderId, offerId, true);
+    }
+
+    const docWhere: Prisma.VerificationDocumentWhereInput = {
+      orderId: params.orderId,
+      adminStatus: { in: ['REJECTED', 'PENDING'] },
+    };
+    if (offerId && storeId) {
+      docWhere.AND = [
+        { OR: [{ offerId }, { offerId: null }] },
+        { storeId },
+      ];
+    } else if (offerId) {
+      docWhere.OR = [{ offerId }, { offerId: null }];
+    } else if (storeId) {
+      docWhere.storeId = storeId;
+    }
+
+    await this.prisma.verificationDocument.updateMany({
+      where: docWhere,
+      data: {
+        adminStatus: 'APPROVED',
+        adminReviewedBy: params.adminId,
+        adminReviewedAt: new Date(),
+        correctionDeadlineAt: null,
+      },
+    });
+  }
+
   /** Merchant, customer, and officer alerts after admin confirms field verification (aligned with orders adminReviewVerification). */
   private async dispatchFieldAdminReviewNotifications(ctx: {
     taskId: string;
@@ -1838,7 +1921,13 @@ export class VerificationTasksService {
           messageEn: `Non-matching part detected for #${order.orderNumber}. You have 48h to submit correction.`,
           type: 'system_alert',
           link,
-          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+          metadata: {
+            orderId: order.id,
+            verification: true,
+            verificationCorrection: true,
+            rejectionReason: null,
+            waEvent: 'VERIFICATION',
+          },
         });
       } else if (newOrderStatus === OrderStatus.CANCELLED && newRejectionCount >= 2) {
         await this.notifications.notifyMerchantByStoreId(storeId, {
@@ -1858,7 +1947,13 @@ export class VerificationTasksService {
           messageEn: `Verification for #${order.orderNumber} approved. You can now handover to courier.`,
           type: 'system_alert',
           link,
-          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+          metadata: {
+            orderId: order.id,
+            verification: true,
+            ctaAr: 'متابعة التسليم',
+            ctaEn: 'Continue Handover',
+            waEvent: 'VERIFICATION',
+          },
         });
       } else if (newOrderStatus === OrderStatus.VERIFICATION && !approved && officerDecision === 'NON_MATCHING') {
         await this.notifications.notifyMerchantByStoreId(storeId, {
