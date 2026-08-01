@@ -285,7 +285,8 @@ export class ShipmentsService {
                 fromStatus: null,
                 toStatus: 'RECEIVED_AT_HUB',
                 changedBy: userId ?? null,
-                source: userId ? 'MANUAL' : 'SYSTEM',
+                // DB CHECK allows only MANUAL | API (not SYSTEM)
+                source: userId ? 'MANUAL' : 'API',
                 notes: userId ? 'Shipment created by merchant request' : 'Shipment created by automated waybill issuance'
             }
         });

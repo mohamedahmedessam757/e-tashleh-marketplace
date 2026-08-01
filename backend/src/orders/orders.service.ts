@@ -2477,9 +2477,35 @@ export class OrdersService {
         }
 
         let partName = order.partName || 'Part';
-        if (latestDoc.offerId) {
+        let resolvedOfferId = latestDoc.offerId ?? null;
+
+        // Correction docs historically omitted offerId — recover from original / task / single paid offer
+        if (!resolvedOfferId && decision === 'APPROVED') {
+            if (latestDoc.originalDocumentId) {
+                const original = await this.prisma.verificationDocument.findUnique({
+                    where: { id: latestDoc.originalDocumentId },
+                    select: { offerId: true },
+                });
+                resolvedOfferId = original?.offerId ?? null;
+            }
+            if (!resolvedOfferId && order.verificationTaskId) {
+                const vt = await this.prisma.verificationTask.findUnique({
+                    where: { id: order.verificationTaskId },
+                    select: { offerId: true },
+                });
+                resolvedOfferId = vt?.offerId ?? null;
+            }
+            if (!resolvedOfferId) {
+                const paid = await this.offerFulfillment.getPaidAcceptedOffers(orderId);
+                const storePaid = paid.filter((o) => o.storeId === latestDoc.storeId);
+                if (storePaid.length === 1) resolvedOfferId = storePaid[0].id;
+                else if (paid.length === 1) resolvedOfferId = paid[0].id;
+            }
+        }
+
+        if (resolvedOfferId) {
             const linkedOffer = await this.prisma.offer.findFirst({
-                where: { id: latestDoc.offerId, orderId },
+                where: { id: resolvedOfferId, orderId },
                 include: { orderPart: true },
             });
             if (linkedOffer) {
@@ -2489,9 +2515,32 @@ export class OrdersService {
 
             await this.offerFulfillment.applyVerificationDecision(
                 orderId,
-                latestDoc.offerId,
+                resolvedOfferId,
                 decision === 'APPROVED',
             );
+
+            if (decision === 'APPROVED') {
+                await this.prisma.verificationDocument.updateMany({
+                    where: {
+                        orderId,
+                        storeId: latestDoc.storeId,
+                        adminStatus: { in: ['REJECTED', 'PENDING'] },
+                        OR: [{ offerId: resolvedOfferId }, { offerId: null }],
+                    },
+                    data: {
+                        adminStatus: 'APPROVED',
+                        adminReviewedBy: adminId,
+                        adminReviewedAt: new Date(),
+                        correctionDeadlineAt: null,
+                    },
+                });
+                if (!latestDoc.offerId) {
+                    await this.prisma.verificationDocument.update({
+                        where: { id: latestDoc.id },
+                        data: { offerId: resolvedOfferId },
+                    }).catch(() => {});
+                }
+            }
 
             // Per-offer path skipped the order update in the txn above — enforce
             // correction SSOT here so aggregate cannot leave the order as PREPARED.
@@ -2572,7 +2621,13 @@ export class OrdersService {
                         messageAr: `تم اعتماد توثيق «${partName}» للطلب #${order.orderNumber}. يمكنك تسليمها للإدارة ومتابعة الشحن.`,
                         messageEn: `Verification for "${partName}" (#${order.orderNumber}) approved. You can hand over to admin.`,
                         link: `/merchant/orders/${order.id}`,
-                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+                        metadata: {
+                            orderId: order.id,
+                            verification: true,
+                            ctaAr: 'متابعة التسليم',
+                            ctaEn: 'Continue Handover',
+                            waEvent: 'VERIFICATION',
+                        },
                     });
                 } else if (newRejectionCount >= 2) {
                     await this.notifications.create({
@@ -2671,9 +2726,13 @@ export class OrdersService {
             orderBy: { cycleNumber: 'desc' },
         });
 
+        const correctionOfferId =
+            originalDoc?.offerId ?? previousTask?.offerId ?? null;
+
         const doc = await this.prisma.verificationDocument.create({
             data: {
                 orderId, storeId,
+                offerId: correctionOfferId,
                 isCorrection: true,
                 originalDocumentId: originalDoc?.id,
                 images: data.images || [],
@@ -2693,7 +2752,7 @@ export class OrdersService {
         if (previousTask) {
             newTask = await this.verificationTasks.startNewCycle({
                 orderId,
-                offerId: previousTask.offerId,
+                offerId: previousTask.offerId ?? correctionOfferId,
                 previousTaskId: previousTask.id,
             });
         } else {

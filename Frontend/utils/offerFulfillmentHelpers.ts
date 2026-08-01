@@ -217,6 +217,28 @@ export type VerificationDocSummary = {
     adminRejectionVideo?: string | null;
 };
 
+/** Post-inspection success — never show rematch CTAs even if a stale REJECTED doc remains. */
+const POST_VERIFICATION_SUCCESS_STATUSES = new Set([
+    'VERIFICATION_SUCCESS',
+    'READY_FOR_SHIPPING',
+    'PARTIALLY_SHIPPED',
+    'SHIPPED',
+    'RECEIVED_AT_HUB',
+    'QUALITY_CHECK_PASSED',
+    'PACKAGED_FOR_SHIPPING',
+    'AWAITING_CARRIER_PICKUP',
+    'PICKED_UP_BY_CARRIER',
+    'IN_TRANSIT_TO_DESTINATION',
+    'ARRIVED_AT_LOCAL_FACILITY',
+    'CUSTOMS_CLEARANCE',
+    'AT_LOCAL_WAREHOUSE',
+    'OUT_FOR_DELIVERY',
+    'DELIVERY_ATTEMPTED',
+    'PARTIALLY_DELIVERED',
+    'DELIVERED',
+    'DELIVERED_TO_CUSTOMER',
+]);
+
 export function merchantOfferAdminRejected(
     fulfillmentStatus?: string,
     doc?: Pick<VerificationDocSummary, 'adminStatus'>,
@@ -225,6 +247,9 @@ export function merchantOfferAdminRejected(
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     // Correction already sent — hide rematch CTAs while awaiting admin review
     if (String(orderStatus || '').toUpperCase() === 'CORRECTION_SUBMITTED') return false;
+    if (POST_VERIFICATION_SUCCESS_STATUSES.has(String(orderStatus || '').toUpperCase())) {
+        return false;
+    }
     if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;
     const fs = String(fulfillmentStatus || '').toUpperCase();
     // Reject path keeps VERIFICATION (legacy rows may still be PREPARED)
@@ -339,7 +364,6 @@ const ORDER_STATUSES_BEFORE_SHIPPING_PHASE = new Set([
     'PREPARATION',
     'PREPARED',
     'VERIFICATION',
-    'VERIFICATION_SUCCESS',
     'NON_MATCHING',
     'CORRECTION_PERIOD',
     'CORRECTION_SUBMITTED',
@@ -362,11 +386,11 @@ export function getOrderTimelineStepIndex(status?: string): number {
             return 3;
         case 'PREPARED':
         case 'VERIFICATION':
-        case 'VERIFICATION_SUCCESS':
         case 'NON_MATCHING':
         case 'CORRECTION_PERIOD':
         case 'CORRECTION_SUBMITTED':
             return 4;
+        case 'VERIFICATION_SUCCESS':
         case 'RECEIVED_AT_HUB':
         case 'QUALITY_CHECK_PASSED':
         case 'PACKAGED_FOR_SHIPPING':

@@ -9,14 +9,8 @@ interface VerificationCorrectionPopupProps {
 }
 
 function isVerificationCorrection(n: Notification): boolean {
-    const meta = n.metadata || {};
-    if (meta.verificationCorrection === true) return true;
-    const type = String(n.type || '').toUpperCase();
-    return (
-        meta.verification === true &&
-        (type === 'SYSTEM' || type === 'SYSTEM_ALERT') &&
-        String(n.recipientRole || '').toUpperCase() === 'MERCHANT'
-    );
+    // Approve alerts also carry verification:true — only correction flag opens this chrome.
+    return n.metadata?.verificationCorrection === true;
 }
 
 function formatDeadline(iso: string | null | undefined, isAr: boolean): string | null {

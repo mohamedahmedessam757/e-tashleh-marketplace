@@ -7,6 +7,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { UploadsModule } from '../uploads/uploads.module';
 import { WaybillsModule } from '../waybills/waybills.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PaymentsModule } from '../payments/payments.module';
     UploadsModule,
     WaybillsModule,
     forwardRef(() => PaymentsModule),
+    forwardRef(() => OrdersModule),
   ],
   providers: [VerificationTasksService],
   controllers: [VerificationTasksController, VerificationTasksPublicController],
