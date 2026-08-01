@@ -223,6 +223,8 @@ export function merchantOfferAdminRejected(
     orderStatus?: string | null,
 ): boolean {
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
+    // Correction already sent — hide rematch CTAs while awaiting admin review
+    if (String(orderStatus || '').toUpperCase() === 'CORRECTION_SUBMITTED') return false;
     if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;
     const fs = String(fulfillmentStatus || '').toUpperCase();
     // Reject path keeps VERIFICATION (legacy rows may still be PREPARED)

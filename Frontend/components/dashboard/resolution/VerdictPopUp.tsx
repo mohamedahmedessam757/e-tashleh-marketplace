@@ -18,6 +18,26 @@ interface VerdictPopUpProps {
     onNavigate?: (path: string, id?: any) => void;
 }
 
+function resolveVerdictPopupCta(notification: Notification, isAr: boolean): string {
+    const meta = notification.metadata || {};
+    const explicit = isAr ? meta.ctaAr : meta.ctaEn;
+    if (typeof explicit === 'string' && explicit.trim()) return explicit.trim();
+
+    const shippingCost = Number(meta.shippingCost || 0);
+    if (meta.isPayee && shippingCost > 0) {
+        return isAr ? 'عرض التفاصيل والسداد' : 'View Details & Pay';
+    }
+
+    const type = String(notification.type || '').toUpperCase();
+    if (type === 'PAYMENT') {
+        return isAr ? 'عرض التفاصيل' : 'View Details';
+    }
+    if (type === 'DISPUTE') {
+        return isAr ? 'عرض تفاصيل النزاع' : 'View Case Details';
+    }
+    return isAr ? 'عرض التفاصيل' : 'View Details';
+}
+
 export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
     const { notifications, dismissNotification, shouldShowAsPopup } = useNotificationStore();
     const { language } = useLanguage();
@@ -86,6 +106,8 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
     const isPayee = currentPopUp.metadata?.isPayee;
     const shippingCost = Number(currentPopUp.metadata?.shippingCost || 0);
     const hasNavAction = Boolean(currentPopUp.link && onNavigate);
+    const ctaLabel = resolveVerdictPopupCta(currentPopUp, isAr);
+    const showPayIcon = Boolean(isPayee && shippingCost > 0);
 
     return (
         <AnimatePresence>
@@ -169,14 +191,14 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                                         type="button"
                                         onClick={() => void handleAction()}
                                         disabled={dismissing}
-                                        className={`flex-1 font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] ${isPayee ? 'bg-red-500 text-black hover:bg-red-400' : 'bg-white text-black hover:bg-zinc-200'}`}
+                                        className={`flex-1 font-black uppercase tracking-[0.2em] text-[10px] py-6 rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] ${showPayIcon ? 'bg-red-500 text-black hover:bg-red-400' : 'bg-white text-black hover:bg-zinc-200'}`}
                                     >
-                                        {isPayee ? (
+                                        {showPayIcon ? (
                                             <CreditCard size={14} className="mr-2" />
                                         ) : (
                                             <ExternalLink size={14} className="mr-2" />
                                         )}
-                                        {isAr ? 'عرض التفاصيل والسداد' : 'View Details & Pay'}
+                                        {ctaLabel}
                                     </Button>
                                 )}
                                 <Button
