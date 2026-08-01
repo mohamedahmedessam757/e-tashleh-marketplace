@@ -46,6 +46,7 @@ import {
     getFulfillmentLabel,
     computeShipmentDeliverySummary,
     allShipmentBatchesDelivered,
+    resolveOrderTimelineStatus,
 } from '../../utils/offerFulfillmentHelpers';
 import { MerchantHandoverPendingBanner } from './shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from './shared/CartShipmentBadge';
@@ -238,6 +239,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     useOrderRealtimeSync(orderId, { includeReviews: true });
     const shipment = shipments.find(s => s.orderId === (orderId || ''));
     const fulfillmentSummary = useOrderFulfillmentSummary(orderId || undefined, order);
+
+    const timelineStatus = useMemo(
+        () =>
+            resolveOrderTimelineStatus(
+                order?.status,
+                shipment?.status ?? order?.shipments?.[0]?.status,
+            ),
+        [order?.status, order?.shipments, shipment?.status],
+    );
 
     const shipmentDeliverySummary = useMemo(
         () => computeShipmentDeliverySummary(order?.shipments, order?.status),
@@ -1125,7 +1135,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             )}
                             <div className="flex justify-between items-center mb-6">
                                 <StatusTimeline
-                                    currentStatus={order.status}
+                                    currentStatus={(timelineStatus || order.status) as any}
                                     fulfillmentSummary={fulfillmentSummary}
                                     shipmentDeliverySummary={shipmentDeliverySummary}
                                 />
@@ -1193,7 +1203,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         </div>
                     ) : (
                         <StatusTimeline
-                            currentStatus={order.status}
+                            currentStatus={(timelineStatus || order.status) as any}
                             fulfillmentSummary={fulfillmentSummary}
                             shipmentDeliverySummary={shipmentDeliverySummary}
                         />

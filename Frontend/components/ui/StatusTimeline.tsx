@@ -74,6 +74,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   ].includes(statusUpper);
   const activeIndex = getOrderTimelineStepIndex(currentStatus);
   const isCancelled = currentStatus === 'CANCELLED';
+  const statusKey = String(currentStatus || '').toUpperCase();
   const isTerminalDeliveryDone = [
     'DELIVERED',
     'COMPLETED',
@@ -82,17 +83,36 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     'RETURNED',
     'REFUNDED',
     'RESOLVED',
-  ].includes(String(currentStatus || '').toUpperCase());
+  ].includes(statusKey);
+  // In-transit: shipping step is done; delivery is current (activeIndex === 6) but not terminal
+  const isEnRouteToCustomer =
+    activeIndex >= 6 &&
+    !isTerminalDeliveryDone &&
+    [
+      'SHIPPED',
+      'PICKED_UP_BY_CARRIER',
+      'IN_TRANSIT_TO_DESTINATION',
+      'ARRIVED_AT_LOCAL_FACILITY',
+      'CUSTOMS_CLEARANCE',
+      'CUSTOMS_DELAY',
+      'AT_LOCAL_WAREHOUSE',
+      'OUT_FOR_DELIVERY',
+      'DELIVERY_ATTEMPTED',
+      'PARTIALLY_DELIVERED',
+    ].includes(statusKey);
 
   // Line runs center→center of first/last circles (not container edges)
   const sideInset = `calc(100% / ${n} / 2)`;
   const trackSpan = `calc(100% - 100% / ${n})`;
+  // En-route fills through shipping (step 5) — not 100% — so delivery stays visually pending
   const filledWidth =
     isCancelled || activeIndex <= 0
       ? '0px'
       : isTerminalDeliveryDone
         ? trackSpan
-        : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
+        : isEnRouteToCustomer
+          ? `calc(5 / ${n - 1} * (100% - 100% / ${n}))`
+          : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
 
   return (
     <div className="w-full py-8 px-2 sm:px-4 isolate" dir={isAr ? 'rtl' : 'ltr'}>

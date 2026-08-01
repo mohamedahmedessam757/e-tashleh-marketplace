@@ -326,7 +326,16 @@ export class ShipmentsService {
         const newStatus = data.status as ShipmentStatus;
 
         const isDelivered = newStatus === ShipmentStatus.DELIVERED_TO_CUSTOMER;
-        const isPickedUp = newStatus === ShipmentStatus.PICKED_UP_BY_CARRIER;
+        const marksOrderShipped = ([
+            ShipmentStatus.PICKED_UP_BY_CARRIER,
+            ShipmentStatus.IN_TRANSIT_TO_DESTINATION,
+            ShipmentStatus.ARRIVED_AT_LOCAL_FACILITY,
+            ShipmentStatus.CUSTOMS_CLEARANCE,
+            ShipmentStatus.CUSTOMS_DELAY,
+            ShipmentStatus.AT_LOCAL_WAREHOUSE,
+            ShipmentStatus.OUT_FOR_DELIVERY,
+            ShipmentStatus.DELIVERY_ATTEMPTED,
+        ] as ShipmentStatus[]).includes(newStatus);
 
         const updated = await this.prisma.shipment.update({
             where: { id },
@@ -375,13 +384,14 @@ export class ShipmentsService {
             }
         });
 
-        if (isPickedUp && shipment.order) {
+        // Keep order.status on SHIPPED whenever carrier transit advances (not only first pickup)
+        if (marksOrderShipped && shipment.order) {
             const orderRow = await this.prisma.order.findUnique({
                 where: { id: shipment.orderId },
                 select: { status: true },
             });
-            const terminal = ['DELIVERED', 'COMPLETED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
-            if (orderRow && !terminal.includes(orderRow.status)) {
+            const terminal = ['DELIVERED', 'COMPLETED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED', 'CANCELLED'];
+            if (orderRow && !terminal.includes(orderRow.status) && orderRow.status !== 'SHIPPED') {
                 await this.prisma.order.update({
                     where: { id: shipment.orderId },
                     data: { status: 'SHIPPED' },
