@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { assertVerificationTaskAccess } from './verification-task-access';
 import { UploadsService, VERIFICATION_FIELD_PHOTOS_BUCKET } from '../uploads/uploads.service';
 import { WaybillsService } from '../waybills/waybills.service';
+import { EscrowService } from '../payments/escrow.service';
 import * as crypto from 'crypto';
 import {
   isUuid,
@@ -124,6 +125,8 @@ export class VerificationTasksService {
     private auditLogs: AuditLogsService,
     private uploads: UploadsService,
     private waybillsService: WaybillsService,
+    @Inject(forwardRef(() => EscrowService))
+    private escrowService: EscrowService,
   ) {}
 
   private get verificationTaskPhotoRows(): VerificationTaskPhotoRepo {
@@ -1585,6 +1588,22 @@ export class VerificationTasksService {
       newRejectionCount,
     }).catch((e) => this.logger.warn(`field admin review notifications: ${e}`));
 
+    if (newOrderStatus === OrderStatus.CANCELLED) {
+      void this.escrowService
+        .refundPaidOrderOnCancel(
+          task.orderId,
+          'Cancelled after second field verification rejection',
+          { previousStatus: task.order.status },
+        )
+        .catch((err) =>
+          this.logger.warn(
+            `Cancel refund after field review failed for ${task.orderId}: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          ),
+        );
+    }
+
     return { success: true, orderStatus: newOrderStatus, taskStatus: dto.approved ? 'ADMIN_APPROVED' : 'ADMIN_REJECTED' };
   }
 
@@ -1861,8 +1880,8 @@ export class VerificationTasksService {
         type: 'system_alert',
         titleAr: '❌ إلغاء الطلب لعدم المطابقة',
         titleEn: '❌ Order Cancelled due to Non-Matching',
-        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. سيتم استرجاع مبلغك قريباً.`,
-        messageEn: `Your order #${order.orderNumber} was cancelled due to non-matching part. Refund will be processed soon.`,
+        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
+        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. Refund is being processed per the 2% payment gateway fee policy.`,
         link: `/customer/orders/${order.id}`,
         metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
       });

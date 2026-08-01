@@ -715,6 +715,25 @@ export class OrdersService {
             });
         }
 
+        if (
+            notifyStatus === OrderStatus.CANCELLED &&
+            order.status !== OrderStatus.CANCELLED
+        ) {
+            void this.escrowService
+                .refundPaidOrderOnCancel(
+                    orderId,
+                    reason || 'Order cancelled before shipping',
+                    { previousStatus: order.status },
+                )
+                .catch((err) => {
+                    this.logger.warn(
+                        `Cancel refund failed for ${orderId}: ${
+                            err instanceof Error ? err.message : String(err)
+                        }`,
+                    );
+                });
+        }
+
         // 3. Notification: Notify Customer & Merchant (Async)
         try {
             const statusMessagesAr: Record<string, string> = {
@@ -2282,6 +2301,7 @@ export class OrdersService {
             include: { offers: true },
         });
         if (!order) throw new NotFoundException('Order not found');
+        this.offerFulfillment.assertOrderAllowsMerchantFulfillment(order);
 
         let targetOfferId = offerId;
         if (!targetOfferId) {
@@ -2566,8 +2586,8 @@ export class OrdersService {
                     await this.notifications.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER', type: 'system_alert',
                         titleAr: '❌ إلغاء الطلب لعدم المطابقة', titleEn: '❌ Order Cancelled due to Non-Matching',
-                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. سيتم استرجاع مبلغك قريباً.`,
-                        messageEn: `Your order #${order.orderNumber} was cancelled due to non-matching part. Refund will be processed soon.`,
+                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
+                        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. Refund is being processed per the 2% payment gateway fee policy.`,
                         link: `/customer/orders/${order.id}`,
                         metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });
@@ -2597,6 +2617,22 @@ export class OrdersService {
             }
         } catch (notifErr) {
             console.error('[adminReviewVerification] Notification failed (non-blocking):', notifErr.message);
+        }
+
+        if (newOrderStatus === OrderStatus.CANCELLED) {
+            void this.escrowService
+                .refundPaidOrderOnCancel(
+                    orderId,
+                    'Cancelled after second verification rejection',
+                    { previousStatus: order.status },
+                )
+                .catch((err) => {
+                    this.logger.warn(
+                        `Cancel refund after verification reject failed for ${orderId}: ${
+                            err instanceof Error ? err.message : String(err)
+                        }`,
+                    );
+                });
         }
 
         return { success: true, status: newOrderStatus };

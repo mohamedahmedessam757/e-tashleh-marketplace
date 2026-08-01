@@ -1428,6 +1428,13 @@ export class ReturnsService {
         }
         notes = notesTrimmed;
 
+        const returnType = String((caseRecord as any).returnType || '').toUpperCase();
+        if (verdict === 'REFUND' && returnType === 'EXCHANGE') {
+            throw new BadRequestException(
+                'WARRANTY_REPLACEMENT_ONLY: الضمان/الاستبدال يسمح بالاستبدال فقط وليس الاسترداد النقدي. / Warranty exchange cases allow replacement only — cash refund is not allowed.',
+            );
+        }
+
         const faultLowerEarly = String(extra?.faultParty || '').toUpperCase();
         const isCloseCompleteRefund = faultLowerEarly === 'CLOSE_COMPLETE_REFUND';
 

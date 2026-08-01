@@ -5,6 +5,10 @@ import { Prisma, ActorType } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+    computeCancelBeforeShippingRefund,
+    isPostShipCancelRefundBlocked,
+} from './cancel-refund.util';
 
 export interface EscrowAmounts {
     merchantAmount: number;
@@ -1000,6 +1004,236 @@ export class EscrowService {
                 );
             }
         })();
+    }
+
+    /**
+     * Idempotent auto-refund for paid orders cancelled before shipping.
+     * Deducts 2% gateway fee (customer terms) and returns the remainder.
+     */
+    async refundPaidOrderOnCancel(
+        orderId: string,
+        reason: string,
+        opts?: { previousStatus?: string | null },
+    ): Promise<{
+        skipped: boolean;
+        reason?: string;
+        amountRefunded?: number;
+        feeAmount?: number;
+        feePct?: number;
+    }> {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                id: true,
+                status: true,
+                orderNumber: true,
+                customerId: true,
+            },
+        });
+        if (!order) {
+            return { skipped: true, reason: 'ORDER_NOT_FOUND' };
+        }
+
+        const statusForGuard = opts?.previousStatus || order.status;
+        if (isPostShipCancelRefundBlocked(statusForGuard)) {
+            this.logger.warn(
+                `SKIP_POST_SHIP_CANCEL_REFUND order=${orderId} status=${statusForGuard}`,
+            );
+            return { skipped: true, reason: 'SKIP_POST_SHIP_CANCEL_REFUND' };
+        }
+
+        const openDispute = await this.prisma.dispute.findFirst({
+            where: {
+                orderId,
+                status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
+            },
+            select: { id: true },
+        });
+        const openReturn = await this.prisma.returnRequest.findFirst({
+            where: {
+                orderId,
+                status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
+            },
+            select: { id: true },
+        });
+        if (openDispute || openReturn) {
+            this.logger.warn(
+                `SKIP_OPEN_CASE_CANCEL_REFUND order=${orderId} dispute=${openDispute?.id || '-'} return=${openReturn?.id || '-'}`,
+            );
+            return { skipped: true, reason: 'OPEN_DISPUTE_OR_RETURN' };
+        }
+
+        const payments = await this.prisma.paymentTransaction.findMany({
+            where: {
+                orderId,
+                status: { in: ['SUCCESS', 'REFUNDED'] },
+            },
+            orderBy: { paidAt: 'asc' },
+        });
+
+        if (!payments.length) {
+            return { skipped: true, reason: 'NO_PAYMENT' };
+        }
+
+        let totalRefundedNow = 0;
+        let totalFee = 0;
+        let feePctUsed = 2;
+        let anyAttempted = false;
+
+        for (const payment of payments) {
+            const paidTotal = Number(payment.totalAmount || 0);
+            const alreadyRefunded = Number(payment.refundedAmount || 0);
+            const calc = computeCancelBeforeShippingRefund(paidTotal, 2, alreadyRefunded);
+            feePctUsed = calc.feePct;
+            totalFee += calc.feeAmount;
+
+            if (calc.refundAmount <= 0) {
+                continue;
+            }
+
+            const escrow = await this.prisma.escrowTransaction.findFirst({
+                where: { paymentId: payment.id },
+                orderBy: { createdAt: 'desc' },
+            });
+            if (escrow?.status === 'REFUNDED' && alreadyRefunded >= calc.targetNetRefund) {
+                continue;
+            }
+
+            anyAttempted = true;
+            try {
+                const ctx = await this.executeStripeRefundOnly(
+                    orderId,
+                    calc.refundAmount,
+                    reason,
+                    'MERCHANT',
+                    payment.id,
+                );
+                await this.prisma.$transaction(
+                    (tx) => this.applyRefundDbUpdates(tx, ctx),
+                    { timeout: 15000 },
+                );
+                totalRefundedNow += ctx.refundAmount;
+
+                // Cancel-specific fee disclosure (AR/EN) for customer, merchant, admin
+                const orderLabel = order.orderNumber || orderId;
+                const paidLabel = calc.paidTotal.toFixed(2);
+                const feeLabel = calc.feeAmount.toFixed(2);
+                const refundLabel = ctx.refundAmount.toFixed(2);
+
+                if (payment.customerId) {
+                    await this.notifications.create({
+                        recipientId: payment.customerId,
+                        recipientRole: 'CUSTOMER',
+                        type: 'payment',
+                        titleAr: 'تم استرداد المبلغ بعد الإلغاء 💰',
+                        titleEn: 'Refund after cancellation 💰',
+                        messageAr: `تم إلغاء الطلب #${orderLabel}. المدفوع: ${paidLabel} درهم، رسوم بوابة الدفع ${calc.feePct}% = ${feeLabel} درهم، المبلغ المسترد: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`,
+                        messageEn: `Order #${orderLabel} was cancelled. Paid: AED ${paidLabel}, gateway fee ${calc.feePct}% = AED ${feeLabel}, refunded: AED ${refundLabel}. It may take a few business days to appear in your account.`,
+                        link: 'orders',
+                        metadata: {
+                            orderId,
+                            amount: ctx.refundAmount,
+                            feeAmount: calc.feeAmount,
+                            feePct: calc.feePct,
+                            paidTotal: calc.paidTotal,
+                            cancelRefund: true,
+                        },
+                    }).catch(() => {});
+                }
+
+                const orderStores = await this.prisma.order.findUnique({
+                    where: { id: orderId },
+                    select: {
+                        storeId: true,
+                        acceptedOffer: { select: { storeId: true } },
+                    },
+                });
+                const resolvedStoreId =
+                    orderStores?.storeId || orderStores?.acceptedOffer?.storeId || null;
+                if (resolvedStoreId) {
+                    const store = await this.prisma.store.findUnique({
+                        where: { id: resolvedStoreId },
+                        select: { ownerId: true },
+                    });
+                    if (store?.ownerId) {
+                        await this.notifications.create({
+                            recipientId: store.ownerId,
+                            recipientRole: 'VENDOR',
+                            type: 'payment',
+                            titleAr: 'استرداد بسبب إلغاء الطلب ⚠️',
+                            titleEn: 'Refund due to order cancellation ⚠️',
+                            messageAr: `تم استرداد ${refundLabel} درهم للعميل من الطلب #${orderLabel} (بعد خصم رسوم بوابة ${calc.feePct}%). السبب: ${reason}`,
+                            messageEn: `AED ${refundLabel} refunded to the customer for Order #${orderLabel} (after ${calc.feePct}% gateway fee). Reason: ${reason}`,
+                            link: `marketplace/orders/${orderId}`,
+                            metadata: {
+                                orderId,
+                                amount: ctx.refundAmount,
+                                feeAmount: calc.feeAmount,
+                                cancelRefund: true,
+                            },
+                        }).catch(() => {});
+                    }
+                }
+
+                await this.notifications.notifyAdmins({
+                    titleAr: 'استرداد إلغاء قبل الشحن 💰',
+                    titleEn: 'Pre-ship cancel refund 💰',
+                    messageAr: `طلب #${orderLabel}: استرداد ${refundLabel} درهم للعميل بعد خصم رسوم ${calc.feePct}% (${feeLabel}). السبب: ${reason}`,
+                    messageEn: `Order #${orderLabel}: refunded AED ${refundLabel} after ${calc.feePct}% fee (AED ${feeLabel}). Reason: ${reason}`,
+                    type: 'PAYMENT',
+                    link: `/admin/orders/${orderId}`,
+                    metadata: {
+                        orderId,
+                        amount: ctx.refundAmount,
+                        feeAmount: calc.feeAmount,
+                        feePct: calc.feePct,
+                        cancelRefund: true,
+                        reason,
+                    },
+                }).catch(() => {});
+
+                await this.auditLogs.logAction({
+                    orderId,
+                    action: 'CANCEL_BEFORE_SHIP_REFUND',
+                    entity: 'EscrowTransaction',
+                    actorType: ActorType.SYSTEM,
+                    actorId: 'CANCEL_REFUND',
+                    reason,
+                    metadata: {
+                        paymentId: payment.id,
+                        refundAmount: ctx.refundAmount,
+                        feeAmount: calc.feeAmount,
+                        feePct: calc.feePct,
+                        paidTotal: calc.paidTotal,
+                        stripeRefundId: ctx.stripeRefundId,
+                    },
+                }).catch(() => {});
+            } catch (err: any) {
+                this.logger.error(
+                    `refundPaidOrderOnCancel Stripe/DB failed for order ${orderId} payment ${payment.id}: ${err?.message}`,
+                );
+                // Do not reverse CANCELLED — leave for admin review
+                return {
+                    skipped: false,
+                    reason: 'REFUND_PENDING',
+                    amountRefunded: totalRefundedNow,
+                    feeAmount: totalFee,
+                    feePct: feePctUsed,
+                };
+            }
+        }
+
+        if (!anyAttempted && totalRefundedNow <= 0) {
+            return { skipped: true, reason: 'ALREADY_REFUNDED' };
+        }
+
+        return {
+            skipped: totalRefundedNow <= 0,
+            reason: totalRefundedNow <= 0 ? 'ALREADY_REFUNDED' : undefined,
+            amountRefunded: totalRefundedNow,
+            feeAmount: totalFee,
+            feePct: feePctUsed,
+        };
     }
 
     /**
