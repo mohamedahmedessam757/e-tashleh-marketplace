@@ -127,7 +127,7 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, varian
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 z-10 transition-all duration-500
                                         ${isActive ? dotActiveClass : 'bg-white/5 border-white/10 text-white/10'}
                                         ${isCurrent ? dotCurrentClass : ''}`}>
-                                        {isCompleted ? (
+                                        {isCompleted || (isForwardDelivered && isActive) ? (
                                             <CheckCircle2 size={18} className="text-current" />
                                         ) : isCurrent ? (
                                             <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${variant === 'admin' ? 'bg-purple-400' : 'bg-gold-400'}`} />
@@ -149,12 +149,16 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ status, varian
                                     </div>
                                 </div>
 
-                                {/* Connection Line */}
+                                {/* Connection Line — fill through the segment leading into the current step */}
                                 {idx < displayStatuses.length - 1 && (
                                     <div className="w-12 h-px relative flex-shrink-0 -translate-y-4">
                                         <div className="absolute inset-x-0 h-px bg-white/5" />
                                         {(currentIndex > idx || isForwardDelivered) && (
                                             <div className={`absolute inset-y-0 h-px ${lineActiveClass}`} style={{ width: '100%' }} />
+                                        )}
+                                        {/* Partial fill on the segment after the current node so the bar reaches it */}
+                                        {currentIndex === idx && !isForwardDelivered && (
+                                            <div className={`absolute inset-y-0 h-px ${lineActiveClass}`} style={{ width: '50%' }} />
                                         )}
                                     </div>
                                 )}

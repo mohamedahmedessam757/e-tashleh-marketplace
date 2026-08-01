@@ -44,13 +44,14 @@ import {
     isPostVerificationSuccessOrderStatus,
     normalizeOfferFulfillmentStatus,
     resolveMerchantTimelineFromOffers,
+    resolveOrderTimelineStatus,
+    computeShipmentDeliverySummary,
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow } from '../../../utils/offerGovernance';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
-import { computeShipmentDeliverySummary } from '../../../utils/offerFulfillmentHelpers';
 import {
     getMerchantHandoverStatusCopy,
     getMerchantPartLogisticsLabel,
@@ -537,14 +538,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     /** Timeline reflects this merchant's parts, not the whole multi-vendor order. */
     const merchantTimelineStatus = useMemo((): StatusType => {
-        if (merchantAcceptedOffers.length === 0) {
-            return (order?.status || 'AWAITING_PAYMENT') as StatusType;
-        }
-        return resolveMerchantTimelineFromOffers(
-            merchantAcceptedOffers.map((o) => o.fulfillmentStatus),
-            order?.status,
-        ) as StatusType;
-    }, [merchantAcceptedOffers, order?.status]);
+        const fromOffers =
+            merchantAcceptedOffers.length === 0
+                ? String(order?.status || 'AWAITING_PAYMENT')
+                : resolveMerchantTimelineFromOffers(
+                      merchantAcceptedOffers.map((o) => o.fulfillmentStatus),
+                      order?.status,
+                  );
+        // Shipment tracker can advance ahead of order/offer rows — keep bar in sync
+        return resolveOrderTimelineStatus(fromOffers, shipment?.status) as StatusType;
+    }, [merchantAcceptedOffers, order?.status, shipment?.status]);
 
     const merchantFulfillmentSummary = useMemo(() => {
         const total = merchantAcceptedOffers.length;
@@ -2591,6 +2594,44 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                               : 'Awaiting handover request'}
                                                     </span>
                                                 </div>
+                                            </button>
+                                        );
+                                    }
+
+                                    if (
+                                        order.status === 'SHIPPED' ||
+                                        order.status === 'PARTIALLY_SHIPPED' ||
+                                        handoverPhase === 'in_transit' ||
+                                        handoverPhase === 'pickup_pending' ||
+                                        handoverPhase === 'at_hub'
+                                    ) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 rounded-xl font-bold text-cyan-400 bg-cyan-500/10 cursor-not-allowed border border-cyan-500/25 flex items-center justify-center gap-2"
+                                            >
+                                                <Truck className="w-5 h-5" />
+                                                <span>{handoverCopy.actionLabel}</span>
+                                            </button>
+                                        );
+                                    }
+
+                                    if (
+                                        order.status === 'DELIVERED' ||
+                                        order.status === 'COMPLETED' ||
+                                        order.status === 'WARRANTY_ACTIVE' ||
+                                        order.status === 'WARRANTY_EXPIRED' ||
+                                        handoverPhase === 'delivered'
+                                    ) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 rounded-xl font-bold text-green-400 bg-green-500/10 cursor-not-allowed border border-green-500/25 flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle2 className="w-5 h-5" />
+                                                <span>
+                                                    {isAr ? 'تم التسليم للعميل' : 'Delivered to customer'}
+                                                </span>
                                             </button>
                                         );
                                     }

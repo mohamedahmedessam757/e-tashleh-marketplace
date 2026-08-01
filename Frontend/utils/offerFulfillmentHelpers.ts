@@ -421,6 +421,7 @@ export function getOrderTimelineStepIndex(status?: string): number {
         case 'CORRECTION_PERIOD':
         case 'CORRECTION_SUBMITTED':
             return 4;
+        // Shipping phase started (hub / ready) — step 5 current
         case 'VERIFICATION_SUCCESS':
         case 'RECEIVED_AT_HUB':
         case 'QUALITY_CHECK_PASSED':
@@ -428,15 +429,18 @@ export function getOrderTimelineStepIndex(status?: string): number {
         case 'AWAITING_CARRIER_PICKUP':
         case 'READY_FOR_SHIPPING':
         case 'PARTIALLY_SHIPPED':
+            return 5;
+        // Carrier has the parcel / in transit — shipping COMPLETE, delivery step current
         case 'SHIPPED':
         case 'PICKED_UP_BY_CARRIER':
         case 'IN_TRANSIT_TO_DESTINATION':
         case 'ARRIVED_AT_LOCAL_FACILITY':
         case 'CUSTOMS_CLEARANCE':
+        case 'CUSTOMS_DELAY':
         case 'AT_LOCAL_WAREHOUSE':
         case 'OUT_FOR_DELIVERY':
         case 'DELIVERY_ATTEMPTED':
-            return 5;
+            return 6;
         case 'PARTIALLY_DELIVERED':
         case 'DELIVERED':
         case 'DELIVERED_TO_CUSTOMER':
@@ -460,6 +464,53 @@ export function getOrderTimelineStepIndex(status?: string): number {
         default:
             return 0;
     }
+}
+
+/**
+ * Map shipment tracker status onto an order-status equivalent for the shared StatusTimeline.
+ * Keeps hub-side statuses on step 5 and carrier/transit on step 6 (shipping completed).
+ */
+export function mapShipmentStatusToTimelineStatus(shipmentStatus?: string | null): string | null {
+    const st = String(shipmentStatus || '').toUpperCase();
+    if (!st) return null;
+    if (st === 'DELIVERED_TO_CUSTOMER') return 'DELIVERED';
+    if (
+        st === 'PICKED_UP_BY_CARRIER' ||
+        st === 'IN_TRANSIT_TO_DESTINATION' ||
+        st === 'ARRIVED_AT_LOCAL_FACILITY' ||
+        st === 'CUSTOMS_CLEARANCE' ||
+        st === 'CUSTOMS_DELAY' ||
+        st === 'AT_LOCAL_WAREHOUSE' ||
+        st === 'OUT_FOR_DELIVERY' ||
+        st === 'DELIVERY_ATTEMPTED'
+    ) {
+        return 'SHIPPED';
+    }
+    if (
+        st === 'RECEIVED_AT_HUB' ||
+        st === 'QUALITY_CHECK_PASSED' ||
+        st === 'PACKAGED_FOR_SHIPPING' ||
+        st === 'AWAITING_CARRIER_PICKUP' ||
+        st === 'PREPARED' ||
+        st === 'PREPARATION'
+    ) {
+        return 'READY_FOR_SHIPPING';
+    }
+    return null;
+}
+
+/** Prefer whichever of order / shipment is further along the shared 7-step timeline. */
+export function resolveOrderTimelineStatus(
+    orderStatus?: string | null,
+    shipmentStatus?: string | null,
+): string {
+    const order = String(orderStatus || '').toUpperCase();
+    const fromShipment = mapShipmentStatusToTimelineStatus(shipmentStatus);
+    if (!fromShipment) return order || 'AWAITING_OFFERS';
+    if (!order) return fromShipment;
+    const orderIdx = getOrderTimelineStepIndex(order);
+    const shipIdx = getOrderTimelineStepIndex(fromShipment);
+    return shipIdx > orderIdx ? fromShipment : order;
 }
 
 export function computeShipmentDeliverySummary(

@@ -34,7 +34,10 @@ import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCa
 import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
-import { computeShipmentDeliverySummary } from '../../../utils/offerFulfillmentHelpers';
+import {
+    computeShipmentDeliverySummary,
+    resolveOrderTimelineStatus,
+} from '../../../utils/offerFulfillmentHelpers';
 import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
 import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
 
@@ -518,6 +521,10 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     : order.status === 'DELIVERED'
                                         ? 'DELIVERED_TO_CUSTOMER'
                                         : order.status;
+                        const timelineStatus = resolveOrderTimelineStatus(
+                            order.status,
+                            order.shipments?.[0]?.status,
+                        );
                         
                         return !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
                             <div className="p-6">
@@ -526,7 +533,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 )}
                                 <div className="flex justify-between items-center mb-6">
                                     <StatusTimeline
-                                        currentStatus={order.status}
+                                        currentStatus={timelineStatus as any}
                                         fulfillmentSummary={fulfillmentSummary}
                                         shipmentDeliverySummary={shipmentDeliverySummary}
                                     />
@@ -561,7 +568,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     <VerificationPhaseBanner className="mb-6" status={order.status} />
                                 )}
                                 <StatusTimeline
-                                    currentStatus={order.status}
+                                    currentStatus={timelineStatus as any}
                                     fulfillmentSummary={fulfillmentSummary}
                                     shipmentDeliverySummary={shipmentDeliverySummary}
                                 />
