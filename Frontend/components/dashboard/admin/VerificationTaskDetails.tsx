@@ -17,6 +17,7 @@ import {
 import { FileUploader } from '../../ui/FileUploader';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../../utils/auth';
+import { supabase } from '../../../services/supabase';
 import {
   isDevGpsBypassEnabled,
   isGeolocationSecureContext,
@@ -95,10 +96,13 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
 
-  const fetchTaskDetails = useCallback(async () => {
+  const fetchTaskDetails = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false;
     try {
-      setLoading(true);
-      setLoadError(null);
+      if (!silent) {
+        setLoading(true);
+        setLoadError(null);
+      }
       const { data } = await verificationTasksApi.getTask(taskId);
       setTask(data);
       setNotes(data.officerNotes ?? '');
@@ -109,15 +113,31 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
       const msg =
         error?.response?.data?.message ||
         (isAr ? 'تعذر تحميل المهمة' : 'Failed to load task');
-      setLoadError(msg);
+      if (!silent) setLoadError(msg);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [taskId, isAr]);
 
   useEffect(() => {
     fetchTaskDetails();
   }, [fetchTaskDetails]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`verification-task-details:${taskId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'verification_tasks', filter: `id=eq.${taskId}` },
+        () => {
+          void fetchTaskDetails({ silent: true });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskId, fetchTaskDetails]);
 
   useEffect(() => {
     if (isDevGpsBypassEnabled() && !isGeolocationSecureContext()) {
@@ -208,12 +228,19 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
       return;
     }
 
-    const hasServerPhotos =
-      (task?.fieldPhotos?.length ?? 0) > 0 ||
-      asImageUrls(task?.officerPhotos).some((u) => u.startsWith('http'));
+    // H5: only photos belonging to THIS task id / current session uploads count.
+    const currentTaskServerPhotos =
+      task?.id === taskId
+        ? getFieldPhotoUrlsFromTask(task).filter((u) => /^https?:\/\//i.test(u))
+        : [];
+    const hasCurrentCyclePhotos = photos.length > 0 || currentTaskServerPhotos.length > 0;
 
-    if (photos.length === 0 && !hasServerPhotos) {
-      alert(isAr ? 'يرجى رفع صور المطابقة للقطعة الفعلية' : 'Please upload field verification photos');
+    if (!hasCurrentCyclePhotos) {
+      alert(
+        isAr
+          ? 'يرجى رفع صور المطابقة لهذه الدورة الحالية (صور الدورات السابقة لا تُحتسب).'
+          : 'Please upload field photos for this current cycle (previous-cycle photos do not count).',
+      );
       return;
     }
 
@@ -384,8 +411,45 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
                     ) : null}
                     {h.decisionReason && (
                       <p className="text-sm text-white mb-2">
-                        <span className="text-white/40">{isAr ? 'السبب:' : 'Reason:'}</span> {h.decisionReason}
+                        <span className="text-white/40">{isAr ? 'سبب الموظف:' : 'Officer reason:'}</span>{' '}
+                        {h.decisionReason}
                       </p>
+                    )}
+                    {h.adminReview?.decision && (
+                      <div
+                        className={`mb-2 p-3 rounded-lg border text-sm ${
+                          h.adminReview.decision === 'REJECTED'
+                            ? 'bg-red-500/10 border-red-500/30 text-red-200'
+                            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                        }`}
+                      >
+                        <p className="font-bold text-xs uppercase mb-1">
+                          {isAr ? 'قرار الإدارة' : 'Admin decision'}{' '}
+                          {h.adminReview.source
+                            ? `(${h.adminReview.source === 'FIELD' ? (isAr ? 'ميدان' : 'field') : isAr ? 'توثيق' : 'document'})`
+                            : ''}
+                        </p>
+                        <p>
+                          {h.adminReview.decision === 'REJECTED'
+                            ? isAr
+                              ? 'مرفوض — إعادة مطابقة'
+                              : 'Rejected — rematch required'
+                            : isAr
+                              ? 'معتمد'
+                              : 'Approved'}
+                        </p>
+                        {h.adminReview.reason ? (
+                          <p className="mt-1 text-white/80 whitespace-pre-wrap">
+                            <span className="text-white/50">{isAr ? 'سبب الرفض:' : 'Rejection reason:'}</span>{' '}
+                            {h.adminReview.reason}
+                          </p>
+                        ) : null}
+                        {h.adminReview.at ? (
+                          <p className="text-[11px] text-white/40 mt-1">
+                            {new Date(h.adminReview.at).toLocaleString(isAr ? 'ar-EG' : 'en-US')}
+                          </p>
+                        ) : null}
+                      </div>
                     )}
                     {h.officerNotes ? (
                       <p className="text-sm text-white/70 mb-2 whitespace-pre-wrap">{h.officerNotes}</p>

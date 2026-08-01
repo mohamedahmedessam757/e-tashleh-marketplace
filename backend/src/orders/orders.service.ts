@@ -2438,6 +2438,24 @@ export class OrdersService {
 
         await this.prisma.$transaction(txOps);
 
+        try {
+            await this.verificationTasks.applyAdminDecisionSideEffects({
+                orderId,
+                offerId: latestDoc.offerId ?? null,
+                taskId: order.verificationTaskId,
+                approved: decision === 'APPROVED',
+                reason: data.rejectionReason ?? null,
+                adminId,
+                orderCancelled: newOrderStatus === OrderStatus.CANCELLED,
+                source: 'DOCUMENT',
+            });
+        } catch (sideErr) {
+            console.error(
+                '[adminReviewVerification] Field-task side effects failed (non-blocking):',
+                sideErr instanceof Error ? sideErr.message : sideErr,
+            );
+        }
+
         let partName = order.partName || 'Part';
         if (latestDoc.offerId) {
             const linkedOffer = await this.prisma.offer.findFirst({
@@ -2604,48 +2622,61 @@ export class OrdersService {
 
         const originalDoc = order.verificationDocuments[0];
 
-        // Find previous verification task to link the cycle
+        // Prefer latest closed/completed field task as previous cycle anchor.
         const previousTask = await this.prisma.verificationTask.findFirst({
-            where: { orderId },
-            orderBy: { createdAt: 'desc' }
+            where: {
+                orderId,
+                OR: [
+                    { decision: { not: null } },
+                    { completedAt: { not: null } },
+                    { status: { in: ['ADMIN_APPROVED', 'ADMIN_REJECTED', 'AWAITING_ADMIN_APPROVAL', 'AWAITING_CORRECTION'] } },
+                ],
+            },
+            orderBy: { cycleNumber: 'desc' },
         });
 
-        const newCycleNumber = previousTask ? previousTask.cycleNumber + 1 : 2;
+        const doc = await this.prisma.verificationDocument.create({
+            data: {
+                orderId, storeId,
+                isCorrection: true,
+                originalDocumentId: originalDoc?.id,
+                images: data.images || [],
+                videoUrl: data.videoUrl,
+                description: data.description,
+                recipientName: data.recipientName,
+                recipientSignature: data.recipientSignature,
+                signatureType: data.signatureType || 'DRAWN',
+                signatureText: data.signatureText || null,
+                handoverDate: data.handoverDate ? new Date(data.handoverDate) : null,
+                handoverTime: data.handoverTime,
+            },
+        });
 
-        const [doc, newTask] = await this.prisma.$transaction([
-            this.prisma.verificationDocument.create({
-                data: {
-                    orderId, storeId,
-                    isCorrection: true,
-                    originalDocumentId: originalDoc?.id,
-                    images: data.images || [],
-                    videoUrl: data.videoUrl,
-                    description: data.description,
-                    recipientName: data.recipientName,
-                    recipientSignature: data.recipientSignature,
-                    signatureType: data.signatureType || 'DRAWN',
-                    signatureText: data.signatureText || null,
-                    handoverDate: data.handoverDate ? new Date(data.handoverDate) : null,
-                    handoverTime: data.handoverTime,
-                }
-            }),
-            this.prisma.verificationTask.create({
+        // Idempotent rematch cycle (coexists with admin-reject auto cycle).
+        let newTask;
+        if (previousTask) {
+            newTask = await this.verificationTasks.startNewCycle({
+                orderId,
+                offerId: previousTask.offerId,
+                previousTaskId: previousTask.id,
+            });
+        } else {
+            newTask = await this.prisma.verificationTask.create({
                 data: {
                     orderId,
                     status: 'PENDING_ASSIGNMENT',
-                    cycleNumber: newCycleNumber,
-                    previousTaskId: previousTask?.id
-                }
-            }),
-            this.prisma.order.update({
+                    cycleNumber: 1,
+                },
+            });
+            await this.prisma.order.update({
                 where: { id: orderId },
-                data: { status: OrderStatus.CORRECTION_SUBMITTED }
-            })
-        ]);
+                data: { verificationTaskId: newTask.id },
+            });
+        }
 
         await this.prisma.order.update({
             where: { id: orderId },
-            data: { verificationTaskId: newTask.id }
+            data: { status: OrderStatus.CORRECTION_SUBMITTED, verificationTaskId: newTask.id },
         });
 
         await this.auditLogs.logAction({

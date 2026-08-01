@@ -48,6 +48,7 @@ export type VerificationLinkMinAggregateOutputType = {
   isUsed: boolean | null
   usedAt: Date | null
   isActive: boolean | null
+  assignedOfficerId: string | null
   openedAt: Date | null
   otpVerifiedAt: Date | null
   ipAddress: string | null
@@ -67,6 +68,7 @@ export type VerificationLinkMaxAggregateOutputType = {
   isUsed: boolean | null
   usedAt: Date | null
   isActive: boolean | null
+  assignedOfficerId: string | null
   openedAt: Date | null
   otpVerifiedAt: Date | null
   ipAddress: string | null
@@ -86,6 +88,7 @@ export type VerificationLinkCountAggregateOutputType = {
   isUsed: number
   usedAt: number
   isActive: number
+  assignedOfficerId: number
   openedAt: number
   otpVerifiedAt: number
   deviceInfo: number
@@ -120,6 +123,7 @@ export type VerificationLinkMinAggregateInputType = {
   isUsed?: true
   usedAt?: true
   isActive?: true
+  assignedOfficerId?: true
   openedAt?: true
   otpVerifiedAt?: true
   ipAddress?: true
@@ -139,6 +143,7 @@ export type VerificationLinkMaxAggregateInputType = {
   isUsed?: true
   usedAt?: true
   isActive?: true
+  assignedOfficerId?: true
   openedAt?: true
   otpVerifiedAt?: true
   ipAddress?: true
@@ -158,6 +163,7 @@ export type VerificationLinkCountAggregateInputType = {
   isUsed?: true
   usedAt?: true
   isActive?: true
+  assignedOfficerId?: true
   openedAt?: true
   otpVerifiedAt?: true
   deviceInfo?: true
@@ -265,6 +271,7 @@ export type VerificationLinkGroupByOutputType = {
   isUsed: boolean
   usedAt: Date | null
   isActive: boolean
+  assignedOfficerId: string | null
   openedAt: Date | null
   otpVerifiedAt: Date | null
   deviceInfo: runtime.JsonValue | null
@@ -308,6 +315,7 @@ export type VerificationLinkWhereInput = {
   isUsed?: Prisma.BoolFilter<"VerificationLink"> | boolean
   usedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   isActive?: Prisma.BoolFilter<"VerificationLink"> | boolean
+  assignedOfficerId?: Prisma.UuidNullableFilter<"VerificationLink"> | string | null
   openedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   otpVerifiedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   deviceInfo?: Prisma.JsonNullableFilter<"VerificationLink">
@@ -318,6 +326,7 @@ export type VerificationLinkWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"VerificationLink"> | Date | string
   task?: Prisma.XOR<Prisma.VerificationTaskScalarRelationFilter, Prisma.VerificationTaskWhereInput>
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  assignedOfficer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type VerificationLinkOrderByWithRelationInput = {
@@ -330,6 +339,7 @@ export type VerificationLinkOrderByWithRelationInput = {
   isUsed?: Prisma.SortOrder
   usedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  assignedOfficerId?: Prisma.SortOrderInput | Prisma.SortOrder
   openedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   otpVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deviceInfo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -340,6 +350,7 @@ export type VerificationLinkOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   task?: Prisma.VerificationTaskOrderByWithRelationInput
   createdBy?: Prisma.UserOrderByWithRelationInput
+  assignedOfficer?: Prisma.UserOrderByWithRelationInput
 }
 
 export type VerificationLinkWhereUniqueInput = Prisma.AtLeast<{
@@ -355,6 +366,7 @@ export type VerificationLinkWhereUniqueInput = Prisma.AtLeast<{
   isUsed?: Prisma.BoolFilter<"VerificationLink"> | boolean
   usedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   isActive?: Prisma.BoolFilter<"VerificationLink"> | boolean
+  assignedOfficerId?: Prisma.UuidNullableFilter<"VerificationLink"> | string | null
   openedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   otpVerifiedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   deviceInfo?: Prisma.JsonNullableFilter<"VerificationLink">
@@ -365,6 +377,7 @@ export type VerificationLinkWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"VerificationLink"> | Date | string
   task?: Prisma.XOR<Prisma.VerificationTaskScalarRelationFilter, Prisma.VerificationTaskWhereInput>
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  assignedOfficer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id" | "token">
 
 export type VerificationLinkOrderByWithAggregationInput = {
@@ -377,6 +390,7 @@ export type VerificationLinkOrderByWithAggregationInput = {
   isUsed?: Prisma.SortOrder
   usedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  assignedOfficerId?: Prisma.SortOrderInput | Prisma.SortOrder
   openedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   otpVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deviceInfo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -405,6 +419,7 @@ export type VerificationLinkScalarWhereWithAggregatesInput = {
   isUsed?: Prisma.BoolWithAggregatesFilter<"VerificationLink"> | boolean
   usedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"VerificationLink"> | Date | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"VerificationLink"> | boolean
+  assignedOfficerId?: Prisma.UuidNullableWithAggregatesFilter<"VerificationLink"> | string | null
   openedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"VerificationLink"> | Date | string | null
   otpVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"VerificationLink"> | Date | string | null
   deviceInfo?: Prisma.JsonNullableWithAggregatesFilter<"VerificationLink">
@@ -433,6 +448,7 @@ export type VerificationLinkCreateInput = {
   createdAt?: Date | string
   task: Prisma.VerificationTaskCreateNestedOneWithoutLinksInput
   createdBy?: Prisma.UserCreateNestedOneWithoutVerificationLinksCreatedInput
+  assignedOfficer?: Prisma.UserCreateNestedOneWithoutVerificationLinksAssignedInput
 }
 
 export type VerificationLinkUncheckedCreateInput = {
@@ -445,6 +461,7 @@ export type VerificationLinkUncheckedCreateInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -473,6 +490,7 @@ export type VerificationLinkUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.VerificationTaskUpdateOneRequiredWithoutLinksNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutVerificationLinksCreatedNestedInput
+  assignedOfficer?: Prisma.UserUpdateOneWithoutVerificationLinksAssignedNestedInput
 }
 
 export type VerificationLinkUncheckedUpdateInput = {
@@ -485,6 +503,7 @@ export type VerificationLinkUncheckedUpdateInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -505,6 +524,7 @@ export type VerificationLinkCreateManyInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -543,6 +563,7 @@ export type VerificationLinkUncheckedUpdateManyInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -573,6 +594,7 @@ export type VerificationLinkCountOrderByAggregateInput = {
   isUsed?: Prisma.SortOrder
   usedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  assignedOfficerId?: Prisma.SortOrder
   openedAt?: Prisma.SortOrder
   otpVerifiedAt?: Prisma.SortOrder
   deviceInfo?: Prisma.SortOrder
@@ -599,6 +621,7 @@ export type VerificationLinkMaxOrderByAggregateInput = {
   isUsed?: Prisma.SortOrder
   usedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  assignedOfficerId?: Prisma.SortOrder
   openedAt?: Prisma.SortOrder
   otpVerifiedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
@@ -618,6 +641,7 @@ export type VerificationLinkMinOrderByAggregateInput = {
   isUsed?: Prisma.SortOrder
   usedAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  assignedOfficerId?: Prisma.SortOrder
   openedAt?: Prisma.SortOrder
   otpVerifiedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
@@ -640,10 +664,24 @@ export type VerificationLinkCreateNestedManyWithoutCreatedByInput = {
   connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
 }
 
+export type VerificationLinkCreateNestedManyWithoutAssignedOfficerInput = {
+  create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput> | Prisma.VerificationLinkCreateWithoutAssignedOfficerInput[] | Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput[]
+  connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput | Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput[]
+  createMany?: Prisma.VerificationLinkCreateManyAssignedOfficerInputEnvelope
+  connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+}
+
 export type VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput = {
   create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutCreatedByInput, Prisma.VerificationLinkUncheckedCreateWithoutCreatedByInput> | Prisma.VerificationLinkCreateWithoutCreatedByInput[] | Prisma.VerificationLinkUncheckedCreateWithoutCreatedByInput[]
   connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutCreatedByInput | Prisma.VerificationLinkCreateOrConnectWithoutCreatedByInput[]
   createMany?: Prisma.VerificationLinkCreateManyCreatedByInputEnvelope
+  connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+}
+
+export type VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput = {
+  create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput> | Prisma.VerificationLinkCreateWithoutAssignedOfficerInput[] | Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput[]
+  connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput | Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput[]
+  createMany?: Prisma.VerificationLinkCreateManyAssignedOfficerInputEnvelope
   connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
 }
 
@@ -661,6 +699,20 @@ export type VerificationLinkUpdateManyWithoutCreatedByNestedInput = {
   deleteMany?: Prisma.VerificationLinkScalarWhereInput | Prisma.VerificationLinkScalarWhereInput[]
 }
 
+export type VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput = {
+  create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput> | Prisma.VerificationLinkCreateWithoutAssignedOfficerInput[] | Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput[]
+  connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput | Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput[]
+  upsert?: Prisma.VerificationLinkUpsertWithWhereUniqueWithoutAssignedOfficerInput | Prisma.VerificationLinkUpsertWithWhereUniqueWithoutAssignedOfficerInput[]
+  createMany?: Prisma.VerificationLinkCreateManyAssignedOfficerInputEnvelope
+  set?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  disconnect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  delete?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  update?: Prisma.VerificationLinkUpdateWithWhereUniqueWithoutAssignedOfficerInput | Prisma.VerificationLinkUpdateWithWhereUniqueWithoutAssignedOfficerInput[]
+  updateMany?: Prisma.VerificationLinkUpdateManyWithWhereWithoutAssignedOfficerInput | Prisma.VerificationLinkUpdateManyWithWhereWithoutAssignedOfficerInput[]
+  deleteMany?: Prisma.VerificationLinkScalarWhereInput | Prisma.VerificationLinkScalarWhereInput[]
+}
+
 export type VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput = {
   create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutCreatedByInput, Prisma.VerificationLinkUncheckedCreateWithoutCreatedByInput> | Prisma.VerificationLinkCreateWithoutCreatedByInput[] | Prisma.VerificationLinkUncheckedCreateWithoutCreatedByInput[]
   connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutCreatedByInput | Prisma.VerificationLinkCreateOrConnectWithoutCreatedByInput[]
@@ -672,6 +724,20 @@ export type VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput = {
   connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
   update?: Prisma.VerificationLinkUpdateWithWhereUniqueWithoutCreatedByInput | Prisma.VerificationLinkUpdateWithWhereUniqueWithoutCreatedByInput[]
   updateMany?: Prisma.VerificationLinkUpdateManyWithWhereWithoutCreatedByInput | Prisma.VerificationLinkUpdateManyWithWhereWithoutCreatedByInput[]
+  deleteMany?: Prisma.VerificationLinkScalarWhereInput | Prisma.VerificationLinkScalarWhereInput[]
+}
+
+export type VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput = {
+  create?: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput> | Prisma.VerificationLinkCreateWithoutAssignedOfficerInput[] | Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput[]
+  connectOrCreate?: Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput | Prisma.VerificationLinkCreateOrConnectWithoutAssignedOfficerInput[]
+  upsert?: Prisma.VerificationLinkUpsertWithWhereUniqueWithoutAssignedOfficerInput | Prisma.VerificationLinkUpsertWithWhereUniqueWithoutAssignedOfficerInput[]
+  createMany?: Prisma.VerificationLinkCreateManyAssignedOfficerInputEnvelope
+  set?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  disconnect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  delete?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  connect?: Prisma.VerificationLinkWhereUniqueInput | Prisma.VerificationLinkWhereUniqueInput[]
+  update?: Prisma.VerificationLinkUpdateWithWhereUniqueWithoutAssignedOfficerInput | Prisma.VerificationLinkUpdateWithWhereUniqueWithoutAssignedOfficerInput[]
+  updateMany?: Prisma.VerificationLinkUpdateManyWithWhereWithoutAssignedOfficerInput | Prisma.VerificationLinkUpdateManyWithWhereWithoutAssignedOfficerInput[]
   deleteMany?: Prisma.VerificationLinkScalarWhereInput | Prisma.VerificationLinkScalarWhereInput[]
 }
 
@@ -734,6 +800,7 @@ export type VerificationLinkCreateWithoutCreatedByInput = {
   gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   task: Prisma.VerificationTaskCreateNestedOneWithoutLinksInput
+  assignedOfficer?: Prisma.UserCreateNestedOneWithoutVerificationLinksAssignedInput
 }
 
 export type VerificationLinkUncheckedCreateWithoutCreatedByInput = {
@@ -746,6 +813,7 @@ export type VerificationLinkUncheckedCreateWithoutCreatedByInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -762,6 +830,56 @@ export type VerificationLinkCreateOrConnectWithoutCreatedByInput = {
 
 export type VerificationLinkCreateManyCreatedByInputEnvelope = {
   data: Prisma.VerificationLinkCreateManyCreatedByInput | Prisma.VerificationLinkCreateManyCreatedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type VerificationLinkCreateWithoutAssignedOfficerInput = {
+  id?: string
+  token: string
+  qrCodeData?: string | null
+  expiresAt: Date | string
+  maxDurationHours?: number
+  isUsed?: boolean
+  usedAt?: Date | string | null
+  isActive?: boolean
+  openedAt?: Date | string | null
+  otpVerifiedAt?: Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  gpsLat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Date | string
+  task: Prisma.VerificationTaskCreateNestedOneWithoutLinksInput
+  createdBy?: Prisma.UserCreateNestedOneWithoutVerificationLinksCreatedInput
+}
+
+export type VerificationLinkUncheckedCreateWithoutAssignedOfficerInput = {
+  id?: string
+  taskId: string
+  token: string
+  qrCodeData?: string | null
+  expiresAt: Date | string
+  maxDurationHours?: number
+  isUsed?: boolean
+  usedAt?: Date | string | null
+  isActive?: boolean
+  openedAt?: Date | string | null
+  otpVerifiedAt?: Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  gpsLat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdById?: string | null
+  createdAt?: Date | string
+}
+
+export type VerificationLinkCreateOrConnectWithoutAssignedOfficerInput = {
+  where: Prisma.VerificationLinkWhereUniqueInput
+  create: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput>
+}
+
+export type VerificationLinkCreateManyAssignedOfficerInputEnvelope = {
+  data: Prisma.VerificationLinkCreateManyAssignedOfficerInput | Prisma.VerificationLinkCreateManyAssignedOfficerInput[]
   skipDuplicates?: boolean
 }
 
@@ -794,6 +912,7 @@ export type VerificationLinkScalarWhereInput = {
   isUsed?: Prisma.BoolFilter<"VerificationLink"> | boolean
   usedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   isActive?: Prisma.BoolFilter<"VerificationLink"> | boolean
+  assignedOfficerId?: Prisma.UuidNullableFilter<"VerificationLink"> | string | null
   openedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   otpVerifiedAt?: Prisma.DateTimeNullableFilter<"VerificationLink"> | Date | string | null
   deviceInfo?: Prisma.JsonNullableFilter<"VerificationLink">
@@ -802,6 +921,22 @@ export type VerificationLinkScalarWhereInput = {
   gpsLng?: Prisma.DecimalNullableFilter<"VerificationLink"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdById?: Prisma.UuidNullableFilter<"VerificationLink"> | string | null
   createdAt?: Prisma.DateTimeFilter<"VerificationLink"> | Date | string
+}
+
+export type VerificationLinkUpsertWithWhereUniqueWithoutAssignedOfficerInput = {
+  where: Prisma.VerificationLinkWhereUniqueInput
+  update: Prisma.XOR<Prisma.VerificationLinkUpdateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedUpdateWithoutAssignedOfficerInput>
+  create: Prisma.XOR<Prisma.VerificationLinkCreateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedCreateWithoutAssignedOfficerInput>
+}
+
+export type VerificationLinkUpdateWithWhereUniqueWithoutAssignedOfficerInput = {
+  where: Prisma.VerificationLinkWhereUniqueInput
+  data: Prisma.XOR<Prisma.VerificationLinkUpdateWithoutAssignedOfficerInput, Prisma.VerificationLinkUncheckedUpdateWithoutAssignedOfficerInput>
+}
+
+export type VerificationLinkUpdateManyWithWhereWithoutAssignedOfficerInput = {
+  where: Prisma.VerificationLinkScalarWhereInput
+  data: Prisma.XOR<Prisma.VerificationLinkUpdateManyMutationInput, Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerInput>
 }
 
 export type VerificationLinkCreateWithoutTaskInput = {
@@ -821,6 +956,7 @@ export type VerificationLinkCreateWithoutTaskInput = {
   gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutVerificationLinksCreatedInput
+  assignedOfficer?: Prisma.UserCreateNestedOneWithoutVerificationLinksAssignedInput
 }
 
 export type VerificationLinkUncheckedCreateWithoutTaskInput = {
@@ -832,6 +968,7 @@ export type VerificationLinkUncheckedCreateWithoutTaskInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -878,12 +1015,33 @@ export type VerificationLinkCreateManyCreatedByInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: string | null
   gpsLat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Date | string
+}
+
+export type VerificationLinkCreateManyAssignedOfficerInput = {
+  id?: string
+  taskId: string
+  token: string
+  qrCodeData?: string | null
+  expiresAt: Date | string
+  maxDurationHours?: number
+  isUsed?: boolean
+  usedAt?: Date | string | null
+  isActive?: boolean
+  openedAt?: Date | string | null
+  otpVerifiedAt?: Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: string | null
+  gpsLat?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdById?: string | null
   createdAt?: Date | string
 }
 
@@ -904,6 +1062,7 @@ export type VerificationLinkUpdateWithoutCreatedByInput = {
   gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.VerificationTaskUpdateOneRequiredWithoutLinksNestedInput
+  assignedOfficer?: Prisma.UserUpdateOneWithoutVerificationLinksAssignedNestedInput
 }
 
 export type VerificationLinkUncheckedUpdateWithoutCreatedByInput = {
@@ -916,6 +1075,7 @@ export type VerificationLinkUncheckedUpdateWithoutCreatedByInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -935,12 +1095,73 @@ export type VerificationLinkUncheckedUpdateManyWithoutCreatedByInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gpsLat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type VerificationLinkUpdateWithoutAssignedOfficerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  qrCodeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxDurationHours?: Prisma.IntFieldUpdateOperationsInput | number
+  isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gpsLat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  task?: Prisma.VerificationTaskUpdateOneRequiredWithoutLinksNestedInput
+  createdBy?: Prisma.UserUpdateOneWithoutVerificationLinksCreatedNestedInput
+}
+
+export type VerificationLinkUncheckedUpdateWithoutAssignedOfficerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  qrCodeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxDurationHours?: Prisma.IntFieldUpdateOperationsInput | number
+  isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gpsLat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  qrCodeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  maxDurationHours?: Prisma.IntFieldUpdateOperationsInput | number
+  isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gpsLat?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -953,6 +1174,7 @@ export type VerificationLinkCreateManyTaskInput = {
   isUsed?: boolean
   usedAt?: Date | string | null
   isActive?: boolean
+  assignedOfficerId?: string | null
   openedAt?: Date | string | null
   otpVerifiedAt?: Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -980,6 +1202,7 @@ export type VerificationLinkUpdateWithoutTaskInput = {
   gpsLng?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutVerificationLinksCreatedNestedInput
+  assignedOfficer?: Prisma.UserUpdateOneWithoutVerificationLinksAssignedNestedInput
 }
 
 export type VerificationLinkUncheckedUpdateWithoutTaskInput = {
@@ -991,6 +1214,7 @@ export type VerificationLinkUncheckedUpdateWithoutTaskInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1010,6 +1234,7 @@ export type VerificationLinkUncheckedUpdateManyWithoutTaskInput = {
   isUsed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedOfficerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   otpVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deviceInfo?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1032,6 +1257,7 @@ export type VerificationLinkSelect<ExtArgs extends runtime.Types.Extensions.Inte
   isUsed?: boolean
   usedAt?: boolean
   isActive?: boolean
+  assignedOfficerId?: boolean
   openedAt?: boolean
   otpVerifiedAt?: boolean
   deviceInfo?: boolean
@@ -1042,6 +1268,7 @@ export type VerificationLinkSelect<ExtArgs extends runtime.Types.Extensions.Inte
   createdAt?: boolean
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }, ExtArgs["result"]["verificationLink"]>
 
 export type VerificationLinkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1054,6 +1281,7 @@ export type VerificationLinkSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   isUsed?: boolean
   usedAt?: boolean
   isActive?: boolean
+  assignedOfficerId?: boolean
   openedAt?: boolean
   otpVerifiedAt?: boolean
   deviceInfo?: boolean
@@ -1064,6 +1292,7 @@ export type VerificationLinkSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   createdAt?: boolean
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }, ExtArgs["result"]["verificationLink"]>
 
 export type VerificationLinkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1076,6 +1305,7 @@ export type VerificationLinkSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   isUsed?: boolean
   usedAt?: boolean
   isActive?: boolean
+  assignedOfficerId?: boolean
   openedAt?: boolean
   otpVerifiedAt?: boolean
   deviceInfo?: boolean
@@ -1086,6 +1316,7 @@ export type VerificationLinkSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   createdAt?: boolean
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }, ExtArgs["result"]["verificationLink"]>
 
 export type VerificationLinkSelectScalar = {
@@ -1098,6 +1329,7 @@ export type VerificationLinkSelectScalar = {
   isUsed?: boolean
   usedAt?: boolean
   isActive?: boolean
+  assignedOfficerId?: boolean
   openedAt?: boolean
   otpVerifiedAt?: boolean
   deviceInfo?: boolean
@@ -1108,18 +1340,21 @@ export type VerificationLinkSelectScalar = {
   createdAt?: boolean
 }
 
-export type VerificationLinkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "token" | "qrCodeData" | "expiresAt" | "maxDurationHours" | "isUsed" | "usedAt" | "isActive" | "openedAt" | "otpVerifiedAt" | "deviceInfo" | "ipAddress" | "gpsLat" | "gpsLng" | "createdById" | "createdAt", ExtArgs["result"]["verificationLink"]>
+export type VerificationLinkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "token" | "qrCodeData" | "expiresAt" | "maxDurationHours" | "isUsed" | "usedAt" | "isActive" | "assignedOfficerId" | "openedAt" | "otpVerifiedAt" | "deviceInfo" | "ipAddress" | "gpsLat" | "gpsLng" | "createdById" | "createdAt", ExtArgs["result"]["verificationLink"]>
 export type VerificationLinkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }
 export type VerificationLinkIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }
 export type VerificationLinkIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.VerificationTaskDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.VerificationLink$createdByArgs<ExtArgs>
+  assignedOfficer?: boolean | Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>
 }
 
 export type $VerificationLinkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1127,6 +1362,7 @@ export type $VerificationLinkPayload<ExtArgs extends runtime.Types.Extensions.In
   objects: {
     task: Prisma.$VerificationTaskPayload<ExtArgs>
     createdBy: Prisma.$UserPayload<ExtArgs> | null
+    assignedOfficer: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1138,6 +1374,7 @@ export type $VerificationLinkPayload<ExtArgs extends runtime.Types.Extensions.In
     isUsed: boolean
     usedAt: Date | null
     isActive: boolean
+    assignedOfficerId: string | null
     openedAt: Date | null
     otpVerifiedAt: Date | null
     deviceInfo: runtime.JsonValue | null
@@ -1542,6 +1779,7 @@ export interface Prisma__VerificationLinkClient<T, Null = never, ExtArgs extends
   readonly [Symbol.toStringTag]: "PrismaPromise"
   task<T extends Prisma.VerificationTaskDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VerificationTaskDefaultArgs<ExtArgs>>): Prisma.Prisma__VerificationTaskClient<runtime.Types.Result.GetResult<Prisma.$VerificationTaskPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   createdBy<T extends Prisma.VerificationLink$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VerificationLink$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  assignedOfficer<T extends Prisma.VerificationLink$assignedOfficerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VerificationLink$assignedOfficerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1580,6 +1818,7 @@ export interface VerificationLinkFieldRefs {
   readonly isUsed: Prisma.FieldRef<"VerificationLink", 'Boolean'>
   readonly usedAt: Prisma.FieldRef<"VerificationLink", 'DateTime'>
   readonly isActive: Prisma.FieldRef<"VerificationLink", 'Boolean'>
+  readonly assignedOfficerId: Prisma.FieldRef<"VerificationLink", 'String'>
   readonly openedAt: Prisma.FieldRef<"VerificationLink", 'DateTime'>
   readonly otpVerifiedAt: Prisma.FieldRef<"VerificationLink", 'DateTime'>
   readonly deviceInfo: Prisma.FieldRef<"VerificationLink", 'Json'>
@@ -1992,6 +2231,25 @@ export type VerificationLinkDeleteManyArgs<ExtArgs extends runtime.Types.Extensi
  * VerificationLink.createdBy
  */
 export type VerificationLink$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * VerificationLink.assignedOfficer
+ */
+export type VerificationLink$assignedOfficerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */

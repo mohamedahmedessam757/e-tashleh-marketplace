@@ -255,6 +255,7 @@ model User {
   verificationTasksAssigned VerificationTask[]        @relation("VerificationTasksAssigned")
   verificationTasksCreated  VerificationTask[]        @relation("VerificationTasksCreated")
   verificationLinksCreated  VerificationLink[]        @relation("VerificationLinksCreated")
+  verificationLinksAssigned VerificationLink[]        @relation("VerificationLinksAssignedOfficer")
   verificationActivityLogs  VerificationActivityLog[] @relation("VerificationOfficerLogs")
   verificationTaskPhotos    VerificationTaskPhoto[]   @relation("VerificationTaskPhotos")
 
@@ -2194,6 +2195,8 @@ model VerificationLink {
   usedAt           DateTime? @map("used_at") @db.Timestamptz
   isActive         Boolean   @default(true) @map("is_active")
 
+  assignedOfficerId String? @map("assigned_officer_id") @db.Uuid
+
   openedAt      DateTime? @map("opened_at") @db.Timestamptz
   otpVerifiedAt DateTime? @map("otp_verified_at") @db.Timestamptz
   deviceInfo    Json?     @default("{}") @map("device_info")
@@ -2204,11 +2207,13 @@ model VerificationLink {
   createdById String?  @map("created_by") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  task      VerificationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  createdBy User?            @relation("VerificationLinksCreated", fields: [createdById], references: [id])
+  task            VerificationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("VerificationLinksCreated", fields: [createdById], references: [id])
+  assignedOfficer User?            @relation("VerificationLinksAssignedOfficer", fields: [assignedOfficerId], references: [id], onDelete: SetNull)
 
   @@index([token])
   @@index([taskId])
+  @@index([assignedOfficerId])
   @@map("verification_links")
 }
 

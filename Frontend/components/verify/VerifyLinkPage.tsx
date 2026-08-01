@@ -28,6 +28,41 @@ interface LinkMeta {
   sessionDeadline?: string;
 }
 
+type LinkErrorCode =
+  | 'LINK_INACTIVE'
+  | 'LINK_EXPIRED'
+  | 'LINK_WRONG_OFFICER'
+  | 'LINK_CLOSED_BY_ADMIN'
+  | 'LINK_NOT_FOUND'
+  | 'LINK_GEN_NOT_ALLOWED';
+
+function extractLinkErrorCode(err: unknown): string | null {
+  const msg = (err as any)?.response?.data?.message;
+  if (typeof msg === 'string' && msg.startsWith('LINK_')) return msg;
+  if (Array.isArray(msg) && typeof msg[0] === 'string' && msg[0].startsWith('LINK_')) return msg[0];
+  return null;
+}
+
+function localizeLinkError(code: string | null, isAr: boolean): string {
+  switch (code as LinkErrorCode | null) {
+    case 'LINK_INACTIVE':
+    case 'LINK_CLOSED_BY_ADMIN':
+      return isAr ? 'هذا الرابط غير فعال' : 'This link is inactive';
+    case 'LINK_EXPIRED':
+      return isAr
+        ? 'انتهت صلاحية هذا الرابط. اطلب من الإدارة رابطاً جديداً.'
+        : 'This link has expired. Ask admin for a new link.';
+    case 'LINK_WRONG_OFFICER':
+      return isAr
+        ? 'هذا الرابط مخصص لموظف مطابقة آخر'
+        : 'This link is assigned to another verification officer';
+    case 'LINK_NOT_FOUND':
+      return isAr ? 'هذا الرابط غير صالح' : 'This link is invalid';
+    default:
+      return isAr ? 'هذا الرابط غير فعال' : 'This link is inactive';
+  }
+}
+
 function PageShell({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="min-h-screen bg-[#0d0c0a] flex items-center justify-center p-4">
@@ -88,8 +123,12 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
       }
       const { data } = await verificationTasksApi.activateLink(token, { lat, lng, deviceInfo });
       onNavigateToTask(data.taskId);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || (isAr ? 'تعذر تفعيل الرابط' : 'Could not activate link'));
+    } catch (e: unknown) {
+      const code = extractLinkErrorCode(e);
+      if (code && typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.debug('[VerifyLinkPage] activate error code:', code, e);
+      }
+      setError(localizeLinkError(code, isAr));
     } finally {
       setActivating(false);
     }
@@ -117,9 +156,14 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
 
         const user = getCurrentUser();
         if (!user || user.role !== 'VERIFICATION_OFFICER') setNeedsLogin(true);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!cancelled) {
-          setError(e?.response?.data?.message || (isAr ? 'رابط غير صالح أو منتهي' : 'Invalid or expired link'));
+          const code = extractLinkErrorCode(e);
+          if (code === 'LINK_EXPIRED') {
+            setLinkExpired(true);
+          } else {
+            setError(localizeLinkError(code, isAr));
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -148,7 +192,7 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
       <PageShell>
         <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
         <p className="text-red-300 text-sm">
-          {isAr ? 'انتهت صلاحية الرابط. اطلب من الإدارة رابطاً جديداً.' : 'This link has expired. Ask admin for a new link.'}
+          {localizeLinkError('LINK_EXPIRED', isAr)}
         </p>
       </PageShell>
     );
@@ -173,7 +217,9 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
           />
         )}
         <p className="text-xs text-white/50 mb-4">
-          {isAr ? 'سجّل الدخول ثم أكمل OTP للوصول للمهمة فقط.' : 'Sign in and complete OTP for task access only.'}
+          {isAr
+            ? 'سجّل الدخول بحساب موظف المطابقة المسند فقط، ثم أكمل OTP.'
+            : 'Sign in with the assigned verification officer account only, then complete OTP.'}
         </p>
         <Suspense fallback={loginFallback}>
           <AdminLogin onLoginSuccess={() => setNeedsLogin(false)} />

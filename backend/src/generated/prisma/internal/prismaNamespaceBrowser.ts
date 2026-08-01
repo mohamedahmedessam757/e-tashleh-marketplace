@@ -1438,6 +1438,7 @@ export const VerificationLinkScalarFieldEnum = {
   isUsed: 'isUsed',
   usedAt: 'usedAt',
   isActive: 'isActive',
+  assignedOfficerId: 'assignedOfficerId',
   openedAt: 'openedAt',
   otpVerifiedAt: 'otpVerifiedAt',
   deviceInfo: 'deviceInfo',
