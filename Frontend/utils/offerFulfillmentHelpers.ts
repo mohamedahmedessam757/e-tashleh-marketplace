@@ -54,7 +54,11 @@ export function canSelectOfferForShipping(
     );
 }
 
-export function merchantCanMarkPrepared(fulfillmentStatus?: string): boolean {
+export function merchantCanMarkPrepared(
+    fulfillmentStatus?: string,
+    orderStatus?: string | null,
+): boolean {
+    if (isMerchantFulfillmentLocked(orderStatus)) return false;
     // Hard gate: payment must have moved the offer into IN_PREPARATION first.
     // Never allow Prepare while still AWAITING_PAYMENT (or missing status).
     return String(fulfillmentStatus || '').toUpperCase() === 'IN_PREPARATION';
@@ -86,6 +90,8 @@ const TERMINAL_ORDER_STATUSES = new Set([
     'RETURNED',
     'REFUNDED',
     'RESOLVED',
+    'CANCELLED',
+    'CLOSED',
 ]);
 
 const CORRECTION_ORDER_STATUSES = new Set([
@@ -97,6 +103,11 @@ const CORRECTION_ORDER_STATUSES = new Set([
 /** Order-level correction / rematch family (SSOT for merchant badges). */
 export function isCorrectionFamilyOrderStatus(orderStatus?: string | null): boolean {
     return CORRECTION_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
+}
+
+/** Terminal / cancelled orders must not expose merchant fulfillment CTAs. */
+export function isMerchantFulfillmentLocked(orderStatus?: string | null): boolean {
+    return TERMINAL_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
 }
 /**
  * Merchant-facing order timeline status from this merchant's accepted offers.
@@ -153,7 +164,11 @@ export function isOfferPaidForFulfillment(fulfillmentStatus?: string | null): bo
     return getFulfillmentRank(fulfillmentStatus) >= FULFILLMENT_RANK.IN_PREPARATION;
 }
 
-export function merchantCanSubmitVerification(fulfillmentStatus?: string): boolean {
+export function merchantCanSubmitVerification(
+    fulfillmentStatus?: string,
+    orderStatus?: string | null,
+): boolean {
+    if (isMerchantFulfillmentLocked(orderStatus)) return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'PREPARED';
 }
 
@@ -166,6 +181,7 @@ export function merchantOfferVerificationPending(
     fulfillmentStatus?: string,
     orderStatus?: string | null,
 ): boolean {
+    if (isMerchantFulfillmentLocked(orderStatus)) return false;
     if (isCorrectionFamilyOrderStatus(orderStatus)) return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'VERIFICATION';
 }
@@ -177,6 +193,9 @@ export function getMerchantFulfillmentDisplayLabel(
     isAr: boolean,
 ): string {
     const os = String(orderStatus || '').toUpperCase();
+    if (os === 'CANCELLED' || os === 'CLOSED') {
+        return isAr ? 'ملغى — لا يمكن إعادة التوثيق' : 'Cancelled — re-verification not allowed';
+    }
     if (os === 'CORRECTION_PERIOD' || os === 'NON_MATCHING') {
         return isAr
             ? 'مطلوب إعادة التوثيق — فترة التصحيح'
@@ -201,7 +220,9 @@ export type VerificationDocSummary = {
 export function merchantOfferAdminRejected(
     fulfillmentStatus?: string,
     doc?: Pick<VerificationDocSummary, 'adminStatus'>,
+    orderStatus?: string | null,
 ): boolean {
+    if (isMerchantFulfillmentLocked(orderStatus)) return false;
     if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;
     const fs = String(fulfillmentStatus || '').toUpperCase();
     // Reject path keeps VERIFICATION (legacy rows may still be PREPARED)
@@ -222,7 +243,11 @@ export function getVerificationDocForOffer(
     );
 }
 
-export function merchantCanRequestReadyForShipping(fulfillmentStatus?: string): boolean {
+export function merchantCanRequestReadyForShipping(
+    fulfillmentStatus?: string,
+    orderStatus?: string | null,
+): boolean {
+    if (isMerchantFulfillmentLocked(orderStatus)) return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'VERIFICATION_SUCCESS';
 }
 

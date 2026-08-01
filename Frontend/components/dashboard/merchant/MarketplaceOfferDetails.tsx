@@ -34,6 +34,7 @@ import {
     getMerchantFulfillmentDisplayLabel,
     getVerificationDocForOffer,
     isCorrectionFamilyOrderStatus,
+    isMerchantFulfillmentLocked,
     isOfferPaidForFulfillment,
     merchantCanMarkPrepared,
     merchantCanSubmitVerification,
@@ -267,6 +268,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         }
     }, [orderId]);
 
+    useEffect(() => {
+        if (isMerchantFulfillmentLocked(order?.status) && showVerificationForm) {
+            setShowVerificationForm(false);
+            setVerificationOfferId(null);
+        }
+    }, [order?.status, showVerificationForm]);
+
     const activeShippingCase = cases.find((c) => {
         if (String(c.orderId) !== String(orderId)) return false;
         if (c.shippingPayee !== 'MERCHANT') return false;
@@ -324,9 +332,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         return Array.from(byPart.values());
     }, [order?.offers, storeId, myOffers]);
 
+    const fulfillmentLocked = isMerchantFulfillmentLocked(order?.status);
+
     const offersNeedingPrepare = useMemo(
-        () => merchantAcceptedOffers.filter((o) => merchantCanMarkPrepared(o.fulfillmentStatus)),
-        [merchantAcceptedOffers],
+        () =>
+            fulfillmentLocked
+                ? []
+                : merchantAcceptedOffers.filter((o) =>
+                      merchantCanMarkPrepared(o.fulfillmentStatus, order?.status),
+                  ),
+        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
     );
     const offersAwaitingCustomerPayment = useMemo(
         () => {
@@ -350,15 +365,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         [merchantAcceptedOffers, order?.status],
     );
     const offersNeedingVerification = useMemo(
-        () => merchantAcceptedOffers.filter((o) => merchantCanSubmitVerification(o.fulfillmentStatus)),
-        [merchantAcceptedOffers],
+        () =>
+            fulfillmentLocked
+                ? []
+                : merchantAcceptedOffers.filter((o) =>
+                      merchantCanSubmitVerification(o.fulfillmentStatus, order?.status),
+                  ),
+        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
     );
     const offersUnderVerificationReview = useMemo(
         () =>
-            merchantAcceptedOffers.filter((o) =>
-                merchantOfferVerificationPending(o.fulfillmentStatus, order?.status),
-            ),
-        [merchantAcceptedOffers, order?.status],
+            fulfillmentLocked
+                ? []
+                : merchantAcceptedOffers.filter((o) =>
+                      merchantOfferVerificationPending(o.fulfillmentStatus, order?.status),
+                  ),
+        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
     );
     const offersVerificationApproved = useMemo(
         () =>
@@ -371,18 +393,25 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     );
     const offersRejectedVerification = useMemo(
         () =>
-            merchantAcceptedOffers.filter((o) => {
-                const doc = getVerificationDocForOffer(
-                    order?.verificationDocuments,
-                    o.id,
-                );
-                return merchantOfferAdminRejected(o.fulfillmentStatus, doc);
-            }),
-        [merchantAcceptedOffers, order?.verificationDocuments],
+            fulfillmentLocked
+                ? []
+                : merchantAcceptedOffers.filter((o) => {
+                      const doc = getVerificationDocForOffer(
+                          order?.verificationDocuments,
+                          o.id,
+                      );
+                      return merchantOfferAdminRejected(o.fulfillmentStatus, doc, order?.status);
+                  }),
+        [merchantAcceptedOffers, order?.verificationDocuments, order?.status, fulfillmentLocked],
     );
     const offersReadyForHandover = useMemo(
-        () => merchantAcceptedOffers.filter((o) => merchantCanRequestReadyForShipping(o.fulfillmentStatus)),
-        [merchantAcceptedOffers],
+        () =>
+            fulfillmentLocked
+                ? []
+                : merchantAcceptedOffers.filter((o) =>
+                      merchantCanRequestReadyForShipping(o.fulfillmentStatus, order?.status),
+                  ),
+        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
     );
 
     const shipment = useMemo(
@@ -726,7 +755,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         );
     }
 
-    if (showVerificationForm) {
+    if (showVerificationForm && !fulfillmentLocked) {
         const verifyPartName = verificationOfferId
             ? getMerchantOfferPartName(
                   merchantAcceptedOffers.find((o) => o.id === verificationOfferId) || {},
@@ -970,11 +999,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                         if (order.status === 'CANCELLED') {
                             return (
-                                <div className="flex items-center gap-2 text-red-400">
-                                    <AlertTriangle size={16} />
-                                    <span className="font-bold">
-                                        {(t.common?.status as Record<string, string> | undefined)?.CANCELLED ||
-                                            (isAr ? 'ملغى' : 'Cancelled')}
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-red-400">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle size={16} />
+                                        <span className="font-bold">
+                                            {(t.common?.status as Record<string, string> | undefined)?.CANCELLED ||
+                                                (isAr ? 'ملغى' : 'Cancelled')}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-bold text-red-300/80 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
+                                        {isAr
+                                            ? 'تم الإلغاء — لا يمكن إعادة التوثيق'
+                                            : 'Cancelled — re-verification is not allowed'}
                                     </span>
                                 </div>
                             );
@@ -1536,6 +1572,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 const isPartRejected = merchantOfferAdminRejected(
                                                                     partOffer.fulfillmentStatus,
                                                                     partVerificationDoc,
+                                                                    order?.status,
                                                                 );
                                                                 const isPartVerified =
                                                                     getFulfillmentRank(partOffer.fulfillmentStatus) >=
@@ -1545,6 +1582,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     order?.status,
                                                                 );
                                                                 const isPartInCorrection =
+                                                                    !fulfillmentLocked &&
                                                                     !isPartVerified &&
                                                                     isCorrectionFamilyOrderStatus(order?.status);
                                                                 return (
@@ -1644,13 +1682,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                                                         {partOffer && String(partOffer.status).toLowerCase() === 'accepted' && (
                                                             <div className="mt-4 flex flex-wrap gap-2">
-                                                                {normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'AWAITING_PAYMENT' && (
+                                                                {fulfillmentLocked && (
+                                                                    <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5">
+                                                                        <AlertTriangle size={14} />
+                                                                        {isAr
+                                                                            ? 'تم الإلغاء — لا يمكن إعادة التوثيق'
+                                                                            : 'Cancelled — re-verification is not allowed'}
+                                                                    </span>
+                                                                )}
+                                                                {!fulfillmentLocked &&
+                                                                    normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'AWAITING_PAYMENT' && (
                                                                     <span className="px-4 py-2 rounded-lg text-xs font-bold bg-orange-500/10 text-orange-300 border border-orange-500/25 flex items-center gap-1.5">
                                                                         <DollarSign size={14} />
                                                                         {isAr ? 'مقفل — بانتظار دفع العميل' : 'Locked — awaiting customer payment'}
                                                                     </span>
                                                                 )}
-                                                                {merchantCanMarkPrepared(partOffer.fulfillmentStatus) && (
+                                                                {merchantCanMarkPrepared(partOffer.fulfillmentStatus, order?.status) && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
@@ -1671,7 +1718,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         {isAr ? 'التوثيق قيد مراجعة الإدارة' : 'Verification under admin review'}
                                                                     </span>
                                                                 )}
-                                                                {isCorrectionFamilyOrderStatus(order?.status) &&
+                                                                {!fulfillmentLocked &&
+                                                                    isCorrectionFamilyOrderStatus(order?.status) &&
                                                                     String(order?.status).toUpperCase() !==
                                                                         'CORRECTION_SUBMITTED' &&
                                                                     getFulfillmentRank(partOffer.fulfillmentStatus) <
@@ -1683,7 +1731,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             : 'Correction required — rematch'}
                                                                     </span>
                                                                 )}
-                                                                {String(order?.status).toUpperCase() ===
+                                                                {!fulfillmentLocked &&
+                                                                    String(order?.status).toUpperCase() ===
                                                                     'CORRECTION_SUBMITTED' &&
                                                                     getFulfillmentRank(partOffer.fulfillmentStatus) <
                                                                         getFulfillmentRank('VERIFICATION_SUCCESS') && (
@@ -1703,6 +1752,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         !merchantOfferAdminRejected(
                                                                             partOffer.fulfillmentStatus,
                                                                             partDoc,
+                                                                            order?.status,
                                                                         )
                                                                     ) {
                                                                         return null;
@@ -1721,7 +1771,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         </button>
                                                                     );
                                                                 })()}
-                                                                {merchantCanSubmitVerification(partOffer.fulfillmentStatus) && (
+                                                                {merchantCanSubmitVerification(partOffer.fulfillmentStatus, order?.status) && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
@@ -1733,7 +1783,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         {isAr ? 'توثيق هذه القطعة' : 'Verify this part'}
                                                                     </button>
                                                                 )}
-                                                                {merchantCanRequestReadyForShipping(partOffer.fulfillmentStatus) && (
+                                                                {merchantCanRequestReadyForShipping(partOffer.fulfillmentStatus, order?.status) && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleRequestShipping(partOffer.id)}
@@ -2391,6 +2441,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     bgColor: 'bg-emerald-500/10',
                                                     borderColor: 'border-emerald-500/20'
                                                 };
+                                            case 'CANCELLED':
+                                                return {
+                                                    icon: <AlertTriangle size={28} className="text-red-400" />,
+                                                    title: isAr ? 'الطلب ملغى' : 'Order cancelled',
+                                                    desc: isAr
+                                                        ? 'تم إلغاء الطلب — لا يمكن إعادة التوثيق أو التجهيز.'
+                                                        : 'This order was cancelled — re-verification and preparation are locked.',
+                                                    bgColor: 'bg-red-500/10',
+                                                    borderColor: 'border-red-500/20'
+                                                };
                                             case 'WARRANTY_ACTIVE':
                                                 return {
                                                     icon: <Shield size={28} className="text-emerald-400" />,
@@ -2483,6 +2543,19 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     <Truck className="w-5 h-5 inline group-hover:translate-x-1 transition-transform" />
                                                     <span>{handoverCopy.actionLabel}</span>
                                                 </div>
+                                            </button>
+                                        );
+                                    }
+
+                                    if (order.status === 'CANCELLED') {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 rounded-xl font-bold text-red-400/80 bg-red-500/10 cursor-not-allowed border border-red-500/20"
+                                            >
+                                                {isAr
+                                                    ? 'تم الإلغاء — لا يمكن إعادة التوثيق'
+                                                    : 'Cancelled — re-verification is not allowed'}
                                             </button>
                                         );
                                     }

@@ -43,6 +43,17 @@ type OfferWithPayments = Prisma.OfferGetPayload<{
     include: { payments: true; orderPart: true; store: true };
 }>;
 
+const MERCHANT_FULFILLMENT_LOCKED_STATUSES = new Set<OrderStatus>([
+    OrderStatus.CANCELLED,
+    OrderStatus.COMPLETED,
+    OrderStatus.REFUNDED,
+    OrderStatus.RETURNED,
+    OrderStatus.RESOLVED,
+    OrderStatus.CLOSED,
+    OrderStatus.WARRANTY_ACTIVE,
+    OrderStatus.WARRANTY_EXPIRED,
+]);
+
 @Injectable()
 export class OfferFulfillmentService {
     constructor(
@@ -144,6 +155,11 @@ export class OfferFulfillmentService {
             },
         });
         if (!order) throw new NotFoundException('Order not found');
+
+        // Terminal cancel must never be resurrected by offer aggregation.
+        if (order.status === OrderStatus.CANCELLED) {
+            return order.status;
+        }
 
         const allAccepted = order.offers as OfferWithPayments[];
         const paidOffers = allAccepted.filter((o) => this.hasSuccessfulPayment(o));
@@ -376,6 +392,14 @@ export class OfferFulfillmentService {
         return map[status] ?? OfferFulfillmentStatus.AWAITING_PAYMENT;
     }
 
+    /** Blocks merchant prepare / verify / ready-for-shipping on terminal orders. */
+    assertOrderAllowsMerchantFulfillment(order: { status: OrderStatus | string }) {
+        const status = String(order.status || '').toUpperCase() as OrderStatus;
+        if (MERCHANT_FULFILLMENT_LOCKED_STATUSES.has(status)) {
+            throw new BadRequestException('ORDER_FULFILLMENT_LOCKED');
+        }
+    }
+
     async markOfferPaid(offerId: string, orderId: string) {
         await this.prisma.offer.update({
             where: { id: offerId },
@@ -410,6 +434,7 @@ export class OfferFulfillmentService {
         const offer = await this.assertMerchantOffer(orderId, offerId, storeId);
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
         if (!order) throw new NotFoundException('Order not found');
+        this.assertOrderAllowsMerchantFulfillment(order);
 
         if (
             offer.fulfillmentStatus === OfferFulfillmentStatus.AWAITING_PAYMENT ||
@@ -517,6 +542,10 @@ export class OfferFulfillmentService {
     ) {
         const offer = await this.assertMerchantOffer(orderId, offerId, storeId);
 
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) throw new NotFoundException('Order not found');
+        this.assertOrderAllowsMerchantFulfillment(order);
+
         const canSubmitFresh = offer.fulfillmentStatus === OfferFulfillmentStatus.PREPARED;
         const canResubmit =
             offer.fulfillmentStatus === OfferFulfillmentStatus.VERIFICATION;
@@ -526,9 +555,6 @@ export class OfferFulfillmentService {
                 `Cannot submit verification while offer is ${offer.fulfillmentStatus}. Mark the part as prepared first.`,
             );
         }
-
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-        if (!order) throw new NotFoundException('Order not found');
 
         let parsedImages: unknown[] = [];
         if (typeof data.images === 'string') {
@@ -665,6 +691,7 @@ export class OfferFulfillmentService {
 
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
         if (!order) throw new NotFoundException('Order not found');
+        this.assertOrderAllowsMerchantFulfillment(order);
 
         await this.prisma.offer.update({
             where: { id: offerId },
