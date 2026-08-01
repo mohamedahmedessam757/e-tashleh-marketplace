@@ -15,6 +15,11 @@ import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import { consumeRegisterPrefill } from '../../utils/registerPrefill';
 import { useCatalogStore } from '../../stores/useCatalogStore';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
+import {
+  mapGeolocationError,
+  requestGeolocationCoords,
+  reverseGeocodeLatLng,
+} from '../../utils/geolocation';
 
 const generateSecurePassword = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
@@ -299,35 +304,33 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
     }
   };
 
-  // GPS Helper
-  const handleGPS = () => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
-      return;
-    }
+  // GPS Helper — numbers + reverse geocode place name (never crash on .toFixed)
+  const handleGPS = async () => {
+    const isAr = language === 'ar';
+    setError(null);
+    try {
+      // No dev bypass (0,0) for registration — need a real location or a clear error.
+      const { lat, lng } = await requestGeolocationCoords(isAr, false);
+      store.updateStoreInfo('lat', lat);
+      store.updateStoreInfo('lng', lng);
 
-    // Show loading state for GPS if needed (using isSubmitting or local state)
-    // For now, assume fast response or implement a local loader
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        store.updateStoreInfo('lat', latitude.toString());
-        store.updateStoreInfo('lng', longitude.toString());
-
-        // Auto-fill address with coordinates if reverse geocoding isn't available
-        // Or you can leave address empty for user to type, but coordinates are set.
-        const coordString = `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-        if (!store.storeInfo.address) {
-          store.updateStoreInfo('address', coordString);
+      const placeName = await reverseGeocodeLatLng(lat, lng, isAr ? 'ar' : 'en');
+      if (placeName) {
+        store.updateStoreInfo('address', placeName);
+        if (errorField === 'address' || errorField === 'all') {
+          setErrorField(null);
         }
-        setError(null);
-      },
-      (error) => {
-        console.error("GPS Error", error);
-        setError("Unable to retrieve your location. Please check browser permissions.");
+      } else if (!String(store.storeInfo.address || '').trim()) {
+        setError(
+          isAr
+            ? 'تم التقاط الموقع، لكن تعذر جلب اسم المكان. يرجى كتابة العنوان يدوياً.'
+            : 'Location captured, but place name lookup failed. Please type the address manually.',
+        );
       }
-    );
+    } catch (err) {
+      console.error('GPS Error', err);
+      setError(mapGeolocationError(err, isAr));
+    }
   };
 
   // Helper for file upload simulation
@@ -785,9 +788,10 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
                     <MapPin size={24} />
                   </button>
                 </div>
-                {store.storeInfo.lat && (
+                {store.storeInfo.lat != null && store.storeInfo.lng != null && Number.isFinite(Number(store.storeInfo.lat)) && (
                   <p className="text-xs text-green-400 mt-2 ml-1 flex items-center gap-1">
-                    <CheckCircle2 size={12} /> {language === 'ar' ? 'تم التقاط إحداثيات الموقع:' : 'Location Captured:'} {store.storeInfo.lat.toFixed(4)}, {store.storeInfo.lng.toFixed(4)}
+                    <CheckCircle2 size={12} /> {language === 'ar' ? 'تم التقاط إحداثيات الموقع:' : 'Location Captured:'}{' '}
+                    {Number(store.storeInfo.lat).toFixed(4)}, {Number(store.storeInfo.lng).toFixed(4)}
                   </p>
                 )}
               </div>

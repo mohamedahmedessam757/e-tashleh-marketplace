@@ -344,6 +344,8 @@ export class PaymentsService {
                     invoiceNumber: result.invoiceNumber,
                     orderNumber: order.orderNumber,
                     waEvent: 'INVOICE_ISSUED',
+                    ctaAr: 'عرض التفاصيل',
+                    ctaEn: 'View Details',
                 },
             });
 
@@ -365,6 +367,8 @@ export class PaymentsService {
                         invoiceNumber: result.invoiceNumber,
                         orderNumber: order.orderNumber,
                         waEvent: 'INVOICE_ISSUED',
+                        ctaAr: 'عرض التفاصيل',
+                        ctaEn: 'View Details',
                     },
                 });
             }
@@ -1015,6 +1019,8 @@ export class PaymentsService {
                         orderNumber,
                         amount: totalAmount,
                         waEvent: 'INVOICE_ISSUED',
+                        ctaAr: 'عرض التفاصيل',
+                        ctaEn: 'View Details',
                     },
                 }).catch(() => {});
 
@@ -1025,7 +1031,12 @@ export class PaymentsService {
                     messageEn: `Payment of AED ${totalAmount} confirmed for Order #${orderNumber}.`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${orderId}`,
-                    metadata: { orderId, amount: totalAmount }
+                    metadata: {
+                        orderId,
+                        amount: totalAmount,
+                        ctaAr: 'عرض التفاصيل',
+                        ctaEn: 'View Details',
+                    }
                 }).catch(() => {});
             }
 
@@ -1045,6 +1056,8 @@ export class PaymentsService {
                     orderNumber,
                     amount: totalAmount,
                     waEvent: 'INVOICE_ISSUED',
+                    ctaAr: 'عرض التفاصيل',
+                    ctaEn: 'View Details',
                 },
             }).catch(() => {});
         }

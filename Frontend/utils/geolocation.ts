@@ -79,3 +79,81 @@ export async function requestGeolocationCoords(
     throw new Error(mapGeolocationError(err, isAr));
   }
 }
+
+type NominatimAddress = {
+  road?: string;
+  pedestrian?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  village?: string;
+  town?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+};
+
+type NominatimReverseResponse = {
+  display_name?: string;
+  address?: NominatimAddress;
+};
+
+function buildPlaceNameFromNominatim(data: NominatimReverseResponse): string | null {
+  const a = data.address;
+  if (a) {
+    const parts = [
+      a.road || a.pedestrian,
+      a.neighbourhood || a.suburb,
+      a.village || a.town || a.city,
+      a.state,
+      a.country,
+    ].filter((p): p is string => Boolean(p && String(p).trim()));
+    if (parts.length > 0) {
+      // Unique consecutive parts only
+      const unique = parts.filter((p, i) => i === 0 || p !== parts[i - 1]);
+      return unique.join(', ');
+    }
+  }
+  const display = String(data.display_name || '').trim();
+  if (!display) return null;
+  // Keep a short readable place name (first ~4 comma segments)
+  return display.split(',').slice(0, 4).map((s) => s.trim()).filter(Boolean).join(', ');
+}
+
+/**
+ * Reverse-geocode lat/lng to a human place name (not raw coordinates).
+ * Uses OpenStreetMap Nominatim — no API key. Returns null on failure.
+ */
+export async function reverseGeocodeLatLng(
+  lat: number,
+  lng: number,
+  lang: 'ar' | 'en',
+): Promise<string | null> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat === 0 && lng === 0) return null;
+
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 8_000);
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lng));
+    url.searchParams.set('accept-language', lang === 'ar' ? 'ar,en' : 'en,ar');
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': lang === 'ar' ? 'ar,en;q=0.8' : 'en,ar;q=0.8',
+      },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as NominatimReverseResponse;
+    return buildPlaceNameFromNominatim(data);
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
