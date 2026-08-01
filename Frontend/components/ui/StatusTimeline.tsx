@@ -190,6 +190,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     fulfillmentSummary,
                     idx,
                     isAr,
+                    currentStatus,
                   );
                   return hint ? (
                     <span className="block text-[9px] text-gold-400/80 font-normal text-center mt-0.5">

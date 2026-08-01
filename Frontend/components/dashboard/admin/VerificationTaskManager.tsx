@@ -91,7 +91,6 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [openingReportTaskId, setOpeningReportTaskId] = useState<string | null>(null);
-  const [adminReviewTaskId, setAdminReviewTaskId] = useState<string | null>(null);
 
   const fetchInFlight = useRef(false);
   const mountedRef = useRef(true);
@@ -253,42 +252,6 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
       );
     } finally {
       setGeneratingTaskId(null);
-    }
-  };
-
-  const handleAdminFieldReview = async (
-    taskId: string,
-    approved: boolean,
-    reason?: string,
-  ) => {
-    if (!approved && !reason?.trim()) {
-      flashMessage(isAr ? 'سبب الرفض مطلوب' : 'Rejection reason is required');
-      return;
-    }
-    setAdminReviewTaskId(taskId);
-    try {
-      await verificationTasksApi.adminFieldReview(taskId, {
-        approved,
-        reason: reason?.trim() || undefined,
-      });
-      await fetchTasks({ silent: true });
-      flashMessage(
-        approved
-          ? isAr
-            ? 'تم اعتماد تقرير الميدان وقفل الرابط'
-            : 'Field report approved — link closed'
-          : isAr
-            ? 'تم الرفض وإنشاء دورة مطابقة جديدة'
-            : 'Rejected — new rematch cycle created',
-      );
-    } catch (err: any) {
-      console.error(err);
-      flashMessage(
-        err?.response?.data?.message ||
-          (isAr ? 'فشل قرار الميدان' : 'Field review failed'),
-      );
-    } finally {
-      setAdminReviewTaskId(null);
     }
   };
 
@@ -692,12 +655,6 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
                   openingReportTaskId={openingReportTaskId}
                   reportBusy={openingReportTaskId !== null}
                   onOpenReport={(id) => void openFieldReport(id)}
-                  onAdminFieldReview={
-                    variant === 'pending'
-                      ? (approved, reason) => handleAdminFieldReview(t.id, approved, reason)
-                      : undefined
-                  }
-                  adminReviewBusy={adminReviewTaskId === t.id}
                 />
               </div>
             );
