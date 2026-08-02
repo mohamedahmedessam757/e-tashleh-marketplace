@@ -62,19 +62,23 @@ export class DashboardService {
             this.prisma.user.count({ where: { role: UserRole.CUSTOMER } }),
             this.prisma.store.count({ where: { status: StoreStatus.ACTIVE } }),
             (async () => {
+                // Smart-alert + KPI: only cases that still need an admin verdict.
+                // After issueVerdict sets verdictIssuedAt (and often APPROVED/REFUNDED),
+                // the alert must disappear even if logistics/fees are still settling.
+                const awaitingAdminWhere = {
+                    verdictIssuedAt: null,
+                    status: {
+                        in: [
+                            'AWAITING_ADMIN',
+                            'UNDER_REVIEW',
+                            'ESCALATED',
+                            'MERCHANT_REJECTED',
+                        ],
+                    },
+                };
                 const [openReturns, openDisputes] = await Promise.all([
-                    this.prisma.returnRequest.count({
-                        where: {
-                            status: {
-                                notIn: ['CLOSED', 'REJECTED', 'CANCELLED', 'REFUNDED', 'RESOLVED'],
-                            },
-                        },
-                    }),
-                    this.prisma.dispute.count({
-                        where: {
-                            status: { notIn: ['CLOSED', 'RESOLVED', 'CANCELLED'] },
-                        },
-                    }),
+                    this.prisma.returnRequest.count({ where: awaitingAdminWhere }),
+                    this.prisma.dispute.count({ where: awaitingAdminWhere }),
                 ]);
                 return openReturns + openDisputes;
             })(),

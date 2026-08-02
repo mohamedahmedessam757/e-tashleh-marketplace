@@ -5,13 +5,27 @@ import { Button } from '../../ui/Button';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ResolutionCase } from '../../../stores/useResolutionStore';
 
-function isShippingUnpaid(c: ResolutionCase): boolean {
+function shippingAmountDue(c: ResolutionCase): number {
+    if (c.shippingPayee !== 'MERCHANT') return 0;
     const amount = Number(c.shippingRefund || c.shippingRoundtrip || 0);
-    if (amount <= 0 || c.shippingPayee !== 'MERCHANT') return false;
+    if (amount <= 0) return 0;
     if (c.shippingPaymentStatus === 'PENDING' || c.shippingPaymentStatus === 'INSUFFICIENT_FUNDS') {
-        return true;
+        return amount;
     }
-    return c.shippingPaymentStatus === 'PAID' && !c.shippingPaymentMethod;
+    // Legacy: PAID flag without a recorded method still blocks logistics
+    if (c.shippingPaymentStatus === 'PAID' && !c.shippingPaymentMethod) return amount;
+    return 0;
+}
+
+function adjudicationAmountDue(c: ResolutionCase): number {
+    if (c.adjudicationFeePayee !== 'MERCHANT') return 0;
+    if (c.adjudicationFeePaymentStatus !== 'PENDING') return 0;
+    const amount = Number(c.adjudicationFeeAmount || 0);
+    return amount > 0 ? amount : 0;
+}
+
+function merchantPaymentDue(c: ResolutionCase): number {
+    return shippingAmountDue(c) + adjudicationAmountDue(c);
 }
 
 interface MerchantShippingPayAlertProps {
@@ -30,17 +44,15 @@ export const MerchantShippingPayAlert: React.FC<MerchantShippingPayAlertProps> =
 
     const pending = cases.filter(
         (c) =>
-            isShippingUnpaid(c) &&
+            merchantPaymentDue(c) > 0 &&
+            !!c.orderId &&
             !['CLOSED', 'CANCELLED'].includes(c.status),
     );
 
     if (pending.length === 0) return null;
 
     const first = pending[0];
-    const totalDue = pending.reduce(
-        (sum, c) => sum + Number(c.shippingRefund || c.shippingRoundtrip || 0),
-        0,
-    );
+    const totalDue = pending.reduce((sum, c) => sum + merchantPaymentDue(c), 0);
 
     return (
         <motion.div
@@ -55,27 +67,22 @@ export const MerchantShippingPayAlert: React.FC<MerchantShippingPayAlertProps> =
                     </div>
                     <div>
                         <p className="text-[10px] font-black text-gold-400 uppercase tracking-[0.25em] mb-1">
-                            {isAr ? 'إجراء عاجل — شحن المرتجع' : 'URGENT — RETURN SHIPPING'}
+                            {isAr ? 'إجراء عاجل — سداد مستحقات' : 'URGENT — SETTLEMENT DUE'}
                         </p>
                         <h3 className="text-lg font-black text-white mb-1">
                             {isAr
-                                ? `يجب سداد ${pending.length} تكلفة شحن ذهاباً وإياباً`
-                                : `${pending.length} round-trip shipping payment(s) required`}
+                                ? `يجب سداد ${pending.length} طلب(طلبات) — رسوم حكم و/أو شحن مرتجع`
+                                : `${pending.length} order(s) need adjudication and/or return shipping payment`}
                         </h3>
                         <p className="text-sm text-white/60 font-bold max-w-xl">
                             {isAr
-                                ? `المجموع المطلوب: ${totalDue.toLocaleString()} AED. افتح القضية واضغط «الدفع عبر STRIPE» أو خصم من المحفظة.`
-                                : `Total due: ${totalDue.toLocaleString()} AED. Open the case and use Pay via card or wallet.`}
+                                ? `المجموع المطلوب: ${totalDue.toLocaleString()} AED. سيتم فتح تفاصيل الطلب للدفع فوراً.`
+                                : `Total due: ${totalDue.toLocaleString()} AED. Opens the order details page to pay now.`}
                         </p>
                     </div>
                 </div>
                 <Button
-                    onClick={() =>
-                        onNavigate(
-                            first.type === 'dispute' ? 'dispute-details' : 'resolution',
-                            first.type === 'dispute' ? first.id : undefined,
-                        )
-                    }
+                    onClick={() => onNavigate('explore-offer', first.orderId)}
                     className="h-14 px-8 bg-gold-500 hover:bg-gold-400 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl whitespace-nowrap"
                 >
                     <div className="flex items-center gap-2">
