@@ -32,7 +32,8 @@ import {
   RotateCcw,
   MinusCircle,
   PlusCircle,
-  Calculator
+  Calculator,
+  Search,
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useResolutionStore, ReturnPhase } from '../../../stores/useResolutionStore';
@@ -45,6 +46,28 @@ import { Button } from '../../ui/Button';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
+import { storageApi } from '../../../services/api/storage';
+
+type AdminEvidenceItem = {
+    id: string;
+    url: string;
+    previewUrl: string;
+    name: string;
+    isImage: boolean;
+    uploading: boolean;
+};
+
+function isImageFile(file: File): boolean {
+    return file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name);
+}
+
+function isImageUrl(url: string): boolean {
+    const clean = String(url || '').split('?')[0].split('#')[0].toLowerCase();
+    if (clean.startsWith('data:image/') || clean.startsWith('blob:')) return true;
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(clean)) return true;
+    if (/\.(pdf|doc|docx|xls|xlsx|zip|rar|txt|csv)$/i.test(clean)) return false;
+    return true;
+}
 
 interface AdminDisputeDetailsProps {
     caseId: string;
@@ -63,12 +86,19 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
 
     const [adminApproval, setAdminApproval] = useState<'APPROVED' | 'REJECTED' | null>(null);
     const [adminApprovalReason, setAdminApprovalReason] = useState('');
-    const [adminEvidence, setAdminEvidence] = useState<string[]>([]);
+    const [adminEvidenceItems, setAdminEvidenceItems] = useState<AdminEvidenceItem[]>([]);
     const [adminName, setAdminName] = useState('');
     const [adminEmail, setAdminEmail] = useState('');
     const [adminSignature, setAdminSignature] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [isExecuting, setIsExecuting] = useState(false);
+    const adminEvidence = useMemo(
+        () =>
+            adminEvidenceItems
+                .filter((item) => !item.uploading && item.url && !item.url.startsWith('blob:'))
+                .map((item) => item.url),
+        [adminEvidenceItems],
+    );
 
     const [adminNotes, setAdminNotes] = useState('');
     const [faultParty, setFaultParty] = useState<
@@ -106,6 +136,17 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             }
         };
         loadGatewayFee();
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            adminEvidenceItems.forEach((item) => {
+                if (item.previewUrl?.startsWith('blob:')) {
+                    URL.revokeObjectURL(item.previewUrl);
+                }
+            });
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke only on unmount
     }, []);
 
     const isAr = language === 'ar';
@@ -224,18 +265,84 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     }
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.length) return;
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        if (!files.length) return;
+
         setIsUploading(true);
-        try {
-            const { storageApi } = await import('../../../services/api/storage');
-            const file = e.target.files[0];
-            const url = await storageApi.upload(file, 'marketplace-uploads', `admin-verdicts/${caseId}`);
-            setAdminEvidence(prev => [...prev, url]);
-        } catch (error) {
-            console.error('Upload failed', error);
-        } finally {
-            setIsUploading(false);
+        for (const file of files) {
+            const id =
+                typeof crypto !== 'undefined' && 'randomUUID' in crypto
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const image = isImageFile(file);
+            const previewUrl = image ? URL.createObjectURL(file) : '';
+            // Show immediately (optimistic) so admin sees the asset in real time
+            setAdminEvidenceItems((prev) => [
+                ...prev,
+                {
+                    id,
+                    url: previewUrl,
+                    previewUrl,
+                    name: file.name,
+                    isImage: image,
+                    uploading: true,
+                },
+            ]);
+
+            try {
+                const url = await storageApi.upload(
+                    file,
+                    'marketplace-uploads',
+                    `admin-verdicts/${caseId}`,
+                );
+                setAdminEvidenceItems((prev) =>
+                    prev.map((item) =>
+                        item.id === id
+                            ? {
+                                  ...item,
+                                  url,
+                                  uploading: false,
+                                  isImage: image || isImageUrl(url),
+                              }
+                            : item,
+                    ),
+                );
+            } catch (error) {
+                console.error('Upload failed', error);
+                setAdminEvidenceItems((prev) => prev.filter((item) => item.id !== id));
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
+                addNotification({
+                    type: 'SECURITY',
+                    titleAr: 'فشل رفع الملف',
+                    titleEn: 'Upload failed',
+                    messageAr: (t.admin.disputeManager.verdictTerminal as any).assetsUploadFailed || 'فشل رفع الملف. حاول مرة أخرى.',
+                    messageEn: (t.admin.disputeManager.verdictTerminal as any).assetsUploadFailed || 'Upload failed. Please try again.',
+                    priority: 'high',
+                });
+            }
         }
+        setIsUploading(false);
+    };
+
+    const removeEvidenceItem = (id: string) => {
+        setAdminEvidenceItems((prev) => {
+            const target = prev.find((item) => item.id === id);
+            if (target?.previewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(target.previewUrl);
+            }
+            return prev.filter((item) => item.id !== id);
+        });
+    };
+
+    const openEvidenceItem = (item: AdminEvidenceItem) => {
+        const src = item.url || item.previewUrl;
+        if (!src) return;
+        if (item.isImage || isImageUrl(src)) {
+            setSelectedEvidence(src);
+            return;
+        }
+        window.open(src, '_blank', 'noopener,noreferrer');
     };
 
     const confirmVerdict = async () => {
@@ -673,24 +780,48 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                          <div className="lg:col-span-12 xl:col-span-8 space-y-8">
                                              <div className="space-y-4">
                                                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">1. {t.admin.disputeManager.verdictTerminal.adminApproval_APPROVED} / {t.admin.disputeManager.verdictTerminal.adminApproval_REJECTED}</label>
+                                                 <div
+                                                     dir={isAr ? 'rtl' : 'ltr'}
+                                                     className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/25 flex gap-3"
+                                                 >
+                                                     <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                                                     <div className={`flex-1 min-w-0 ${isAr ? 'text-right' : 'text-left'}`}>
+                                                         <h5 className="text-[11px] font-bold text-amber-400 mb-1">
+                                                             {isAr ? 'تنبيه هام' : 'Important Note'}
+                                                         </h5>
+                                                         <p className="text-[10px] text-white/65 leading-relaxed">
+                                                             {(t.admin.disputeManager.verdictTerminal as any).adminApprovalHint}
+                                                         </p>
+                                                     </div>
+                                                 </div>
                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                      <button 
                                                          onClick={() => setAdminApproval('APPROVED')}
                                                          className={`p-6 rounded-3xl border flex items-center gap-6 transition-all ${adminApproval === 'APPROVED' ? 'bg-green-500/10 border-green-500/50 shadow-2xl' : 'bg-white/5 border-white/5 hover:border-white/10 opacity-60'}`}
                                                      >
-                                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${adminApproval === 'APPROVED' ? 'bg-green-500 text-black' : 'bg-white/10 text-white/40'}`}>
+                                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${adminApproval === 'APPROVED' ? 'bg-green-500 text-black' : 'bg-white/10 text-white/40'}`}>
                                                              <CheckCircle2 size={24} />
                                                          </div>
-                                                         <span className="text-lg font-black text-white">{t.admin.disputeManager.verdictTerminal.adminApproval_APPROVED}</span>
+                                                         <div className={`${isAr ? 'text-right' : 'text-left'}`}>
+                                                             <span className="text-lg font-black text-white block">{t.admin.disputeManager.verdictTerminal.adminApproval_APPROVED}</span>
+                                                             <span className="text-[10px] text-white/45 font-bold leading-snug block mt-1">
+                                                                 {(t.admin.disputeManager.verdictTerminal as any).adminApprovalApproveHint}
+                                                             </span>
+                                                         </div>
                                                      </button>
                                                      <button 
                                                          onClick={() => setAdminApproval('REJECTED')}
                                                          className={`p-6 rounded-3xl border flex items-center gap-6 transition-all ${adminApproval === 'REJECTED' ? 'bg-red-500/10 border-red-500/50 shadow-2xl' : 'bg-white/5 border-white/5 hover:border-white/10 opacity-60'}`}
                                                      >
-                                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${adminApproval === 'REJECTED' ? 'bg-red-500 text-white' : 'bg-white/10 text-white/40'}`}>
+                                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${adminApproval === 'REJECTED' ? 'bg-red-500 text-white' : 'bg-white/10 text-white/40'}`}>
                                                              <X size={24} />
                                                          </div>
-                                                         <span className="text-lg font-black text-white">{t.admin.disputeManager.verdictTerminal.adminApproval_REJECTED}</span>
+                                                         <div className={`${isAr ? 'text-right' : 'text-left'}`}>
+                                                             <span className="text-lg font-black text-white block">{t.admin.disputeManager.verdictTerminal.adminApproval_REJECTED}</span>
+                                                             <span className="text-[10px] text-white/45 font-bold leading-snug block mt-1">
+                                                                 {(t.admin.disputeManager.verdictTerminal as any).adminApprovalRejectHint}
+                                                             </span>
+                                                         </div>
                                                      </button>
                                                  </div>
                                              </div>
@@ -709,25 +840,84 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                          {/* RIGHT: Asset Upload */}
                                          <div className="lg:col-span-12 xl:col-span-4 space-y-4">
                                              <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{t.admin.disputeManager.intelligence.assets}</label>
-                                             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] space-y-6">
+                                             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] space-y-4">
                                                  <div className="grid grid-cols-2 gap-3">
-                                                     {adminEvidence.map((url, idx) => (
-                                                         <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-white/10 group shadow-xl">
-                                                             <img src={url} alt="Evidence" className="w-full h-full object-cover" />
-                                                             <button 
-                                                                 onClick={() => setAdminEvidence(prev => prev.filter((_, i) => i !== idx))}
-                                                                 className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                     {adminEvidenceItems.map((item) => {
+                                                         const src = item.url || item.previewUrl;
+                                                         return (
+                                                             <div
+                                                                 key={item.id}
+                                                                 className="relative aspect-square rounded-2xl overflow-hidden border border-white/10 group shadow-xl bg-black/30"
                                                              >
-                                                                 <X size={12} />
-                                                             </button>
-                                                         </div>
-                                                     ))}
-                                                     <label className={`aspect-square rounded-2xl border-2 border-dashed border-white/10 hover:border-gold-500/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-white/5 group ${isUploading ? 'animate-pulse pointer-events-none' : ''}`}>
-                                                         <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
-                                                         <Activity size={24} className={`${isUploading ? 'text-gold-500' : 'text-white/20 group-hover:text-gold-500'} transition-colors`} />
-                                                         <span className="text-[8px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors">{isUploading ? 'UPLOADING...' : 'ADD ASSET'}</span>
+                                                                 <button
+                                                                     type="button"
+                                                                     onClick={() => openEvidenceItem(item)}
+                                                                     className="w-full h-full cursor-zoom-in focus:outline-none"
+                                                                     title={(t.admin.disputeManager.verdictTerminal as any).assetsOpen}
+                                                                 >
+                                                                     {item.isImage && src ? (
+                                                                         <img
+                                                                             src={src}
+                                                                             alt={item.name || 'Evidence'}
+                                                                             className={`w-full h-full object-cover transition-opacity ${item.uploading ? 'opacity-50' : 'opacity-90 group-hover:opacity-100'}`}
+                                                                         />
+                                                                     ) : (
+                                                                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-white/50 p-2">
+                                                                             <FileText size={28} />
+                                                                             <span className="text-[9px] font-bold truncate w-full text-center">
+                                                                                 {item.name || (isAr ? 'ملف' : 'File')}
+                                                                             </span>
+                                                                         </div>
+                                                                     )}
+                                                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all pointer-events-none">
+                                                                         {item.isImage ? <Search className="text-white" size={20} /> : <ExternalLink className="text-white" size={20} />}
+                                                                     </div>
+                                                                 </button>
+                                                                 {item.uploading && (
+                                                                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+                                                                         <Loader2 className="text-gold-400 animate-spin" size={22} />
+                                                                     </div>
+                                                                 )}
+                                                                 <button
+                                                                     type="button"
+                                                                     onClick={(ev) => {
+                                                                         ev.stopPropagation();
+                                                                         removeEvidenceItem(item.id);
+                                                                     }}
+                                                                     className="absolute top-2 right-2 z-10 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                                 >
+                                                                     <X size={12} />
+                                                                 </button>
+                                                             </div>
+                                                         );
+                                                     })}
+                                                     <label className={`aspect-square rounded-2xl border-2 border-dashed border-white/10 hover:border-gold-500/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-white/5 group ${isUploading ? 'animate-pulse' : ''}`}>
+                                                         <input
+                                                             type="file"
+                                                             className="hidden"
+                                                             onChange={handleFileUpload}
+                                                             accept="image/*,.pdf,.doc,.docx"
+                                                             multiple
+                                                         />
+                                                         {isUploading ? (
+                                                             <Loader2 size={24} className="text-gold-500 animate-spin" />
+                                                         ) : (
+                                                             <Activity size={24} className="text-white/20 group-hover:text-gold-500 transition-colors" />
+                                                         )}
+                                                         <span className="text-[8px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors text-center px-2">
+                                                             {isUploading
+                                                                 ? (t.admin.disputeManager.verdictTerminal as any).assetsUploading
+                                                                 : (t.admin.disputeManager.verdictTerminal as any).assetsAdd}
+                                                         </span>
                                                      </label>
                                                  </div>
+                                                 {adminEvidenceItems.length > 0 && (
+                                                     <p className="text-[10px] text-white/35 font-bold">
+                                                         {isAr
+                                                             ? `${adminEvidence.length} ملف جاهز · اضغط للفتح/التكبير`
+                                                             : `${adminEvidence.length} ready · click to open/enlarge`}
+                                                     </p>
+                                                 )}
                                              </div>
                                          </div>
                                      </div>
