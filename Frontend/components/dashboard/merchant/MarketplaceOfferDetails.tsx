@@ -35,6 +35,11 @@ import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
 import {
+    MerchantSettlementPaymentCard,
+    isMerchantCombinedSettlementDue,
+    isMerchantCombinedSettlementPaid,
+} from '../resolution/MerchantSettlementPaymentCard';
+import {
     getFulfillmentRank,
     getMerchantFulfillmentDisplayLabel,
     getVerificationDocForOffer,
@@ -285,6 +290,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const activeShippingCase = cases.find((c) => {
         if (String(c.orderId) !== String(orderId)) return false;
         if (c.shippingPayee !== 'MERCHANT') return false;
+        if (isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c)) return false;
         const amount = Number(c.shippingRefund || c.shippingRoundtrip || 0);
         if (amount <= 0) return false;
         if (['CLOSED', 'CANCELLED'].includes(c.status)) return false;
@@ -298,10 +304,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         if (String(c.orderId) !== String(orderId)) return false;
         if (c.adjudicationFeePayee !== 'MERCHANT') return false;
         if (Number(c.adjudicationFeeAmount || 0) <= 0) return false;
+        if (isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c)) return false;
         return (
             c.adjudicationFeePaymentStatus === 'PENDING' ||
             c.adjudicationFeePaymentStatus === 'PAID'
         );
+    });
+
+    const activeSettlementCase = cases.find((c) => {
+        if (String(c.orderId) !== String(orderId)) return false;
+        return isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c);
     });
 
     const openResolutionCase = useMemo(() => {
@@ -1173,14 +1185,21 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                 {/* LEFT COLUMN: Request Intel */}
                 <div className="lg:col-span-2 space-y-6">
-                    {activeShippingCase && (
+                    {activeSettlementCase && (
+                        <MerchantSettlementPaymentCard
+                            caseRecord={activeSettlementCase}
+                            role="MERCHANT"
+                            onSuccess={() => fetchCases('merchant')}
+                        />
+                    )}
+                    {!activeSettlementCase && activeShippingCase && (
                         <ShippingPaymentCard 
                             caseRecord={activeShippingCase} 
                             role="MERCHANT" 
                             onSuccess={() => fetchCases('merchant')}
                         />
                     )}
-                    {activeAdjudicationFeeCase && (
+                    {!activeSettlementCase && activeAdjudicationFeeCase && (
                         <AdjudicationFeePaymentCard
                             caseRecord={activeAdjudicationFeeCase}
                             role="MERCHANT"

@@ -19,7 +19,8 @@ export function useShippingPaymentReturn(
         const params = new URLSearchParams(window.location.search);
         const payment = params.get('payment');
         const adjFeePayment = params.get('adjFeePayment');
-        if (!payment && !adjFeePayment) return;
+        const settlementPayment = params.get('settlementPayment');
+        if (!payment && !adjFeePayment && !settlementPayment) return;
 
         const caseId = params.get('caseId');
         const caseType = params.get('caseType') || 'dispute';
@@ -29,6 +30,7 @@ export function useShippingPaymentReturn(
             const url = new URL(window.location.href);
             url.searchParams.delete('payment');
             url.searchParams.delete('adjFeePayment');
+            url.searchParams.delete('settlementPayment');
             url.searchParams.delete('caseId');
             url.searchParams.delete('caseType');
             window.history.replaceState(window.history.state, '', url.pathname + url.search);
@@ -45,7 +47,26 @@ export function useShippingPaymentReturn(
         void (async () => {
             await refresh();
 
-            if (adjFeePayment === 'success') {
+            if (settlementPayment === 'success') {
+                addNotification({
+                    type: 'success',
+                    titleAr: 'تم السداد المجمع',
+                    titleEn: 'Combined settlement paid',
+                    messageAr: 'تم تأكيد دفع رسوم الحكم وشحن المرتجع. سيظهر كل بند منفصلاً في السجل المالي.',
+                    messageEn: 'Judgment fees and return shipping confirmed. Each line is itemized in the ledger.',
+                });
+                if (caseId && onNavigate) {
+                    onNavigate('dispute-details', caseId);
+                }
+            } else if (settlementPayment === 'cancel') {
+                addNotification({
+                    type: 'warning',
+                    titleAr: 'تم إلغاء السداد المجمع',
+                    titleEn: 'Combined settlement cancelled',
+                    messageAr: 'لم يتم خصم أي مبلغ. يمكنك إعادة المحاولة من بطاقة السداد.',
+                    messageEn: 'No charge was made. You can retry from the settlement card.',
+                });
+            } else if (adjFeePayment === 'success') {
                 addNotification({
                     type: 'success',
                     titleAr: 'تم سداد رسوم الحكم',
