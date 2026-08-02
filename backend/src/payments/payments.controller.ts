@@ -76,7 +76,12 @@ export class PaymentsController {
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     createMerchantSettlementCheckoutSession(
         @Request() req,
-        @Body() body: { caseId: string; caseType: 'return' | 'dispute'; frontendUrl?: string },
+        @Body() body: {
+            caseId: string;
+            caseType: 'return' | 'dispute';
+            frontendUrl?: string;
+            returnPath?: string;
+        },
     ) {
         if (!body?.caseId || !body?.caseType) {
             throw new BadRequestException('Case ID and Case Type are required');
@@ -89,6 +94,27 @@ export class PaymentsController {
             body.caseId,
             body.caseType,
             body.frontendUrl,
+            body.returnPath,
+        );
+    }
+
+    /** Client fallback when Stripe Checkout returns before webhook settles the case */
+    @Post('confirm-merchant-settlement')
+    @Throttle({ default: { limit: 20, ttl: 60000 } })
+    confirmMerchantSettlement(
+        @Request() req,
+        @Body() body: { caseId: string; caseType: 'return' | 'dispute' },
+    ) {
+        if (!body?.caseId || !body?.caseType) {
+            throw new BadRequestException('Case ID and Case Type are required');
+        }
+        if (body.caseType !== 'return' && body.caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        return this.paymentsService.confirmMerchantSettlementFromClient(
+            req.user.id,
+            body.caseId,
+            body.caseType,
         );
     }
 

@@ -44,10 +44,28 @@ export function useShippingPaymentReturn(
             }
         };
 
-        void (async () => {
-            await refresh();
+        /** If webhook lagged/failed, confirm Checkout session from the client */
+        const confirmSettlementIfNeeded = async () => {
+            if (!caseId || role !== 'merchant') return;
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
+                await fetch(`${apiUrl}/payments/confirm-merchant-settlement`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                    body: JSON.stringify({ caseId, caseType }),
+                });
+            } catch {
+                /* webhook may still settle; refresh covers eventual consistency */
+            }
+        };
 
+        void (async () => {
             if (settlementPayment === 'success') {
+                await confirmSettlementIfNeeded();
+                await refresh();
                 addNotification({
                     type: 'success',
                     titleAr: 'تم السداد المجمع',
@@ -55,9 +73,6 @@ export function useShippingPaymentReturn(
                     messageAr: 'تم تأكيد دفع رسوم الحكم وشحن المرتجع. سيظهر كل بند منفصلاً في السجل المالي.',
                     messageEn: 'Judgment fees and return shipping confirmed. Each line is itemized in the ledger.',
                 });
-                if (caseId && onNavigate) {
-                    onNavigate('dispute-details', caseId);
-                }
             } else if (settlementPayment === 'cancel') {
                 addNotification({
                     type: 'warning',

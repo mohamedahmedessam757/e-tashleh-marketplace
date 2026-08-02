@@ -39,6 +39,7 @@ import {
     isMerchantCombinedSettlementDue,
     isMerchantCombinedSettlementPaid,
 } from '../resolution/MerchantSettlementPaymentCard';
+import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import {
     getFulfillmentRank,
     getMerchantFulfillmentDisplayLabel,
@@ -117,6 +118,8 @@ interface MarketplaceOfferDetailsProps {
 
 export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = ({ orderId, onBack }) => {
     const { t, language } = useLanguage();
+    // Confirm Stripe settlement return (?settlementPayment=) and refresh cases
+    useShippingPaymentReturn(true, 'merchant');
     const { addOfferToOrder, patchOrderFromRealtime, fetchOrder, removeOfferFromOrder, markOfferWithdrawnInOrder } =
         useOrderStore();
     const order = useOrderById(orderId);
