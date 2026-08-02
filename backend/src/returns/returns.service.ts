@@ -1465,13 +1465,14 @@ export class ReturnsService {
                 );
             }
         }
+        // CLOSE_COMPLETE: still a money refund — order/case must show REFUNDED (not COMPLETED)
         const nextStatus = isCloseCompleteRefund
-            ? 'RESOLVED'
+            ? 'REFUNDED'
             : verdict === 'REFUND'
                 ? 'REFUNDED'
                 : 'RESOLVED';
         const orderStatus = isCloseCompleteRefund
-            ? 'COMPLETED'
+            ? 'REFUNDED'
             : verdict === 'REFUND'
                 ? 'REFUNDED'
                 : 'COMPLETED';
@@ -1645,30 +1646,53 @@ export class ReturnsService {
                     updateData.netRefundAmount = fin.netRefundAmount;
                     updateData.refundAmount = fin.customerStripeRefund;
 
-                    if (isCloseCompleteRefund && fin.platformRetainedAmount > 0) {
-                        const platformWallet = await tx.platformWallet.findFirst();
-                        if (platformWallet) {
-                            await tx.platformWallet.update({
-                                where: { id: platformWallet.id },
+                    if (
+                        fin.platformRetainedAmount > 0 &&
+                        (isCloseCompleteRefund || fin.feeBearer === 'CUSTOMER')
+                    ) {
+                        let platformWallet = await tx.platformWallet.findFirst();
+                        if (!platformWallet) {
+                            platformWallet = await tx.platformWallet.create({
                                 data: {
-                                    feesBalance: { increment: fin.platformRetainedAmount },
-                                    totalRevenue: { increment: fin.platformRetainedAmount },
+                                    feesBalance: 0,
+                                    commissionBalance: 0,
+                                    totalRevenue: 0,
                                 },
                             });
                         }
-                    }
-
-                    if (fin.feeBearer === 'CUSTOMER' && fin.platformRetainedAmount > 0) {
-                        const platformWallet = await tx.platformWallet.findFirst();
-                        if (platformWallet) {
-                            await tx.platformWallet.update({
-                                where: { id: platformWallet.id },
-                                data: {
-                                    feesBalance: { increment: fin.platformRetainedAmount },
-                                    totalRevenue: { increment: fin.platformRetainedAmount },
+                        const updatedWallet = await tx.platformWallet.update({
+                            where: { id: platformWallet.id },
+                            data: {
+                                feesBalance: { increment: fin.platformRetainedAmount },
+                                totalRevenue: { increment: fin.platformRetainedAmount },
+                            },
+                        });
+                        // Visible ledger row for platform fee retention (admin financial feed)
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: adminId,
+                                role: 'ADMIN',
+                                type: 'CREDIT',
+                                transactionType: 'PLATFORM_FEE_RETENTION',
+                                amount: fin.platformRetainedAmount,
+                                currency: 'AED',
+                                description: isCloseCompleteRefund
+                                    ? `Platform retained gateway+refund fees (CLOSE_COMPLETE) — Case #${caseId.substring(0, 8)}`
+                                    : `Platform retained fees (customer-fault refund) — Case #${caseId.substring(0, 8)}`,
+                                balanceAfter: Number(updatedWallet.feesBalance),
+                                metadata: {
+                                    caseId,
+                                    orderId: caseRecord.orderId,
+                                    feeBearer: fin.feeBearer,
+                                    gatewayFeeAmount: fin.gatewayFeeAmount,
+                                    refundFeeAmount: fin.refundFeeAmount,
+                                    customerStripeRefund: fin.customerStripeRefund,
+                                    resolutionMode: isCloseCompleteRefund
+                                        ? 'CLOSE_COMPLETE_REFUND'
+                                        : undefined,
                                 },
-                            });
-                        }
+                            },
+                        });
                     }
 
                     // Fraud Penalty Logic (Spec §15.4)
@@ -1907,6 +1931,13 @@ export class ReturnsService {
                                 : {}),
                         },
                     });
+                    // Refund verdicts (incl. CLOSE_COMPLETE) must surface REFUNDED on the order
+                    if (verdict === 'REFUND' || isCloseCompleteRefund) {
+                        await tx.order.update({
+                            where: { id: caseRecord.orderId },
+                            data: { status: 'REFUNDED' },
+                        });
+                    }
                 } else {
                     await tx.order.update({
                         where: { id: caseRecord.orderId },
@@ -1966,7 +1997,7 @@ export class ReturnsService {
                 const faultLower = String(extra?.faultParty || '').toUpperCase();
                 const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
                 const refundReason = isCloseCompleteRefund
-                    ? notes || 'إغلاق الطلب كمنتهٍ مع استرداد صافي المبلغ للعميل'
+                    ? notes || 'إغلاق النزاع مع استرداد صافي المبلغ للعميل (تم الاسترداد)'
                     : notes || 'Administrative Refund';
                 const offerPaymentBase = caseRecord.offerId
                     ? await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId)
@@ -2008,6 +2039,13 @@ export class ReturnsService {
                             data: { refundAmount: stripeRefundCtx.refundAmount },
                         });
                     }
+                    // Pin order status after escrow/invoice sync so it cannot drift to COMPLETED
+                    if (verdict === 'REFUND' || isCloseCompleteRefund) {
+                        await tx.order.update({
+                            where: { id: caseRecord.orderId },
+                            data: { status: 'REFUNDED' },
+                        });
+                    }
                 });
             } catch (refundErr: any) {
                 console.error(
@@ -2036,6 +2074,15 @@ export class ReturnsService {
                         e?.message,
                     ),
                 );
+            // recompute must not wipe REFUNDED after a refund verdict
+            if (verdict === 'REFUND' || isCloseCompleteRefund) {
+                await this.prisma.order
+                    .update({
+                        where: { id: caseRecord.orderId },
+                        data: { status: 'REFUNDED' },
+                    })
+                    .catch(() => {});
+            }
         }
 
         if (stripeRefundCtx) {
@@ -2057,10 +2104,10 @@ export class ReturnsService {
         const verdictMap = {
             'REFUND': {
                 ar: isCloseCompleteRefund
-                    ? 'إغلاق الطلب كمنتهٍ مع استرداد صافي المبلغ للعميل'
+                    ? 'إغلاق النزاع مع استرداد صافي المبلغ للعميل (تم الاسترداد)'
                     : 'الموافقة على الإرجاع واسترداد الأموال',
                 en: isCloseCompleteRefund
-                    ? 'Order closed as completed with net refund to customer'
+                    ? 'Dispute closed with net refund to customer (Refunded)'
                     : 'Approved & Refund Issued',
             },
             'DENY': { ar: 'رفض طلب الإرجاع والإغلاق', en: 'Return Request Denied' },

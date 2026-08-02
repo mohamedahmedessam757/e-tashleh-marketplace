@@ -844,9 +844,16 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                             <Receipt className="text-amber-500 w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className="text-sm font-bold text-white tracking-tight">
-                                                {isAr ? `فاتورة رقم ${inv.invoiceNumber}` : `Invoice #${inv.invoiceNumber}`}
-                                            </h3>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h3 className="text-sm font-bold text-white tracking-tight">
+                                                    {isAr ? `فاتورة رقم ${inv.invoiceNumber}` : `Invoice #${inv.invoiceNumber}`}
+                                                </h3>
+                                                {String(inv.status || '').toUpperCase() === 'REFUNDED' && (
+                                                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                                        {isAr ? 'تم الاسترداد' : 'Refunded'}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-[10px] text-white/30 font-mono">ID: {String(inv.id).slice(0, 8)}...</p>
                                         </div>
                                     </div>
