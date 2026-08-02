@@ -27,6 +27,10 @@ import { OrderWaybillsPanel } from '../shared/OrderWaybillsPanel';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../../utils/orderSla';
 import { shouldShowAdminVerificationSections } from '../../../utils/orderVerificationVisibility';
 import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../../ui/VerificationPhaseBanner';
+import {
+    ReturnDisputePhaseBanner,
+    shouldShowReturnDisputeBanner,
+} from '../../ui/ReturnDisputePhaseBanner';
 import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
@@ -531,6 +535,13 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 {shouldShowVerificationBanner(order.status) && (
                                     <VerificationPhaseBanner className="mb-6" status={order.status} />
                                 )}
+                                {shouldShowReturnDisputeBanner(order.status) && (
+                                    <ReturnDisputePhaseBanner
+                                        className="mb-6"
+                                        status={order.status}
+                                        role="admin"
+                                    />
+                                )}
                                 <div className="flex justify-between items-center mb-6">
                                     <StatusTimeline
                                         currentStatus={timelineStatus as any}
@@ -566,6 +577,13 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             <div className="p-6">
                                 {shouldShowVerificationBanner(order.status) && (
                                     <VerificationPhaseBanner className="mb-6" status={order.status} />
+                                )}
+                                {shouldShowReturnDisputeBanner(order.status) && (
+                                    <ReturnDisputePhaseBanner
+                                        className="mb-6"
+                                        status={order.status}
+                                        role="admin"
+                                    />
                                 )}
                                 <StatusTimeline
                                     currentStatus={timelineStatus as any}

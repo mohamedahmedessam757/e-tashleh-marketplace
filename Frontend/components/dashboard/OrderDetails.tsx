@@ -6,6 +6,10 @@ import { Badge, StatusType } from '../ui/Badge';
 import { StatusTimeline } from '../ui/StatusTimeline';
 import type { FulfillmentSummaryPartHint } from '../ui/StatusTimeline';
 import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../ui/VerificationPhaseBanner';
+import {
+    ReturnDisputePhaseBanner,
+    shouldShowReturnDisputeBanner,
+} from '../ui/ReturnDisputePhaseBanner';
 import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 import { OfferCard } from './OfferCard';
 import { PartOffersDrawer } from './PartOffersDrawer';
@@ -336,6 +340,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         c.orderId === orderId && 
         c.shippingPaymentStatus === 'PENDING' && 
         !['RESOLVED', 'CLOSED', 'CANCELLED'].includes(c.status)
+    );
+
+    const openResolutionCase = cases.find(
+        (c) =>
+            c.orderId === orderId &&
+            (c.type === 'return' || c.type === 'dispute') &&
+            !['RESOLVED', 'CLOSED', 'CANCELLED', 'REFUNDED'].includes(c.status),
     );
 
     const handleCloseExpiredModal = (dontShowAgain: boolean) => {
@@ -824,6 +835,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             />
 
             <PendingStoreReviewBanner order={order} onNavigate={onNavigate} className="mb-6" />
+
+            {shouldShowReturnDisputeBanner(order.status, openResolutionCase?.type) && (
+                <ReturnDisputePhaseBanner
+                    className="mb-6"
+                    status={order.status}
+                    caseType={openResolutionCase?.type}
+                    caseReference={openResolutionCase?.caseReference}
+                    partName={openResolutionCase?.partName}
+                    role="customer"
+                />
+            )}
 
             {isMultiPartOrder && (fulfillmentSummary?.parts?.length ?? 0) > 1 && (
                 <motion.div
