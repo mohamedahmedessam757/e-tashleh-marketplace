@@ -1536,123 +1536,156 @@ export class PaymentsService {
 
         this.logger.log(`Fulfilling shipping payment for ${caseType} ${caseId}`);
 
-        return await this.prisma.$transaction(async (tx) => {
-            // 1. Update the case status
-            const updatedCase = await (tx as any)[modelName].update({
-                where: { id: caseId },
-                data: {
-                    shippingPaymentStatus: 'PAID',
-                    shippingPaymentMethod: 'STRIPE',
-                    updatedAt: new Date()
-                }
-            });
-
-            // 2. Create financial log (WalletTransaction for transparency)
-            // Even if paid via Stripe, we log it.
-            const payeeId = updatedCase.shippingPayee === 'MERCHANT' ? 
-                           (await tx.store.findUnique({ where: { id: updatedCase.storeId }, select: { ownerId: true } })).ownerId :
-                           updatedCase.customerId;
-
-            let balanceAfter = 0;
-            if (updatedCase.shippingPayee === 'MERCHANT') {
-                const storeRow = await tx.store.findUnique({
-                    where: { id: updatedCase.storeId },
-                    select: { balance: true },
-                });
-                balanceAfter = Number(storeRow?.balance ?? 0);
-            } else {
-                const userRow = await tx.user.findUnique({
-                    where: { id: payeeId },
-                    select: { customerBalance: true },
-                });
-                balanceAfter = Number(userRow?.customerBalance ?? 0);
-            }
-
-            await tx.walletTransaction.create({
-                data: {
-                    userId: payeeId,
-                    role: updatedCase.shippingPayee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
-                    type: 'DEBIT',
-                    transactionType: 'SHIPPING_FEE',
-                    amount: Number(updatedCase.shippingRefund),
-                    currency: 'AED',
-                    description: `Shipping cost for ${caseType} #${updatedCase.orderId} (Paid via Stripe)`,
-                    balanceAfter,
-                    metadata: { caseId, caseType, paymentMethod: 'STRIPE', stripeIntentId: intent.id },
-                }
-            });
-
-            // 3. Transition Shipment Status to RETURN_STARTED (Ø¨Ø¯Ø¡ Ø§Ù„Ø§Ø±Ø¬Ø§Ø¹)
-            const shipment = await tx.shipment.findFirst({
-                where: { orderId: updatedCase.orderId },
-                orderBy: { createdAt: 'desc' }
-            });
-
-            if (shipment) {
-                await tx.shipment.update({
-                    where: { id: shipment.id },
-                    data: { status: 'RETURN_STARTED' as any }
-                });
-
-                await tx.shipmentStatusLog.create({
+        // DB-only TX — notifications (WhatsApp) must run AFTER commit to avoid P2028
+        const updatedCase = await this.prisma.$transaction(
+            async (tx) => {
+                const claimed = await (tx as any)[modelName].updateMany({
+                    where: {
+                        id: caseId,
+                        shippingPaymentStatus: { in: ['PENDING', 'INSUFFICIENT_FUNDS'] },
+                    },
                     data: {
-                        shipmentId: shipment.id,
-                        fromStatus: shipment.status,
-                        toStatus: 'RETURN_STARTED' as any,
-                        notes: 'Ø¨Ø¯Ø¡ Ø§Ù„Ø§Ø±Ø¬Ø§Ø¹ - ØªÙ… Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù† Ø¹Ø¨Ø± Stripe',
-                        source: 'API'
-                    }
+                        shippingPaymentStatus: 'PAID',
+                        shippingPaymentMethod: 'STRIPE',
+                        shippingStripeId: intent.id,
+                        updatedAt: new Date(),
+                    },
                 });
-            }
+                if (claimed.count === 0) {
+                    this.logger.log(
+                        `Shipping claim lost for ${caseType} ${caseId}; already settled`,
+                    );
+                    return null;
+                }
 
-            // 4. Notify all parties
-            const titleAr = 'ØªÙ… Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù†! ðŸšš';
-            const titleEn = 'Shipping Paid! ðŸšš';
-            const messageAr = `ØªÙ… Ø§Ø³ØªÙ„Ø§Ù… Ø¯ÙØ¹Ø© Ø§Ù„Ø´Ø­Ù† Ù„Ù„Ø·Ù„Ø¨ #${updatedCase.orderId}. Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø¥Ø±Ø¬Ø§Ø¹ Ø¬Ø§Ø±ÙŠØ© Ø§Ù„Ø¢Ù†.`;
-            const messageEn = `Shipping payment received for Order #${updatedCase.orderId}. Return process is now active.`;
+                const caseRow = await (tx as any)[modelName].findUnique({ where: { id: caseId } });
+                if (!caseRow) return null;
 
-            await this.notifications.create({
+                const payeeId =
+                    caseRow.shippingPayee === 'MERCHANT'
+                        ? (
+                              await tx.store.findUnique({
+                                  where: { id: caseRow.storeId },
+                                  select: { ownerId: true },
+                              })
+                          )?.ownerId
+                        : caseRow.customerId;
+
+                let balanceAfter = 0;
+                if (caseRow.shippingPayee === 'MERCHANT') {
+                    const storeRow = await tx.store.findUnique({
+                        where: { id: caseRow.storeId },
+                        select: { balance: true },
+                    });
+                    balanceAfter = Number(storeRow?.balance ?? 0);
+                } else if (payeeId) {
+                    const userRow = await tx.user.findUnique({
+                        where: { id: payeeId },
+                        select: { customerBalance: true },
+                    });
+                    balanceAfter = Number(userRow?.customerBalance ?? 0);
+                }
+
+                if (payeeId) {
+                    await tx.walletTransaction.create({
+                        data: {
+                            userId: payeeId,
+                            role: caseRow.shippingPayee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
+                            type: 'DEBIT',
+                            transactionType: 'SHIPPING_FEE',
+                            amount: Number(caseRow.shippingRefund),
+                            currency: 'AED',
+                            description: `Shipping cost for ${caseType} #${caseRow.orderId} (Paid via Stripe)`,
+                            balanceAfter,
+                            metadata: {
+                                caseId,
+                                caseType,
+                                paymentMethod: 'STRIPE',
+                                stripeIntentId: intent.id,
+                            },
+                        },
+                    });
+                }
+
+                const shipment = await tx.shipment.findFirst({
+                    where: { orderId: caseRow.orderId },
+                    orderBy: { createdAt: 'desc' },
+                });
+
+                if (shipment) {
+                    await tx.shipment.update({
+                        where: { id: shipment.id },
+                        data: { status: 'RETURN_STARTED' as any },
+                    });
+
+                    await tx.shipmentStatusLog.create({
+                        data: {
+                            shipmentId: shipment.id,
+                            fromStatus: shipment.status,
+                            toStatus: 'RETURN_STARTED' as any,
+                            notes: 'بدء الارجاع - تم سداد تكلفة الشحن عبر Stripe',
+                            source: 'API',
+                        },
+                    });
+                }
+
+                return caseRow;
+            },
+            { timeout: 20000, maxWait: 10000 },
+        );
+
+        if (!updatedCase) return;
+
+        const titleAr = 'تم سداد تكلفة الشحن!';
+        const titleEn = 'Shipping Paid!';
+        const messageAr = `تم استلام دفعة الشحن للطلب #${updatedCase.orderId}. عملية الإرجاع جارية الآن.`;
+        const messageEn = `Shipping payment received for Order #${updatedCase.orderId}. Return process is now active.`;
+
+        this.notifications
+            .create({
                 recipientId: updatedCase.customerId,
                 recipientRole: 'CUSTOMER',
                 type: 'order',
-                titleAr, titleEn, messageAr, messageEn,
+                titleAr,
+                titleEn,
+                messageAr,
+                messageEn,
                 link: `orders/${updatedCase.orderId}`,
-                metadata: { caseId, caseType }
-            });
+                metadata: { caseId, caseType },
+            })
+            .catch(() => {});
 
-            const store = await tx.store.findUnique({ where: { id: updatedCase.storeId }, select: { ownerId: true } });
-            if (store) {
-                await this.notifications.create({
+        this.prisma.store
+            .findUnique({ where: { id: updatedCase.storeId }, select: { ownerId: true } })
+            .then((store) => {
+                if (!store?.ownerId) return;
+                return this.notifications.create({
                     recipientId: store.ownerId,
                     recipientRole: 'VENDOR',
                     type: 'order',
-                    titleAr, titleEn, messageAr, messageEn,
+                    titleAr,
+                    titleEn,
+                    messageAr,
+                    messageEn,
                     link: `marketplace/orders/${updatedCase.orderId}`,
-                    metadata: { caseId, caseType }
+                    metadata: { caseId, caseType },
                 });
-            }
+            })
+            .catch(() => {});
 
-            // 5. Notify ADMIN
-            const adminTitleAr = `Ø³Ø¯Ø§Ø¯ Ø´Ø­Ù†: ${caseType === 'return' ? 'Ø·Ù„Ø¨ Ø¥Ø±Ø¬Ø§Ø¹' : 'Ù†Ø²Ø§Ø¹'} #${updatedCase.orderId}`;
-            const adminTitleEn = `Shipping Paid: ${caseType === 'return' ? 'Return' : 'Dispute'} #${updatedCase.orderId}`;
-            const adminMsgAr = `Ù‚Ø§Ù… ${updatedCase.shippingPayee === 'MERCHANT' ? 'Ø§Ù„ØªØ§Ø¬Ø±' : 'Ø§Ù„Ø¹Ù…ÙŠÙ„'} Ø¨Ø³Ø¯Ø§Ø¯ ØªÙƒÙ„ÙØ© Ø§Ù„Ø´Ø­Ù† Ø¨Ù‚ÙŠÙ…Ø© ${updatedCase.shippingRefund} Ø¯Ø±Ù‡Ù….`;
-            const adminMsgEn = `${updatedCase.shippingPayee === 'MERCHANT' ? 'Merchant' : 'Customer'} paid AED ${updatedCase.shippingRefund} for shipping.`;
-
-            // Broadcast to all admins (recipientId = null + role = ADMIN often used for broadcast in our system)
-            await this.notifications.create({
-                recipientId: null as any,
-                recipientRole: 'ADMIN',
+        this.notifications
+            .notifyAdmins({
                 type: 'order',
-                titleAr: adminTitleAr,
-                titleEn: adminTitleEn,
-                messageAr: adminMsgAr,
-                messageEn: adminMsgEn,
-                link: 'resolution', // Admin resolution center
-                metadata: { caseId, caseType }
-            });
+                titleAr: `سداد شحن: ${caseType === 'return' ? 'طلب إرجاع' : 'نزاع'} #${updatedCase.orderId}`,
+                titleEn: `Shipping Paid: ${caseType === 'return' ? 'Return' : 'Dispute'} #${updatedCase.orderId}`,
+                messageAr: `قام ${updatedCase.shippingPayee === 'MERCHANT' ? 'التاجر' : 'العميل'} بسداد تكلفة الشحن بقيمة ${updatedCase.shippingRefund} درهم.`,
+                messageEn: `${updatedCase.shippingPayee === 'MERCHANT' ? 'Merchant' : 'Customer'} paid AED ${updatedCase.shippingRefund} for shipping.`,
+                link: 'resolution',
+                metadata: { caseId, caseType },
+            })
+            .catch(() => {});
 
-            return updatedCase;
-        });
+        return updatedCase;
     }
 
     /**
