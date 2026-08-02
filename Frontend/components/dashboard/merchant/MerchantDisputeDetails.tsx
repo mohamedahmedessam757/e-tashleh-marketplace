@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   AlertTriangle, Clock, ChevronRight, ChevronLeft, FileText, 
   UploadCloud, Send, ShieldCheck, User, MessageSquare, Scale, CheckCircle2, X,
-  FileIcon, FileImage, FileStack, Trash2, Gavel, History
+  FileIcon, FileImage, FileStack, Trash2, Gavel, History, Search, ExternalLink
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
@@ -14,6 +14,19 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
+
+function isImageEvidenceUrl(url: string): boolean {
+  const raw = String(url || '').trim();
+  if (!raw) return false;
+  if (raw.startsWith('data:image/')) return true;
+  if (raw.startsWith('blob:')) return true;
+  const clean = raw.split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(clean)) return true;
+  // Explicit non-image documents
+  if (/\.(pdf|doc|docx|xls|xlsx|zip|rar|txt|csv)$/i.test(clean)) return false;
+  // Signed storage URLs often omit extensions — treat as image (typical customer evidence)
+  return true;
+}
 
 interface MerchantDisputeDetailsProps {
   caseId: string;
@@ -44,6 +57,17 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [previewEvidence, setPreviewEvidence] = useState<{ url: string; isImage: boolean } | null>(null);
+
+  const openEvidence = (url: string) => {
+    if (!url) return;
+    if (isImageEvidenceUrl(url)) {
+      setPreviewEvidence({ url, isImage: true });
+      return;
+    }
+    // Non-image files (PDF/docs): open safely in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const calcTimeLeft = (deadlineStr: string) => {
     const diff = new Date(deadlineStr).getTime() - new Date().getTime();
@@ -239,18 +263,40 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                  <span className="text-xs text-white/40 uppercase tracking-wider">{isAr ? 'الأدلة المرفقة' : 'Attached Evidence'}</span>
                   <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
                      {dispute.customerEvidence && dispute.customerEvidence.length > 0 ? (
-                        dispute.customerEvidence.map((url, i) => (
-                           <div key={i} className="w-32 h-32 rounded-2xl bg-black/40 border border-white/10 overflow-hidden shrink-0 group/img relative">
-                              <img 
-                                 src={url} 
-                                 alt={`Evidence ${i+1}`} 
-                                 className="w-full h-full object-cover opacity-60 group-hover/img:opacity-100 transition-all duration-500" 
-                              />
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-all cursor-pointer">
-                                 <FileText className="text-white" size={24} />
-                              </div>
-                           </div>
-                        ))
+                        dispute.customerEvidence.map((url, i) => {
+                           const isImage = isImageEvidenceUrl(url);
+                           return (
+                              <button
+                                 key={i}
+                                 type="button"
+                                 onClick={() => openEvidence(url)}
+                                 className="w-32 h-32 rounded-2xl bg-black/40 border border-white/10 overflow-hidden shrink-0 group/img relative cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-gold-500/50"
+                                 title={isAr ? (isImage ? 'تكبير الصورة' : 'فتح الملف') : (isImage ? 'Enlarge image' : 'Open file')}
+                              >
+                                 {isImage ? (
+                                    <img
+                                       src={url}
+                                       alt={`Evidence ${i + 1}`}
+                                       className="w-full h-full object-cover opacity-70 group-hover/img:opacity-100 transition-all duration-500"
+                                    />
+                                 ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-white/50">
+                                       <FileText size={28} />
+                                       <span className="text-[9px] font-bold uppercase tracking-wider">
+                                          {isAr ? 'ملف' : 'File'}
+                                       </span>
+                                    </div>
+                                 )}
+                                 <div className="absolute inset-0 bg-black/55 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-all">
+                                    {isImage ? (
+                                       <Search className="text-white" size={22} />
+                                    ) : (
+                                       <ExternalLink className="text-white" size={22} />
+                                    )}
+                                 </div>
+                              </button>
+                           );
+                        })
                      ) : (
                         <div className="w-full py-8 bg-white/5 rounded-2xl border border-dashed border-white/10 flex flex-col items-center justify-center gap-2 opacity-30">
                            <X size={24} />
@@ -440,7 +486,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                        </div>
                     </div>
 
-                     {/* Dynamic Decision Warnings (Phase 2) */}
+                     {/* Dynamic Decision Warnings — same RTL layout for approve & reject */}
                      <AnimatePresence mode="wait">
                         {decision === 'APPROVE' && (
                            <motion.div
@@ -450,15 +496,18 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                               exit={{ opacity: 0, height: 0 }}
                               className="overflow-hidden"
                            >
-                              <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20 flex gap-3 text-left mb-4">
+                              <div
+                                 dir={isAr ? 'rtl' : 'ltr'}
+                                 className="p-4 rounded-xl bg-green-500/5 border border-green-500/20 flex gap-3 mb-4"
+                              >
                                  <AlertTriangle size={18} className="text-green-500 shrink-0 mt-0.5" />
-                                 <div className="flex-1">
+                                 <div className={`flex-1 min-w-0 ${isAr ? 'text-right' : 'text-left'}`}>
                                     <h5 className="text-[11px] font-bold text-green-500 mb-1">
                                        {isAr ? 'ماذا سيحدث الآن؟' : 'What happens next?'}
                                     </h5>
                                     <p className="text-[10px] text-white/60 leading-relaxed">
-                                       {isAr 
-                                         ? 'بمجرد الموافقة، سنقوم بإصدار بوليصة شحن للعميل آلياً. بعد استلامك للمنتج وفحصه، يمكنك تأكيد استرداد الأموال للعميل.' 
+                                       {isAr
+                                         ? 'بمجرد الموافقة، سنقوم بإصدار بوليصة شحن للعميل آلياً. بعد استلامك للمنتج وفحصه، يمكنك تأكيد استرداد الأموال للعميل.'
                                          : 'Upon approval, a return waybill will be automatically generated for the customer. Once you receive and inspect the item, you can confirm the final refund.'}
                                     </p>
                                  </div>
@@ -474,15 +523,18 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                               exit={{ opacity: 0, height: 0 }}
                               className="overflow-hidden"
                            >
-                              <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 flex gap-3 text-left mb-4">
+                              <div
+                                 dir={isAr ? 'rtl' : 'ltr'}
+                                 className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 flex gap-3 mb-4"
+                              >
                                  <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
-                                 <div className="flex-1">
-                                    <h5 className={`text-[11px] font-bold text-red-500 mb-1 ${isAr ? 'text-right' : 'text-left'}`}>
-                                       {isAr ? 'تنبيه هـام' : 'Important Note'}
+                                 <div className={`flex-1 min-w-0 ${isAr ? 'text-right' : 'text-left'}`}>
+                                    <h5 className="text-[11px] font-bold text-red-500 mb-1">
+                                       {isAr ? 'تنبيه هام' : 'Important Note'}
                                     </h5>
-                                    <p className={`text-[10px] text-white/60 leading-relaxed ${isAr ? 'text-right' : 'text-left'}`}>
-                                       {isAr 
-                                         ? 'يجب كتابة سبب الرفض بوضوح وإرفاق الأدلة اللازمة. قد يقوم العميل بطلب "تصعيد" القضية للإدارة للمراجعة النهائية في حال عدم الاقتناع بالسبب.' 
+                                    <p className="text-[10px] text-white/60 leading-relaxed">
+                                       {isAr
+                                         ? 'يجب كتابة سبب الرفض بوضوح وإرفاق الأدلة اللازمة. قد يقوم العميل بطلب "تصعيد" القضية للإدارة للمراجعة النهائية في حال عدم الاقتناع بالسبب.'
                                          : 'A clear reason for rejection and supporting evidence must be provided. The customer may escalate the case to administration for final review if the reason is unsatisfactory.'}
                                     </p>
                                  </div>
@@ -647,6 +699,38 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                   </div>
                </motion.div>
             </div>
+         )}
+      </AnimatePresence>
+
+      {/* Evidence lightbox — images enlarge; non-images open in new tab */}
+      <AnimatePresence>
+         {previewEvidence?.isImage && (
+            <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               onClick={() => setPreviewEvidence(null)}
+               className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl"
+            >
+               <motion.button
+                  type="button"
+                  className="absolute top-8 right-8 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/10"
+                  whileHover={{ rotate: 90 }}
+                  onClick={() => setPreviewEvidence(null)}
+                  aria-label={isAr ? 'إغلاق' : 'Close'}
+               >
+                  <X size={24} />
+               </motion.button>
+               <motion.img
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  src={previewEvidence.url}
+                  alt={isAr ? 'دليل مكبر' : 'Evidence fullscreen'}
+                  className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl border border-white/10 object-contain"
+                  onClick={(e) => e.stopPropagation()}
+               />
+            </motion.div>
          )}
       </AnimatePresence>
     </div>
