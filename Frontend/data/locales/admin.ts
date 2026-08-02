@@ -653,7 +653,9 @@ export const admin = {
         merchantDebitShipping: 'شحن ذهاباً وإياباً (خصم من التاجر)',
         shippingCompanyLiability: 'مسؤولية شركة الشحن (تسوية لاحقة)',
         merchantBalanceCheck: 'رصيد المتجر (رسوم + شحن)',
-        merchantInsufficientBalance: 'تنبيه: رصيد المتجر غير كافٍ. سيُخصم بالسالب.',
+        merchantInsufficientBalance: 'الرصيد غير كافٍ — سيتم طلب الدفع عبر Stripe بعد تنفيذ الحكم',
+        collectionMethodLabel: 'طريقة التحصيل المتوقعة لرسوم الحكم',
+        step1FinancialSummary: 'ملخص مالي قبل التنفيذ',
         merchantDebitLabel: 'خصم من التاجر',
         customerNetRefundLabel: 'صافي مسترد للعميل'
       }
@@ -2157,7 +2159,9 @@ export const admin = {
         merchantDebitShipping: 'Round-trip shipping (merchant debit)',
         shippingCompanyLiability: 'Shipping company liability (pending settlement)',
         merchantBalanceCheck: 'Merchant balance (fees + shipping)',
-        merchantInsufficientBalance: 'Warning: insufficient merchant balance. Balance may go negative.',
+        merchantInsufficientBalance: 'Insufficient balance — Stripe payment will be requested after verdict execution',
+        collectionMethodLabel: 'Expected adjudication fee collection',
+        step1FinancialSummary: 'Financial summary before execute',
         merchantDebitLabel: 'Debited from merchant',
         customerNetRefundLabel: 'Net refunded to customer'
       }

@@ -372,14 +372,22 @@ export class StripeService {
     }): Promise<any> {
         const amountCents = Math.round(parseFloat(params.amount) * 100);
 
+        const isAdjFee = params.metadata?.isAdjudicationFeePayment === 'true';
+        const productName = isAdjFee
+            ? `Adjudication Fee - Order #${params.metadata.orderNumber || 'N/A'}`
+            : `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`;
+        const productDescription = isAdjFee
+            ? `Platform adjudication fees for ${params.metadata.caseType} #${params.metadata.caseId}`
+            : `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`;
+
         return await this.stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
                     currency: params.currency,
                     product_data: {
-                        name: `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`,
-                        description: `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`,
+                        name: productName,
+                        description: productDescription,
                     },
                     unit_amount: amountCents,
                 },

@@ -1483,6 +1483,9 @@ export class ReturnsService {
         }) | null = null;
 
         let adjudicationOrderAmount = 0;
+        /** Set during TX when merchant fees must be collected via Stripe later */
+        let pendingAdjudicationFee: { amount: number; payee: 'MERCHANT' } | null = null;
+
         if (verdict === 'REFUND' && extra) {
             adjudicationOrderAmount = await this.resolveAdjudicationOrderAmount(
                 caseRecord.orderId,
@@ -1493,29 +1496,7 @@ export class ReturnsService {
                 extra,
                 isCloseCompleteRefund,
             );
-            if (refundFinancials.customerStripeRefund > 0) {
-                const faultLower = String(extra.faultParty || '').toUpperCase();
-                const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
-                const refundReason = isCloseCompleteRefund
-                    ? notes || 'إغلاق الطلب كمنتهٍ مع استرداد صافي المبلغ للعميل'
-                    : notes || 'Administrative Refund';
-                const offerPaymentBase = caseRecord.offerId
-                    ? await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId)
-                    : null;
-                stripeRefundCtx = await this.escrowService.executeStripeRefundOnly(
-                    caseRecord.orderId,
-                    refundFinancials.customerStripeRefund,
-                    refundReason,
-                    isCloseCompleteRefund
-                        ? 'LOGISTICS'
-                        : faultLower === 'SHIPPING_COMPANY'
-                          ? 'LOGISTICS'
-                          : isMerchantFault
-                            ? 'MERCHANT'
-                            : 'CUSTOMER',
-                    offerPaymentBase?.paymentId ?? undefined,
-                );
-            }
+            // Stripe refund runs AFTER DB commit (Phase 3) to avoid orphan refunds
         }
 
         const result = await this.prisma.$transaction(async (tx) => {
@@ -1574,12 +1555,12 @@ export class ReturnsService {
                         updateData.shippingCompanyLiability = fin.shippingCompanyLiability;
                     }
 
-                    const debitMerchantWallet = async (
+                    const debitMerchantWalletOrPending = async (
                         amount: number,
                         transactionType: string,
                         description: string,
-                    ) => {
-                        if (amount <= 0) return null;
+                    ): Promise<'PAID' | 'PENDING'> => {
+                        if (amount <= 0) return 'PAID';
                         const resolvedStore = await this.resolveCaseStore(caseRecord, tx);
                         if (!resolvedStore) {
                             throw new BadRequestException(
@@ -1588,9 +1569,8 @@ export class ReturnsService {
                         }
                         const merchantBalance = Number(resolvedStore.balance || 0);
                         if (merchantBalance < amount) {
-                            throw new BadRequestException(
-                                'رصيد المتجر غير كافٍ لخصم رسوم الحكم.',
-                            );
+                            // Do not block verdict — collect via Stripe checkout instead
+                            return 'PENDING';
                         }
                         await tx.store.update({
                             where: { id: resolvedStore.id },
@@ -1613,7 +1593,7 @@ export class ReturnsService {
                                 },
                             },
                         });
-                        return merchantBalance;
+                        return 'PAID';
                     };
 
                     // Round-trip shipping: merchant must pay explicitly (Stripe / wallet UI) — never auto-mark PAID at verdict
@@ -1626,22 +1606,34 @@ export class ReturnsService {
                         updateData.shippingPaymentStatus = 'PENDING';
                     }
 
-                    // Merchant platform fee debit (gateway + refund fees)
+                    // Merchant platform fee: wallet if enough, else PENDING Stripe obligation
                     if (fin.merchantWalletDebits.platformFees > 0 && fin.feeBearer === 'MERCHANT') {
-                        await debitMerchantWallet(
+                        const feeOutcome = await debitMerchantWalletOrPending(
                             fin.merchantWalletDebits.platformFees,
                             'ADJUDICATION_FEE',
                             `Adjudication platform fees for Case #${caseId.substring(0, 8)}`,
                         );
-                        const platformWallet = await tx.platformWallet.findFirst();
-                        if (platformWallet) {
-                            await tx.platformWallet.update({
-                                where: { id: platformWallet.id },
-                                data: {
-                                    feesBalance: { increment: fin.platformRetainedAmount },
-                                    totalRevenue: { increment: fin.platformRetainedAmount },
-                                },
-                            });
+                        updateData.adjudicationFeeAmount = fin.merchantWalletDebits.platformFees;
+                        updateData.adjudicationFeePayee = 'MERCHANT';
+                        if (feeOutcome === 'PAID') {
+                            updateData.adjudicationFeePaymentStatus = 'PAID';
+                            updateData.adjudicationFeePaymentMethod = 'WALLET';
+                            const platformWallet = await tx.platformWallet.findFirst();
+                            if (platformWallet) {
+                                await tx.platformWallet.update({
+                                    where: { id: platformWallet.id },
+                                    data: {
+                                        feesBalance: { increment: fin.platformRetainedAmount },
+                                        totalRevenue: { increment: fin.platformRetainedAmount },
+                                    },
+                                });
+                            }
+                        } else {
+                            updateData.adjudicationFeePaymentStatus = 'PENDING';
+                            pendingAdjudicationFee = {
+                                amount: fin.merchantWalletDebits.platformFees,
+                                payee: 'MERCHANT',
+                            };
                         }
                     }
 
@@ -1651,8 +1643,7 @@ export class ReturnsService {
                     updateData.refundFeeAmount = fin.refundFeeAmount;
                     updateData.shippingRoundtrip = shippingRoundtrip;
                     updateData.netRefundAmount = fin.netRefundAmount;
-                    updateData.refundAmount =
-                        stripeRefundCtx?.refundAmount ?? fin.customerStripeRefund;
+                    updateData.refundAmount = fin.customerStripeRefund;
 
                     if (isCloseCompleteRefund && fin.platformRetainedAmount > 0) {
                         const platformWallet = await tx.platformWallet.findFirst();
@@ -1721,23 +1712,7 @@ export class ReturnsService {
                             },
                         });
                     }
-
-                    if (stripeRefundCtx) {
-                        await this.escrowService.applyRefundDbUpdates(tx, {
-                            ...stripeRefundCtx,
-                            adjudicationLedger: {
-                                caseId,
-                                caseType: type,
-                                faultParty: faultLower,
-                                feeBearer: fin.feeBearer,
-                                grossPaid: adjudicationOrderAmount,
-                                platformFees: fin.platformFeesTotal,
-                                shippingDeducted:
-                                    fin.shippingBearer === 'CUSTOMER' ? shippingRoundtrip : 0,
-                                shippingCompanyLiability: fin.shippingCompanyLiability,
-                            },
-                        });
-                    }
+                    // Stripe refund DB updates applied AFTER commit (see post-TX block)
                 }
 
                 // RELEASE_FUNDS / DENY: Move funds to merchant balance (per-offer escrow)
@@ -1952,14 +1927,14 @@ export class ReturnsService {
                 auditMetadata.merchantWalletDebits = refundFinancials.merchantWalletDebits;
                 auditMetadata.shippingCompanyLiability =
                     refundFinancials.shippingCompanyLiability;
-                if (refundFinancials.refundCapped || stripeRefundCtx?.cappedFrom) {
+                if (refundFinancials.refundCapped) {
                     auditMetadata.refundCapped = true;
-                    auditMetadata.refundCappedFrom =
-                        refundFinancials.refundCappedFrom ?? stripeRefundCtx?.cappedFrom;
+                    auditMetadata.refundCappedFrom = refundFinancials.refundCappedFrom;
                 }
-            }
-            if (stripeRefundCtx?.stripeRefundId) {
-                auditMetadata.stripeRefundId = stripeRefundCtx.stripeRefundId;
+                if (pendingAdjudicationFee) {
+                    auditMetadata.adjudicationFeePending = true;
+                    auditMetadata.adjudicationFeeAmount = pendingAdjudicationFee.amount;
+                }
             }
             if (isCloseCompleteRefund) {
                 auditMetadata.platformRetentionReasonAr =
@@ -1984,6 +1959,73 @@ export class ReturnsService {
 
             return updated;
         }, { timeout: 30000 });
+
+        // Phase 3: Stripe refund AFTER verdict is persisted (prevents orphan refunds)
+        if (verdict === 'REFUND' && refundFinancials && refundFinancials.customerStripeRefund > 0) {
+            try {
+                const faultLower = String(extra?.faultParty || '').toUpperCase();
+                const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
+                const refundReason = isCloseCompleteRefund
+                    ? notes || 'إغلاق الطلب كمنتهٍ مع استرداد صافي المبلغ للعميل'
+                    : notes || 'Administrative Refund';
+                const offerPaymentBase = caseRecord.offerId
+                    ? await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId)
+                    : null;
+                stripeRefundCtx = await this.escrowService.executeStripeRefundOnly(
+                    caseRecord.orderId,
+                    refundFinancials.customerStripeRefund,
+                    refundReason,
+                    isCloseCompleteRefund
+                        ? 'LOGISTICS'
+                        : faultLower === 'SHIPPING_COMPANY'
+                          ? 'LOGISTICS'
+                          : isMerchantFault
+                            ? 'MERCHANT'
+                            : 'CUSTOMER',
+                    offerPaymentBase?.paymentId ?? undefined,
+                );
+                const shippingRoundtrip = Number(extra?.shippingRoundtrip || 0);
+                await this.prisma.$transaction(async (tx) => {
+                    await this.escrowService.applyRefundDbUpdates(tx, {
+                        ...stripeRefundCtx!,
+                        adjudicationLedger: {
+                            caseId,
+                            caseType: type,
+                            faultParty: faultLower,
+                            feeBearer: refundFinancials!.feeBearer,
+                            grossPaid: adjudicationOrderAmount,
+                            platformFees: refundFinancials!.platformFeesTotal,
+                            shippingDeducted:
+                                refundFinancials!.shippingBearer === 'CUSTOMER'
+                                    ? shippingRoundtrip
+                                    : 0,
+                            shippingCompanyLiability: refundFinancials!.shippingCompanyLiability,
+                        },
+                    });
+                    if (stripeRefundCtx?.refundAmount != null) {
+                        await (tx as any)[type === 'return' ? 'returnRequest' : 'dispute'].update({
+                            where: { id: caseId },
+                            data: { refundAmount: stripeRefundCtx.refundAmount },
+                        });
+                    }
+                });
+            } catch (refundErr: any) {
+                console.error(
+                    `[ADJUDICATION] Verdict saved for ${caseId} but Stripe refund failed:`,
+                    refundErr?.message || refundErr,
+                );
+                await this.notificationsService
+                    .notifyAdmins({
+                        titleAr: 'فشل استرداد Stripe بعد الحكم',
+                        titleEn: 'Stripe refund failed after verdict',
+                        messageAr: `تم حفظ الحكم للقضية #${caseId.substring(0, 8)} لكن فشل استرداد العميل: ${refundErr?.message || 'خطأ غير معروف'}`,
+                        messageEn: `Verdict saved for case #${caseId.substring(0, 8)} but customer refund failed: ${refundErr?.message || 'unknown error'}`,
+                        type: 'system_alert',
+                        link: `/admin/dashboard/admin-dispute-details/${caseId}`,
+                    })
+                    .catch(() => {});
+            }
+        }
 
         if (this.isMultiItemOrder(caseRecord.order) && caseRecord.offerId) {
             await this.offerFulfillment
@@ -2059,6 +2101,15 @@ export class ReturnsService {
                 }
             }
 
+            if (
+                pendingAdjudicationFee &&
+                pendingAdjudicationFee.payee === 'MERCHANT' &&
+                recipient.role === 'MERCHANT'
+            ) {
+                finalMessageAr += `\n\n💳 رسوم الحكم (${pendingAdjudicationFee.amount.toFixed(2)} AED) بانتظار السداد عبر المحفظة أو Stripe لإكمال التسوية.`;
+                finalMessageEn += `\n\n💳 Adjudication fees (${pendingAdjudicationFee.amount.toFixed(2)} AED) are pending — pay via wallet or Stripe to complete settlement.`;
+            }
+
             this.notificationsService.create({
                 recipientId: recipient.id,
                 recipientRole: recipient.role,
@@ -2067,12 +2118,46 @@ export class ReturnsService {
                 messageAr: finalMessageAr,
                 messageEn: finalMessageEn,
                 type: 'DISPUTE',
-                link: recipient.role === 'MERCHANT' ? `orders/${caseRecord.orderId}` : `order-details/${caseRecord.orderId}`,
-                metadata: { caseId: caseId, isPayee, shippingCost }
+                link: recipient.role === 'MERCHANT' ? `dispute-details/${caseId}` : `dispute-details/${caseId}`,
+                metadata: {
+                    caseId,
+                    isPayee,
+                    shippingCost,
+                    adjudicationFeePending: Boolean(pendingAdjudicationFee),
+                    adjudicationFeeAmount: pendingAdjudicationFee?.amount,
+                    waEvent: 'ORDER_STATUS',
+                },
             }).catch(err => {
                 console.error(`[ASYNC_NOTIFICATION_FAILURE] Failed to notify ${recipient.role} ${recipient.id}: ${err.message}`);
             });
         });
+
+        // Dedicated PENDING adjudication-fee notice (Stripe/wallet collection)
+        if (pendingAdjudicationFee) {
+            const feePayeeRole =
+                pendingAdjudicationFee.payee === 'MERCHANT' ? 'MERCHANT' : 'CUSTOMER';
+            const feeRecipient = recipientList.find((r) => r.role === feePayeeRole);
+            if (feeRecipient) {
+                this.notificationsService
+                    .create({
+                        recipientId: feeRecipient.id,
+                        recipientRole: feeRecipient.role,
+                        titleAr: 'مطلوب سداد رسوم الحكم',
+                        titleEn: 'Adjudication fee payment required',
+                        messageAr: `رسوم الحكم (${pendingAdjudicationFee.amount.toFixed(2)} AED) بانتظار السداد عبر المحفظة أو Stripe. افتح تفاصيل النزاع لإكمال الدفع.`,
+                        messageEn: `Adjudication fees (${pendingAdjudicationFee.amount.toFixed(2)} AED) are pending. Open dispute details to pay via wallet or Stripe.`,
+                        type: 'DISPUTE',
+                        link: `dispute-details/${caseId}`,
+                        metadata: {
+                            caseId,
+                            adjudicationFeePending: true,
+                            adjudicationFeeAmount: pendingAdjudicationFee.amount,
+                            waEvent: 'ORDER_STATUS',
+                        },
+                    })
+                    .catch(() => {});
+            }
+        }
 
         // Audit Log (2026 Administrative Verdict)
         await this.auditLogs.logAction({
@@ -2777,6 +2862,154 @@ export class ReturnsService {
             });
 
             return updatedCase;
+        });
+    }
+
+    /**
+     * Pay pending adjudication platform fees from wallet (merchant or customer payee).
+     * Does not block verdict issuance — only settles a PENDING fee obligation.
+     */
+    async deductAdjudicationFeeFromBalance(
+        userId: string,
+        caseId: string,
+        caseType: 'return' | 'dispute',
+    ) {
+        if (caseType !== 'return' && caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        const modelName = caseType === 'return' ? 'returnRequest' : 'dispute';
+        const caseRecord = await (this.prisma as any)[modelName].findUnique({
+            where: { id: caseId },
+            include: { store: true, order: true },
+        });
+        if (!caseRecord) throw new NotFoundException('Case not found');
+
+        if (caseRecord.adjudicationFeePaymentStatus === 'PAID') {
+            throw new BadRequestException('Adjudication fee already paid');
+        }
+        if (caseRecord.adjudicationFeePaymentStatus !== 'PENDING') {
+            throw new BadRequestException('No pending adjudication fee for this case');
+        }
+
+        const amount = Number(caseRecord.adjudicationFeeAmount || 0);
+        if (!(amount > 0) || !Number.isFinite(amount)) {
+            throw new BadRequestException('No adjudication fee amount');
+        }
+
+        const payee = String(caseRecord.adjudicationFeePayee || '').toUpperCase();
+        if (payee === 'MERCHANT') {
+            const store = caseRecord.storeId
+                ? await this.prisma.store.findUnique({ where: { id: caseRecord.storeId } })
+                : null;
+            if (!store || store.ownerId !== userId) {
+                throw new ForbiddenException('You are not the merchant assigned to this fee');
+            }
+        } else if (payee === 'CUSTOMER') {
+            if (caseRecord.customerId !== userId) {
+                throw new ForbiddenException('You are not the customer assigned to this fee');
+            }
+        } else {
+            throw new BadRequestException('No adjudication fee payee assigned');
+        }
+
+        return await this.prisma.$transaction(async (tx) => {
+            // Claim PENDING first so concurrent Stripe webhook / double-click cannot double-settle
+            const claimed = await (tx as any)[modelName].updateMany({
+                where: { id: caseId, adjudicationFeePaymentStatus: 'PENDING' },
+                data: {
+                    adjudicationFeePaymentStatus: 'PAID',
+                    adjudicationFeePaymentMethod: 'WALLET',
+                    updatedAt: new Date(),
+                },
+            });
+            if (claimed.count === 0) {
+                throw new BadRequestException('Adjudication fee already paid');
+            }
+
+            let balanceAfter = 0;
+            try {
+                if (payee === 'MERCHANT') {
+                    const store = await tx.store.findUnique({ where: { id: caseRecord.storeId } });
+                    if (!store) throw new NotFoundException('Store not found');
+                    if (Number(store.balance) < amount) {
+                        throw new BadRequestException(
+                            'Insufficient store balance — please pay via Stripe',
+                        );
+                    }
+                    await tx.store.update({
+                        where: { id: store.id },
+                        data: { balance: { decrement: amount } },
+                    });
+                    balanceAfter = Number(store.balance) - amount;
+                } else {
+                    const user = await tx.user.findUnique({ where: { id: caseRecord.customerId } });
+                    if (!user) throw new NotFoundException('User not found');
+                    if (Number(user.customerBalance) < amount) {
+                        throw new BadRequestException(
+                            'Insufficient rewards balance — please pay via Stripe',
+                        );
+                    }
+                    await tx.user.update({
+                        where: { id: user.id },
+                        data: { customerBalance: { decrement: amount } },
+                    });
+                    balanceAfter = Number(user.customerBalance) - amount;
+                }
+            } catch (err) {
+                // Release claim so the payee can retry via wallet/Stripe
+                await (tx as any)[modelName].update({
+                    where: { id: caseId },
+                    data: {
+                        adjudicationFeePaymentStatus: 'PENDING',
+                        adjudicationFeePaymentMethod: null,
+                        updatedAt: new Date(),
+                    },
+                });
+                throw err;
+            }
+
+            await tx.walletTransaction.create({
+                data: {
+                    userId,
+                    role: payee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
+                    type: 'DEBIT',
+                    transactionType: 'ADJUDICATION_FEE',
+                    amount,
+                    currency: 'AED',
+                    description: `Adjudication platform fees for ${caseType} #${caseId.substring(0, 8)} (Wallet)`,
+                    balanceAfter,
+                    metadata: { caseId, caseType, paymentMethod: 'WALLET' },
+                },
+            });
+
+            const platformWallet = await tx.platformWallet.findFirst();
+            if (platformWallet) {
+                await tx.platformWallet.update({
+                    where: { id: platformWallet.id },
+                    data: {
+                        feesBalance: { increment: amount },
+                        totalRevenue: { increment: amount },
+                    },
+                });
+            }
+
+            const updated = await (tx as any)[modelName].findUnique({ where: { id: caseId } });
+
+            await this.notificationsService
+                .create({
+                    recipientId: userId,
+                    recipientRole: payee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
+                    type: 'ORDER',
+                    titleAr: 'تم سداد رسوم الحكم',
+                    titleEn: 'Adjudication fee paid',
+                    messageAr: `تم خصم ${amount.toFixed(2)} AED رسوم الحكم من محفظتك.`,
+                    messageEn: `Adjudication fees of ${amount.toFixed(2)} AED were deducted from your wallet.`,
+                    link: `dispute-details/${caseId}`,
+                    metadata: { caseId, caseType, waEvent: 'ORDER_STATUS' },
+                })
+                .catch(() => {});
+
+            return updated;
         });
     }
 }

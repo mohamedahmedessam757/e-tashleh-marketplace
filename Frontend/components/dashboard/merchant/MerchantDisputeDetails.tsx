@@ -12,6 +12,7 @@ import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
+import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
@@ -39,13 +40,15 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
   const isAr = language === 'ar';
   const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
   
-  const { getCaseById, respondToCase, escalateCase, fetchMerchantCases } = useResolutionStore();
+  const { getCaseById, respondToCase, escalateCase, fetchMerchantCases, subscribeToCases, unsubscribeFromCases } = useResolutionStore();
   const { addNotification } = useNotificationStore();
   const dispute = getCaseById(caseId);
 
   useEffect(() => {
     fetchMerchantCases(true);
-  }, [caseId, fetchMerchantCases]);
+    subscribeToCases('merchant');
+    return () => unsubscribeFromCases();
+  }, [caseId, fetchMerchantCases, subscribeToCases, unsubscribeFromCases]);
 
   useShippingPaymentReturn(true, 'merchant');
 
@@ -318,7 +321,18 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
         </div>
 
         {/* RIGHT: Merchant Response Form */}
-        <div className="relative">
+        <div className="relative space-y-6">
+           {/* Always visible when PENDING — not nested under adminApproval panel only */}
+           {dispute.adjudicationFeePayee === 'MERCHANT' &&
+              (dispute.adjudicationFeePaymentStatus === 'PENDING' ||
+                  dispute.adjudicationFeePaymentStatus === 'PAID') &&
+              Number(dispute.adjudicationFeeAmount || 0) > 0 && (
+              <AdjudicationFeePaymentCard
+                 caseRecord={dispute as any}
+                 role="MERCHANT"
+                 onSuccess={() => useResolutionStore.getState().fetchMerchantCases(true)}
+              />
+           )}
            {dispute.adminApproval ? (
               <GlassCard className="h-full bg-black/40 border-gold-500/20 relative overflow-hidden flex flex-col">
                  {/* 2026 Admin Verdict Header */}

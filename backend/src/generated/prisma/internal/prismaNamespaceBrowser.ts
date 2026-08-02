@@ -610,6 +610,11 @@ export const ReturnRequestScalarFieldEnum = {
   shippingPaymentMethod: 'shippingPaymentMethod',
   shippingStripeId: 'shippingStripeId',
   isAttachmentsEnabled: 'isAttachmentsEnabled',
+  adjudicationFeeAmount: 'adjudicationFeeAmount',
+  adjudicationFeePayee: 'adjudicationFeePayee',
+  adjudicationFeePaymentStatus: 'adjudicationFeePaymentStatus',
+  adjudicationFeePaymentMethod: 'adjudicationFeePaymentMethod',
+  adjudicationFeeStripeId: 'adjudicationFeeStripeId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -654,6 +659,11 @@ export const DisputeScalarFieldEnum = {
   shippingPaymentMethod: 'shippingPaymentMethod',
   shippingStripeId: 'shippingStripeId',
   isAttachmentsEnabled: 'isAttachmentsEnabled',
+  adjudicationFeeAmount: 'adjudicationFeeAmount',
+  adjudicationFeePayee: 'adjudicationFeePayee',
+  adjudicationFeePaymentStatus: 'adjudicationFeePaymentStatus',
+  adjudicationFeePaymentMethod: 'adjudicationFeePaymentMethod',
+  adjudicationFeeStripeId: 'adjudicationFeeStripeId',
   verdictNotes: 'verdictNotes',
   adminApproval: 'adminApproval',
   adminApprovalReason: 'adminApprovalReason',

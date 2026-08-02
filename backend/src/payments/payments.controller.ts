@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Query, Param, Put, ForbiddenException, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Query, Param, Put, ForbiddenException, BadRequestException, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -50,6 +50,26 @@ export class PaymentsController {
     @Post('shipping-checkout')
     createShippingCheckoutSession(@Request() req, @Body() body: { caseId: string; caseType: 'return' | 'dispute'; frontendUrl?: string }) {
         return this.paymentsService.createShippingCheckoutSession(req.user.id, body.caseId, body.caseType, body.frontendUrl);
+    }
+
+    @Post('adjudication-fee-checkout')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
+    createAdjudicationFeeCheckoutSession(
+        @Request() req,
+        @Body() body: { caseId: string; caseType: 'return' | 'dispute'; frontendUrl?: string },
+    ) {
+        if (!body?.caseId || !body?.caseType) {
+            throw new BadRequestException('Case ID and Case Type are required');
+        }
+        if (body.caseType !== 'return' && body.caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        return this.paymentsService.createAdjudicationFeeCheckoutSession(
+            req.user.id,
+            body.caseId,
+            body.caseType,
+            body.frontendUrl,
+        );
     }
 
     @Get('pending')

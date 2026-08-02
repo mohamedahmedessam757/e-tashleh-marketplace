@@ -165,7 +165,15 @@ export const merchant = {
       wallet_remaining: 'الرصيد بعد الخصم',
       confirm_deduction: 'تأكيد عملية الخصم',
       cancel: 'إلغاء',
-      amount_due: 'المبلغ المطلوب'
+      amount_due: 'المبلغ المطلوب',
+      adj_fee_title: 'رسوم الحكم الإداري',
+      adj_fee_paid: 'مدفوع',
+      adj_fee_success: 'تم سداد رسوم الحكم',
+      adj_fee_success_msg: 'تم خصم رسوم الحكم من محفظتك.',
+      adj_fee_paid_msg: 'تم سداد رسوم الحكم بنجاح.',
+      adj_fee_payee_msg: 'بناءً على الحكم، أنت ملزم بسداد رسوم المنصة عبر المحفظة أو Stripe.',
+      adj_fee_other_msg: 'الطرف الملزم بسداد رسوم الحكم لم يُكمل الدفع بعد.',
+      adj_fee_warning: 'الرصيد غير كافٍ وقت الحكم — يرجى السداد عبر Stripe أو شحن المحفظة ثم الخصم.',
     },
     kpi: {
       title: 'مؤشرات الأداء (KPIs)',
@@ -934,7 +942,15 @@ export const merchant = {
       wallet_remaining: 'Projected Balance',
       confirm_deduction: 'Confirm Deduction',
       cancel: 'Cancel',
-      amount_due: 'AMOUNT DUE'
+      amount_due: 'AMOUNT DUE',
+      adj_fee_title: 'Adjudication Fees',
+      adj_fee_paid: 'PAID',
+      adj_fee_success: 'Adjudication fee paid',
+      adj_fee_success_msg: 'Adjudication fees deducted from your wallet.',
+      adj_fee_paid_msg: 'Adjudication fees have been settled.',
+      adj_fee_payee_msg: 'Per the verdict, you must pay platform adjudication fees via wallet or Stripe.',
+      adj_fee_other_msg: 'The obligated party has not completed adjudication fee payment yet.',
+      adj_fee_warning: 'Balance was insufficient at verdict — please pay via Stripe or top up your wallet then deduct.',
     },
     kpi: {
       title: 'Performance Indicators (KPIs)',

@@ -41,6 +41,7 @@ import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { useResolutionStore } from '../../stores/useResolutionStore';
 import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
+import { AdjudicationFeePaymentCard } from './resolution/AdjudicationFeePaymentCard';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
 import { getOrderReview, resolveReviewTarget } from '../../utils/reviewHelpers';
@@ -340,6 +341,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         c.orderId === orderId && 
         c.shippingPaymentStatus === 'PENDING' && 
         !['RESOLVED', 'CLOSED', 'CANCELLED'].includes(c.status)
+    );
+
+    const activeAdjudicationFeeCase = cases.find(
+        (c) =>
+            c.orderId === orderId &&
+            c.adjudicationFeePayee === 'CUSTOMER' &&
+            Number(c.adjudicationFeeAmount || 0) > 0 &&
+            (c.adjudicationFeePaymentStatus === 'PENDING' ||
+                c.adjudicationFeePaymentStatus === 'PAID'),
     );
 
     const openResolutionCase = cases.find(
@@ -1242,6 +1252,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         <ShippingPaymentCard 
                             caseRecord={activeShippingCase} 
                             role="CUSTOMER" 
+                            onSuccess={() => fetchCases('customer')}
+                        />
+                    )}
+                    {activeAdjudicationFeeCase && (
+                        <AdjudicationFeePaymentCard
+                            caseRecord={activeAdjudicationFeeCase}
+                            role="CUSTOMER"
                             onSuccess={() => fetchCases('customer')}
                         />
                     )}

@@ -38,6 +38,7 @@ export type DisputeAvgAggregateOutputType = {
   penaltyAmount: runtime.Decimal | null
   netRefundAmount: runtime.Decimal | null
   shippingCompanyLiability: runtime.Decimal | null
+  adjudicationFeeAmount: runtime.Decimal | null
 }
 
 export type DisputeSumAggregateOutputType = {
@@ -52,6 +53,7 @@ export type DisputeSumAggregateOutputType = {
   penaltyAmount: runtime.Decimal | null
   netRefundAmount: runtime.Decimal | null
   shippingCompanyLiability: runtime.Decimal | null
+  adjudicationFeeAmount: runtime.Decimal | null
 }
 
 export type DisputeMinAggregateOutputType = {
@@ -89,6 +91,11 @@ export type DisputeMinAggregateOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean | null
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string | null
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   verdictNotes: string | null
   adminApproval: string | null
   adminApprovalReason: string | null
@@ -136,6 +143,11 @@ export type DisputeMaxAggregateOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean | null
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string | null
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   verdictNotes: string | null
   adminApproval: string | null
   adminApprovalReason: string | null
@@ -185,6 +197,11 @@ export type DisputeCountAggregateOutputType = {
   shippingPaymentMethod: number
   shippingStripeId: number
   isAttachmentsEnabled: number
+  adjudicationFeeAmount: number
+  adjudicationFeePayee: number
+  adjudicationFeePaymentStatus: number
+  adjudicationFeePaymentMethod: number
+  adjudicationFeeStripeId: number
   verdictNotes: number
   adminApproval: number
   adminApprovalReason: number
@@ -212,6 +229,7 @@ export type DisputeAvgAggregateInputType = {
   penaltyAmount?: true
   netRefundAmount?: true
   shippingCompanyLiability?: true
+  adjudicationFeeAmount?: true
 }
 
 export type DisputeSumAggregateInputType = {
@@ -226,6 +244,7 @@ export type DisputeSumAggregateInputType = {
   penaltyAmount?: true
   netRefundAmount?: true
   shippingCompanyLiability?: true
+  adjudicationFeeAmount?: true
 }
 
 export type DisputeMinAggregateInputType = {
@@ -263,6 +282,11 @@ export type DisputeMinAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   verdictNotes?: true
   adminApproval?: true
   adminApprovalReason?: true
@@ -310,6 +334,11 @@ export type DisputeMaxAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   verdictNotes?: true
   adminApproval?: true
   adminApprovalReason?: true
@@ -359,6 +388,11 @@ export type DisputeCountAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   verdictNotes?: true
   adminApproval?: true
   adminApprovalReason?: true
@@ -496,6 +530,11 @@ export type DisputeGroupByOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   verdictNotes: string | null
   adminApproval: string | null
   adminApprovalReason: string | null
@@ -569,6 +608,11 @@ export type DisputeWhereInput = {
   shippingPaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"Dispute"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"Dispute"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"Dispute"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   verdictNotes?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApproval?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApprovalReason?: Prisma.StringNullableFilter<"Dispute"> | string | null
@@ -623,6 +667,11 @@ export type DisputeOrderByWithRelationInput = {
   shippingPaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   verdictNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   adminApproval?: Prisma.SortOrderInput | Prisma.SortOrder
   adminApprovalReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -680,6 +729,11 @@ export type DisputeWhereUniqueInput = Prisma.AtLeast<{
   shippingPaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"Dispute"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"Dispute"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"Dispute"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   verdictNotes?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApproval?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApprovalReason?: Prisma.StringNullableFilter<"Dispute"> | string | null
@@ -734,6 +788,11 @@ export type DisputeOrderByWithAggregationInput = {
   shippingPaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   verdictNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   adminApproval?: Prisma.SortOrderInput | Prisma.SortOrder
   adminApprovalReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -792,6 +851,11 @@ export type DisputeScalarWhereWithAggregatesInput = {
   shippingPaymentMethod?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   shippingStripeId?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   isAttachmentsEnabled?: Prisma.BoolWithAggregatesFilter<"Dispute"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableWithAggregatesFilter<"Dispute"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringWithAggregatesFilter<"Dispute"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   verdictNotes?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   adminApproval?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
   adminApprovalReason?: Prisma.StringNullableWithAggregatesFilter<"Dispute"> | string | null
@@ -838,6 +902,11 @@ export type DisputeCreateInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -892,6 +961,11 @@ export type DisputeUncheckedCreateInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -938,6 +1012,11 @@ export type DisputeUpdateInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -992,6 +1071,11 @@ export type DisputeUncheckedUpdateInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1042,6 +1126,11 @@ export type DisputeCreateManyInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1088,6 +1177,11 @@ export type DisputeUpdateManyMutationInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1138,6 +1232,11 @@ export type DisputeUncheckedUpdateManyInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1198,6 +1297,11 @@ export type DisputeCountOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   verdictNotes?: Prisma.SortOrder
   adminApproval?: Prisma.SortOrder
   adminApprovalReason?: Prisma.SortOrder
@@ -1223,6 +1327,7 @@ export type DisputeAvgOrderByAggregateInput = {
   penaltyAmount?: Prisma.SortOrder
   netRefundAmount?: Prisma.SortOrder
   shippingCompanyLiability?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
 }
 
 export type DisputeMaxOrderByAggregateInput = {
@@ -1260,6 +1365,11 @@ export type DisputeMaxOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   verdictNotes?: Prisma.SortOrder
   adminApproval?: Prisma.SortOrder
   adminApprovalReason?: Prisma.SortOrder
@@ -1307,6 +1417,11 @@ export type DisputeMinOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   verdictNotes?: Prisma.SortOrder
   adminApproval?: Prisma.SortOrder
   adminApprovalReason?: Prisma.SortOrder
@@ -1331,6 +1446,7 @@ export type DisputeSumOrderByAggregateInput = {
   penaltyAmount?: Prisma.SortOrder
   netRefundAmount?: Prisma.SortOrder
   shippingCompanyLiability?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
 }
 
 export type DisputeCreateNestedManyWithoutCustomerInput = {
@@ -1534,6 +1650,11 @@ export type DisputeCreateWithoutCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1586,6 +1707,11 @@ export type DisputeUncheckedCreateWithoutCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1665,6 +1791,11 @@ export type DisputeScalarWhereInput = {
   shippingPaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"Dispute"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"Dispute"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"Dispute"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"Dispute"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"Dispute"> | string | null
   verdictNotes?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApproval?: Prisma.StringNullableFilter<"Dispute"> | string | null
   adminApprovalReason?: Prisma.StringNullableFilter<"Dispute"> | string | null
@@ -1711,6 +1842,11 @@ export type DisputeCreateWithoutStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1763,6 +1899,11 @@ export type DisputeUncheckedCreateWithoutStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1835,6 +1976,11 @@ export type DisputeCreateWithoutOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1887,6 +2033,11 @@ export type DisputeUncheckedCreateWithoutOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -1959,6 +2110,11 @@ export type DisputeCreateWithoutOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2011,6 +2167,11 @@ export type DisputeUncheckedCreateWithoutOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2086,6 +2247,11 @@ export type DisputeCreateManyCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2132,6 +2298,11 @@ export type DisputeUpdateWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2184,6 +2355,11 @@ export type DisputeUncheckedUpdateWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2233,6 +2409,11 @@ export type DisputeUncheckedUpdateManyWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2282,6 +2463,11 @@ export type DisputeCreateManyStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2328,6 +2514,11 @@ export type DisputeUpdateWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2380,6 +2571,11 @@ export type DisputeUncheckedUpdateWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2429,6 +2625,11 @@ export type DisputeUncheckedUpdateManyWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2478,6 +2679,11 @@ export type DisputeCreateManyOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2524,6 +2730,11 @@ export type DisputeUpdateWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2576,6 +2787,11 @@ export type DisputeUncheckedUpdateWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2625,6 +2841,11 @@ export type DisputeUncheckedUpdateManyWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2674,6 +2895,11 @@ export type DisputeCreateManyOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   verdictNotes?: string | null
   adminApproval?: string | null
   adminApprovalReason?: string | null
@@ -2720,6 +2946,11 @@ export type DisputeUpdateWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2772,6 +3003,11 @@ export type DisputeUncheckedUpdateWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2821,6 +3057,11 @@ export type DisputeUncheckedUpdateManyWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verdictNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApproval?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   adminApprovalReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2873,6 +3114,11 @@ export type DisputeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   verdictNotes?: boolean
   adminApproval?: boolean
   adminApprovalReason?: boolean
@@ -2927,6 +3173,11 @@ export type DisputeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   verdictNotes?: boolean
   adminApproval?: boolean
   adminApprovalReason?: boolean
@@ -2981,6 +3232,11 @@ export type DisputeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   verdictNotes?: boolean
   adminApproval?: boolean
   adminApprovalReason?: boolean
@@ -3035,6 +3291,11 @@ export type DisputeSelectScalar = {
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   verdictNotes?: boolean
   adminApproval?: boolean
   adminApprovalReason?: boolean
@@ -3048,7 +3309,7 @@ export type DisputeSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DisputeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "storeId" | "invoiceId" | "shipmentId" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "createdAt" | "updatedAt", ExtArgs["result"]["dispute"]>
+export type DisputeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "storeId" | "invoiceId" | "shipmentId" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "adjudicationFeeAmount" | "adjudicationFeePayee" | "adjudicationFeePaymentStatus" | "adjudicationFeePaymentMethod" | "adjudicationFeeStripeId" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "createdAt" | "updatedAt", ExtArgs["result"]["dispute"]>
 export type DisputeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -3113,6 +3374,11 @@ export type $DisputePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     shippingPaymentMethod: string | null
     shippingStripeId: string | null
     isAttachmentsEnabled: boolean
+    adjudicationFeeAmount: runtime.Decimal | null
+    adjudicationFeePayee: string | null
+    adjudicationFeePaymentStatus: string
+    adjudicationFeePaymentMethod: string | null
+    adjudicationFeeStripeId: string | null
     verdictNotes: string | null
     adminApproval: string | null
     adminApprovalReason: string | null
@@ -3587,6 +3853,11 @@ export interface DisputeFieldRefs {
   readonly shippingPaymentMethod: Prisma.FieldRef<"Dispute", 'String'>
   readonly shippingStripeId: Prisma.FieldRef<"Dispute", 'String'>
   readonly isAttachmentsEnabled: Prisma.FieldRef<"Dispute", 'Boolean'>
+  readonly adjudicationFeeAmount: Prisma.FieldRef<"Dispute", 'Decimal'>
+  readonly adjudicationFeePayee: Prisma.FieldRef<"Dispute", 'String'>
+  readonly adjudicationFeePaymentStatus: Prisma.FieldRef<"Dispute", 'String'>
+  readonly adjudicationFeePaymentMethod: Prisma.FieldRef<"Dispute", 'String'>
+  readonly adjudicationFeeStripeId: Prisma.FieldRef<"Dispute", 'String'>
   readonly verdictNotes: Prisma.FieldRef<"Dispute", 'String'>
   readonly adminApproval: Prisma.FieldRef<"Dispute", 'String'>
   readonly adminApprovalReason: Prisma.FieldRef<"Dispute", 'String'>

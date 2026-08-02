@@ -3,7 +3,7 @@ import { useNotificationStore } from '../stores/useNotificationStore';
 import { useResolutionStore } from '../stores/useResolutionStore';
 
 /**
- * Handles Stripe Checkout return (?payment=success|cancel) for return/dispute shipping fees.
+ * Handles Stripe Checkout return for shipping (?payment=) and adjudication fees (?adjFeePayment=).
  */
 export function useShippingPaymentReturn(
     enabled: boolean,
@@ -18,7 +18,8 @@ export function useShippingPaymentReturn(
 
         const params = new URLSearchParams(window.location.search);
         const payment = params.get('payment');
-        if (!payment) return;
+        const adjFeePayment = params.get('adjFeePayment');
+        if (!payment && !adjFeePayment) return;
 
         const caseId = params.get('caseId');
         const caseType = params.get('caseType') || 'dispute';
@@ -27,6 +28,7 @@ export function useShippingPaymentReturn(
         const cleanUrl = () => {
             const url = new URL(window.location.href);
             url.searchParams.delete('payment');
+            url.searchParams.delete('adjFeePayment');
             url.searchParams.delete('caseId');
             url.searchParams.delete('caseType');
             window.history.replaceState(window.history.state, '', url.pathname + url.search);
@@ -35,13 +37,34 @@ export function useShippingPaymentReturn(
         const refresh = async () => {
             if (role === 'merchant') {
                 await useResolutionStore.getState().fetchMerchantCases(true);
+            } else {
+                await useResolutionStore.getState().fetchUserRequests(true);
             }
         };
 
         void (async () => {
             await refresh();
 
-            if (payment === 'success') {
+            if (adjFeePayment === 'success') {
+                addNotification({
+                    type: 'success',
+                    titleAr: 'تم سداد رسوم الحكم',
+                    titleEn: 'Adjudication fee paid',
+                    messageAr: 'تم تأكيد دفع رسوم الحكم عبر Stripe.',
+                    messageEn: 'Adjudication fee payment confirmed via Stripe.',
+                });
+                if (caseId && onNavigate) {
+                    onNavigate('dispute-details', caseId);
+                }
+            } else if (adjFeePayment === 'cancel') {
+                addNotification({
+                    type: 'warning',
+                    titleAr: 'تم إلغاء دفع رسوم الحكم',
+                    titleEn: 'Adjudication fee payment cancelled',
+                    messageAr: 'لم يتم خصم أي مبلغ. يمكنك إعادة المحاولة من بطاقة رسوم الحكم.',
+                    messageEn: 'No charge was made. You can retry from the adjudication fee card.',
+                });
+            } else if (payment === 'success') {
                 addNotification({
                     type: 'success',
                     titleAr: 'تم سداد شحن المرتجع',

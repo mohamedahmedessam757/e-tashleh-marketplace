@@ -44,6 +44,7 @@ import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
+import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
 import { storageApi } from '../../../services/api/storage';
@@ -748,6 +749,11 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                         role="ADMIN" 
                     />
 
+                    <AdjudicationFeePaymentCard
+                        caseRecord={dispute}
+                        role="ADMIN"
+                    />
+
                      {/* 2026 VERDICT TERMINAL: WIZARD OR FINAL DISPLAY */}
                     {(!dispute.verdictIssuedAt && !['APPROVED', 'REFUNDED', 'RESOLVED', 'CLOSED', 'CANCELLED'].includes(dispute.status)) ? (
                        <GlassCard className="p-10 bg-red-500/[0.03] border-red-500/20 rounded-[40px] shadow-2xl relative overflow-hidden">
@@ -834,6 +840,94 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      placeholder={isAr ? 'اكتب بالتفصيل أسباب قرارك الإداري...' : 'State the administrative rationale for this decision...'}
                                                      className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 text-white text-sm focus:border-gold-500/50 outline-none transition-all min-h-[120px]"
                                                  />
+                                             </div>
+
+                                             {/* Step-1 financial preview + fault party (synced with Step 2) */}
+                                             <div className="space-y-4 p-6 rounded-[28px] bg-black/40 border border-white/5">
+                                                 <div className="flex items-center gap-3">
+                                                     <Calculator size={16} className="text-gold-500" />
+                                                     <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                                         {(t.admin.disputeManager.verdictTerminal as any).step1FinancialSummary ||
+                                                             (isAr ? 'ملخص مالي قبل التنفيذ' : 'Financial summary before execute')}
+                                                     </span>
+                                                 </div>
+                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                     {[
+                                                         { id: 'MERCHANT', label: isAr ? 'خطأ التاجر' : 'Merchant fault' },
+                                                         { id: 'CUSTOMER', label: isAr ? 'خطأ العميل' : 'Customer fault' },
+                                                         { id: 'SHIPPING_COMPANY', label: isAr ? 'خطأ شركة الشحن' : 'Shipping fault' },
+                                                         { id: 'CLOSE_COMPLETE_REFUND', label: isAr ? 'إغلاق + استرداد صافي' : 'Close + net refund' },
+                                                     ].map((opt) => (
+                                                         <button
+                                                             key={opt.id}
+                                                             type="button"
+                                                             onClick={() => setFaultParty(opt.id as any)}
+                                                             className={`p-3 rounded-xl border text-[11px] font-bold transition-all ${
+                                                                 faultParty === opt.id
+                                                                     ? 'bg-gold-500/10 border-gold-500/40 text-white'
+                                                                     : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                             }`}
+                                                         >
+                                                             {opt.label}
+                                                         </button>
+                                                     ))}
+                                                 </div>
+                                                 <div className="space-y-2 text-[11px] font-bold">
+                                                     <div className="flex justify-between gap-3 text-white/60">
+                                                         <span>{(t.admin.disputeManager.verdictTerminal as any).customerNetRefundLabel}</span>
+                                                         <span className="text-emerald-400 font-mono">{finPreview.net.toFixed(2)} AED</span>
+                                                     </div>
+                                                     {finPreview.platformFees > 0 && (
+                                                         <div className="flex justify-between gap-3 text-white/60">
+                                                             <span>
+                                                                 {faultParty === 'MERCHANT'
+                                                                     ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees
+                                                                     : faultParty === 'CUSTOMER' || isCloseCompleteRefund
+                                                                       ? (isAr ? 'رسوم المنصة (من صافي العميل)' : 'Platform fees (from customer net)')
+                                                                       : (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees}
+                                                             </span>
+                                                             <span className="text-orange-400 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
+                                                         </div>
+                                                     )}
+                                                     {shippingRoundtrip > 0 && (
+                                                         <div className="flex justify-between gap-3 text-white/60">
+                                                             <span>
+                                                                 {faultParty === 'SHIPPING_COMPANY'
+                                                                     ? (t.admin.disputeManager.verdictTerminal as any).shippingCompanyLiability
+                                                                     : faultParty === 'MERCHANT'
+                                                                       ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitShipping
+                                                                       : (isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)')}
+                                                             </span>
+                                                             <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
+                                                         </div>
+                                                     )}
+                                                     {faultParty === 'MERCHANT' && finPreview.merchantDebits.platformFees > 0 && (
+                                                         <div className={`mt-2 p-3 rounded-xl border ${
+                                                             merchantBalance !== null &&
+                                                             merchantBalance < finPreview.merchantDebits.platformFees
+                                                                 ? 'bg-amber-500/10 border-amber-500/30'
+                                                                 : 'bg-green-500/5 border-green-500/10'
+                                                         }`}>
+                                                             <p className="text-[10px] text-white/50 mb-1">
+                                                                 {(t.admin.disputeManager.verdictTerminal as any).collectionMethodLabel ||
+                                                                     (isAr ? 'طريقة التحصيل المتوقعة لرسوم الحكم' : 'Expected adjudication fee collection')}
+                                                             </p>
+                                                             <p className={`text-[10px] font-black ${
+                                                                 merchantBalance !== null &&
+                                                                 merchantBalance < finPreview.merchantDebits.platformFees
+                                                                     ? 'text-amber-400'
+                                                                     : 'text-green-400'
+                                                             }`}>
+                                                                 {merchantBalance !== null &&
+                                                                 merchantBalance < finPreview.merchantDebits.platformFees
+                                                                     ? (t.admin.disputeManager.verdictTerminal as any).merchantInsufficientBalance
+                                                                     : (isAr
+                                                                           ? 'الرصيد كافٍ — خصم فوري من محفظة التاجر'
+                                                                           : 'Sufficient balance — immediate merchant wallet debit')}
+                                                             </p>
+                                                         </div>
+                                                     )}
+                                                 </div>
                                              </div>
                                          </div>
 
@@ -1108,15 +1202,19 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                             </div>
                                                          )}
                                                          {faultParty === 'MERCHANT' && merchantBalance !== null && (finPreview.merchantDebits.shipping + finPreview.merchantDebits.platformFees) > 0 && (
-                                                            <div className={`mt-4 p-3 rounded-xl border ${merchantBalance < finPreview.merchantDebits.shipping + finPreview.merchantDebits.platformFees ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/5 border-green-500/10'}`}>
+                                                            <div className={`mt-4 p-3 rounded-xl border ${merchantBalance < finPreview.merchantDebits.platformFees ? 'bg-amber-500/10 border-amber-500/30' : 'bg-green-500/5 border-green-500/10'}`}>
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{(t.admin.disputeManager.verdictTerminal as any).merchantBalanceCheck}</span>
-                                                                    <span className={`text-[10px] font-mono ${merchantBalance < finPreview.merchantDebits.shipping + finPreview.merchantDebits.platformFees ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
+                                                                    <span className={`text-[10px] font-mono ${merchantBalance < finPreview.merchantDebits.platformFees ? 'text-amber-400 animate-pulse' : 'text-green-400'}`}>
                                                                         {merchantBalance.toFixed(2)} AED
                                                                     </span>
                                                                 </div>
-                                                                {merchantBalance < finPreview.merchantDebits.shipping + finPreview.merchantDebits.platformFees && (
-                                                                    <p className="text-[8px] text-red-500 font-bold mt-1">{(t.admin.disputeManager.verdictTerminal as any).merchantInsufficientBalance}</p>
+                                                                {merchantBalance < finPreview.merchantDebits.platformFees ? (
+                                                                    <p className="text-[8px] text-amber-400 font-bold mt-1">{(t.admin.disputeManager.verdictTerminal as any).merchantInsufficientBalance}</p>
+                                                                ) : (
+                                                                    <p className="text-[8px] text-green-400/80 font-bold mt-1">
+                                                                        {isAr ? 'الرصيد كافٍ لرسوم الحكم — خصم محفظة فوري' : 'Sufficient for adjudication fees — immediate wallet debit'}
+                                                                    </p>
                                                                 )}
                                                             </div>
                                                          )}

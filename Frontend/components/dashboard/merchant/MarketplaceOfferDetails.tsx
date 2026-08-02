@@ -33,6 +33,7 @@ import { useShipmentsStore } from '../../../stores/useShipmentsStore';
 import { ShipmentTracker } from '../shipments/ShipmentTracker';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
+import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
 import {
     getFulfillmentRank,
     getMerchantFulfillmentDisplayLabel,
@@ -291,6 +292,16 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             return true;
         }
         return c.shippingPaymentStatus === 'PAID' && !c.shippingPaymentMethod;
+    });
+
+    const activeAdjudicationFeeCase = cases.find((c) => {
+        if (String(c.orderId) !== String(orderId)) return false;
+        if (c.adjudicationFeePayee !== 'MERCHANT') return false;
+        if (Number(c.adjudicationFeeAmount || 0) <= 0) return false;
+        return (
+            c.adjudicationFeePaymentStatus === 'PENDING' ||
+            c.adjudicationFeePaymentStatus === 'PAID'
+        );
     });
 
     const openResolutionCase = useMemo(() => {
@@ -1166,6 +1177,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         <ShippingPaymentCard 
                             caseRecord={activeShippingCase} 
                             role="MERCHANT" 
+                            onSuccess={() => fetchCases('merchant')}
+                        />
+                    )}
+                    {activeAdjudicationFeeCase && (
+                        <AdjudicationFeePaymentCard
+                            caseRecord={activeAdjudicationFeeCase}
+                            role="MERCHANT"
                             onSuccess={() => fetchCases('merchant')}
                         />
                     )}
