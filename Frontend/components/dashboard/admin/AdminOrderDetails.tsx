@@ -495,6 +495,18 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                     )}
 
                     <div className="px-6 pt-4 space-y-4">
+                        {String(order.status).toUpperCase() === 'REFUNDED' && (
+                            <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4">
+                                <p className="text-sm font-black text-indigo-200 uppercase tracking-wider">
+                                    {isAr ? 'تم استرداد أموال هذا الطلب' : 'This order has been refunded'}
+                                </p>
+                                <p className="text-xs text-white/50 font-bold mt-1 leading-relaxed">
+                                    {isAr
+                                        ? 'حالة الطلب REFUNDED — صافي المبلغ أُعيد للعميل ورسوم المنصة محتجزة وفق الحكم.'
+                                        : 'Order status is REFUNDED — net amount returned to the customer; platform fees retained per verdict.'}
+                                </p>
+                            </div>
+                        )}
                         <MerchantHandoverPendingBanner
                             order={order}
                             role="admin"

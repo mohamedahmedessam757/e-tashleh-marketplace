@@ -390,6 +390,21 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
 
             {!isPrinting && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    {String(orderStatus || '').toUpperCase() === 'REFUNDED' && (
+                        <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4 flex items-start gap-3">
+                            <ShieldAlert className="text-indigo-300 shrink-0 mt-0.5" size={18} />
+                            <div>
+                                <p className="text-sm font-black text-indigo-200 uppercase tracking-wider">
+                                    {isAr ? 'طلب مسترد — تنويه على البوليصة' : 'Refunded order — waybill notice'}
+                                </p>
+                                <p className="text-xs text-white/50 font-bold mt-1 leading-relaxed">
+                                    {isAr
+                                        ? 'تم استرداد أموال هذا الطلب. بوليصة الشحن الأصلية تبقى سجلاً تاريخياً مع حالة الطلب «تم الاسترداد».'
+                                        : 'Funds for this order were refunded. The original shipping waybill remains a historical record under order status Refunded.'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     {isGrouped && shipmentBatches.length > 0 && (
                         <div className="space-y-3">
                             <h4 className="text-sm font-bold text-white/60 uppercase tracking-wider">

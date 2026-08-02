@@ -986,6 +986,22 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     className="mb-4"
                 />
 
+                {String(order.status).toUpperCase() === 'REFUNDED' && (
+                    <div className="mb-4 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4 flex items-start gap-3">
+                        <RefreshCcw className="text-indigo-300 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="text-sm font-black text-indigo-200 uppercase tracking-wider">
+                                {language === 'ar' ? 'تم استرداد أموال هذا الطلب' : 'This order has been refunded'}
+                            </p>
+                            <p className="text-xs text-white/50 font-bold mt-1 leading-relaxed">
+                                {language === 'ar'
+                                    ? 'تم إرجاع المبلغ المستحق للعميل وفق قرار الحكم (صافي بعد رسوم المنصة إن وُجدت). الفواتير والبوليصة تعكس حالة الاسترداد.'
+                                    : 'The eligible amount was returned to the customer per the verdict (net after platform fees when applicable). Invoices and waybills reflect the refunded state.'}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
                     <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>

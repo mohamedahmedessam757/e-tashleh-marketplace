@@ -948,6 +948,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 #{order.id}
                             </span>
                         </div>
+                        {String(order.status).toUpperCase() === 'REFUNDED' && (
+                            <p className="text-xs font-bold text-indigo-300/90 mt-1">
+                                {isAr
+                                    ? 'تم استرداد أموال هذا الطلب — حالة الطلب: تم الاسترداد'
+                                    : 'Funds for this order were refunded — status: Refunded'}
+                            </p>
+                        )}
                         {order.warranty_end_at && (
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 <WarrantyProtectionCard
@@ -1113,15 +1120,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 'REFUNDED',
                             ];
                             if (DONE_STATUSES.includes(order.status)) {
+                                const isRefunded = order.status === 'REFUNDED';
                                 return (
-                                    <div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+                                        isRefunded
+                                            ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30'
+                                            : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                                    }`}>
                                         <CheckCircle2 size={16} />
                                         <span className="font-bold text-sm">
                                             {order.status === 'WARRANTY_ACTIVE'
                                                 ? (isAr ? 'مكتمل — الضمان نشط' : 'Completed — Warranty Active')
                                                 : order.status === 'WARRANTY_EXPIRED'
                                                   ? (isAr ? 'مكتمل — انتهى الضمان' : 'Completed — Warranty Expired')
-                                                  : (isAr ? 'مكتمل' : 'Completed')}
+                                                  : isRefunded
+                                                    ? (isAr ? 'تم الاسترداد' : 'Refunded')
+                                                    : (isAr ? 'مكتمل' : 'Completed')}
                                         </span>
                                     </div>
                                 );
