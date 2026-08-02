@@ -22,6 +22,15 @@ export const storageApi = {
       const { data } = await client.post<{ url: string }>('/uploads/appeals', formData);
       return data.url;
     }
+    // Admin dispute verdict assets — fast path (no verification-docs pipeline)
+    if (
+      folder.startsWith('admin-verdicts/') ||
+      folder.startsWith('admin-evidence/')
+    ) {
+      formData.append('folder', folder);
+      const { data } = await client.post<{ url: string }>('/uploads/order-draft', formData);
+      return data.url;
+    }
     const orderId = folder.split('/').pop() || 'misc';
     formData.append('orderId', orderId);
     formData.append('folder', folder);
