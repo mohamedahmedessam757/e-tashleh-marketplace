@@ -7,7 +7,7 @@ import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import {
-    ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale
+    ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
@@ -21,6 +21,10 @@ import { shipmentsApi } from '../../../services/api/shipments.api';
 import { StatusTimeline } from '../../ui/StatusTimeline';
 import type { FulfillmentSummaryPartHint } from '../../ui/StatusTimeline';
 import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../../ui/VerificationPhaseBanner';
+import {
+    ReturnDisputePhaseBanner,
+    shouldShowReturnDisputeBanner,
+} from '../../ui/ReturnDisputePhaseBanner';
 import { VerificationForm } from './VerificationForm';
 import { OrderInvoicesPanel } from '../shared/OrderInvoicesPanel';
 import { OrderWaybillsPanel } from '../shared/OrderWaybillsPanel';
@@ -288,6 +292,14 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         }
         return c.shippingPaymentStatus === 'PAID' && !c.shippingPaymentMethod;
     });
+
+    const openResolutionCase = useMemo(() => {
+        return cases.find((c) => {
+            if (String(c.orderId) !== String(orderId)) return false;
+            if (['RESOLVED', 'CLOSED', 'CANCELLED', 'REFUNDED'].includes(c.status)) return false;
+            return c.type === 'return' || c.type === 'dispute';
+        }) ?? null;
+    }, [cases, orderId]);
 
     // Map partId -> count of ALL offers (from all merchants)
     const offersPerPart = useMemo(() => {
@@ -646,7 +658,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     };
 
     // 2026 Centralized Lifecycle States
-    const progressiveStates = ['AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
+    const progressiveStates = ['AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'DISPUTED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
     const isProgressive = order ? progressiveStates.includes(order.status) : false;
 
     const handleOpenLightbox = (images: string[], index: number) => {
@@ -1040,12 +1052,38 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         // If the order has progressed to checkout/shipping
                         if (isProgressive) {
                             const hasAccepted = myOffers.some(o => o.status === 'accepted');
+                            const RESOLUTION_STATUSES = [
+                                'RETURN_REQUESTED',
+                                'RETURN_APPROVED',
+                                'DISPUTED',
+                                'RETURNED',
+                            ];
+                            if (RESOLUTION_STATUSES.includes(order.status)) {
+                                const isDispute = order.status === 'DISPUTED';
+                                return (
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+                                        isDispute
+                                            ? 'text-red-400 bg-red-500/10 border-red-500/20'
+                                            : 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20'
+                                    }`}>
+                                        {isDispute ? <Scale size={16} /> : <RefreshCcw size={16} />}
+                                        <span className="font-bold text-sm">
+                                            {order.status === 'DISPUTED'
+                                                ? (isAr ? 'نزاع مفتوح بعد التسليم' : 'Open dispute after delivery')
+                                                : order.status === 'RETURN_APPROVED'
+                                                  ? (isAr ? 'إرجاع معتمد' : 'Return approved')
+                                                  : order.status === 'RETURNED'
+                                                    ? (isAr ? 'تم الإرجاع' : 'Returned')
+                                                    : (isAr ? 'طلب إرجاع مفتوح' : 'Open return request')}
+                                        </span>
+                                    </div>
+                                );
+                            }
                             const DONE_STATUSES = [
                                 'DELIVERED',
                                 'COMPLETED',
                                 'WARRANTY_ACTIVE',
                                 'WARRANTY_EXPIRED',
-                                'RETURNED',
                                 'REFUNDED',
                             ];
                             if (DONE_STATUSES.includes(order.status)) {
@@ -1107,6 +1145,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 isAr={isAr}
                 className="mb-2"
             />
+
+            {shouldShowReturnDisputeBanner(order?.status, openResolutionCase?.type) && (
+                <ReturnDisputePhaseBanner
+                    className="mb-4"
+                    status={order?.status}
+                    caseType={openResolutionCase?.type}
+                    caseReference={openResolutionCase?.caseReference}
+                    partName={openResolutionCase?.partName}
+                    role="merchant"
+                />
+            )}
 
             {/* MAIN CONTENT GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2464,6 +2513,46 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     bgColor: 'bg-green-500/10',
                                                     borderColor: 'border-green-500/20'
                                                 };
+                                            case 'RETURN_REQUESTED':
+                                                return {
+                                                    icon: <RefreshCcw size={28} className="text-cyan-400" />,
+                                                    title: isAr ? 'طلب إرجاع مفتوح' : 'Open return request',
+                                                    desc: isAr
+                                                        ? 'العميل طلب إرجاعًا بعد التسليم. التوثيق مغلق — تابع الرد من مركز الحلول.'
+                                                        : 'Customer requested a return after delivery. Verification is locked — respond via the resolution center.',
+                                                    bgColor: 'bg-cyan-500/10',
+                                                    borderColor: 'border-cyan-500/25',
+                                                };
+                                            case 'RETURN_APPROVED':
+                                                return {
+                                                    icon: <RefreshCcw size={28} className="text-cyan-400" />,
+                                                    title: isAr ? 'تمت الموافقة على الإرجاع' : 'Return approved',
+                                                    desc: isAr
+                                                        ? 'تمت الموافقة على الإرجاع. أكمل خطوات الشحن/الاستلام المطلوبة.'
+                                                        : 'Return approved. Complete the required shipping/handover steps.',
+                                                    bgColor: 'bg-cyan-500/10',
+                                                    borderColor: 'border-cyan-500/25',
+                                                };
+                                            case 'DISPUTED':
+                                                return {
+                                                    icon: <Scale size={28} className="text-red-400" />,
+                                                    title: isAr ? 'نزاع مفتوح بعد التسليم' : 'Open dispute after delivery',
+                                                    desc: isAr
+                                                        ? 'هناك نزاع مفتوح. التوثيق/إعادة المطابقة مغلقة — تابع مركز الحلول.'
+                                                        : 'A dispute is open. Rematch/verification is locked — follow the resolution center.',
+                                                    bgColor: 'bg-red-500/10',
+                                                    borderColor: 'border-red-500/25',
+                                                };
+                                            case 'RETURNED':
+                                                return {
+                                                    icon: <RefreshCcw size={28} className="text-cyan-400" />,
+                                                    title: isAr ? 'تم الإرجاع' : 'Returned',
+                                                    desc: isAr
+                                                        ? 'اكتملت عملية الإرجاع لهذا الطلب.'
+                                                        : 'The return process for this order has completed.',
+                                                    bgColor: 'bg-cyan-500/10',
+                                                    borderColor: 'border-cyan-500/20',
+                                                };
                                             case 'COMPLETED':
                                                 return {
                                                     icon: <CheckCircle2 size={28} className="text-emerald-400" />,
@@ -2547,7 +2636,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 })()}
 
                                 {(() => {
-                                    const progressiveStates = ['AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
+                                    const progressiveStates = ['AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'PARTIALLY_DELIVERED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'DISPUTED', 'RETURNED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'];
                                     const isProgressive = progressiveStates.includes(order.status);
 
                                     if (order.status === 'VERIFICATION') {

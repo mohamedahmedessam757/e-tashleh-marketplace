@@ -76,6 +76,8 @@ export function normalizeOfferFulfillmentStatus(status?: string | null): OfferFu
             'REFUNDED',
             'RESOLVED',
             'DISPUTED',
+            'RETURN_REQUESTED',
+            'RETURN_APPROVED',
         ].includes(s)
     ) {
         return 'DELIVERED';
@@ -94,6 +96,13 @@ const TERMINAL_ORDER_STATUSES = new Set([
     'CLOSED',
 ]);
 
+/** Active post-delivery return/dispute — delivery already happened; lock rematch CTAs. */
+const ACTIVE_RESOLUTION_ORDER_STATUSES = new Set([
+    'RETURN_REQUESTED',
+    'RETURN_APPROVED',
+    'DISPUTED',
+]);
+
 const CORRECTION_ORDER_STATUSES = new Set([
     'NON_MATCHING',
     'CORRECTION_PERIOD',
@@ -105,9 +114,15 @@ export function isCorrectionFamilyOrderStatus(orderStatus?: string | null): bool
     return CORRECTION_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
 }
 
-/** Terminal / cancelled orders must not expose merchant fulfillment CTAs. */
+/** Active return/dispute after delivery (not rematch / verification). */
+export function isActiveResolutionOrderStatus(orderStatus?: string | null): boolean {
+    return ACTIVE_RESOLUTION_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
+}
+
+/** Terminal / cancelled / active resolution — never expose merchant fulfillment CTAs. */
 export function isMerchantFulfillmentLocked(orderStatus?: string | null): boolean {
-    return TERMINAL_ORDER_STATUSES.has(String(orderStatus || '').toUpperCase());
+    const s = String(orderStatus || '').toUpperCase();
+    return TERMINAL_ORDER_STATUSES.has(s) || ACTIVE_RESOLUTION_ORDER_STATUSES.has(s);
 }
 /**
  * Merchant-facing order timeline status from this merchant's accepted offers.
@@ -122,6 +137,10 @@ export function resolveMerchantTimelineFromOffers(
 ): string {
     const fallback = String(fallbackOrderStatus || '').toUpperCase();
     if (fallback && TERMINAL_ORDER_STATUSES.has(fallback)) {
+        return fallback;
+    }
+    // Active return/dispute is order-level SSOT (never fall back to stale verification)
+    if (fallback && ACTIVE_RESOLUTION_ORDER_STATUSES.has(fallback)) {
         return fallback;
     }
     // Correction-family is order-level SSOT (admin reject / merchant resubmit)
@@ -208,6 +227,18 @@ export function getMerchantFulfillmentDisplayLabel(
     if (os === 'CANCELLED' || os === 'CLOSED') {
         return isAr ? 'ملغى — لا يمكن إعادة التوثيق' : 'Cancelled — re-verification not allowed';
     }
+    if (os === 'RETURN_REQUESTED') {
+        return isAr ? 'طلب إرجاع مفتوح — بعد التسليم' : 'Return requested — after delivery';
+    }
+    if (os === 'RETURN_APPROVED') {
+        return isAr ? 'تمت الموافقة على الإرجاع' : 'Return approved';
+    }
+    if (os === 'DISPUTED') {
+        return isAr ? 'نزاع مفتوح — بعد التسليم' : 'Dispute open — after delivery';
+    }
+    if (os === 'RETURNED') {
+        return isAr ? 'تم الإرجاع' : 'Returned';
+    }
     if (os === 'CORRECTION_PERIOD' || os === 'NON_MATCHING') {
         return isAr
             ? 'مطلوب إعادة التوثيق — فترة التصحيح'
@@ -264,6 +295,16 @@ const POST_VERIFICATION_SUCCESS_STATUSES = new Set([
     'PARTIALLY_DELIVERED',
     'DELIVERED',
     'DELIVERED_TO_CUSTOMER',
+    // Post-delivery resolution — rematch/verification UI must never reopen
+    'RETURN_REQUESTED',
+    'RETURN_APPROVED',
+    'DISPUTED',
+    'RETURNED',
+    'REFUNDED',
+    'RESOLVED',
+    'COMPLETED',
+    'WARRANTY_ACTIVE',
+    'WARRANTY_EXPIRED',
 ]);
 
 export function isPostVerificationSuccessOrderStatus(orderStatus?: string | null): boolean {

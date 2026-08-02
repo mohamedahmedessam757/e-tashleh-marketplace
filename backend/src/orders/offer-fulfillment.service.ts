@@ -52,6 +52,10 @@ const MERCHANT_FULFILLMENT_LOCKED_STATUSES = new Set<OrderStatus>([
     OrderStatus.CLOSED,
     OrderStatus.WARRANTY_ACTIVE,
     OrderStatus.WARRANTY_EXPIRED,
+    // Active post-delivery resolution — block rematch / prepare / verify CTAs
+    OrderStatus.RETURN_REQUESTED,
+    OrderStatus.RETURN_APPROVED,
+    OrderStatus.DISPUTED,
 ]);
 
 @Injectable()

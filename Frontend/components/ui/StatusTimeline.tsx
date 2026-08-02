@@ -84,6 +84,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     'RETURNED',
     'REFUNDED',
     'RESOLVED',
+    // Delivery already happened — keep الاستلام checked during return/dispute
+    'RETURN_REQUESTED',
+    'RETURN_APPROVED',
+    'DISPUTED',
+    'RETURN_LABEL_ISSUED',
+    'RETURN_STARTED',
+    'RECEIVED_FROM_CUSTOMER',
+    'DELIVERED_TO_VENDOR',
+    'EXCHANGE_COMPLETED',
+    'IN_TRANSIT_TO_CUSTOMER',
+    'RETURN_COMPLETED_TO_CUSTOMER',
   ].includes(statusKey);
   // In-transit: shipping step is done; delivery is current (activeIndex === 6) but not terminal
   const isEnRouteToCustomer =
