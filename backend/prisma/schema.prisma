@@ -885,7 +885,8 @@ model ReturnRequest {
   verdictLocked       Boolean   @default(false) @map("verdict_locked")
 
   // Phase 4 Governance Extensions (Spec §15)
-  faultParty     String?  @map("fault_party")
+  // VARCHAR(40): CLOSE_COMPLETE_REFUND is 21 chars (was overflowing VARCHAR(20))
+  faultParty     String?  @map("fault_party") @db.VarChar(40)
   refundAmount   Decimal? @map("refund_amount") @db.Decimal(14, 2)
   shippingRefund Decimal? @map("shipping_refund") @db.Decimal(14, 2)
   stripeFee      Decimal? @map("stripe_fee") @db.Decimal(14, 2)
@@ -953,7 +954,8 @@ model Dispute {
   merchantDecision     String? @map("merchant_decision") // APPROVE | REJECT
 
   // Phase 4 Governance
-  faultParty     String?  @map("fault_party")
+  // VARCHAR(40): CLOSE_COMPLETE_REFUND is 21 chars (was overflowing VARCHAR(20))
+  faultParty     String?  @map("fault_party") @db.VarChar(40)
   refundAmount   Decimal? @map("refund_amount") @db.Decimal(14, 2)
   shippingRefund Decimal? @map("shipping_refund") @db.Decimal(14, 2)
   stripeFee      Decimal? @map("stripe_fee") @db.Decimal(14, 2)
@@ -987,11 +989,11 @@ model Dispute {
   adjudicationFeeStripeId      String?  @map("adjudication_fee_stripe_id")
 
   verdictNotes        String?   @map("verdict_notes")
-  adminApproval       String?   @map("admin_approval")
+  adminApproval       String?   @map("admin_approval") @db.VarChar(20)
   adminApprovalReason String?   @map("admin_approval_reason") @db.Text
   adminEvidence       Json      @default("[]") @map("admin_evidence")
-  adminName           String?   @map("admin_name")
-  adminEmail          String?   @map("admin_email")
+  adminName           String?   @map("admin_name") @db.VarChar(255)
+  adminEmail          String?   @map("admin_email") @db.VarChar(255)
   adminSignature      String?   @map("admin_signature") @db.Text
   verdictIssuedAt     DateTime? @map("verdict_issued_at") @db.Timestamptz
   verdictLocked       Boolean   @default(false) @map("verdict_locked")
