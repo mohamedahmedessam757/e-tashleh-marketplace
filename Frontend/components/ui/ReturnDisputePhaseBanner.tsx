@@ -70,11 +70,11 @@ export const ReturnDisputePhaseBanner: React.FC<ReturnDisputePhaseBannerProps> =
     titleEn = 'Open dispute on this order';
     descAr =
       role === 'merchant'
-        ? 'العميل فتح نزاعًا بعد التسليم. التوثيق/إعادة المطابقة مغلقة — تابع مسار النزاع من مركز الحلول.'
+        ? 'العميل فتح نزاعًا بعد التسليم. تابع مسار النزاع من مركز الحلول.'
         : 'تم فتح نزاع بعد التسليم. يمكنك متابعة الحالة والرد من مركز الحلول.';
     descEn =
       role === 'merchant'
-        ? 'The customer opened a dispute after delivery. Rematch/verification is locked — follow the dispute in the resolution center.'
+        ? 'The customer opened a dispute after delivery. Follow the dispute in the resolution center.'
         : 'A dispute was opened after delivery. Track status and respond from the resolution center.';
   } else if (isReturned) {
     titleAr = 'تم إرجاع القطعة';
@@ -97,11 +97,11 @@ export const ReturnDisputePhaseBanner: React.FC<ReturnDisputePhaseBannerProps> =
     titleEn = 'Open return request';
     descAr =
       role === 'merchant'
-        ? 'العميل قدّم طلب إرجاع بعد التسليم. التوثيق/إعادة المطابقة مغلقة — راجع الطلب ورد من مركز الحلول.'
+        ? 'العميل قدّم طلب إرجاع بعد التسليم. راجع الطلب ورد من مركز الحلول.'
         : 'تم تقديم طلب إرجاع بعد التسليم. تابع الحالة من مركز الحلول حتى يتم حسم الطلب.';
     descEn =
       role === 'merchant'
-        ? 'The customer submitted a return after delivery. Rematch/verification is locked — review and respond in the resolution center.'
+        ? 'The customer submitted a return after delivery. Review and respond in the resolution center.'
         : 'A return was submitted after delivery. Track the case in the resolution center until it is resolved.';
   }
 
@@ -128,8 +128,8 @@ export const ReturnDisputePhaseBanner: React.FC<ReturnDisputePhaseBannerProps> =
           <p className="text-[11px] text-white/40 flex items-center gap-1.5 pt-1">
             <AlertTriangle size={12} className="shrink-0" />
             {isAr
-              ? 'لا يظهر هنا طلب إعادة توثيق — هذه مرحلة إرجاع/نزاع بعد التسليم.'
-              : 'Re-verification is not shown here — this is a post-delivery return/dispute stage.'}
+              ? 'هذه مرحلة إرجاع/نزاع بعد التسليم.'
+              : 'This is a post-delivery return/dispute stage.'}
           </p>
         )}
       </div>

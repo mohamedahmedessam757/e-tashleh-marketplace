@@ -2518,8 +2518,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     icon: <RefreshCcw size={28} className="text-cyan-400" />,
                                                     title: isAr ? 'طلب إرجاع مفتوح' : 'Open return request',
                                                     desc: isAr
-                                                        ? 'العميل طلب إرجاعًا بعد التسليم. التوثيق مغلق — تابع الرد من مركز الحلول.'
-                                                        : 'Customer requested a return after delivery. Verification is locked — respond via the resolution center.',
+                                                        ? 'العميل طلب إرجاعًا بعد التسليم. تابع الرد من مركز الحلول.'
+                                                        : 'Customer requested a return after delivery. Respond via the resolution center.',
                                                     bgColor: 'bg-cyan-500/10',
                                                     borderColor: 'border-cyan-500/25',
                                                 };
@@ -2538,8 +2538,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     icon: <Scale size={28} className="text-red-400" />,
                                                     title: isAr ? 'نزاع مفتوح بعد التسليم' : 'Open dispute after delivery',
                                                     desc: isAr
-                                                        ? 'هناك نزاع مفتوح. التوثيق/إعادة المطابقة مغلقة — تابع مركز الحلول.'
-                                                        : 'A dispute is open. Rematch/verification is locked — follow the resolution center.',
+                                                        ? 'هناك نزاع مفتوح. تابع مركز الحلول.'
+                                                        : 'A dispute is open. Follow the resolution center.',
                                                     bgColor: 'bg-red-500/10',
                                                     borderColor: 'border-red-500/25',
                                                 };
