@@ -3012,4 +3012,198 @@ export class ReturnsService {
             return updated;
         });
     }
+
+    /**
+     * Combined wallet settlement: adjudication fee + shipping in one debit total,
+     * with two itemized wallet ledger rows.
+     */
+    async deductMerchantSettlementFromBalance(
+        userId: string,
+        caseId: string,
+        caseType: 'return' | 'dispute',
+    ) {
+        if (caseType !== 'return' && caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        const modelName = caseType === 'return' ? 'returnRequest' : 'dispute';
+        const caseRecord = await (this.prisma as any)[modelName].findUnique({
+            where: { id: caseId },
+            include: { store: true, order: { include: { customer: true } } },
+        });
+        if (!caseRecord) throw new NotFoundException('Case not found');
+
+        const store = caseRecord.storeId
+            ? await this.prisma.store.findUnique({ where: { id: caseRecord.storeId } })
+            : null;
+        if (!store || store.ownerId !== userId) {
+            throw new ForbiddenException('You are not the merchant for this case');
+        }
+
+        const adjPending =
+            String(caseRecord.adjudicationFeePayee || '').toUpperCase() === 'MERCHANT' &&
+            caseRecord.adjudicationFeePaymentStatus === 'PENDING' &&
+            Number(caseRecord.adjudicationFeeAmount || 0) > 0;
+        const shipPending =
+            String(caseRecord.shippingPayee || '').toUpperCase() === 'MERCHANT' &&
+            (caseRecord.shippingPaymentStatus === 'PENDING' ||
+                caseRecord.shippingPaymentStatus === 'INSUFFICIENT_FUNDS') &&
+            Number(caseRecord.shippingRefund || caseRecord.shippingRoundtrip || 0) > 0;
+
+        if (!adjPending || !shipPending) {
+            throw new BadRequestException(
+                'Combined settlement requires both pending adjudication fee and shipping payment',
+            );
+        }
+
+        const adjAmount = Number(caseRecord.adjudicationFeeAmount);
+        const shipAmount = Number(caseRecord.shippingRefund || caseRecord.shippingRoundtrip || 0);
+        const total = adjAmount + shipAmount;
+
+        return await this.prisma.$transaction(async (tx) => {
+            const freshStore = await tx.store.findUnique({ where: { id: store.id } });
+            if (!freshStore) throw new NotFoundException('Store not found');
+            if (Number(freshStore.balance) < total) {
+                throw new BadRequestException(
+                    'Insufficient store balance — please pay via Stripe',
+                );
+            }
+
+            // Claim both PENDING rows first (race-safe vs Stripe webhook)
+            const claimedAdj = await (tx as any)[modelName].updateMany({
+                where: { id: caseId, adjudicationFeePaymentStatus: 'PENDING' },
+                data: {
+                    adjudicationFeePaymentStatus: 'PAID',
+                    adjudicationFeePaymentMethod: 'WALLET',
+                    updatedAt: new Date(),
+                },
+            });
+            const claimedShip = await (tx as any)[modelName].updateMany({
+                where: {
+                    id: caseId,
+                    shippingPaymentStatus: { in: ['PENDING', 'INSUFFICIENT_FUNDS'] },
+                },
+                data: {
+                    shippingPaymentStatus: 'PAID',
+                    shippingPaymentMethod: 'WALLET',
+                    updatedAt: new Date(),
+                },
+            });
+            if (claimedAdj.count === 0 || claimedShip.count === 0) {
+                throw new BadRequestException('Settlement already paid or no longer pending');
+            }
+
+            try {
+                await tx.store.update({
+                    where: { id: store.id },
+                    data: { balance: { decrement: total } },
+                });
+            } catch (err) {
+                await (tx as any)[modelName].update({
+                    where: { id: caseId },
+                    data: {
+                        adjudicationFeePaymentStatus: 'PENDING',
+                        adjudicationFeePaymentMethod: null,
+                        shippingPaymentStatus: 'PENDING',
+                        shippingPaymentMethod: null,
+                        updatedAt: new Date(),
+                    },
+                });
+                throw err;
+            }
+
+            const balanceAfter = Number(freshStore.balance) - total;
+
+            await tx.walletTransaction.create({
+                data: {
+                    userId,
+                    role: 'VENDOR',
+                    type: 'DEBIT',
+                    transactionType: 'ADJUDICATION_FEE',
+                    amount: adjAmount,
+                    currency: 'AED',
+                    description: `رسوم الحكم الإداري / Adjudication fees for ${caseType} #${caseId.substring(0, 8)} (Wallet settlement)`,
+                    balanceAfter: balanceAfter + shipAmount,
+                    metadata: {
+                        caseId,
+                        caseType,
+                        paymentMethod: 'WALLET',
+                        settlementBundle: true,
+                        lineItem: 'ADJUDICATION_FEE',
+                    },
+                },
+            });
+            await tx.walletTransaction.create({
+                data: {
+                    userId,
+                    role: 'VENDOR',
+                    type: 'DEBIT',
+                    transactionType: 'SHIPPING_FEE',
+                    amount: shipAmount,
+                    currency: 'AED',
+                    description: `لوجستيات شحن المرتجعات / Return shipping for ${caseType} #${caseRecord.orderId} (Wallet settlement)`,
+                    balanceAfter,
+                    metadata: {
+                        caseId,
+                        caseType,
+                        paymentMethod: 'WALLET',
+                        settlementBundle: true,
+                        lineItem: 'SHIPPING_FEE',
+                    },
+                },
+            });
+
+            const platformWallet = await tx.platformWallet.findFirst();
+            if (platformWallet && adjAmount > 0) {
+                await tx.platformWallet.update({
+                    where: { id: platformWallet.id },
+                    data: {
+                        feesBalance: { increment: adjAmount },
+                        totalRevenue: { increment: adjAmount },
+                    },
+                });
+            }
+
+            const shipment = await tx.shipment.findFirst({
+                where: { orderId: caseRecord.orderId },
+                orderBy: { createdAt: 'desc' },
+            });
+            if (shipment) {
+                await tx.shipment.update({
+                    where: { id: shipment.id },
+                    data: { status: 'RETURN_STARTED' as any },
+                });
+                await tx.shipmentStatusLog.create({
+                    data: {
+                        shipmentId: shipment.id,
+                        fromStatus: shipment.status,
+                        toStatus: 'RETURN_STARTED' as any,
+                        notes: 'بدء الارجاع - سداد مجمع من المحفظة (رسوم حكم + شحن)',
+                        source: 'API',
+                    },
+                });
+            }
+
+            await this.notificationsService
+                .create({
+                    recipientId: userId,
+                    recipientRole: 'VENDOR',
+                    type: 'ORDER',
+                    titleAr: 'تم سداد مستحقات الحكم والشحن',
+                    titleEn: 'Judgment & shipping settlement paid',
+                    messageAr: `تم خصم ${total.toFixed(2)} AED من محفظتك (رسوم حكم ${adjAmount.toFixed(2)} + شحن ${shipAmount.toFixed(2)}).`,
+                    messageEn: `${total.toFixed(2)} AED deducted (fees ${adjAmount.toFixed(2)} + shipping ${shipAmount.toFixed(2)}).`,
+                    link: `dispute-details/${caseId}`,
+                    metadata: {
+                        caseId,
+                        caseType,
+                        adjAmount,
+                        shippingAmount: shipAmount,
+                        waEvent: 'ORDER_STATUS',
+                    },
+                })
+                .catch(() => {});
+
+            return (tx as any)[modelName].findUnique({ where: { id: caseId } });
+        });
+    }
 }

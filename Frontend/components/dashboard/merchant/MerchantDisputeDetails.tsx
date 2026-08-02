@@ -13,6 +13,11 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
+import {
+  MerchantSettlementPaymentCard,
+  isMerchantCombinedSettlementDue,
+  isMerchantCombinedSettlementPaid,
+} from '../resolution/MerchantSettlementPaymentCard';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
@@ -322,8 +327,18 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
 
         {/* RIGHT: Merchant Response Form */}
         <div className="relative space-y-6">
-           {/* Always visible when PENDING — not nested under adminApproval panel only */}
-           {dispute.adjudicationFeePayee === 'MERCHANT' &&
+           {/* Combined settlement when both fee + shipping are due (one payment, itemized ledger) */}
+           {(isMerchantCombinedSettlementDue(dispute) || isMerchantCombinedSettlementPaid(dispute)) && (
+              <MerchantSettlementPaymentCard
+                 caseRecord={dispute as any}
+                 role="MERCHANT"
+                 onSuccess={() => useResolutionStore.getState().fetchMerchantCases(true)}
+              />
+           )}
+           {/* Single-item cards only when the other obligation is not also pending */}
+           {!isMerchantCombinedSettlementDue(dispute) &&
+              !isMerchantCombinedSettlementPaid(dispute) &&
+              dispute.adjudicationFeePayee === 'MERCHANT' &&
               (dispute.adjudicationFeePaymentStatus === 'PENDING' ||
                   dispute.adjudicationFeePaymentStatus === 'PAID') &&
               Number(dispute.adjudicationFeeAmount || 0) > 0 && (
@@ -420,8 +435,10 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                        </div>
                     </div>
  
-                    {/* Shipping Payment Section (Phase 4) */}
-                    {dispute.shippingPayee === 'MERCHANT' &&
+                    {/* Shipping alone — only when not part of combined settlement */}
+                    {!isMerchantCombinedSettlementDue(dispute) &&
+                        !isMerchantCombinedSettlementPaid(dispute) &&
+                        dispute.shippingPayee === 'MERCHANT' &&
                         Number(dispute.shippingRefund || dispute.shippingRoundtrip || 0) > 0 && (
                        <div className="pt-4 border-t border-white/5">
                            <ShippingPaymentCard

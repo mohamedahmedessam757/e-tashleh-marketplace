@@ -72,6 +72,26 @@ export class PaymentsController {
         );
     }
 
+    @Post('merchant-settlement-checkout')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
+    createMerchantSettlementCheckoutSession(
+        @Request() req,
+        @Body() body: { caseId: string; caseType: 'return' | 'dispute'; frontendUrl?: string },
+    ) {
+        if (!body?.caseId || !body?.caseType) {
+            throw new BadRequestException('Case ID and Case Type are required');
+        }
+        if (body.caseType !== 'return' && body.caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        return this.paymentsService.createMerchantSettlementCheckoutSession(
+            req.user.id,
+            body.caseId,
+            body.caseType,
+            body.frontendUrl,
+        );
+    }
+
     @Get('pending')
     getPendingPayments(@Request() req) {
         return this.paymentsService.getPendingPayments(req.user.id);

@@ -258,4 +258,23 @@ export class ReturnsController {
             body.caseType,
         );
     }
+
+    @Post('pay-merchant-settlement-wallet')
+    @UseGuards(JwtAuthGuard)
+    async payMerchantSettlementWallet(
+        @Request() req,
+        @Body() body: { caseId: string; caseType: 'return' | 'dispute' },
+    ) {
+        if (!body.caseId || !body.caseType) {
+            throw new BadRequestException('Case ID and Case Type are required');
+        }
+        if (body.caseType !== 'return' && body.caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        return this.returnsService.deductMerchantSettlementFromBalance(
+            req.user.id,
+            body.caseId,
+            body.caseType,
+        );
+    }
 }

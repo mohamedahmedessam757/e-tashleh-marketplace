@@ -45,6 +45,11 @@ import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
+import {
+  MerchantSettlementPaymentCard,
+  isMerchantCombinedSettlementDue,
+  isMerchantCombinedSettlementPaid,
+} from '../resolution/MerchantSettlementPaymentCard';
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
 import { storageApi } from '../../../services/api/storage';
@@ -743,16 +748,18 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                         </div>
                     </GlassCard>
 
-                    {/* 2026 Logistics Hub: Shipping Payment Status (ADMIN VIEW) */}
-                    <ShippingPaymentCard 
-                        caseRecord={dispute} 
-                        role="ADMIN" 
-                    />
-
-                    <AdjudicationFeePaymentCard
-                        caseRecord={dispute}
-                        role="ADMIN"
-                    />
+                    {/* Combined settlement when merchant owes both; otherwise separate cards */}
+                    {(isMerchantCombinedSettlementDue(dispute) ||
+                        isMerchantCombinedSettlementPaid(dispute)) && (
+                        <MerchantSettlementPaymentCard caseRecord={dispute} role="ADMIN" />
+                    )}
+                    {!isMerchantCombinedSettlementDue(dispute) &&
+                        !isMerchantCombinedSettlementPaid(dispute) && (
+                        <>
+                            <ShippingPaymentCard caseRecord={dispute} role="ADMIN" />
+                            <AdjudicationFeePaymentCard caseRecord={dispute} role="ADMIN" />
+                        </>
+                    )}
 
                      {/* 2026 VERDICT TERMINAL: WIZARD OR FINAL DISPLAY */}
                     {(!dispute.verdictIssuedAt && !['APPROVED', 'REFUNDED', 'RESOLVED', 'CLOSED', 'CANCELLED'].includes(dispute.status)) ? (

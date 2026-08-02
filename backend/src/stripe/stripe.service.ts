@@ -369,30 +369,50 @@ export class StripeService {
         cancelUrl: string;
         metadata: any;
         customerEmail?: string;
+        /** Optional multi-line items (combined settlement). Overrides single `amount` product. */
+        lineItems?: Array<{ name: string; description?: string; amount: string }>;
     }): Promise<any> {
-        const amountCents = Math.round(parseFloat(params.amount) * 100);
-
         const isAdjFee = params.metadata?.isAdjudicationFeePayment === 'true';
-        const productName = isAdjFee
-            ? `Adjudication Fee - Order #${params.metadata.orderNumber || 'N/A'}`
-            : `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`;
-        const productDescription = isAdjFee
-            ? `Platform adjudication fees for ${params.metadata.caseType} #${params.metadata.caseId}`
-            : `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`;
+        const isSettlement = params.metadata?.isMerchantSettlement === 'true';
+
+        const line_items =
+            params.lineItems && params.lineItems.length > 0
+                ? params.lineItems.map((item) => ({
+                      price_data: {
+                          currency: params.currency,
+                          product_data: {
+                              name: item.name,
+                              description: item.description || undefined,
+                          },
+                          unit_amount: Math.round(parseFloat(item.amount) * 100),
+                      },
+                      quantity: 1,
+                  }))
+                : [
+                      {
+                          price_data: {
+                              currency: params.currency,
+                              product_data: {
+                                  name: isAdjFee
+                                      ? `Adjudication Fee - Order #${params.metadata.orderNumber || 'N/A'}`
+                                      : `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`,
+                                  description: isAdjFee
+                                      ? `Platform adjudication fees for ${params.metadata.caseType} #${params.metadata.caseId}`
+                                      : `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`,
+                              },
+                              unit_amount: Math.round(parseFloat(params.amount) * 100),
+                          },
+                          quantity: 1,
+                      },
+                  ];
+
+        if (isSettlement && (!params.lineItems || params.lineItems.length < 1)) {
+            throw new BadRequestException('Settlement checkout requires line items');
+        }
 
         return await this.stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: params.currency,
-                    product_data: {
-                        name: productName,
-                        description: productDescription,
-                    },
-                    unit_amount: amountCents,
-                },
-                quantity: 1,
-            }],
+            line_items,
             mode: 'payment',
             success_url: params.successUrl,
             cancel_url: params.cancelUrl,
