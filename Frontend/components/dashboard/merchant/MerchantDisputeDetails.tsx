@@ -197,7 +197,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-8">
       
       {/* Top Navigation & Status */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -240,10 +240,19 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Combined settlement full-width above columns — avoids stretching the verdict card */}
+      {(isMerchantCombinedSettlementDue(dispute) || isMerchantCombinedSettlementPaid(dispute)) && (
+         <MerchantSettlementPaymentCard
+            caseRecord={dispute as any}
+            role="MERCHANT"
+            onSuccess={() => useResolutionStore.getState().fetchMerchantCases(true)}
+         />
+      )}
+
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
         
         {/* LEFT: Customer Claim */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
            <GlassCard className="bg-[#1A1814] border-red-500/20 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-red-500" />
               
@@ -326,15 +335,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
         </div>
 
         {/* RIGHT: Merchant Response Form */}
-        <div className="relative space-y-6">
-           {/* Combined settlement when both fee + shipping are due (one payment, itemized ledger) */}
-           {(isMerchantCombinedSettlementDue(dispute) || isMerchantCombinedSettlementPaid(dispute)) && (
-              <MerchantSettlementPaymentCard
-                 caseRecord={dispute as any}
-                 role="MERCHANT"
-                 onSuccess={() => useResolutionStore.getState().fetchMerchantCases(true)}
-              />
-           )}
+        <div className="relative space-y-6 min-w-0">
            {/* Single-item cards only when the other obligation is not also pending */}
            {!isMerchantCombinedSettlementDue(dispute) &&
               !isMerchantCombinedSettlementPaid(dispute) &&
@@ -349,7 +350,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
               />
            )}
            {dispute.adminApproval ? (
-              <GlassCard className="h-full bg-black/40 border-gold-500/20 relative overflow-hidden flex flex-col">
+              <GlassCard className="bg-black/40 border-gold-500/20 relative overflow-hidden flex flex-col">
                  {/* 2026 Admin Verdict Header */}
                  <div className={`p-8 border-b border-white/5 flex items-center justify-between
                     ${dispute.adminApproval === 'APPROVED' ? 'bg-green-500/[0.03]' : 'bg-red-500/[0.03]'}`}>
@@ -370,7 +371,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                     </Badge>
                  </div>
 
-                 <div className="p-8 flex-1 space-y-8">
+                 <div className="p-8 space-y-8">
                     {/* Rationale Section */}
                     <div className="space-y-3">
                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{isAr ? 'موجز الحكم الإداري' : 'OFFICIAL RATIONALE'}</span>
@@ -409,7 +410,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                     </div>
 
                     {/* Admin Signature & Verification */}
-                    <div className="pt-8 border-t border-white/5 mt-auto">
+                    <div className="pt-8 border-t border-white/5">
                        <div className="flex flex-col items-center gap-4">
                           <div className="text-center">
                              <div className="text-signature text-3xl text-gold-500 opacity-60 mb-2 select-none">
@@ -451,7 +452,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                  </div>
               </GlassCard>
            ) : dispute.status !== 'OPEN' && dispute.status !== 'AWAITING_MERCHANT' ? (
-              <GlassCard className="h-full flex flex-col items-center justify-center text-center p-12 bg-gold-500/5 border-gold-500/20">
+              <GlassCard className="flex flex-col items-center justify-center text-center p-12 bg-gold-500/5 border-gold-500/20">
                  <div className="w-20 h-20 bg-gold-500/10 rounded-full flex items-center justify-center text-gold-500 mb-6">
                     <Clock size={40} className="animate-pulse" />
                  </div>
@@ -467,7 +468,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                  </div>
               </GlassCard>
            ) : (
-              <GlassCard className="h-full flex flex-col bg-[#151310] border-gold-500/20">
+              <GlassCard className="flex flex-col bg-[#151310] border-gold-500/20">
                  <div className="mb-6">
                     <h2 className="text-lg font-bold text-white mb-2">{isAr ? 'رد التاجر' : 'Your Response'}</h2>
                     <p className="text-xs text-white/50">
