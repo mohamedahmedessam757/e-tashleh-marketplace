@@ -19,6 +19,14 @@ export class NotificationsService {
     ) { }
 
     async create(data: CreateNotificationDto) {
+        // Prefer notifyAdmins() for staff broadcasts — never persist null recipientId
+        if (!data.recipientId) {
+            this.logger.warn(
+                `notifications.create skipped: missing recipientId (title=${data.titleEn || data.titleAr})`,
+            );
+            return null;
+        }
+
         const offerId = data.metadata?.offerId != null ? String(data.metadata.offerId) : null;
         if (data.type === 'payment' && offerId) {
             const duplicate = await this.prisma.notification.findFirst({
@@ -93,7 +101,9 @@ export class NotificationsService {
         return notification;
     }
 
-    private async isRateLimited(userId: string, maxPerMinute = 20): Promise<boolean> {
+    private async isRateLimited(userId: string | null | undefined, maxPerMinute = 20): Promise<boolean> {
+        // Broadcast / admin fan-out may pass null — never query UUID column with null
+        if (!userId) return false;
         const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
         const count = await this.prisma.notification.count({
             where: {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   AlertTriangle, Clock, ChevronRight, ChevronLeft, FileText, 
   UploadCloud, Send, ShieldCheck, User, MessageSquare, Scale, CheckCircle2, X,
-  FileIcon, FileImage, FileStack, Trash2, Gavel, History, Search, ExternalLink
+  FileIcon, FileImage, FileStack, Trash2, Gavel, History, Search, ExternalLink, Loader2
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
@@ -97,7 +97,16 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
     return () => clearInterval(interval);
   }, [dispute]);
 
-  if (!dispute) return <div className="p-8 text-center text-white">Case not found</div>;
+  if (!dispute) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center gap-4 text-center">
+        <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+        <p className="text-white/50 text-sm font-bold">
+          {isAr ? 'جاري تحميل بيانات القضية...' : 'Loading case details...'}
+        </p>
+      </div>
+    );
+  }
 
   const handleManualEscalate = async () => {
     setIsEscalating(true);

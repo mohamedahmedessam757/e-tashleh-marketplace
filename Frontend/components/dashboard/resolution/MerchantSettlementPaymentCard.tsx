@@ -100,6 +100,8 @@ export const MerchantSettlementPaymentCard: React.FC<MerchantSettlementPaymentCa
           caseId: caseRecord.id,
           caseType,
           frontendUrl: window.location.origin,
+          // Return to the page the merchant paid from (order details or dispute details)
+          returnPath: `${window.location.pathname}`,
         }),
       });
       if (!response.ok) {
