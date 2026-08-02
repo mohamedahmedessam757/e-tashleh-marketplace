@@ -911,6 +911,13 @@ model ReturnRequest {
   shippingStripeId      String? @map("shipping_stripe_id")
   isAttachmentsEnabled  Boolean @default(true) @map("is_attachments_enabled")
 
+  // Adjudication platform-fee payment (wallet or Stripe when balance insufficient)
+  adjudicationFeeAmount        Decimal? @map("adjudication_fee_amount") @db.Decimal(14, 2)
+  adjudicationFeePayee         String?  @map("adjudication_fee_payee") // MERCHANT | CUSTOMER
+  adjudicationFeePaymentStatus String   @default("NONE") @map("adjudication_fee_payment_status") // NONE | PENDING | PAID
+  adjudicationFeePaymentMethod String?  @map("adjudication_fee_payment_method") // WALLET | STRIPE
+  adjudicationFeeStripeId      String?  @map("adjudication_fee_stripe_id")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
@@ -971,6 +978,13 @@ model Dispute {
   shippingPaymentMethod String? @map("shipping_payment_method")
   shippingStripeId      String? @map("shipping_stripe_id")
   isAttachmentsEnabled  Boolean @default(true) @map("is_attachments_enabled")
+
+  // Adjudication platform-fee payment (wallet or Stripe when balance insufficient)
+  adjudicationFeeAmount        Decimal? @map("adjudication_fee_amount") @db.Decimal(14, 2)
+  adjudicationFeePayee         String?  @map("adjudication_fee_payee") // MERCHANT | CUSTOMER
+  adjudicationFeePaymentStatus String   @default("NONE") @map("adjudication_fee_payment_status") // NONE | PENDING | PAID
+  adjudicationFeePaymentMethod String?  @map("adjudication_fee_payment_method") // WALLET | STRIPE
+  adjudicationFeeStripeId      String?  @map("adjudication_fee_stripe_id")
 
   verdictNotes        String?   @map("verdict_notes")
   adminApproval       String?   @map("admin_approval")

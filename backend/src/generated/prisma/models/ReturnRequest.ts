@@ -38,6 +38,7 @@ export type ReturnRequestAvgAggregateOutputType = {
   penaltyAmount: runtime.Decimal | null
   netRefundAmount: runtime.Decimal | null
   shippingCompanyLiability: runtime.Decimal | null
+  adjudicationFeeAmount: runtime.Decimal | null
 }
 
 export type ReturnRequestSumAggregateOutputType = {
@@ -52,6 +53,7 @@ export type ReturnRequestSumAggregateOutputType = {
   penaltyAmount: runtime.Decimal | null
   netRefundAmount: runtime.Decimal | null
   shippingCompanyLiability: runtime.Decimal | null
+  adjudicationFeeAmount: runtime.Decimal | null
 }
 
 export type ReturnRequestMinAggregateOutputType = {
@@ -100,6 +102,11 @@ export type ReturnRequestMinAggregateOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean | null
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string | null
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -150,6 +157,11 @@ export type ReturnRequestMaxAggregateOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean | null
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string | null
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -203,6 +215,11 @@ export type ReturnRequestCountAggregateOutputType = {
   shippingPaymentMethod: number
   shippingStripeId: number
   isAttachmentsEnabled: number
+  adjudicationFeeAmount: number
+  adjudicationFeePayee: number
+  adjudicationFeePaymentStatus: number
+  adjudicationFeePaymentMethod: number
+  adjudicationFeeStripeId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -221,6 +238,7 @@ export type ReturnRequestAvgAggregateInputType = {
   penaltyAmount?: true
   netRefundAmount?: true
   shippingCompanyLiability?: true
+  adjudicationFeeAmount?: true
 }
 
 export type ReturnRequestSumAggregateInputType = {
@@ -235,6 +253,7 @@ export type ReturnRequestSumAggregateInputType = {
   penaltyAmount?: true
   netRefundAmount?: true
   shippingCompanyLiability?: true
+  adjudicationFeeAmount?: true
 }
 
 export type ReturnRequestMinAggregateInputType = {
@@ -283,6 +302,11 @@ export type ReturnRequestMinAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -333,6 +357,11 @@ export type ReturnRequestMaxAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -386,6 +415,11 @@ export type ReturnRequestCountAggregateInputType = {
   shippingPaymentMethod?: true
   shippingStripeId?: true
   isAttachmentsEnabled?: true
+  adjudicationFeeAmount?: true
+  adjudicationFeePayee?: true
+  adjudicationFeePaymentStatus?: true
+  adjudicationFeePaymentMethod?: true
+  adjudicationFeeStripeId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -526,6 +560,11 @@ export type ReturnRequestGroupByOutputType = {
   shippingPaymentMethod: string | null
   shippingStripeId: string | null
   isAttachmentsEnabled: boolean
+  adjudicationFeeAmount: runtime.Decimal | null
+  adjudicationFeePayee: string | null
+  adjudicationFeePaymentStatus: string
+  adjudicationFeePaymentMethod: string | null
+  adjudicationFeeStripeId: string | null
   createdAt: Date
   updatedAt: Date
   _count: ReturnRequestCountAggregateOutputType | null
@@ -602,6 +641,11 @@ export type ReturnRequestWhereInput = {
   shippingPaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"ReturnRequest"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"ReturnRequest"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -659,6 +703,11 @@ export type ReturnRequestOrderByWithRelationInput = {
   shippingPaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   customer?: Prisma.UserOrderByWithRelationInput
@@ -719,6 +768,11 @@ export type ReturnRequestWhereUniqueInput = Prisma.AtLeast<{
   shippingPaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"ReturnRequest"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"ReturnRequest"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
   customer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -776,6 +830,11 @@ export type ReturnRequestOrderByWithAggregationInput = {
   shippingPaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReturnRequestCountOrderByAggregateInput
@@ -837,6 +896,11 @@ export type ReturnRequestScalarWhereWithAggregatesInput = {
   shippingPaymentMethod?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   shippingStripeId?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   isAttachmentsEnabled?: Prisma.BoolWithAggregatesFilter<"ReturnRequest"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringWithAggregatesFilter<"ReturnRequest"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ReturnRequest"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ReturnRequest"> | Date | string
 }
@@ -886,6 +950,11 @@ export type ReturnRequestCreateInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutReturnsInput
@@ -943,6 +1012,11 @@ export type ReturnRequestUncheckedCreateInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -992,6 +1066,11 @@ export type ReturnRequestUpdateInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutReturnsNestedInput
@@ -1049,6 +1128,11 @@ export type ReturnRequestUncheckedUpdateInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1102,6 +1186,11 @@ export type ReturnRequestCreateManyInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1151,6 +1240,11 @@ export type ReturnRequestUpdateManyMutationInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1204,6 +1298,11 @@ export type ReturnRequestUncheckedUpdateManyInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1267,6 +1366,11 @@ export type ReturnRequestCountOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1283,6 +1387,7 @@ export type ReturnRequestAvgOrderByAggregateInput = {
   penaltyAmount?: Prisma.SortOrder
   netRefundAmount?: Prisma.SortOrder
   shippingCompanyLiability?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
 }
 
 export type ReturnRequestMaxOrderByAggregateInput = {
@@ -1331,6 +1436,11 @@ export type ReturnRequestMaxOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1381,6 +1491,11 @@ export type ReturnRequestMinOrderByAggregateInput = {
   shippingPaymentMethod?: Prisma.SortOrder
   shippingStripeId?: Prisma.SortOrder
   isAttachmentsEnabled?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
+  adjudicationFeePayee?: Prisma.SortOrder
+  adjudicationFeePaymentStatus?: Prisma.SortOrder
+  adjudicationFeePaymentMethod?: Prisma.SortOrder
+  adjudicationFeeStripeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1397,6 +1512,7 @@ export type ReturnRequestSumOrderByAggregateInput = {
   penaltyAmount?: Prisma.SortOrder
   netRefundAmount?: Prisma.SortOrder
   shippingCompanyLiability?: Prisma.SortOrder
+  adjudicationFeeAmount?: Prisma.SortOrder
 }
 
 export type ReturnRequestCreateNestedManyWithoutCustomerInput = {
@@ -1612,6 +1728,11 @@ export type ReturnRequestCreateWithoutCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutReturnsInput
@@ -1667,6 +1788,11 @@ export type ReturnRequestUncheckedCreateWithoutCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1749,6 +1875,11 @@ export type ReturnRequestScalarWhereInput = {
   shippingPaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   shippingStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   isAttachmentsEnabled?: Prisma.BoolFilter<"ReturnRequest"> | boolean
+  adjudicationFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFilter<"ReturnRequest"> | string
+  adjudicationFeePaymentMethod?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  adjudicationFeeStripeId?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ReturnRequest"> | Date | string
 }
@@ -1798,6 +1929,11 @@ export type ReturnRequestCreateWithoutStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutReturnsInput
@@ -1853,6 +1989,11 @@ export type ReturnRequestUncheckedCreateWithoutStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1928,6 +2069,11 @@ export type ReturnRequestCreateWithoutOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutReturnsInput
@@ -1983,6 +2129,11 @@ export type ReturnRequestUncheckedCreateWithoutOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2058,6 +2209,11 @@ export type ReturnRequestCreateWithoutOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.UserCreateNestedOneWithoutReturnsInput
@@ -2113,6 +2269,11 @@ export type ReturnRequestUncheckedCreateWithoutOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2191,6 +2352,11 @@ export type ReturnRequestCreateManyCustomerInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2240,6 +2406,11 @@ export type ReturnRequestUpdateWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutReturnsNestedInput
@@ -2295,6 +2466,11 @@ export type ReturnRequestUncheckedUpdateWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2347,6 +2523,11 @@ export type ReturnRequestUncheckedUpdateManyWithoutCustomerInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2399,6 +2580,11 @@ export type ReturnRequestCreateManyStoreInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2448,6 +2634,11 @@ export type ReturnRequestUpdateWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutReturnsNestedInput
@@ -2503,6 +2694,11 @@ export type ReturnRequestUncheckedUpdateWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2555,6 +2751,11 @@ export type ReturnRequestUncheckedUpdateManyWithoutStoreInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2607,6 +2808,11 @@ export type ReturnRequestCreateManyOrderInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2656,6 +2862,11 @@ export type ReturnRequestUpdateWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutReturnsNestedInput
@@ -2711,6 +2922,11 @@ export type ReturnRequestUncheckedUpdateWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2763,6 +2979,11 @@ export type ReturnRequestUncheckedUpdateManyWithoutOrderInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2815,6 +3036,11 @@ export type ReturnRequestCreateManyOfferInput = {
   shippingPaymentMethod?: string | null
   shippingStripeId?: string | null
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: string | null
+  adjudicationFeePaymentStatus?: string
+  adjudicationFeePaymentMethod?: string | null
+  adjudicationFeeStripeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2864,6 +3090,11 @@ export type ReturnRequestUpdateWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.UserUpdateOneRequiredWithoutReturnsNestedInput
@@ -2919,6 +3150,11 @@ export type ReturnRequestUncheckedUpdateWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2971,6 +3207,11 @@ export type ReturnRequestUncheckedUpdateManyWithoutOfferInput = {
   shippingPaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adjudicationFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  adjudicationFeePayee?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeePaymentStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  adjudicationFeePaymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adjudicationFeeStripeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -3026,6 +3267,11 @@ export type ReturnRequestSelect<ExtArgs extends runtime.Types.Extensions.Interna
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3083,6 +3329,11 @@ export type ReturnRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3140,6 +3391,11 @@ export type ReturnRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3197,11 +3453,16 @@ export type ReturnRequestSelectScalar = {
   shippingPaymentMethod?: boolean
   shippingStripeId?: boolean
   isAttachmentsEnabled?: boolean
+  adjudicationFeeAmount?: boolean
+  adjudicationFeePayee?: boolean
+  adjudicationFeePaymentStatus?: boolean
+  adjudicationFeePaymentMethod?: boolean
+  adjudicationFeeStripeId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
+export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "adjudicationFeeAmount" | "adjudicationFeePayee" | "adjudicationFeePaymentStatus" | "adjudicationFeePaymentMethod" | "adjudicationFeeStripeId" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
 export type ReturnRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -3278,6 +3539,11 @@ export type $ReturnRequestPayload<ExtArgs extends runtime.Types.Extensions.Inter
     shippingPaymentMethod: string | null
     shippingStripeId: string | null
     isAttachmentsEnabled: boolean
+    adjudicationFeeAmount: runtime.Decimal | null
+    adjudicationFeePayee: string | null
+    adjudicationFeePaymentStatus: string
+    adjudicationFeePaymentMethod: string | null
+    adjudicationFeeStripeId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["returnRequest"]>
@@ -3755,6 +4021,11 @@ export interface ReturnRequestFieldRefs {
   readonly shippingPaymentMethod: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly shippingStripeId: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly isAttachmentsEnabled: Prisma.FieldRef<"ReturnRequest", 'Boolean'>
+  readonly adjudicationFeeAmount: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
+  readonly adjudicationFeePayee: Prisma.FieldRef<"ReturnRequest", 'String'>
+  readonly adjudicationFeePaymentStatus: Prisma.FieldRef<"ReturnRequest", 'String'>
+  readonly adjudicationFeePaymentMethod: Prisma.FieldRef<"ReturnRequest", 'String'>
+  readonly adjudicationFeeStripeId: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly createdAt: Prisma.FieldRef<"ReturnRequest", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ReturnRequest", 'DateTime'>
 }

@@ -86,6 +86,13 @@ export interface ResolutionCase {
     shippingPaymentMethod?: 'STRIPE' | 'WALLET';
     shippingStripeId?: string;
 
+    // Adjudication platform fee payment (Stripe / wallet when balance insufficient at verdict)
+    adjudicationFeeAmount?: number;
+    adjudicationFeePayee?: 'MERCHANT' | 'CUSTOMER';
+    adjudicationFeePaymentStatus?: 'NONE' | 'PENDING' | 'PAID';
+    adjudicationFeePaymentMethod?: 'STRIPE' | 'WALLET';
+    adjudicationFeeStripeId?: string;
+
     customerRisk?: {
         totalReturns: number;
         totalDisputes: number;
@@ -227,7 +234,14 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 shippingPayee: (r as any).shippingPayee,
                 shippingPaymentStatus: (r as any).shippingPaymentStatus,
                 shippingPaymentMethod: (r as any).shippingPaymentMethod,
-                shippingStripeId: (r as any).shippingStripeId
+                shippingStripeId: (r as any).shippingStripeId,
+                adjudicationFeeAmount: (r as any).adjudicationFeeAmount != null
+                    ? Number((r as any).adjudicationFeeAmount)
+                    : undefined,
+                adjudicationFeePayee: (r as any).adjudicationFeePayee,
+                adjudicationFeePaymentStatus: (r as any).adjudicationFeePaymentStatus,
+                adjudicationFeePaymentMethod: (r as any).adjudicationFeePaymentMethod,
+                adjudicationFeeStripeId: (r as any).adjudicationFeeStripeId,
             }));
 
             const mappedDisputes: ResolutionCase[] = disputes.map(d => ({
@@ -293,7 +307,14 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 shippingPayee: (d as any).shippingPayee,
                 shippingPaymentStatus: (d as any).shippingPaymentStatus,
                 shippingPaymentMethod: (d as any).shippingPaymentMethod,
-                shippingStripeId: (d as any).shippingStripeId
+                shippingStripeId: (d as any).shippingStripeId,
+                adjudicationFeeAmount: (d as any).adjudicationFeeAmount != null
+                    ? Number((d as any).adjudicationFeeAmount)
+                    : undefined,
+                adjudicationFeePayee: (d as any).adjudicationFeePayee,
+                adjudicationFeePaymentStatus: (d as any).adjudicationFeePaymentStatus,
+                adjudicationFeePaymentMethod: (d as any).adjudicationFeePaymentMethod,
+                adjudicationFeeStripeId: (d as any).adjudicationFeeStripeId,
             }));
 
             set({ cases: [...mappedReturns, ...mappedDisputes], isLoading: false });
@@ -321,6 +342,12 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 paidTotal: item.paidTotal != null ? Number(item.paidTotal) : null,
                 maxRefundable: item.maxRefundable != null ? Number(item.maxRefundable) : null,
                 escrowStatus: item.escrowStatus ?? null,
+                adjudicationFeeAmount:
+                    item.adjudicationFeeAmount != null ? Number(item.adjudicationFeeAmount) : undefined,
+                adjudicationFeePayee: item.adjudicationFeePayee,
+                adjudicationFeePaymentStatus: item.adjudicationFeePaymentStatus,
+                adjudicationFeePaymentMethod: item.adjudicationFeePaymentMethod,
+                adjudicationFeeStripeId: item.adjudicationFeeStripeId,
             });
 
             const mappedReturns: ResolutionCase[] = returns.map(r => ({
@@ -523,6 +550,13 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 shippingPaymentStatus: (r as any).shippingPaymentStatus,
                 shippingPaymentMethod: (r as any).shippingPaymentMethod,
                 shippingStripeId: (r as any).shippingStripeId,
+                adjudicationFeeAmount: (r as any).adjudicationFeeAmount != null
+                    ? Number((r as any).adjudicationFeeAmount)
+                    : undefined,
+                adjudicationFeePayee: (r as any).adjudicationFeePayee,
+                adjudicationFeePaymentStatus: (r as any).adjudicationFeePaymentStatus,
+                adjudicationFeePaymentMethod: (r as any).adjudicationFeePaymentMethod,
+                adjudicationFeeStripeId: (r as any).adjudicationFeeStripeId,
                 merchantResponse: r.merchantResponseText ? {
                     text: r.merchantResponseText,
                     acceptedReturn: String((r as any).merchantDecision || '')
@@ -589,6 +623,13 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 shippingPaymentStatus: (d as any).shippingPaymentStatus,
                 shippingPaymentMethod: (d as any).shippingPaymentMethod,
                 shippingStripeId: (d as any).shippingStripeId,
+                adjudicationFeeAmount: (d as any).adjudicationFeeAmount != null
+                    ? Number((d as any).adjudicationFeeAmount)
+                    : undefined,
+                adjudicationFeePayee: (d as any).adjudicationFeePayee,
+                adjudicationFeePaymentStatus: (d as any).adjudicationFeePaymentStatus,
+                adjudicationFeePaymentMethod: (d as any).adjudicationFeePaymentMethod,
+                adjudicationFeeStripeId: (d as any).adjudicationFeeStripeId,
                 merchantResponse: d.merchantResponseText ? {
                     text: d.merchantResponseText,
                     acceptedReturn: String((d as any).merchantDecision || '')

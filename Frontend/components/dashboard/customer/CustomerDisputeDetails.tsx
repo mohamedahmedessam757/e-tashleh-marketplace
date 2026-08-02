@@ -11,6 +11,8 @@ import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Badge } from '../../ui/Badge';
 import { ShippingPaymentCard } from '../resolution/ShippingPaymentCard';
+import { AdjudicationFeePaymentCard } from '../resolution/AdjudicationFeePaymentCard';
+import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
 interface CustomerDisputeDetailsProps {
@@ -60,12 +62,19 @@ const CountdownTimer: React.FC<{ targetDate: string, isAr: boolean }> = ({ targe
 };
 
 export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ caseId, onBack, onNavigate }) => {
+  useShippingPaymentReturn(true, 'customer', onNavigate);
   const { t, language } = useLanguage();
   const isAr = language === 'ar';
   const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
   
-  const { getCaseById } = useResolutionStore();
+  const { getCaseById, fetchUserRequests, subscribeToCases, unsubscribeFromCases } = useResolutionStore();
   const dispute = getCaseById(caseId);
+
+  useEffect(() => {
+    fetchUserRequests(true);
+    subscribeToCases('customer');
+    return () => unsubscribeFromCases();
+  }, [caseId, fetchUserRequests, subscribeToCases, unsubscribeFromCases]);
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -282,6 +291,11 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
             <ShippingPaymentCard 
                 caseRecord={dispute} 
                 role="CUSTOMER" 
+            />
+            <AdjudicationFeePaymentCard
+                caseRecord={dispute}
+                role="CUSTOMER"
+                onSuccess={() => useResolutionStore.getState().fetchUserRequests(true)}
             />
          </div>
 

@@ -744,6 +744,84 @@ export class PaymentsService {
         return { url: session.url };
     }
 
+    async createAdjudicationFeeCheckoutSession(
+        userId: string,
+        caseId: string,
+        caseType: 'return' | 'dispute',
+        frontendUrl?: string,
+    ) {
+        if (caseType !== 'return' && caseType !== 'dispute') {
+            throw new BadRequestException('Invalid case type');
+        }
+        const model = caseType === 'return' ? this.prisma.returnRequest : this.prisma.dispute;
+        const caseRecord = await (model as any).findUnique({
+            where: { id: caseId },
+            include: { customer: true, order: true, store: true },
+        });
+        if (!caseRecord) throw new NotFoundException('Case not found');
+
+        if (caseRecord.adjudicationFeePaymentStatus === 'PAID') {
+            throw new BadRequestException('Adjudication fee already paid');
+        }
+        if (caseRecord.adjudicationFeePaymentStatus !== 'PENDING') {
+            throw new BadRequestException('No pending adjudication fee for this case');
+        }
+
+        const payee = String(caseRecord.adjudicationFeePayee || '').toUpperCase();
+        let checkoutEmail: string | undefined = caseRecord.customer?.email;
+        if (payee === 'MERCHANT') {
+            const store = await this.prisma.store.findUnique({
+                where: { ownerId: userId },
+                include: { owner: { select: { email: true } } },
+            });
+            if (!store || store.id !== caseRecord.storeId) {
+                throw new ForbiddenException('You are not the merchant assigned to this fee');
+            }
+            checkoutEmail = store.owner?.email || checkoutEmail;
+        } else if (payee === 'CUSTOMER') {
+            if (caseRecord.customerId !== userId) {
+                throw new ForbiddenException('You are not the customer assigned to this fee');
+            }
+        } else {
+            throw new BadRequestException('No adjudication fee payee assigned');
+        }
+
+        const feeAmount = Number(caseRecord.adjudicationFeeAmount || 0);
+        if (!(feeAmount > 0) || !Number.isFinite(feeAmount)) {
+            throw new BadRequestException('No adjudication fee amount');
+        }
+
+        const baseUrl = (frontendUrl || process.env.FRONTEND_URL || 'https://e-tashleh.net').replace(
+            /\/$/,
+            '',
+        );
+        const returnPath = `/dashboard/dispute-details/${caseId}`;
+        const successUrl = `${baseUrl}${returnPath}?adjFeePayment=success&caseId=${caseId}&caseType=${caseType}`;
+        const cancelUrl = `${baseUrl}${returnPath}?adjFeePayment=cancel&caseId=${caseId}&caseType=${caseType}`;
+
+        const session = await this.stripeService.createCheckoutSession({
+            amount: feeAmount.toFixed(2),
+            currency: 'AED',
+            successUrl,
+            cancelUrl,
+            customerEmail: checkoutEmail,
+            metadata: {
+                caseId,
+                caseType,
+                isAdjudicationFeePayment: 'true',
+                orderId: String(caseRecord.orderId || ''),
+                orderNumber: caseRecord.order?.orderNumber || '',
+            },
+        });
+
+        await (model as any).update({
+            where: { id: caseId },
+            data: { adjudicationFeeStripeId: session.id },
+        });
+
+        return { url: session.url };
+    }
+
     /**
      * Phase 2: Webhook Fulfillment
      * Finalizes the payment, credits wallets, generates invoices, and holds funds in escrow.
@@ -762,8 +840,11 @@ export class PaymentsService {
         });
 
         if (!payment) {
-            // Check if it's a shipping payment intent (these aren't in paymentTransaction table)
+            // Check if it's a shipping / adjudication fee payment intent (not in paymentTransaction)
             const intent = await this.stripeService.getStripeClient().paymentIntents.retrieve(paymentIntentId);
+            if (intent.metadata?.isAdjudicationFeePayment === 'true') {
+                return await this.fulfillAdjudicationFeePayment(intent);
+            }
             if (intent.metadata?.isShippingPayment === 'true') {
                 return await this.fulfillShippingPayment(intent);
             }
@@ -1371,6 +1452,159 @@ export class PaymentsService {
                 link: 'resolution', // Admin resolution center
                 metadata: { caseId, caseType }
             });
+
+            return updatedCase;
+        });
+    }
+
+    private async fulfillAdjudicationFeePayment(intent: any) {
+        const { caseId, caseType } = intent.metadata || {};
+        if (!caseId || !caseType) {
+            this.logger.warn('Adjudication fee fulfillment missing case metadata');
+            return;
+        }
+
+        const caseBefore =
+            caseType === 'return'
+                ? await this.prisma.returnRequest.findUnique({ where: { id: caseId } })
+                : await this.prisma.dispute.findUnique({ where: { id: caseId } });
+        if (!caseBefore) {
+            this.logger.warn(`Adjudication fee case missing for ${caseId}`);
+            return;
+        }
+        // Idempotent for any prior settlement (wallet or Stripe) — prevents double platform credit
+        if (caseBefore.adjudicationFeePaymentStatus === 'PAID') {
+            this.logger.log(
+                `Adjudication fee already paid for ${caseType} ${caseId}; skipping duplicate webhook`,
+            );
+            return;
+        }
+        if (caseBefore.adjudicationFeePaymentStatus !== 'PENDING') {
+            this.logger.warn(
+                `Adjudication fee not PENDING for ${caseType} ${caseId} (status=${caseBefore.adjudicationFeePaymentStatus}); skip`,
+            );
+            return;
+        }
+
+        const expectedMinor = Math.round(Number(caseBefore.adjudicationFeeAmount || 0) * 100);
+        if (expectedMinor <= 0) {
+            this.logger.warn(`Adjudication fee amount missing for ${caseId}; skip`);
+            return;
+        }
+        if (typeof intent.amount_received === 'number' && intent.amount_received !== expectedMinor) {
+            this.logger.error(
+                `Adjudication fee PI ${intent.id} amount mismatch: expected ${expectedMinor}, got ${intent.amount_received}`,
+            );
+            throw new Error('Adjudication fee payment amount mismatch');
+        }
+
+        const modelName = caseType === 'return' ? 'returnRequest' : 'dispute';
+        this.logger.log(`Fulfilling adjudication fee payment for ${caseType} ${caseId}`);
+
+        return await this.prisma.$transaction(async (tx) => {
+            // Atomic claim: only one webhook/wallet race winner proceeds
+            const claimed = await (tx as any)[modelName].updateMany({
+                where: { id: caseId, adjudicationFeePaymentStatus: 'PENDING' },
+                data: {
+                    adjudicationFeePaymentStatus: 'PAID',
+                    adjudicationFeePaymentMethod: 'STRIPE',
+                    adjudicationFeeStripeId: intent.id,
+                    updatedAt: new Date(),
+                },
+            });
+            if (claimed.count === 0) {
+                this.logger.log(
+                    `Adjudication fee claim lost for ${caseType} ${caseId}; already settled`,
+                );
+                return;
+            }
+
+            const updatedCase = await (tx as any)[modelName].findUnique({ where: { id: caseId } });
+            if (!updatedCase) return;
+
+            const payee = String(updatedCase.adjudicationFeePayee || '').toUpperCase();
+            let payeeUserId: string | null = null;
+            let balanceAfter = 0;
+
+            if (payee === 'MERCHANT') {
+                const store = await tx.store.findUnique({
+                    where: { id: updatedCase.storeId },
+                    select: { ownerId: true, balance: true },
+                });
+                payeeUserId = store?.ownerId || null;
+                balanceAfter = Number(store?.balance ?? 0);
+            } else if (payee === 'CUSTOMER') {
+                payeeUserId = updatedCase.customerId;
+                const userRow = await tx.user.findUnique({
+                    where: { id: payeeUserId },
+                    select: { customerBalance: true },
+                });
+                balanceAfter = Number(userRow?.customerBalance ?? 0);
+            }
+
+            const amount = Number(updatedCase.adjudicationFeeAmount || 0);
+
+            if (payeeUserId && amount > 0) {
+                await tx.walletTransaction.create({
+                    data: {
+                        userId: payeeUserId,
+                        role: payee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
+                        type: 'DEBIT',
+                        transactionType: 'ADJUDICATION_FEE',
+                        amount,
+                        currency: 'AED',
+                        description: `Adjudication platform fees for ${caseType} #${caseId.substring(0, 8)} (Stripe)`,
+                        balanceAfter,
+                        metadata: {
+                            caseId,
+                            caseType,
+                            paymentMethod: 'STRIPE',
+                            stripeIntentId: intent.id,
+                        },
+                    },
+                });
+            }
+
+            const platformWallet = await tx.platformWallet.findFirst();
+            if (platformWallet && amount > 0) {
+                await tx.platformWallet.update({
+                    where: { id: platformWallet.id },
+                    data: {
+                        feesBalance: { increment: amount },
+                        totalRevenue: { increment: amount },
+                    },
+                });
+            }
+
+            if (payeeUserId) {
+                await this.notifications
+                    .create({
+                        recipientId: payeeUserId,
+                        recipientRole: payee === 'MERCHANT' ? 'VENDOR' : 'CUSTOMER',
+                        type: 'ORDER',
+                        titleAr: 'تم سداد رسوم الحكم',
+                        titleEn: 'Adjudication fee paid',
+                        messageAr: `تم استلام دفع رسوم الحكم بقيمة ${amount.toFixed(2)} AED عبر Stripe.`,
+                        messageEn: `Adjudication fee of ${amount.toFixed(2)} AED received via Stripe.`,
+                        link: `dispute-details/${caseId}`,
+                        metadata: { caseId, caseType, waEvent: 'ORDER_STATUS' },
+                    })
+                    .catch(() => {});
+            }
+
+            await this.notifications
+                .create({
+                    recipientId: null as any,
+                    recipientRole: 'ADMIN',
+                    type: 'order',
+                    titleAr: `سداد رسوم حكم: ${caseType === 'return' ? 'إرجاع' : 'نزاع'} #${updatedCase.orderId}`,
+                    titleEn: `Adjudication fee paid: ${caseType === 'return' ? 'Return' : 'Dispute'} #${updatedCase.orderId}`,
+                    messageAr: `تم سداد رسوم الحكم ${amount.toFixed(2)} درهم عبر Stripe.`,
+                    messageEn: `Adjudication fees of AED ${amount.toFixed(2)} paid via Stripe.`,
+                    link: 'resolution',
+                    metadata: { caseId, caseType },
+                })
+                .catch(() => {});
 
             return updatedCase;
         });
