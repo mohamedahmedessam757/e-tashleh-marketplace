@@ -841,94 +841,6 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 text-white text-sm focus:border-gold-500/50 outline-none transition-all min-h-[120px]"
                                                  />
                                              </div>
-
-                                             {/* Step-1 financial preview + fault party (synced with Step 2) */}
-                                             <div className="space-y-4 p-6 rounded-[28px] bg-black/40 border border-white/5">
-                                                 <div className="flex items-center gap-3">
-                                                     <Calculator size={16} className="text-gold-500" />
-                                                     <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
-                                                         {(t.admin.disputeManager.verdictTerminal as any).step1FinancialSummary ||
-                                                             (isAr ? 'ملخص مالي قبل التنفيذ' : 'Financial summary before execute')}
-                                                     </span>
-                                                 </div>
-                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                     {[
-                                                         { id: 'MERCHANT', label: isAr ? 'خطأ التاجر' : 'Merchant fault' },
-                                                         { id: 'CUSTOMER', label: isAr ? 'خطأ العميل' : 'Customer fault' },
-                                                         { id: 'SHIPPING_COMPANY', label: isAr ? 'خطأ شركة الشحن' : 'Shipping fault' },
-                                                         { id: 'CLOSE_COMPLETE_REFUND', label: isAr ? 'إغلاق + استرداد صافي' : 'Close + net refund' },
-                                                     ].map((opt) => (
-                                                         <button
-                                                             key={opt.id}
-                                                             type="button"
-                                                             onClick={() => setFaultParty(opt.id as any)}
-                                                             className={`p-3 rounded-xl border text-[11px] font-bold transition-all ${
-                                                                 faultParty === opt.id
-                                                                     ? 'bg-gold-500/10 border-gold-500/40 text-white'
-                                                                     : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
-                                                             }`}
-                                                         >
-                                                             {opt.label}
-                                                         </button>
-                                                     ))}
-                                                 </div>
-                                                 <div className="space-y-2 text-[11px] font-bold">
-                                                     <div className="flex justify-between gap-3 text-white/60">
-                                                         <span>{(t.admin.disputeManager.verdictTerminal as any).customerNetRefundLabel}</span>
-                                                         <span className="text-emerald-400 font-mono">{finPreview.net.toFixed(2)} AED</span>
-                                                     </div>
-                                                     {finPreview.platformFees > 0 && (
-                                                         <div className="flex justify-between gap-3 text-white/60">
-                                                             <span>
-                                                                 {faultParty === 'MERCHANT'
-                                                                     ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees
-                                                                     : faultParty === 'CUSTOMER' || isCloseCompleteRefund
-                                                                       ? (isAr ? 'رسوم المنصة (من صافي العميل)' : 'Platform fees (from customer net)')
-                                                                       : (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees}
-                                                             </span>
-                                                             <span className="text-orange-400 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
-                                                         </div>
-                                                     )}
-                                                     {shippingRoundtrip > 0 && (
-                                                         <div className="flex justify-between gap-3 text-white/60">
-                                                             <span>
-                                                                 {faultParty === 'SHIPPING_COMPANY'
-                                                                     ? (t.admin.disputeManager.verdictTerminal as any).shippingCompanyLiability
-                                                                     : faultParty === 'MERCHANT'
-                                                                       ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitShipping
-                                                                       : (isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)')}
-                                                             </span>
-                                                             <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
-                                                         </div>
-                                                     )}
-                                                     {faultParty === 'MERCHANT' && finPreview.merchantDebits.platformFees > 0 && (
-                                                         <div className={`mt-2 p-3 rounded-xl border ${
-                                                             merchantBalance !== null &&
-                                                             merchantBalance < finPreview.merchantDebits.platformFees
-                                                                 ? 'bg-amber-500/10 border-amber-500/30'
-                                                                 : 'bg-green-500/5 border-green-500/10'
-                                                         }`}>
-                                                             <p className="text-[10px] text-white/50 mb-1">
-                                                                 {(t.admin.disputeManager.verdictTerminal as any).collectionMethodLabel ||
-                                                                     (isAr ? 'طريقة التحصيل المتوقعة لرسوم الحكم' : 'Expected adjudication fee collection')}
-                                                             </p>
-                                                             <p className={`text-[10px] font-black ${
-                                                                 merchantBalance !== null &&
-                                                                 merchantBalance < finPreview.merchantDebits.platformFees
-                                                                     ? 'text-amber-400'
-                                                                     : 'text-green-400'
-                                                             }`}>
-                                                                 {merchantBalance !== null &&
-                                                                 merchantBalance < finPreview.merchantDebits.platformFees
-                                                                     ? (t.admin.disputeManager.verdictTerminal as any).merchantInsufficientBalance
-                                                                     : (isAr
-                                                                           ? 'الرصيد كافٍ — خصم فوري من محفظة التاجر'
-                                                                           : 'Sufficient balance — immediate merchant wallet debit')}
-                                                             </p>
-                                                         </div>
-                                                     )}
-                                                 </div>
-                                             </div>
                                          </div>
 
                                          {/* RIGHT: Asset Upload */}
@@ -1342,6 +1254,95 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                              </span>
                                          </div>
                                      </div>
+
+                                     {/* Financial summary before execute (Stage 3) */}
+                                     <div className="space-y-4 p-6 rounded-[28px] bg-black/40 border border-white/5">
+                                         <div className="flex items-center gap-3">
+                                             <Calculator size={16} className="text-gold-500" />
+                                             <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                                 {(t.admin.disputeManager.verdictTerminal as any).step1FinancialSummary ||
+                                                     (isAr ? 'ملخص مالي قبل التنفيذ' : 'Financial summary before execute')}
+                                             </span>
+                                         </div>
+                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                             {[
+                                                 { id: 'MERCHANT', label: isAr ? 'خطأ التاجر' : 'Merchant fault' },
+                                                 { id: 'CUSTOMER', label: isAr ? 'خطأ العميل' : 'Customer fault' },
+                                                 { id: 'SHIPPING_COMPANY', label: isAr ? 'خطأ شركة الشحن' : 'Shipping fault' },
+                                                 { id: 'CLOSE_COMPLETE_REFUND', label: isAr ? 'إغلاق + استرداد صافي' : 'Close + net refund' },
+                                             ].map((opt) => (
+                                                 <button
+                                                     key={opt.id}
+                                                     type="button"
+                                                     onClick={() => setFaultParty(opt.id as any)}
+                                                     className={`p-3 rounded-xl border text-[11px] font-bold transition-all ${
+                                                         faultParty === opt.id
+                                                             ? 'bg-gold-500/10 border-gold-500/40 text-white'
+                                                             : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                     }`}
+                                                 >
+                                                     {opt.label}
+                                                 </button>
+                                             ))}
+                                         </div>
+                                         <div className="space-y-2 text-[11px] font-bold">
+                                             <div className="flex justify-between gap-3 text-white/60">
+                                                 <span>{(t.admin.disputeManager.verdictTerminal as any).customerNetRefundLabel}</span>
+                                                 <span className="text-emerald-400 font-mono">{finPreview.net.toFixed(2)} AED</span>
+                                             </div>
+                                             {finPreview.platformFees > 0 && (
+                                                 <div className="flex justify-between gap-3 text-white/60">
+                                                     <span>
+                                                         {faultParty === 'MERCHANT'
+                                                             ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees
+                                                             : faultParty === 'CUSTOMER' || isCloseCompleteRefund
+                                                               ? (isAr ? 'رسوم المنصة (من صافي العميل)' : 'Platform fees (from customer net)')
+                                                               : (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees}
+                                                     </span>
+                                                     <span className="text-orange-400 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
+                                                 </div>
+                                             )}
+                                             {shippingRoundtrip > 0 && (
+                                                 <div className="flex justify-between gap-3 text-white/60">
+                                                     <span>
+                                                         {faultParty === 'SHIPPING_COMPANY'
+                                                             ? (t.admin.disputeManager.verdictTerminal as any).shippingCompanyLiability
+                                                             : faultParty === 'MERCHANT'
+                                                               ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitShipping
+                                                               : (isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)')}
+                                                     </span>
+                                                     <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
+                                                 </div>
+                                             )}
+                                             {faultParty === 'MERCHANT' && finPreview.merchantDebits.platformFees > 0 && (
+                                                 <div className={`mt-2 p-3 rounded-xl border ${
+                                                     merchantBalance !== null &&
+                                                     merchantBalance < finPreview.merchantDebits.platformFees
+                                                         ? 'bg-amber-500/10 border-amber-500/30'
+                                                         : 'bg-green-500/5 border-green-500/10'
+                                                 }`}>
+                                                     <p className="text-[10px] text-white/50 mb-1">
+                                                         {(t.admin.disputeManager.verdictTerminal as any).collectionMethodLabel ||
+                                                             (isAr ? 'طريقة التحصيل المتوقعة لرسوم الحكم' : 'Expected adjudication fee collection')}
+                                                     </p>
+                                                     <p className={`text-[10px] font-black ${
+                                                         merchantBalance !== null &&
+                                                         merchantBalance < finPreview.merchantDebits.platformFees
+                                                             ? 'text-amber-400'
+                                                             : 'text-green-400'
+                                                     }`}>
+                                                         {merchantBalance !== null &&
+                                                         merchantBalance < finPreview.merchantDebits.platformFees
+                                                             ? (t.admin.disputeManager.verdictTerminal as any).merchantInsufficientBalance
+                                                             : (isAr
+                                                                   ? 'الرصيد كافٍ — خصم فوري من محفظة التاجر'
+                                                                   : 'Sufficient balance — immediate merchant wallet debit')}
+                                                     </p>
+                                                 </div>
+                                             )}
+                                         </div>
+                                     </div>
+
                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                                          <div className="space-y-8">
                                              <div className="p-8 bg-gold-500/5 rounded-[40px] border border-gold-500/20 space-y-6">
