@@ -20,11 +20,19 @@ function isAcceptedOffer(offer?: OrderOffer | null): boolean {
   return isAcceptedOfferStatus(offer.status);
 }
 
+/** Prefer singular `review`, fall back to `reviews[0]` from list payloads. */
+export function getOrderReview(order: Order | null | undefined): Order['review'] | undefined {
+  if (!order) return undefined;
+  if (order.review) return order.review;
+  const fromList = (order as Order & { reviews?: Order['review'][] }).reviews?.[0];
+  return fromList ?? undefined;
+}
+
 export function orderNeedsReview(order: Order | null | undefined): boolean {
   if (!order) return false;
   return (
     REVIEWABLE_ORDER_STATUSES.includes(order.status as (typeof REVIEWABLE_ORDER_STATUSES)[number]) &&
-    !order.review
+    !getOrderReview(order)
   );
 }
 

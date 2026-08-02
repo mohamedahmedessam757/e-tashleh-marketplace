@@ -39,7 +39,7 @@ import { useResolutionStore } from '../../stores/useResolutionStore';
 import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
-import { resolveReviewTarget } from '../../utils/reviewHelpers';
+import { getOrderReview, resolveReviewTarget } from '../../utils/reviewHelpers';
 import { parseImageList, resolveMediaSrc, resolvePartPrimaryImage } from '../../utils/partMedia';
 import { ordersApi } from '../../services/api/orders';
 import {
@@ -1012,30 +1012,30 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             {/* Warranty Badge Removed (Replaced by Hub above or Compact Badge in header) */}
 
                             {/* Review: write CTA or submitted badge (single-item orders) */}
-                            {!isMultiPartOrder && (order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'PARTIALLY_DELIVERED' || order.status === 'WARRANTY_ACTIVE') && (
-                                order.review ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
-                                    >
-                                        <motion.div className="flex gap-0.5">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star
-                                                    key={star}
-                                                    size={14}
-                                                    className={star <= (order.review?.rating ?? 0) ? 'text-gold-500' : 'text-white/15'}
-                                                    fill={star <= (order.review?.rating ?? 0) ? 'currentColor' : 'none'}
-                                                />
-                                            ))}
-                                        </motion.div>
-                                        <span className="text-emerald-400 font-bold text-sm">
-                                            {language === 'ar'
-                                                ? (order.review.adminStatus === 'PUBLISHED' ? 'تم نشر تقييمك' : 'تم إرسال تقييمك')
-                                                : (order.review.adminStatus === 'PUBLISHED' ? 'Review published' : 'Review submitted')}
-                                        </span>
-                                    </motion.div>
-                                ) : (
+                            {!isMultiPartOrder && (order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'PARTIALLY_DELIVERED' || order.status === 'WARRANTY_ACTIVE') && (() => {
+                                const existingReview = getOrderReview(order);
+                                if (existingReview) {
+                                    return (
+                                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                                            <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Star
+                                                        key={star}
+                                                        size={14}
+                                                        className={star <= (existingReview.rating ?? 0) ? 'text-gold-500' : 'text-white/15'}
+                                                        fill={star <= (existingReview.rating ?? 0) ? 'currentColor' : 'none'}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className="text-emerald-400 font-bold text-sm">
+                                                {language === 'ar'
+                                                    ? (existingReview.adminStatus === 'PUBLISHED' ? 'تم نشر تقييمك' : 'تم إرسال تقييمك')
+                                                    : (existingReview.adminStatus === 'PUBLISHED' ? 'Review published' : 'Review submitted')}
+                                            </span>
+                                        </div>
+                                    );
+                                }
+                                return (
                                     <button
                                         onClick={() => setShowReviewModal(true)}
                                         className="flex items-center gap-2 px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-400 hover:text-white border border-gold-500/30 rounded-lg transition-all font-bold text-sm"
@@ -1043,8 +1043,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         <Star size={16} />
                                         {t.dashboard.reviews.writeTitle}
                                     </button>
-                                )
-                            )}
+                                );
+                            })()}
 
                             {/* Return / Dispute — single-item orders only (multi-part uses PartReturnWindowCard) */}
                             {!isMultiPartOrder && isDeliveredLike && (

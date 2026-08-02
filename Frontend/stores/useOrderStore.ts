@@ -500,6 +500,8 @@ const mergeOrderPreservingDetails = (
             incoming.shipmentBatches?.length
                 ? incoming.shipmentBatches
                 : existing.shipmentBatches,
+        // List payloads may omit review; never wipe a known review with undefined
+        review: incoming.review ?? existing.review,
     };
 };
 
@@ -973,15 +975,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 invoices: o.invoices || [],
                 warranty_active_at: o.warranty_active_at || o.warrantyActiveAt,
                 warranty_end_at: o.warranty_end_at || o.warrantyEndAt,
-                review: o.review
-                    ? {
-                        id: o.review.id,
-                        rating: o.review.rating,
-                        comment: o.review.comment,
-                        adminStatus: o.review.adminStatus,
-                        createdAt: o.review.createdAt,
-                    }
-                    : undefined,
+                review: (() => {
+                    const raw = o.review ?? (Array.isArray(o.reviews) ? o.reviews[0] : null);
+                    if (!raw) return undefined;
+                    return {
+                        id: raw.id,
+                        rating: raw.rating,
+                        comment: raw.comment,
+                        adminStatus: raw.adminStatus,
+                        createdAt: raw.createdAt,
+                    };
+                })(),
             }));
     },
 

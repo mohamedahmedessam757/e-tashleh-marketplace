@@ -411,7 +411,18 @@ export class OrdersService {
                 include: {
                     parts: { select: { id: true, name: true, quantity: true, description: true, images: true, notes: true } },
                     customer: { select: { id: true, name: true, email: true, avatar: true } },
-                    reviews: { select: { id: true, rating: true, offerId: true } },
+                    reviews: {
+                        select: {
+                            id: true,
+                            rating: true,
+                            comment: true,
+                            adminStatus: true,
+                            offerId: true,
+                            createdAt: true,
+                        },
+                        take: 1,
+                        orderBy: { createdAt: 'desc' },
+                    },
                     offers: {
                         where: { status: { not: 'rejected' }, isWithdrawn: false },
                         orderBy: { createdAt: 'asc' },
@@ -455,28 +466,30 @@ export class OrdersService {
         
         // --- 2026 Governance: Visibility Filtering ---
         const now = new Date();
-        (items as any[]).forEach(order => {
-            this.attachLegacyReviewField(order);
+        // Must assign return value — attachLegacyReviewField returns a new object (does not mutate)
+        const itemsWithReview = (items as any[]).map((order) => {
+            const withReview = this.attachLegacyReviewField(order);
             // 1. Hide ALL offers from CUSTOMER if reveal time not reached AND not in selection phase
-            if (user.role === 'CUSTOMER' && order.status !== OrderStatus.AWAITING_SELECTION && order.revealOffersAt && order.revealOffersAt > now) {
-                order.offers = [];
+            if (user.role === 'CUSTOMER' && withReview.status !== OrderStatus.AWAITING_SELECTION && withReview.revealOffersAt && withReview.revealOffersAt > now) {
+                withReview.offers = [];
                 // @ts-ignore
-                if (order._count) order._count.offers = 0;
+                if (withReview._count) withReview._count.offers = 0;
             }
-            
+
             // 2. Hide OTHER merchants' offers from VENDOR during bidding phase
-            if (user.role === 'VENDOR' && (order.status === OrderStatus.COLLECTING_OFFERS || order.status === OrderStatus.AWAITING_SELECTION)) {
+            if (user.role === 'VENDOR' && (withReview.status === OrderStatus.COLLECTING_OFFERS || withReview.status === OrderStatus.AWAITING_SELECTION)) {
                 const myStoreId = user.storeId;
                 if (myStoreId) {
-                    order.offers = order.offers.filter(o => o.storeId === myStoreId);
+                    withReview.offers = withReview.offers.filter((o: { storeId: string }) => o.storeId === myStoreId);
                     // @ts-ignore
-                    if (order._count) order._count.offers = order.offers.length;
+                    if (withReview._count) withReview._count.offers = withReview.offers.length;
                 }
             }
+            return withReview;
         });
 
         const durationCfg = await this.orderDurationConfig.getConfig();
-        const itemsWithSla = this.orderSla.attachActiveSlaBatch(items as any[], durationCfg);
+        const itemsWithSla = this.orderSla.attachActiveSlaBatch(itemsWithReview as any[], durationCfg);
 
         return {
             items: itemsWithSla,
