@@ -84,6 +84,26 @@ export class AuthService {
         return AuthService.STAFF_ROLES.has(role);
     }
 
+    /**
+     * Gate login OTP: panel role must match DB role BEFORE any WhatsApp/email send.
+     * customer panel → CUSTOMER only; merchant panel → VENDOR only.
+     */
+    private assertLoginPanelRole(
+        userRole: string,
+        panelRole: 'customer' | 'merchant',
+    ): void {
+        const expected = panelRole === 'merchant' ? 'VENDOR' : 'CUSTOMER';
+        if (userRole !== expected) {
+            throw new ForbiddenException(
+                'Incorrect account type (try switching between customer/merchant)',
+            );
+        }
+    }
+
+    private normalizeLoginEmail(email: string): string {
+        return String(email || '').trim().toLowerCase();
+    }
+
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.usersService.findByEmail(email);
         if (user && (await bcrypt.compare(pass, user.passwordHash))) {
@@ -419,12 +439,15 @@ export class AuthService {
         };
     }
 
-    async initiateMobileLogin(phone: string) {
+    async initiateMobileLogin(phone: string, panelRole: 'customer' | 'merchant') {
         const user = await this.usersService.findByPhone(phone);
 
         if (!user) {
             return null;
         }
+
+        // Role gate BEFORE Widers/email — prevents OTP cost + spam on wrong panel
+        this.assertLoginPanelRole(user.role, panelRole);
 
         if (!user.phone) {
             throw new BadRequestException('Account has no phone number on file');
@@ -447,19 +470,22 @@ export class AuthService {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email,
-                phone: user.phone,
                 role: user.role,
             },
         };
     }
 
-    async initiateEmailLogin(email: string) {
-        const user = await this.usersService.findByEmail(email);
+    async initiateEmailLogin(email: string, panelRole: 'customer' | 'merchant') {
+        const normalized = this.normalizeLoginEmail(email);
+        const user =
+            (await this.usersService.findByEmail(normalized)) ||
+            (normalized !== email ? await this.usersService.findByEmail(email) : null);
 
         if (!user) {
             return null;
         }
+
+        this.assertLoginPanelRole(user.role, panelRole);
 
         const result = await this.otpService.issueAndSend({
             channel: 'email',
@@ -482,18 +508,18 @@ export class AuthService {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email,
-                phone: user.phone,
                 role: user.role,
             },
         };
     }
 
-    async resendMobileLoginOtp(phone: string) {
+    async resendMobileLoginOtp(phone: string, panelRole: 'customer' | 'merchant') {
         const user = await this.usersService.findByPhone(phone);
         if (!user?.phone) {
             throw new UnauthorizedException('Account not found');
         }
+
+        this.assertLoginPanelRole(user.role, panelRole);
 
         const result = await this.otpService.resend({
             channel: 'whatsapp',
@@ -512,11 +538,16 @@ export class AuthService {
         };
     }
 
-    async resendEmailLoginOtp(email: string) {
-        const user = await this.usersService.findByEmail(email);
+    async resendEmailLoginOtp(email: string, panelRole: 'customer' | 'merchant') {
+        const normalized = this.normalizeLoginEmail(email);
+        const user =
+            (await this.usersService.findByEmail(normalized)) ||
+            (normalized !== email ? await this.usersService.findByEmail(email) : null);
         if (!user) {
             throw new UnauthorizedException('Account not found');
         }
+
+        this.assertLoginPanelRole(user.role, panelRole);
 
         const result = await this.otpService.resend({
             channel: 'email',
@@ -535,11 +566,23 @@ export class AuthService {
         };
     }
 
-    async verifyEmailLogin(email: string, code: string, ip?: string, userAgent?: string, fingerprint?: string) {
-        const user = await this.usersService.findByEmail(email);
+    async verifyEmailLogin(
+        email: string,
+        code: string,
+        panelRole: 'customer' | 'merchant',
+        ip?: string,
+        userAgent?: string,
+        fingerprint?: string,
+    ) {
+        const normalized = this.normalizeLoginEmail(email);
+        const user =
+            (await this.usersService.findByEmail(normalized)) ||
+            (normalized !== email ? await this.usersService.findByEmail(email) : null);
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
+
+        this.assertLoginPanelRole(user.role, panelRole);
 
         await this.otpService.verify({
             channel: 'email',
@@ -551,11 +594,20 @@ export class AuthService {
         return this.login(user, ip, userAgent, fingerprint);
     }
 
-    async verifyMobileLogin(phone: string, code: string, ip?: string, userAgent?: string, fingerprint?: string) {
+    async verifyMobileLogin(
+        phone: string,
+        code: string,
+        panelRole: 'customer' | 'merchant',
+        ip?: string,
+        userAgent?: string,
+        fingerprint?: string,
+    ) {
         const user = await this.usersService.findByPhone(phone);
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
+
+        this.assertLoginPanelRole(user.role, panelRole);
 
         await this.otpService.verify({
             channel: 'whatsapp',
