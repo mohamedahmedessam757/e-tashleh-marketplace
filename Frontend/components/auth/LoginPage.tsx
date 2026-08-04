@@ -147,9 +147,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       let data;
       if (activationMethod === 'whatsapp') {
         const fullPhone = `${countryCode}${phone}`;
-        data = await authApi.initiateMobileLogin(fullPhone);
+        data = await authApi.initiateMobileLogin(fullPhone, activeTab);
       } else {
-        data = await authApi.initiateEmailLogin(loginEmail);
+        data = await authApi.initiateEmailLogin(loginEmail, activeTab);
         setUserEmail(loginEmail);
         setMaskedEmail(data?.maskedEmail ?? loginEmail);
       }
@@ -163,9 +163,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         throw new Error(t.auth.errors?.accountNotFound || (language === 'ar' ? 'الحساب غير موجود' : 'Account not found'));
       }
 
+      // Role is enforced on the backend before OTP send; keep a client guard as defense-in-depth
       const backendRole = user.role;
-
-      // 2. Role Verification
       if (activeTab === 'customer' && backendRole !== 'CUSTOMER') {
         throw new Error(t.auth.errors?.wrongAccountType || (language === 'ar' ? 'نوع الحساب غير صحيح' : 'Incorrect account type'));
       }
@@ -183,6 +182,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     } catch (err: any) {
       console.error('Login Init Failed', err);
+
+      const apiMsg =
+        err.response?.data?.message ||
+        (Array.isArray(err.response?.data?.message)
+          ? err.response.data.message.join(', ')
+          : undefined);
+
+      const isWrongAccountType =
+        err.response?.status === 403 ||
+        (typeof apiMsg === 'string' && /incorrect account type|نوع الحساب/i.test(apiMsg)) ||
+        (err.message && /incorrect account type|نوع الحساب|wrongAccountType/i.test(err.message));
+
+      if (isWrongAccountType) {
+        setError(
+          t.auth.errors?.wrongAccountType ||
+            (language === 'ar'
+              ? 'نوع الحساب غير صحيح (حاول التبديل بين عميل/تاجر)'
+              : 'Incorrect account type (try switching between customer/merchant)'),
+        );
+        return;
+      }
 
       const isAccountNotFound =
         err.response?.status === 401 ||
@@ -228,10 +248,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           expiresInSeconds={otpExpiresInSeconds}
           onResend={async () => {
             if (activationMethod === 'whatsapp') {
-              const result = await authApi.resendMobileLoginOtp(`${countryCode}${phone}`);
+              const result = await authApi.resendMobileLoginOtp(`${countryCode}${phone}`, activeTab);
               return { expiresInMinutes: result?.expiresInMinutes };
             }
-            const result = await authApi.resendEmailLoginOtp(loginEmail || userEmail);
+            const result = await authApi.resendEmailLoginOtp(loginEmail || userEmail, activeTab);
             return { expiresInMinutes: result?.expiresInMinutes };
           }}
           onVerify={async (code) => {
@@ -239,9 +259,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             if (activationMethod === 'whatsapp') {
               const fullPhone = `${countryCode}${phone}`;
-              response = await authApi.verifyMobileLogin(fullPhone, code, fingerprint || undefined);
+              response = await authApi.verifyMobileLogin(
+                fullPhone,
+                code,
+                activeTab,
+                fingerprint || undefined,
+              );
             } else {
-              response = await authApi.verifyEmailLogin(userEmail, code, fingerprint || undefined);
+              response = await authApi.verifyEmailLogin(
+                userEmail,
+                code,
+                activeTab,
+                fingerprint || undefined,
+              );
             }
 
             localStorage.setItem('access_token', response.access_token);

@@ -9,6 +9,11 @@ import {
     RegisterResendOtpDto,
     RegisterVerifyOtpDto,
     MobileLoginResendOtpDto,
+    MobileLoginInitDto,
+    EmailLoginInitDto,
+    EmailLoginResendOtpDto,
+    MobileLoginVerifyDto,
+    EmailLoginVerifyDto,
     RegisterInitDto,
     StaffOtpDto,
     StaffOtpVerifyDto,
@@ -33,11 +38,10 @@ export class AuthController {
 
     @Post('mobile-login-init')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async initiateMobileLogin(@Body() body: { phone: string }) {
-        const result = await this.authService.initiateMobileLogin(body.phone);
+    async initiateMobileLogin(@Body() body: MobileLoginInitDto) {
+        const result = await this.authService.initiateMobileLogin(body.phone, body.role);
         if (!result) {
-            // We return a specific structure or 404 to let frontend know user doesn't exist
-            // Frontend requirement: "If no, show message account not found please register"
+            // Frontend: "If no, show message account not found please register"
             throw new UnauthorizedException('Account not found');
         }
         return result;
@@ -45,8 +49,8 @@ export class AuthController {
 
     @Post('email-login-init')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async initiateEmailLogin(@Body() body: { email: string }) {
-        const result = await this.authService.initiateEmailLogin(body.email);
+    async initiateEmailLogin(@Body() body: EmailLoginInitDto) {
+        const result = await this.authService.initiateEmailLogin(body.email, body.role);
         if (!result) {
             throw new UnauthorizedException('Account not found');
         }
@@ -55,18 +59,32 @@ export class AuthController {
 
     @Post('mobile-login-verify')
     @Throttle({ default: { limit: 10, ttl: 60_000 } })
-    async verifyMobileLogin(@Body() body: { phone: string; code: string; fingerprint?: string }, @Request() req) {
+    async verifyMobileLogin(@Body() body: MobileLoginVerifyDto, @Request() req) {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const userAgent = req.headers['user-agent'];
-        return this.authService.verifyMobileLogin(body.phone, body.code, ip, userAgent, body.fingerprint);
+        return this.authService.verifyMobileLogin(
+            body.phone,
+            body.code,
+            body.role,
+            ip,
+            userAgent,
+            body.fingerprint,
+        );
     }
 
     @Post('email-login-verify')
     @Throttle({ default: { limit: 10, ttl: 60_000 } })
-    async verifyEmailLogin(@Body() body: { email: string; code: string; fingerprint?: string }, @Request() req) {
+    async verifyEmailLogin(@Body() body: EmailLoginVerifyDto, @Request() req) {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const userAgent = req.headers['user-agent'];
-        return this.authService.verifyEmailLogin(body.email, body.code, ip, userAgent, body.fingerprint);
+        return this.authService.verifyEmailLogin(
+            body.email,
+            body.code,
+            body.role,
+            ip,
+            userAgent,
+            body.fingerprint,
+        );
     }
 
 
@@ -112,13 +130,13 @@ export class AuthController {
     @Post('mobile-login-resend')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     async resendMobileLoginOtp(@Body() body: MobileLoginResendOtpDto) {
-        return this.authService.resendMobileLoginOtp(body.phone);
+        return this.authService.resendMobileLoginOtp(body.phone, body.role);
     }
 
     @Post('email-login-resend')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async resendEmailLoginOtp(@Body() body: { email: string }) {
-        return this.authService.resendEmailLoginOtp(body.email);
+    async resendEmailLoginOtp(@Body() body: EmailLoginResendOtpDto) {
+        return this.authService.resendEmailLoginOtp(body.email, body.role);
     }
 
     /** Staff 2FA — Admin / Super Admin / Support / Verification Officer / Accountant */

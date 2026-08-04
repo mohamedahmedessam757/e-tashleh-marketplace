@@ -56,6 +56,68 @@ export class RegisterInitDto {
 export class MobileLoginResendOtpDto {
     @IsString()
     phone: string;
+
+    /** Required so OTP is never resent for the wrong panel (customer vs merchant). */
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+}
+
+export class MobileLoginInitDto {
+    @IsString()
+    phone: string;
+
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+}
+
+export class EmailLoginInitDto {
+    @IsEmail()
+    email: string;
+
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+}
+
+export class EmailLoginResendOtpDto {
+    @IsEmail()
+    email: string;
+
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+}
+
+export class MobileLoginVerifyDto {
+    @IsString()
+    phone: string;
+
+    @IsString()
+    @Length(6, 6)
+    @Matches(/^\d{6}$/)
+    code: string;
+
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+
+    @IsOptional()
+    @IsString()
+    fingerprint?: string;
+}
+
+export class EmailLoginVerifyDto {
+    @IsEmail()
+    email: string;
+
+    @IsString()
+    @Length(6, 6)
+    @Matches(/^\d{6}$/)
+    code: string;
+
+    @IsIn(['customer', 'merchant'])
+    role: 'customer' | 'merchant';
+
+    @IsOptional()
+    @IsString()
+    fingerprint?: string;
 }
 
 export class StaffOtpDto {

@@ -55,13 +55,13 @@ export const authApi = {
         return response.data;
     },
 
-    initiateMobileLogin: async (phone: string) => {
-        const response = await client.post('/auth/mobile-login-init', { phone });
+    initiateMobileLogin: async (phone: string, role: 'customer' | 'merchant') => {
+        const response = await client.post('/auth/mobile-login-init', { phone, role });
         return response.data;
     },
 
-    initiateEmailLogin: async (email: string) => {
-        const response = await client.post('/auth/email-login-init', { email });
+    initiateEmailLogin: async (email: string, role: 'customer' | 'merchant') => {
+        const response = await client.post('/auth/email-login-init', { email, role });
         return response.data;
     },
 
@@ -75,23 +75,43 @@ export const authApi = {
         return response.data;
     },
 
-    resendMobileLoginOtp: async (phone: string) => {
-        const response = await client.post('/auth/mobile-login-resend', { phone });
+    resendMobileLoginOtp: async (phone: string, role: 'customer' | 'merchant') => {
+        const response = await client.post('/auth/mobile-login-resend', { phone, role });
         return response.data;
     },
 
-    resendEmailLoginOtp: async (email: string) => {
-        const response = await client.post('/auth/email-login-resend', { email });
+    resendEmailLoginOtp: async (email: string, role: 'customer' | 'merchant') => {
+        const response = await client.post('/auth/email-login-resend', { email, role });
         return response.data;
     },
 
-    verifyMobileLogin: async (phone: string, code: string, fingerprint?: string) => {
-        const response = await client.post('/auth/mobile-login-verify', { phone, code, fingerprint });
+    verifyMobileLogin: async (
+        phone: string,
+        code: string,
+        role: 'customer' | 'merchant',
+        fingerprint?: string,
+    ) => {
+        const response = await client.post('/auth/mobile-login-verify', {
+            phone,
+            code,
+            role,
+            fingerprint,
+        });
         return response.data;
     },
 
-    verifyEmailLogin: async (email: string, code: string, fingerprint?: string) => {
-        const response = await client.post('/auth/email-login-verify', { email, code, fingerprint });
+    verifyEmailLogin: async (
+        email: string,
+        code: string,
+        role: 'customer' | 'merchant',
+        fingerprint?: string,
+    ) => {
+        const response = await client.post('/auth/email-login-verify', {
+            email,
+            code,
+            role,
+            fingerprint,
+        });
         return response.data;
     },
 
