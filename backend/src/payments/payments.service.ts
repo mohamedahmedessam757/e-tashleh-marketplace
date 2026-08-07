@@ -53,6 +53,7 @@ import {
     getPaymentStatusLabel,
     getEscrowStatusLabel,
 } from './financial-labels.ar';
+import { enrichLedgerRow, buildTransactionCopy } from './financial-transaction-copy';
 import {
     fetchUnifiedFeedIndex,
     countUnifiedFeed,
@@ -1170,7 +1171,7 @@ export class PaymentsService {
                         transactionType: 'PAYMENT',
                         amount: merchantNetShare,
                         currency: 'AED',
-                        description: `Net payout for offer #${payment.offer.offerNumber} (Excludes Admin Commission & Shipping) â€” Order #${payment.order.orderNumber}`,
+                        description: `Payout for offer #${payment.offer.offerNumber}`,
                         balanceAfter: Number(updatedStore?.pendingBalance ?? payment.offer.store.pendingBalance ?? 0),
                     },
                 });
@@ -2442,33 +2443,87 @@ export class PaymentsService {
             // 2. Fetch wallet-specific transactions (Loyalty, Referrals, Refunds, Withdrawals)
             this.prisma.walletTransaction.findMany({
                 where: { userId, role: 'CUSTOMER' },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    payment: {
+                        select: {
+                            orderId: true,
+                            order: {
+                                select: {
+                                    id: true,
+                                    orderNumber: true,
+                                    status: true,
+                                },
+                            },
+                        },
+                    },
+                },
             })
         ]);
 
+        // Resolve order numbers for wallet rows that only store orderId in metadata
+        const metaOrderIds = [
+            ...new Set(
+                walletTxs
+                    .filter((w) => !w.payment?.order)
+                    .map((w) => {
+                        const meta = (w.metadata as Record<string, unknown>) || {};
+                        const id = meta.orderId ?? meta.order_id;
+                        return id != null ? String(id) : null;
+                    })
+                    .filter((id): id is string => !!id),
+            ),
+        ];
+        const metaOrders =
+            metaOrderIds.length > 0
+                ? await this.prisma.order.findMany({
+                      where: { id: { in: metaOrderIds } },
+                      select: { id: true, orderNumber: true, status: true },
+                  })
+                : [];
+        const orderById = new Map(metaOrders.map((o) => [o.id, o]));
+
         // 3. Normalize and merge for a unified 2026 ledger
         const unifiedLedger = [
-            ...payments.map(p => ({
-                id: p.id,
-                amount: Number(p.totalAmount),
-                type: 'DEBIT',
-                transactionType: 'PAYMENT',
-                status: p.status,
-                createdAt: p.createdAt,
-                description: `Payment for Order #${p.order?.orderNumber || 'N/A'}`,
-                order: p.order,
-                metadata: { offerId: p.offerId, transactionNumber: p.transactionNumber }
-            })),
-            ...walletTxs.map(w => ({
-                id: w.id,
-                amount: Number(w.amount),
-                type: w.type,
-                transactionType: w.transactionType,
-                status: 'SUCCESS', // Wallet actions are immediate in this system
-                createdAt: w.createdAt,
-                description: w.description,
-                metadata: w.metadata
-            }))
+            ...payments.map((p) =>
+                enrichLedgerRow({
+                    id: p.id,
+                    amount: Number(p.totalAmount),
+                    type: 'DEBIT',
+                    transactionType: 'PAYMENT',
+                    status: p.status,
+                    createdAt: p.createdAt,
+                    description: `Payment for Order #${p.order?.orderNumber || 'N/A'}`,
+                    order: p.order,
+                    metadata: { offerId: p.offerId, transactionNumber: p.transactionNumber },
+                }),
+            ),
+            ...walletTxs.map((w) => {
+                const meta = (w.metadata as Record<string, unknown>) || {};
+                const metaOrderId = meta.orderId ?? meta.order_id;
+                const linkedOrder =
+                    w.payment?.order ||
+                    (metaOrderId != null ? orderById.get(String(metaOrderId)) : undefined) ||
+                    undefined;
+                return enrichLedgerRow({
+                    id: w.id,
+                    amount: Number(w.amount),
+                    type: w.type,
+                    transactionType: w.transactionType,
+                    status: 'SUCCESS',
+                    createdAt: w.createdAt,
+                    description: w.description,
+                    order: linkedOrder
+                        ? {
+                              id: (linkedOrder as any).id,
+                              orderNumber: linkedOrder.orderNumber,
+                              status: (linkedOrder as any).status,
+                          }
+                        : undefined,
+                    metadata: w.metadata,
+                    payment: w.payment,
+                });
+            }),
         ];
 
         // 4. Sort by date descending (Real-time Audit Trail)
@@ -2787,7 +2842,13 @@ export class PaymentsService {
             },
             withdrawalLimits,
             notifications,
-            transactions: walletActions // Wallet actions has exactly all sales, cancellations, and referrals
+            transactions: walletActions.map((w) =>
+                enrichLedgerRow({
+                    ...w,
+                    amount: Number(w.amount),
+                    order: w.payment?.order || w.escrow?.order || undefined,
+                }),
+            ),
         };
     }
 
@@ -2844,7 +2905,7 @@ export class PaymentsService {
         const store = await this.prisma.store.findUnique({ where: { ownerId: userId }});
         if(!store) throw new NotFoundException('Store not found');
 
-        return this.prisma.walletTransaction.findMany({
+        const rows = await this.prisma.walletTransaction.findMany({
             where: { userId: store.ownerId, role: 'VENDOR' },
             orderBy: { createdAt: 'desc' },
             include: {
@@ -2853,14 +2914,34 @@ export class PaymentsService {
                         orderId: true,
                         order: {
                             select: {
+                                id: true,
                                 orderNumber: true,
                                 status: true
                             }
                         }
                     }
-                }
+                },
+                escrow: {
+                    include: {
+                        order: {
+                            select: {
+                                id: true,
+                                orderNumber: true,
+                                status: true,
+                            },
+                        },
+                    },
+                },
             }
         });
+
+        return rows.map((w) =>
+            enrichLedgerRow({
+                ...w,
+                amount: Number(w.amount),
+                order: w.payment?.order || w.escrow?.order || undefined,
+            }),
+        );
     }
 
     async releaseEscrowManually(
@@ -4367,12 +4448,32 @@ export class PaymentsService {
 
     private mapPaymentToUnified(p: any): UnifiedFinancialEventDto {
         const amount = Number(p.totalAmount);
+        const orderNumber = p.order?.orderNumber;
+        const copyAr = buildTransactionCopy(
+            {
+                transactionType: 'PAYMENT',
+                orderNumber,
+                description: orderNumber ? `Payment for Order #${orderNumber}` : undefined,
+                metadata: { offerId: p.offerId },
+            },
+            'ar',
+        );
+        const copyEn = buildTransactionCopy(
+            {
+                transactionType: 'PAYMENT',
+                orderNumber,
+                description: orderNumber ? `Payment for Order #${orderNumber}` : undefined,
+                metadata: { offerId: p.offerId },
+            },
+            'en',
+        );
+        const shippingCost = Number(p.shippingCost);
         return {
             id: p.id,
             source: FinancialEventSource.PAYMENT,
             orderId: p.orderId,
-            orderNumber: p.order?.orderNumber,
-            reference: p.order?.orderNumber || p.id,
+            orderNumber,
+            reference: orderNumber || p.id,
             debit: amount,
             credit: undefined,
             executorName: undefined,
@@ -4387,7 +4488,7 @@ export class PaymentsService {
             currency: p.currency,
             direction: FinancialDirection.DEBIT,
             unitPrice: Number(p.unitPrice),
-            shippingCost: Number(p.shippingCost),
+            shippingCost,
             commission: Number(p.commission),
             gatewayFee: Number(p.gatewayFee),
             refundedAmount: Number(p.refundedAmount),
@@ -4398,9 +4499,25 @@ export class PaymentsService {
             eventTypeEn: getPaymentStatusLabel(p.status, 'en'),
             eventTypeAr: getPaymentStatusLabel(p.status, 'ar'),
             status: p.status,
+            description:
+                shippingCost > 0
+                    ? `${copyEn.detail} | Shipping: ${shippingCost} AED`
+                    : copyEn.detail,
             createdAt: p.createdAt,
             updatedAt: p.paidAt || p.createdAt,
-            metadata: { transactionNumber: p.transactionNumber, method: p.cardBrand },
+            metadata: {
+                transactionNumber: p.transactionNumber,
+                method: p.cardBrand,
+                displayDescriptionAr:
+                    shippingCost > 0
+                        ? `${copyAr.detail} | الشحن: ${shippingCost} درهم`
+                        : copyAr.detail,
+                displayDescriptionEn:
+                    shippingCost > 0
+                        ? `${copyEn.detail} | Shipping: ${shippingCost} AED`
+                        : copyEn.detail,
+                shippingCost,
+            },
         };
     }
 
@@ -4409,11 +4526,31 @@ export class PaymentsService {
         const txType = String(w.transactionType || '').toUpperCase();
         const amount = Number(w.amount);
         const meta = (w.metadata as Record<string, unknown>) || {};
+        const copyAr = buildTransactionCopy(
+            {
+                transactionType: w.transactionType,
+                description: w.description,
+                metadata: meta,
+                payment: w.payment,
+                order: w.payment?.order,
+            },
+            'ar',
+        );
+        const copyEn = buildTransactionCopy(
+            {
+                transactionType: w.transactionType,
+                description: w.description,
+                metadata: meta,
+                payment: w.payment,
+                order: w.payment?.order,
+            },
+            'en',
+        );
         return {
             id: w.id,
             source: FinancialEventSource.WALLET,
-            orderId: w.payment?.order?.id,
-            orderNumber: w.payment?.order?.orderNumber,
+            orderId: w.payment?.order?.id || (meta.orderId as string) || undefined,
+            orderNumber: w.payment?.order?.orderNumber || copyEn.orderNumber,
             reference: (meta.requestId as string) || w.payment?.order?.orderNumber || w.id,
             debit: isCredit ? undefined : amount,
             credit: isCredit ? amount : undefined,
@@ -4437,10 +4574,14 @@ export class PaymentsService {
             eventTypeEn: getWalletTypeLabel(w.transactionType, 'en'),
             eventTypeAr: getWalletTypeLabel(w.transactionType, 'ar'),
             status: 'COMPLETED',
-            description: w.description,
+            description: w.description || copyEn.detail,
             createdAt: w.createdAt,
             updatedAt: w.createdAt,
-            metadata: meta,
+            metadata: {
+                ...meta,
+                displayDescriptionAr: copyAr.detail,
+                displayDescriptionEn: copyEn.detail,
+            },
         };
     }
 

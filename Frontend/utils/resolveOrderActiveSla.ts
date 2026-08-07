@@ -88,7 +88,22 @@ export function resolveOrderActiveSla(
   config: OrderDurationSettings = getOrderDurationSettings(),
 ): OrderActiveSla | null {
   if (!order?.status) return null;
-  if (order.activeSla?.endsAt) return order.activeSla;
+  if (order.activeSla?.endsAt && order.activeSla.phase === order.status) {
+    const stickyEnd = toMs(order.activeSla.endsAt);
+    const liveEnd =
+      order.status === 'AWAITING_PAYMENT' || order.status === 'PARTIALLY_PAID'
+        ? toMs(order.paymentDeadlineAt)
+        : order.status === 'CORRECTION_PERIOD'
+          ? toMs(order.correctionDeadlineAt)
+          : order.status === 'AWAITING_SELECTION'
+            ? toMs(order.selectionDeadlineAt)
+            : order.status === 'COLLECTING_OFFERS' || order.status === 'AWAITING_OFFERS'
+              ? toMs(order.revealOffersAt)
+              : null;
+    if (liveEnd == null || stickyEnd === liveEnd) {
+      return order.activeSla;
+    }
+  }
 
   const status = order.status;
   const terminal = new Set([
@@ -159,17 +174,24 @@ export function resolveOrderActiveSla(
       );
 
     case 'NON_MATCHING':
-      return buildSla(status, 'sla.correction', toMs(order.updatedAt), M(config.nonMatchingGraceMinutes));
-
-    case 'CORRECTION_PERIOD':
       return buildSla(
         status,
-        'sla.correction',
-        toMs(order.correctionDeadlineAt)
-          ? toMs(order.correctionDeadlineAt)! - H(config.correctionPeriodHours)
-          : toMs(order.updatedAt),
-        H(config.correctionPeriodHours),
+        'sla.nonMatchingGrace',
+        toMs(order.updatedAt),
+        M(config.nonMatchingGraceMinutes),
       );
+
+    case 'CORRECTION_PERIOD': {
+      const endMs = toMs(order.correctionDeadlineAt);
+      const startMs =
+        endMs != null
+          ? endMs - H(config.correctionPeriodHours)
+          : toMs(order.updatedAt);
+      if (endMs != null && startMs != null) {
+        return buildSlaUntil(status, 'sla.correction', startMs, endMs);
+      }
+      return buildSla(status, 'sla.correction', startMs, H(config.correctionPeriodHours));
+    }
 
     case 'SHIPPED':
     case 'PARTIALLY_SHIPPED':

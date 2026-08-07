@@ -54,6 +54,7 @@ import { FinancialFeedRow } from './FinancialFeedRow';
 import type { UnifiedFinancialEvent } from '../../../stores/useAdminStore';
 import { AdminSearchInput } from './AdminSearchInput';
 import { OverviewKpiSection } from './OverviewKpiSection';
+import { AdminBillingTabNav } from './AdminBillingTabNav';
 
 const OrderFinancialDrawer = lazy(() =>
   import('./OrderFinancialDrawer').then((m) => ({ default: m.OrderFinancialDrawer })),
@@ -269,12 +270,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
             isLocked: !canViewTab('BILLING', tab.permissionKey)
         }));
     }, [allTabsConfig, canViewTab]);
-
-    const tabGroups = useMemo(() => ([
-        { key: 'merchant', label: t.admin.billing.tabGroups.merchant, tabs: visibleTabs.filter(t => t.group === 'merchant') },
-        { key: 'customer', label: t.admin.billing.tabGroups.customer, tabs: visibleTabs.filter(t => t.group === 'customer') },
-        { key: 'platform', label: t.admin.billing.tabGroups.platform, tabs: visibleTabs.filter(t => t.group === 'platform') },
-    ]), [visibleTabs, t]);
 
     // Auto-switch if current tab is restricted
     useEffect(() => {
@@ -511,47 +506,17 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                 </div>
             </div>
 
-            {/* Tab Navigation — desktop flat / mobile grouped */}
-            <div className="hidden lg:flex gap-2 p-2 bg-[#1A1814] border border-white/5 rounded-3xl w-fit overflow-x-auto no-scrollbar shadow-2xl">
-                {visibleTabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-[10px] uppercase transition-all whitespace-nowrap cursor-pointer
-                            ${activeTab === tab.id 
-                                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20 scale-105' 
-                                : 'text-white/40 hover:text-white hover:bg-white/5'
-                            }
-                            ${tab.isLocked ? 'opacity-70' : ''}
-                        `}
-                    >
-                        <tab.icon size={14} />
-                        {tab.label}
-                        {tab.isLocked && <Lock size={11} className={activeTab === tab.id ? 'text-black/50' : 'text-gold-500/50'} />}
-                    </button>
-                ))}
-            </div>
-            <div className="lg:hidden space-y-4">
-                {tabGroups.map(group => (
-                    <div key={group.key}>
-                        <p className="text-[10px] font-black text-white/25 uppercase tracking-widest mb-2 px-1">{group.label}</p>
-                        <div className="flex gap-2 p-2 bg-[#1A1814] border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
-                            {group.tabs.map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all whitespace-nowrap
-                                        ${activeTab === tab.id ? 'bg-gold-500 text-black' : 'text-white/40 hover:text-white hover:bg-white/5'}
-                                    `}
-                                >
-                                    <tab.icon size={12} />
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {/* Tab Navigation — two-level segments + sub-tabs */}
+            <AdminBillingTabNav
+                tabs={visibleTabs}
+                groups={[
+                    { key: 'platform', label: t.admin.billing.tabGroups.platform },
+                    { key: 'customer', label: t.admin.billing.tabGroups.customer },
+                    { key: 'merchant', label: t.admin.billing.tabGroups.merchant },
+                ]}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+            />
 
             <BlurredSection
                 isBlurred={visibleTabs.find(t => t.id === activeTab)?.isLocked}

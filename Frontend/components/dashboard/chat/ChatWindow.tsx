@@ -371,18 +371,34 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           {/* Status Badge or SLA Timer */}
           {chatStatus === 'active' && orderChat?.type !== 'support' && (
             <div className="hidden md:block">
-              {orderStatus && !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION'].includes(orderStatus) ? (
-                <Badge status={orderStatus} />
-              ) : (
-                <CountdownTimer
-                  targetDate={
-                    (['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(orderStatus || ''))
-                      ? (order?.revealOffersAt || new Date(new Date(order?.createdAt || Date.now()).getTime() + 24 * 60 * 60 * 1000).toISOString())
-                      : (order?.selectionDeadlineAt || orderChat?.expiryAt || new Date(new Date(order?.createdAt || Date.now()).getTime() + 48 * 60 * 60 * 1000).toISOString())
-                  }
-                  compact
-                />
-              )}
+              {(() => {
+                const status = orderStatus || '';
+                const timerStatuses = [
+                  'AWAITING_OFFERS',
+                  'COLLECTING_OFFERS',
+                  'AWAITING_SELECTION',
+                  'AWAITING_PAYMENT',
+                  'PARTIALLY_PAID',
+                  'CORRECTION_PERIOD',
+                ];
+                if (!timerStatuses.includes(status)) {
+                  return orderStatus ? <Badge status={orderStatus} /> : null;
+                }
+                let targetDate: string | undefined;
+                if (['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(status)) {
+                  targetDate = order?.revealOffersAt;
+                } else if (status === 'AWAITING_SELECTION') {
+                  targetDate = order?.selectionDeadlineAt || orderChat?.expiryAt;
+                } else if (status === 'AWAITING_PAYMENT' || status === 'PARTIALLY_PAID') {
+                  targetDate = order?.paymentDeadlineAt;
+                } else if (status === 'CORRECTION_PERIOD') {
+                  targetDate = order?.correctionDeadlineAt;
+                }
+                if (!targetDate) {
+                  return orderStatus ? <Badge status={orderStatus} /> : null;
+                }
+                return <CountdownTimer targetDate={targetDate} compact />;
+              })()}
             </div>
           )}
 

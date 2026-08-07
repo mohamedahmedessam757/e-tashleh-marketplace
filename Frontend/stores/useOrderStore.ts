@@ -911,6 +911,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 revealOffersAt: o.revealOffersAt,
                 offersStopAt: o.offersStopAt,
                 selectionDeadlineAt: o.selectionDeadlineAt,
+                paymentDeadlineAt: o.paymentDeadlineAt ?? o.payment_deadline_at ?? undefined,
+                offersDeadlineAt: o.offersDeadlineAt ?? o.offers_deadline_at ?? undefined,
+                delayedPreparationDeadlineAt:
+                    o.delayedPreparationDeadlineAt ?? o.delayed_prep_deadline_at ?? undefined,
                 customer: o.customer ? {
                     ...o.customer,
                     customerCode: o.customer.id ? `CUS-${o.customer.id.substring(0, 6).toUpperCase()}` : undefined

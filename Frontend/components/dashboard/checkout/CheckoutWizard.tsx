@@ -12,9 +12,9 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { OffersReviewStep } from './steps/OffersReviewStep';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
-import { isAcceptedOfferStatus, isActiveOfferStatus } from '../../../utils/offerStatusHelpers';
 import {
     areAllAcceptedOffersPaid,
+    areAllPartsReadyForCheckout,
     getAcceptedOffersFromList,
     isOrderStatusPayable,
 } from '../../../utils/checkoutPaymentHelpers';
@@ -118,22 +118,7 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
     // Determines if any part still needs an offer selection (for validation blocking)
     const hasPendingToReview = React.useMemo(() => {
         if (!order || !order.parts || order.parts.length <= 1) return false;
-
-        let pending = false;
-        for (const part of order.parts) {
-            const partOffers =
-                order.offers?.filter(
-                    (o) =>
-                        String(o.orderPartId) === String(part.id) &&
-                        isActiveOfferStatus(o.status),
-                ) || [];
-            const hasAccepted = partOffers.some((o) => isAcceptedOfferStatus(o.status));
-            if (partOffers.length > 0 && !hasAccepted) {
-                pending = true;
-                break;
-            }
-        }
-        return pending;
+        return !areAllPartsReadyForCheckout(order);
     }, [order]);
 
     // Multi-part orders ALWAYS show Step 0 as a summary checkout step
@@ -368,13 +353,14 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                                 disabled={
                                     isProcessing ||
                                     isVerifyingPayments ||
+                                    (step === 0 && hasPendingToReview) ||
                                     (step === 3 && !allOffersPaid)
                                 }
                                 animate={showPaymentError ? { x: [-10, 10, -10, 10, 0], scale: [1, 1.02, 1] } : {}}
                                 transition={{ duration: 0.4 }}
                                 className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all relative ${showPaymentError
                                     ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
-                                    : step === 3 && !allOffersPaid
+                                    : (step === 0 && hasPendingToReview) || (step === 3 && !allOffersPaid)
                                         ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
                                         : 'bg-gold-500 hover:bg-gold-600 text-white shadow-lg shadow-gold-500/20'
                                     }`}
