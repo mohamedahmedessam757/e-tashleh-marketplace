@@ -647,6 +647,15 @@ export class OrdersService {
                 ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.offerSelectionHours))
                 : undefined;
 
+        const shouldSetCorrectionDeadline =
+            newStatus === OrderStatus.CORRECTION_PERIOD && !order.correctionDeadlineAt;
+        const correctionDeadlineAt = shouldSetCorrectionDeadline
+            ? new Date(
+                  Date.now() +
+                      this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours),
+              )
+            : undefined;
+
         // 2. Transaction: Update Status + Audit Log
         const result = await this.prisma.$transaction(async (tx) => {
             // New 2026 Logic: Check all accepted offers for warranty (Multi-part support)
@@ -669,6 +678,7 @@ export class OrdersService {
                     warranty_active_at: isTransitioningToWarranty ? now : undefined,
                     warranty_end_at: isTransitioningToWarranty ? warranty.endAt : undefined,
                     selectionDeadlineAt,
+                    ...(correctionDeadlineAt ? { correctionDeadlineAt } : {}),
                     deliveredAt: isFirstDeliveredTransition ? now : undefined,
                 },
             });
@@ -1187,24 +1197,56 @@ export class OrdersService {
                 data: { status: 'rejected' }
             });
 
-            // --- 2026 Selection Logic: Transition to payment if at least one part is accepted ---
-            const acceptedPartsCount = await tx.offer.count({
-                where: { orderId, status: 'accepted' }
+            // --- Selection Logic: only move to payment when every selectable part has an accepted offer ---
+            const parts = await tx.orderPart.findMany({
+                where: { orderId },
+                select: { id: true },
             });
-            const hasAnyAccepted = acceptedPartsCount > 0;
+            const activeOffers = await tx.offer.findMany({
+                where: {
+                    orderId,
+                    status: { in: ['pending', 'accepted'] },
+                    isWithdrawn: false,
+                },
+                select: { orderPartId: true, status: true },
+            });
+
+            const offersByPart = new Map<string, { hasPending: boolean; hasAccepted: boolean }>();
+            for (const part of parts) {
+                offersByPart.set(part.id, { hasPending: false, hasAccepted: false });
+            }
+            for (const offer of activeOffers) {
+                if (!offer.orderPartId) continue;
+                const bucket = offersByPart.get(offer.orderPartId);
+                if (!bucket) continue;
+                if (offer.status === 'accepted') bucket.hasAccepted = true;
+                if (offer.status === 'pending') bucket.hasPending = true;
+            }
+
+            const selectableParts = [...offersByPart.values()].filter(
+                (p) => p.hasPending || p.hasAccepted,
+            );
+            const allSelectablePartsAccepted =
+                selectableParts.length > 0 && selectableParts.every((p) => p.hasAccepted);
 
             let updatedOrder = order;
-            if (hasAnyAccepted && [OrderStatus.AWAITING_OFFERS, OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_SELECTION].includes(order.status as any)) {
+            const canEnterPayment = [
+                OrderStatus.AWAITING_OFFERS,
+                OrderStatus.COLLECTING_OFFERS,
+                OrderStatus.AWAITING_SELECTION,
+            ].includes(order.status as any);
+
+            if (allSelectablePartsAccepted && canEnterPayment) {
                 const paymentCfg = await this.orderDurationConfig.getConfig();
                 const partPaymentDeadline = new Date(
                     Date.now() + this.orderDurationConfig.hoursToMs(paymentCfg.paymentTimeoutHours),
                 );
-                
+
                 updatedOrder = await tx.order.update({
                     where: { id: orderId },
-                    data: { 
+                    data: {
                         status: OrderStatus.AWAITING_PAYMENT,
-                        paymentDeadlineAt: partPaymentDeadline
+                        paymentDeadlineAt: partPaymentDeadline,
                     },
                 });
             }
@@ -1253,14 +1295,23 @@ export class OrdersService {
             }).catch(e => console.error('Failed to notify merchant', e));
         }
 
-        // Notify customer — part accepted / awaiting payment
+        // Notify customer — part accepted (payment only when all selectable parts accepted)
+        const enteredPayment = result.updatedOrder.status === OrderStatus.AWAITING_PAYMENT;
         await this.notifications.create({
             recipientId: customerId,
             recipientRole: 'CUSTOMER',
-            titleAr: 'تم قبول عرض — بانتظار الدفع',
-            titleEn: 'Offer accepted — awaiting payment',
-            messageAr: `تم قبول عرض لقطعة في الطلب #${order.orderNumber}. يمكنك المتابعة للدفع.`,
-            messageEn: `An offer was accepted for a part in Order #${order.orderNumber}. You can proceed to payment.`,
+            titleAr: enteredPayment
+                ? 'تم قبول عرض — بانتظار الدفع'
+                : 'تم قبول عرض للقطعة — أكمل اختيار باقي القطع',
+            titleEn: enteredPayment
+                ? 'Offer accepted — awaiting payment'
+                : 'Part offer accepted — finish selecting remaining parts',
+            messageAr: enteredPayment
+                ? `تم قبول عروض جميع القطع في الطلب #${order.orderNumber}. يمكنك المتابعة للدفع.`
+                : `تم قبول عرض لقطعة في الطلب #${order.orderNumber}. أكمل اختيار عروض باقي القطع قبل المتابعة للدفع.`,
+            messageEn: enteredPayment
+                ? `All selectable parts for Order #${order.orderNumber} have accepted offers. You can proceed to payment.`
+                : `An offer was accepted for a part in Order #${order.orderNumber}. Finish selecting offers for the remaining parts before checkout.`,
             type: 'ORDER',
             link: `/dashboard/orders/${order.id}`,
             metadata: {

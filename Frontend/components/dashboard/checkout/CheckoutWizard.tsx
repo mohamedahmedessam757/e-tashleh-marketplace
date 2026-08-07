@@ -368,13 +368,14 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                                 disabled={
                                     isProcessing ||
                                     isVerifyingPayments ||
+                                    (step === 0 && hasPendingToReview) ||
                                     (step === 3 && !allOffersPaid)
                                 }
                                 animate={showPaymentError ? { x: [-10, 10, -10, 10, 0], scale: [1, 1.02, 1] } : {}}
                                 transition={{ duration: 0.4 }}
                                 className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all relative ${showPaymentError
                                     ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
-                                    : step === 3 && !allOffersPaid
+                                    : (step === 0 && hasPendingToReview) || (step === 3 && !allOffersPaid)
                                         ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
                                         : 'bg-gold-500 hover:bg-gold-600 text-white shadow-lg shadow-gold-500/20'
                                     }`}

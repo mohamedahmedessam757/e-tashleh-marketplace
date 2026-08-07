@@ -343,10 +343,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
     };
 
     const getPaymentDeadline = () => {
-        if (!order.offerAcceptedAt) return '';
-        const d = new Date(order.offerAcceptedAt);
-        d.setHours(d.getHours() + 24);
-        return d.toISOString();
+        if (order.paymentDeadlineAt) return order.paymentDeadlineAt;
+        return '';
     };
 
     const getReturnDeadline = () => {

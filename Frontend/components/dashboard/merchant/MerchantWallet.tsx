@@ -797,7 +797,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                             <table className="w-full text-sm text-center border-collapse min-w-[900px]">
                                 <thead>
                                     <tr className="sticky top-0 z-20 border-b border-white/5 bg-[#151310] text-[10px] text-white/30 uppercase tracking-widest font-black">
-                                        <th className="px-4 py-5">{isAr ? 'رقم الطلب' : 'Order ID'}</th>
+                                        <th className="px-4 py-5">{isAr ? 'رقم الطلب / التفاصيل' : 'Order / Details'}</th>
                                         <th className="px-4 py-5">{isAr ? 'التاريخ' : 'Date'}</th>
                                         <th className="px-4 py-5">{isAr ? 'المبلغ' : 'Amount'}</th>
                                         <th className="px-4 py-5">{isAr ? 'حالة الدفع' : 'Payment'}</th>
@@ -814,9 +814,18 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                     ) : filteredTransactions.map((tx) => (
                                         <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-all group">
                                             <td className="px-4 py-4">
-                                                <code className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[11px] text-gold-500/80 group-hover:text-gold-500">
-                                                    #{tx.payment?.order?.orderNumber || tx.id.slice(0, 8).toUpperCase()}
-                                                </code>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <code className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[11px] text-gold-500/80 group-hover:text-gold-500">
+                                                        #{tx.order?.orderNumber || tx.payment?.order?.orderNumber || tx.orderNumber || tx.id.slice(0, 8).toUpperCase()}
+                                                    </code>
+                                                    {(tx.displayDescriptionAr || tx.displayDescriptionEn || tx.description) && (
+                                                        <span className="text-[10px] text-white/45 font-medium max-w-[220px] leading-snug normal-case">
+                                                            {isAr
+                                                                ? (tx.displayDescriptionAr || tx.titleAr || tx.description)
+                                                                : (tx.displayDescriptionEn || tx.titleEn || tx.description)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-4 font-mono text-white/40 text-[11px]">{new Date(tx.createdAt).toLocaleDateString(isAr ? 'ar-AE' : 'en-AE')}</td>
                                             <td className="px-4 py-4 font-bold text-white">

@@ -23,6 +23,7 @@ const SLA_KEY_MAP: Record<string, string> = {
   'sla.shipping': 'shipping',
   'sla.return': 'return',
   'sla.correction': 'correction',
+  'sla.nonMatchingGrace': 'nonMatchingGrace',
 };
 
 const TERMINAL_STATUSES = new Set([

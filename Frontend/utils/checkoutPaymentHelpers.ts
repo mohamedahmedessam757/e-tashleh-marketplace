@@ -81,6 +81,50 @@ export function hasRemainingPaymentDue(order: {
   return accepted.some((o) => !isOfferConsideredPaid(o, paidIds));
 }
 
+/**
+ * True when every part that still has active (pending/accepted, non-withdrawn) offers
+ * has at least one accepted offer. Parts with no active offers do not block checkout.
+ * Single-part / no-parts orders with any accepted offer are ready.
+ */
+export function areAllPartsReadyForCheckout(order: {
+  parts?: Array<{ id: string }>;
+  offers?: Array<{
+    id?: string;
+    orderPartId?: string | null;
+    status?: string;
+    isWithdrawn?: boolean;
+  }>;
+}): boolean {
+  const parts = order.parts ?? [];
+  const offers = order.offers ?? [];
+
+  const isActiveSelectable = (o: {
+    status?: string;
+    isWithdrawn?: boolean;
+  }) => {
+    if (o.isWithdrawn) return false;
+    const s = String(o.status || '').toUpperCase();
+    return s === 'PENDING' || isAcceptedOfferStatus(o.status);
+  };
+
+  if (parts.length <= 1) {
+    return getAcceptedOffersFromList(offers as OrderOffer[]).length > 0;
+  }
+
+  let selectableCount = 0;
+  for (const part of parts) {
+    const partOffers = offers.filter(
+      (o) => String(o.orderPartId) === String(part.id) && isActiveSelectable(o),
+    );
+    if (partOffers.length === 0) continue;
+    selectableCount += 1;
+    const hasAccepted = partOffers.some((o) => isAcceptedOfferStatus(o.status));
+    if (!hasAccepted) return false;
+  }
+
+  return selectableCount > 0;
+}
+
 /** Terminal / non-checkout statuses — payment CTAs must never appear. */
 export const NON_PAYABLE_ORDER_STATUSES = new Set([
   'CANCELLED',
@@ -111,11 +155,18 @@ export function isOrderStatusPayable(status?: string): boolean {
 /** Show "continue payment" on order page when checkout can still be resumed. */
 export function shouldShowContinuePaymentButton(order: {
   status?: string;
+  parts?: Array<{ id: string }>;
   offers?: OrderOffer[];
   payments?: Array<{ status?: string; offerId?: string }>;
 }): boolean {
   // Defense-in-depth: cancelled / closed orders must never expose payment CTAs
   // even if accepted offers still look "awaiting payment" in UI.
   if (!isOrderStatusPayable(order.status)) return false;
-  return hasRemainingPaymentDue(order);
+  const accepted = getAcceptedOffersFromList(order.offers);
+  if (!accepted.length) return false;
+  if (areAllPartsReadyForCheckout(order)) {
+    return hasRemainingPaymentDue(order);
+  }
+  // Multi-part: show a disabled CTA while selection is incomplete
+  return (order.parts?.length ?? 0) > 1;
 }

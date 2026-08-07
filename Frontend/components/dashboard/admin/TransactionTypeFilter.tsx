@@ -11,6 +11,10 @@ import {
   Landmark,
   TrendingUp,
   Percent,
+  Truck,
+  AlertTriangle,
+  Scale,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 const TransactionTypeFilter: React.FC = () => {
@@ -28,6 +32,10 @@ const TransactionTypeFilter: React.FC = () => {
     { id: 'ORDER_PROFIT', icon: TrendingUp, label: b.loyaltyCashback },
     { id: 'REFERRAL_PROFIT', icon: Wallet, label: b.referralPayouts },
     { id: 'COMMISSION', icon: Percent, label: b.commissions },
+    { id: 'SHIPPING_FEE', icon: Truck, label: b.shippingFees },
+    { id: 'PENALTY', icon: AlertTriangle, label: b.penalties },
+    { id: 'ADJUDICATION_FEE', icon: Scale, label: b.adjudicationFees },
+    { id: 'ADJUSTMENT', icon: FileSpreadsheet, label: b.adjustments },
   ];
 
   return (

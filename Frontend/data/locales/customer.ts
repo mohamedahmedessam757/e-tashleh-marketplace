@@ -354,7 +354,7 @@ export const customer = {
     },
     checkout: {
       title: 'إتمام الطلب',
-      common: { back: 'رجوع', continue: 'المتابعة لتأكيد الطلب', payNow: 'دفع الآن', editData: 'تعديل البيانات' },
+      common: { back: 'رجوع', continue: 'المتابعة لتأكيد الطلب', payNow: 'دفع الآن', editData: 'تعديل البيانات', selectAllOffersBeforeContinue: 'يجب اختيار عرض لجميع القطع قبل المتابعة' },
       steps: { address: 'تأكيد بيانات الشحن', summary: 'الفاتورة', finalReview: 'تأكيد الطلبات', payment: 'الدفع', confirm: 'التأكيد' },
       finalReview: {
         title: "مراجعة نهائية قبل إتمام عملية الشراء",
@@ -443,7 +443,10 @@ export const customer = {
           SHIPPING_FEE: 'تكاليف الشحن 🚚',
           FRAUD_PENALTY: 'غرامة احتيال 🚫',
           ADJUDICATION_FEE: 'رسوم حكم إداري ⚖️',
-          SHIPPING_LIABILITY: 'مسؤولية شحن (معلقة) 🚚'
+          SHIPPING_LIABILITY: 'مسؤولية شحن (معلقة) 🚚',
+          ADJUSTMENT: 'تسوية مالية 🧾',
+          ESCROW_RELEASE: 'تحرير ضمان 🔓',
+          PLATFORM_FEE_RETENTION: 'احتفاظ برسوم المنصة 🏛️',
         },
         walletDashboard: {
           availableBalance: 'الرصيد المتاح',
@@ -463,6 +466,7 @@ export const customer = {
           pointsResetNote: 'تُعاد النقاط يدوياً من الإدارة. المستوى لا يتأثر.',
           earningsLog: 'سجل الارباح والطلبات',
           searchPlaceholder: 'بحث برقم الطلب...',
+          transactionDetails: 'تفاصيل المعاملة',
         }
       },
       settings: {
@@ -652,6 +656,7 @@ export const customer = {
       shipping: 'مهلة الشحن',
       return: 'مهلة الإرجاع / النزاع',
       correction: 'مهلة التصحيح',
+      nonMatchingGrace: 'مهلة السماح قبل التصحيح',
       expired: 'انتهت المهلة',
       remaining: 'الوقت المتبقي',
     },
@@ -1359,7 +1364,7 @@ export const customer = {
     },
     checkout: {
       title: 'Checkout',
-      common: { back: 'Back', continue: 'Continue to Confirm', payNow: 'Pay Now', editData: 'Edit Data' },
+      common: { back: 'Back', continue: 'Continue to Confirm', payNow: 'Pay Now', editData: 'Edit Data', selectAllOffersBeforeContinue: 'Select an offer for every part before continuing' },
       steps: { address: 'Shipping Confirmation', summary: 'Invoice', finalReview: 'Order Confirmation', payment: 'Payment', confirm: 'Confirm' },
       finalReview: {
         title: "Final review before completing the purchase",
@@ -1448,7 +1453,10 @@ export const customer = {
           SHIPPING_FEE: 'Shipping Cost 🚚',
           FRAUD_PENALTY: 'Fraud Penalty 🚫',
           ADJUDICATION_FEE: 'Adjudication Fee ⚖️',
-          SHIPPING_LIABILITY: 'Shipping Liability (pending) 🚚'
+          SHIPPING_LIABILITY: 'Shipping Liability (pending) 🚚',
+          ADJUSTMENT: 'Financial Adjustment 🧾',
+          ESCROW_RELEASE: 'Escrow Release 🔓',
+          PLATFORM_FEE_RETENTION: 'Platform Fee Retention 🏛️',
         },
         walletDashboard: {
           availableBalance: 'Available Balance',
@@ -1468,6 +1476,7 @@ export const customer = {
           pointsResetNote: 'Points reset is admin-triggered. Tier is unaffected.',
           earningsLog: 'Earnings & Orders Log',
           searchPlaceholder: 'Search Order Number...',
+          transactionDetails: 'Transaction details',
         }
       },
       settings: {
@@ -1953,6 +1962,7 @@ export const customer = {
       shipping: 'Shipping SLA',
       return: 'Return / dispute window',
       correction: 'Correction deadline',
+      nonMatchingGrace: 'Pre-correction grace period',
       expired: 'Deadline expired',
       remaining: 'Time remaining',
     },

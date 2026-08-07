@@ -12,6 +12,7 @@ import { UploadsService, VERIFICATION_FIELD_PHOTOS_BUCKET } from '../uploads/upl
 import { WaybillsService } from '../waybills/waybills.service';
 import { EscrowService } from '../payments/escrow.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import * as crypto from 'crypto';
 import {
   isUuid,
@@ -130,6 +131,7 @@ export class VerificationTasksService {
     private escrowService: EscrowService,
     @Inject(forwardRef(() => OfferFulfillmentService))
     private offerFulfillment: OfferFulfillmentService,
+    private orderDurationConfig: OrderDurationConfigService,
   ) {}
 
   private get verificationTaskPhotoRows(): VerificationTaskPhotoRepo {
@@ -1454,6 +1456,8 @@ export class VerificationTasksService {
     let newOrderStatus: OrderStatus = task.order.status;
     let correctionDeadline: Date | null = null;
     let newRejectionCount = task.order.rejectionCount;
+    const durationCfg = await this.orderDurationConfig.getConfig();
+    const correctionMs = this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours);
 
     if (dto.approved) {
       // Admin agrees with the officer's field decision
@@ -1464,7 +1468,7 @@ export class VerificationTasksService {
           correctionDeadline = null;
         } else {
           newOrderStatus = OrderStatus.CORRECTION_PERIOD;
-          correctionDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000);
+          correctionDeadline = new Date(Date.now() + correctionMs);
         }
       } else {
         newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
@@ -1484,7 +1488,7 @@ export class VerificationTasksService {
           correctionDeadline = null;
         } else {
           newOrderStatus = OrderStatus.CORRECTION_PERIOD;
-          correctionDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000);
+          correctionDeadline = new Date(Date.now() + correctionMs);
         }
       }
     }

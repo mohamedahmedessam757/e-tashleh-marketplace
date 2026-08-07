@@ -744,7 +744,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                             <table className="w-full text-sm text-center border-collapse min-w-[800px]">
                                 <thead>
                                     <tr className="sticky top-0 z-20 border-b border-white/5 bg-[#151310] text-[10px] text-white/30 uppercase tracking-widest font-black">
-                                        <th className="px-4 py-5 font-black">{isAr ? 'رقم الطلب' : 'Order ID'}</th>
+                                        <th className="px-4 py-5 font-black">{isAr ? 'رقم الطلب / التفاصيل' : 'Order / Details'}</th>
                                         <th className="px-4 py-5 font-black">{isAr ? 'التاريخ' : 'Date'}</th>
                                         <th className="px-4 py-5 font-black">{isAr ? 'المبلغ' : 'Amount'}</th>
                                         <th className="px-4 py-5 font-black">{isAr ? 'حالة الدفع' : 'Payment Status'}</th>
@@ -762,7 +762,16 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                         filteredTransactions.map((tx) => (
                                             <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
                                                 <td className="px-4 py-4">
-                                                    <span className="font-mono font-bold text-white group-hover:text-gold-500 transition-colors">#{tx.order?.orderNumber || (tx.metadata?.orderId ? '---' : tx.id.slice(0, 8))}</span>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <span className="font-mono font-bold text-white group-hover:text-gold-500 transition-colors">#{tx.order?.orderNumber || tx.orderNumber || (tx.metadata?.orderId ? '---' : tx.id.slice(0, 8))}</span>
+                                                        {(tx.displayDescriptionAr || tx.displayDescriptionEn || tx.description) && (
+                                                            <span className="text-[10px] text-white/45 font-medium max-w-[220px] leading-snug normal-case">
+                                                                {isAr
+                                                                    ? (tx.displayDescriptionAr || tx.titleAr || tx.description)
+                                                                    : (tx.displayDescriptionEn || tx.titleEn || tx.description)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-4 font-mono text-white/40 text-[11px]">
                                                     {new Date(tx.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}

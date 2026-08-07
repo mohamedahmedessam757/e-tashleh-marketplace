@@ -13,6 +13,7 @@ import {
     Crown,
     ChevronDown,
     History,
+    Truck,
 } from 'lucide-react';
 import { BlurredSection } from './BlurredSection';
 import type { UnifiedFinancialEvent } from '../../../stores/useAdminStore';
@@ -45,13 +46,24 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
     const executor = item.executorName || item.executor || (item.metadata as any)?.adminName || '—';
 
     const breakdownParts: string[] = [];
-    if (item.commission != null && item.commission > 0) breakdownParts.push(`C:${item.commission}`);
-    if (item.shippingCost != null && item.shippingCost > 0) breakdownParts.push(`S:${item.shippingCost}`);
-    if (item.gatewayFee != null && item.gatewayFee > 0) breakdownParts.push(`G:${item.gatewayFee}`);
-    if (item.refundedAmount != null && item.refundedAmount > 0) breakdownParts.push(`R:${item.refundedAmount}`);
-    if (item.unitPrice != null && item.unitPrice > 0) breakdownParts.push(`U:${item.unitPrice}`);
+    if (item.commission != null && item.commission > 0) {
+      breakdownParts.push(isAr ? `عمولة:${item.commission}` : `C:${item.commission}`);
+    }
+    if (item.shippingCost != null && item.shippingCost > 0) {
+      breakdownParts.push(isAr ? `شحن:${item.shippingCost}` : `Shipping:${item.shippingCost}`);
+    }
+    if (item.gatewayFee != null && item.gatewayFee > 0) {
+      breakdownParts.push(isAr ? `بوابة:${item.gatewayFee}` : `G:${item.gatewayFee}`);
+    }
+    if (item.refundedAmount != null && item.refundedAmount > 0) {
+      breakdownParts.push(isAr ? `مسترد:${item.refundedAmount}` : `R:${item.refundedAmount}`);
+    }
+    if (item.unitPrice != null && item.unitPrice > 0) {
+      breakdownParts.push(isAr ? `سعر:${item.unitPrice}` : `U:${item.unitPrice}`);
+    }
 
     const eventIcon = (() => {
+        if (item.eventType.includes('SHIPPING')) return <Truck size={18} className="text-cyan-400" />;
         if (item.eventType.includes('PAYMENT')) return <ArrowDownLeft size={18} className="text-emerald-400" />;
         if (item.eventType.includes('WITHDRAWAL')) return <ArrowUpRight size={18} className="text-rose-400" />;
         if (item.eventType.includes('COMMISSION')) return <Percent size={18} className="text-gold-400" />;
@@ -79,6 +91,16 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                             <div className="font-mono text-white font-bold text-sm">
                                 {isAr ? item.eventTypeAr : item.eventTypeEn}
                             </div>
+                            {((isAr
+                                ? (item.metadata as any)?.displayDescriptionAr
+                                : (item.metadata as any)?.displayDescriptionEn) ||
+                                item.description) && (
+                                <div className="text-[10px] text-white/45 font-medium mt-1 max-w-[280px] leading-snug normal-case">
+                                    {isAr
+                                        ? ((item.metadata as any)?.displayDescriptionAr || item.description)
+                                        : ((item.metadata as any)?.displayDescriptionEn || item.description)}
+                                </div>
+                            )}
                             <div className="text-[10px] text-white/30 font-black uppercase mt-1">
                                 {item.source} • #{item.id.slice(-8).toUpperCase()}
                             </div>

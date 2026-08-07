@@ -61,6 +61,7 @@ import { PartReturnWindowCard, PartReturnWindowOffer } from './shared/PartReturn
 import { useOrderFulfillmentSummary } from '../../hooks/useOrderFulfillmentSummary';
 import type { EligibleResolutionPart } from './resolution/resolutionTypes';
 import {
+    areAllPartsReadyForCheckout,
     collectPaidOfferIdsFromOrder,
     getAcceptedOffersFromList,
     hasRemainingPaymentDue,
@@ -561,6 +562,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     };
 
     const showContinuePayment = shouldShowContinuePaymentButton(order);
+    const partsReadyForCheckout = areAllPartsReadyForCheckout(order);
     const continuePaymentLabel =
         order.status === 'PARTIALLY_PAID' || hasRemainingPaymentDue(order)
             ? language === 'ar'
@@ -569,6 +571,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             : language === 'ar'
               ? 'إكمال تفاصيل الدفع'
               : 'Continue Checkout';
+    const selectAllOffersHint =
+        language === 'ar'
+            ? 'يجب اختيار عرض لجميع القطع قبل المتابعة'
+            : 'Select an offer for every part before continuing';
 
     const handleAcceptOffer = async (offer: any) => {
         setAcceptLoadingOfferId(String(offer.id));
@@ -1038,13 +1044,30 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                             {/* Continue Checkout / partial payment */}
                             {showContinuePayment && (
-                                <button
-                                    onClick={() => openCheckout()}
-                                    className="hidden md:flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black rounded-lg transition-all shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:shadow-[0_0_20px_rgba(212,175,55,0.5)] font-bold text-sm"
-                                >
-                                    <CheckCircle2 size={16} />
-                                    {continuePaymentLabel}
-                                </button>
+                                <div className="hidden md:flex flex-col items-end gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!partsReadyForCheckout) return;
+                                            openCheckout();
+                                        }}
+                                        disabled={!partsReadyForCheckout}
+                                        title={!partsReadyForCheckout ? selectAllOffersHint : undefined}
+                                        className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all font-bold text-sm ${
+                                            partsReadyForCheckout
+                                                ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]'
+                                                : 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
+                                        }`}
+                                    >
+                                        <CheckCircle2 size={16} />
+                                        {continuePaymentLabel}
+                                    </button>
+                                    {!partsReadyForCheckout && (
+                                        <span className="text-[10px] text-amber-400/90 max-w-[220px] text-end leading-snug">
+                                            {selectAllOffersHint}
+                                        </span>
+                                    )}
+                                </div>
                             )}
 
                             {canConfirmFullReceipt && (
@@ -1876,13 +1899,30 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                     {/* Mobile/Sidebar Continue payment */}
                     {showContinuePayment && (
-                        <button
-                            onClick={() => openCheckout()}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black rounded-2xl transition-all shadow-[0_0_15px_rgba(212,175,55,0.3)] font-bold text-lg mb-4"
-                        >
-                            <CheckCircle2 size={24} />
-                            {continuePaymentLabel}
-                        </button>
+                        <div className="w-full mb-4 space-y-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!partsReadyForCheckout) return;
+                                    openCheckout();
+                                }}
+                                disabled={!partsReadyForCheckout}
+                                title={!partsReadyForCheckout ? selectAllOffersHint : undefined}
+                                className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl transition-all font-bold text-lg ${
+                                    partsReadyForCheckout
+                                        ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black shadow-[0_0_15px_rgba(212,175,55,0.3)]'
+                                        : 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
+                                }`}
+                            >
+                                <CheckCircle2 size={24} />
+                                {continuePaymentLabel}
+                            </button>
+                            {!partsReadyForCheckout && (
+                                <p className="text-[11px] text-amber-400/90 text-center leading-snug">
+                                    {selectAllOffersHint}
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
