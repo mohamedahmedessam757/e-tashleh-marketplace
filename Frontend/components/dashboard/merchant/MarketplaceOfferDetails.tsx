@@ -5,6 +5,8 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { getOfferModificationMetrics, getMonthlyOfferDeletionMetrics, isActiveMerchantOffer } from '../../../utils/merchantOffers';
 import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
+import { useEnforceExpiredOrderSla } from '../../../hooks/useEnforceExpiredOrderSla';
+import { getDisplayOrderStatus } from '../../../utils/orderExpiryHelpers';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import {
     ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw
@@ -123,6 +125,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const { addOfferToOrder, patchOrderFromRealtime, fetchOrder, removeOfferFromOrder, markOfferWithdrawnInOrder } =
         useOrderStore();
     const order = useOrderById(orderId);
+    useEnforceExpiredOrderSla(order);
+    const displayStatus = order ? getDisplayOrderStatus(order) : '';
     const fulfillmentSummary = useOrderFulfillmentSummary(orderId, order);
 
     const partResolutionByOfferId = useMemo(() => {
@@ -940,7 +944,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             <h1 className="text-2xl md:text-3xl font-bold text-white">
                                 {isAr ? 'تفاصيل طلب العميل' : 'Customer Request Details'}
                             </h1>
-                            <Badge status={order.status} />
+                            <Badge status={(displayStatus || order.status) as StatusType} />
                             {shipment && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
                                 <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                             )}
