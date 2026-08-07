@@ -647,8 +647,7 @@ export class OrdersService {
                 ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.offerSelectionHours))
                 : undefined;
 
-        const shouldSetCorrectionDeadline =
-            newStatus === OrderStatus.CORRECTION_PERIOD && !order.correctionDeadlineAt;
+        const shouldSetCorrectionDeadline = newStatus === OrderStatus.CORRECTION_PERIOD;
         const correctionDeadlineAt = shouldSetCorrectionDeadline
             ? new Date(
                   Date.now() +
@@ -1162,6 +1161,17 @@ export class OrdersService {
             throw new ForbiddenException('You can only accept offers for your own orders');
         }
 
+        const selectableStatuses: OrderStatus[] = [
+            OrderStatus.AWAITING_OFFERS,
+            OrderStatus.COLLECTING_OFFERS,
+            OrderStatus.AWAITING_SELECTION,
+        ];
+        if (!selectableStatuses.includes(order.status as OrderStatus)) {
+            throw new BadRequestException(
+                'Offers can only be accepted while the order is in the selection phase',
+            );
+        }
+
         const result = await this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
 
@@ -1268,12 +1278,33 @@ export class OrdersService {
             return { acceptedOffer, losingOffers, updatedOrder };
         }, { timeout: 15000 });
 
-        const { acceptedOffer, losingOffers } = result;
+        const { acceptedOffer, losingOffers, updatedOrder } = result;
+        const enteredPayment = updatedOrder.status === OrderStatus.AWAITING_PAYMENT;
 
-        // Close chats 
-        try {
-            await this.chatService.closeOtherChats(orderId, acceptedOffer.storeId);
-        } catch (e) { console.error('Failed to close other chats', e); }
+        // Only close losing merchants' chats once selection is complete (keep all winning stores open).
+        if (enteredPayment) {
+            try {
+                const winners = await this.prisma.offer.findMany({
+                    where: { orderId, status: 'accepted' },
+                    select: { storeId: true },
+                });
+                const winningStoreIds = [...new Set(winners.map((w) => w.storeId).filter(Boolean))];
+                if (winningStoreIds.length === 1) {
+                    await this.chatService.closeOtherChats(orderId, winningStoreIds[0]);
+                } else if (winningStoreIds.length > 1) {
+                    await this.prisma.orderChat.updateMany({
+                        where: {
+                            orderId,
+                            status: 'OPEN',
+                            vendorId: { notIn: winningStoreIds },
+                        },
+                        data: { status: 'CLOSED' },
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to close losing merchant chats', e);
+            }
+        }
 
         // Notify winner
         if (acceptedOffer.store?.ownerId) {
@@ -1296,7 +1327,6 @@ export class OrdersService {
         }
 
         // Notify customer — part accepted (payment only when all selectable parts accepted)
-        const enteredPayment = result.updatedOrder.status === OrderStatus.AWAITING_PAYMENT;
         await this.notifications.create({
             recipientId: customerId,
             recipientRole: 'CUSTOMER',
@@ -1344,7 +1374,7 @@ export class OrdersService {
             }
         }
 
-        return result.updatedOrder;
+        return updatedOrder;
     }
 
     async markAsPrepared(orderId: string, storeId: string, offerId?: string) {
@@ -2474,9 +2504,9 @@ export class OrdersService {
         const durationCfg = await this.orderDurationConfig.getConfig();
         
         let newOrderStatus: OrderStatus = decision === 'APPROVED' ? OrderStatus.VERIFICATION_SUCCESS : OrderStatus.NON_MATCHING;
-        let correctionDeadline = decision === 'REJECTED'
-            ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours))
-            : null;
+        // Order-level 48h correction clock starts when entering CORRECTION_PERIOD (scheduler/transitionStatus),
+        // not during the short NON_MATCHING grace window.
+        let correctionDeadline: Date | null = null;
         let newRejectionCount = order.rejectionCount;
 
         if (decision === 'REJECTED') {
@@ -2486,6 +2516,11 @@ export class OrdersService {
                 correctionDeadline = null;
             }
         }
+
+        const docCorrectionDeadline =
+            decision === 'REJECTED' && newOrderStatus === OrderStatus.NON_MATCHING
+                ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours))
+                : correctionDeadline;
 
         const txOps: any[] = [
             this.prisma.verificationDocument.update({
@@ -2497,7 +2532,7 @@ export class OrdersService {
                     adminRejectionReason: data.rejectionReason,
                     adminRejectionImages: data.rejectionImages || [],
                     adminRejectionVideo: data.rejectionVideo,
-                    correctionDeadlineAt: correctionDeadline,
+                    correctionDeadlineAt: docCorrectionDeadline,
                     adminSignatureName: data.adminSignatureName,
                     adminSignatureType: data.adminSignatureType,
                     adminSignatureText: data.adminSignatureText,
@@ -2512,7 +2547,7 @@ export class OrdersService {
                     where: { id: orderId },
                     data: {
                         status: newOrderStatus,
-                        correctionDeadlineAt: correctionDeadline,
+                        correctionDeadlineAt: null,
                         rejectionCount: newRejectionCount,
                     },
                 }),
@@ -2622,7 +2657,7 @@ export class OrdersService {
                     where: { id: orderId },
                     data: {
                         status: newOrderStatus,
-                        correctionDeadlineAt: correctionDeadline,
+                        correctionDeadlineAt: null,
                         rejectionCount: newRejectionCount,
                     },
                 });
@@ -2734,7 +2769,7 @@ export class OrdersService {
                             offerId: latestDoc.offerId || undefined,
                             partName,
                             rejectionReason: data.rejectionReason || null,
-                            correctionDeadlineAt: correctionDeadline?.toISOString() || null,
+                            correctionDeadlineAt: docCorrectionDeadline?.toISOString() || null,
                             orderNumber: order.orderNumber,
                             verification: true,
                             verificationCorrection: true,

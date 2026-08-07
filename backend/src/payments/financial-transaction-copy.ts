@@ -41,7 +41,8 @@ function resolvePartHint(meta: Record<string, unknown>, lang: 'ar' | 'en'): stri
   if (partName != null && String(partName).trim()) {
     return lang === 'ar' ? `القطعة: ${partName}` : `Part: ${partName}`;
   }
-  const reason = meta.reason ?? meta.adminNote ?? meta.note;
+  // Do not surface admin-only notes to customer/merchant ledgers
+  const reason = meta.reason ?? meta.note;
   if (reason != null && String(reason).trim()) {
     return String(reason);
   }
@@ -71,9 +72,13 @@ export function buildTransactionCopy(
   }
   if (partHint) pieces.push(partHint);
   if (rawDescription && rawDescription !== title) {
-    // Avoid duplicating generic English descriptions when we already have structured copy
     const looksGeneric = /^Payment for Order #/i.test(rawDescription);
-    if (!looksGeneric || !orderNumber) {
+    const looksEnglish =
+      /[A-Za-z]/.test(rawDescription) && !/[\u0600-\u06FF]/.test(rawDescription);
+    // Prefer structured bilingual title/order; avoid dumping English raw text into Arabic copy
+    if (lang === 'ar' && looksEnglish && (orderNumber || partHint)) {
+      // skip
+    } else if (!looksGeneric || !orderNumber) {
       pieces.push(rawDescription);
     }
   }

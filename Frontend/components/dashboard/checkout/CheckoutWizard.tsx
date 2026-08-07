@@ -12,9 +12,9 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { OffersReviewStep } from './steps/OffersReviewStep';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
-import { isAcceptedOfferStatus, isActiveOfferStatus } from '../../../utils/offerStatusHelpers';
 import {
     areAllAcceptedOffersPaid,
+    areAllPartsReadyForCheckout,
     getAcceptedOffersFromList,
     isOrderStatusPayable,
 } from '../../../utils/checkoutPaymentHelpers';
@@ -118,22 +118,7 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
     // Determines if any part still needs an offer selection (for validation blocking)
     const hasPendingToReview = React.useMemo(() => {
         if (!order || !order.parts || order.parts.length <= 1) return false;
-
-        let pending = false;
-        for (const part of order.parts) {
-            const partOffers =
-                order.offers?.filter(
-                    (o) =>
-                        String(o.orderPartId) === String(part.id) &&
-                        isActiveOfferStatus(o.status),
-                ) || [];
-            const hasAccepted = partOffers.some((o) => isAcceptedOfferStatus(o.status));
-            if (partOffers.length > 0 && !hasAccepted) {
-                pending = true;
-                break;
-            }
-        }
-        return pending;
+        return !areAllPartsReadyForCheckout(order);
     }, [order]);
 
     // Multi-part orders ALWAYS show Step 0 as a summary checkout step

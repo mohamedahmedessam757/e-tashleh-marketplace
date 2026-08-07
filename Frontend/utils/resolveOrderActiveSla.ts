@@ -89,7 +89,20 @@ export function resolveOrderActiveSla(
 ): OrderActiveSla | null {
   if (!order?.status) return null;
   if (order.activeSla?.endsAt && order.activeSla.phase === order.status) {
-    return order.activeSla;
+    const stickyEnd = toMs(order.activeSla.endsAt);
+    const liveEnd =
+      order.status === 'AWAITING_PAYMENT' || order.status === 'PARTIALLY_PAID'
+        ? toMs(order.paymentDeadlineAt)
+        : order.status === 'CORRECTION_PERIOD'
+          ? toMs(order.correctionDeadlineAt)
+          : order.status === 'AWAITING_SELECTION'
+            ? toMs(order.selectionDeadlineAt)
+            : order.status === 'COLLECTING_OFFERS' || order.status === 'AWAITING_OFFERS'
+              ? toMs(order.revealOffersAt)
+              : null;
+    if (liveEnd == null || stickyEnd === liveEnd) {
+      return order.activeSla;
+    }
   }
 
   const status = order.status;
