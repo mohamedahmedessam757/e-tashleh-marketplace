@@ -1171,7 +1171,7 @@ export class PaymentsService {
                         transactionType: 'PAYMENT',
                         amount: merchantNetShare,
                         currency: 'AED',
-                        description: `Net payout for offer #${payment.offer.offerNumber} (Excludes Admin Commission & Shipping) â€” Order #${payment.order.orderNumber}`,
+                        description: `Payout for offer #${payment.offer.offerNumber}`,
                         balanceAfter: Number(updatedStore?.pendingBalance ?? payment.offer.store.pendingBalance ?? 0),
                     },
                 });
