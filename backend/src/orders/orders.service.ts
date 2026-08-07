@@ -1151,6 +1151,115 @@ export class OrdersService {
         return result;
     }
 
+    /**
+     * Idempotent SLA enforcement for near-realtime cancel when selection/payment
+     * windows elapse (cron remains the safety net). Safe for customer/merchant/admin
+     * callers who already passed order access checks.
+     */
+    async enforceExpiredSla(
+        orderId: string,
+        actor: { id: string; type: ActorType; name?: string },
+    ): Promise<{ changed: boolean; order: Order; reason?: string }> {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                offers: {
+                    where: { status: { not: 'rejected' } },
+                    select: { id: true, status: true },
+                },
+            },
+        });
+        if (!order) throw new NotFoundException('Order not found');
+
+        if (order.status === OrderStatus.CANCELLED) {
+            return { changed: false, order, reason: 'already_cancelled' };
+        }
+
+        const durationCfg = await this.orderDurationConfig.getConfig();
+        const status = order.status as OrderStatus;
+
+        const shouldCancelSelection =
+            status === OrderStatus.AWAITING_SELECTION &&
+            (order.offers.length === 0 || this.orderSla.isSlaExpired(order, durationCfg));
+
+        const shouldCancelPayment =
+            (status === OrderStatus.AWAITING_PAYMENT || status === OrderStatus.PARTIALLY_PAID) &&
+            this.orderSla.isSlaExpired(order, durationCfg);
+
+        const shouldCancelCollectingEmpty =
+            (status === OrderStatus.AWAITING_OFFERS || status === OrderStatus.COLLECTING_OFFERS) &&
+            order.offers.length === 0 &&
+            this.orderSla.isSlaExpired(order, durationCfg);
+
+        if (!shouldCancelSelection && !shouldCancelPayment && !shouldCancelCollectingEmpty) {
+            return { changed: false, order, reason: 'not_expired' };
+        }
+
+        let cancelReason: string;
+        let titleAr: string;
+        let titleEn: string;
+        let messageAr: string;
+        let messageEn: string;
+
+        if (shouldCancelSelection) {
+            cancelReason =
+                order.offers.length === 0
+                    ? 'System: No offers received after collection window.'
+                    : `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`;
+            titleAr = order.offers.length === 0 ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض';
+            titleEn = order.offers.length === 0 ? 'Collection Period Ended' : 'Selection Period Expired';
+            messageAr =
+                order.offers.length === 0
+                    ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
+                    : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`;
+            messageEn =
+                order.offers.length === 0
+                    ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
+                    : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`;
+        } else if (shouldCancelPayment) {
+            cancelReason = `System: Payment period expired after ${durationCfg.paymentTimeoutHours} hours`;
+            titleAr = 'انتهت مهلة الدفع';
+            titleEn = 'Payment Period Expired';
+            messageAr = `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`;
+            messageEn = `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`;
+        } else {
+            cancelReason = 'System: Offer collection window ended with no offers.';
+            titleAr = 'انتهت مهلة جمع العروض';
+            titleEn = 'Collection Period Ended';
+            messageAr = `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`;
+            messageEn = `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`;
+        }
+
+        const updated = await this.transitionStatus(
+            orderId,
+            OrderStatus.CANCELLED,
+            actor.type === ActorType.SYSTEM
+                ? actor
+                : { type: ActorType.SYSTEM, id: 'system-sla-enforce', name: 'SLA Enforce' },
+            cancelReason,
+            { triggeredBy: actor.id, triggerActorType: actor.type, source: 'enforceExpiredSla' },
+        );
+
+        await this.notifications.create({
+            recipientId: order.customerId,
+            recipientRole: 'CUSTOMER',
+            titleAr,
+            titleEn,
+            messageAr,
+            messageEn,
+            type: 'system_alert',
+            link: `/dashboard/orders/${order.id}`,
+            metadata: {
+                orderId: order.id,
+                orderNumber: order.orderNumber,
+                waEvent: 'ORDER_STATUS',
+                status: 'CANCELLED',
+            },
+        }).catch((e) => this.logger.warn(`enforceExpiredSla notify failed: ${e?.message || e}`));
+
+        return { changed: true, order: updated, reason: 'cancelled' };
+    }
+
     async acceptOfferForPart(orderId: string, partId: string, offerId: string, customerId: string) {
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
         if (!order) {

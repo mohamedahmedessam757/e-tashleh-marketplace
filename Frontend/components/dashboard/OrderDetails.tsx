@@ -21,7 +21,8 @@ import { useOrderStore, Order, OrderOffer } from '../../stores/useOrderStore';
 import { useOrderById } from '../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../hooks/useOrderRealtimeSync';
 import { isAcceptedOfferStatus, isVisibleMarketplaceOffer } from '../../utils/offerStatusHelpers';
-import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
+import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
+import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla';
 import { writeCreateOrderPrefill } from '../../stores/useCreateOrderStore';
 import { useOrderChatStore } from '../../stores/useOrderChatStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
@@ -243,6 +244,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     const order = useOrderById(orderId || undefined);
     useOrderRealtimeSync(orderId, { includeReviews: true });
+    useEnforceExpiredOrderSla(order);
+    const displayStatus = order ? getDisplayOrderStatus(order) : '';
     const shipment = shipments.find(s => s.orderId === (orderId || ''));
     const fulfillmentSummary = useOrderFulfillmentSummary(orderId || undefined, order);
 
@@ -289,7 +292,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     useEffect(() => {
         if (!order) return;
         if (!['AWAITING_SELECTION', 'AWAITING_OFFERS', 'CANCELLED', 'COLLECTING_OFFERS'].includes(order.status)) return;
-        const id = setInterval(() => setExpiryTick((t) => t + 1), 30000);
+        const id = setInterval(() => setExpiryTick((t) => t + 1), 5000);
         return () => clearInterval(id);
     }, [order?.status]);
 
@@ -1017,7 +1020,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         ? (language === 'ar' ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
                                         : order.part}
                                 </h1>
-                                <Badge status={order.status} />
+                                <Badge status={displayStatus as StatusType} />
                                 {order.warranty_end_at && (
                                     <WarrantyProtectionCard 
                                         order={order} 

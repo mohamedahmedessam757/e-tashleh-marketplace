@@ -123,6 +123,23 @@ export class OrdersController {
             transitionDto.metadata
         );
     }
+    @Post(':id/enforce-expired-sla')
+    async enforceExpiredSla(@Request() req, @Param('id') id: string) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), id);
+
+        let actorType: ActorType = ActorType.SYSTEM;
+        const role = req.user.role;
+        if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) actorType = ActorType.ADMIN;
+        else if (role === UserRole.VENDOR) actorType = ActorType.VENDOR;
+        else if (role === UserRole.CUSTOMER) actorType = ActorType.CUSTOMER;
+
+        return this.ordersService.enforceExpiredSla(id, {
+            id: req.user.id,
+            type: actorType,
+            name: req.user.email,
+        });
+    }
+
     @Post(':id/offer/:offerId/accept')
     acceptOffer(
         @Request() req,

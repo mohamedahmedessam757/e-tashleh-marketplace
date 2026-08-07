@@ -12,6 +12,8 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
+import { useEnforceExpiredOrderSla } from '../../../hooks/useEnforceExpiredOrderSla';
+import { getDisplayOrderStatus } from '../../../utils/orderExpiryHelpers';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import {
     ChevronLeft, ChevronRight, User, Store, DollarSign, Settings2, ShieldAlert,
@@ -223,6 +225,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
     const order = useOrderById(orderId ? String(orderId) : undefined);
     useOrderRealtimeSync(orderId ? String(orderId) : undefined);
+    useEnforceExpiredOrderSla(order);
+    const displayStatus = order ? getDisplayOrderStatus(order) : '';
     const financial = useAdminStore((s) => s.systemConfig?.financial);
 
     // Belt-and-suspenders: poll while admin stays on this order (covers RLS/realtime gaps)
@@ -435,7 +439,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         ? (isAr ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
                                         : order.part}
                                 </h1>
-                                <Badge status={order.status} />
+                                <Badge status={(displayStatus || order.status) as StatusType} />
                                 {multiItemCompletion && (
                                     <MultiItemCompletionBadge
                                         completedCount={multiItemCompletion.completedCount}

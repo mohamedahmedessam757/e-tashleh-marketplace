@@ -104,6 +104,76 @@ function isAwaitingSelectionPastDeadline(order: OrderExpiryContext): boolean {
   return Date.now() > base.getTime();
 }
 
+function isAwaitingPaymentPastDeadline(order: {
+  status?: string;
+  paymentDeadlineAt?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}): boolean {
+  const status = String(order.status || '');
+  if (status !== 'AWAITING_PAYMENT' && status !== 'PARTIALLY_PAID') return false;
+  if (order.paymentDeadlineAt) {
+    return Date.now() > new Date(order.paymentDeadlineAt).getTime();
+  }
+  const base = new Date(order.updatedAt || order.createdAt || Date.now());
+  base.setHours(base.getHours() + 24);
+  return Date.now() > base.getTime();
+}
+
+/**
+ * Status shown in badges while backend cancel is in-flight after an SLA deadline.
+ * Keeps customer/merchant/admin UI consistent the moment the window ends.
+ */
+export function getDisplayOrderStatus(order: {
+  status?: string;
+  selectionDeadlineAt?: string | null;
+  paymentDeadlineAt?: string | null;
+  createdAt?: string;
+  date?: string;
+  updatedAt?: string | null;
+}): string {
+  const status = String(order.status || '');
+  if (!status) return status;
+  if (status === 'CANCELLED') return status;
+
+  if (
+    isAwaitingSelectionPastDeadline({
+      status,
+      selectionDeadlineAt: order.selectionDeadlineAt,
+      createdAt: order.createdAt,
+      date: order.date,
+    })
+  ) {
+    return 'CANCELLED';
+  }
+
+  if (
+    isAwaitingPaymentPastDeadline({
+      status,
+      paymentDeadlineAt: order.paymentDeadlineAt,
+      updatedAt: order.updatedAt,
+      createdAt: order.createdAt,
+    })
+  ) {
+    return 'CANCELLED';
+  }
+
+  return status;
+}
+
+export function shouldEnforceExpiredSla(order: {
+  status?: string;
+  selectionDeadlineAt?: string | null;
+  paymentDeadlineAt?: string | null;
+  createdAt?: string;
+  date?: string;
+  updatedAt?: string | null;
+}): boolean {
+  const status = String(order.status || '');
+  if (!status || status === 'CANCELLED') return false;
+  return getDisplayOrderStatus(order) === 'CANCELLED' && status !== 'CANCELLED';
+}
+
 function isAwaitingOffersPastDeadline(order: OrderExpiryContext): boolean {
   if (order.status !== 'AWAITING_OFFERS') return false;
   const base = new Date(order.createdAt || order.date || Date.now());

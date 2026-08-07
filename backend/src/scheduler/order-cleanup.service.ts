@@ -494,9 +494,14 @@ export class OrderCleanupService {
     }
 
     private async expireAwaitingSelection() {
+        const now = new Date();
         const expiredOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.AWAITING_SELECTION,
+                OR: [
+                    { selectionDeadlineAt: { lte: now } },
+                    { selectionDeadlineAt: null },
+                ],
             },
             include: {
                 offers: {
@@ -551,7 +556,7 @@ export class OrderCleanupService {
                     order.id,
                     OrderStatus.CANCELLED,
                     { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                    'System: Selection period expired (48h total elapsed). Customer failed to choose an offer.',
+                    `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`,
                 );
 
                 await this.notificationsService.create({
@@ -576,9 +581,14 @@ export class OrderCleanupService {
     }
 
     async expireAwaitingPayment() {
+        const now = new Date();
         const expiredOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.AWAITING_PAYMENT,
+                OR: [
+                    { paymentDeadlineAt: { lte: now } },
+                    { paymentDeadlineAt: null },
+                ],
             },
             select: {
                 id: true,

@@ -157,6 +157,12 @@ export const ordersApi = {
         return response.data;
     },
 
+    /** Near-realtime cancel when selection/payment SLA has already elapsed. */
+    enforceExpiredSla: async (id: string) => {
+        const response = await client.post(`/orders/${id}/enforce-expired-sla`);
+        return response.data as { changed: boolean; order?: any; reason?: string };
+    },
+
     cancel: async (id: string, reason?: string) => {
         const response = await client.patch(`/orders/${id}/transition`, {
             newStatus: 'CANCELLED',
