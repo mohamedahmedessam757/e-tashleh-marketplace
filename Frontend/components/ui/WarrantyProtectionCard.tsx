@@ -155,7 +155,7 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                                 {isAr ? 'حماية الضمان النشطة' : 'ACTIVE WARRANTY PROTECTION'}
                             </span>
                             <h3 className={`text-xl font-black ${isExpired ? 'text-white/40' : 'text-white'}`}>
-                                {isAr ? 'ضمان إتـشـلـيـح 2026' : 'E-TASHLEH WARRANTY 2026'}
+                                {isAr ? 'ضمان أى تشليح 2026' : 'E-TASHLEH WARRANTY 2026'}
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className={`text-xs font-bold ${isExpired ? 'text-red-400' : 'text-emerald-400'}`}>
