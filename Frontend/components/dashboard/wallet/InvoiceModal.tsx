@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Printer, FileText, ChevronDown, ChevronUp,
@@ -22,46 +23,39 @@ interface InvoiceModalProps {
 /* ─────────────── PRINT CSS ─────────────── */
 const PrintStyles = () => (
     <style>{`
-        /* The nuclear option: When printing, hide the ENTIRE normal React app 
-           and ONLY show our special print container which we portal/inject 
-           at the very top level. */
         @media print {
             html, body {
                 background-color: white !important;
-                height: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             @page {
                 size: A4 portrait;
-                margin: 0 !important; /* Hides browser header/footer URL */
+                margin: 0 !important;
             }
 
-            /* Hide everything by default */
-            body * {
-                visibility: hidden !important;
+            /* Hide app chrome; keep only the portaled invoice (waybill pattern) */
+            body > *:not(#special-invoice-print-container) {
+                display: none !important;
             }
 
-            /* Unhide ONLY our dedicated print container and its children */
-            #special-invoice-print-container,
-            #special-invoice-print-container * {
-                visibility: visible !important;
-            }
-
-            /* Position the exact print container at the top left of the page */
             #special-invoice-print-container {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
+                display: block !important;
+                position: static !important;
                 width: 100% !important;
                 background: white !important;
                 color: black !important;
-                padding: 15mm !important; /* Internal spacing instead of @page margin */
+                padding: 15mm !important;
                 margin: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            /* ── Common Print Styles ── */
             .inv-section {
                 background: white !important;
                 border: 1px solid #ccc !important;
@@ -193,22 +187,37 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     /* ── print handler ── */
     const handlePrint = () => {
-        // We set isPrinting to true, which renders a completely separate DOM tree
-        // directly appended to body (using a trick) that won't be constrained by hidden parents
+        // Mount print tree on body, then wait for afterprint before tearing it down.
+        // Removing the DOM right after window.print() blanks Chromium's print preview.
         setIsPrinting(true);
-        setTimeout(() => {
-            window.print();
-            setIsPrinting(false);
-            addNotification({
-                titleAr: 'تمت طباعة الفاتورة',
-                titleEn: 'Invoice Printed',
-                messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
-                messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
-                type: 'SYSTEM',
-                recipientRole: 'CUSTOMER',
-                link: '/dashboard/wallet'
-            });
-        }, 300); // give React time to render the print tree
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                let finished = false;
+                const mediaQueryList = window.matchMedia?.('print');
+                const onPrintMqChange = (e: MediaQueryListEvent) => {
+                    if (!e.matches) finish();
+                };
+                const finish = () => {
+                    if (finished) return;
+                    finished = true;
+                    window.removeEventListener('afterprint', finish);
+                    mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
+                    setIsPrinting(false);
+                    addNotification({
+                        titleAr: 'تمت طباعة الفاتورة',
+                        titleEn: 'Invoice Printed',
+                        messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
+                        messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
+                        type: 'SYSTEM',
+                        recipientRole: 'CUSTOMER',
+                        link: '/dashboard/wallet'
+                    });
+                };
+                mediaQueryList?.addEventListener?.('change', onPrintMqChange);
+                window.addEventListener('afterprint', finish);
+                window.print();
+            }, 150);
+        });
     };
 
     const handleExportExcel = async () => {
@@ -551,8 +560,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     return (
         <AnimatePresence>
-            {/* The regular modal for screen viewing */}
-            {isOpen && !isPrinting && (
+            {/* Keep modal mounted during print so the UI doesn't flash to a blank dashboard */}
+            {isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
                     <div className="relative w-full max-w-4xl max-h-[95vh] flex flex-col bg-[#111] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden">
                         <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/10 bg-[#1a1a1a] shrink-0">
@@ -565,7 +574,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={handleExportExcel} 
-                                    disabled={isExporting}
+                                    disabled={isExporting || isPrinting}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-colors border border-white/10 disabled:opacity-50"
                                 >
                                     {isExporting ? (
@@ -573,11 +582,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                                     ) : <Download className="w-4 h-4" />}
                                     <span className="hidden sm:inline">{language === 'ar' ? 'تصدير Excel' : 'Export Excel'}</span>
                                 </button>
-                                <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-colors shadow-[0_0_15px_rgba(184,134,11,0.4)]">
+                                <button
+                                    onClick={handlePrint}
+                                    disabled={isPrinting}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-colors shadow-[0_0_15px_rgba(184,134,11,0.4)] disabled:opacity-50"
+                                >
                                     <Printer className="w-4 h-4" />
                                     <span className="hidden sm:inline">{language === 'ar' ? 'طباعة / PDF' : 'Print / PDF'}</span>
                                 </button>
-                                <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-red-500/20">
+                                <button onClick={onClose} disabled={isPrinting} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-red-500/20 disabled:opacity-50">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -590,14 +603,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                 </div>
             )}
 
-            {/* The dedicated print structure that overrides EVERYTHING when printing */}
-            {isPrinting && (
+            {/* Portaled print tree — survives dashboard overflow/transform clipping */}
+            {isPrinting && typeof document !== 'undefined' && createPortal(
                 <>
                     <PrintStyles />
                     <div id="special-invoice-print-container" dir={isRTL ? 'rtl' : 'ltr'}>
                         <InvoiceContent />
                     </div>
-                </>
+                </>,
+                document.body
             )}
         </AnimatePresence>
     );

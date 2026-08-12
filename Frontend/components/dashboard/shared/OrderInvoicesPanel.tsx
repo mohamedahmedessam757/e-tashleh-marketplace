@@ -39,25 +39,23 @@ const PrintStyles = () => (
         @media print {
             html, body {
                 background-color: white !important;
-                height: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             @page {
                 size: A4 portrait;
                 margin: 0 !important;
             }
-            html { height: auto !important; }
-            body { height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
-            body * {
-                visibility: hidden !important;
-            }
-            #special-invoice-print-container,
-            #special-invoice-print-container * {
-                visibility: visible !important;
+            body > *:not(#special-invoice-print-container) {
+                display: none !important;
             }
             #special-invoice-print-container {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
+                display: block !important;
+                position: static !important;
                 width: 100% !important;
                 background: white !important;
                 color: black !important;
@@ -242,20 +240,35 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     const handlePrint = (inv: any) => {
         setActiveInvoice(inv);
         setIsPrinting(true);
-        setTimeout(() => {
-            window.print();
-            setIsPrinting(false);
-            setActiveInvoice(null);
-            addNotification({
-                titleAr: 'تمت طباعة الفاتورة',
-                titleEn: 'Invoice Printed',
-                messageAr: `تم طباعة أو تنزيل الفاتورة ${inv.invoiceNumber} بنجاح.`,
-                messageEn: `Invoice ${inv.invoiceNumber} was successfully printed or downloaded.`,
-                type: 'SYSTEM',
-                recipientRole: role,
-                link: '#'
-            });
-        }, 500);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                let finished = false;
+                const mediaQueryList = window.matchMedia?.('print');
+                const onPrintMqChange = (e: MediaQueryListEvent) => {
+                    if (!e.matches) finish();
+                };
+                const finish = () => {
+                    if (finished) return;
+                    finished = true;
+                    window.removeEventListener('afterprint', finish);
+                    mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
+                    setIsPrinting(false);
+                    setActiveInvoice(null);
+                    addNotification({
+                        titleAr: 'تمت طباعة الفاتورة',
+                        titleEn: 'Invoice Printed',
+                        messageAr: `تم طباعة أو تنزيل الفاتورة ${inv.invoiceNumber} بنجاح.`,
+                        messageEn: `Invoice ${inv.invoiceNumber} was successfully printed or downloaded.`,
+                        type: 'SYSTEM',
+                        recipientRole: role,
+                        link: '#'
+                    });
+                };
+                mediaQueryList?.addEventListener?.('change', onPrintMqChange);
+                window.addEventListener('afterprint', finish);
+                window.print();
+            }, 150);
+        });
     };
 
     const handleExportExcel = async (inv: any) => {
