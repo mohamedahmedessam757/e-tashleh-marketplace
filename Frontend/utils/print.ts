@@ -1,6 +1,6 @@
 /**
  * Professional Print Utility (v2026)
- * Isolated iframe printing — visible ink, real layout size, UI unlocks right after print().
+ * Invoice print uses a hidden off-screen iframe only — no HTML popup window.
  */
 
 const escapeAttr = (value: string): string =>
@@ -10,42 +10,64 @@ const escapeAttr = (value: string): string =>
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-/** Clean white-paper invoice — same organization as screen, ink-friendly for print */
+/** White-paper invoice: organized like screen UI, compact to avoid extra pages */
 const INVOICE_ISOLATED_CSS = `
+*, *::before, *::after { box-sizing: border-box; }
 html, body {
   background: #ffffff !important;
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
   font-family: system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
-  opacity: 1 !important;
 }
-@page { size: A4 portrait; margin: 10mm; }
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
 .inv-print-root {
   display: block !important;
   position: static !important;
   left: auto !important;
   top: auto !important;
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: 190mm !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
   background: #ffffff !important;
   color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
-  padding: 8mm !important;
-  margin: 0 !important;
-  box-sizing: border-box;
-  opacity: 1 !important;
   overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 .inv-print-root * {
-  box-sizing: border-box;
-  opacity: 1 !important;
   max-width: 100%;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
 }
-/* Layout: keep screen structure, prevent overlap */
+
+/* Never emit URL after links */
+a, a:link, a:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+  pointer-events: none !important;
+}
+a[href]::after,
+a[href]::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Layout mirrors dashboard structure */
 .inv-print-root .flex { display: flex !important; }
 .inv-print-root .flex-col { flex-direction: column !important; }
 .inv-print-root .flex-row,
@@ -54,18 +76,18 @@ html, body {
 .inv-print-root .items-center { align-items: center !important; }
 .inv-print-root .justify-between { justify-content: space-between !important; }
 .inv-print-root .justify-center { justify-content: center !important; }
-.inv-print-root .gap-2 { gap: 8px !important; }
-.inv-print-root .gap-4 { gap: 16px !important; }
+.inv-print-root .gap-2 { gap: 6px !important; }
+.inv-print-root .gap-4 { gap: 10px !important; }
 .inv-print-root .gap-6,
-.inv-print-root .sm\\:gap-6 { gap: 20px !important; }
+.inv-print-root .sm\\:gap-6 { gap: 12px !important; }
 .inv-print-root .grid {
   display: grid !important;
-  gap: 16px !important;
+  gap: 10px !important;
   width: 100% !important;
 }
-.inv-print-root .grid-cols-1.md\\:grid-cols-2,
 .inv-print-root .md\\:grid-cols-2,
-.inv-print-root .sm\\:grid-cols-2 {
+.inv-print-root .sm\\:grid-cols-2,
+.inv-print-root .grid-cols-1.md\\:grid-cols-2 {
   grid-template-columns: 1fr 1fr !important;
 }
 .inv-print-root .min-w-0 { min-width: 0 !important; }
@@ -82,51 +104,64 @@ html, body {
   white-space: normal !important;
 }
 .inv-print-root .space-y-1\\.5 > * + *,
-.inv-print-root .space-y-2 > * + * { margin-top: 8px !important; }
-.inv-print-root .mt-4 { margin-top: 16px !important; }
-.inv-print-root .mt-6 { margin-top: 20px !important; }
-.inv-print-root .mt-8 { margin-top: 24px !important; }
-.inv-print-root .mb-1 { margin-bottom: 4px !important; }
-.inv-print-root .mb-2 { margin-bottom: 8px !important; }
-.inv-print-root .pb-6 { padding-bottom: 20px !important; }
-.inv-print-root .p-4 { padding: 14px !important; }
-.inv-print-root .p-5 { padding: 16px !important; }
+.inv-print-root .space-y-2 > * + * { margin-top: 5px !important; }
+.inv-print-root .mt-4 { margin-top: 10px !important; }
+.inv-print-root .mt-6 { margin-top: 12px !important; }
+.inv-print-root .mt-8 { margin-top: 12px !important; }
+.inv-print-root .mt-12 { margin-top: 12px !important; }
+.inv-print-root .mb-1 { margin-bottom: 3px !important; }
+.inv-print-root .mb-2 { margin-bottom: 5px !important; }
+.inv-print-root .mb-4 { margin-bottom: 8px !important; }
+.inv-print-root .pb-6 { padding-bottom: 10px !important; }
+.inv-print-root .pt-8 { padding-top: 10px !important; }
+.inv-print-root .p-4 { padding: 10px !important; }
+.inv-print-root .p-5 { padding: 11px !important; }
+.inv-print-root .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+.inv-print-root .py-4 { padding-top: 10px !important; padding-bottom: 10px !important; }
+
 .inv-label {
   color: #6b7280 !important;
   -webkit-text-fill-color: #6b7280 !important;
-  font-size: 12px !important;
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
 }
 .inv-value {
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
   font-weight: 700 !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
 }
 .inv-icon {
   color: #b8860b !important;
   -webkit-text-fill-color: #b8860b !important;
   flex-shrink: 0 !important;
+  width: 13px !important;
+  height: 13px !important;
 }
+
 .inv-section {
   background: #fafafa !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
-  margin-bottom: 14px !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  margin: 0 0 8px 0 !important;
   overflow: hidden !important;
+  break-inside: auto !important;
+  page-break-inside: auto !important;
 }
 .inv-section-header {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   border-bottom: 1px solid #e5e7eb !important;
-  margin-bottom: 12px !important;
-  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+  padding-bottom: 5px !important;
 }
 .inv-section-header h3 {
   color: #b8860b !important;
   -webkit-text-fill-color: #b8860b !important;
-  font-size: 13px !important;
+  font-size: 11px !important;
   font-weight: 800 !important;
   margin: 0 !important;
   letter-spacing: 0.04em !important;
@@ -134,14 +169,16 @@ html, body {
 }
 .inv-section-header svg {
   color: #b8860b !important;
-  -webkit-text-fill-color: #b8860b !important;
+  width: 13px !important;
+  height: 13px !important;
 }
+
 .inv-total-box {
   background: #fffbeb !important;
   border: 2px solid #b8860b !important;
-  padding: 18px !important;
-  margin: 16px 0 !important;
-  border-radius: 12px !important;
+  padding: 12px !important;
+  margin: 10px 0 !important;
+  border-radius: 8px !important;
   text-align: center !important;
   break-inside: avoid !important;
   page-break-inside: avoid !important;
@@ -155,33 +192,39 @@ html, body {
   color: #b8860b !important;
   -webkit-text-fill-color: #b8860b !important;
   font-weight: 900 !important;
-  font-size: 28px !important;
+  font-size: 24px !important;
 }
-.inv-policy-body { display: block !important; }
-.inv-policy-chevron { display: none !important; }
+
+/* Policies stay on screen only — print body would add empty pages */
+.inv-policy-body,
+.inv-policy-chevron,
 .inv-screen-img { display: none !important; }
+.no-print,
+.print\\:hidden { display: none !important; }
+/* Duplicate print-only logo strip — keep one header from screen content */
+.hidden.print\\:flex { display: none !important; }
+.hidden:not(.print\\:block):not(.print\\:flex) { display: none !important; }
+.hidden.print\\:block,
+.print\\:block { display: block !important; }
+
 .inv-print-qr {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
+  margin: 6px 0 !important;
 }
 .inv-footer {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
   border-top: 1px solid #e5e7eb !important;
-  padding-top: 18px !important;
-  margin-top: 20px !important;
+  padding-top: 10px !important;
+  margin-top: 10px !important;
   text-align: center !important;
   color: #6b7280 !important;
   -webkit-text-fill-color: #6b7280 !important;
+  font-size: 9.5px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
 }
-.no-print,
-.print\\:hidden { display: none !important; }
-/* Hide duplicate print-only brand strip — SECTION 1 already has branding + QR */
-.hidden.print\\:flex { display: none !important; }
-.hidden.print\\:block,
-.print\\:block { display: block !important; }
-/* Remap dark-screen utilities → paper-friendly colors (keep hierarchy) */
+
 .text-white,
 .text-white\\/80,
 .text-white\\/90 {
@@ -197,159 +240,177 @@ html, body {
   -webkit-text-fill-color: #6b7280 !important;
 }
 .text-gold-500,
+.text-gold-400,
 .text-\\[\\#b8860b\\] {
   color: #b8860b !important;
   -webkit-text-fill-color: #b8860b !important;
 }
 .bg-white\\/5,
 .bg-black\\/20,
-.bg-black\\/40 {
-  background: #f9fafb !important;
-}
+.bg-black\\/40 { background: #f9fafb !important; }
 .border-white\\/5,
 .border-white\\/10,
-.border-b {
-  border-color: #e5e7eb !important;
-}
+.border-b { border-color: #e5e7eb !important; }
 .border-gold-500\\/20,
-.border-gold-500\\/30 {
-  border-color: rgba(184, 134, 11, 0.35) !important;
-}
+.border-gold-500\\/30,
+.border-gold-500 { border-color: rgba(184, 134, 11, 0.4) !important; }
 .rounded-xl,
-.rounded-lg { border-radius: 12px !important; }
-.absolute,
-.relative { position: static !important; }
-.inv-print-root .absolute { display: none !important; } /* drop watermarks/overlays */
-img { max-width: 100%; height: auto; }
-svg { max-width: 100%; flex-shrink: 0; }
+.rounded-lg { border-radius: 8px !important; }
+
+/* Watermarks / absolute layers create phantom empty space */
+.inv-print-root .absolute { display: none !important; }
+.inv-print-root .relative { position: static !important; }
+
+img { max-width: 56px !important; max-height: 56px !important; height: auto !important; object-fit: contain !important; }
+.inv-footer img,
+.inv-print-qr svg,
+.inv-footer svg { max-width: 110px !important; max-height: 110px !important; }
+svg { flex-shrink: 0; }
+button { border: 0 !important; background: transparent !important; padding: 0 !important; }
 `;
 
-function createPrintIframe(): HTMLIFrameElement {
-    const iframe = document.createElement('iframe');
-    iframe.id = 'ft-print-iframe-' + Date.now();
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.left = '-10000px';
-    iframe.style.top = '0';
-    iframe.style.border = '0';
-    // Must stay fully opaque — opacity:0 prints as blank white pages in Chromium
-    iframe.style.opacity = '1';
-    iframe.style.visibility = 'visible';
-    iframe.style.pointerEvents = 'none';
-    iframe.style.zIndex = '-1';
-    iframe.style.width = '794px';
-    iframe.style.height = '1123px';
-    iframe.style.background = '#ffffff';
-    document.body.appendChild(iframe);
-    return iframe;
+/** Strip SPA chrome that causes URLs / offscreen layout / bloat in print HTML */
+function preparePrintHtml(html: string): string {
+    try {
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const root = parsed.body.firstElementChild as HTMLElement | null;
+        if (!root) return html;
+
+        root.removeAttribute('style');
+        root.style.cssText = '';
+        root.classList.add('inv-print-root');
+
+        root.querySelectorAll('a[href]').forEach((node) => {
+            const a = node as HTMLAnchorElement;
+            a.removeAttribute('href');
+            a.removeAttribute('target');
+            a.removeAttribute('rel');
+        });
+
+        root.querySelectorAll('[class*="print:hidden"], .no-print, .inv-policy-body, .inv-screen-img').forEach((el) => {
+            el.remove();
+        });
+
+        // Drop hidden chrome; keep only print:block helpers (e.g. policy QR hint)
+        root.querySelectorAll('.hidden').forEach((el) => {
+            const cls = typeof el.className === 'string' ? el.className : '';
+            if (!cls.includes('print:block')) el.remove();
+        });
+
+        return root.outerHTML;
+    } catch {
+        return html;
+    }
 }
 
-/** Cleanup iframe after dialog closes — does NOT gate the UI promise */
-function bindAfterPrintCleanup(iframe: HTMLIFrameElement): void {
-    const win = iframe.contentWindow;
-    if (!win) {
-        if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        try {
-            window.focus();
-        } catch {
-            /* ignore */
-        }
-        return;
-    }
-
-    let cleaned = false;
-    const finish = () => {
-        if (cleaned) return;
-        cleaned = true;
-        win.removeEventListener('afterprint', finish);
-        mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
-        if (safetyTimer != null) window.clearTimeout(safetyTimer);
-        if (document.body.contains(iframe)) {
-            document.body.removeChild(iframe);
-        }
-        try {
-            window.focus();
-        } catch {
-            /* ignore */
-        }
-    };
-
-    const onPrintMqChange = (e: MediaQueryListEvent) => {
-        if (!e.matches) finish();
-    };
-    const mediaQueryList = win.matchMedia?.('print');
-    mediaQueryList?.addEventListener?.('change', onPrintMqChange);
-    win.addEventListener('afterprint', finish);
-    const safetyTimer = window.setTimeout(finish, 120_000);
+function buildInvoiceDocument(html: string, title: string, dir: 'rtl' | 'ltr'): string {
+    const lang = dir === 'rtl' ? 'ar' : 'en';
+    const safeTitle = escapeAttr(title);
+    const bodyHtml = preparePrintHtml(html);
+    return `<!DOCTYPE html>
+<html dir="${dir}" lang="${lang}">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>${safeTitle}</title>
+<style>${INVOICE_ISOLATED_CSS}</style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>`;
 }
 
 function collectStylesheetLinksHtml(): string {
     const links = document.querySelectorAll('link[rel="stylesheet"]');
     let out = '';
     links.forEach((link) => {
-        out += link.outerHTML;
+        const href = (link as HTMLLinkElement).href;
+        if (!href) return;
+        out += `<link rel="stylesheet" href="${escapeAttr(href)}">`;
     });
     return out;
 }
 
 /**
- * Legacy helper used by contracts/profiles.
+ * Hidden iframe print — no popup tab/window. Only the browser print dialog appears.
+ * Resolves right after print() so the app UI unlocks immediately.
  */
-export const printHtml = (html: string, title: string = 'Print Document') => {
-    const iframe = createPrintIframe();
-    const doc = iframe.contentWindow?.document;
-    if (!doc) return;
+function printViaHiddenIframe(docHtml: string, title: string): Promise<void> {
+    return new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.setAttribute('title', title);
+        // Real A4 size, off-screen only — do NOT use opacity/visibility:0 (Chrome prints blank pages)
+        iframe.style.cssText =
+            'position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;opacity:1;background:#fff;z-index:-1;pointer-events:none';
 
-    const safeTitle = escapeAttr(title);
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+            const cleanup = () => {
+                try {
+                    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+                } catch {
+                    /* ignore */
+                }
+                try {
+                    window.focus();
+                } catch {
+                    /* ignore */
+                }
+            };
+            iframe.contentWindow?.addEventListener('afterprint', cleanup);
+            window.setTimeout(cleanup, 60_000);
+        };
 
-    doc.open();
-    doc.write(`
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head>
-            <title>${safeTitle}</title>
-            <meta charset="utf-8">
-            <style>
-                body { margin: 0; padding: 0; background: white !important; }
-                @media print { body { margin: 0; } }
-            </style>
-    `);
+        document.body.appendChild(iframe);
 
-    const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-    styles.forEach((style) => {
-        doc.write(style.outerHTML);
-    });
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) {
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
+            resolve();
+            return;
+        }
 
-    doc.write('</head><body>');
-    doc.write(html);
-    doc.write('</body></html>');
-    doc.close();
+        doc.open();
+        doc.write(docHtml);
+        doc.close();
 
-    const triggerPrint = () => {
-        if (!iframe.contentWindow) return;
-        iframe.style.opacity = '1';
-        iframe.style.height =
-            Math.max(1123, (iframe.contentWindow.document.body?.scrollHeight || 0) + 48) + 'px';
-        iframe.contentWindow.focus();
-        setTimeout(() => {
-            bindAfterPrintCleanup(iframe);
-            iframe.contentWindow?.print();
+        window.setTimeout(() => {
             try {
-                window.focus();
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
             } catch {
                 /* ignore */
             }
-        }, 500);
-    };
+            finish();
+        }, 220);
+    });
+}
 
-    let printTriggered = false;
-    const triggerOnce = () => {
-        if (printTriggered) return;
-        printTriggered = true;
-        triggerPrint();
-    };
-    iframe.onload = triggerOnce;
-    setTimeout(triggerOnce, 1000);
+/**
+ * Legacy helper used by contracts/profiles (keeps app stylesheets).
+ */
+export const printHtml = (html: string, title: string = 'Print Document') => {
+    const safeTitle = escapeAttr(title);
+    const docHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<title>${safeTitle}</title>
+${collectStylesheetLinksHtml()}
+<style>
+  @page { size: A4; margin: 12mm; }
+  html, body { background: #fff; color: #111; margin: 0; padding: 12px; }
+  a[href]::after, a[href]::before { content: none !important; display: none !important; }
+</style>
+</head>
+<body>${html}</body>
+</html>`;
+    void printViaHiddenIframe(docHtml, title);
 };
 
 export type PrintIsolatedOptions = {
@@ -357,74 +418,13 @@ export type PrintIsolatedOptions = {
 };
 
 /**
- * Invoice print: isolated iframe with original light invoice CSS.
- * Resolves right after print() so the SPA unlocks while the dialog is open.
- * Iframe cleanup still runs on afterprint.
+ * Invoice print via hidden iframe only (no HTML popup window).
  */
 export const printIsolatedHtml = (
     html: string,
     title: string = 'Print Document',
     options: PrintIsolatedOptions = {},
 ): Promise<void> => {
-    return new Promise((resolve) => {
-        const iframe = createPrintIframe();
-        const doc = iframe.contentWindow?.document;
-        if (!doc) {
-            resolve();
-            return;
-        }
-
-        const dir = options.dir === 'ltr' ? 'ltr' : 'rtl';
-        const lang = dir === 'rtl' ? 'ar' : 'en';
-        const safeTitle = escapeAttr(title);
-        const stylesheetLinks = collectStylesheetLinksHtml();
-
-        doc.open();
-        doc.write(`<!DOCTYPE html>
-<html dir="${dir}" lang="${lang}">
-<head>
-<meta charset="utf-8">
-<title>${safeTitle}</title>
-${stylesheetLinks}
-<style>${INVOICE_ISOLATED_CSS}</style>
-</head>
-<body>${html}</body>
-</html>`);
-        doc.close();
-
-        const triggerPrint = () => {
-            if (!iframe.contentWindow) {
-                resolve();
-                return;
-            }
-
-            iframe.style.opacity = '1';
-            iframe.style.visibility = 'visible';
-            const scrollH = iframe.contentWindow.document.body?.scrollHeight || 0;
-            iframe.style.height = Math.max(1123, scrollH + 48) + 'px';
-
-            iframe.contentWindow.focus();
-            requestAnimationFrame(() => {
-                bindAfterPrintCleanup(iframe);
-                iframe.contentWindow?.print();
-                try {
-                    window.focus();
-                } catch {
-                    /* ignore */
-                }
-                // Unlock UI immediately — do not wait for afterprint
-                resolve();
-            });
-        };
-
-        let printTriggered = false;
-        const triggerOnce = () => {
-            if (printTriggered) return;
-            printTriggered = true;
-            // Give linked stylesheets a brief moment to apply layout utilities
-            setTimeout(triggerPrint, 150);
-        };
-        iframe.onload = triggerOnce;
-        setTimeout(triggerOnce, 400);
-    });
+    const dir = options.dir === 'ltr' ? 'ltr' : 'rtl';
+    return printViaHiddenIframe(buildInvoiceDocument(html, title, dir), title);
 };
