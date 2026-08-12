@@ -505,7 +505,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                                     <Printer className="w-4 h-4" />
                                     <span className="hidden sm:inline">{language === 'ar' ? 'طباعة / PDF' : 'Print / PDF'}</span>
                                 </button>
-                                <button onClick={onClose} disabled={isPrinting} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-red-500/20 disabled:opacity-50">
+                                <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-red-500/20">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -516,25 +516,20 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                         </div>
                     </div>
 
-                    {/* Offscreen source — styles stripped before iframe print */}
+                    {/* Offscreen light source for isolated iframe print */}
                     <div
                         id="invoice-print-source"
                         ref={printRef}
                         className="inv-print-root"
                         dir={isRTL ? 'rtl' : 'ltr'}
                         aria-hidden="true"
-                        data-print-host="true"
                         style={{
-                            position: 'fixed',
-                            left: 0,
+                            position: 'absolute',
+                            left: '-10000px',
                             top: 0,
                             width: '210mm',
                             background: '#fff',
                             color: '#111',
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            zIndex: -1,
-                            overflow: 'hidden',
                         }}
                     >
                         <InvoiceContent />

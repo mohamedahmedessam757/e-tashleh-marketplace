@@ -178,35 +178,38 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         if (!isPrinting || !activeInvoice) return;
 
         let cancelled = false;
+        const invoiceSnapshot = activeInvoice;
+
         const run = async () => {
-            await new Promise<void>((resolve) => {
-                requestAnimationFrame(() => resolve());
-            });
-            const el = printSourceRef.current;
-            if (!el || cancelled) return;
+            let el = printSourceRef.current;
+            for (let i = 0; i < 20 && !el; i++) {
+                await new Promise((r) => setTimeout(r, 50));
+                el = printSourceRef.current;
+            }
 
             try {
-                await printIsolatedHtml(
-                    el.outerHTML,
-                    String(activeInvoice.invoiceNumber || 'Invoice'),
-                    { dir: isRTL ? 'rtl' : 'ltr' },
-                );
-                if (!cancelled) {
-                    addNotification({
-                        titleAr: 'تمت طباعة الفاتورة',
-                        titleEn: 'Invoice Printed',
-                        messageAr: `تم طباعة أو تنزيل الفاتورة ${activeInvoice.invoiceNumber} بنجاح.`,
-                        messageEn: `Invoice ${activeInvoice.invoiceNumber} was successfully printed or downloaded.`,
-                        type: 'SYSTEM',
-                        recipientRole: role,
-                        link: '#'
-                    });
+                if (!cancelled && el) {
+                    await printIsolatedHtml(
+                        el.outerHTML,
+                        String(invoiceSnapshot.invoiceNumber || 'Invoice'),
+                        { dir: isRTL ? 'rtl' : 'ltr' },
+                    );
+                    if (!cancelled) {
+                        addNotification({
+                            titleAr: 'تمت طباعة الفاتورة',
+                            titleEn: 'Invoice Printed',
+                            messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceSnapshot.invoiceNumber} بنجاح.`,
+                            messageEn: `Invoice ${invoiceSnapshot.invoiceNumber} was successfully printed or downloaded.`,
+                            type: 'SYSTEM',
+                            recipientRole: role,
+                            link: '#'
+                        });
+                    }
                 }
             } finally {
-                if (!cancelled) {
-                    setIsPrinting(false);
-                    setActiveInvoice(null);
-                }
+                // Always clear — never leave the order page frozen
+                setIsPrinting(false);
+                setActiveInvoice(null);
             }
         };
 
@@ -878,18 +881,13 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     className="inv-print-root"
                     dir={isRTL ? 'rtl' : 'ltr'}
                     aria-hidden="true"
-                    data-print-host="true"
                     style={{
-                        position: 'fixed',
-                        left: 0,
+                        position: 'absolute',
+                        left: '-10000px',
                         top: 0,
                         width: '210mm',
                         background: '#fff',
                         color: '#111',
-                        opacity: 0,
-                        pointerEvents: 'none',
-                        zIndex: -1,
-                        overflow: 'hidden',
                     }}
                 >
                     {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
