@@ -1,6 +1,6 @@
 /**
  * Professional Print Utility (v2026)
- * Isolated iframe printing — real A4-sized iframe so Chromium can layout content.
+ * Isolated iframe printing — real A4-sized iframe; strip offscreen positioning from clones.
  */
 
 const escapeAttr = (value: string): string =>
@@ -24,7 +24,16 @@ html, body {
 @page { size: A4 portrait; margin: 0; }
 .inv-print-root {
   display: block !important;
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
   width: 100% !important;
+  max-width: 100% !important;
   background: #fff !important;
   color: #111 !important;
   padding: 15mm !important;
@@ -83,7 +92,6 @@ html, body {
 }
 .no-print,
 .print\\:hidden { display: none !important; }
-/* Show print-only logo header (Tailwind hidden + print:flex) without blanket .hidden kill */
 .hidden.print\\:flex,
 .print\\:flex { display: flex !important; }
 .hidden.print\\:block,
@@ -91,6 +99,26 @@ html, body {
 img { max-width: 100%; }
 svg { max-width: 100%; }
 `;
+
+/**
+ * Clone a DOM node for printing and strip offscreen host styles
+ * (e.g. left:-10000px) that would otherwise produce blank pages.
+ */
+export function serializePrintNode(el: HTMLElement): string {
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.style.position = 'static';
+    clone.style.left = 'auto';
+    clone.style.top = 'auto';
+    clone.style.right = 'auto';
+    clone.style.bottom = 'auto';
+    clone.style.transform = 'none';
+    clone.style.opacity = '1';
+    clone.style.visibility = 'visible';
+    clone.style.pointerEvents = 'auto';
+    clone.style.width = '100%';
+    clone.removeAttribute('aria-hidden');
+    return clone.outerHTML;
+}
 
 function createPrintIframe(): HTMLIFrameElement {
     const iframe = document.createElement('iframe');
@@ -103,20 +131,16 @@ function createPrintIframe(): HTMLIFrameElement {
     iframe.style.opacity = '0';
     iframe.style.pointerEvents = 'none';
     iframe.style.zIndex = '-1';
-    // Real A4-ish box so Chromium can layout printable content (0x0 → blank pages)
     iframe.style.width = '794px';
     iframe.style.height = '1123px';
     document.body.appendChild(iframe);
     return iframe;
 }
 
-function bindAfterPrintCleanup(
-    iframe: HTMLIFrameElement,
-    onDone?: () => void,
-): void {
+function bindAfterPrintCleanup(iframe: HTMLIFrameElement): void {
     const win = iframe.contentWindow;
     if (!win) {
-        onDone?.();
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
         return;
     }
 
@@ -135,7 +159,6 @@ function bindAfterPrintCleanup(
         } catch {
             /* ignore */
         }
-        onDone?.();
     };
 
     const onPrintMqChange = (e: MediaQueryListEvent) => {
@@ -144,13 +167,11 @@ function bindAfterPrintCleanup(
     const mediaQueryList = win.matchMedia?.('print');
     mediaQueryList?.addEventListener?.('change', onPrintMqChange);
     win.addEventListener('afterprint', finish);
-    // If afterprint never fires, do not leave UI waiting forever
     const safetyTimer = window.setTimeout(finish, 120_000);
 }
 
 /**
  * Legacy helper used by contracts/profiles.
- * Uses a real-sized iframe and afterprint cleanup (no 1s teardown).
  */
 export const printHtml = (html: string, title: string = 'Print Document') => {
     const iframe = createPrintIframe();
@@ -188,6 +209,11 @@ export const printHtml = (html: string, title: string = 'Print Document') => {
         setTimeout(() => {
             bindAfterPrintCleanup(iframe);
             iframe.contentWindow?.print();
+            try {
+                window.focus();
+            } catch {
+                /* ignore */
+            }
         }, 500);
     };
 
@@ -206,8 +232,9 @@ export type PrintIsolatedOptions = {
 };
 
 /**
- * Invoice print: isolated iframe with original light invoice CSS only.
- * Resolves after print dialog closes (afterprint) or safety timeout.
+ * Invoice print via isolated iframe.
+ * Resolves soon after the print dialog opens so the SPA does not stay frozen
+ * waiting for afterprint; iframe cleanup still waits for afterprint/timeout.
  */
 export const printIsolatedHtml = (
     html: string,
@@ -238,15 +265,28 @@ export const printIsolatedHtml = (
 </html>`);
         doc.close();
 
+        let settled = false;
+        const settleUi = () => {
+            if (settled) return;
+            settled = true;
+            try {
+                window.focus();
+            } catch {
+                /* ignore */
+            }
+            resolve();
+        };
+
         const triggerPrint = () => {
             if (!iframe.contentWindow) {
-                resolve();
+                settleUi();
                 return;
             }
-            iframe.contentWindow.focus();
             requestAnimationFrame(() => {
-                bindAfterPrintCleanup(iframe, resolve);
+                bindAfterPrintCleanup(iframe);
                 iframe.contentWindow?.print();
+                // Unblock React/UI immediately; do not wait for dialog close
+                setTimeout(settleUi, 250);
             });
         };
 

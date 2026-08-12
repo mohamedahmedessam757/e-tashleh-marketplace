@@ -11,7 +11,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { getCurrentUser, mapBackendRoleToFrontend } from '../../../utils/auth';
 import { excelApi } from '../../../services/api/excel';
 import { Download } from 'lucide-react';
-import { printIsolatedHtml } from '../../../utils/print';
+import { printIsolatedHtml, serializePrintNode } from '../../../utils/print';
 
 /* ─────────────── types ─────────────── */
 interface InvoiceModalProps {
@@ -118,7 +118,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
         if (!el || isPrinting) return;
         setIsPrinting(true);
         try {
-            await printIsolatedHtml(el.outerHTML, String(invoiceNumber), {
+            await printIsolatedHtml(serializePrintNode(el), String(invoiceNumber), {
                 dir: isRTL ? 'rtl' : 'ltr',
             });
             addNotification({
@@ -516,23 +516,30 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                         </div>
                     </div>
 
-                    {/* Offscreen light source for isolated iframe print */}
+                    {/* Offscreen host — positioning stays on outer wrapper only */}
                     <div
-                        id="invoice-print-source"
-                        ref={printRef}
-                        className="inv-print-root"
-                        dir={isRTL ? 'rtl' : 'ltr'}
                         aria-hidden="true"
                         style={{
                             position: 'absolute',
                             left: '-10000px',
                             top: 0,
                             width: '210mm',
-                            background: '#fff',
-                            color: '#111',
+                            overflow: 'hidden',
                         }}
                     >
-                        <InvoiceContent />
+                        <div
+                            id="invoice-print-source"
+                            ref={printRef}
+                            className="inv-print-root"
+                            dir={isRTL ? 'rtl' : 'ltr'}
+                            style={{
+                                background: '#fff',
+                                color: '#111',
+                                width: '210mm',
+                            }}
+                        >
+                            <InvoiceContent />
+                        </div>
                     </div>
                 </div>
             )}

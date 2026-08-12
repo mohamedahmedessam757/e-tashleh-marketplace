@@ -22,7 +22,7 @@ import {
     InvoiceDocTab,
     filterInvoicesByTab,
 } from './invoices/invoiceDocs.types';
-import { printIsolatedHtml } from './../../../utils/print';
+import { printIsolatedHtml, serializePrintNode } from './../../../utils/print';
 
 
 interface OrderInvoicesPanelProps {
@@ -190,7 +190,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             try {
                 if (!cancelled && el) {
                     await printIsolatedHtml(
-                        el.outerHTML,
+                        serializePrintNode(el),
                         String(invoiceSnapshot.invoiceNumber || 'Invoice'),
                         { dir: isRTL ? 'rtl' : 'ltr' },
                     );
@@ -873,34 +873,41 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     )}
                 </div>
 
-            {/* Offscreen source for isolated iframe print */}
+            {/* Offscreen host — positioning on outer wrapper only (not serialized) */}
             {activeInvoice && (
                 <div
-                    id="order-invoice-print-source"
-                    ref={printSourceRef}
-                    className="inv-print-root"
-                    dir={isRTL ? 'rtl' : 'ltr'}
                     aria-hidden="true"
                     style={{
                         position: 'absolute',
                         left: '-10000px',
                         top: 0,
                         width: '210mm',
-                        background: '#fff',
-                        color: '#111',
+                        overflow: 'hidden',
                     }}
                 >
-                    {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
-                        <InvoiceContentBlock inv={activeInvoice} />
-                    ) : (
-                        <InvoiceTypedDocument
-                            inv={activeInvoice}
-                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
-                            isAr={isAr}
-                            isRTL={isRTL}
-                            labels={typedLabels}
-                        />
-                    )}
+                    <div
+                        id="order-invoice-print-source"
+                        ref={printSourceRef}
+                        className="inv-print-root"
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        style={{
+                            background: '#fff',
+                            color: '#111',
+                            width: '210mm',
+                        }}
+                    >
+                        {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
+                            <InvoiceContentBlock inv={activeInvoice} />
+                        ) : (
+                            <InvoiceTypedDocument
+                                inv={activeInvoice}
+                                docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
+                                isAr={isAr}
+                                isRTL={isRTL}
+                                labels={typedLabels}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
         </>
