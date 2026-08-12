@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     X, Printer, FileText, ChevronDown, ChevronUp,
     Package, Store, Truck, ShieldCheck,
@@ -11,7 +11,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { getCurrentUser, mapBackendRoleToFrontend } from '../../../utils/auth';
 import { excelApi } from '../../../services/api/excel';
 import { Download } from 'lucide-react';
-import { printElement } from '../../../utils/print';
+import { printIsolatedHtml } from '../../../utils/print';
 
 /* ─────────────── types ─────────────── */
 interface InvoiceModalProps {
@@ -27,8 +27,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const isRTL = language === 'ar';
     const printRef = useRef<HTMLDivElement>(null);
     const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null);
-
-    // Track if we are currently printing so we can mount the portal
     const [isPrinting, setIsPrinting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
@@ -114,26 +112,27 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     const qrValue = `https://e-tashleh.net/invoice/${order.invoiceId || 'view'}`;
 
-    /* ── print handler ── */
-    const handlePrint = () => {
-        const node = printRef.current;
-        if (!node) return;
+    /* ── print handler: isolated iframe (no SPA window.print) ── */
+    const handlePrint = async () => {
+        const el = printRef.current;
+        if (!el || isPrinting) return;
         setIsPrinting(true);
-        printElement(node, invoiceNumber, {
-            dir: isRTL ? 'rtl' : 'ltr',
-            onAfterPrint: () => {
-                setIsPrinting(false);
-                addNotification({
-                    titleAr: 'تمت طباعة الفاتورة',
-                    titleEn: 'Invoice Printed',
-                    messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
-                    messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
-                    type: 'SYSTEM',
-                    recipientRole: 'CUSTOMER',
-                    link: '/dashboard/wallet'
-                });
-            },
-        });
+        try {
+            await printIsolatedHtml(el.outerHTML, String(invoiceNumber), {
+                dir: isRTL ? 'rtl' : 'ltr',
+            });
+            addNotification({
+                titleAr: 'تمت طباعة الفاتورة',
+                titleEn: 'Invoice Printed',
+                messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
+                messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
+                type: 'SYSTEM',
+                recipientRole: 'CUSTOMER',
+                link: '/dashboard/wallet'
+            });
+        } finally {
+            setIsPrinting(false);
+        }
     };
 
     const handleExportExcel = async () => {
@@ -206,8 +205,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const InvoiceContent = () => (
         <div dir={isRTL ? 'rtl' : 'ltr'}>
 
-            {/* ═══ PRINT LOGO HEADER (hidden on screen; forced visible in iframe print CSS) ═══ */}
-            <div className="hidden print-only-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section">
+            {/* ═══ NEW: PRINT LOGO HEADER ═══ */}
+            <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
                         <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
@@ -476,6 +475,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     return (
         <AnimatePresence>
+            {/* Keep modal mounted during print so the UI doesn't flash to a blank dashboard */}
             {isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
                     <div className="relative w-full max-w-4xl max-h-[95vh] flex flex-col bg-[#111] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden">
@@ -511,9 +511,28 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             </div>
                         </div>
 
-                        <div ref={printRef} className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
+                        <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
                             <InvoiceContent />
                         </div>
+                    </div>
+
+                    {/* Offscreen light source for isolated iframe print */}
+                    <div
+                        id="invoice-print-source"
+                        ref={printRef}
+                        className="inv-print-root"
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        aria-hidden="true"
+                        style={{
+                            position: 'absolute',
+                            left: '-10000px',
+                            top: 0,
+                            width: '210mm',
+                            background: '#fff',
+                            color: '#111',
+                        }}
+                    >
+                        <InvoiceContent />
                     </div>
                 </div>
             )}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { invoicesApi } from './../../../services/api/invoices';
 import { useLanguage } from './../../../contexts/LanguageContext';
 import { useNotificationStore } from './../../../stores/useNotificationStore';
@@ -23,7 +22,7 @@ import {
     InvoiceDocTab,
     filterInvoicesByTab,
 } from './invoices/invoiceDocs.types';
-import { printElement } from './../../../utils/print';
+import { printIsolatedHtml } from './../../../utils/print';
 
 
 interface OrderInvoicesPanelProps {
@@ -56,6 +55,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     const [highlightedInvoiceId, setHighlightedInvoiceId] = useState<string | null>(null);
     const invoiceRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const printSourceRef = useRef<HTMLDivElement>(null);
 
     const isMerchant = role === 'MERCHANT';
     const isCustomer = role === 'CUSTOMER';
@@ -169,41 +169,51 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     }, [highlightOfferId, invoices, isLoading]);
 
     const handlePrint = (inv: any) => {
+        if (isPrinting) return;
         setActiveInvoice(inv);
         setIsPrinting(true);
     };
 
-    // Mount invoice off-screen, then print via isolated iframe (avoids blank Chromium preview).
     useEffect(() => {
         if (!isPrinting || !activeInvoice) return;
 
-        const inv = activeInvoice;
-        const timer = window.setTimeout(() => {
-            const el = document.getElementById('special-invoice-print-container');
-            if (!el) {
-                setIsPrinting(false);
-                setActiveInvoice(null);
-                return;
-            }
-            printElement(el, inv.invoiceNumber || 'Invoice', {
-                dir: isRTL ? 'rtl' : 'ltr',
-                onAfterPrint: () => {
-                    setIsPrinting(false);
-                    setActiveInvoice(null);
+        let cancelled = false;
+        const run = async () => {
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => resolve());
+            });
+            const el = printSourceRef.current;
+            if (!el || cancelled) return;
+
+            try {
+                await printIsolatedHtml(
+                    el.outerHTML,
+                    String(activeInvoice.invoiceNumber || 'Invoice'),
+                    { dir: isRTL ? 'rtl' : 'ltr' },
+                );
+                if (!cancelled) {
                     addNotification({
                         titleAr: 'تمت طباعة الفاتورة',
                         titleEn: 'Invoice Printed',
-                        messageAr: `تم طباعة أو تنزيل الفاتورة ${inv.invoiceNumber} بنجاح.`,
-                        messageEn: `Invoice ${inv.invoiceNumber} was successfully printed or downloaded.`,
+                        messageAr: `تم طباعة أو تنزيل الفاتورة ${activeInvoice.invoiceNumber} بنجاح.`,
+                        messageEn: `Invoice ${activeInvoice.invoiceNumber} was successfully printed or downloaded.`,
                         type: 'SYSTEM',
                         recipientRole: role,
                         link: '#'
                     });
-                },
-            });
-        }, 100);
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsPrinting(false);
+                    setActiveInvoice(null);
+                }
+            }
+        };
 
-        return () => window.clearTimeout(timer);
+        void run();
+        return () => {
+            cancelled = true;
+        };
     }, [isPrinting, activeInvoice, isRTL, addNotification, role]);
 
     const handleExportExcel = async (inv: any) => {
@@ -400,7 +410,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         return (
             <div dir={isRTL ? 'rtl' : 'ltr'}>
                 {/* ═══ PRINT LOGO HEADER ═══ */}
-                <div className="hidden print-only-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section">
+                <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
                             <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
@@ -732,9 +742,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
     return (
         <>
-            {/* Screen content: hidden entirely when printing to prevent blank pages */}
-            {!isPrinting && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2">
                             <ShieldAlert size={18} />
@@ -820,7 +828,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         )}
                                         <button
                                             onClick={() => handlePrint(inv)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs"
+                                            disabled={isPrinting}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs disabled:opacity-50"
                                         >
                                             <Printer size={14} />
                                             <span>{isAr ? 'طباعة / PDF' : 'Print / PDF'}</span>
@@ -860,21 +869,22 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     </div>
                     )}
                 </div>
-            )}
 
-            {/* Off-screen clone source for iframe print (not used with window.print) */}
-            {isPrinting && activeInvoice && typeof document !== 'undefined' && createPortal(
+            {/* Offscreen source for isolated iframe print */}
+            {activeInvoice && (
                 <div
-                    id="special-invoice-print-container"
+                    id="order-invoice-print-source"
+                    ref={printSourceRef}
+                    className="inv-print-root"
                     dir={isRTL ? 'rtl' : 'ltr'}
+                    aria-hidden="true"
                     style={{
-                        position: 'fixed',
+                        position: 'absolute',
                         left: '-10000px',
                         top: 0,
-                        width: '800px',
+                        width: '210mm',
                         background: '#fff',
                         color: '#111',
-                        pointerEvents: 'none',
                     }}
                 >
                     {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
@@ -888,8 +898,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                             labels={typedLabels}
                         />
                     )}
-                </div>,
-                document.body
+                </div>
             )}
         </>
     );

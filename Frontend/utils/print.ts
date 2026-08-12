@@ -1,194 +1,219 @@
 /**
- * Isolated HTML printing via a hidden iframe.
- * Avoids blank Chromium print previews caused by main-document @media print races.
+ * Professional Print Utility (v2026)
+ * Isolated iframe printing — keep iframe until afterprint so Chromium preview is not blank.
  */
 
-export type PrintHtmlOptions = {
-  dir?: 'rtl' | 'ltr';
-  extraCss?: string;
-  onAfterPrint?: () => void;
-};
+const escapeAttr = (value: string): string =>
+    String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
-const INVOICE_PRINT_CSS = `
-  * { box-sizing: border-box; }
-  :root, html, body {
-    margin: 0;
-    padding: 0;
-    background: #fff !important;
-    color: #111 !important;
-    color-scheme: only light !important;
-    font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  @page { size: A4 portrait; margin: 12mm; }
-  img { max-width: 100%; height: auto; }
-  svg { max-width: 100%; }
-
-  /* Force readable print colors over dark-theme Tailwind utilities */
-  .invoice-print-root,
-  .invoice-print-root * {
-    color: #111 !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    opacity: 1 !important;
-  }
-  .invoice-print-root {
-    background: #fff !important;
-    padding: 8px;
-    width: 100%;
-  }
-  .invoice-print-root .inv-section,
-  .invoice-print-root .inv-total-box {
-    background: #fff !important;
-    border: 1px solid #ccc !important;
-    border-radius: 6px !important;
-    padding: 14px !important;
-    margin: 10px 0 !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-  .invoice-print-root .inv-section-header {
-    border-bottom: 1px solid #eee !important;
-    margin-bottom: 10px !important;
-    padding-bottom: 6px !important;
-  }
-  .invoice-print-root .inv-section-header h3,
-  .invoice-print-root .inv-icon,
-  .invoice-print-root .inv-total-amount,
-  .invoice-print-root .text-gold-500,
-  .invoice-print-root .text-gold-400,
-  .invoice-print-root .text-\\[\\#b8860b\\] {
-    color: #b8860b !important;
-  }
-  .invoice-print-root .inv-value { color: #000 !important; font-weight: 600 !important; }
-  .invoice-print-root .inv-label { color: #555 !important; }
-  .invoice-print-root .inv-policy-body { display: block !important; }
-  .invoice-print-root .inv-policy-chevron { display: none !important; }
-  .invoice-print-root .inv-screen-img { display: none !important; }
-  .invoice-print-root .inv-print-qr {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-  }
-  .invoice-print-root .inv-footer {
-    break-inside: avoid !important;
-    border-top: 1px solid #eee !important;
-    padding-top: 16px !important;
-    margin-top: 16px !important;
-    text-align: center !important;
-  }
-  .invoice-print-root .print-only-header,
-  .invoice-print-root .hidden.print-only-header {
-    display: flex !important;
-  }
-  /* Screen-only / accordion chrome */
-  .invoice-print-root .print\\:hidden,
-  .invoice-print-root button { display: none !important; }
+const INVOICE_ISOLATED_CSS = `
+html, body {
+  background: #fff !important;
+  color: #111 !important;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+@page { size: A4 portrait; margin: 12mm; }
+.inv-print-root { color: #111 !important; background: #fff !important; padding: 8mm; }
+.inv-print-root * { box-sizing: border-box; }
+.inv-label { color: #555 !important; }
+.inv-value, h1, h2, h3, p, span, td, th, div, label { color: #111 !important; }
+.inv-total-amount, .inv-icon, .inv-section-header h3 { color: #b8860b !important; }
+.inv-section {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  background: #fff !important;
+}
+.inv-section-header { border-bottom: 1px solid #eee; margin-bottom: 12px; padding-bottom: 8px; }
+.inv-total-box {
+  border: 2px solid #b8860b;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #fdfbf7 !important;
+}
+.inv-screen-img { display: none !important; }
+.inv-print-qr { display: flex !important; flex-direction: column; align-items: center; }
+.inv-policy-body { display: block !important; }
+.inv-policy-chevron { display: none !important; }
+.inv-footer { break-inside: avoid; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px; text-align: center; }
+.no-print, .print\\:hidden { display: none !important; }
+.hidden { display: none !important; }
+.hidden.print\\:flex, .print\\:flex { display: flex !important; }
+.hidden.print\\:block, .print\\:block { display: block !important; }
+img { max-width: 100%; }
+svg { max-width: 100%; }
 `;
 
-export const printHtml = (
-  html: string,
-  title: string = 'Print Document',
-  options: PrintHtmlOptions = {},
-) => {
-  const { dir = 'rtl', extraCss = '', onAfterPrint } = options;
-  const iframeId = 'ft-print-iframe-' + Date.now();
-  const iframe = document.createElement('iframe');
-  iframe.id = iframeId;
-  iframe.setAttribute('title', title);
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.style.opacity = '0';
-  iframe.style.pointerEvents = 'none';
-  iframe.style.zIndex = '-1';
-  document.body.appendChild(iframe);
+function createPrintIframe(): HTMLIFrameElement {
+    const iframe = document.createElement('iframe');
+    iframe.id = 'ft-print-iframe-' + Date.now();
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    iframe.style.zIndex = '-1';
+    document.body.appendChild(iframe);
+    return iframe;
+}
 
-  const win = iframe.contentWindow;
-  const doc = win?.document;
-  if (!win || !doc) {
-    iframe.remove();
-    onAfterPrint?.();
-    return;
-  }
-
-  const origin = window.location.origin;
-  doc.open();
-  doc.write(`<!DOCTYPE html>
-<html dir="${dir}" lang="${dir === 'rtl' ? 'ar' : 'en'}">
-<head>
-  <meta charset="utf-8" />
-  <base href="${origin}/" />
-  <title>${title.replace(/</g, '')}</title>
-`);
-
-  // Clone app stylesheets for layout (Tailwind), then force print colors after.
-  document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
-    doc.write(node.outerHTML);
-  });
-
-  doc.write(`<style>${INVOICE_PRINT_CSS}\n${extraCss}</style></head><body>
-  <div class="invoice-print-root">${html}</div>
-</body>
-</html>`);
-  doc.close();
-
-  let finished = false;
-  const cleanup = () => {
-    if (finished) return;
-    finished = true;
-    win.removeEventListener('afterprint', cleanup);
-    try {
-      iframe.remove();
-    } catch {
-      /* ignore */
+function bindAfterPrintCleanup(
+    iframe: HTMLIFrameElement,
+    onDone?: () => void,
+): void {
+    const win = iframe.contentWindow;
+    if (!win) {
+        onDone?.();
+        return;
     }
-    onAfterPrint?.();
-  };
 
-  const triggerPrint = () => {
-    win.focus();
-    win.addEventListener('afterprint', cleanup);
-    try {
-      win.print();
-    } catch {
-      cleanup();
-      return;
-    }
-    // Safety if afterprint never fires (some browsers)
-    window.setTimeout(cleanup, 120_000);
-  };
+    let cleaned = false;
+    const finish = () => {
+        if (cleaned) return;
+        cleaned = true;
+        win.removeEventListener('afterprint', finish);
+        mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
+        if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+        }
+        onDone?.();
+    };
 
-  // Wait for images/fonts inside the iframe before opening the dialog
-  const images = Array.from(doc.images || []);
-  const waitForImages = Promise.all(
-    images.map(
-      (img) =>
-        img.complete
-          ? Promise.resolve()
-          : new Promise<void>((resolve) => {
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-            }),
-    ),
-  );
+    const onPrintMqChange = (e: MediaQueryListEvent) => {
+        if (!e.matches) finish();
+    };
+    const mediaQueryList = win.matchMedia?.('print');
+    mediaQueryList?.addEventListener?.('change', onPrintMqChange);
+    win.addEventListener('afterprint', finish);
+}
 
-  waitForImages.then(() => {
-    window.setTimeout(triggerPrint, 100);
-  });
+/**
+ * Legacy helper used by contracts/profiles.
+ * Still copies app stylesheets (needed for those docs) but no longer tears down
+ * the iframe on a fixed 1s timer (that blanks Chromium print preview).
+ */
+export const printHtml = (html: string, title: string = 'Print Document') => {
+    const iframe = createPrintIframe();
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    const safeTitle = escapeAttr(title);
+
+    doc.open();
+    doc.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>${safeTitle}</title>
+            <meta charset="utf-8">
+            <style>
+                body { margin: 0; padding: 0; background: white !important; }
+                @media print { body { margin: 0; } }
+            </style>
+    `);
+
+    const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+    styles.forEach((style) => {
+        doc.write(style.outerHTML);
+    });
+
+    doc.write('</head><body>');
+    doc.write(html);
+    doc.write('</body></html>');
+    doc.close();
+
+    const triggerPrint = () => {
+        if (!iframe.contentWindow) return;
+        iframe.contentWindow.focus();
+        setTimeout(() => {
+            bindAfterPrintCleanup(iframe);
+            iframe.contentWindow?.print();
+        }, 500);
+    };
+
+    let printTriggered = false;
+    const triggerOnce = () => {
+        if (printTriggered) return;
+        printTriggered = true;
+        triggerPrint();
+    };
+    iframe.onload = triggerOnce;
+    setTimeout(triggerOnce, 1000);
 };
 
-/** Clone a live DOM node into an isolated iframe print job. */
-export const printElement = (
-  element: HTMLElement,
-  title?: string,
-  options?: PrintHtmlOptions,
-) => {
-  printHtml(element.innerHTML, title, options);
+export type PrintIsolatedOptions = {
+    dir?: 'rtl' | 'ltr';
+};
+
+/**
+ * Invoice / light-document print: isolated iframe with light CSS only.
+ * Does NOT copy app Tailwind/dark stylesheets (avoids white-on-white blank pages).
+ * Resolves after the print dialog closes (afterprint).
+ */
+export const printIsolatedHtml = (
+    html: string,
+    title: string = 'Print Document',
+    options: PrintIsolatedOptions = {},
+): Promise<void> => {
+    return new Promise((resolve) => {
+        const iframe = createPrintIframe();
+        const doc = iframe.contentWindow?.document;
+        if (!doc) {
+            resolve();
+            return;
+        }
+
+        const dir = options.dir === 'ltr' ? 'ltr' : 'rtl';
+        const lang = dir === 'rtl' ? 'ar' : 'en';
+        const safeTitle = escapeAttr(title);
+
+        doc.open();
+        doc.write(`<!DOCTYPE html>
+<html dir="${dir}" lang="${lang}">
+<head>
+<meta charset="utf-8">
+<title>${safeTitle}</title>
+<style>${INVOICE_ISOLATED_CSS}</style>
+</head>
+<body>${html}</body>
+</html>`);
+        doc.close();
+
+        const triggerPrint = () => {
+            if (!iframe.contentWindow) {
+                resolve();
+                return;
+            }
+            iframe.contentWindow.focus();
+            requestAnimationFrame(() => {
+                bindAfterPrintCleanup(iframe, resolve);
+                iframe.contentWindow?.print();
+            });
+        };
+
+        let printTriggered = false;
+        const triggerOnce = () => {
+            if (printTriggered) return;
+            printTriggered = true;
+            triggerPrint();
+        };
+        iframe.onload = triggerOnce;
+        setTimeout(triggerOnce, 300);
+    });
 };

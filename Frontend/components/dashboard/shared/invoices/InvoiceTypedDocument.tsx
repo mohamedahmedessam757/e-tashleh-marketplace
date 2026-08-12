@@ -124,7 +124,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
       <div
-        className="hidden print-only-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section"
+        className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section"
         style={{ border: 'none !important', background: 'transparent !important' }}
       >
         <div className="flex items-center gap-4">
