@@ -516,20 +516,25 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                         </div>
                     </div>
 
-                    {/* Offscreen light source for isolated iframe print */}
+                    {/* Offscreen source — styles stripped before iframe print */}
                     <div
                         id="invoice-print-source"
                         ref={printRef}
                         className="inv-print-root"
                         dir={isRTL ? 'rtl' : 'ltr'}
                         aria-hidden="true"
+                        data-print-host="true"
                         style={{
-                            position: 'absolute',
-                            left: '-10000px',
+                            position: 'fixed',
+                            left: 0,
                             top: 0,
                             width: '210mm',
                             background: '#fff',
                             color: '#111',
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            zIndex: -1,
+                            overflow: 'hidden',
                         }}
                     >
                         <InvoiceContent />

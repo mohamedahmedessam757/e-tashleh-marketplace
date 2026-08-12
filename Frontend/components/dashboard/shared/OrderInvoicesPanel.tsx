@@ -878,13 +878,18 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     className="inv-print-root"
                     dir={isRTL ? 'rtl' : 'ltr'}
                     aria-hidden="true"
+                    data-print-host="true"
                     style={{
-                        position: 'absolute',
-                        left: '-10000px',
+                        position: 'fixed',
+                        left: 0,
                         top: 0,
                         width: '210mm',
                         background: '#fff',
                         color: '#111',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        zIndex: -1,
+                        overflow: 'hidden',
                     }}
                 >
                     {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
