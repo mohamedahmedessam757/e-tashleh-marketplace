@@ -10,12 +10,12 @@ const escapeAttr = (value: string): string =>
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-/** Original paper invoice look — force visible ink over dark screen utility classes */
+/** Dark gold invoice print — matches on-screen E-Tashleh dashboard theme */
 const INVOICE_ISOLATED_CSS = `
 html, body {
-  background: #fff !important;
-  color: #111 !important;
-  -webkit-text-fill-color: #111 !important;
+  background: #0d0d0d !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   margin: 0;
   padding: 0;
   font-family: system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
@@ -24,31 +24,32 @@ html, body {
   opacity: 1 !important;
 }
 @page { size: A4 portrait; margin: 0; }
-.inv-print-root,
-.inv-print-root * {
-  color: #111 !important;
-  -webkit-text-fill-color: #111 !important;
-  opacity: 1 !important;
-  box-sizing: border-box;
-}
 .inv-print-root {
   display: block !important;
   position: static !important;
   left: auto !important;
   top: auto !important;
   width: 100% !important;
-  background: #fff !important;
-  padding: 15mm !important;
+  background: #0d0d0d !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  padding: 12mm !important;
   margin: 0 !important;
+  box-sizing: border-box;
+  opacity: 1 !important;
+}
+.inv-print-root * {
+  box-sizing: border-box;
+  opacity: 1 !important;
 }
 .inv-label {
-  color: #666 !important;
-  -webkit-text-fill-color: #666 !important;
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
   font-size: 12px !important;
 }
 .inv-value {
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   font-weight: 600 !important;
   font-size: 13px !important;
 }
@@ -57,14 +58,14 @@ html, body {
   -webkit-text-fill-color: #b8860b !important;
 }
 .inv-section {
-  background: #fff !important;
-  border: 1px solid #ccc !important;
-  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 12px !important;
   padding: 16px !important;
   margin-bottom: 12px !important;
 }
 .inv-section-header {
-  border-bottom: 1px solid #eee !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
   margin-bottom: 12px !important;
   padding-bottom: 8px !important;
 }
@@ -80,18 +81,18 @@ html, body {
   -webkit-text-fill-color: #b8860b !important;
 }
 .inv-total-box {
-  background: #fdfbf7 !important;
+  background: rgba(0, 0, 0, 0.4) !important;
   border: 2px solid #b8860b !important;
   padding: 16px !important;
   margin-bottom: 12px !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   break-inside: avoid !important;
   page-break-inside: avoid !important;
 }
 .inv-total-box span,
 .inv-total-box p {
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   opacity: 1 !important;
 }
 .inv-total-amount {
@@ -110,17 +111,32 @@ html, body {
 .inv-footer {
   break-inside: avoid !important;
   page-break-inside: avoid !important;
-  border-top: 1px solid #eee !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding-top: 20px !important;
   margin-top: 20px !important;
   text-align: center !important;
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
 }
 .no-print,
 .print\\:hidden { display: none !important; }
-.hidden.print\\:flex,
-.print\\:flex { display: flex !important; }
+/* Hide duplicate print-only brand strip — SECTION 1 already has E-Tashleh.net + QR */
+.hidden.print\\:flex { display: none !important; }
 .hidden.print\\:block,
 .print\\:block { display: block !important; }
+.text-white,
+.text-white\\/80,
+.text-white\\/90 { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.text-gray-300,
+.text-gray-400,
+.text-gray-500 { color: #9ca3af !important; -webkit-text-fill-color: #9ca3af !important; }
+.text-gold-500,
+.text-\\[\\#b8860b\\] { color: #b8860b !important; -webkit-text-fill-color: #b8860b !important; }
+.bg-white\\/5 { background: rgba(255, 255, 255, 0.05) !important; }
+.bg-black\\/20,
+.bg-black\\/40 { background: rgba(0, 0, 0, 0.35) !important; }
+.border-white\\/5,
+.border-white\\/10 { border-color: rgba(255, 255, 255, 0.10) !important; }
 img { max-width: 100%; }
 svg { max-width: 100%; }
 `;
@@ -140,7 +156,7 @@ function createPrintIframe(): HTMLIFrameElement {
     iframe.style.zIndex = '-1';
     iframe.style.width = '794px';
     iframe.style.height = '1123px';
-    iframe.style.background = '#fff';
+    iframe.style.background = '#0d0d0d';
     document.body.appendChild(iframe);
     return iframe;
 }
