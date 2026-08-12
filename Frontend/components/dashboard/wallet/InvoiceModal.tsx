@@ -205,11 +205,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const InvoiceContent = () => (
         <div dir={isRTL ? 'rtl' : 'ltr'}>
 
-            {/* ═══ NEW: PRINT LOGO HEADER ═══ */}
-            <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
+            {/* ═══ PRINT LOGO HEADER ═══ */}
+            <div className="hidden print:flex inv-print-logo-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8">
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
-                        <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                        <img src="/logo.png" alt="E-Tashleh" className="w-12 h-12 object-contain inv-brand-logo" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-[#b8860b] uppercase tracking-wider mb-1">E-Tashleh</h1>
@@ -228,7 +228,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
             {/* ═══ SECTION 1: HEADER ═══ */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 pb-6 border-b border-white/10 inv-section">
                 <div>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value mb-1">E-Tashleh.net</h1>
+                    <div className="flex items-center gap-3 mb-1">
+                        <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
+                    </div>
                     <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider inv-label">{language === 'ar' ? 'سوق قطع غيار السيارات' : 'Automotive Marketplace'}</p>
                     <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
                         <div className="flex items-center gap-2">

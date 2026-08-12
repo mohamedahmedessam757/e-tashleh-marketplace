@@ -201,9 +201,31 @@ a[href]::before {
 .inv-screen-img { display: none !important; }
 .no-print,
 .print\\:hidden { display: none !important; }
-/* Duplicate print-only logo strip — keep one header from screen content */
-.hidden.print\\:flex { display: none !important; }
-.hidden:not(.print\\:block):not(.print\\:flex) { display: none !important; }
+/* Print-only brand header with E-Tashleh logo */
+.hidden.print\\:flex,
+.inv-print-logo-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #b8860b !important;
+  border-radius: 0 !important;
+  margin: 0 0 12px 0 !important;
+  padding: 0 0 10px 0 !important;
+  page-break-inside: avoid !important;
+}
+.inv-print-logo-header h1 {
+  color: #b8860b !important;
+  -webkit-text-fill-color: #b8860b !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  margin: 0 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+.hidden:not(.print\\:block):not(.print\\:flex):not(.inv-print-logo-header) { display: none !important; }
 .hidden.print\\:block,
 .print\\:block { display: block !important; }
 
@@ -262,6 +284,15 @@ a[href]::before {
 .inv-print-root .relative { position: static !important; }
 
 img { max-width: 56px !important; max-height: 56px !important; height: auto !important; object-fit: contain !important; }
+.inv-brand-logo,
+.inv-print-logo-header img {
+  max-width: 64px !important;
+  max-height: 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
 .inv-footer img,
 .inv-print-qr svg,
 .inv-footer svg { max-width: 110px !important; max-height: 110px !important; }
@@ -291,10 +322,36 @@ function preparePrintHtml(html: string): string {
             el.remove();
         });
 
-        // Drop hidden chrome; keep only print:block helpers (e.g. policy QR hint)
+        // Keep print-only blocks (logo header / policy hint); drop other hidden chrome
         root.querySelectorAll('.hidden').forEach((el) => {
             const cls = typeof el.className === 'string' ? el.className : '';
-            if (!cls.includes('print:block')) el.remove();
+            const keepPrint =
+                cls.includes('print:block') ||
+                cls.includes('print:flex') ||
+                cls.includes('inv-print-logo-header');
+            if (!keepPrint) {
+                el.remove();
+                return;
+            }
+            el.classList.remove('hidden');
+            const host = el as HTMLElement;
+            if (cls.includes('print:flex') || cls.includes('inv-print-logo-header')) {
+                host.style.display = 'flex';
+            } else {
+                host.style.display = 'block';
+            }
+        });
+
+        // Absolute image URLs so logo loads inside the print iframe
+        root.querySelectorAll('img[src]').forEach((node) => {
+            const img = node as HTMLImageElement;
+            const src = img.getAttribute('src');
+            if (!src || src.startsWith('data:') || src.startsWith('blob:') || /^https?:\/\//i.test(src)) return;
+            try {
+                img.setAttribute('src', new URL(src, window.location.origin).href);
+            } catch {
+                /* ignore */
+            }
         });
 
         return root.outerHTML;
@@ -379,15 +436,37 @@ function printViaHiddenIframe(docHtml: string, title: string): Promise<void> {
         doc.write(docHtml);
         doc.close();
 
-        window.setTimeout(() => {
-            try {
-                iframe.contentWindow?.focus();
-                iframe.contentWindow?.print();
-            } catch {
-                /* ignore */
-            }
-            finish();
-        }, 220);
+        const waitForImages = (): Promise<void> => {
+            const images = Array.from(doc.images || []);
+            if (images.length === 0) return Promise.resolve();
+            return Promise.all(
+                images.map(
+                    (img) =>
+                        new Promise<void>((res) => {
+                            if (img.complete && img.naturalWidth > 0) {
+                                res();
+                                return;
+                            }
+                            const done = () => res();
+                            img.addEventListener('load', done, { once: true });
+                            img.addEventListener('error', done, { once: true });
+                            window.setTimeout(done, 1500);
+                        }),
+                ),
+            ).then(() => undefined);
+        };
+
+        void waitForImages().then(() => {
+            window.setTimeout(() => {
+                try {
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                } catch {
+                    /* ignore */
+                }
+                finish();
+            }, 120);
+        });
     });
 }
 
