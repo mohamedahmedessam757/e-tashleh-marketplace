@@ -886,8 +886,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         left: '-10000px',
                         top: 0,
                         width: '210mm',
-                        background: '#0d0d0d',
-                        color: '#fff',
+                        background: '#ffffff',
+                        color: '#111827',
                     }}
                 >
                     {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
