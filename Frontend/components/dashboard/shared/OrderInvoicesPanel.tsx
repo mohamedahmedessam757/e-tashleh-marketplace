@@ -23,6 +23,7 @@ import {
     InvoiceDocTab,
     filterInvoicesByTab,
 } from './invoices/invoiceDocs.types';
+import { printElement } from './../../../utils/print';
 
 
 interface OrderInvoicesPanelProps {
@@ -32,76 +33,6 @@ interface OrderInvoicesPanelProps {
     highlightOfferId?: string;
     initialDocTab?: InvoiceDocTab;
 }
-
-/* ─────────────── PRINT CSS ─────────────── */
-const PrintStyles = () => (
-    <style>{`
-        @media print {
-            html, body {
-                background-color: white !important;
-                height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 0 !important;
-            }
-            body > *:not(#special-invoice-print-container) {
-                display: none !important;
-            }
-            #special-invoice-print-container {
-                display: block !important;
-                position: static !important;
-                width: 100% !important;
-                background: white !important;
-                color: black !important;
-                padding: 15mm !important;
-                margin: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .inv-section {
-                background: white !important;
-                border: 1px solid #ccc !important;
-                border-radius: 6px !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-            .inv-section-header { border-bottom: 1px solid #eee !important; margin-bottom: 12px !important; padding-bottom: 8px !important; }
-            .inv-section-header h3 { color: #b8860b !important; font-size: 14px !important; font-weight: bold !important; margin: 0 !important; }
-            .inv-section-header svg { color: #b8860b !important; }
-            
-            .inv-value { color: #000 !important; font-weight: 600 !important; font-size: 13px !important; }
-            .inv-label { color: #666 !important; font-size: 12px !important; }
-            .inv-icon { color: #b8860b !important; }
-
-            .inv-total-box {
-                background: white !important;
-                border: 2px solid #b8860b !important;
-                break-inside: avoid !important;
-                padding: 16px !important;
-                margin-top: 12px !important;
-                margin-bottom: 12px !important;
-                border-radius: 8px !important;
-                box-shadow: none !important;
-            }
-            .inv-total-box span, .inv-total-box p { color: black !important; opacity: 1 !important; }
-            .inv-total-amount { color: #b8860b !important; font-weight: 900 !important; }
-            .inv-policy-body { display: block !important; }
-            .inv-policy-chevron { display: none !important; }
-            .inv-screen-img { display: none !important; }
-            .inv-print-qr { display: flex !important; flex-direction: column !important; align-items: center !important; }
-            .inv-footer { break-inside: avoid !important; border-top: 1px solid #eee !important; padding-top: 20px !important; margin-top: 20px !important; text-align: center !important; }
-            .no-print { display: none !important; }
-        }
-    `}</style>
-);
 
 export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     orderId,
@@ -240,18 +171,23 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     const handlePrint = (inv: any) => {
         setActiveInvoice(inv);
         setIsPrinting(true);
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                let finished = false;
-                const mediaQueryList = window.matchMedia?.('print');
-                const onPrintMqChange = (e: MediaQueryListEvent) => {
-                    if (!e.matches) finish();
-                };
-                const finish = () => {
-                    if (finished) return;
-                    finished = true;
-                    window.removeEventListener('afterprint', finish);
-                    mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
+    };
+
+    // Mount invoice off-screen, then print via isolated iframe (avoids blank Chromium preview).
+    useEffect(() => {
+        if (!isPrinting || !activeInvoice) return;
+
+        const inv = activeInvoice;
+        const timer = window.setTimeout(() => {
+            const el = document.getElementById('special-invoice-print-container');
+            if (!el) {
+                setIsPrinting(false);
+                setActiveInvoice(null);
+                return;
+            }
+            printElement(el, inv.invoiceNumber || 'Invoice', {
+                dir: isRTL ? 'rtl' : 'ltr',
+                onAfterPrint: () => {
                     setIsPrinting(false);
                     setActiveInvoice(null);
                     addNotification({
@@ -263,13 +199,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         recipientRole: role,
                         link: '#'
                     });
-                };
-                mediaQueryList?.addEventListener?.('change', onPrintMqChange);
-                window.addEventListener('afterprint', finish);
-                window.print();
-            }, 150);
-        });
-    };
+                },
+            });
+        }, 100);
+
+        return () => window.clearTimeout(timer);
+    }, [isPrinting, activeInvoice, isRTL, addNotification, role]);
 
     const handleExportExcel = async (inv: any) => {
         try {
@@ -465,7 +400,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         return (
             <div dir={isRTL ? 'rtl' : 'ltr'}>
                 {/* ═══ PRINT LOGO HEADER ═══ */}
-                <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
+                <div className="hidden print-only-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
                             <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
@@ -927,24 +862,33 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                 </div>
             )}
 
-            {/* Dedicated print structure: Portaled to body to escape Admin Dashboard overflow clipping */}
+            {/* Off-screen clone source for iframe print (not used with window.print) */}
             {isPrinting && activeInvoice && typeof document !== 'undefined' && createPortal(
-                <>
-                    <PrintStyles />
-                    <div id="special-invoice-print-container" dir={isRTL ? 'rtl' : 'ltr'}>
-                        {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
-                            <InvoiceContentBlock inv={activeInvoice} />
-                        ) : (
-                            <InvoiceTypedDocument
-                                inv={activeInvoice}
-                                docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
-                                isAr={isAr}
-                                isRTL={isRTL}
-                                labels={typedLabels}
-                            />
-                        )}
-                    </div>
-                </>,
+                <div
+                    id="special-invoice-print-container"
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    style={{
+                        position: 'fixed',
+                        left: '-10000px',
+                        top: 0,
+                        width: '800px',
+                        background: '#fff',
+                        color: '#111',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
+                        <InvoiceContentBlock inv={activeInvoice} />
+                    ) : (
+                        <InvoiceTypedDocument
+                            inv={activeInvoice}
+                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
+                            isAr={isAr}
+                            isRTL={isRTL}
+                            labels={typedLabels}
+                        />
+                    )}
+                </div>,
                 document.body
             )}
         </>

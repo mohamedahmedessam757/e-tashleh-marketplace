@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Printer, FileText, ChevronDown, ChevronUp,
@@ -12,6 +11,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { getCurrentUser, mapBackendRoleToFrontend } from '../../../utils/auth';
 import { excelApi } from '../../../services/api/excel';
 import { Download } from 'lucide-react';
+import { printElement } from '../../../utils/print';
 
 /* ─────────────── types ─────────────── */
 interface InvoiceModalProps {
@@ -19,77 +19,6 @@ interface InvoiceModalProps {
     onClose: () => void;
     order: any;
 }
-
-/* ─────────────── PRINT CSS ─────────────── */
-const PrintStyles = () => (
-    <style>{`
-        @media print {
-            html, body {
-                background-color: white !important;
-                height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            @page {
-                size: A4 portrait;
-                margin: 0 !important;
-            }
-
-            /* Hide app chrome; keep only the portaled invoice (waybill pattern) */
-            body > *:not(#special-invoice-print-container) {
-                display: none !important;
-            }
-
-            #special-invoice-print-container {
-                display: block !important;
-                position: static !important;
-                width: 100% !important;
-                background: white !important;
-                color: black !important;
-                padding: 15mm !important;
-                margin: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .inv-section {
-                background: white !important;
-                border: 1px solid #ccc !important;
-                border-radius: 6px !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-            .inv-section-header { border-bottom: 1px solid #eee !important; margin-bottom: 12px !important; padding-bottom: 8px !important; }
-            .inv-section-header h3 { color: #b8860b !important; font-size: 14px !important; font-weight: bold !important; margin: 0 !important; }
-            .inv-section-header svg { color: #b8860b !important; }
-            
-            .inv-value { color: #000 !important; font-weight: 600 !important; font-size: 13px !important; }
-            .inv-label { color: #666 !important; font-size: 12px !important; }
-            .inv-icon { color: #b8860b !important; }
-
-            .inv-total-box {
-                background: #fdfbf7 !important;
-                border: 2px solid #b8860b !important;
-                break-inside: avoid !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                border-radius: 8px !important;
-            }
-            .inv-total-amount { color: #b8860b !important; }
-            .inv-policy-body { display: block !important; }
-            .inv-policy-chevron { display: none !important; }
-            .inv-screen-img { display: none !important; }
-            .inv-print-qr { display: flex !important; flex-direction: column !important; align-items: center !important; }
-            .inv-footer { break-inside: avoid !important; border-top: 1px solid #eee !important; padding-top: 20px !important; margin-top: 20px !important; text-align: center !important; }
-        }
-    `}</style>
-);
 
 /* ─────────────── component ─────────────── */
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, order }) => {
@@ -187,36 +116,23 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     /* ── print handler ── */
     const handlePrint = () => {
-        // Mount print tree on body, then wait for afterprint before tearing it down.
-        // Removing the DOM right after window.print() blanks Chromium's print preview.
+        const node = printRef.current;
+        if (!node) return;
         setIsPrinting(true);
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                let finished = false;
-                const mediaQueryList = window.matchMedia?.('print');
-                const onPrintMqChange = (e: MediaQueryListEvent) => {
-                    if (!e.matches) finish();
-                };
-                const finish = () => {
-                    if (finished) return;
-                    finished = true;
-                    window.removeEventListener('afterprint', finish);
-                    mediaQueryList?.removeEventListener?.('change', onPrintMqChange);
-                    setIsPrinting(false);
-                    addNotification({
-                        titleAr: 'تمت طباعة الفاتورة',
-                        titleEn: 'Invoice Printed',
-                        messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
-                        messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
-                        type: 'SYSTEM',
-                        recipientRole: 'CUSTOMER',
-                        link: '/dashboard/wallet'
-                    });
-                };
-                mediaQueryList?.addEventListener?.('change', onPrintMqChange);
-                window.addEventListener('afterprint', finish);
-                window.print();
-            }, 150);
+        printElement(node, invoiceNumber, {
+            dir: isRTL ? 'rtl' : 'ltr',
+            onAfterPrint: () => {
+                setIsPrinting(false);
+                addNotification({
+                    titleAr: 'تمت طباعة الفاتورة',
+                    titleEn: 'Invoice Printed',
+                    messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceNumber} بنجاح.`,
+                    messageEn: `Invoice ${invoiceNumber} was successfully printed or downloaded.`,
+                    type: 'SYSTEM',
+                    recipientRole: 'CUSTOMER',
+                    link: '/dashboard/wallet'
+                });
+            },
         });
     };
 
@@ -290,8 +206,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const InvoiceContent = () => (
         <div dir={isRTL ? 'rtl' : 'ltr'}>
 
-            {/* ═══ NEW: PRINT LOGO HEADER ═══ */}
-            <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
+            {/* ═══ PRINT LOGO HEADER (hidden on screen; forced visible in iframe print CSS) ═══ */}
+            <div className="hidden print-only-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section">
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
                         <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
@@ -560,7 +476,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     return (
         <AnimatePresence>
-            {/* Keep modal mounted during print so the UI doesn't flash to a blank dashboard */}
             {isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
                     <div className="relative w-full max-w-4xl max-h-[95vh] flex flex-col bg-[#111] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden">
@@ -596,22 +511,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
+                        <div ref={printRef} className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
                             <InvoiceContent />
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* Portaled print tree — survives dashboard overflow/transform clipping */}
-            {isPrinting && typeof document !== 'undefined' && createPortal(
-                <>
-                    <PrintStyles />
-                    <div id="special-invoice-print-container" dir={isRTL ? 'rtl' : 'ltr'}>
-                        <InvoiceContent />
-                    </div>
-                </>,
-                document.body
             )}
         </AnimatePresence>
     );
