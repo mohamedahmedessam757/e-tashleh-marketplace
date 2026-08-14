@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     X, Printer, FileText, ChevronDown, ChevronUp,
     Package, Store, Truck, ShieldCheck,
@@ -11,6 +11,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { getCurrentUser, mapBackendRoleToFrontend } from '../../../utils/auth';
 import { excelApi } from '../../../services/api/excel';
 import { Download } from 'lucide-react';
+import { printIsolatedHtml } from '../../../utils/print';
 
 /* ─────────────── types ─────────────── */
 interface InvoiceModalProps {
@@ -19,84 +20,6 @@ interface InvoiceModalProps {
     order: any;
 }
 
-/* ─────────────── PRINT CSS ─────────────── */
-const PrintStyles = () => (
-    <style>{`
-        /* The nuclear option: When printing, hide the ENTIRE normal React app 
-           and ONLY show our special print container which we portal/inject 
-           at the very top level. */
-        @media print {
-            html, body {
-                background-color: white !important;
-                height: 100% !important;
-            }
-
-            @page {
-                size: A4 portrait;
-                margin: 0 !important; /* Hides browser header/footer URL */
-            }
-
-            /* Hide everything by default */
-            body * {
-                visibility: hidden !important;
-            }
-
-            /* Unhide ONLY our dedicated print container and its children */
-            #special-invoice-print-container,
-            #special-invoice-print-container * {
-                visibility: visible !important;
-            }
-
-            /* Position the exact print container at the top left of the page */
-            #special-invoice-print-container {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                background: white !important;
-                color: black !important;
-                padding: 15mm !important; /* Internal spacing instead of @page margin */
-                margin: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            /* ── Common Print Styles ── */
-            .inv-section {
-                background: white !important;
-                border: 1px solid #ccc !important;
-                border-radius: 6px !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-            .inv-section-header { border-bottom: 1px solid #eee !important; margin-bottom: 12px !important; padding-bottom: 8px !important; }
-            .inv-section-header h3 { color: #b8860b !important; font-size: 14px !important; font-weight: bold !important; margin: 0 !important; }
-            .inv-section-header svg { color: #b8860b !important; }
-            
-            .inv-value { color: #000 !important; font-weight: 600 !important; font-size: 13px !important; }
-            .inv-label { color: #666 !important; font-size: 12px !important; }
-            .inv-icon { color: #b8860b !important; }
-
-            .inv-total-box {
-                background: #fdfbf7 !important;
-                border: 2px solid #b8860b !important;
-                break-inside: avoid !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                border-radius: 8px !important;
-            }
-            .inv-total-amount { color: #b8860b !important; }
-            .inv-policy-body { display: block !important; }
-            .inv-policy-chevron { display: none !important; }
-            .inv-screen-img { display: none !important; }
-            .inv-print-qr { display: flex !important; flex-direction: column !important; align-items: center !important; }
-            .inv-footer { break-inside: avoid !important; border-top: 1px solid #eee !important; padding-top: 20px !important; margin-top: 20px !important; text-align: center !important; }
-        }
-    `}</style>
-);
-
 /* ─────────────── component ─────────────── */
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, order }) => {
     const { t, language } = useLanguage();
@@ -104,8 +27,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const isRTL = language === 'ar';
     const printRef = useRef<HTMLDivElement>(null);
     const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null);
-
-    // Track if we are currently printing so we can mount the portal
     const [isPrinting, setIsPrinting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
@@ -191,14 +112,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     const qrValue = `https://e-tashleh.net/invoice/${order.invoiceId || 'view'}`;
 
-    /* ── print handler ── */
-    const handlePrint = () => {
-        // We set isPrinting to true, which renders a completely separate DOM tree
-        // directly appended to body (using a trick) that won't be constrained by hidden parents
+    /* ── print handler: isolated iframe (no SPA window.print) ── */
+    const handlePrint = async () => {
+        const el = printRef.current;
+        if (!el || isPrinting) return;
         setIsPrinting(true);
-        setTimeout(() => {
-            window.print();
-            setIsPrinting(false);
+        try {
+            await printIsolatedHtml(el.outerHTML, String(invoiceNumber), {
+                dir: isRTL ? 'rtl' : 'ltr',
+            });
             addNotification({
                 titleAr: 'تمت طباعة الفاتورة',
                 titleEn: 'Invoice Printed',
@@ -208,7 +130,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                 recipientRole: 'CUSTOMER',
                 link: '/dashboard/wallet'
             });
-        }, 300); // give React time to render the print tree
+        } finally {
+            setIsPrinting(false);
+        }
     };
 
     const handleExportExcel = async () => {
@@ -281,11 +205,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const InvoiceContent = () => (
         <div dir={isRTL ? 'rtl' : 'ltr'}>
 
-            {/* ═══ NEW: PRINT LOGO HEADER ═══ */}
-            <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
+            {/* ═══ PRINT LOGO HEADER ═══ */}
+            <div className="hidden print:flex inv-print-logo-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8">
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
-                        <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                        <img src="/logo.png" alt="E-Tashleh" className="w-12 h-12 object-contain inv-brand-logo" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-[#b8860b] uppercase tracking-wider mb-1">E-Tashleh</h1>
@@ -304,7 +228,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
             {/* ═══ SECTION 1: HEADER ═══ */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 pb-6 border-b border-white/10 inv-section">
                 <div>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value mb-1">E-Tashleh.net</h1>
+                    <div className="flex items-center gap-3 mb-1">
+                        <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
+                    </div>
                     <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider inv-label">{language === 'ar' ? 'سوق قطع غيار السيارات' : 'Automotive Marketplace'}</p>
                     <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
                         <div className="flex items-center gap-2">
@@ -551,8 +478,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     return (
         <AnimatePresence>
-            {/* The regular modal for screen viewing */}
-            {isOpen && !isPrinting && (
+            {/* Keep modal mounted during print so the UI doesn't flash to a blank dashboard */}
+            {isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
                     <div className="relative w-full max-w-4xl max-h-[95vh] flex flex-col bg-[#111] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden">
                         <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/10 bg-[#1a1a1a] shrink-0">
@@ -565,7 +492,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={handleExportExcel} 
-                                    disabled={isExporting}
+                                    disabled={isExporting || isPrinting}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-colors border border-white/10 disabled:opacity-50"
                                 >
                                     {isExporting ? (
@@ -573,7 +500,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                                     ) : <Download className="w-4 h-4" />}
                                     <span className="hidden sm:inline">{language === 'ar' ? 'تصدير Excel' : 'Export Excel'}</span>
                                 </button>
-                                <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-colors shadow-[0_0_15px_rgba(184,134,11,0.4)]">
+                                <button
+                                    onClick={handlePrint}
+                                    disabled={isPrinting}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-colors shadow-[0_0_15px_rgba(184,134,11,0.4)] disabled:opacity-50"
+                                >
                                     <Printer className="w-4 h-4" />
                                     <span className="hidden sm:inline">{language === 'ar' ? 'طباعة / PDF' : 'Print / PDF'}</span>
                                 </button>
@@ -587,17 +518,26 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             <InvoiceContent />
                         </div>
                     </div>
-                </div>
-            )}
 
-            {/* The dedicated print structure that overrides EVERYTHING when printing */}
-            {isPrinting && (
-                <>
-                    <PrintStyles />
-                    <div id="special-invoice-print-container" dir={isRTL ? 'rtl' : 'ltr'}>
+                    {/* Offscreen light source for isolated iframe print */}
+                    <div
+                        id="invoice-print-source"
+                        ref={printRef}
+                        className="inv-print-root"
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        aria-hidden="true"
+                        style={{
+                            position: 'absolute',
+                            left: '-10000px',
+                            top: 0,
+                            width: '210mm',
+                            background: '#ffffff',
+                            color: '#111827',
+                        }}
+                    >
                         <InvoiceContent />
                     </div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );

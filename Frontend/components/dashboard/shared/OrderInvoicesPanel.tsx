@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { invoicesApi } from './../../../services/api/invoices';
 import { useLanguage } from './../../../contexts/LanguageContext';
 import { useNotificationStore } from './../../../stores/useNotificationStore';
@@ -23,6 +22,7 @@ import {
     InvoiceDocTab,
     filterInvoicesByTab,
 } from './invoices/invoiceDocs.types';
+import { printIsolatedHtml } from './../../../utils/print';
 
 
 interface OrderInvoicesPanelProps {
@@ -32,78 +32,6 @@ interface OrderInvoicesPanelProps {
     highlightOfferId?: string;
     initialDocTab?: InvoiceDocTab;
 }
-
-/* ─────────────── PRINT CSS ─────────────── */
-const PrintStyles = () => (
-    <style>{`
-        @media print {
-            html, body {
-                background-color: white !important;
-                height: 100% !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 0 !important;
-            }
-            html { height: auto !important; }
-            body { height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
-            body * {
-                visibility: hidden !important;
-            }
-            #special-invoice-print-container,
-            #special-invoice-print-container * {
-                visibility: visible !important;
-            }
-            #special-invoice-print-container {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                background: white !important;
-                color: black !important;
-                padding: 15mm !important;
-                margin: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .inv-section {
-                background: white !important;
-                border: 1px solid #ccc !important;
-                border-radius: 6px !important;
-                padding: 16px !important;
-                margin-bottom: 12px !important;
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-            .inv-section-header { border-bottom: 1px solid #eee !important; margin-bottom: 12px !important; padding-bottom: 8px !important; }
-            .inv-section-header h3 { color: #b8860b !important; font-size: 14px !important; font-weight: bold !important; margin: 0 !important; }
-            .inv-section-header svg { color: #b8860b !important; }
-            
-            .inv-value { color: #000 !important; font-weight: 600 !important; font-size: 13px !important; }
-            .inv-label { color: #666 !important; font-size: 12px !important; }
-            .inv-icon { color: #b8860b !important; }
-
-            .inv-total-box {
-                background: white !important;
-                border: 2px solid #b8860b !important;
-                break-inside: avoid !important;
-                padding: 16px !important;
-                margin-top: 12px !important;
-                margin-bottom: 12px !important;
-                border-radius: 8px !important;
-                box-shadow: none !important;
-            }
-            .inv-total-box span, .inv-total-box p { color: black !important; opacity: 1 !important; }
-            .inv-total-amount { color: #b8860b !important; font-weight: 900 !important; }
-            .inv-policy-body { display: block !important; }
-            .inv-policy-chevron { display: none !important; }
-            .inv-screen-img { display: none !important; }
-            .inv-print-qr { display: flex !important; flex-direction: column !important; align-items: center !important; }
-            .inv-footer { break-inside: avoid !important; border-top: 1px solid #eee !important; padding-top: 20px !important; margin-top: 20px !important; text-align: center !important; }
-            .no-print { display: none !important; }
-        }
-    `}</style>
-);
 
 export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     orderId,
@@ -127,6 +55,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     const [highlightedInvoiceId, setHighlightedInvoiceId] = useState<string | null>(null);
     const invoiceRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const printSourceRef = useRef<HTMLDivElement>(null);
 
     const isMerchant = role === 'MERCHANT';
     const isCustomer = role === 'CUSTOMER';
@@ -240,23 +169,55 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     }, [highlightOfferId, invoices, isLoading]);
 
     const handlePrint = (inv: any) => {
+        if (isPrinting) return;
         setActiveInvoice(inv);
         setIsPrinting(true);
-        setTimeout(() => {
-            window.print();
-            setIsPrinting(false);
-            setActiveInvoice(null);
-            addNotification({
-                titleAr: 'تمت طباعة الفاتورة',
-                titleEn: 'Invoice Printed',
-                messageAr: `تم طباعة أو تنزيل الفاتورة ${inv.invoiceNumber} بنجاح.`,
-                messageEn: `Invoice ${inv.invoiceNumber} was successfully printed or downloaded.`,
-                type: 'SYSTEM',
-                recipientRole: role,
-                link: '#'
-            });
-        }, 500);
     };
+
+    useEffect(() => {
+        if (!isPrinting || !activeInvoice) return;
+
+        let cancelled = false;
+        const invoiceSnapshot = activeInvoice;
+
+        const run = async () => {
+            let el = printSourceRef.current;
+            for (let i = 0; i < 20 && !el; i++) {
+                await new Promise((r) => setTimeout(r, 50));
+                el = printSourceRef.current;
+            }
+
+            try {
+                if (!cancelled && el) {
+                    await printIsolatedHtml(
+                        el.outerHTML,
+                        String(invoiceSnapshot.invoiceNumber || 'Invoice'),
+                        { dir: isRTL ? 'rtl' : 'ltr' },
+                    );
+                    if (!cancelled) {
+                        addNotification({
+                            titleAr: 'تمت طباعة الفاتورة',
+                            titleEn: 'Invoice Printed',
+                            messageAr: `تم طباعة أو تنزيل الفاتورة ${invoiceSnapshot.invoiceNumber} بنجاح.`,
+                            messageEn: `Invoice ${invoiceSnapshot.invoiceNumber} was successfully printed or downloaded.`,
+                            type: 'SYSTEM',
+                            recipientRole: role,
+                            link: '#'
+                        });
+                    }
+                }
+            } finally {
+                // Always clear — never leave the order page frozen
+                setIsPrinting(false);
+                setActiveInvoice(null);
+            }
+        };
+
+        void run();
+        return () => {
+            cancelled = true;
+        };
+    }, [isPrinting, activeInvoice, isRTL, addNotification, role]);
 
     const handleExportExcel = async (inv: any) => {
         try {
@@ -452,10 +413,10 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         return (
             <div dir={isRTL ? 'rtl' : 'ltr'}>
                 {/* ═══ PRINT LOGO HEADER ═══ */}
-                <div className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section" style={{ border: 'none !important', background: 'transparent !important' }}>
+                <div className="hidden print:flex inv-print-logo-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2 isolate">
-                            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                            <img src="/logo.png" alt="E-Tashleh" className="w-12 h-12 object-contain inv-brand-logo" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-black text-[#b8860b] uppercase tracking-wider mb-1">E-Tashleh</h1>
@@ -473,7 +434,10 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                 {/* ═══ SECTION 1: HEADER ═══ */}
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 pb-6 border-b border-white/10 inv-section">
                     <div>
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value mb-1">E-Tashleh.net</h1>
+                        <div className="flex items-center gap-3 mb-1">
+                            <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
+                        </div>
                         <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider inv-label">{isAr ? 'سوق قطع غيار السيارات' : 'Automotive Marketplace'}</p>
                         <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
                             <div className="flex items-center gap-2">
@@ -784,9 +748,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
     return (
         <>
-            {/* Screen content: hidden entirely when printing to prevent blank pages */}
-            {!isPrinting && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2">
                             <ShieldAlert size={18} />
@@ -872,7 +834,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         )}
                                         <button
                                             onClick={() => handlePrint(inv)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs"
+                                            disabled={isPrinting}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs disabled:opacity-50"
                                         >
                                             <Printer size={14} />
                                             <span>{isAr ? 'طباعة / PDF' : 'Print / PDF'}</span>
@@ -912,27 +875,36 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     </div>
                     )}
                 </div>
-            )}
 
-            {/* Dedicated print structure: Portaled to body to escape Admin Dashboard overflow clipping */}
-            {isPrinting && activeInvoice && typeof document !== 'undefined' && createPortal(
-                <>
-                    <PrintStyles />
-                    <div id="special-invoice-print-container" dir={isRTL ? 'rtl' : 'ltr'}>
-                        {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
-                            <InvoiceContentBlock inv={activeInvoice} />
-                        ) : (
-                            <InvoiceTypedDocument
-                                inv={activeInvoice}
-                                docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
-                                isAr={isAr}
-                                isRTL={isRTL}
-                                labels={typedLabels}
-                            />
-                        )}
-                    </div>
-                </>,
-                document.body
+            {/* Offscreen source for isolated iframe print */}
+            {activeInvoice && (
+                <div
+                    id="order-invoice-print-source"
+                    ref={printSourceRef}
+                    className="inv-print-root"
+                    dir={isRTL ? 'rtl' : 'ltr'}
+                    aria-hidden="true"
+                    style={{
+                        position: 'absolute',
+                        left: '-10000px',
+                        top: 0,
+                        width: '210mm',
+                        background: '#ffffff',
+                        color: '#111827',
+                    }}
+                >
+                    {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
+                        <InvoiceContentBlock inv={activeInvoice} />
+                    ) : (
+                        <InvoiceTypedDocument
+                            inv={activeInvoice}
+                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
+                            isAr={isAr}
+                            isRTL={isRTL}
+                            labels={typedLabels}
+                        />
+                    )}
+                </div>
             )}
         </>
     );

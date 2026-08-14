@@ -124,27 +124,29 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
       <div
-        className="hidden print:flex justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8 inv-section"
-        style={{ border: 'none !important', background: 'transparent !important' }}
+        className="hidden print:flex inv-print-logo-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8"
       >
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white rounded-xl border-2 border-gold-500 flex items-center justify-center p-2">
-            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+            <img src="/logo.png" alt="E-Tashleh" className="w-12 h-12 object-contain inv-brand-logo" />
           </div>
           <h1 className="text-3xl font-black text-[#b8860b] uppercase tracking-wider">
             E-Tashleh
           </h1>
         </div>
-        <p className="text-[18px] font-black text-gray-800 uppercase tracking-widest">
+        <p className="text-[18px] font-black text-gray-800 uppercase tracking-widest inv-value">
           {labels.invoiceTitle}
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-white/10 inv-section">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white inv-value mb-1">
-            E-Tashleh.net
-          </h1>
+          <div className="flex items-center gap-3 mb-1">
+            <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white inv-value">
+              E-Tashleh.net
+            </h1>
+          </div>
           <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
             <div className="flex items-center gap-2">
               <Hash className="w-4 h-4 text-gold-500 inv-icon" />
