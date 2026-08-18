@@ -418,7 +418,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                           <div className="text-xl font-black text-white font-mono">
                              {dispute.finalRefundDecision === 'REFUND_CUSTOMER' ? (
                                 <>
-                                   -{Number(dispute.finalCustomerRefundAmount ?? dispute.refundAmount || 0).toLocaleString()} <span className="text-[10px] text-red-500">AED</span>
+                                   -{Number((dispute.finalCustomerRefundAmount ?? dispute.refundAmount) ?? 0).toLocaleString()} <span className="text-[10px] text-red-500">AED</span>
                                 </>
                              ) : (
                                 <span className="text-green-500">0.00 AED</span>
