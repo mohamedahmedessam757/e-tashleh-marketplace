@@ -22,6 +22,7 @@ import { useOrderById } from '../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../hooks/useOrderRealtimeSync';
 import { isAcceptedOfferStatus, isVisibleMarketplaceOffer } from '../../utils/offerStatusHelpers';
 import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
+import { getOrderPaymentDisplay, getOrderPaymentDisplayClasses } from '../../utils/orderPaymentDisplay';
 import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla';
 import { writeCreateOrderPrefill } from '../../stores/useCreateOrderStore';
 import { useOrderChatStore } from '../../stores/useOrderChatStore';
@@ -1860,26 +1861,28 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         </span>
                                     </div>
                                     <div className="pt-2 border-t border-white/10 flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                            order.status === 'PARTIALLY_PAID'
-                                                ? 'bg-amber-500 animate-pulse'
-                                                : order.status === 'AWAITING_OFFERS' || order.status === 'AWAITING_PAYMENT' || order.status === 'CANCELLED'
-                                                  ? 'bg-red-500 animate-pulse'
-                                                  : 'bg-green-500'
-                                        }`} />
-                                        <span className={`text-xs font-bold ${
-                                            order.status === 'PARTIALLY_PAID'
-                                                ? 'text-amber-400'
-                                                : order.status === 'AWAITING_OFFERS' || order.status === 'AWAITING_PAYMENT' || order.status === 'CANCELLED'
-                                                  ? 'text-red-400'
-                                                  : 'text-green-400'
-                                        }`}>
-                                            {order.status === 'PARTIALLY_PAID'
-                                                ? (language === 'ar' ? 'دفع جزئي — باقي القطع معلّقة' : 'Partial payment — parts pending')
-                                                : order.status === 'AWAITING_OFFERS' || order.status === 'AWAITING_PAYMENT' || order.status === 'CANCELLED'
-                                                  ? (language === 'ar' ? 'لم يتم الدفع' : 'Not Paid')
-                                                  : (language === 'ar' ? 'تم الدفع بنجاح' : 'Paid Successfully')}
-                                        </span>
+                                        {(() => {
+                                            const paymentDisplay = getOrderPaymentDisplay(order.status);
+                                            const paymentClasses = getOrderPaymentDisplayClasses(paymentDisplay);
+                                            const paymentLabels = (t.dashboard.orders as any).paymentStatusLabels || {};
+                                            const paymentLabel =
+                                                paymentLabels[paymentDisplay]
+                                                ?? (paymentDisplay === 'partial'
+                                                    ? (language === 'ar' ? 'دفع جزئي — باقي القطع معلّقة' : 'Partial payment — parts pending')
+                                                    : paymentDisplay === 'paid'
+                                                      ? (language === 'ar' ? 'تم الدفع بنجاح' : 'Paid Successfully')
+                                                      : paymentDisplay === 'cancelled'
+                                                        ? (language === 'ar' ? 'ملغى — لم يتم الدفع' : 'Cancelled — not paid')
+                                                        : (language === 'ar' ? 'لم يتم الدفع' : 'Not Paid'));
+                                            return (
+                                                <>
+                                                    <div className={`w-2 h-2 rounded-full ${paymentClasses.dot}`} />
+                                                    <span className={`text-xs font-bold ${paymentClasses.text}`}>
+                                                        {paymentLabel}
+                                                    </span>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>

@@ -3,6 +3,8 @@
  * Invoice print uses a hidden off-screen iframe only — no HTML popup window.
  */
 
+import { CONTRACT_PRINT_CSS } from './contractPrintStyles';
+
 const escapeAttr = (value: string): string =>
     String(value)
         .replace(/&/g, '&amp;')
@@ -301,7 +303,7 @@ button { border: 0 !important; background: transparent !important; padding: 0 !i
 `;
 
 /** Strip SPA chrome that causes URLs / offscreen layout / bloat in print HTML */
-function preparePrintHtml(html: string): string {
+function preparePrintHtml(html: string, rootClass: 'inv-print-root' | 'ctr-print-root' = 'inv-print-root'): string {
     try {
         const parsed = new DOMParser().parseFromString(html, 'text/html');
         const root = parsed.body.firstElementChild as HTMLElement | null;
@@ -309,7 +311,7 @@ function preparePrintHtml(html: string): string {
 
         root.removeAttribute('style');
         root.style.cssText = '';
-        root.classList.add('inv-print-root');
+        root.classList.add(rootClass);
 
         root.querySelectorAll('a[href]').forEach((node) => {
             const a = node as HTMLAnchorElement;
@@ -363,7 +365,7 @@ function preparePrintHtml(html: string): string {
 function buildInvoiceDocument(html: string, title: string, dir: 'rtl' | 'ltr'): string {
     const lang = dir === 'rtl' ? 'ar' : 'en';
     const safeTitle = escapeAttr(title);
-    const bodyHtml = preparePrintHtml(html);
+    const bodyHtml = preparePrintHtml(html, 'inv-print-root');
     return `<!DOCTYPE html>
 <html dir="${dir}" lang="${lang}">
 <head>
@@ -371,6 +373,24 @@ function buildInvoiceDocument(html: string, title: string, dir: 'rtl' | 'ltr'): 
 <meta name="robots" content="noindex">
 <title>${safeTitle}</title>
 <style>${INVOICE_ISOLATED_CSS}</style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>`;
+}
+
+function buildContractDocument(html: string, title: string, dir: 'rtl' | 'ltr'): string {
+    const lang = dir === 'rtl' ? 'ar' : 'en';
+    const safeTitle = escapeAttr(title);
+    const bodyHtml = preparePrintHtml(html, 'ctr-print-root');
+    return `<!DOCTYPE html>
+<html dir="${dir}" lang="${lang}">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>${safeTitle}</title>
+<style>${CONTRACT_PRINT_CSS}</style>
 </head>
 <body>
 ${bodyHtml}
@@ -506,4 +526,16 @@ export const printIsolatedHtml = (
 ): Promise<void> => {
     const dir = options.dir === 'ltr' ? 'ltr' : 'rtl';
     return printViaHiddenIframe(buildInvoiceDocument(html, title, dir), title);
+};
+
+/**
+ * Contract print via hidden iframe — professional A4 layout matching invoices.
+ */
+export const printContractHtml = (
+    html: string,
+    title: string = 'Contract',
+    options: PrintIsolatedOptions = {},
+): Promise<void> => {
+    const dir = options.dir === 'ltr' ? 'ltr' : 'rtl';
+    return printViaHiddenIframe(buildContractDocument(html, title, dir), title);
 };

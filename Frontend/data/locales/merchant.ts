@@ -219,6 +219,8 @@ export const merchant = {
       suspensionNotice: 'إشعار إيقاف مؤقت',
       actionRequired: 'مطلوب تحسين الأداء',
       viewRules: 'عرض القواعد',
+      insufficientData: 'لا توجد تقييمات كافية بعد لتطبيق قواعد التأثير',
+      noRatingYet: 'لا يوجد تقييم بعد',
     },
     alerts: {
       licenseExpiring: 'رخصتك التجارية على وشك الانتهاء — يرجى التجديد قريباً.',
@@ -997,6 +999,8 @@ export const merchant = {
       suspensionNotice: 'Suspension Notice',
       actionRequired: 'Performance Improvement Required',
       viewRules: 'View Rules',
+      insufficientData: 'Not enough reviews yet to apply impact rules',
+      noRatingYet: 'No rating yet',
     },
     alerts: {
       licenseExpiring: 'Your commercial license is about to expire — please renew soon.',

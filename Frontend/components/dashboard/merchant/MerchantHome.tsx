@@ -8,6 +8,7 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { useReviewStore } from '../../../stores/useReviewStore';
+import { isFeaturedMerchantByRules } from '../../../utils/ratingImpactPolicy';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
@@ -46,7 +47,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
 
     // Fetch Dashboard Stats on Mount
     const { fetchDashboardStats, fetchVendorProfile } = useVendorStore();
-    const { fetchImpactRules, impactRules } = useReviewStore();
+    const { fetchImpactRules, fetchMerchantStats, impactRules, merchantStats } = useReviewStore();
     const { cases: resolutionCases, fetchMerchantCases } = useResolutionStore();
     const fetchLock = useRef(false);
 
@@ -57,10 +58,11 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             fetchDashboardStats(),
             fetchVendorProfile(),
             fetchImpactRules(),
+            fetchMerchantStats(),
             fetchMerchantCases(true),
             fetchOrders({ page: 1, limit: 100 }),
         ]).finally(() => fetchLock.current = false);
-    }, [fetchDashboardStats, fetchVendorProfile, fetchImpactRules, fetchMerchantCases, fetchOrders]);
+    }, [fetchDashboardStats, fetchVendorProfile, fetchImpactRules, fetchMerchantStats, fetchMerchantCases, fetchOrders]);
 
     // --- LOGIC: Alerts ---
     // License expiry is shown via LicenseExpiryBanner (contract + document date).
@@ -259,12 +261,9 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
 
             {/* Featured Badge Logic */}
             {(() => {
-                const isFeatured = impactRules.some(r => 
-                    r.actionType === 'FEATURED' && 
-                    r.isActive && 
-                    (performance?.rating || 0) >= Number(r.minRating) && 
-                    (performance?.rating || 0) <= Number(r.maxRating)
-                );
+                const storeRating = performance?.rating || 0;
+                const totalReviews = merchantStats?.totalReviews ?? 0;
+                const isFeatured = isFeaturedMerchantByRules(impactRules, storeRating, totalReviews);
                 
                 if (!isFeatured) return null;
 

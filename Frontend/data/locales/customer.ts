@@ -265,6 +265,12 @@ export const customer = {
         message: 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى',
         reorderBtn: 'إعادة الطلب',
         waiting: 'لا توجد عروض لهذه القطعة بعد'
+      },
+      paymentStatusLabels: {
+        unpaid: 'لم يتم الدفع',
+        partial: 'دفع جزئي — باقي القطع معلّقة',
+        paid: 'تم الدفع بنجاح',
+        cancelled: 'ملغى — لم يتم الدفع'
       }
     },
     offers: {
@@ -1272,6 +1278,12 @@ export const customer = {
         message: 'We apologize — no offers were available. Please submit a new request.',
         reorderBtn: 'Reorder',
         waiting: 'No offers yet for this part'
+      },
+      paymentStatusLabels: {
+        unpaid: 'Not Paid',
+        partial: 'Partial payment — parts pending',
+        paid: 'Paid Successfully',
+        cancelled: 'Cancelled — not paid'
       }
     },
     offers: {

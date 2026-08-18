@@ -638,6 +638,15 @@ export class OrdersService {
     ): Promise<Order> {
         const order = await this.findOne(orderId);
 
+        if (
+            newStatus === OrderStatus.CANCELLED &&
+            actor.type === ActorType.CUSTOMER &&
+            order.status !== OrderStatus.COLLECTING_OFFERS &&
+            order.status !== OrderStatus.AWAITING_OFFERS
+        ) {
+            throw new ForbiddenException('Customer can only cancel during offer collection phase');
+        }
+
         // 1. Validate Transition (Guard)
         this.fsm.validateTransition(order.status, newStatus);
 
