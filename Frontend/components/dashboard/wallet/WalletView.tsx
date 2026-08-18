@@ -287,7 +287,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
             return;
         }
 
-        if (amountNum > (stats?.availableBalance ?? stats?.customerBalance || 0)) {
+        if (amountNum > ((stats?.availableBalance ?? stats?.customerBalance) ?? 0)) {
             setWithdrawError(isAr ? 'رصيد المكافآت غير كافٍ' : 'Insufficient rewards balance');
             return;
         }
@@ -397,7 +397,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div style="border-bottom: 1px solid #F3F4F6; padding-bottom: 10px;">
                                 <span style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 800;">${isAr ? 'الرصيد المتاح' : 'Available Balance'}</span>
-                                <div style="font-size: 16px; font-weight: 800; color: #A88B3E;">${(stats?.availableBalance ?? stats?.customerBalance || 0).toLocaleString()} <small style="font-size: 9px;">AED</small></div>
+                                <div style="font-size: 16px; font-weight: 800; color: #A88B3E;">${((stats?.availableBalance ?? stats?.customerBalance) ?? 0).toLocaleString()} <small style="font-size: 9px;">AED</small></div>
                             </div>
                             <div style="border-bottom: 1px solid #F3F4F6; padding-bottom: 10px;">
                                 <span style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 800;">${isAr ? 'إجمالي المشتريات' : 'Total Purchases'}</span>
@@ -577,7 +577,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                 <StatCard 
                     label={wd.availableBalance}
-                    value={Number(stats?.availableBalance ?? stats?.customerBalance || 0).toLocaleString()}
+                    value={Number((stats?.availableBalance ?? stats?.customerBalance) ?? 0).toLocaleString()}
                     unit="AED"
                     icon={Wallet}
                     colorClass="text-emerald-400"
