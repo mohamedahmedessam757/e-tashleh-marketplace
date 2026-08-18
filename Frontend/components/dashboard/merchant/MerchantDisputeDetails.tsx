@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   AlertTriangle, Clock, ChevronRight, ChevronLeft, FileText, 
   UploadCloud, Send, ShieldCheck, User, MessageSquare, Scale, CheckCircle2, X,
-  FileIcon, FileImage, FileStack, Trash2, Gavel, History, Search, ExternalLink, Loader2
+  FileIcon, FileImage, FileStack, Trash2, Gavel, History, Search, ExternalLink, Loader2, CreditCard
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
@@ -402,18 +402,42 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                           </p>
                        </div>
                        <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-2">
-                          <span className="text-[9px] font-black text-white/20 uppercase">{isAr ? 'الأثر المالي' : 'Financial Impact'}</span>
+                          <span className="text-[9px] font-black text-white/20 uppercase">{t.dashboard.merchant.resolution.finalRefundDecision}</span>
+                          <div className={`text-md font-black flex items-center gap-2 ${dispute.finalRefundDecision === 'REFUND_CUSTOMER' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                             <CreditCard size={16} />
+                             {dispute.finalRefundDecision === 'REFUND_CUSTOMER'
+                                ? t.dashboard.merchant.resolution.refundDecisionYes
+                                : t.dashboard.merchant.resolution.refundDecisionNo}
+                          </div>
+                          <p className="text-[8px] text-white/30 leading-tight uppercase font-bold">
+                             {isAr ? 'قرار مالي نهائي مرتبط بالحكم الإداري' : 'Final monetary decision tied to the administrative verdict'}
+                          </p>
+                       </div>
+                       <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-2">
+                          <span className="text-[9px] font-black text-white/20 uppercase">{t.dashboard.merchant.resolution.finalCustomerRefundAmount}</span>
                           <div className="text-xl font-black text-white font-mono">
-                             {dispute.adminApproval === 'APPROVED' ? (
+                             {dispute.finalRefundDecision === 'REFUND_CUSTOMER' ? (
                                 <>
-                                   -{Number(dispute.refundAmount || 0).toLocaleString()} <span className="text-[10px] text-red-500">SAR</span>
+                                   -{Number(dispute.finalCustomerRefundAmount ?? dispute.refundAmount || 0).toLocaleString()} <span className="text-[10px] text-red-500">AED</span>
                                 </>
                              ) : (
-                                <span className="text-green-500">0.00 SAR</span>
+                                <span className="text-green-500">0.00 AED</span>
                              )}
                           </div>
                           <p className="text-[8px] text-white/30 leading-tight uppercase font-bold">
-                             {dispute.adminApproval === 'APPROVED' ? (isAr ? 'سيتم الخصم من المحفظة' : 'Deducted from balance') : (isAr ? 'لم يتم إجراء خصم' : 'No deduction applied')}
+                             {dispute.refundExecutionStatus
+                                ? `${t.dashboard.merchant.resolution.refundExecutionStatus}: ${
+                                    {
+                                      NOT_REQUIRED: t.dashboard.merchant.resolution.refundExecutionNotRequired,
+                                      PENDING: t.dashboard.merchant.resolution.refundExecutionPending,
+                                      PROCESSING: t.dashboard.merchant.resolution.refundExecutionProcessing,
+                                      SUCCEEDED: t.dashboard.merchant.resolution.refundExecutionSucceeded,
+                                      FAILED: t.dashboard.merchant.resolution.refundExecutionFailed,
+                                    }[dispute.refundExecutionStatus] || dispute.refundExecutionStatus
+                                  }`
+                                : dispute.finalRefundDecision === 'REFUND_CUSTOMER'
+                                  ? (isAr ? 'سيتم التنفيذ وفق نتيجة الحكم' : 'Will execute according to the verdict result')
+                                  : (isAr ? 'لم يتم اعتماد رد مبلغ للعميل' : 'No customer refund was approved')}
                           </p>
                        </div>
                     </div>

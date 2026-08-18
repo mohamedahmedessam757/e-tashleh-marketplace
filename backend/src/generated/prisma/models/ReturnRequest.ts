@@ -28,6 +28,7 @@ export type AggregateReturnRequest = {
 
 export type ReturnRequestAvgAggregateOutputType = {
   refundAmount: runtime.Decimal | null
+  finalCustomerRefundAmount: runtime.Decimal | null
   shippingRefund: runtime.Decimal | null
   stripeFee: runtime.Decimal | null
   gatewayFeePct: runtime.Decimal | null
@@ -43,6 +44,7 @@ export type ReturnRequestAvgAggregateOutputType = {
 
 export type ReturnRequestSumAggregateOutputType = {
   refundAmount: runtime.Decimal | null
+  finalCustomerRefundAmount: runtime.Decimal | null
   shippingRefund: runtime.Decimal | null
   stripeFee: runtime.Decimal | null
   gatewayFeePct: runtime.Decimal | null
@@ -84,9 +86,12 @@ export type ReturnRequestMinAggregateOutputType = {
   verdictIssuedAt: Date | null
   verdictLocked: boolean | null
   faultParty: string | null
+  finalRefundDecision: string | null
   refundAmount: runtime.Decimal | null
+  finalCustomerRefundAmount: runtime.Decimal | null
   shippingRefund: runtime.Decimal | null
   stripeFee: runtime.Decimal | null
+  refundExecutionStatus: string | null
   gatewayFeePct: runtime.Decimal | null
   refundFeePct: runtime.Decimal | null
   gatewayFeeAmount: runtime.Decimal | null
@@ -139,9 +144,12 @@ export type ReturnRequestMaxAggregateOutputType = {
   verdictIssuedAt: Date | null
   verdictLocked: boolean | null
   faultParty: string | null
+  finalRefundDecision: string | null
   refundAmount: runtime.Decimal | null
+  finalCustomerRefundAmount: runtime.Decimal | null
   shippingRefund: runtime.Decimal | null
   stripeFee: runtime.Decimal | null
+  refundExecutionStatus: string | null
   gatewayFeePct: runtime.Decimal | null
   refundFeePct: runtime.Decimal | null
   gatewayFeeAmount: runtime.Decimal | null
@@ -197,9 +205,12 @@ export type ReturnRequestCountAggregateOutputType = {
   verdictIssuedAt: number
   verdictLocked: number
   faultParty: number
+  finalRefundDecision: number
   refundAmount: number
+  finalCustomerRefundAmount: number
   shippingRefund: number
   stripeFee: number
+  refundExecutionStatus: number
   gatewayFeePct: number
   refundFeePct: number
   gatewayFeeAmount: number
@@ -228,6 +239,7 @@ export type ReturnRequestCountAggregateOutputType = {
 
 export type ReturnRequestAvgAggregateInputType = {
   refundAmount?: true
+  finalCustomerRefundAmount?: true
   shippingRefund?: true
   stripeFee?: true
   gatewayFeePct?: true
@@ -243,6 +255,7 @@ export type ReturnRequestAvgAggregateInputType = {
 
 export type ReturnRequestSumAggregateInputType = {
   refundAmount?: true
+  finalCustomerRefundAmount?: true
   shippingRefund?: true
   stripeFee?: true
   gatewayFeePct?: true
@@ -284,9 +297,12 @@ export type ReturnRequestMinAggregateInputType = {
   verdictIssuedAt?: true
   verdictLocked?: true
   faultParty?: true
+  finalRefundDecision?: true
   refundAmount?: true
+  finalCustomerRefundAmount?: true
   shippingRefund?: true
   stripeFee?: true
+  refundExecutionStatus?: true
   gatewayFeePct?: true
   refundFeePct?: true
   gatewayFeeAmount?: true
@@ -339,9 +355,12 @@ export type ReturnRequestMaxAggregateInputType = {
   verdictIssuedAt?: true
   verdictLocked?: true
   faultParty?: true
+  finalRefundDecision?: true
   refundAmount?: true
+  finalCustomerRefundAmount?: true
   shippingRefund?: true
   stripeFee?: true
+  refundExecutionStatus?: true
   gatewayFeePct?: true
   refundFeePct?: true
   gatewayFeeAmount?: true
@@ -397,9 +416,12 @@ export type ReturnRequestCountAggregateInputType = {
   verdictIssuedAt?: true
   verdictLocked?: true
   faultParty?: true
+  finalRefundDecision?: true
   refundAmount?: true
+  finalCustomerRefundAmount?: true
   shippingRefund?: true
   stripeFee?: true
+  refundExecutionStatus?: true
   gatewayFeePct?: true
   refundFeePct?: true
   gatewayFeeAmount?: true
@@ -542,9 +564,12 @@ export type ReturnRequestGroupByOutputType = {
   verdictIssuedAt: Date | null
   verdictLocked: boolean
   faultParty: string | null
+  finalRefundDecision: string | null
   refundAmount: runtime.Decimal | null
+  finalCustomerRefundAmount: runtime.Decimal | null
   shippingRefund: runtime.Decimal | null
   stripeFee: runtime.Decimal | null
+  refundExecutionStatus: string
   gatewayFeePct: runtime.Decimal | null
   refundFeePct: runtime.Decimal | null
   gatewayFeeAmount: runtime.Decimal | null
@@ -623,9 +648,12 @@ export type ReturnRequestWhereInput = {
   verdictIssuedAt?: Prisma.DateTimeNullableFilter<"ReturnRequest"> | Date | string | null
   verdictLocked?: Prisma.BoolFilter<"ReturnRequest"> | boolean
   faultParty?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  finalRefundDecision?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   refundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFilter<"ReturnRequest"> | string
   gatewayFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -685,9 +713,12 @@ export type ReturnRequestOrderByWithRelationInput = {
   verdictIssuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verdictLocked?: Prisma.SortOrder
   faultParty?: Prisma.SortOrderInput | Prisma.SortOrder
+  finalRefundDecision?: Prisma.SortOrderInput | Prisma.SortOrder
   refundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingRefund?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeFee?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundExecutionStatus?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrderInput | Prisma.SortOrder
   refundFeePct?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -750,9 +781,12 @@ export type ReturnRequestWhereUniqueInput = Prisma.AtLeast<{
   verdictIssuedAt?: Prisma.DateTimeNullableFilter<"ReturnRequest"> | Date | string | null
   verdictLocked?: Prisma.BoolFilter<"ReturnRequest"> | boolean
   faultParty?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  finalRefundDecision?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   refundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFilter<"ReturnRequest"> | string
   gatewayFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -812,9 +846,12 @@ export type ReturnRequestOrderByWithAggregationInput = {
   verdictIssuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verdictLocked?: Prisma.SortOrder
   faultParty?: Prisma.SortOrderInput | Prisma.SortOrder
+  finalRefundDecision?: Prisma.SortOrderInput | Prisma.SortOrder
   refundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingRefund?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeFee?: Prisma.SortOrderInput | Prisma.SortOrder
+  refundExecutionStatus?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrderInput | Prisma.SortOrder
   refundFeePct?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayFeeAmount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -878,9 +915,12 @@ export type ReturnRequestScalarWhereWithAggregatesInput = {
   verdictIssuedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ReturnRequest"> | Date | string | null
   verdictLocked?: Prisma.BoolWithAggregatesFilter<"ReturnRequest"> | boolean
   faultParty?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
+  finalRefundDecision?: Prisma.StringNullableWithAggregatesFilter<"ReturnRequest"> | string | null
   refundAmount?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringWithAggregatesFilter<"ReturnRequest"> | string
   gatewayFeePct?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.DecimalNullableWithAggregatesFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -932,9 +972,12 @@ export type ReturnRequestCreateInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -994,9 +1037,12 @@ export type ReturnRequestUncheckedCreateInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1048,9 +1094,12 @@ export type ReturnRequestUpdateInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1110,9 +1159,12 @@ export type ReturnRequestUncheckedUpdateInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1168,9 +1220,12 @@ export type ReturnRequestCreateManyInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1222,9 +1277,12 @@ export type ReturnRequestUpdateManyMutationInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1280,9 +1338,12 @@ export type ReturnRequestUncheckedUpdateManyInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1348,9 +1409,12 @@ export type ReturnRequestCountOrderByAggregateInput = {
   verdictIssuedAt?: Prisma.SortOrder
   verdictLocked?: Prisma.SortOrder
   faultParty?: Prisma.SortOrder
+  finalRefundDecision?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrder
   shippingRefund?: Prisma.SortOrder
   stripeFee?: Prisma.SortOrder
+  refundExecutionStatus?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrder
   refundFeePct?: Prisma.SortOrder
   gatewayFeeAmount?: Prisma.SortOrder
@@ -1377,6 +1441,7 @@ export type ReturnRequestCountOrderByAggregateInput = {
 
 export type ReturnRequestAvgOrderByAggregateInput = {
   refundAmount?: Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrder
   shippingRefund?: Prisma.SortOrder
   stripeFee?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrder
@@ -1418,9 +1483,12 @@ export type ReturnRequestMaxOrderByAggregateInput = {
   verdictIssuedAt?: Prisma.SortOrder
   verdictLocked?: Prisma.SortOrder
   faultParty?: Prisma.SortOrder
+  finalRefundDecision?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrder
   shippingRefund?: Prisma.SortOrder
   stripeFee?: Prisma.SortOrder
+  refundExecutionStatus?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrder
   refundFeePct?: Prisma.SortOrder
   gatewayFeeAmount?: Prisma.SortOrder
@@ -1473,9 +1541,12 @@ export type ReturnRequestMinOrderByAggregateInput = {
   verdictIssuedAt?: Prisma.SortOrder
   verdictLocked?: Prisma.SortOrder
   faultParty?: Prisma.SortOrder
+  finalRefundDecision?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrder
   shippingRefund?: Prisma.SortOrder
   stripeFee?: Prisma.SortOrder
+  refundExecutionStatus?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrder
   refundFeePct?: Prisma.SortOrder
   gatewayFeeAmount?: Prisma.SortOrder
@@ -1502,6 +1573,7 @@ export type ReturnRequestMinOrderByAggregateInput = {
 
 export type ReturnRequestSumOrderByAggregateInput = {
   refundAmount?: Prisma.SortOrder
+  finalCustomerRefundAmount?: Prisma.SortOrder
   shippingRefund?: Prisma.SortOrder
   stripeFee?: Prisma.SortOrder
   gatewayFeePct?: Prisma.SortOrder
@@ -1710,9 +1782,12 @@ export type ReturnRequestCreateWithoutCustomerInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1770,9 +1845,12 @@ export type ReturnRequestUncheckedCreateWithoutCustomerInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1857,9 +1935,12 @@ export type ReturnRequestScalarWhereInput = {
   verdictIssuedAt?: Prisma.DateTimeNullableFilter<"ReturnRequest"> | Date | string | null
   verdictLocked?: Prisma.BoolFilter<"ReturnRequest"> | boolean
   faultParty?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
+  finalRefundDecision?: Prisma.StringNullableFilter<"ReturnRequest"> | string | null
   refundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFilter<"ReturnRequest"> | string
   gatewayFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.DecimalNullableFilter<"ReturnRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1911,9 +1992,12 @@ export type ReturnRequestCreateWithoutStoreInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1971,9 +2055,12 @@ export type ReturnRequestUncheckedCreateWithoutStoreInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2051,9 +2138,12 @@ export type ReturnRequestCreateWithoutOrderInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2111,9 +2201,12 @@ export type ReturnRequestUncheckedCreateWithoutOrderInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2191,9 +2284,12 @@ export type ReturnRequestCreateWithoutOfferInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2251,9 +2347,12 @@ export type ReturnRequestUncheckedCreateWithoutOfferInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2334,9 +2433,12 @@ export type ReturnRequestCreateManyCustomerInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2388,9 +2490,12 @@ export type ReturnRequestUpdateWithoutCustomerInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2448,9 +2553,12 @@ export type ReturnRequestUncheckedUpdateWithoutCustomerInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2505,9 +2613,12 @@ export type ReturnRequestUncheckedUpdateManyWithoutCustomerInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2562,9 +2673,12 @@ export type ReturnRequestCreateManyStoreInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2616,9 +2730,12 @@ export type ReturnRequestUpdateWithoutStoreInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2676,9 +2793,12 @@ export type ReturnRequestUncheckedUpdateWithoutStoreInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2733,9 +2853,12 @@ export type ReturnRequestUncheckedUpdateManyWithoutStoreInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2790,9 +2913,12 @@ export type ReturnRequestCreateManyOrderInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2844,9 +2970,12 @@ export type ReturnRequestUpdateWithoutOrderInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2904,9 +3033,12 @@ export type ReturnRequestUncheckedUpdateWithoutOrderInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -2961,9 +3093,12 @@ export type ReturnRequestUncheckedUpdateManyWithoutOrderInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -3018,9 +3153,12 @@ export type ReturnRequestCreateManyOfferInput = {
   verdictIssuedAt?: Date | string | null
   verdictLocked?: boolean
   faultParty?: string | null
+  finalRefundDecision?: string | null
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: string
   gatewayFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -3072,9 +3210,12 @@ export type ReturnRequestUpdateWithoutOfferInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -3132,9 +3273,12 @@ export type ReturnRequestUncheckedUpdateWithoutOfferInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -3189,9 +3333,12 @@ export type ReturnRequestUncheckedUpdateManyWithoutOfferInput = {
   verdictIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verdictLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   faultParty?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finalRefundDecision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  finalCustomerRefundAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   shippingRefund?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   stripeFee?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  refundExecutionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   gatewayFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   refundFeePct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   gatewayFeeAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -3249,9 +3396,12 @@ export type ReturnRequestSelect<ExtArgs extends runtime.Types.Extensions.Interna
   verdictIssuedAt?: boolean
   verdictLocked?: boolean
   faultParty?: boolean
+  finalRefundDecision?: boolean
   refundAmount?: boolean
+  finalCustomerRefundAmount?: boolean
   shippingRefund?: boolean
   stripeFee?: boolean
+  refundExecutionStatus?: boolean
   gatewayFeePct?: boolean
   refundFeePct?: boolean
   gatewayFeeAmount?: boolean
@@ -3311,9 +3461,12 @@ export type ReturnRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   verdictIssuedAt?: boolean
   verdictLocked?: boolean
   faultParty?: boolean
+  finalRefundDecision?: boolean
   refundAmount?: boolean
+  finalCustomerRefundAmount?: boolean
   shippingRefund?: boolean
   stripeFee?: boolean
+  refundExecutionStatus?: boolean
   gatewayFeePct?: boolean
   refundFeePct?: boolean
   gatewayFeeAmount?: boolean
@@ -3373,9 +3526,12 @@ export type ReturnRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   verdictIssuedAt?: boolean
   verdictLocked?: boolean
   faultParty?: boolean
+  finalRefundDecision?: boolean
   refundAmount?: boolean
+  finalCustomerRefundAmount?: boolean
   shippingRefund?: boolean
   stripeFee?: boolean
+  refundExecutionStatus?: boolean
   gatewayFeePct?: boolean
   refundFeePct?: boolean
   gatewayFeeAmount?: boolean
@@ -3435,9 +3591,12 @@ export type ReturnRequestSelectScalar = {
   verdictIssuedAt?: boolean
   verdictLocked?: boolean
   faultParty?: boolean
+  finalRefundDecision?: boolean
   refundAmount?: boolean
+  finalCustomerRefundAmount?: boolean
   shippingRefund?: boolean
   stripeFee?: boolean
+  refundExecutionStatus?: boolean
   gatewayFeePct?: boolean
   refundFeePct?: boolean
   gatewayFeeAmount?: boolean
@@ -3462,7 +3621,7 @@ export type ReturnRequestSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "refundAmount" | "shippingRefund" | "stripeFee" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "adjudicationFeeAmount" | "adjudicationFeePayee" | "adjudicationFeePaymentStatus" | "adjudicationFeePaymentMethod" | "adjudicationFeeStripeId" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
+export type ReturnRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "orderPartId" | "offerId" | "customerId" | "caseReference" | "reason" | "description" | "status" | "evidenceFiles" | "usageCondition" | "returnType" | "storeId" | "invoiceId" | "shipmentId" | "returnWaybillId" | "handoverDeadline" | "merchantEvidence" | "merchantResponseText" | "merchantDecision" | "verdictNotes" | "adminApproval" | "adminApprovalReason" | "adminEvidence" | "adminName" | "adminEmail" | "adminSignature" | "verdictIssuedAt" | "verdictLocked" | "faultParty" | "finalRefundDecision" | "refundAmount" | "finalCustomerRefundAmount" | "shippingRefund" | "stripeFee" | "refundExecutionStatus" | "gatewayFeePct" | "refundFeePct" | "gatewayFeeAmount" | "refundFeeAmount" | "shippingRoundtrip" | "penaltyAmount" | "penaltyType" | "netRefundAmount" | "feeBearer" | "shippingCompanyLiability" | "shippingPayee" | "shippingPaymentStatus" | "shippingPaymentMethod" | "shippingStripeId" | "isAttachmentsEnabled" | "adjudicationFeeAmount" | "adjudicationFeePayee" | "adjudicationFeePaymentStatus" | "adjudicationFeePaymentMethod" | "adjudicationFeeStripeId" | "createdAt" | "updatedAt", ExtArgs["result"]["returnRequest"]>
 export type ReturnRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -3521,9 +3680,12 @@ export type $ReturnRequestPayload<ExtArgs extends runtime.Types.Extensions.Inter
     verdictIssuedAt: Date | null
     verdictLocked: boolean
     faultParty: string | null
+    finalRefundDecision: string | null
     refundAmount: runtime.Decimal | null
+    finalCustomerRefundAmount: runtime.Decimal | null
     shippingRefund: runtime.Decimal | null
     stripeFee: runtime.Decimal | null
+    refundExecutionStatus: string
     gatewayFeePct: runtime.Decimal | null
     refundFeePct: runtime.Decimal | null
     gatewayFeeAmount: runtime.Decimal | null
@@ -4003,9 +4165,12 @@ export interface ReturnRequestFieldRefs {
   readonly verdictIssuedAt: Prisma.FieldRef<"ReturnRequest", 'DateTime'>
   readonly verdictLocked: Prisma.FieldRef<"ReturnRequest", 'Boolean'>
   readonly faultParty: Prisma.FieldRef<"ReturnRequest", 'String'>
+  readonly finalRefundDecision: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly refundAmount: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
+  readonly finalCustomerRefundAmount: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
   readonly shippingRefund: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
   readonly stripeFee: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
+  readonly refundExecutionStatus: Prisma.FieldRef<"ReturnRequest", 'String'>
   readonly gatewayFeePct: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
   readonly refundFeePct: Prisma.FieldRef<"ReturnRequest", 'Decimal'>
   readonly gatewayFeeAmount: Prisma.FieldRef<"ReturnRequest", 'Decimal'>

@@ -122,12 +122,30 @@ export async function buildOrderFinancialTimeline(
     }),
     prisma.returnRequest.findMany({
       where: { orderId: resolvedOrderId },
-      select: { id: true, createdAt: true, status: true, refundAmount: true, reason: true },
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        refundAmount: true,
+        finalCustomerRefundAmount: true,
+        finalRefundDecision: true,
+        refundExecutionStatus: true,
+        reason: true,
+      },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.dispute.findMany({
       where: { orderId: resolvedOrderId },
-      select: { id: true, createdAt: true, status: true, refundAmount: true, reason: true },
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        refundAmount: true,
+        finalCustomerRefundAmount: true,
+        finalRefundDecision: true,
+        refundExecutionStatus: true,
+        reason: true,
+      },
       orderBy: { createdAt: 'asc' },
     }),
   ]);
@@ -317,9 +335,20 @@ export async function buildOrderFinancialTimeline(
       eventTypeAr: 'طلب إرجاع',
       timestamp: r.createdAt,
       status: r.status,
-      amount: r.refundAmount != null ? Number(r.refundAmount) : undefined,
-      descriptionEn: `Return requested: ${r.reason}`,
-      descriptionAr: `طلب إرجاع: ${r.reason}`,
+      amount:
+        r.finalCustomerRefundAmount != null
+          ? Number(r.finalCustomerRefundAmount)
+          : r.refundAmount != null
+            ? Number(r.refundAmount)
+            : undefined,
+      descriptionEn:
+        r.finalRefundDecision === 'REFUND_CUSTOMER'
+          ? `Return decision refunds customer (${r.refundExecutionStatus || 'PENDING'}): ${r.reason}`
+          : `Return decision without customer refund (${r.refundExecutionStatus || 'NOT_REQUIRED'}): ${r.reason}`,
+      descriptionAr:
+        r.finalRefundDecision === 'REFUND_CUSTOMER'
+          ? `قرار الإرجاع يتضمن رد مبلغ للعميل (${r.refundExecutionStatus || 'PENDING'}): ${r.reason}`
+          : `قرار الإرجاع بدون رد مبلغ للعميل (${r.refundExecutionStatus || 'NOT_REQUIRED'}): ${r.reason}`,
     });
   }
 
@@ -331,9 +360,20 @@ export async function buildOrderFinancialTimeline(
       eventTypeAr: 'فتح نزاع',
       timestamp: d.createdAt,
       status: d.status,
-      amount: d.refundAmount != null ? Number(d.refundAmount) : undefined,
-      descriptionEn: `Dispute opened: ${d.reason}`,
-      descriptionAr: `تم فتح نزاع: ${d.reason}`,
+      amount:
+        d.finalCustomerRefundAmount != null
+          ? Number(d.finalCustomerRefundAmount)
+          : d.refundAmount != null
+            ? Number(d.refundAmount)
+            : undefined,
+      descriptionEn:
+        d.finalRefundDecision === 'REFUND_CUSTOMER'
+          ? `Dispute decision refunds customer (${d.refundExecutionStatus || 'PENDING'}): ${d.reason}`
+          : `Dispute decision without customer refund (${d.refundExecutionStatus || 'NOT_REQUIRED'}): ${d.reason}`,
+      descriptionAr:
+        d.finalRefundDecision === 'REFUND_CUSTOMER'
+          ? `قرار النزاع يتضمن رد مبلغ للعميل (${d.refundExecutionStatus || 'PENDING'}): ${d.reason}`
+          : `قرار النزاع بدون رد مبلغ للعميل (${d.refundExecutionStatus || 'NOT_REQUIRED'}): ${d.reason}`,
     });
   }
 

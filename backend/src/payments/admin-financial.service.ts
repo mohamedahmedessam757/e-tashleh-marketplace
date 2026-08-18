@@ -330,7 +330,17 @@ export class AdminFinancialService {
           invoice: invoice?.invoiceNumber || null,
           invoiceId: invoice?.id || null,
           reason: ret.reason,
-          refundAmount: roundMoney(Number(ret.refundAmount || ret.netRefundAmount || payment?.refundedAmount || 0)),
+          refundAmount: roundMoney(
+            Number(
+              ret.finalCustomerRefundAmount ||
+                ret.refundAmount ||
+                ret.netRefundAmount ||
+                payment?.refundedAmount ||
+                0,
+            ),
+          ),
+          finalRefundDecision: ret.finalRefundDecision || null,
+          refundExecutionStatus: ret.refundExecutionStatus || 'NOT_REQUIRED',
           shippingFee: roundMoney(Number(ret.shippingRoundtrip || ret.shippingRefund || 0)),
           gatewayFee: roundMoney(Number(ret.gatewayFeeAmount || payment?.gatewayFee || 0)),
           costBearer: ret.feeBearer || ret.faultParty || null,
@@ -844,6 +854,9 @@ export class AdminFinancialService {
             orderId: true,
             status: true,
             refundAmount: true,
+            finalCustomerRefundAmount: true,
+            finalRefundDecision: true,
+            refundExecutionStatus: true,
             netRefundAmount: true,
             createdAt: true,
           },
@@ -861,8 +874,12 @@ export class AdminFinancialService {
             id: r.id,
             orderId: r.orderId,
             status: r.status,
-            refundAmount: roundMoney(Number(r.refundAmount || 0)),
+            refundAmount: roundMoney(
+              Number(r.finalCustomerRefundAmount || r.refundAmount || 0),
+            ),
             netRefundAmount: roundMoney(Number(r.netRefundAmount || 0)),
+            finalRefundDecision: r.finalRefundDecision || null,
+            refundExecutionStatus: r.refundExecutionStatus || 'NOT_REQUIRED',
             createdAt: r.createdAt,
           })),
         };

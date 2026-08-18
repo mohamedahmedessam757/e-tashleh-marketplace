@@ -342,13 +342,39 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                       </div>
 
                       {/* Fault and Responsibility Hub */}
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                          <div className="p-5 bg-white/[0.02] rounded-2xl border border-white/5">
                             <span className="text-[9px] font-black text-white/20 uppercase block mb-1">{isAr ? 'الطرف المتسبب' : 'Fault Party'}</span>
                             <div className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-2">
                                <div className="w-1.5 h-1.5 rounded-full bg-gold-400 shadow-[0_0_8px_#fbbf24]" />
                                {dispute.faultParty || 'OFFICIAL_REVIEW'}
                             </div>
+                         </div>
+                         <div className="p-5 bg-white/[0.02] rounded-2xl border border-white/5">
+                            <span className="text-[9px] font-black text-white/20 uppercase block mb-1">{t.dashboard.resolution.details.finalRefundDecision}</span>
+                            <div className={`text-xs font-black uppercase tracking-tight ${dispute.finalRefundDecision === 'REFUND_CUSTOMER' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                               {dispute.finalRefundDecision === 'REFUND_CUSTOMER'
+                                  ? t.dashboard.resolution.details.refundDecisionYes
+                                  : t.dashboard.resolution.details.refundDecisionNo}
+                            </div>
+                         </div>
+                         <div className="p-5 bg-white/[0.02] rounded-2xl border border-white/5">
+                            <span className="text-[9px] font-black text-white/20 uppercase block mb-1">{t.dashboard.resolution.details.finalCustomerRefundAmount}</span>
+                            <div className="text-xs font-black text-green-400 uppercase tracking-tight">
+                               {Number(dispute.finalCustomerRefundAmount ?? dispute.netRefundAmount ?? dispute.refundAmount ?? 0).toLocaleString()} AED
+                            </div>
+                            {dispute.refundExecutionStatus && (
+                               <div className="text-[8px] text-white/35 mt-1 uppercase font-bold">
+                                  {t.dashboard.resolution.details.refundExecutionStatus}:{' '}
+                                  {{
+                                    NOT_REQUIRED: t.dashboard.resolution.details.refundExecutionNotRequired,
+                                    PENDING: t.dashboard.resolution.details.refundExecutionPending,
+                                    PROCESSING: t.dashboard.resolution.details.refundExecutionProcessing,
+                                    SUCCEEDED: t.dashboard.resolution.details.refundExecutionSucceeded,
+                                    FAILED: t.dashboard.resolution.details.refundExecutionFailed,
+                                  }[dispute.refundExecutionStatus] || dispute.refundExecutionStatus}
+                               </div>
+                            )}
                          </div>
                          <div className="p-5 bg-white/[0.02] rounded-2xl border border-white/5">
                             <span className="text-[9px] font-black text-white/20 uppercase block mb-1">{isAr ? 'تاريخ التنفيذ' : 'Execution Date'}</span>

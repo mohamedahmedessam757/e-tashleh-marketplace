@@ -658,7 +658,19 @@ export const admin = {
         collectionMethodLabel: 'طريقة التحصيل المتوقعة لرسوم الحكم',
         step1FinancialSummary: 'ملخص مالي قبل التنفيذ',
         merchantDebitLabel: 'خصم من التاجر',
-        customerNetRefundLabel: 'صافي مسترد للعميل'
+        customerNetRefundLabel: 'صافي مسترد للعميل',
+        finalRefundDecisionLabel: 'قرار الاسترداد النهائي',
+        refundDecisionYes: 'نعم، يتم رد المبلغ للعميل',
+        refundDecisionNo: 'لا، لا يتم رد أي مبلغ للعميل',
+        refundDecisionYesHint: 'هذا القرار يسمح بإرجاع المبلغ النهائي المحسوب للعميل حسب الحاسبة والحد الأقصى المتاح.',
+        refundDecisionNoHint: 'هذا القرار يمنع رد أي مبلغ للعميل حتى لو وُجدت رسوم أو التزامات أخرى على أطراف القضية.',
+        finalCustomerRefundAmountLabel: 'المبلغ النهائي الذي سيعود للعميل',
+        customerRefundWillBeZero: 'لن يتم رد أي مبلغ للعميل',
+        refundExecutionNotRequired: 'غير مطلوب',
+        refundExecutionPending: 'قيد الانتظار',
+        refundExecutionProcessing: 'جاري التنفيذ',
+        refundExecutionSucceeded: 'تم الاسترداد',
+        refundExecutionFailed: 'فشل الاسترداد'
       }
     },
     shippingPage: {
@@ -1027,6 +1039,8 @@ export const admin = {
         costBearer: 'تحمّل التكلفة',
         status: 'الحالة',
         date: 'التاريخ',
+        refundDecision: 'قرار الاسترداد',
+        refundExecutionStatus: 'حالة التنفيذ',
         empty: 'لا توجد مرتجعات'
       },
       settlement: {
@@ -2182,7 +2196,19 @@ export const admin = {
         collectionMethodLabel: 'Expected adjudication fee collection',
         step1FinancialSummary: 'Financial summary before execute',
         merchantDebitLabel: 'Debited from merchant',
-        customerNetRefundLabel: 'Net refunded to customer'
+        customerNetRefundLabel: 'Net refunded to customer',
+        finalRefundDecisionLabel: 'Final refund decision',
+        refundDecisionYes: 'Yes, refund the customer',
+        refundDecisionNo: 'No, do not refund the customer',
+        refundDecisionYesHint: 'This final decision allows the calculated customer refund amount to be returned, subject to the Stripe refundable cap.',
+        refundDecisionNoHint: 'This final decision blocks any customer refund even if other fees or obligations still apply to the case parties.',
+        finalCustomerRefundAmountLabel: 'Final customer refund amount',
+        customerRefundWillBeZero: 'Customer refund will be zero',
+        refundExecutionNotRequired: 'Not required',
+        refundExecutionPending: 'Pending',
+        refundExecutionProcessing: 'Processing',
+        refundExecutionSucceeded: 'Refunded',
+        refundExecutionFailed: 'Refund failed'
       }
     },
     shippingPage: {
@@ -2551,6 +2577,8 @@ export const admin = {
         costBearer: 'Cost Bearer',
         status: 'Status',
         date: 'Date',
+        refundDecision: 'Refund Decision',
+        refundExecutionStatus: 'Execution Status',
         empty: 'No refunds found'
       },
       settlement: {

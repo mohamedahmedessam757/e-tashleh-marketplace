@@ -256,6 +256,16 @@ export const OrderFinancialDrawer: React.FC<OrderFinancialDrawerProps> = memo(fu
         { event: '*', schema: 'public', table: 'escrow_transactions', filter: `order_id=eq.${realtimeOrderId}` },
         scheduleSilentRefresh,
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'returns', filter: `order_id=eq.${realtimeOrderId}` },
+        scheduleSilentRefresh,
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'disputes', filter: `order_id=eq.${realtimeOrderId}` },
+        scheduleSilentRefresh,
+      )
       .subscribe();
 
     return () => {

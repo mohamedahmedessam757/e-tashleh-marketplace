@@ -107,7 +107,7 @@ const COLUMN_ORDER: Partial<Record<AdminFinancialReportId, string[]>> = {
   'commission-summary': ['createdAt', 'orderId', 'totalAmount', 'commission', 'gatewayFee'],
   'gateway-fees': ['createdAt', 'orderId', 'gatewayFee', 'totalAmount'],
   'shipping-collected': ['date', 'shippingCollected', 'count'],
-  'refunds-summary': ['createdAt', 'orderId', 'status', 'refundAmount', 'netRefundAmount'],
+  'refunds-summary': ['createdAt', 'orderId', 'status', 'refundAmount', 'finalRefundDecision', 'refundExecutionStatus', 'netRefundAmount'],
   'withdrawals-summary': ['createdAt', 'role', 'target', 'amount', 'status', 'payoutMethod'],
   'escrow-holdings': ['status', 'merchantAmount', 'commissionAmount', 'count'],
   'seller-balances': ['name', 'totalEarned', 'ordersCount', 'rating'],

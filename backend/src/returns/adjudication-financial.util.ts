@@ -1,6 +1,16 @@
 /**
  * Single source of truth for admin adjudication financial rules (disputes / returns).
+ *
+ * Frozen scenario matrix:
+ * - MERCHANT/STORE/VENDOR + REFUND_CUSTOMER → full paid (capped); merchant pays fees + shipping
+ * - MERCHANT/STORE/VENDOR + NO_CUSTOMER_REFUND → 0 customer refund; merchant still owes fees + shipping
+ * - CUSTOMER + REFUND_CUSTOMER → paid − fees − shipping; customer bears fees/shipping
+ * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; customer still bears shipping
+ * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform fees; shipping-company liability
+ * - CLOSE_COMPLETE_REFUND → forced REFUND_CUSTOMER; paid − fees; no shipping
+ * - Stripe call only when REFUND_CUSTOMER and amount > 0
  */
+
 
 export type AdjudicationFaultParty =
     | 'CUSTOMER'
@@ -13,6 +23,13 @@ export type AdjudicationFaultParty =
 
 export type FeeBearer = 'CUSTOMER' | 'MERCHANT' | 'PLATFORM' | 'MIXED_CLOSE';
 export type ShippingBearer = 'CUSTOMER' | 'MERCHANT' | 'SHIPPING_COMPANY' | 'NONE';
+export type FinalRefundDecision = 'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND';
+export type RefundExecutionStatus =
+    | 'NOT_REQUIRED'
+    | 'PENDING'
+    | 'PROCESSING'
+    | 'SUCCEEDED'
+    | 'FAILED';
 
 export interface AdjudicationFinancialInput {
     orderPaidTotal: number;
@@ -20,9 +37,8 @@ export interface AdjudicationFinancialInput {
     refundFeePct: number;
     shippingRoundtrip: number;
     faultParty: AdjudicationFaultParty;
+    finalRefundDecision?: FinalRefundDecision;
     maxRefundable?: number;
-    /** Client preview only — server may override on mismatch */
-    calculatedNetRefund?: number;
 }
 
 export interface AdjudicationFinancialResult {
@@ -43,6 +59,10 @@ export interface AdjudicationFinancialResult {
     refundCappedFrom?: number;
     gatewayFeePct: number;
     refundFeePct: number;
+    finalRefundDecision: FinalRefundDecision;
+    finalCustomerRefundAmount: number;
+    refundRequired: boolean;
+    refundExecutionStatusSeed: RefundExecutionStatus;
 }
 
 function normalizeFault(faultParty: AdjudicationFaultParty): string {
@@ -53,15 +73,40 @@ function isMerchantFault(fault: string): boolean {
     return ['STORE', 'MERCHANT', 'VENDOR'].includes(fault);
 }
 
+function normalizeFinalRefundDecision(
+    decision: FinalRefundDecision | string | undefined,
+    fault: string,
+): FinalRefundDecision {
+    const normalized = String(decision || '').toUpperCase();
+    if (normalized === 'REFUND_CUSTOMER' || normalized === 'NO_CUSTOMER_REFUND') {
+        return normalized;
+    }
+    return fault === 'CLOSE_COMPLETE_REFUND' ? 'REFUND_CUSTOMER' : 'NO_CUSTOMER_REFUND';
+}
+
+function roundMoney2(amount: number): number {
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function sanitizePct(value: unknown, fallback: number): number {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return fallback;
+    return Math.min(n, 100);
+}
+
 export function computeAdjudicationFinancials(
     input: AdjudicationFinancialInput,
 ): AdjudicationFinancialResult {
-    const orderPaidTotal = Math.max(0, Number(input.orderPaidTotal) || 0);
-    const gatewayFeePct = Number(input.gatewayFeePct ?? 3);
-    const refundFeePct = Number(input.refundFeePct ?? 1.5);
-    const shippingRoundtrip = Math.max(0, Number(input.shippingRoundtrip) || 0);
+    const orderPaidTotal = roundMoney2(Math.max(0, Number(input.orderPaidTotal) || 0));
+    const gatewayFeePct = sanitizePct(input.gatewayFeePct ?? 3, 3);
+    const refundFeePct = sanitizePct(input.refundFeePct ?? 1.5, 1.5);
+    const shippingRoundtrip = roundMoney2(Math.max(0, Number(input.shippingRoundtrip) || 0));
     const fault = normalizeFault(input.faultParty);
     const isCloseComplete = fault === 'CLOSE_COMPLETE_REFUND';
+    const finalRefundDecision = normalizeFinalRefundDecision(input.finalRefundDecision, fault);
+    const refundRequired = finalRefundDecision === 'REFUND_CUSTOMER';
 
     const gatewayFeeAmount = (orderPaidTotal * gatewayFeePct) / 100;
     const refundFeeAmount = (orderPaidTotal * refundFeePct) / 100;
@@ -75,22 +120,34 @@ export function computeAdjudicationFinancials(
     let merchantPlatformFeesDebit = 0;
     let shippingCompanyLiability = 0;
 
-    if (isCloseComplete) {
+    if (!refundRequired) {
+        feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
+        shippingBearer =
+            fault === 'SHIPPING_COMPANY'
+                ? shippingRoundtrip > 0
+                    ? 'SHIPPING_COMPANY'
+                    : 'NONE'
+                : isMerchantFault(fault)
+                  ? shippingRoundtrip > 0
+                      ? 'MERCHANT'
+                      : 'NONE'
+                  : shippingRoundtrip > 0
+                    ? 'CUSTOMER'
+                    : 'NONE';
+        merchantShippingDebit =
+            shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0;
+        merchantPlatformFeesDebit =
+            feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
+        shippingCompanyLiability =
+            shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
+        platformRetainedAmount =
+            feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
+        customerStripeRefund = 0;
+    } else if (isCloseComplete) {
         feeBearer = 'MIXED_CLOSE';
         shippingBearer = 'NONE';
         platformRetainedAmount = platformFeesTotal;
         customerStripeRefund = Math.max(0, orderPaidTotal - platformFeesTotal);
-        if (input.calculatedNetRefund != null) {
-            const fromClient = Math.max(0, Number(input.calculatedNetRefund));
-            if (
-                Math.abs(fromClient - customerStripeRefund) > 0.01 &&
-                fromClient <= platformFeesTotal + 0.01
-            ) {
-                customerStripeRefund = Math.max(0, orderPaidTotal - platformFeesTotal);
-            } else if (fromClient < orderPaidTotal - platformFeesTotal + 0.01) {
-                customerStripeRefund = fromClient;
-            }
-        }
     } else if (isMerchantFault(fault)) {
         feeBearer = 'MERCHANT';
         shippingBearer = shippingRoundtrip > 0 ? 'MERCHANT' : 'NONE';
@@ -132,23 +189,28 @@ export function computeAdjudicationFinancials(
     }
 
     return {
-        gatewayFeeAmount,
-        refundFeeAmount,
-        platformFeesTotal,
-        customerStripeRefund: cappedStripe,
-        stripeRefundAmount: cappedStripe,
-        netRefundAmount,
-        platformRetainedAmount,
+        gatewayFeeAmount: roundMoney2(gatewayFeeAmount),
+        refundFeeAmount: roundMoney2(refundFeeAmount),
+        platformFeesTotal: roundMoney2(platformFeesTotal),
+        customerStripeRefund: roundMoney2(cappedStripe),
+        stripeRefundAmount: roundMoney2(cappedStripe),
+        netRefundAmount: roundMoney2(netRefundAmount),
+        platformRetainedAmount: roundMoney2(platformRetainedAmount),
         feeBearer,
         shippingBearer,
         merchantWalletDebits: {
-            shipping: merchantShippingDebit,
-            platformFees: merchantPlatformFeesDebit,
+            shipping: roundMoney2(merchantShippingDebit),
+            platformFees: roundMoney2(merchantPlatformFeesDebit),
         },
-        shippingCompanyLiability,
+        shippingCompanyLiability: roundMoney2(shippingCompanyLiability),
         stripeCapped,
-        refundCappedFrom,
+        refundCappedFrom: refundCappedFrom != null ? roundMoney2(refundCappedFrom) : undefined,
         gatewayFeePct,
         refundFeePct,
+        finalRefundDecision,
+        finalCustomerRefundAmount: roundMoney2(cappedStripe),
+        refundRequired,
+        refundExecutionStatusSeed:
+            refundRequired && cappedStripe > 0 ? 'PENDING' : 'NOT_REQUIRED',
     };
 }
