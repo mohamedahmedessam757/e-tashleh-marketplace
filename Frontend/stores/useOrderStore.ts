@@ -10,6 +10,7 @@ import { resolveOrderActiveSla } from '../utils/resolveOrderActiveSla';
 import type { OrderActiveSla } from '../types/orderSla';
 import { formatApiErrorMessage } from '../utils/formatApiErrorMessage';
 import { computeOfferFinalPrice } from '../utils/offerPricing';
+import { canCustomerCancelOrder } from '../utils/orderCancelPolicy';
 import { useAdminStore } from './useAdminStore';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
@@ -1284,6 +1285,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     },
 
     cancelOrder: async (id: string, reason?: string) => {
+        const order = get().orders.find(o => String(o.id) === String(id));
+        if (!order || !canCustomerCancelOrder(order.status)) return false;
+
         // Optimistic UI
         const previousOrders = get().orders;
         set(state => ({
@@ -1341,7 +1345,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     canCancelOrder: (id: string) => {
         const order = get().orders.find(o => String(o.id) === String(id));
         if (!order) return false;
-        const immutableStatuses = ['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
-        return !immutableStatuses.includes(order.status);
+        return canCustomerCancelOrder(order.status);
     }
 }));

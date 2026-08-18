@@ -14,6 +14,7 @@ import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
 import { useEnforceExpiredOrderSla } from '../../../hooks/useEnforceExpiredOrderSla';
 import { getDisplayOrderStatus } from '../../../utils/orderExpiryHelpers';
+import { getOrderPaymentDisplay, getOrderPaymentDisplayClasses } from '../../../utils/orderPaymentDisplay';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import {
     ChevronLeft, ChevronRight, User, Store, DollarSign, Settings2, ShieldAlert,
@@ -1408,12 +1409,23 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         )}
                         <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
                             <span className="text-white/40">{isAr ? 'حالة الدفع:' : 'Payment Status:'}</span>
-                            <span className={`font-bold flex items-center gap-1 ${['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? 'text-red-400' : 'text-green-400'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? 'bg-red-400' : 'bg-green-400'}`} />
-                                {['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status)
-                                    ? (isAr ? 'لم يتم الدفع' : 'Unpaid')
-                                    : (isAr ? 'مدفوع' : 'Paid')}
-                            </span>
+                            {(() => {
+                                const paymentDisplay = getOrderPaymentDisplay(order.status);
+                                const paymentClasses = getOrderPaymentDisplayClasses(paymentDisplay);
+                                const label = paymentDisplay === 'partial'
+                                    ? (isAr ? 'دفع جزئي' : 'Partially Paid')
+                                    : paymentDisplay === 'paid'
+                                      ? (isAr ? 'مدفوع' : 'Paid')
+                                      : paymentDisplay === 'cancelled'
+                                        ? (isAr ? 'ملغى' : 'Cancelled')
+                                        : (isAr ? 'لم يتم الدفع' : 'Unpaid');
+                                return (
+                                    <span className={`font-bold flex items-center gap-1 ${paymentClasses.text}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${paymentClasses.dot.replace('animate-pulse', '')}`} />
+                                        {label}
+                                    </span>
+                                );
+                            })()}
                         </div>
                     </GlassCard>
 

@@ -403,6 +403,11 @@ export class ReviewsService {
 
     if (!store) return;
 
+    const publishedReviewCount = await this.prisma.review.count({
+      where: { storeId, adminStatus: 'PUBLISHED' },
+    });
+    if (publishedReviewCount === 0) return;
+
     const rating = Number(store.rating);
     
     // Find matching active rule

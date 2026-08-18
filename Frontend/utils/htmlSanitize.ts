@@ -22,7 +22,8 @@ export function sanitizeHtml(html: string | null | undefined): string {
   if (!html) return '';
   return DOMPurify.sanitize(String(html), {
     ALLOWED_TAGS: [
-      'p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'span', 'div',
+      'p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'span', 'div', 'article',
+      'header', 'footer', 'section',
       'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'a',
     ],

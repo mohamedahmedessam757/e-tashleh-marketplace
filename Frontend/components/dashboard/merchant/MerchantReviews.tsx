@@ -5,6 +5,7 @@ import { useReviewStore } from '../../../stores/useReviewStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Star, MessageSquare, User, Calendar, Quote, TrendingUp, Award, ThumbsUp, Loader2, Search, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { findApplicableRatingImpactRule, hasRatingSample } from '../../../utils/ratingImpactPolicy';
 
 export const MerchantReviews: React.FC = () => {
     const { t, language } = useLanguage();
@@ -42,12 +43,11 @@ export const MerchantReviews: React.FC = () => {
     const totalReviews = merchantStats?.totalReviews || 0;
     const fiveStarPercentage = merchantStats?.satisfaction || 0;
     const reputationGrowth = merchantStats?.reputationGrowth || 0;
-    const currentRank = merchantStats?.storeRank || 5; 
+    const currentRank = merchantStats?.storeRank || 5;
+    const hasReviews = hasRatingSample(totalReviews);
 
-    // Find applicable impact rule
-    const applicableRule = impactRules
-        .filter(r => r.isActive)
-        .find(r => averageRating >= Number(r.minRating) && averageRating <= Number(r.maxRating));
+    const applicableRule = findApplicableRatingImpactRule(impactRules, averageRating, totalReviews);
+    const showExcellentBadge = hasReviews && averageRating >= 4;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
@@ -56,9 +56,11 @@ export const MerchantReviews: React.FC = () => {
                 <GlassCard className="lg:col-span-1 p-8 bg-gradient-to-br from-gold-500/10 to-transparent border-gold-500/20 flex flex-col items-center justify-center text-center">
                     <div className="relative mb-4">
                         <div className="text-6xl font-black text-white">{averageRating.toFixed(1)}</div>
+                        {showExcellentBadge && (
                         <div className="absolute -top-2 -right-4 bg-gold-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-lg shadow-gold-500/20">
                             {isAr ? 'ممتاز' : 'EXCELLENT'}
                         </div>
+                        )}
                     </div>
                     
                     <div className="flex gap-1 mb-4">
@@ -149,17 +151,21 @@ export const MerchantReviews: React.FC = () => {
                              <div className="h-px w-8 bg-white/10" />
                         </div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">
-                            {applicableRule 
+                            {!hasReviews
+                                ? t.dashboard.merchant.reviews.noRatingYet
+                                : applicableRule
                                 ? (isAr ? applicableRule.actionLabelAr : applicableRule.actionLabelEn)
-                                : (averageRating >= 4 ? t.dashboard.merchant.reviews.featuredStore : t.dashboard.merchant.reviews.maintainingQuality)
+                                : t.dashboard.merchant.reviews.maintainingQuality
                             }
                         </h2>
                         <p className="text-white/50 text-sm max-w-xl">
-                            {applicableRule 
-                                ? (applicableRule.actionType === 'SUSPEND' 
+                            {!hasReviews
+                                ? t.dashboard.merchant.reviews.insufficientData
+                                : applicableRule
+                                ? (applicableRule.actionType === 'SUSPEND'
                                     ? (isAr ? `تنبيه: تقييمك الحالي قد يؤدي إلى إيقاف المتجر لمدة ${applicableRule.suspendDurationDays} أيام.` : `Warning: Your current rating may lead to a ${applicableRule.suspendDurationDays} day store suspension.`)
                                     : t.dashboard.merchant.reviews.impactDesc)
-                                : (averageRating >= 4 ? t.dashboard.merchant.reviews.featuredDesc : t.dashboard.merchant.reviews.qualityDesc)
+                                : t.dashboard.merchant.reviews.qualityDesc
                             }
                         </p>
                     </div>

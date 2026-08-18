@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { Order } from '../types';
 import { ordersApi } from '../services/api/orders';
+import { canCustomerCancelOrder } from '../utils/orderCancelPolicy';
 
 interface OrdersState {
     orders: Order[];
@@ -42,6 +43,9 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     },
 
     cancelOrder: async (orderId: string, reason?: string) => {
+        const order = get().getOrderById(orderId);
+        if (!order || !canCustomerCancelOrder(order.status)) return false;
+
         try {
             // Goes through the FSM-guarded, authorized backend transition endpoint.
             await ordersApi.cancel(orderId, reason);
@@ -89,8 +93,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     canCancelOrder: (orderId: string) => {
         const order = get().getOrderById(orderId);
         if (!order) return false;
-        const immutableStatuses = ['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
-        return !immutableStatuses.includes(order.status);
+        return canCustomerCancelOrder(order.status);
     },
 
     getCancelReason: (orderId: string) => {

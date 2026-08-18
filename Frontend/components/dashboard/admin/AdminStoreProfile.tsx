@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
@@ -22,7 +23,8 @@ import { AdminSignatureModal } from './AdminSignatureModal';
 import { AdminInitiateChatModal } from './AdminInitiateChatModal';
 import { ReuploadRequestModal } from '../../modals/ReuploadRequestModal';
 import { PrintTemplate } from './PrintTemplate';
-import { printHtml } from '../../../utils/print';
+import { printHtml, printContractHtml } from '../../../utils/print';
+import { ContractPrintDocument, mapAdminContractAcceptance } from '../shared/contracts/ContractPrintDocument';
 import { renderToString } from 'react-dom/server';
 import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
@@ -86,6 +88,9 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
     const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'offers' | 'disputes' | 'reviews' | 'financial' | 'sessions' | 'contract' | 'restrictions'>('overview');
     const [offerHighlightId, setOfferHighlightId] = useState<string | null>(null);
     const [hasPendingContractAmendment, setHasPendingContractAmendment] = useState(false);
+    const [isPrintingContract, setIsPrintingContract] = useState(false);
+    const [contractPrintTarget, setContractPrintTarget] = useState<any | null>(null);
+    const contractPrintRef = useRef<HTMLDivElement>(null);
 
     // Local state for modal
     const [selectedDoc, setSelectedDoc] = useState<{ type: string; title: string; url: string; status?: string } | null>(null);
@@ -534,114 +539,23 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
         printHtml(html, `Merchant_${vendor.storeCode}`);
     };
 
-    const handlePrintContract = (acceptance: any) => {
-        if (!acceptance || !vendor) return;
-
-        const content = (
-            <div className="space-y-8" dir="rtl">
-                <section>
-                    <table className="w-full border-collapse border border-gray-300 text-sm mb-6">
-                        <thead>
-                            <tr>
-                                <th colSpan={4} className="bg-gray-100 p-3 text-right font-bold text-gray-800 border border-gray-300 uppercase">
-                                    {isAr ? 'بيانات العقد المعتمدة (نسخة الحوكمة)' : 'Certified Contract Metadata'}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300 w-1/4">{isAr ? 'تاريخ القبول:' : 'Acceptance Date:'}</td>
-                                <td className="p-3 border border-gray-300 w-1/4">{new Date(acceptance.acceptedAt).toLocaleString('ar-EG', { dateStyle: 'long', timeStyle: 'short' })}</td>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300 w-1/4">{isAr ? 'مرجع العقد:' : 'Contract Ref:'}</td>
-                                <td className="p-3 border border-gray-300 font-mono text-xs w-1/4">{acceptance.id.toUpperCase()}</td>
-                            </tr>
-                            <tr>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300">{isAr ? 'إصدار العقد:' : 'Contract Version:'}</td>
-                                <td className="p-3 border border-gray-300 font-bold">{acceptance.contractVersion || '2026.04'}</td>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300">{isAr ? 'الحالة:' : 'Status:'}</td>
-                                <td className="p-3 border border-gray-300 font-bold text-green-700">{isAr ? 'معتمد إلكترونياً' : 'Electronically Certified'}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead>
-                            <tr>
-                                <th colSpan={4} className="bg-gray-100 p-3 text-right font-bold text-gray-800 border border-gray-300 uppercase">
-                                    {isAr ? 'بيانات الطرف الثاني (التاجر)' : 'Second Party (Merchant) Details'}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300 w-1/4">{isAr ? 'اسم المنشأة:' : 'Company Name:'}</td>
-                                <td className="p-3 border border-gray-300 w-1/4 font-bold">{acceptance.secondPartyData?.companyName}</td>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300 w-1/4">{isAr ? 'المدير المسؤول:' : 'Managing Director:'}</td>
-                                <td className="p-3 border border-gray-300 w-1/4">{acceptance.secondPartyData?.managerName}</td>
-                            </tr>
-                            <tr>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300">{isAr ? 'السجل التجاري:' : 'CR Number:'}</td>
-                                <td className="p-3 border border-gray-300 font-mono text-xs">{acceptance.secondPartyData?.crNumber}</td>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300">{isAr ? 'الرخصة التجارية:' : 'Trade License:'}</td>
-                                <td className="p-3 border border-gray-300 font-mono text-xs">{acceptance.secondPartyData?.licenseNumber}</td>
-                            </tr>
-                            <tr>
-                                <td className="bg-gray-50 p-3 font-bold border border-gray-300">{isAr ? 'البريد الإلكتروني:' : 'Certified Email:'}</td>
-                                <td colSpan={3} className="p-3 border border-gray-300">{acceptance.signatureData?.email || vendor?.owner?.email}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </section>
-
-                <section className="mt-8 border-2 border-gray-800 p-6 relative">
-                    <h3 className="text-lg font-black mb-6 text-center text-gray-900 uppercase tracking-widest border-b-2 border-gray-200 pb-4">
-                        {isAr ? 'نص الاتفاقية الموثقة' : 'Documented Agreement Text'}
-                    </h3>
-                    <div
-                        className="text-sm leading-relaxed text-gray-800 text-justify"
-                        style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
-                    >
-                        {isAr ? acceptance.contentArSnapshot : acceptance.contentEnSnapshot}
-                    </div>
-                </section>
-
-                <section className="mt-12 flex justify-between gap-10">
-                    <div className="flex-1 border border-gray-300 p-6 flex flex-col items-center min-h-[180px]">
-                        <p className="text-xs text-gray-600 font-bold uppercase mb-6">{isAr ? 'توقيع الطرف الأول (المنصة)' : 'First Party Signature'}</p>
-                        <div className="flex flex-col items-center">
-                            <div className="w-20 h-20 rounded-full border-2 border-gray-300 flex items-center justify-center mb-2">
-                                <div className="text-[10px] font-black text-center text-gray-400">E-TASHLEH<br />OFFICIAL<br />SEAL</div>
-                            </div>
-                            <p className="text-[10px] font-bold text-gray-500">{isAr ? 'ختم إلكتروني معتمد' : 'Authenticated Electronic Seal'}</p>
-                        </div>
-                    </div>
-                    <div className="flex-1 border border-gray-300 p-6 flex flex-col items-center min-h-[180px]">
-                        <p className="text-xs text-gray-600 font-bold uppercase mb-6">{isAr ? 'توقيع الطرف الثاني (التاجر)' : 'Second Party Signature'}</p>
-                        <div className="flex flex-col items-center gap-4 mt-4">
-                            <div className="font-black text-2xl text-gray-900" style={{ fontFamily: '"Brush Script MT", cursive' }}>
-                                {acceptance.signatureData?.signedName}
-                            </div>
-                            <div className="h-px w-48 bg-gray-400 mt-2" />
-                            <p className="text-[10px] font-mono text-gray-500">DIGITAL ID: {acceptance.id.split('-')[1]?.toUpperCase() || 'VERIFIED'}</p>
-                        </div>
-                    </div>
-                </section>
-
-                <div className="mt-8 pt-4 border-t border-gray-200 text-center space-y-1">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Global Governance Standards v2026.4.12</p>
-                    <p className="text-[9px] text-gray-400 font-mono">Security Check: {acceptance.ipAddress || '---'} | Timestamp: {new Date().toISOString()}</p>
-                </div>
-            </div>
-        );
-
-        const html = renderToString(
-            <PrintTemplate
-                title={isAr ? 'عقد انضمام وشروط الخدمة' : 'Merchant Partnership Agreement'}
-                subtitle={`Store ID: ${vendor.storeCode}`}
-                content={content}
-            />
-        );
-        printHtml(html, `Contract_${vendor.storeCode}`);
+    const handlePrintContract = async (acceptance: any) => {
+        if (!acceptance || !vendor || isPrintingContract) return;
+        setIsPrintingContract(true);
+        flushSync(() => setContractPrintTarget(acceptance));
+        try {
+            const el = contractPrintRef.current;
+            if (!el) {
+                console.error('Contract print source element not found');
+                return;
+            }
+            await printContractHtml(el.outerHTML, `Contract_${vendor.storeCode}`, {
+                dir: isAr ? 'rtl' : 'ltr',
+            });
+        } finally {
+            setIsPrintingContract(false);
+            setContractPrintTarget(null);
+        }
     };
 
     const ArrowIcon = isAr ? ChevronRight : ChevronLeft;
@@ -1363,7 +1277,7 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     },
                 ];
                 return (
-                    <GlassCard className="p-5 border-white/5" style={{ backgroundColor: '#141210' }}>
+                    <GlassCard className="p-5 border-white/5 bg-[#141210]">
                         <div className="flex items-center justify-between mb-4 px-1">
                             <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                 <Activity size={16} className="text-gold-500" />
@@ -2034,8 +1948,9 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
 
                             {activeTab === 'offers' && (
                                 <BlurredSection
-                                    isBlurred={isSectionBlurred('STORE_PROFILE', 'ORDERS')}
-                                    title={isAr ? 'سجل العروض' : 'Offer History'}
+                                    isBlurred={!canViewTab('STORE_PROFILE', 'ORDERS')}
+                                    titleAr="سجل العروض"
+                                    titleEn="Offer History"
                                 >
                                     <AdminStoreOfferHistory
                                         vendor={vendor}
@@ -2796,7 +2711,8 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                                         {/* 2026 Audit Action: Print Official Contract */}
                                                         <button
                                                             onClick={() => handlePrintContract(acceptance)}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest border border-gold-500/20 transition-all"
+                                                            disabled={isPrintingContract}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest border border-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold-500/10 disabled:hover:text-gold-500"
                                                         >
                                                             <FileText size={12} />
                                                             {isAr ? 'طباعة العقد المعتمد' : 'Print Official Contract'}
@@ -3344,6 +3260,28 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                     : (isAr ? `يرجى كتابة سبب الرفض والتوقيع لإبلاغ التاجر بخصوص مستند ${selectedDoc?.title}.` : `Please provide rejection reason and sign for ${selectedDoc?.title}.`)
                 }
             />
+            )}
+
+            {contractPrintTarget && vendor && (
+                <div
+                    id="contract-print-source"
+                    ref={contractPrintRef}
+                    aria-hidden="true"
+                    style={{
+                        position: 'fixed',
+                        left: '-9999px',
+                        top: 0,
+                        visibility: 'hidden',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <ContractPrintDocument
+                        acceptance={mapAdminContractAcceptance(contractPrintTarget)}
+                        storeName={vendor.name}
+                        storeCode={vendor.storeCode}
+                        language={language}
+                    />
+                </div>
             )}
 
         </div>

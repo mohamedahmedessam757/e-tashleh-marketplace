@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Store, MapPin, Clock, FileText, UploadCloud, Edit3, Save, CheckCircle2, User, Phone, Mail, Shield, ShieldCheck, Fingerprint, Globe, RefreshCw, Eye, Archive, CreditCard, ExternalLink, AlertTriangle, Star, ShieldAlert, Info, PenTool } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { useReviewStore } from '../../../stores/useReviewStore';
+import { isFeaturedMerchantByRules } from '../../../utils/ratingImpactPolicy';
 import { GlassCard } from '../../ui/GlassCard';
 import { MultiSelectDropdown } from '../../ui/MultiSelectDropdown';
 import { useCatalogStore } from '../../../stores/useCatalogStore';
-import { PrintTemplate } from '../admin/PrintTemplate';
-import { printHtml } from '../../../utils/print';
+import { printContractHtml } from '../../../utils/print';
+import { ContractPrintDocument, mapMerchantContractAcceptance } from '../shared/contracts/ContractPrintDocument';
 import { sanitizeHtml } from '../../../utils/htmlSanitize';
-import { renderToString } from 'react-dom/server';
 import { ContractAmendmentModal } from './ContractAmendmentModal';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
 import { MerchantDocumentUploadModal, type MerchantDocKey } from './MerchantDocumentUploadModal';
@@ -36,7 +36,7 @@ export const MerchantProfile: React.FC = () => {
         connectStripe, openStripeDashboard, fetchDashboardStats
     } = useVendorStore();
 
-    const { fetchImpactRules, impactRules } = useReviewStore();
+    const { fetchImpactRules, fetchMerchantStats, impactRules, merchantStats } = useReviewStore();
     const { makes, fetchCatalog, isLoading: isLoadingCatalog, subscribeToCatalog, unsubscribeFromCatalog } = useCatalogStore();
     
     const [activeProfileTab, setActiveProfileTab] = useState<'info' | 'contract' | 'restrictions'>('info');
@@ -50,6 +50,8 @@ export const MerchantProfile: React.FC = () => {
         key: MerchantDocKey;
         title: string;
     } | null>(null);
+    const [isPrintingContract, setIsPrintingContract] = useState(false);
+    const contractPrintRef = useRef<HTMLDivElement>(null);
 
     const archivedContracts = contractAcceptances.filter((a: any) => a.isActive === false);
     const hasPendingAmendment = pendingContractChanges.length > 0;
@@ -60,6 +62,7 @@ export const MerchantProfile: React.FC = () => {
         fetchDashboardStats();
         fetchPendingContractChanges();
         fetchImpactRules();
+        fetchMerchantStats();
         if (makes.length === 0) {
             fetchCatalog();
         }
@@ -67,7 +70,7 @@ export const MerchantProfile: React.FC = () => {
         return () => {
             unsubscribeFromCatalog();
         };
-    }, [fetchVendorProfile, fetchDashboardStats, fetchPendingContractChanges, fetchImpactRules, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
+    }, [fetchVendorProfile, fetchDashboardStats, fetchPendingContractChanges, fetchImpactRules, fetchMerchantStats, makes.length, fetchCatalog, subscribeToCatalog, unsubscribeFromCatalog]);
 
     const handleSubmitContractAmendment = async (data: SecondPartyData) => {
         await submitContractChange(data as Record<string, string>);
@@ -101,74 +104,18 @@ export const MerchantProfile: React.FC = () => {
         }
     };
 
-    const handlePrintContract = () => {
-        if (!contractAcceptance) return;
-        
-        const content = (
-            <div className="space-y-10" dir="rtl">
-                <section>
-                    <h3 className="text-xl font-bold mb-4 border-b-2 border-black pb-2">بيانات العقد الأساسية</h3>
-                    <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>تاريخ القبول:</strong> <span>{new Date(contractAcceptance.acceptedAt).toLocaleString('ar-EG')}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>رقم مرجع العقد:</strong> <span className="font-mono">{contractAcceptance.contractId}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>إصدار العقد:</strong> <span>{contractAcceptance.contract?.version || '1.0'}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>الحالة:</strong> <span className="text-green-600 font-bold">معتمد إلكترونياً</span></div>
-                    </div>
-                </section>
-
-                <section>
-                    <h3 className="text-xl font-bold mb-4 border-b-2 border-black pb-2">بيانات الطرف الثاني (التاجر)</h3>
-                    <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>اسم الشركة/المؤسسة:</strong> <span>{contractAcceptance.secondPartyData?.companyName}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>المدير المسؤول:</strong> <span>{contractAcceptance.secondPartyData?.managerName}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>رقم السجل التجاري:</strong> <span className="font-mono">{contractAcceptance.secondPartyData?.crNumber}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>رقم الرخصة:</strong> <span className="font-mono">{contractAcceptance.secondPartyData?.municipalityLicense}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>البريد الإلكتروني:</strong> <span>{contractAcceptance.signatureData?.email}</span></div>
-                        <div className="flex justify-between border-b border-gray-100 pb-1"><strong>رقم الهاتف:</strong> <span className="tabular-nums">{contractAcceptance.signatureData?.phone}</span></div>
-                    </div>
-                </section>
-
-                <section className="mt-8 border-2 border-gray-100 p-8 rounded-3xl bg-gray-50/50">
-                    <h3 className="text-lg font-black mb-6 text-center text-gray-800 uppercase tracking-tighter">نص الاتفاقية المعتمدة</h3>
-                    <div 
-                        className="text-[10pt] leading-relaxed whitespace-pre-wrap text-gray-700 text-justify font-serif"
-                        dangerouslySetInnerHTML={{ 
-                            __html: sanitizeHtml(language === 'ar' 
-                                ? contractAcceptance.contentArSnapshot 
-                                : contractAcceptance.contentEnSnapshot)
-                        }}
-                    />
-                </section>
-
-                <section className="mt-16 flex justify-between items-start gap-20">
-                    <div className="border-t-2 border-black pt-4 w-64 text-center">
-                        <p className="text-[10px] uppercase font-black text-gray-400 mb-10 tracking-widest">الطرف الأول (المنصة)</p>
-                        <div className="relative inline-block">
-                            <p className="font-black text-xl italic text-gray-800">E-TASHLEH</p>
-                            <div className="absolute -inset-4 border-4 border-blue-500/10 rounded-full rotate-12 flex items-center justify-center pointer-events-none">
-                                <span className="text-[8px] font-black text-blue-500/20">OFFICIAL SEAL</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="border-t-2 border-black pt-4 w-64 text-center">
-                        <p className="text-[10px] uppercase font-black text-gray-400 mb-10 tracking-widest">الطرف الثاني (التاجر)</p>
-                        <p className="font-bold text-2xl text-blue-900" style={{ fontFamily: '"Brush Script MT", cursive' }}>
-                            {contractAcceptance.signatureData?.signedName || contractAcceptance.signatureData?.signerName}
-                        </p>
-                        <p className="text-[8px] text-gray-400 mt-2 font-mono">Digitally Verified via IP: {contractAcceptance.ipAddress}</p>
-                    </div>
-                </section>
-            </div>
-        );
-
-        const html = renderToString(
-            <PrintTemplate 
-                title="عقد انضمام وشروط الخدمة" 
-                subtitle={`متجر: ${storeInfo.storeName} | المرجع: ${contractAcceptance.contractId}`}
-                content={content}
-            />
-        );
-        printHtml(html, `Contract_${storeInfo.storeName}`);
+    const handlePrintContract = async () => {
+        if (!contractAcceptance || isPrintingContract) return;
+        const el = contractPrintRef.current;
+        if (!el) return;
+        setIsPrintingContract(true);
+        try {
+            await printContractHtml(el.outerHTML, `Contract_${storeInfo.storeName}`, {
+                dir: language === 'ar' ? 'rtl' : 'ltr',
+            });
+        } finally {
+            setIsPrintingContract(false);
+        }
     };
 
     const InputGroup = ({ label, value, onChange, disabled = false, type = "text" }: any) => (
@@ -507,12 +454,9 @@ export const MerchantProfile: React.FC = () => {
                                     <div className="flex flex-col items-center gap-2 mb-2">
                                         <h2 className="text-xl font-bold text-white leading-tight">{storeInfo.storeName || t.dashboard.merchant.storeProfile.fields.name}</h2>
                                         {(() => {
-                                            const isFeatured = impactRules.some(r => 
-                                                r.actionType === 'FEATURED' && 
-                                                r.isActive && 
-                                                (performance?.rating || 0) >= Number(r.minRating) && 
-                                                (performance?.rating || 0) <= Number(r.maxRating)
-                                            );
+                                            const storeRating = performance?.rating || 0;
+                                            const totalReviews = merchantStats?.totalReviews ?? 0;
+                                            const isFeatured = isFeaturedMerchantByRules(impactRules, storeRating, totalReviews);
                                             
                                             if (!isFeatured) return null;
 
@@ -1024,7 +968,8 @@ export const MerchantProfile: React.FC = () => {
                                                 </div>
                                                 <button 
                                                     onClick={handlePrintContract}
-                                                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-black border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all group"
+                                                    disabled={isPrintingContract}
+                                                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-black border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500/10 disabled:hover:text-blue-500"
                                                     title={language === 'ar' ? 'تنزيل العقد PDF' : 'Download Contract PDF'}
                                                 >
                                                     <FileText size={14} className="group-hover:scale-110 transition-transform" />
@@ -1178,6 +1123,26 @@ export const MerchantProfile: React.FC = () => {
                             await fetchVendorProfile();
                         }}
                     />
+            {contractAcceptance && (
+                <div
+                    id="contract-print-source"
+                    ref={contractPrintRef}
+                    aria-hidden="true"
+                    style={{
+                        position: 'fixed',
+                        left: '-9999px',
+                        top: 0,
+                        visibility: 'hidden',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <ContractPrintDocument
+                        acceptance={mapMerchantContractAcceptance(contractAcceptance)}
+                        storeName={storeInfo.storeName}
+                        language={language}
+                    />
+                </div>
+            )}
         </div>
     );
 };
