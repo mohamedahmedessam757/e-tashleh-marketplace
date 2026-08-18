@@ -473,6 +473,14 @@ export const customer = {
           earningsLog: 'سجل الارباح والطلبات',
           searchPlaceholder: 'بحث برقم الطلب...',
           transactionDetails: 'تفاصيل المعاملة',
+          loyaltyTiers: {
+            BASIC: 'أساسي',
+            SILVER: 'فضي',
+            GOLD: 'ذهبي',
+            VIP: 'VIP',
+            ELITE: 'نخبة',
+            PARTNER: 'شريك',
+          },
         }
       },
       settings: {
@@ -1489,6 +1497,14 @@ export const customer = {
           earningsLog: 'Earnings & Orders Log',
           searchPlaceholder: 'Search Order Number...',
           transactionDetails: 'Transaction details',
+          loyaltyTiers: {
+            BASIC: 'Basic',
+            SILVER: 'Silver',
+            GOLD: 'Gold',
+            VIP: 'VIP',
+            ELITE: 'Elite',
+            PARTNER: 'Partner',
+          },
         }
       },
       settings: {

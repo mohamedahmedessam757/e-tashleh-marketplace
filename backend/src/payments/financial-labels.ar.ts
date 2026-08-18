@@ -43,6 +43,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, { en: string; ar: string }> =
 
 export const ESCROW_STATUS_LABELS: Record<string, { en: string; ar: string }> = {
   HELD: { en: 'Funds Secured in Escrow', ar: 'تأمين الأموال في الضمان' },
+  RELEASING: { en: 'Escrow Release In Progress', ar: 'جاري تحرير أموال الضمان' },
   RELEASED: { en: 'Escrow Funds Released', ar: 'تحرير أموال الضمان' },
   FROZEN: { en: 'Escrow Funds Frozen', ar: 'تجميد أموال الضمان' },
 };

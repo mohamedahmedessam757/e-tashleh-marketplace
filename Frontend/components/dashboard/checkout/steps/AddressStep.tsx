@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useCheckoutStore } from '../../../../stores/useCheckoutStore';
 import { useProfileStore } from '../../../../stores/useProfileStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
@@ -46,27 +46,12 @@ export const AddressStep: React.FC<{ showValidationErrors?: boolean; order?: any
         setLegalModalOpen(true);
     };
 
-    // Auto-fill from profile once on mount
-    useEffect(() => {
-        let needsUpdate = false;
-        if (!address.fullName && user?.name) {
-            updateAddress('fullName', user.name);
-            needsUpdate = true;
-        }
-        if (!address.phone && user?.phone) {
-            updateAddress('phone', user.phone);
-            needsUpdate = true;
-        }
-        if (!address.email && user?.email) {
-            updateAddress('email', user.email);
-            needsUpdate = true;
-        }
-        // If we auto-filled successfully and city/details exist from a previous session, we can start in read-only.
-        // Else, force them into edit mode so they enter city/address.
-        if (!address.city || !address.details) {
-            setIsEditingShipping(true);
-        }
-    }, [user]);
+    const applyProfileToAddress = () => {
+        if (user?.name) updateAddress('fullName', user.name);
+        if (user?.phone) updateAddress('phone', user.phone);
+        if (user?.email) updateAddress('email', user.email);
+        setIsEditingShipping(true);
+    };
 
     const tC = (t as any).dashboard.checkout;
 
@@ -99,13 +84,26 @@ export const AddressStep: React.FC<{ showValidationErrors?: boolean; order?: any
                         <User className="text-gold-500" size={24} />
                         <h3 className="text-xl font-bold text-white">{tC.steps.address}</h3>
                     </div>
-                    <button
-                        onClick={() => setIsEditingShipping(!isEditingShipping)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-sm font-bold text-white/80"
-                    >
-                        <Edit2 size={16} />
-                        <span>{tC.common.editData}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {(user?.name || user?.phone || user?.email) && isEditingShipping && (
+                            <button
+                                type="button"
+                                onClick={applyProfileToAddress}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gold-500/30 hover:bg-gold-500/10 transition-colors text-xs font-bold text-gold-400"
+                            >
+                                <User size={14} />
+                                <span>{isAr ? 'استخدام بيانات حسابي' : 'Use my account info'}</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsEditingShipping(!isEditingShipping)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-sm font-bold text-white/80"
+                        >
+                            <Edit2 size={16} />
+                            <span>{tC.common.editData}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content Body */}

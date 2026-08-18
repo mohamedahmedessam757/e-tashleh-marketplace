@@ -585,8 +585,29 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             'SHIPPED': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
             'PREPARATION': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
             'CANCELLED': 'bg-red-500/10 text-red-400 border-red-500/20',
+            'PAID': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+            'HELD': 'bg-white/5 text-white/60 border-white/10',
+            'RELEASED': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
         };
         return styles[status?.toUpperCase()] || 'bg-white/5 text-white/50 border-white/10';
+    };
+
+    const getStatusLabel = (status: string) => {
+        const labels: Record<string, string> = {
+            COMPLETED: isAr ? 'مكتمل' : 'Completed',
+            SUCCESS: isAr ? 'ناجح' : 'Success',
+            SHIPPED: isAr ? 'تم الشحن' : 'Shipped',
+            PREPARATION: isAr ? 'قيد التجهيز' : 'Preparation',
+            CANCELLED: isAr ? 'ملغي' : 'Cancelled',
+            PAID: isAr ? 'مدفوع' : 'Paid',
+            HELD: isAr ? 'محجوز' : 'Held',
+            RELEASED: isAr ? 'مُحرَّر' : 'Released',
+            PENDING: isAr ? 'قيد الانتظار' : 'Pending',
+            BASIC: isAr ? 'أساسي' : 'Basic',
+            DELIVERED: isAr ? 'تم التوصيل' : 'Delivered',
+            WARRANTY_ACTIVE: isAr ? 'الضمان نشط' : 'Warranty Active',
+        };
+        return labels[status?.toUpperCase()] || status;
     };
 
     const StatCard = ({ label, value, unit, icon: Icon, colorClass, bgClass, borderClass, subtitle }: any) => (
@@ -763,7 +784,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                         <p className="text-[10px] text-white/30 uppercase font-black">{w.storeTier}</p>
                         <div className="flex items-center gap-2 mt-1.5 text-gold-400">
                             <Crown size={16} />
-                            <span className="text-lg font-bold sm:text-xl tracking-tighter">{stats.loyaltyTier || 'BASIC'}</span>
+                            <span className="text-lg font-bold sm:text-xl tracking-tighter">{getStatusLabel(stats.loyaltyTier || 'BASIC')}</span>
                         </div>
                         <p className="text-[8px] text-white/30 mt-1">{w.storeTierHint}</p>
                     </GlassCard>
@@ -835,12 +856,12 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                             </td>
                                             <td className="px-4 py-4">
                                                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${getStatusStyle(tx.payment?.status || 'SUCCESS')}`}>
-                                                    {tx.payment?.status || 'SUCCESS'}
+                                                    {getStatusLabel(tx.payment?.status || 'SUCCESS')}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">
                                                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${getStatusStyle(tx.payment?.order?.status || 'PREPARATION')}`}>
-                                                    {tx.payment?.order?.status || 'PREP'}
+                                                    {getStatusLabel(tx.payment?.order?.status || tx.escrow?.order?.status || 'PREPARATION')}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4">

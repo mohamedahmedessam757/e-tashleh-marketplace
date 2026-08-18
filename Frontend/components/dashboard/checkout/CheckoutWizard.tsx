@@ -12,13 +12,11 @@ import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { OffersReviewStep } from './steps/OffersReviewStep';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
-import {
-    areAllAcceptedOffersPaid,
+import { areAllAcceptedOffersPaid,
     areAllPartsReadyForCheckout,
     getAcceptedOffersFromList,
     isOrderStatusPayable,
 } from '../../../utils/checkoutPaymentHelpers';
-import { hasMeaningfulAddress } from '../../../utils/checkoutSessionStorage';
 
 interface CheckoutWizardProps {
     onComplete: () => void;
@@ -41,7 +39,6 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
         orderId,
         paidOfferIds,
         syncPaidOffersForOrder,
-        hydrateShippingFromOrder,
         persistCheckoutSession,
         clearCheckoutForOrder,
     } = useCheckoutStore();
@@ -83,15 +80,6 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
         clearCheckoutForOrder(String(order.id));
         onNavigate('order-details', order.id);
     }, [order?.id, order?.status, language, addNotification, clearCheckoutForOrder, onNavigate]);
-
-    useEffect(() => {
-        if (!order || !orderId) return;
-        hydrateShippingFromOrder(order);
-        const s = useCheckoutStore.getState();
-        if (hasMeaningfulAddress(s.address) && s.step === 1 && s.termsAccepted) {
-            setStep(2);
-        }
-    }, [order?.id, order?.shippingAddresses, orderId, hydrateShippingFromOrder, setStep]);
 
     useEffect(() => {
         if (!orderId) return;

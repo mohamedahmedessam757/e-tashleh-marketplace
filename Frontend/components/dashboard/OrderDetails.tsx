@@ -501,7 +501,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         onNavigate('create-order');
     };
 
-    const openCheckout = (accOffer?: typeof firstAcceptedOffer) => {
+    const openCheckout = (accOffer?: typeof firstAcceptedOffer, opts?: { freshSession?: boolean }) => {
         // Hard stop: cancelled / closed orders must never enter checkout
         if (!isOrderStatusPayable(order.status)) {
             useNotificationStore.getState().addNotification({
@@ -533,8 +533,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
               ? 3
               : 1;
 
-        checkout.initCheckoutForOrder(order.id, { defaultStep });
-        checkout.hydrateShippingFromOrder(order);
+        checkout.initCheckoutForOrder(order.id, {
+            defaultStep,
+            freshSession: opts?.freshSession === true,
+        });
+        if (!opts?.freshSession) {
+            checkout.hydrateShippingFromOrder(order);
+        }
 
         if (paidIds.length > 0) {
             useCheckoutStore.setState((s) => ({
@@ -602,7 +607,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     recipientRole: 'CUSTOMER',
                 });
             } else {
-                openCheckout(offer);
+                openCheckout(offer, { freshSession: true });
             }
         } catch (error) {
             console.error('Failed to accept offer:', error);

@@ -79,6 +79,10 @@ const MONEY_KEYS = new Set([
   'platformCommissionBalance',
   'platformFeesBalance',
   'netPlatformPosition',
+  'platformCommissions',
+  'loyaltyReferralExpenses',
+  'commissionRefunds',
+  'netPlatformRevenue',
   'commissionBalance',
   'feesBalance',
   'totalAmount_summary',
@@ -176,19 +180,28 @@ export const AdminFinancialReports: React.FC = () => {
     return financialReportData.rows ?? financialReportData.data ?? [];
   }, [financialReportData]);
 
+  const numberLocale = isAr ? 'ar-AE' : 'en-AE';
+  const isPlatformRevenueReport =
+    selectedReport === 'platform-revenue-summary' || selectedReport === 'platform-revenue';
+
   const summaryEntries = useMemo(() => {
+    if (isPlatformRevenueReport) return [];
     const summary = financialReportData?.summary;
     if (!summary || typeof summary !== 'object') return [];
     return Object.entries(summary as Record<string, unknown>).filter(([, val]) => isScalar(val));
-  }, [financialReportData]);
+  }, [financialReportData, isPlatformRevenueReport]);
 
   const formatMoney = (val: number) =>
-    `${val.toLocaleString(isAr ? 'ar-EG' : 'en-US', { maximumFractionDigits: 2 })} AED`;
+    `${val.toLocaleString(numberLocale, { maximumFractionDigits: 2 })} AED`;
 
   const formatCell = useCallback(
     (key: string, val: unknown) => {
       if (val == null || val === '') return '—';
       if (typeof val === 'boolean') return val ? (isAr ? 'نعم' : 'Yes') : (isAr ? 'لا' : 'No');
+
+      if ((key === 'label' || key === 'metric') && typeof val === 'string') {
+        return columnLabels[val] || val;
+      }
 
       if (key === 'status' && typeof val === 'string') {
         const label = statusLabels[val] || val;
@@ -211,7 +224,7 @@ export const AdminFinancialReports: React.FC = () => {
       if (key.includes('At') || key === 'date') {
         const d = new Date(String(val));
         if (!Number.isNaN(d.getTime())) {
-          return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
+          return d.toLocaleDateString(numberLocale, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -231,12 +244,12 @@ export const AdminFinancialReports: React.FC = () => {
             </span>
           );
         }
-        return val.toLocaleString(isAr ? 'ar-EG' : 'en-US');
+        return val.toLocaleString(numberLocale);
       }
 
       return String(val);
     },
-    [isAr, statusLabels, roleLabels, payoutLabels],
+    [isAr, numberLocale, formatMoney, statusLabels, roleLabels, payoutLabels, columnLabels],
   );
 
   const columns = useMemo(() => {
@@ -258,7 +271,7 @@ export const AdminFinancialReports: React.FC = () => {
 
   const ReportIcon = REPORT_ICONS[selectedReport] || FileBarChart;
   const generatedAt = financialReportData?.generatedAt
-    ? new Date(financialReportData.generatedAt).toLocaleString(isAr ? 'ar-EG' : 'en-US')
+    ? new Date(financialReportData.generatedAt).toLocaleString(numberLocale)
     : null;
 
   const summaryColors = [
@@ -325,8 +338,22 @@ export const AdminFinancialReports: React.FC = () => {
       </GlassCard>
 
       
-      {selectedReport === 'platform-revenue-summary' && financialReportData?.summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {isPlatformRevenueReport && financialReportData?.summary && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+            {financialReportData.summary.periodStart || financialReportData.summary.periodEnd
+              ? `${columnLabels.periodStart || (isAr ? 'من' : 'From')} ${
+                  financialReportData.summary.periodStart
+                    ? new Date(financialReportData.summary.periodStart).toLocaleDateString(numberLocale)
+                    : '—'
+                }  —  ${columnLabels.periodEnd || (isAr ? 'إلى' : 'To')} ${
+                  financialReportData.summary.periodEnd
+                    ? new Date(financialReportData.summary.periodEnd).toLocaleDateString(numberLocale)
+                    : '—'
+                }`
+              : bt.allTime}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[
             { key: 'platformCommissions', ar: 'عمولات المنصة', en: 'Platform Commissions' },
             { key: 'loyaltyReferralExpenses', ar: 'مصروف الولاء والإحالة', en: 'Loyalty & Referral Expenses' },
@@ -336,10 +363,11 @@ export const AdminFinancialReports: React.FC = () => {
             <GlassCard key={card.key} className="p-5 bg-[#151310] border-white/5">
               <p className="text-[10px] font-black uppercase text-white/40 mb-2">{isAr ? card.ar : card.en}</p>
               <p className="text-2xl font-black text-gold-400">
-                {Number((financialReportData.summary as any)[card.key] || 0).toLocaleString()} AED
+                {formatMoney(Number((financialReportData.summary as any)[card.key] || 0))}
               </p>
             </GlassCard>
           ))}
+          </div>
         </div>
       )}
 

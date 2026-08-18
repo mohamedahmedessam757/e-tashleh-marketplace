@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { isUuid } from '../common/search/admin-entity-search.util';
 import {
   getEscrowStatusLabel,
   getPaymentStatusLabel,
@@ -47,28 +48,33 @@ export async function buildOrderFinancialTimeline(
   prisma: PrismaService,
   orderId: string,
 ): Promise<OrderFinancialTimelineDto> {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: {
-      id: true,
-      orderNumber: true,
-      status: true,
-      createdAt: true,
-      customer: { select: { id: true, name: true, avatar: true } },
-      offers: {
-        where: { status: 'accepted' },
-        select: {
-          store: { select: { id: true, name: true, logo: true, storeCode: true } },
-        },
+  const orderSelect = {
+    id: true,
+    orderNumber: true,
+    status: true,
+    createdAt: true,
+    customer: { select: { id: true, name: true, avatar: true } },
+    offers: {
+      where: { status: { in: ['accepted', 'ACCEPTED'] } },
+      select: {
+        store: { select: { id: true, name: true, logo: true, storeCode: true } },
       },
     },
-  });
+  };
+
+  const order = isUuid(orderId)
+    ? await prisma.order.findUnique({ where: { id: orderId }, select: orderSelect })
+    : await prisma.order.findFirst({
+        where: { orderNumber: orderId },
+        select: orderSelect,
+      });
 
   if (!order) throw new NotFoundException('Order not found');
+  const resolvedOrderId = order.id;
 
   const [payments, escrowRows, auditLogs, returns, disputes] = await Promise.all([
     prisma.paymentTransaction.findMany({
-      where: { orderId },
+      where: { orderId: resolvedOrderId },
       select: {
         id: true,
         createdAt: true,
@@ -79,11 +85,16 @@ export async function buildOrderFinancialTimeline(
         refundedAmount: true,
         transactionNumber: true,
         cardBrand: true,
+        offer: {
+          select: {
+            store: { select: { id: true, name: true, logo: true, storeCode: true } },
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.escrowTransaction.findMany({
-      where: { orderId },
+      where: { orderId: resolvedOrderId },
       select: {
         id: true,
         createdAt: true,
@@ -96,7 +107,10 @@ export async function buildOrderFinancialTimeline(
       orderBy: { createdAt: 'asc' },
     }),
     prisma.auditLog.findMany({
-      where: { orderId, entity: 'FINANCIAL' },
+      where: {
+        orderId: resolvedOrderId,
+        entity: { in: ['FINANCIAL', 'EscrowTransaction', 'Order'] },
+      },
       select: {
         id: true,
         timestamp: true,
@@ -107,12 +121,12 @@ export async function buildOrderFinancialTimeline(
       orderBy: { timestamp: 'asc' },
     }),
     prisma.returnRequest.findMany({
-      where: { orderId },
+      where: { orderId: resolvedOrderId },
       select: { id: true, createdAt: true, status: true, refundAmount: true, reason: true },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.dispute.findMany({
-      where: { orderId },
+      where: { orderId: resolvedOrderId },
       select: { id: true, createdAt: true, status: true, refundAmount: true, reason: true },
       orderBy: { createdAt: 'asc' },
     }),
@@ -121,13 +135,13 @@ export async function buildOrderFinancialTimeline(
   const paymentIds = payments.map((p) => p.id);
   const escrowIds = escrowRows.map((e) => e.id);
 
-  const walletTxs =
-    paymentIds.length || escrowIds.length
-      ? await prisma.walletTransaction.findMany({
+  const walletTxs = await prisma.walletTransaction.findMany({
           where: {
             OR: [
               ...(paymentIds.length ? [{ paymentId: { in: paymentIds } }] : []),
               ...(escrowIds.length ? [{ escrowId: { in: escrowIds } }] : []),
+              { metadata: { path: ['orderId'], equals: resolvedOrderId } },
+              { metadata: { path: ['order_id'], equals: resolvedOrderId } },
             ],
           },
           select: {
@@ -142,8 +156,7 @@ export async function buildOrderFinancialTimeline(
             description: true,
           },
           orderBy: { createdAt: 'asc' },
-        })
-      : [];
+        });
 
   const walletsByPayment = new Map<string, typeof walletTxs>();
   const walletsByEscrow = new Map<string, typeof walletTxs>();
@@ -264,6 +277,25 @@ export async function buildOrderFinancialTimeline(
     }
   }
 
+  for (const wt of walletTxs) {
+    if (seenWalletIds.has(wt.id)) continue;
+    seenWalletIds.add(wt.id);
+    const labelEn = getWalletTypeLabel(wt.transactionType, 'en');
+    const labelAr = getWalletTypeLabel(wt.transactionType, 'ar');
+    timeline.push({
+      id: `wallet-${wt.id}`,
+      eventType: `WALLET_${wt.transactionType.toUpperCase()}`,
+      eventTypeEn: labelEn,
+      eventTypeAr: labelAr,
+      timestamp: wt.createdAt,
+      direction: wt.type,
+      amount: Number(wt.amount),
+      role: wt.role,
+      descriptionEn: wt.description || labelEn,
+      descriptionAr: wt.description || labelAr,
+    });
+  }
+
   for (const log of auditLogs) {
     timeline.push({
       id: `audit-${log.id}`,
@@ -312,6 +344,10 @@ export async function buildOrderFinancialTimeline(
   const merchantById = new Map<string, (typeof order.offers)[number]['store']>();
   for (const offer of order.offers) {
     if (offer.store) merchantById.set(offer.store.id, offer.store);
+  }
+  for (const pt of payments) {
+    const store = pt.offer?.store;
+    if (store) merchantById.set(store.id, store);
   }
 
   const totalPaid = payments.reduce((sum, pt) => sum + Number(pt.totalAmount), 0);

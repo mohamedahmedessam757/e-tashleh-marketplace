@@ -19,6 +19,7 @@ import { OrderSlaService } from './order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
+import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
 import {
   isUuid,
   mergeWhereWithSearch,
@@ -49,6 +50,8 @@ export class OrdersService {
         private verificationTasks: VerificationTasksService,
         @Inject(forwardRef(() => EscrowService))
         private escrowService: EscrowService,
+        @Inject(forwardRef(() => OrderCompletionFinanceService))
+        private completionFinance: OrderCompletionFinanceService,
         private orderDurationConfig: OrderDurationConfigService,
         private logisticsConfig: LogisticsConfigService,
         private orderSla: OrderSlaService,
@@ -735,11 +738,13 @@ export class OrdersService {
 
         if (
             result.status === OrderStatus.COMPLETED ||
-            result.status === OrderStatus.WARRANTY_ACTIVE
+            result.status === OrderStatus.WARRANTY_ACTIVE ||
+            result.status === OrderStatus.WARRANTY_EXPIRED ||
+            result.status === OrderStatus.CLOSED
         ) {
-            void this.releaseHeldEscrowForOrder(orderId).catch((err) => {
+            void this.completionFinance.settleCompletedOrder(orderId).catch((err) => {
                 this.logger.warn(
-                    `Escrow release after order completion failed for ${orderId}: ${
+                    `Completion finance settlement failed for ${orderId}: ${
                         err instanceof Error ? err.message : String(err)
                     }`,
                 );
@@ -801,17 +806,6 @@ export class OrdersService {
                 [OrderStatus.AWAITING_PAYMENT]: 'Great choice! 👌 Please complete payment to start processing your order right away.',
                 [OrderStatus.RETURNED]: 'Your rights are protected 🤝 Your return request has been approved.'
             };
-
-            // 3.0 Real-time Reward Engine: Trigger 2026 Loyalty System upon COMPLETION
-            if (newStatus === OrderStatus.COMPLETED) {
-                this.loyaltyService.grantOrderCompletionRewards(orderId).catch(err => {
-                    console.error(`Failed to grant rewards for order ${orderId}:`, err);
-                });
-                // Referral commission v2 (1% of item subtotal, within 6-month window)
-                this.loyaltyService.processReferralReward(orderId).catch(err => {
-                    console.error(`Failed to process referral reward for order ${orderId}:`, err);
-                });
-            }
 
             // Lock vendor–customer chat on terminal statuses (cancel / complete / warranty)
             if (shouldCloseOrderChat(newStatus) || shouldCloseOrderChat(notifyStatus)) {
@@ -3399,32 +3393,5 @@ export class OrdersService {
         }, {} as Record<string, any>);
 
         return Object.values(cartsByCustomer);
-    }
-
-    private async releaseHeldEscrowForOrder(orderId: string): Promise<void> {
-        const heldPayments = await this.prisma.paymentTransaction.findMany({
-            where: {
-                orderId,
-                status: 'SUCCESS',
-                escrow: { status: 'HELD' },
-            },
-            select: { id: true },
-        });
-
-        for (const payment of heldPayments) {
-            try {
-                await this.escrowService.releaseFunds(
-                    orderId,
-                    'AUTO_48H',
-                    undefined,
-                    payment.id,
-                );
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                this.logger.warn(
-                    `Escrow release skipped for payment ${payment.id} on order ${orderId}: ${message}`,
-                );
-            }
-        }
     }
 }

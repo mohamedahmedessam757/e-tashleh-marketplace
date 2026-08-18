@@ -15,6 +15,7 @@ import {
 } from '../common/search/admin-entity-search.util';
 import { resolveCompletionWarranty } from '../orders/warranty-activation.util';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
+import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
 
 // Premium Bilingual status labels for notifications (Enthusiastic & Clear)
 const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
@@ -152,6 +153,8 @@ export class ShipmentsService {
         private auditLogs: AuditLogsService,
         private users: UsersService,
         private orderDurationConfig: OrderDurationConfigService,
+        @Inject(forwardRef(() => OrderCompletionFinanceService))
+        private completionFinance: OrderCompletionFinanceService,
         @Inject(forwardRef(() => OrdersService))
         private ordersService: OrdersService,
     ) {}
@@ -436,6 +439,14 @@ export class ShipmentsService {
                 },
             });
             this.ordersService.afterOrderReachedCompletion(shipment.orderId);
+            if (this.completionFinance.isTerminalFinanceStatus(warranty.effectiveStatus)) {
+                void this.completionFinance.settleCompletedOrder(shipment.orderId).catch((err) => {
+                    console.error(
+                        `Completion finance settlement failed for order ${shipment.orderId}:`,
+                        err instanceof Error ? err.message : err,
+                    );
+                });
+            }
         }
 
         // Send rich bilingual notifications
