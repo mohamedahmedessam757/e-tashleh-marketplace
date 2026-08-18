@@ -641,7 +641,8 @@ export class OrdersService {
         if (
             newStatus === OrderStatus.CANCELLED &&
             actor.type === ActorType.CUSTOMER &&
-            ![OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_OFFERS].includes(order.status as OrderStatus)
+            order.status !== OrderStatus.COLLECTING_OFFERS &&
+            order.status !== OrderStatus.AWAITING_OFFERS
         ) {
             throw new ForbiddenException('Customer can only cancel during offer collection phase');
         }
