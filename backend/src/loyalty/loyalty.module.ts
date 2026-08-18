@@ -15,7 +15,7 @@ import { JwtAuthSharedModule } from '../auth/jwt-auth-shared.module';
     PrismaModule,
     NotificationsModule,
     AuditLogsModule,
-    PaymentsModule,
+    forwardRef(() => PaymentsModule),
     forwardRef(() => MerchantPerformanceModule),
   ],
   controllers: [LoyaltyController],

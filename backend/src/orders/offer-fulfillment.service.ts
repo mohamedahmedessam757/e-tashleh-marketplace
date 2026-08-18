@@ -25,6 +25,7 @@ import {
     resolveCompletionWarranty,
 } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
+import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     [OfferFulfillmentStatus.AWAITING_PAYMENT]: 0,
@@ -68,6 +69,8 @@ export class OfferFulfillmentService {
         private orderDurationConfig: OrderDurationConfigService,
         @Inject(forwardRef(() => ChatService))
         private chatService: ChatService,
+        @Inject(forwardRef(() => OrderCompletionFinanceService))
+        private completionFinance: OrderCompletionFinanceService,
     ) {}
 
     private isAcceptedOffer(status: string) {
@@ -243,6 +246,15 @@ export class OfferFulfillmentService {
             if (shouldCloseOrderChat(effectiveStatus)) {
                 this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
                     console.error(`Failed to lock chat on completion for order ${orderId}:`, err);
+                });
+            }
+
+            if (this.completionFinance.isTerminalFinanceStatus(effectiveStatus)) {
+                void this.completionFinance.settleCompletedOrder(orderId).catch((err) => {
+                    console.error(
+                        `Completion finance settlement failed for order ${orderId}:`,
+                        err instanceof Error ? err.message : err,
+                    );
                 });
             }
 

@@ -7,7 +7,6 @@ import {
     Clock, 
     ClipboardCheck, 
     ShieldCheck, 
-    Percent, 
     Crown, 
     FileText, 
     Copy, 
@@ -108,7 +107,9 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const [isSavingBank, setIsSavingBank] = useState(false);
     const [showBankForm, setShowBankForm] = useState(false);
 
-    const availableBalance = isLoading ? null : Number(stats?.customerBalance ?? 0);
+    const availableBalance = isLoading
+        ? null
+        : Number(stats?.availableBalance ?? stats?.customerBalance ?? 0);
     const payoutReadiness = useMemo(
         () => getPayoutReadiness(bankDetails, stats?.stripeOnboarded),
         [bankDetails, stats?.stripeOnboarded],
@@ -286,7 +287,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
             return;
         }
 
-        if (amountNum > (stats?.customerBalance || 0)) {
+        if (amountNum > (stats?.availableBalance ?? stats?.customerBalance || 0)) {
             setWithdrawError(isAr ? 'رصيد المكافآت غير كافٍ' : 'Insufficient rewards balance');
             return;
         }
@@ -396,7 +397,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div style="border-bottom: 1px solid #F3F4F6; padding-bottom: 10px;">
                                 <span style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 800;">${isAr ? 'الرصيد المتاح' : 'Available Balance'}</span>
-                                <div style="font-size: 16px; font-weight: 800; color: #A88B3E;">${(stats?.customerBalance || 0).toLocaleString()} <small style="font-size: 9px;">AED</small></div>
+                                <div style="font-size: 16px; font-weight: 800; color: #A88B3E;">${(stats?.availableBalance ?? stats?.customerBalance || 0).toLocaleString()} <small style="font-size: 9px;">AED</small></div>
                             </div>
                             <div style="border-bottom: 1px solid #F3F4F6; padding-bottom: 10px;">
                                 <span style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 800;">${isAr ? 'إجمالي المشتريات' : 'Total Purchases'}</span>
@@ -576,7 +577,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                 <StatCard 
                     label={wd.availableBalance}
-                    value={Number(stats?.customerBalance || 0).toLocaleString()}
+                    value={Number(stats?.availableBalance ?? stats?.customerBalance || 0).toLocaleString()}
                     unit="AED"
                     icon={Wallet}
                     colorClass="text-emerald-400"
@@ -617,7 +618,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                 />
                 <StatCard 
                     label={wd.tier}
-                    value={stats?.loyaltyTier || 'BASIC'}
+                    value={(wd as any).loyaltyTiers?.[stats?.loyaltyTier || 'BASIC'] || stats?.loyaltyTier || (isAr ? 'أساسي' : 'Basic')}
                     unit={`[${stats?.referralCount || 0} ${isAr ? 'إحالة' : 'Ref'}]`}
                     icon={Crown}
                     colorClass="text-purple-400"
@@ -704,7 +705,6 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                     <GlassCard className="p-4 flex flex-col justify-center bg-white/[0.02] border-white/5 border-l-2 border-l-purple-500/30">
                         <p className="text-[10px] text-white/30 uppercase font-black">{wd.tierCashbackRate}</p>
                         <div className="flex items-center gap-2 mt-1.5 text-purple-400">
-                            <Percent size={16} />
                             <span className="text-lg font-bold sm:text-xl tracking-tighter">
                                 {stats?.tierCashbackRate ?? stats?.profitPercentage ?? 2}%
                             </span>
@@ -1132,7 +1132,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                         />
                                     </div>
                                     <div className="flex justify-between text-[10px] font-bold">
-                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available Balance:'} <span className="text-emerald-400 font-black">{isLoading ? '…' : `${(stats?.customerBalance ?? 0).toLocaleString()} AED`}</span></span>
+                                        <span className="text-white/30">{isAr ? 'الرصيد المتاح:' : 'Available Balance:'} <span className="text-emerald-400 font-black">{isLoading ? '…' : `${(stats?.availableBalance ?? stats?.customerBalance ?? 0).toLocaleString()} AED`}</span></span>
                                         <span className="text-white/30">{isAr ? 'الحد الأدنى:' : 'Min:'} <span className="text-white/80">{withdrawalLimits.min} AED</span></span>
                                     </div>
                                     {!canWithdraw && !isLoading && !stats?.withdrawalsFrozen && activeWithdrawal && (

@@ -12,6 +12,8 @@ import { FinancialConfigService } from '../common/financial-config.service';
 import { AdminFinancialService } from './admin-financial.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 import { InvoicesModule } from '../invoices/invoices.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { OrderCompletionFinanceService } from './order-completion-finance.service';
 
 @Module({
     imports: [
@@ -20,11 +22,26 @@ import { InvoicesModule } from '../invoices/invoices.module';
         AuditLogsModule,
         forwardRef(() => StripeModule),
         forwardRef(() => OrdersModule),
+        forwardRef(() => LoyaltyModule),
         CardsModule,
         InvoicesModule,
     ],
     controllers: [PaymentsController],
-    providers: [PaymentsService, EscrowService, FinancialConfigService, AdminFinancialService, WithdrawalWorkflowService],
-    exports: [PaymentsService, EscrowService, FinancialConfigService, AdminFinancialService, WithdrawalWorkflowService],
+    providers: [
+        PaymentsService,
+        EscrowService,
+        FinancialConfigService,
+        AdminFinancialService,
+        WithdrawalWorkflowService,
+        OrderCompletionFinanceService,
+    ],
+    exports: [
+        PaymentsService,
+        EscrowService,
+        FinancialConfigService,
+        AdminFinancialService,
+        WithdrawalWorkflowService,
+        OrderCompletionFinanceService,
+    ],
 })
 export class PaymentsModule { }

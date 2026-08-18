@@ -7,6 +7,7 @@ import { CreateIntentDto } from './dto/create-intent.dto';
 import { AdminManualPayoutDto, PayoutMethod } from './dto/admin-payout.dto';
 import { Prisma, ActorType, OfferFulfillmentStatus } from '@prisma/client';
 import { EscrowService } from './escrow.service';
+import { OrderCompletionFinanceService } from './order-completion-finance.service';
 import { UnifiedFinancialEventDto, FinancialEventSource, FinancialDirection } from './dto/unified-financial-feed.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
@@ -17,11 +18,6 @@ import {
     computeMerchantGrossSales,
     reconcileStoreWalletFromEscrow,
 } from './merchant-wallet-metrics.util';
-import {
-    escrowReleaseWindowEnd,
-    isOrderEligibleForEscrowAutoRelease,
-    isEscrowPaymentEligibleForAutoRelease,
-} from './escrow-release-eligibility.util';
 import {
     buildWithdrawalGovernance,
     countOpenMerchantCases,
@@ -35,7 +31,11 @@ import {
     computePendingLoyaltyFromOrders,
     computePendingReferralFromOrders,
     computeRefundedAmount,
+    computeCustomerAvailableBalance,
     CUSTOMER_PENDING_ORDER_STATUSES,
+    CUSTOMER_TERMINAL_REWARD_STATUSES,
+    extractOrderProfitOrderIds,
+    sumPrematureOrderProfit,
     reconcileUserTotalSpent,
     REFERRAL_WINDOW_DAYS,
     splitRewardAggregates,
@@ -92,6 +92,7 @@ export class PaymentsService {
         private readonly financialConfig: FinancialConfigService,
         private readonly withdrawalWorkflow: WithdrawalWorkflowService,
         private readonly invoiceSnapshot: InvoiceSnapshotService,
+        private readonly completionFinance: OrderCompletionFinanceService,
     ) { }
 
     /**
@@ -205,30 +206,50 @@ export class PaymentsService {
                 // in OrdersService/LoyaltyService to ensure return period has passed.
 
 
-                // 7c. Credit merchant wallet (unitPrice + shippingCost)
-                const merchantAmount = unitPrice + shippingCost;
+                // 7c. Hold merchant funds in escrow (available balance is credited on release)
                 const store = offer.store;
 
                 if (store) {
-                    const newStoreBalance = Number(store.balance) + merchantAmount;
-
-                    await tx.store.update({
-                        where: { id: store.id },
-                        data: { balance: newStoreBalance },
-                    });
-
-                    await tx.walletTransaction.create({
-                        data: {
-                            userId: store.ownerId,
-                            role: 'VENDOR',
-                            paymentId: payment.id,
-                            type: 'CREDIT',
-                            amount: merchantAmount,
-                            currency: 'AED',
-                            description: `Payment for offer #${offer.offerNumber} â€” Order #${order.orderNumber}`,
-                            balanceAfter: newStoreBalance,
+                    await this.escrowService.holdFunds(
+                        payment.id,
+                        orderId,
+                        store.id,
+                        {
+                            merchantAmount: unitPrice,
+                            shippingAmount: shippingCost,
+                            commissionAmount: commission,
+                            gatewayFee: 0,
                         },
+                        tx,
+                    );
+                    const pendingAfter = await tx.store.findUnique({
+                        where: { id: store.id },
+                        select: { pendingBalance: true },
                     });
+                    const vendorWalletExists = await tx.walletTransaction.findFirst({
+                        where: {
+                            paymentId: payment.id,
+                            role: 'VENDOR',
+                            type: 'CREDIT',
+                            transactionType: 'PAYMENT',
+                        },
+                        select: { id: true },
+                    });
+                    if (!vendorWalletExists) {
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: store.ownerId,
+                                role: 'VENDOR',
+                                paymentId: payment.id,
+                                type: 'CREDIT',
+                                transactionType: 'PAYMENT',
+                                amount: unitPrice,
+                                currency: 'AED',
+                                description: `Payment for offer #${offer.offerNumber} — Order #${order.orderNumber}`,
+                                balanceAfter: Number(pendingAfter?.pendingBalance ?? 0),
+                            },
+                        });
+                    }
                 }
 
                 // 7d. Credit admin commission (to a system wallet record)
@@ -2267,6 +2288,12 @@ export class PaymentsService {
     // --- New Wallet APIs ---
 
     async getCustomerWalletDashboard(userId: string) {
+        await this.completionFinance.healCustomerCompletionRewards(userId, 20).catch((err) => {
+            this.logger.warn(
+                `Customer wallet completion heal skipped: ${err instanceof Error ? err.message : String(err)}`,
+            );
+        });
+
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -2286,6 +2313,7 @@ export class PaymentsService {
             purchasesFromPayments,
             completedOrders,
             refundedAmount,
+            orderProfitTxs,
         ] = await Promise.all([
             this.prisma.user.findUnique({
                 where: { id: userId },
@@ -2351,6 +2379,14 @@ export class PaymentsService {
             computeCustomerTotalPurchases(this.prisma, userId),
             computeCustomerCompletedOrdersCount(this.prisma, userId),
             computeRefundedAmount(this.prisma, userId),
+            this.prisma.walletTransaction.findMany({
+                where: {
+                    userId,
+                    role: 'CUSTOMER',
+                    transactionType: 'ORDER_PROFIT',
+                },
+                select: { amount: true, transactionType: true, metadata: true },
+            }),
         ]);
 
         if (!user) throw new NotFoundException('User not found');
@@ -2361,6 +2397,7 @@ export class PaymentsService {
             finConfig,
         );
         const rewardSplits = splitRewardAggregates(rewardTxs, startOfMonth);
+        const rewardedOrderIds = extractOrderProfitOrderIds(orderProfitTxs);
         const pendingLoyaltyRewards = computePendingLoyaltyFromOrders(
             pendingOwnOrders,
             tierCashbackRate,
@@ -2369,6 +2406,30 @@ export class PaymentsService {
             pendingReferralOrders,
         );
         const pendingRewards = pendingLoyaltyRewards + pendingReferralRewards;
+
+        let prematureCashbackHeld = 0;
+        if (rewardedOrderIds.size > 0) {
+            const rewardedOrders = await this.prisma.order.findMany({
+                where: { id: { in: [...rewardedOrderIds] } },
+                select: { id: true, status: true },
+            });
+            const terminalSet = new Set<string>(CUSTOMER_TERMINAL_REWARD_STATUSES);
+            const nonTerminalRewardedIds = new Set(
+                rewardedOrders
+                    .filter((o) => !terminalSet.has(o.status))
+                    .map((o) => o.id),
+            );
+            prematureCashbackHeld = sumPrematureOrderProfit(
+                orderProfitTxs,
+                nonTerminalRewardedIds,
+            );
+        }
+
+        const rawCustomerBalance = Number(user.customerBalance || 0);
+        const availableBalance = computeCustomerAvailableBalance(
+            rawCustomerBalance,
+            prematureCashbackHeld,
+        );
 
         const totalOrdersCount = ordersCount._count.id;
         const orderCompletionRate =
@@ -2388,7 +2449,9 @@ export class PaymentsService {
         return {
             stats: {
                 ...user,
-                customerBalance: Number(user.customerBalance || 0),
+                customerBalance: rawCustomerBalance,
+                availableBalance,
+                prematureCashbackHeld,
                 totalSpent,
                 totalPurchases,
                 monthlyLoyaltyRewards: rewardSplits.monthlyLoyalty,
@@ -2549,7 +2612,17 @@ export class PaymentsService {
         }
         const hasDateFilter = Object.keys(dateFilter).length > 0;
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        await this.syncMerchantEscrowReleases(store.id);
+        const refreshedStoreEarly = await this.prisma.store.findUnique({
+            where: { id: store.id },
+            select: { balance: true, pendingBalance: true, frozenBalance: true },
+        });
+        if (refreshedStoreEarly) {
+            store.balance = refreshedStoreEarly.balance;
+            store.pendingBalance = refreshedStoreEarly.pendingBalance;
+            store.frozenBalance = refreshedStoreEarly.frozenBalance;
+        }
+
         // 1. Parallel fetch: KPI aggregates (always all-time) + filtered ledger for table
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const [
@@ -2671,20 +2744,7 @@ export class PaymentsService {
 
         const ACTIVE_STATUSES = ['PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'DELAYED_PREPARATION', 'NON_MATCHING'];
 
-        // Release eligible escrow (same rules as cron) + repair missing rows for completed orders
-        await this.syncMerchantEscrowReleases(store.id);
-        const refreshedStore = await this.prisma.store.findUnique({
-            where: { id: store.id },
-            select: { balance: true, pendingBalance: true, frozenBalance: true },
-        });
-        if (refreshedStore) {
-            store.balance = refreshedStore.balance;
-            store.pendingBalance = refreshedStore.pendingBalance;
-            store.frozenBalance = refreshedStore.frozenBalance;
-        }
-
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // 3. KPI cards â€” always all-time (never date-filtered)
+        // 3. KPI cards — always all-time (never date-filtered)
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const escrowBalances = await computeMerchantEscrowBalances(
             this.prisma,
@@ -3921,122 +3981,10 @@ export class PaymentsService {
     }
 
     /**
-     * Auto-release HELD escrow for completed/delivered orders (24h window).
-     * Also repairs SUCCESS payments that never created escrow rows (legacy/test data).
+     * Auto-release eligible escrow + repair missing rows, then reconcile store.balance.
      */
     private async syncMerchantEscrowReleases(storeId: string): Promise<void> {
-        const config = await this.financialConfig.getConfig();
-        const windowEnd = escrowReleaseWindowEnd(new Date(), config.escrowHoldHoursMerchant);
-
-        const heldEscrows = await this.prisma.escrowTransaction.findMany({
-            where: {
-                status: 'HELD',
-                payment: { offer: { storeId } },
-            },
-            select: {
-                orderId: true,
-                paymentId: true,
-                payment: {
-                    select: {
-                        offer: {
-                            select: {
-                                fulfillmentStatus: true,
-                                deliveredAt: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
-
-        for (const escrow of heldEscrows) {
-            const order = await this.prisma.order.findUnique({
-                where: { id: escrow.orderId },
-                select: { status: true, deliveredAt: true, updatedAt: true },
-            });
-            const offer = escrow.payment?.offer;
-            if (
-                !order ||
-                !isEscrowPaymentEligibleForAutoRelease(order, offer, windowEnd)
-            ) {
-                continue;
-            }
-            try {
-                await this.escrowService.releaseFunds(
-                    escrow.orderId,
-                    'AUTO_48H',
-                    undefined,
-                    escrow.paymentId,
-                );
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                this.logger.warn(
-                    `Escrow auto-release skipped for payment ${escrow.paymentId}: ${message}`,
-                );
-            }
-        }
-
-        const paymentsWithoutEscrow = await this.prisma.paymentTransaction.findMany({
-            where: {
-                status: 'SUCCESS',
-                offer: { storeId },
-                escrow: null,
-            },
-            include: {
-                order: { select: { status: true, deliveredAt: true, updatedAt: true } },
-                offer: {
-                    select: {
-                        fulfillmentStatus: true,
-                        deliveredAt: true,
-                        storeId: true,
-                        store: { select: { ownerId: true } },
-                    },
-                },
-            },
-        });
-
-        for (const payment of paymentsWithoutEscrow) {
-            if (!payment.order || !payment.offer?.storeId) continue;
-            if (
-                !isEscrowPaymentEligibleForAutoRelease(
-                    payment.order,
-                    payment.offer,
-                    windowEnd,
-                )
-            ) {
-                continue;
-            }
-
-            try {
-                const unitPrice = Number(payment.unitPrice || 0);
-                const shippingCost = Number(payment.shippingCost || 0);
-                const commission = Number(payment.commission || 0);
-                if (unitPrice <= 0) continue;
-
-                await this.escrowService.holdFunds(
-                    payment.id,
-                    payment.orderId,
-                    payment.offer.storeId,
-                    {
-                        merchantAmount: unitPrice,
-                        shippingAmount: shippingCost,
-                        commissionAmount: commission,
-                        gatewayFee: 0,
-                    },
-                );
-                await this.escrowService.releaseFunds(
-                    payment.orderId,
-                    'AUTO_48H',
-                    undefined,
-                    payment.id,
-                );
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                this.logger.warn(
-                    `Legacy escrow repair skipped for payment ${payment.id}: ${message}`,
-                );
-            }
-        }
+        await this.completionFinance.syncEligibleEscrowReleases({ storeId, limit: 50 });
 
         const store = await this.prisma.store.findUnique({
             where: { id: storeId },
@@ -4318,6 +4266,12 @@ export class PaymentsService {
      * Aggregates events from Payments, Wallet, Escrow, and Withdrawals.
      */
     async getUnifiedFinancialFeed(filters: any) {
+        await this.completionFinance.syncEligibleEscrowReleases({ limit: 50 }).catch((err) => {
+            this.logger.warn(
+                `Admin feed escrow heal skipped: ${err instanceof Error ? err.message : String(err)}`,
+            );
+        });
+
         const limit = Math.min(Math.max(Number(filters?.limit) || 50, 1), 100);
 
         const [{ rows, hasMore }, total] = await Promise.all([
@@ -4366,6 +4320,9 @@ export class PaymentsService {
                               },
                           },
                           payment: {
+                              select: { id: true, order: { select: { orderNumber: true, id: true } } },
+                          },
+                          escrow: {
                               select: { id: true, order: { select: { orderNumber: true, id: true } } },
                           },
                       },
@@ -4532,7 +4489,7 @@ export class PaymentsService {
                 description: w.description,
                 metadata: meta,
                 payment: w.payment,
-                order: w.payment?.order,
+                order: w.payment?.order || w.escrow?.order,
             },
             'ar',
         );
@@ -4542,15 +4499,16 @@ export class PaymentsService {
                 description: w.description,
                 metadata: meta,
                 payment: w.payment,
-                order: w.payment?.order,
+                order: w.payment?.order || w.escrow?.order,
             },
             'en',
         );
+        const linkedOrder = w.payment?.order || w.escrow?.order;
         return {
             id: w.id,
             source: FinancialEventSource.WALLET,
-            orderId: w.payment?.order?.id || (meta.orderId as string) || undefined,
-            orderNumber: w.payment?.order?.orderNumber || copyEn.orderNumber,
+            orderId: linkedOrder?.id || (meta.orderId as string) || (meta.order_id as string) || undefined,
+            orderNumber: linkedOrder?.orderNumber || copyEn.orderNumber,
             reference: (meta.requestId as string) || w.payment?.order?.orderNumber || w.id,
             debit: isCredit ? undefined : amount,
             credit: isCredit ? amount : undefined,

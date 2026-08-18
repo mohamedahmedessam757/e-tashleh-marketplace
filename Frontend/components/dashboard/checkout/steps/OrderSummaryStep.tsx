@@ -5,6 +5,7 @@ import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useProfileStore } from '../../../../stores/useProfileStore';
 import { MapPin, Info, AlertTriangle, Package, CheckCircle2, Copy, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { hasMeaningfulAddress } from '../../../../utils/checkoutSessionStorage';
 
 export const OrderSummaryStep: React.FC = () => {
     const { orderId, address, partAddresses, selectedOffer } = useCheckoutStore();
@@ -99,6 +100,7 @@ export const OrderSummaryStep: React.FC = () => {
 
 
     const hasMultiAddresses = Object.keys(partAddresses).length > 0;
+    const showShippingBlock = hasMultiAddresses || hasMeaningfulAddress(address);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300" dir={isAr ? 'rtl' : 'ltr'}>
@@ -273,7 +275,11 @@ export const OrderSummaryStep: React.FC = () => {
                         <h3 className="font-bold text-green-400 text-base">{tFR.shippingInfo}</h3>
                     </div>
 
-                    {!hasMultiAddresses ? (
+                    {!showShippingBlock ? (
+                        <p className="text-green-500/60 text-sm w-full text-center py-4">
+                            {isAr ? 'لم يتم إدخال بيانات الشحن بعد — ارجع للخطوة السابقة.' : 'Shipping details not entered yet — go back to the previous step.'}
+                        </p>
+                    ) : !hasMultiAddresses ? (
                         <div className="space-y-3 text-xs md:text-sm w-full">
                             <div className="flex justify-between items-start border-b border-green-500/10 pb-2">
                                 <span className="text-green-50 font-bold ltr:text-left rtl:text-right flex-1">{address.fullName}</span>

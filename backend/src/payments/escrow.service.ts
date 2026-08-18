@@ -192,15 +192,34 @@ export class EscrowService {
             );
         }
 
-        await this.prisma.$transaction(async (tx) => {
-            await tx.escrowTransaction.update({
-                where: { id: escrow.id },
+        const didRelease = await this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201602, hashtext(${escrow.id}))`;
+
+            const alreadyReleased = await tx.walletTransaction.findFirst({
+                where: { escrowId: escrow.id, transactionType: 'ESCROW_RELEASE' },
+                select: { id: true },
+            });
+            if (alreadyReleased) {
+                await tx.escrowTransaction.updateMany({
+                    where: { id: escrow.id, NOT: { status: 'RELEASED' } },
+                    data: {
+                        status: 'RELEASED',
+                        releaseCondition,
+                        releasedAt: new Date(),
+                    },
+                });
+                return false;
+            }
+
+            const claimed = await tx.escrowTransaction.updateMany({
+                where: { id: escrow.id, status: { in: ['HELD', 'RELEASING'] } },
                 data: {
                     status: 'RELEASED',
                     releaseCondition,
                     releasedAt: new Date(),
                 },
             });
+            if (claimed.count === 0) return false;
 
             await tx.store.update({
                 where: { id: store.id },
@@ -234,18 +253,6 @@ export class EscrowService {
                 },
             });
 
-            await this.notifications.create({
-                recipientId: store.ownerId,
-                recipientRole: 'VENDOR',
-                type: 'payment',
-                titleAr: 'تم تحرير الدفعة! 💸',
-                titleEn: 'Funds Released! 💸',
-                messageAr: `تم تحرير مبلغ ${escrow.merchantAmount} درهم للطلب #${order.orderNumber} وإضافته إلى رصيدك المتاح.`,
-                messageEn: `Amount of AED ${escrow.merchantAmount} for Order #${order.orderNumber} has been released to your available balance.`,
-                link: 'wallet',
-                metadata: { orderId, amount: escrow.merchantAmount },
-            });
-
             await this.auditLogs.logAction({
                 orderId,
                 action: 'ESCROW_RELEASED',
@@ -259,7 +266,44 @@ export class EscrowService {
                     paymentId: payment.id,
                     releaseMode: useStripeConnect ? 'stripe_connect' : 'internal_bank',
                 },
-            });
+            }, tx);
+            return true;
+        });
+
+        if (!didRelease) return;
+
+        await this.notifications.create({
+            recipientId: store.ownerId,
+            recipientRole: 'VENDOR',
+            type: 'payment',
+            titleAr: 'تم تحرير الدفعة! 💸',
+            titleEn: 'Funds Released! 💸',
+            messageAr: `تم تحرير مبلغ ${escrow.merchantAmount} درهم للطلب #${order.orderNumber} وإضافته إلى رصيدك المتاح.`,
+            messageEn: `Amount of AED ${escrow.merchantAmount} for Order #${order.orderNumber} has been released to your available balance.`,
+            link: 'wallet',
+            metadata: { orderId, amount: escrow.merchantAmount },
+        }).catch((err) => {
+            this.logger.warn(
+                `Vendor escrow-release notify failed for order ${orderId}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+        });
+
+        await this.notifications.notifyAdmins({
+            titleAr: 'تحرير ضمان للتاجر 💸',
+            titleEn: 'Merchant Escrow Released 💸',
+            messageAr: `تم تحرير مبلغ ${escrow.merchantAmount} درهم للطلب #${order.orderNumber} وإضافته لرصيد التاجر المتاح.`,
+            messageEn: `AED ${escrow.merchantAmount} for order #${order.orderNumber} has been released to the merchant available balance.`,
+            type: 'PAYMENT',
+            link: `/admin/orders/${orderId}`,
+            metadata: { orderId, amount: escrow.merchantAmount, paymentId: payment.id },
+        }).catch((err) => {
+            this.logger.warn(
+                `Admin escrow-release notify failed for order ${orderId}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
         });
     }
 

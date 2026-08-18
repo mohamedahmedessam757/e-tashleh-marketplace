@@ -1011,6 +1011,9 @@ export class AdminFinancialService {
                 }
               : {}),
           },
+          // PaymentTransaction stores original commission, not a separate "commission refunded"
+          // field. Until a dedicated refunded-commission amount exists, keep summing commission
+          // on refunded payments rather than guessing a ratio from refundedAmount/totalAmount.
           _sum: { commission: true },
         });
         // Net Platform Revenue = Platform Commissions − Loyalty/Referral Expenses − Commission Refunds
@@ -1029,34 +1032,28 @@ export class AdminFinancialService {
             loyaltyReferralExpenses,
             commissionRefunds,
             netPlatformRevenue,
-            // legacy fields kept for older UI cards
-            platformRevenue: kpis.platformRevenue,
-            platformCommissionBalance: kpis.platformCommissionBalance,
-            platformFeesBalance: kpis.platformFeesBalance,
-            netPlatformPosition: kpis.netPlatformPosition,
-            formula: 'netPlatformRevenue = platformCommissions - loyaltyReferralExpenses - commissionRefunds',
             periodStart: range.startDate,
             periodEnd: range.endDate,
           },
           rows: [
             {
               metric: 'platformCommissions',
-              label: 'Platform Commissions',
+              label: 'platformCommissions',
               amount: platformCommissions,
             },
             {
               metric: 'loyaltyReferralExpenses',
-              label: 'Loyalty & Referral Expenses',
+              label: 'loyaltyReferralExpenses',
               amount: loyaltyReferralExpenses,
             },
             {
               metric: 'commissionRefunds',
-              label: 'Commission Refunds',
+              label: 'commissionRefunds',
               amount: commissionRefunds,
             },
             {
               metric: 'netPlatformRevenue',
-              label: 'Net Platform Revenue',
+              label: 'netPlatformRevenue',
               amount: netPlatformRevenue,
             },
           ],

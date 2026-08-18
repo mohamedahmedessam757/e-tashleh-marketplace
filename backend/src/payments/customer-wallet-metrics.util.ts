@@ -19,6 +19,14 @@ export const CUSTOMER_PENDING_ORDER_STATUSES = [
   'CORRECTION_PERIOD',
   'CORRECTION_SUBMITTED',
   'DELAYED_PREPARATION',
+  'PARTIALLY_DELIVERED',
+] as const;
+
+/** Orders that qualify for realized cashback / completion settlement. */
+export const CUSTOMER_TERMINAL_REWARD_STATUSES = [
+  'COMPLETED',
+  'WARRANTY_ACTIVE',
+  'WARRANTY_EXPIRED',
 ] as const;
 
 export const REFERRAL_WINDOW_DAYS = 180;
@@ -155,17 +163,23 @@ export function buildActiveReferralWindowFilter(windowCutoff: Date) {
 }
 
 export function computePendingLoyaltyFromOrders(
-  pendingOrders: Array<{ payments: Array<{ commission?: unknown }> }>,
+  pendingOrders: Array<{ id?: string; payments: Array<{ commission?: unknown }> }>,
   tierCashbackRate: number,
+  excludeOrderIds?: Set<string>,
 ): number {
   return Number(
     pendingOrders
+      .filter((order) => !order.id || !excludeOrderIds?.has(order.id))
       .reduce((sum, order) => {
         const commission = order.payments.reduce(
           (cSum, p) => cSum + Number(p.commission || 0),
           0,
         );
-        return sum + commission * tierCashbackRate;
+        const raw = commission * tierCashbackRate;
+        const MIN_ORDER_REWARD = 2.0;
+        const MAX_ORDER_REWARD = 150.0;
+        const earned = Math.max(MIN_ORDER_REWARD, Math.min(MAX_ORDER_REWARD, raw));
+        return sum + (commission > 0 ? earned : 0);
       }, 0)
       .toFixed(2),
   );
@@ -185,6 +199,42 @@ export function computePendingReferralFromOrders(
       }, 0)
       .toFixed(2),
   );
+}
+
+export function extractOrderProfitOrderIds(
+  txs: Array<{ transactionType?: string | null; metadata?: unknown }>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const tx of txs) {
+    if (tx.transactionType !== 'ORDER_PROFIT') continue;
+    const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
+    if (typeof orderId === 'string' && orderId.length > 0) ids.add(orderId);
+  }
+  return ids;
+}
+
+/** Cashback credited before order reached a terminal completion status. */
+export function sumPrematureOrderProfit(
+  txs: Array<{ amount: unknown; transactionType?: string | null; metadata?: unknown }>,
+  nonTerminalOrderIds: Set<string>,
+): number {
+  return Number(
+    txs
+      .filter((tx) => {
+        if (tx.transactionType !== 'ORDER_PROFIT') return false;
+        const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
+        return orderId && nonTerminalOrderIds.has(orderId);
+      })
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+      .toFixed(2),
+  );
+}
+
+export function computeCustomerAvailableBalance(
+  customerBalance: number,
+  prematureCashbackHeld: number,
+): number {
+  return Number(Math.max(0, customerBalance - prematureCashbackHeld).toFixed(2));
 }
 
 /** Backfill users.total_spent from payment aggregates when drift detected. */

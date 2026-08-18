@@ -5,9 +5,16 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 import { OrdersModule } from '../orders/orders.module';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
-  imports: [PrismaModule, NotificationsModule, UsersModule, forwardRef(() => OrdersModule)],
+  imports: [
+    PrismaModule,
+    NotificationsModule,
+    UsersModule,
+    forwardRef(() => OrdersModule),
+    forwardRef(() => PaymentsModule),
+  ],
   controllers: [ShipmentsController],
   providers: [ShipmentsService],
   exports: [ShipmentsService],

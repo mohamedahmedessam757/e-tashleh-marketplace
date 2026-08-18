@@ -7,6 +7,25 @@ import { MerchantPerformanceService } from '../merchant-performance/merchant-per
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FinancialConfigService, LoyaltyTierConfig } from '../common/financial-config.service';
 import { sumMerchantShareByStore } from '../payments/merchant-wallet-metrics.util';
+import {
+  CLOSED_DISPUTE_STATUSES,
+  CLOSED_RETURN_STATUSES,
+} from '../chat/chat-completion-lock.util';
+
+const TERMINAL_REWARD_STATUSES = new Set([
+  'COMPLETED',
+  'WARRANTY_ACTIVE',
+  'WARRANTY_EXPIRED',
+  'CLOSED',
+]);
+
+const OPEN_DISPUTE_STATUS_FILTER = {
+  notIn: [...CLOSED_DISPUTE_STATUSES, 'REJECTED'] as string[],
+};
+
+const OPEN_RETURN_STATUS_FILTER = {
+  notIn: [...CLOSED_RETURN_STATUSES] as string[],
+};
 
 @Injectable()
 export class LoyaltyService {
@@ -129,8 +148,8 @@ export class LoyaltyService {
         customer: true,
         store: true,
         payments: { where: { status: 'SUCCESS' } },
-        disputes: { select: { id: true } },
-        returns: { select: { id: true } }
+        disputes: { where: { status: OPEN_DISPUTE_STATUS_FILTER }, select: { id: true } },
+        returns: { where: { status: OPEN_RETURN_STATUS_FILTER }, select: { id: true } },
       }
     });
 
@@ -139,10 +158,11 @@ export class LoyaltyService {
       return;
     }
 
-    // 2. EXTREME SECURITY: Verify strict eligibility
-    const isEligible = 
-        order.status === 'COMPLETED' && 
-        order.disputes.length === 0 && 
+    // Terminal fulfillment statuses (warranty is post-completion, not a failed order).
+    // Only OPEN disputes/returns block rewards — closed historical cases do not.
+    const isEligible =
+        TERMINAL_REWARD_STATUSES.has(order.status) &&
+        order.disputes.length === 0 &&
         order.returns.length === 0;
 
     if (!isEligible) {
@@ -150,19 +170,19 @@ export class LoyaltyService {
       return;
     }
 
+    const orderProfitWhere = {
+      userId: order.customerId,
+      transactionType: 'ORDER_PROFIT' as const,
+      metadata: { path: ['orderId'], equals: orderId },
+    };
+
     const existingOrderProfit = await this.prisma.walletTransaction.findFirst({
-      where: {
-        userId: order.customerId,
-        transactionType: 'ORDER_PROFIT',
-        metadata: { path: ['orderId'], equals: orderId },
-      },
+      where: orderProfitWhere,
     });
     if (existingOrderProfit) {
       this.logger.warn(`[LoyaltyEngine] Order ${orderId} rewards already granted. Skipping duplicate.`);
       return;
     }
-
-    await this.applyMerchantCompletionCounters(orderId);
 
     // 3. Compute Financial Basis
     const totalCommission = order.payments.reduce((sum, p) => sum + Number(p.commission || 0), 0);
@@ -170,6 +190,26 @@ export class LoyaltyService {
 
     if (totalCommission <= 0) {
       this.logger.log(`[LoyaltyEngine] Order ${orderId} has no platform commission. Skipping cash rewards.`);
+      const marked = await this.prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201601, hashtext(${orderId}))`;
+        const existing = await tx.walletTransaction.findFirst({ where: orderProfitWhere, select: { id: true } });
+        if (existing) return false;
+        await tx.walletTransaction.create({
+          data: {
+            userId: order.customerId,
+            role: 'CUSTOMER',
+            type: 'CREDIT',
+            transactionType: 'ORDER_PROFIT',
+            amount: 0,
+            currency: 'AED',
+            description: `Order completion marker (no commission): #${order.orderNumber}`,
+            balanceAfter: Number(order.customer.customerBalance),
+            metadata: { orderId: order.id, skipReason: 'no_commission' },
+          },
+        });
+        return true;
+      });
+      if (marked) await this.applyMerchantCompletionCounters(orderId);
       return;
     }
 
@@ -218,22 +258,12 @@ export class LoyaltyService {
     });
 
     const currentMonthlyProfitTotal = Number(monthlyProfits._sum.amount || 0);
-    
+    let hitMonthlyCap = false;
+
     if (currentMonthlyProfitTotal >= effectiveMonthlyCap) {
       this.logger.warn(`[LoyaltyEngine] User ${order.customerId} reached monthly cap (${effectiveMonthlyCap}). Reward skipped.`);
       earnedProfit = 0;
-
-      // Notify user about reaching the cap (v2026 transparency)
-      await this.notifications.create({
-        recipientId: order.customerId,
-        recipientRole: 'CUSTOMER',
-        titleAr: 'تم الوصول للحد الشهري! 🛑',
-        titleEn: 'Monthly Cap Reached! 🛑',
-        messageAr: `لقد حققت الحد الأقصى للأرباح لهذا الشهر (${effectiveMonthlyCap} درهم). ستتمكن من البدء في كسب مكافآت جديدة ابتداءً من الشهر القادم. استمر في التميز!`,
-        messageEn: `You've reached your maximum profit cap for this month (${effectiveMonthlyCap} AED). You will start earning rewards again next month. Keep it up!`,
-        type: 'loyalty',
-        link: '/dashboard/wallet'
-      });
+      hitMonthlyCap = true;
     } else if (currentMonthlyProfitTotal + earnedProfit > effectiveMonthlyCap) {
       earnedProfit = effectiveMonthlyCap - currentMonthlyProfitTotal;
     }
@@ -248,7 +278,13 @@ export class LoyaltyService {
     const newTier = await this.calculateTier(newTotalSpent);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // a. Synchronize User Stats
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201601, hashtext(${orderId}))`;
+      const existing = await tx.walletTransaction.findFirst({
+        where: orderProfitWhere,
+        select: { id: true },
+      });
+      if (existing) return null;
+
       const updatedUser = await tx.user.update({
         where: { id: order.customerId },
         data: {
@@ -259,30 +295,49 @@ export class LoyaltyService {
         }
       });
 
-      // b. Immutable Financial Audit Ledger
-      if (earnedProfit > 0) {
-        await tx.walletTransaction.create({
-          data: {
-            userId: order.customerId,
-            role: 'CUSTOMER',
-            type: 'CREDIT',
-            transactionType: 'ORDER_PROFIT',
-            amount: earnedProfit,
-            currency: 'AED',
-            description: `Order Success Reward: #${order.orderNumber} (${oldTier} Level)`,
-            balanceAfter: Number(updatedUser.customerBalance),
-            metadata: { 
-                orderId: order.id, 
-                commission: totalCommission, 
-                rate: `${config.percent * 100}%`,
-                capsApplied: earnedProfit < EARNED_RAW
-            }
+      // Always write ORDER_PROFIT (amount may be 0 at monthly cap) so heal paths stay idempotent.
+      await tx.walletTransaction.create({
+        data: {
+          userId: order.customerId,
+          role: 'CUSTOMER',
+          type: 'CREDIT',
+          transactionType: 'ORDER_PROFIT',
+          amount: earnedProfit,
+          currency: 'AED',
+          description: `Order Success Reward: #${order.orderNumber} (${oldTier} Level)`,
+          balanceAfter: Number(updatedUser.customerBalance),
+          metadata: { 
+              orderId: order.id, 
+              commission: totalCommission, 
+              rate: `${config.percent * 100}%`,
+              capsApplied: earnedProfit < EARNED_RAW,
+              skipReason: hitMonthlyCap ? 'monthly_cap' : undefined,
           }
-        });
-      }
+        }
+      });
 
       return updatedUser;
     });
+
+    if (!result) {
+      this.logger.warn(`[LoyaltyEngine] Order ${orderId} rewards already granted (race). Skipping duplicate.`);
+      return;
+    }
+
+    await this.applyMerchantCompletionCounters(orderId);
+
+    if (hitMonthlyCap) {
+      await this.notifications.create({
+        recipientId: order.customerId,
+        recipientRole: 'CUSTOMER',
+        titleAr: 'تم الوصول للحد الشهري! 🛑',
+        titleEn: 'Monthly Cap Reached! 🛑',
+        messageAr: `لقد حققت الحد الأقصى للأرباح لهذا الشهر (${effectiveMonthlyCap} درهم). ستتمكن من البدء في كسب مكافآت جديدة ابتداءً من الشهر القادم. استمر في التميز!`,
+        messageEn: `You've reached your maximum profit cap for this month (${effectiveMonthlyCap} AED). You will start earning rewards again next month. Keep it up!`,
+        type: 'loyalty',
+        link: '/dashboard/wallet'
+      });
+    }
 
     // 9. REAL-TIME SYNCHRONIZATION
     this.loyaltyGateway.emitLoyaltyUpdate(order.customerId, 'CUSTOMER', {
@@ -361,15 +416,18 @@ export class LoyaltyService {
           }
         },
         payments: { where: { status: 'SUCCESS' } },
-        disputes: { select: { id: true } },
-        returns: { select: { id: true } }
+        disputes: { where: { status: OPEN_DISPUTE_STATUS_FILTER }, select: { id: true } },
+        returns: { where: { status: OPEN_RETURN_STATUS_FILTER }, select: { id: true } },
       }
     });
 
     if (!order || !order.customer || !order.customer.referredById) return;
 
-    // Eligibility: order must be cleanly completed (no disputes, no returns)
-    if (order.status !== 'COMPLETED' || order.disputes.length > 0 || order.returns.length > 0) {
+    if (
+      !TERMINAL_REWARD_STATUSES.has(order.status) ||
+      order.disputes.length > 0 ||
+      order.returns.length > 0
+    ) {
       this.logger.warn(
         `[Referral] Order ${orderId} ineligible. status=${order.status} disputes=${order.disputes.length} returns=${order.returns.length}`
       );
@@ -414,7 +472,20 @@ export class LoyaltyService {
 
     const referredById = order.customer.referredById;
 
+    const referralWhere = {
+      userId: referredById,
+      transactionType: 'REFERRAL_PROFIT' as const,
+      metadata: { path: ['orderId'], equals: orderId },
+    };
+
     const result = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201603, hashtext(${orderId}))`;
+      const dup = await tx.walletTransaction.findFirst({
+        where: referralWhere,
+        select: { id: true },
+      });
+      if (dup) return null;
+
       const referrer = await tx.user.update({
         where: { id: referredById },
         data: {
@@ -447,6 +518,11 @@ export class LoyaltyService {
 
       return referrer;
     });
+
+    if (!result || !referredById) {
+      this.logger.warn(`[Referral] Duplicate prevention: order ${orderId} already rewarded (race).`);
+      return;
+    }
 
     this.loyaltyGateway.emitLoyaltyUpdate(referredById, 'CUSTOMER', {
       customerBalance: Number(result.customerBalance),

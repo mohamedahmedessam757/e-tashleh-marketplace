@@ -94,7 +94,7 @@ interface CheckoutState {
   /** Restore local session + optional server shipping; avoid wipe on re-entry. */
   initCheckoutForOrder: (
     orderId: string,
-    options?: { defaultStep?: number; forceReset?: boolean },
+    options?: { defaultStep?: number; forceReset?: boolean; freshSession?: boolean },
   ) => void;
   hydrateShippingFromOrder: (order: {
     shippingAddresses?: Array<{
@@ -166,9 +166,38 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   },
 
   initCheckoutForOrder: (orderId, options) => {
-    const forceReset = options?.forceReset === true;
-    const saved = !forceReset ? loadCheckoutSession(orderId) : null;
+    const forceReset = options?.forceReset === true || options?.freshSession === true;
+    const freshSession = options?.freshSession === true;
     const current = get();
+
+    if (freshSession) {
+      clearCheckoutSession(orderId);
+    }
+
+    const saved = !forceReset ? loadCheckoutSession(orderId) : null;
+
+    // Never carry address/terms from a different order into this checkout.
+    if (current.orderId && current.orderId !== orderId) {
+      set({
+        orderId,
+        step: options?.defaultStep ?? 1,
+        address: emptyAddress(),
+        isProcessing: false,
+        selectedOffer: null,
+        openDrawerForPartId: null,
+        termsAccepted: false,
+        returnPolicyAccepted: false,
+        isEditingShipping: true,
+        partAddresses: {},
+        paidOfferIds: [],
+        paymentError: null,
+        lastPaymentResult: null,
+        clientSecret: null,
+        isOnline: navigator.onLine,
+      });
+      get().persistCheckoutSession();
+      return;
+    }
 
     if (saved) {
       set({
@@ -252,9 +281,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     set({
       address: toAddress(main),
       partAddresses,
-      termsAccepted: true,
-      returnPolicyAccepted: true,
-      isEditingShipping: false,
+      // User must re-accept terms and confirm address each checkout session.
+      isEditingShipping: true,
     });
     get().persistCheckoutSession();
   },

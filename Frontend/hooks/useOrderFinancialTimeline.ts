@@ -33,7 +33,15 @@ export interface OrderFinancialTimelineData {
 }
 
 const memoryCache = new Map<string, OrderFinancialTimelineData>();
-const inflight = new Map<string, Promise<OrderFinancialTimelineData | null>>();
+
+export class OrderFinancialTimelineHttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'OrderFinancialTimelineHttpError';
+    this.status = status;
+  }
+}
 
 function timelineFingerprint(data: OrderFinancialTimelineData): string {
   const last = data.timeline[data.timeline.length - 1];
@@ -50,13 +58,18 @@ function timelineFingerprint(data: OrderFinancialTimelineData): string {
 async function fetchTimelineFromApi(
   orderId: string,
   signal?: AbortSignal,
-): Promise<OrderFinancialTimelineData | null> {
+): Promise<OrderFinancialTimelineData> {
   const token = localStorage.getItem('access_token');
-  const res = await fetch(`${API_URL}/payments/admin/order-financial-timeline/${orderId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    signal,
-  });
-  if (!res.ok) return null;
+  const res = await fetch(
+    `${API_URL}/payments/admin/order-financial-timeline/${encodeURIComponent(orderId)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal,
+    },
+  );
+  if (!res.ok) {
+    throw new OrderFinancialTimelineHttpError(res.status, `Timeline request failed (${res.status})`);
+  }
   return res.json();
 }
 
@@ -65,6 +78,7 @@ export function useOrderFinancialTimeline(orderId: string) {
   const [data, setData] = useState<OrderFinancialTimelineData | null>(cached);
   const [loading, setLoading] = useState(!cached);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fingerprintRef = useRef(cached ? timelineFingerprint(cached) : '');
 
@@ -86,31 +100,26 @@ export function useOrderFinancialTimeline(orderId: string) {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      let promise = inflight.get(orderId);
-      if (!promise) {
-        promise = fetchTimelineFromApi(orderId, controller.signal).finally(() => {
-          inflight.delete(orderId);
-        });
-        inflight.set(orderId, promise);
-      }
-
       try {
-        const next = await promise;
-        if (controller.signal.aborted || !next) {
-          if (!silent && !existing) setLoading(false);
-          setRefreshing(false);
-          return;
-        }
+        const next = await fetchTimelineFromApi(orderId, controller.signal);
+        if (controller.signal.aborted) return;
 
+        setError(null);
         const fp = timelineFingerprint(next);
         if (fp !== fingerprintRef.current) {
           fingerprintRef.current = fp;
           memoryCache.set(orderId, next);
           setData(next);
+        } else if (!existing) {
+          memoryCache.set(orderId, next);
+          setData(next);
         }
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Failed to fetch order financial timeline', err);
+        if ((err as Error).name === 'AbortError') return;
+        console.error('Failed to fetch order financial timeline', err);
+        if (!existing) {
+          setError((err as Error).message || 'load_failed');
+          setData(null);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -134,5 +143,5 @@ export function useOrderFinancialTimeline(orderId: string) {
     load(true);
   }, [load]);
 
-  return { data, loading, refreshing, silentRefresh };
+  return { data, loading, refreshing, error, silentRefresh };
 }

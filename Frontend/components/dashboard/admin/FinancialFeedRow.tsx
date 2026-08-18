@@ -192,7 +192,9 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                                     ? 'bg-amber-500'
                                     : 'bg-white/20'
                         }`} />
-                        <span className="text-[10px] text-white/60 font-black uppercase">{item.status}</span>
+                        <span className="text-[10px] text-white/60 font-black">
+                            {t.admin.billing.reports.statusLabels?.[item.status] || item.status}
+                        </span>
                     </div>
                 </td>
                 <td className="px-6 py-6 text-center font-mono text-[9px] text-white/30">
@@ -217,9 +219,11 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (item.orderId) onViewAudit(item.orderId);
+                                if (item.orderId || item.orderNumber) {
+                                    onViewAudit(item.orderId || item.orderNumber || '');
+                                }
                             }}
-                            disabled={!item.orderId}
+                            disabled={!item.orderId && !item.orderNumber}
                             className="p-2 rounded-xl bg-white/5 hover:bg-gold-500 hover:text-black transition-all disabled:opacity-20 disabled:cursor-not-allowed group/btn shadow-lg border border-white/5"
                             title={t.admin.billing.ledger.table.viewAudit}
                         >

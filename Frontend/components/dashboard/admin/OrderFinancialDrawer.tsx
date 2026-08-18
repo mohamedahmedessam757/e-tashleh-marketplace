@@ -67,6 +67,7 @@ const DrawerBody = memo(function DrawerBody({
   data,
   loading,
   refreshing,
+  error,
 }: {
   orderId: string;
   isAr: boolean;
@@ -74,6 +75,7 @@ const DrawerBody = memo(function DrawerBody({
   data: OrderFinancialTimelineData | null;
   loading: boolean;
   refreshing: boolean;
+  error: string | null;
 }) {
   if (loading && !data) {
     return (
@@ -82,6 +84,14 @@ const DrawerBody = memo(function DrawerBody({
         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gold-500">
           {t.admin.billing.ledger.auditDrawer.analyzing}
         </span>
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px] text-rose-400/80 text-sm font-medium px-6 text-center">
+        {t.admin.billing.ledger.auditDrawer.loadError}
       </div>
     );
   }
@@ -221,8 +231,9 @@ export const OrderFinancialDrawer: React.FC<OrderFinancialDrawerProps> = memo(fu
 }) {
   const { t, language } = useLanguage();
   const isAr = language === 'ar';
-  const { data, loading, refreshing, silentRefresh } = useOrderFinancialTimeline(orderId);
+  const { data, loading, refreshing, error, silentRefresh } = useOrderFinancialTimeline(orderId);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const realtimeOrderId = data?.order?.id || orderId;
 
   const scheduleSilentRefresh = useCallback(() => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
@@ -230,16 +241,19 @@ export const OrderFinancialDrawer: React.FC<OrderFinancialDrawerProps> = memo(fu
   }, [silentRefresh]);
 
   useEffect(() => {
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(realtimeOrderId)) return;
+
     const channel = supabase
-      .channel(`order-audit-${orderId}`)
+      .channel(`order-audit-${realtimeOrderId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'payment_transactions', filter: `order_id=eq.${orderId}` },
+        { event: '*', schema: 'public', table: 'payment_transactions', filter: `order_id=eq.${realtimeOrderId}` },
         scheduleSilentRefresh,
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'escrow_transactions', filter: `order_id=eq.${orderId}` },
+        { event: '*', schema: 'public', table: 'escrow_transactions', filter: `order_id=eq.${realtimeOrderId}` },
         scheduleSilentRefresh,
       )
       .subscribe();
@@ -248,7 +262,7 @@ export const OrderFinancialDrawer: React.FC<OrderFinancialDrawerProps> = memo(fu
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       supabase.removeChannel(channel);
     };
-  }, [orderId, scheduleSilentRefresh]);
+  }, [realtimeOrderId, scheduleSilentRefresh]);
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -305,6 +319,7 @@ export const OrderFinancialDrawer: React.FC<OrderFinancialDrawerProps> = memo(fu
             data={data}
             loading={loading}
             refreshing={refreshing}
+            error={error}
           />
         </div>
 
