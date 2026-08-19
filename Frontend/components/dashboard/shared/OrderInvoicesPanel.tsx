@@ -235,7 +235,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     }
 
     const masterInvoices = filterInvoicesByTab(invoices, 'MASTER');
-    const visibleInvoices = isSystemAdmin
+    const hasTypedDocs = invoices.some((inv) => {
+        const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
+        return type !== 'MASTER';
+    });
+    const showDocTabs = isSystemAdmin || hasTypedDocs;
+    const visibleInvoices = showDocTabs
         ? filterInvoicesByTab(invoices, activeDocTab)
         : masterInvoices;
 
@@ -282,6 +287,10 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         lineItems: docs.lineItems || (isAr ? 'تفصيل القطع' : 'Part breakdown'),
         platformCompany: docs.platformCompany || (isAr ? 'الشركة' : 'Company'),
         commissionAmount: docs.commissionAmount || (isAr ? 'عمولة المنصة' : 'Platform commission'),
+        gatewayFee: docs.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee'),
+        refundFee: docs.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee'),
+        roundtripShipping: docs.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping'),
+        adjudicationFee: docs.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee'),
         customer: docs.customer || (isAr ? 'العميل' : 'Customer'),
         total: docs.total || (isAr ? 'الإجمالي' : 'Total'),
         thankYou: docs.thankYou || (isAr ? 'شكراً لثقتكم واختياركم منصة E-Tashleh.net' : 'Thank you for trusting E-Tashleh.net'),
@@ -756,9 +765,9 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         </div>
                     )}
 
-                    {isSystemAdmin && (
+                    {showDocTabs && (
                         <div className="flex flex-wrap gap-2 no-print">
-                            {INVOICE_DOC_TABS.map((tab) => {
+                            {(isSystemAdmin ? INVOICE_DOC_TABS : INVOICE_DOC_TABS.filter((tab) => tab === 'MASTER' || filterInvoicesByTab(invoices, tab).length > 0)).map((tab) => {
                                 const count = filterInvoicesByTab(invoices, tab).length;
                                 const active = activeDocTab === tab;
                                 return (
@@ -820,7 +829,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {(!isSystemAdmin || activeDocTab === 'MASTER') && (
+                                        {(activeDocTab === 'MASTER') && (
                                         <button
                                             onClick={() => handleExportExcel(inv)}
                                             disabled={isExporting === inv.id}
@@ -857,7 +866,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                             <img src="/logo.png" alt="" className="w-1/2 h-auto max-w-sm" />
                                         </div>
 
-                                        {(!isSystemAdmin || activeDocTab === 'MASTER') ? (
+                                        {(activeDocTab === 'MASTER') ? (
                                             <InvoiceContentBlock inv={inv} />
                                         ) : (
                                             <InvoiceTypedDocument
@@ -893,7 +902,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         color: '#111827',
                     }}
                 >
-                    {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
+                    {(String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
                         <InvoiceContentBlock inv={activeInvoice} />
                     ) : (
                         <InvoiceTypedDocument

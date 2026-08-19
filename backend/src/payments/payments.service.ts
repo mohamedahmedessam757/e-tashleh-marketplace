@@ -32,10 +32,11 @@ import {
     computePendingReferralFromOrders,
     computeRefundedAmount,
     computeCustomerAvailableBalance,
-    CUSTOMER_PENDING_ORDER_STATUSES,
+    CUSTOMER_PENDING_REWARD_ORDER_STATUSES,
     CUSTOMER_TERMINAL_REWARD_STATUSES,
     extractOrderProfitOrderIds,
     sumPrematureOrderProfit,
+    sumPrematureReferralProfit,
     reconcileUserTotalSpent,
     REFERRAL_WINDOW_DAYS,
     splitRewardAggregates,
@@ -2339,13 +2340,13 @@ export class PaymentsService {
             this.prisma.order.findMany({
                 where: {
                     customerId: userId,
-                    status: { in: [...CUSTOMER_PENDING_ORDER_STATUSES] },
+                    status: { in: [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES] },
                 },
                 include: { payments: { where: { status: 'SUCCESS' } } },
             }),
             this.prisma.order.findMany({
                 where: {
-                    status: { in: [...CUSTOMER_PENDING_ORDER_STATUSES] },
+                    status: { in: [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES] },
                     customer: {
                         referredById: userId,
                         ...buildActiveReferralWindowFilter(referralWindowCutoff),
@@ -2383,9 +2384,9 @@ export class PaymentsService {
                 where: {
                     userId,
                     role: 'CUSTOMER',
-                    transactionType: 'ORDER_PROFIT',
+                    transactionType: { in: ['ORDER_PROFIT', 'REFERRAL_PROFIT'] },
                 },
-                select: { amount: true, transactionType: true, metadata: true },
+                select: { amount: true, type: true, transactionType: true, metadata: true },
             }),
         ]);
 
@@ -2398,16 +2399,21 @@ export class PaymentsService {
         );
         const rewardSplits = splitRewardAggregates(rewardTxs, startOfMonth);
         const rewardedOrderIds = extractOrderProfitOrderIds(orderProfitTxs);
-        const pendingLoyaltyRewards = computePendingLoyaltyFromOrders(
-            pendingOwnOrders,
-            tierCashbackRate,
+        const pendingLoyaltyRewards = Number(
+            (
+                computePendingLoyaltyFromOrders(
+                    pendingOwnOrders,
+                    tierCashbackRate,
+                    rewardedOrderIds,
+                )
+            ).toFixed(2),
         );
         const pendingReferralRewards = computePendingReferralFromOrders(
-            pendingReferralOrders,
+            pendingReferralOrders.filter((order) => !rewardedOrderIds.has(order.id)),
         );
-        const pendingRewards = pendingLoyaltyRewards + pendingReferralRewards;
 
         let prematureCashbackHeld = 0;
+        let prematureReferralHeld = 0;
         if (rewardedOrderIds.size > 0) {
             const rewardedOrders = await this.prisma.order.findMany({
                 where: { id: { in: [...rewardedOrderIds] } },
@@ -2423,12 +2429,24 @@ export class PaymentsService {
                 orderProfitTxs,
                 nonTerminalRewardedIds,
             );
+            prematureReferralHeld = sumPrematureReferralProfit(
+                orderProfitTxs,
+                nonTerminalRewardedIds,
+            );
         }
+
+        const pendingLoyaltyDisplayed = Number(
+            (pendingLoyaltyRewards + prematureCashbackHeld).toFixed(2),
+        );
+        const pendingReferralDisplayed = Number(
+            (pendingReferralRewards + prematureReferralHeld).toFixed(2),
+        );
+        const pendingRewards = pendingLoyaltyDisplayed + pendingReferralDisplayed;
 
         const rawCustomerBalance = Number(user.customerBalance || 0);
         const availableBalance = computeCustomerAvailableBalance(
             rawCustomerBalance,
-            prematureCashbackHeld,
+            prematureCashbackHeld + prematureReferralHeld,
         );
 
         const totalOrdersCount = ordersCount._count.id;
@@ -2458,8 +2476,8 @@ export class PaymentsService {
                 monthlyReferralRewards: rewardSplits.monthlyReferral,
                 monthlyRewards:
                     rewardSplits.monthlyLoyalty + rewardSplits.monthlyReferral,
-                pendingLoyaltyRewards,
-                pendingReferralRewards,
+                pendingLoyaltyRewards: pendingLoyaltyDisplayed,
+                pendingReferralRewards: pendingReferralDisplayed,
                 pendingRewards,
                 refundedAmount,
                 walletDeductions: Number(walletDebitStats._sum.amount || 0),
@@ -3442,6 +3460,12 @@ export class PaymentsService {
 
         if (Number(user.customerBalance) < amount) {
             throw new BadRequestException('Insufficient balance in your rewards wallet');
+        }
+        const walletStats = await this.getCustomerWallet(userId);
+        if (Number(walletStats.availableBalance || 0) < amount) {
+            throw new BadRequestException(
+                'Insufficient available rewards — pending/held cashback cannot be withdrawn',
+            );
         }
 
         const finConfig = await this.financialConfig.getConfig();

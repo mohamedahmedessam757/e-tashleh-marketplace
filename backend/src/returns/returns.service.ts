@@ -16,6 +16,12 @@ import {
 import { REFUND_EXECUTION_STATUSES } from './dto/admin-verdict.dto';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
+import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import {
+    buildFeeSettlementPlan,
+    makeReturnsLineItemIdempotencyKey,
+} from './fee-settlement-plan.util';
 import {
     normalizeSearchQuery,
     resolveUserIds,
@@ -36,10 +42,101 @@ export class ReturnsService {
         private escrowService: EscrowService,
         private violationsService: ViolationsService,
         private offerFulfillment: OfferFulfillmentService,
+        private returnsFeeInvoices: ReturnsFeeInvoiceService,
+        private loyaltyService: LoyaltyService,
     ) { }
 
     private isMultiItemOrder(order: { requestType?: string | null; parts?: { id: string }[] }) {
         return this.offerFulfillment.isMultiItemOrder(order);
+    }
+
+    private async walletTxExistsByKey(
+        tx: Prisma.TransactionClient,
+        idempotencyKey: string,
+    ): Promise<boolean> {
+        const row = await tx.walletTransaction.findFirst({
+            where: { metadata: { path: ['idempotencyKey'], equals: idempotencyKey } },
+            select: { id: true },
+        });
+        return !!row;
+    }
+
+    private async persistReturnsFeeInvoices(params: {
+        tx: Prisma.TransactionClient;
+        caseId: string;
+        type: 'return' | 'dispute';
+        caseRecord: any;
+        fin: AdjudicationFinancialResult;
+        extra?: any;
+        adminId: string;
+        refundExecutionStatus: string;
+        adjudicationFeePaid: boolean;
+        shippingPaid: boolean;
+    }) {
+        const offerPaymentId = params.caseRecord.offerId
+            ? (await this.escrowService.resolveOfferPaymentBase(params.caseRecord.offerId).catch(() => null))
+                  ?.paymentId
+            : null;
+        const paymentId =
+            offerPaymentId ||
+            (
+                await params.tx.paymentTransaction.findFirst({
+                    where: { orderId: params.caseRecord.orderId, status: 'SUCCESS' },
+                    orderBy: { paidAt: 'asc' },
+                    select: { id: true },
+                })
+            )?.id;
+        if (!paymentId) return;
+
+        const master = await params.tx.invoice.findFirst({
+            where: { paymentId, invoiceType: 'MASTER' },
+            select: { id: true, invoiceGroupId: true, currency: true, partNameSnapshot: true },
+        });
+        const store = await this.resolveCaseStore(params.caseRecord, params.tx);
+        const shippingRoundtrip = Number(
+            params.extra?.shippingRoundtrip ??
+                params.caseRecord.shippingRoundtrip ??
+                params.caseRecord.shippingRefund ??
+                0,
+        );
+        const plan = buildFeeSettlementPlan({
+            caseId: params.caseId,
+            shippingRoundtrip,
+            refundExecutionStatus: (params.refundExecutionStatus as any) || params.fin.refundExecutionStatusSeed,
+            fin: params.fin,
+            faultPartyHint: params.extra?.faultParty || params.caseRecord.faultParty,
+        });
+        await this.returnsFeeInvoices.ensureFromPlan(
+            plan,
+            {
+                orderId: params.caseRecord.orderId,
+                paymentId,
+                customerId: params.caseRecord.customerId || params.caseRecord.order?.customerId,
+                merchantOwnerId: store?.ownerId || null,
+                adminId: params.adminId,
+                currency: master?.currency || 'AED',
+                partName: master?.partNameSnapshot || null,
+                parentInvoiceId: master?.id || null,
+                invoiceGroupId: master?.invoiceGroupId || master?.id || null,
+                adjudicationFeePaid: params.adjudicationFeePaid,
+                shippingPaid: params.shippingPaid,
+            },
+            params.tx,
+        );
+    }
+
+    private async rebuildFinFromCase(caseRecord: any): Promise<AdjudicationFinancialResult> {
+        const orderAmount = await this.resolveAdjudicationOrderAmount(caseRecord.orderId, caseRecord);
+        return computeAdjudicationFinancials({
+            orderPaidTotal: orderAmount,
+            gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 3),
+            refundFeePct: Number(caseRecord.refundFeePct ?? 1.5),
+            shippingRoundtrip: Number(
+                caseRecord.shippingRoundtrip || caseRecord.shippingRefund || 0,
+            ),
+            faultParty: caseRecord.faultParty || 'MERCHANT',
+            finalRefundDecision: caseRecord.finalRefundDecision,
+        });
     }
 
     private async resolveAcceptedOfferForCase(
@@ -1481,6 +1578,12 @@ export class ReturnsService {
                         refundAmount: stripeRefundCtx.refundAmount,
                         finalCustomerRefundAmount: stripeRefundCtx.refundAmount,
                         refundExecutionStatus: 'SUCCEEDED',
+                        ...(String(caseRecord.shippingPaymentStatus || '') === 'WITHHELD_PENDING'
+                            ? {
+                                  shippingPaymentStatus: 'PAID',
+                                  shippingPaymentMethod: 'STRIPE_WITHHOLD',
+                              }
+                            : {}),
                     },
                 });
                 await tx.order.update({
@@ -1488,6 +1591,14 @@ export class ReturnsService {
                     data: { status: 'REFUNDED' },
                 });
             });
+            await this.loyaltyService
+                .reverseRewardsForCustomerRefund(caseRecord.orderId, caseId)
+                .catch((err) =>
+                    console.warn(
+                        `[ADJUDICATION] reward reversal skipped for ${caseId}:`,
+                        err?.message || err,
+                    ),
+                );
             return stripeRefundCtx;
         } catch (refundErr: any) {
             console.error(
@@ -1816,9 +1927,18 @@ export class ReturnsService {
                                 'تعذر تحديد متجر النزاع لخصم الرسوم المالية.',
                             );
                         }
+                        const idempotencyKey = makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            transactionType === 'ADJUDICATION_FEE'
+                                ? 'MERCHANT_WALLET_PLATFORM_FEE_DEBIT'
+                                : 'MERCHANT_WALLET_SHIPPING_DEBIT',
+                            updateData.refundExecutionStatus || fin.refundExecutionStatusSeed,
+                        );
+                        if (await this.walletTxExistsByKey(tx, idempotencyKey)) {
+                            return 'PAID';
+                        }
                         const merchantBalance = Number(resolvedStore.balance || 0);
                         if (merchantBalance < amount) {
-                            // Do not block verdict — collect via Stripe checkout instead
                             return 'PENDING';
                         }
                         await tx.store.update({
@@ -1836,9 +1956,15 @@ export class ReturnsService {
                                 description,
                                 metadata: {
                                     caseId,
+                                    caseType: type,
                                     orderId: caseRecord.orderId,
                                     faultParty: faultLower,
                                     feeBearer: fin.feeBearer,
+                                    shippingBearer: fin.shippingBearer,
+                                    gatewayFeeAmount: fin.gatewayFeeAmount,
+                                    refundFeeAmount: fin.refundFeeAmount,
+                                    shippingRoundtrip,
+                                    idempotencyKey,
                                 },
                             },
                         });
@@ -1901,9 +2027,15 @@ export class ReturnsService {
 
                     if (
                         fin.platformRetainedAmount > 0 &&
-                        fin.customerStripeRefund > 0 &&
-                        (isCloseCompleteRefund || fin.feeBearer === 'CUSTOMER')
+                        updateData.adjudicationFeePaymentStatus !== 'PENDING'
                     ) {
+                        const shouldIncrementWallet =
+                            fin.customerStripeRefund > 0 &&
+                            (isCloseCompleteRefund ||
+                                fin.feeBearer === 'CUSTOMER' ||
+                                fin.feeBearer === 'MIXED_CLOSE');
+                        let feesBalanceAfter = 0;
+                        if (shouldIncrementWallet) {
                         let platformWallet = await tx.platformWallet.findFirst();
                         if (!platformWallet) {
                             platformWallet = await tx.platformWallet.create({
@@ -1921,7 +2053,17 @@ export class ReturnsService {
                                 totalRevenue: { increment: fin.platformRetainedAmount },
                             },
                         });
-                        // Visible ledger row for platform fee retention (admin financial feed)
+                            feesBalanceAfter = Number(updatedWallet.feesBalance);
+                        } else {
+                            const pw = await tx.platformWallet.findFirst();
+                            feesBalanceAfter = Number(pw?.feesBalance || 0);
+                        }
+                        const retentionKey = makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'PLATFORM_RETAINED_AMOUNT',
+                            updateData.refundExecutionStatus || fin.refundExecutionStatusSeed,
+                        );
+                        if (!(await this.walletTxExistsByKey(tx, retentionKey))) {
                         await tx.walletTransaction.create({
                             data: {
                                 userId: adminId,
@@ -1932,21 +2074,24 @@ export class ReturnsService {
                                 currency: 'AED',
                                 description: isCloseCompleteRefund
                                     ? `Platform retained gateway+refund fees (CLOSE_COMPLETE) — Case #${caseId.substring(0, 8)}`
-                                    : `Platform retained fees (customer-fault refund) — Case #${caseId.substring(0, 8)}`,
-                                balanceAfter: Number(updatedWallet.feesBalance),
+                                    : `Platform retained fees — Case #${caseId.substring(0, 8)}`,
+                                balanceAfter: feesBalanceAfter,
                                 metadata: {
                                     caseId,
+                                    caseType: type,
                                     orderId: caseRecord.orderId,
                                     feeBearer: fin.feeBearer,
                                     gatewayFeeAmount: fin.gatewayFeeAmount,
                                     refundFeeAmount: fin.refundFeeAmount,
                                     customerStripeRefund: fin.customerStripeRefund,
+                                    idempotencyKey: retentionKey,
                                     resolutionMode: isCloseCompleteRefund
                                         ? 'CLOSE_COMPLETE_REFUND'
                                         : undefined,
                                 },
                             },
                         });
+                        }
                     }
 
                     // Fraud Penalty Logic (Spec §15.4)
@@ -2111,7 +2256,10 @@ export class ReturnsService {
                         }
                     } else if (bearer === 'CUSTOMER') {
                         updateData.shippingPayee = 'CUSTOMER';
-                        if (!updateData.shippingPaymentStatus) {
+                        if (refundRequired && shipObligation > 0) {
+                            updateData.shippingPaymentStatus = 'WITHHELD_PENDING';
+                            updateData.shippingPaymentMethod = 'STRIPE_WITHHOLD';
+                        } else if (!updateData.shippingPaymentStatus) {
                             updateData.shippingPaymentStatus =
                                 shipObligation > 0 ? 'PENDING' : 'PAID';
                         }
@@ -2251,6 +2399,23 @@ export class ReturnsService {
                 },
             });
 
+            if (refundFinancials) {
+                await this.persistReturnsFeeInvoices({
+                    tx,
+                    caseId,
+                    type,
+                    caseRecord,
+                    fin: refundFinancials,
+                    extra,
+                    adminId,
+                    refundExecutionStatus: String(updateData.refundExecutionStatus || 'NOT_REQUIRED'),
+                    adjudicationFeePaid: String(updateData.adjudicationFeePaymentStatus || '') === 'PAID',
+                    shippingPaid:
+                        String(updateData.shippingPaymentStatus || '') === 'PAID' ||
+                        String(updateData.shippingPaymentStatus || '') === 'WITHHELD_PENDING',
+                });
+            }
+
             return updated;
         }, { timeout: 30000 });
 
@@ -2266,6 +2431,15 @@ export class ReturnsService {
                 adjudicationOrderAmount,
                 notes,
             });
+        } else if (refundRequired) {
+            await this.loyaltyService
+                .reverseRewardsForCustomerRefund(caseRecord.orderId, caseId)
+                .catch((err) =>
+                    console.warn(
+                        `[ADJUDICATION] reward reversal skipped for ${caseId}:`,
+                        err?.message || err,
+                    ),
+                );
         }
 
         if (this.isMultiItemOrder(caseRecord.order) && caseRecord.offerId) {
@@ -3008,7 +3182,15 @@ export class ReturnsService {
             });
 
             if (!caseRecord) throw new NotFoundException('Case not found');
-            if (caseRecord.shippingPaymentStatus === 'PAID') throw new BadRequestException('Shipping already paid');
+            const shipStatus = String(caseRecord.shippingPaymentStatus || '').toUpperCase();
+            const shipMethod = String(caseRecord.shippingPaymentMethod || '').toUpperCase();
+            if (
+                shipStatus === 'PAID' ||
+                shipStatus === 'WITHHELD_PENDING' ||
+                shipMethod === 'STRIPE_WITHHOLD'
+            ) {
+                throw new BadRequestException('Shipping already paid');
+            }
             
             const amount = Number(caseRecord.shippingRefund);
             if (amount <= 0) throw new BadRequestException('Invalid shipping amount');
@@ -3055,8 +3237,20 @@ export class ReturnsService {
                     amount: amount,
                     currency: 'AED',
                     description: `Shipping cost for ${caseType} #${caseRecord.orderId} (Wallet Deduction)`,
-                    balanceAfter
-                }
+                    balanceAfter,
+                    metadata: {
+                        caseId,
+                        caseType,
+                        orderId: caseRecord.orderId,
+                        shippingBearer: caseRecord.shippingPayee,
+                        shippingRoundtrip: amount,
+                        idempotencyKey: makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'ROUNDTRIP_SHIPPING',
+                            String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED') as any,
+                        ),
+                    },
+                },
             });
 
             // 4. Update Case Status
@@ -3116,6 +3310,20 @@ export class ReturnsService {
                 link: `orders/${caseRecord.orderId}`,
                 metadata: { caseId, caseType }
             });
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: String(caseRecord.adjudicationFeePaymentStatus || '') === 'PAID',
+                shippingPaid: true,
+            }).catch(() => {});
 
             return updatedCase;
         });
@@ -3234,7 +3442,19 @@ export class ReturnsService {
                     currency: 'AED',
                     description: `Adjudication platform fees for ${caseType} #${caseId.substring(0, 8)} (Wallet)`,
                     balanceAfter,
-                    metadata: { caseId, caseType, paymentMethod: 'WALLET' },
+                    metadata: {
+                        caseId,
+                        caseType,
+                        paymentMethod: 'WALLET',
+                        gatewayFeeAmount: Number(caseRecord.gatewayFeeAmount || 0),
+                        refundFeeAmount: Number(caseRecord.refundFeeAmount || 0),
+                        feeBearer: caseRecord.feeBearer,
+                        idempotencyKey: makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'MERCHANT_WALLET_PLATFORM_FEE_DEBIT',
+                            String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED') as any,
+                        ),
+                    },
                 },
             });
 
@@ -3264,6 +3484,20 @@ export class ReturnsService {
                     metadata: { caseId, caseType, waEvent: 'ORDER_STATUS' },
                 })
                 .catch(() => {});
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: true,
+                shippingPaid: String(caseRecord.shippingPaymentStatus || '') === 'PAID',
+            }).catch(() => {});
 
             return updated;
         });
@@ -3458,6 +3692,20 @@ export class ReturnsService {
                     },
                 })
                 .catch(() => {});
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: true,
+                shippingPaid: true,
+            }).catch(() => {});
 
             return (tx as any)[modelName].findUnique({ where: { id: caseId } });
         });

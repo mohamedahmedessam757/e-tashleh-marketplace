@@ -9,6 +9,7 @@ import {
   normalizeSearchQuery,
   mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
+import { filterOrderInvoicesForViewer } from './invoice-visibility.util';
 
 const invoiceInclude = {
   payment: {
@@ -89,7 +90,13 @@ export class InvoicesService {
 
     async getUserInvoices(userId: string) {
         return this.prisma.invoice.findMany({
-            where: { customerId: userId, invoiceType: 'MASTER' },
+            where: {
+                customerId: userId,
+                OR: [
+                    { invoiceType: 'MASTER' },
+                    { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                ],
+            },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -125,7 +132,14 @@ export class InvoicesService {
 
     async getInvoiceById(userId: string, id: string) {
         const invoice = await this.prisma.invoice.findFirst({
-            where: { id, customerId: userId, invoiceType: 'MASTER' },
+            where: {
+                id,
+                customerId: userId,
+                OR: [
+                    { invoiceType: 'MASTER' },
+                    { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                ],
+            },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -414,8 +428,16 @@ export class InvoicesService {
 
         return this.prisma.invoice.findMany({
             where: {
-                paymentId: { in: paymentIds },
-                invoiceType: 'MASTER',
+                OR: [
+                    {
+                        paymentId: { in: paymentIds },
+                        invoiceType: 'MASTER',
+                    },
+                    {
+                        customerId: userId,
+                        shippingBatchKey: { startsWith: 'RETURNS_FEE:' },
+                    },
+                ],
             },
             include: {
                 payment: {
@@ -450,7 +472,7 @@ export class InvoicesService {
         });
     }
 
-    async getInvoicesByOrder(orderId: string, role?: string) {
+    async getInvoicesByOrder(orderId: string, role?: string, viewerUserId?: string) {
         const r = String(role || '').toUpperCase();
         const isAdmin =
             r === 'ADMIN' ||
@@ -460,10 +482,7 @@ export class InvoicesService {
             r === 'VERIFICATION_OFFICER';
 
         const invoices = await this.prisma.invoice.findMany({
-            where: {
-                orderId,
-                ...(isAdmin ? {} : { invoiceType: 'MASTER' }),
-            },
+            where: { orderId },
             include: {
                 payment: {
                     select: { offerId: true, status: true },
@@ -554,19 +573,10 @@ export class InvoicesService {
         };
 
         if (!isAdmin) {
-            // One MASTER per payment (latest)
-            const byPayment = new Map<string, (typeof invoices)[number]>();
-            for (const inv of invoices) {
-                if ((inv.invoiceType || 'MASTER') !== 'MASTER') continue;
-                const key = inv.paymentId;
-                const existing = byPayment.get(key);
-                if (!existing || inv.issuedAt > existing.issuedAt) {
-                    byPayment.set(key, inv);
-                }
-            }
-            return Array.from(byPayment.values())
-                .sort((a, b) => a.issuedAt.getTime() - b.issuedAt.getTime())
-                .map(enrich);
+            return filterOrderInvoicesForViewer(invoices, {
+                isAdmin: false,
+                viewerUserId,
+            }).map(enrich);
         }
 
         const enriched = invoices.map(enrich);

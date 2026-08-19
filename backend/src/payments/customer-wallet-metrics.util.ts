@@ -22,6 +22,19 @@ export const CUSTOMER_PENDING_ORDER_STATUSES = [
   'PARTIALLY_DELIVERED',
 ] as const;
 
+/** Open return/dispute statuses — pending rewards stay visible until verdict. */
+export const CUSTOMER_OPEN_RESOLUTION_STATUSES = [
+  'RETURN_REQUESTED',
+  'DISPUTED',
+  'RETURNED',
+  'RETURN_APPROVED',
+] as const;
+
+export const CUSTOMER_PENDING_REWARD_ORDER_STATUSES = [
+  ...CUSTOMER_PENDING_ORDER_STATUSES,
+  ...CUSTOMER_OPEN_RESOLUTION_STATUSES,
+] as const;
+
 /** Orders that qualify for realized cashback / completion settlement. */
 export const CUSTOMER_TERMINAL_REWARD_STATUSES = [
   'COMPLETED',
@@ -61,6 +74,8 @@ export function computeLedgerNetRewards(txs: CustomerLedgerTx[]): number {
     const txType = String(tx.transactionType || '').toUpperCase();
     if (tx.type === 'CREDIT' && (txType === 'ORDER_PROFIT' || txType === 'REFERRAL_PROFIT')) {
       net += amount;
+    } else if (tx.type === 'DEBIT' && (txType === 'ORDER_PROFIT' || txType === 'REFERRAL_PROFIT')) {
+      net -= amount;
     } else if (tx.type === 'DEBIT' && CUSTOMER_NET_DEBIT_TYPES.has(txType)) {
       net -= amount;
     }
@@ -134,15 +149,16 @@ export function splitRewardAggregates(
   for (const tx of txs) {
     const amount = Number(tx.amount);
     const txType = String(tx.transactionType || '').toUpperCase();
-    if (tx.type !== 'CREDIT') continue;
+    const sign = tx.type === 'CREDIT' ? 1 : tx.type === 'DEBIT' ? -1 : 0;
+    if (!sign) continue;
 
     const isMonthly = tx.createdAt >= startOfMonth;
     if (txType === 'ORDER_PROFIT') {
-      result.lifetimeLoyalty += amount;
-      if (isMonthly) result.monthlyLoyalty += amount;
+      result.lifetimeLoyalty += amount * sign;
+      if (isMonthly) result.monthlyLoyalty += amount * sign;
     } else if (txType === 'REFERRAL_PROFIT') {
-      result.lifetimeReferral += amount;
-      if (isMonthly) result.monthlyReferral += amount;
+      result.lifetimeReferral += amount * sign;
+      if (isMonthly) result.monthlyReferral += amount * sign;
     }
   }
 
@@ -206,28 +222,58 @@ export function extractOrderProfitOrderIds(
 ): Set<string> {
   const ids = new Set<string>();
   for (const tx of txs) {
-    if (tx.transactionType !== 'ORDER_PROFIT') continue;
+    if (tx.transactionType !== 'ORDER_PROFIT' && tx.transactionType !== 'REFERRAL_PROFIT') continue;
     const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
     if (typeof orderId === 'string' && orderId.length > 0) ids.add(orderId);
   }
   return ids;
 }
 
-/** Cashback credited before order reached a terminal completion status. */
+/** Cashback credited before order reached a terminal completion status. Net of reversals. */
 export function sumPrematureOrderProfit(
-  txs: Array<{ amount: unknown; transactionType?: string | null; metadata?: unknown }>,
+  txs: Array<{
+    amount: unknown;
+    type?: string | null;
+    transactionType?: string | null;
+    metadata?: unknown;
+  }>,
   nonTerminalOrderIds: Set<string>,
 ): number {
-  return Number(
-    txs
-      .filter((tx) => {
-        if (tx.transactionType !== 'ORDER_PROFIT') return false;
-        const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
-        return orderId && nonTerminalOrderIds.has(orderId);
-      })
-      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
-      .toFixed(2),
-  );
+  const raw = txs
+    .filter((tx) => {
+      if (tx.transactionType !== 'ORDER_PROFIT') return false;
+      const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
+      return !!orderId && nonTerminalOrderIds.has(orderId);
+    })
+    .reduce((sum, tx) => {
+      const amount = Number(tx.amount || 0);
+      const sign = String(tx.type || 'CREDIT').toUpperCase() === 'DEBIT' ? -1 : 1;
+      return sum + amount * sign;
+    }, 0);
+  return Number(Math.max(0, raw).toFixed(2));
+}
+
+export function sumPrematureReferralProfit(
+  txs: Array<{
+    amount: unknown;
+    type?: string | null;
+    transactionType?: string | null;
+    metadata?: unknown;
+  }>,
+  nonTerminalOrderIds: Set<string>,
+): number {
+  const raw = txs
+    .filter((tx) => {
+      if (tx.transactionType !== 'REFERRAL_PROFIT') return false;
+      const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
+      return !!orderId && nonTerminalOrderIds.has(orderId);
+    })
+    .reduce((sum, tx) => {
+      const amount = Number(tx.amount || 0);
+      const sign = String(tx.type || 'CREDIT').toUpperCase() === 'DEBIT' ? -1 : 1;
+      return sum + amount * sign;
+    }, 0);
+  return Number(Math.max(0, raw).toFixed(2));
 }
 
 export function computeCustomerAvailableBalance(

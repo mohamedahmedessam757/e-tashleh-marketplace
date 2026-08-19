@@ -845,6 +845,10 @@ export const admin = {
       emptyTitle: 'لا توجد فواتير لهذا النوع',
       emptyHint: 'قد لا توجد قيمة شحن أو لم تُنشأ الوثيقة بعد.',
       groupId: 'مجموعة الفواتير',
+      gatewayFee: 'رسوم بوابة الدفع',
+      refundFee: 'رسوم الاسترداد',
+      roundtripShipping: 'شحن ذهاب وعودة',
+      adjudicationFee: 'رسوم الحكم',
     },
     billing: {
       title: 'المركز المالي',
@@ -2383,6 +2387,10 @@ export const admin = {
       emptyTitle: 'No invoices for this type',
       emptyHint: 'There may be no shipping amount, or the document is not created yet.',
       groupId: 'Invoice group',
+      gatewayFee: 'Gateway fee',
+      refundFee: 'Refund fee',
+      roundtripShipping: 'Round-trip shipping',
+      adjudicationFee: 'Adjudication fee',
     },
     billing: {
       title: 'Financial Center',
