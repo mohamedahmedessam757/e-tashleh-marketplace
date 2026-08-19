@@ -904,7 +904,11 @@ export const customer = {
         grandTotal: 'الإجمالي الكلي',
         sender: 'المرسل',
         receiver: 'المستلم',
-        note: 'ملاحظة'
+        note: 'ملاحظة',
+        addendumTitle: 'ملحق رسوم القضية',
+        addendumHint: 'فواتير مستقلة — لا تغيّر أرقام الفاتورة الشاملة الأصلية',
+        caseFees: 'رسوم قضية',
+        payer: 'الدافع',
       },
       cardForm: {
         holder: 'اسم صاحب البطاقة',
@@ -1844,7 +1848,11 @@ export const customer = {
         grandTotal: 'Grand Total',
         sender: 'Sender',
         receiver: 'Receiver',
-        note: 'Note'
+        note: 'Note',
+        addendumTitle: 'Case-fee addendum',
+        addendumHint: 'Standalone invoices — they do not change the original master totals',
+        caseFees: 'Case fees',
+        payer: 'Payer',
       },
       cardForm: {
         holder: 'Card Holder Name',

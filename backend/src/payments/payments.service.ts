@@ -75,6 +75,7 @@ import {
 import { FinancialConfigService } from '../common/financial-config.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
+import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 
@@ -95,6 +96,7 @@ export class PaymentsService {
         private readonly financialConfig: FinancialConfigService,
         private readonly withdrawalWorkflow: WithdrawalWorkflowService,
         private readonly invoiceSnapshot: InvoiceSnapshotService,
+        private readonly returnsFeeInvoices: ReturnsFeeInvoiceService,
         private readonly completionFinance: OrderCompletionFinanceService,
     ) { }
 
@@ -1710,6 +1712,14 @@ export class PaymentsService {
             })
             .catch(() => {});
 
+        void this.returnsFeeInvoices
+            .issueFromCaseRow(updatedCase, { shippingPaid: true })
+            .catch((err) =>
+                this.logger.warn(
+                    `Fee invoices after shipping Stripe fulfill skipped: ${(err as Error)?.message}`,
+                ),
+            );
+
         return updatedCase;
     }
 
@@ -1935,6 +1945,19 @@ export class PaymentsService {
                 );
         }
 
+        if (settled.updated) {
+            void this.returnsFeeInvoices
+                .issueFromCaseRow(settled.updated, {
+                    adjudicationFeePaid: true,
+                    shippingPaid: true,
+                })
+                .catch((err) =>
+                    this.logger.warn(
+                        `Fee invoices after settlement Stripe fulfill skipped: ${(err as Error)?.message}`,
+                    ),
+                );
+        }
+
         return settled.updated;
     }
 
@@ -2091,6 +2114,14 @@ export class PaymentsService {
                 metadata: { caseId, caseType },
             })
             .catch(() => {});
+
+        void this.returnsFeeInvoices
+            .issueFromCaseRow(result.updatedCase, { adjudicationFeePaid: true })
+            .catch((err) =>
+                this.logger.warn(
+                    `Fee invoices after adjudication Stripe fulfill skipped: ${(err as Error)?.message}`,
+                ),
+            );
 
         return result.updatedCase;
     }

@@ -1,4 +1,4 @@
-import { filterOrderInvoicesForViewer, isReturnsFeeInvoice } from './invoice-visibility.util';
+import { filterOrderInvoicesForViewer, isReturnsFeeInvoice, isSaleRefundStampableInvoice, FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES } from './invoice-visibility.util';
 
 const issued = new Date('2026-01-01T00:00:00Z');
 
@@ -52,6 +52,7 @@ describe('invoice visibility — payer-only fee docs', () => {
             'MASTER:null',
             'COMMISSION:RETURNS_FEE:case-1:COMMISSION',
         ]);
+        expect(visible.some((i) => i.customerId === 'merchant-1')).toBe(false);
     });
 
     it('merchant sees MASTER + own shipping fee doc, not customer fee doc', () => {
@@ -69,5 +70,21 @@ describe('invoice visibility — payer-only fee docs', () => {
         });
         expect(visible).toHaveLength(1);
         expect(visible[0].invoiceType).toBe('MASTER');
+    });
+});
+
+describe('isSaleRefundStampableInvoice', () => {
+    it('keeps RETURNS_FEE commission out of sale refund stamp', () => {
+        expect(
+            isSaleRefundStampableInvoice({ shippingBatchKey: 'RETURNS_FEE:case-1:COMMISSION' }),
+        ).toBe(false);
+        expect(isSaleRefundStampableInvoice({ shippingBatchKey: null })).toBe(true);
+        expect(isSaleRefundStampableInvoice({ shippingBatchKey: 'pay-1' })).toBe(true);
+    });
+});
+
+describe('FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES', () => {
+    it('includes REFUNDED so persist still resolves paymentId after a full refund', () => {
+        expect(FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES).toEqual(['SUCCESS', 'REFUNDED']);
     });
 });

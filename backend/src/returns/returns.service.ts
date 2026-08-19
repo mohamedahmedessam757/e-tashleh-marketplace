@@ -17,6 +17,7 @@ import { REFUND_EXECUTION_STATUSES } from './dto/admin-verdict.dto';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
+import { FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES } from '../invoices/invoice-visibility.util';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import {
     buildFeeSettlementPlan,
@@ -81,8 +82,11 @@ export class ReturnsService {
             offerPaymentId ||
             (
                 await params.tx.paymentTransaction.findFirst({
-                    where: { orderId: params.caseRecord.orderId, status: 'SUCCESS' },
-                    orderBy: { paidAt: 'asc' },
+                    where: {
+                        orderId: params.caseRecord.orderId,
+                        status: { in: [...FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES] },
+                    },
+                    orderBy: { paidAt: 'desc' },
                     select: { id: true },
                 })
             )?.id;
@@ -1812,7 +1816,7 @@ export class ReturnsService {
         /** Set during TX when merchant fees must be collected via Stripe later */
         let pendingAdjudicationFee: { amount: number; payee: 'MERCHANT' } | null = null;
 
-        if (refundRequired || extra?.faultParty) {
+        if (refundRequired || extra?.faultParty || caseRecord.faultParty) {
             adjudicationOrderAmount = await this.resolveAdjudicationOrderAmount(
                 caseRecord.orderId,
                 caseRecord,

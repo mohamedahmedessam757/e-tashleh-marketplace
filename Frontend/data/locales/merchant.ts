@@ -807,6 +807,15 @@ export const merchant = {
         FREEZE_BALANCE: 'إيقاف وحجز رصيد',
         PERMANENT_BAN: 'حظر نهائي'
       }
+    },
+    invoiceDocs: {
+      addendumTitle: 'ملحق رسوم القضية',
+      addendumHint: 'فواتير مستقلة — لا تغيّر أرقام الفاتورة الشاملة الأصلية',
+      caseFees: 'رسوم قضية',
+      payer: 'الدافع',
+      gatewayFee: 'رسوم بوابة الدفع',
+      refundFee: 'رسوم الاسترداد',
+      roundtripShipping: 'شحن ذهاب وعودة',
     }
   },
   en: {
@@ -1597,6 +1606,15 @@ export const merchant = {
         FREEZE_BALANCE: 'Suspend & Freeze Balance',
         PERMANENT_BAN: 'Permanent Ban'
       }
+    },
+    invoiceDocs: {
+      addendumTitle: 'Case-fee addendum',
+      addendumHint: 'Standalone invoices — they do not change the original master totals',
+      caseFees: 'Case fees',
+      payer: 'Payer',
+      gatewayFee: 'Gateway fee',
+      refundFee: 'Refund fee',
+      roundtripShipping: 'Round-trip shipping',
     }
   }
 };

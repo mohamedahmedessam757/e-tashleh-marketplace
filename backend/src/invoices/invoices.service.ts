@@ -9,7 +9,8 @@ import {
   normalizeSearchQuery,
   mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
-import { filterOrderInvoicesForViewer } from './invoice-visibility.util';
+import { filterOrderInvoicesForViewer, isReturnsFeeInvoice } from './invoice-visibility.util';
+import { ReturnsFeeInvoiceService } from './returns-fee-invoice.service';
 
 const invoiceInclude = {
   payment: {
@@ -43,6 +44,7 @@ export class InvoicesService {
     constructor(
         private prisma: PrismaService,
         private readonly auditLogs: AuditLogsService,
+        private readonly returnsFeeInvoices: ReturnsFeeInvoiceService,
     ) { }
 
     private mapAdminInvoiceRow(invoice: Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>) {
@@ -84,6 +86,7 @@ export class InvoicesService {
             issuedAt: invoice.issuedAt,
             invoiceType: (invoice as any).invoiceType || 'MASTER',
             invoiceGroupId: (invoice as any).invoiceGroupId || null,
+            shippingBatchKey: (invoice as any).shippingBatchKey || null,
             isDerived: false,
         };
     }
@@ -479,6 +482,12 @@ export class InvoicesService {
             r === 'ACCOUNTANT' ||
             r === 'VERIFICATION_OFFICER';
 
+        if (isAdmin) {
+            await this.returnsFeeInvoices
+                .backfillForOrder(orderId, viewerUserId)
+                .catch(() => undefined);
+        }
+
         const invoices = await this.prisma.invoice.findMany({
             where: { orderId },
             include: {
@@ -591,7 +600,9 @@ export class InvoicesService {
         for (const [, group] of byPayment) {
             const master = group.find((i) => i.invoiceType === 'MASTER');
             if (!master) continue;
-            const types = new Set(group.map((i) => i.invoiceType));
+            const saleTypes = new Set(
+                group.filter((i) => !isReturnsFeeInvoice(i)).map((i) => i.invoiceType),
+            );
             const baseMeta = {
                 order: master.order,
                 payment: master.payment,
@@ -614,7 +625,7 @@ export class InvoicesService {
                 platformLegalNameAr: master.livePlatformLegalNameAr,
             };
 
-            if (!types.has('PART')) {
+            if (!saleTypes.has('PART')) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-part-${master.id}`,
@@ -626,7 +637,7 @@ export class InvoicesService {
                     total: master.subtotal,
                 });
             }
-            if (!types.has('COMMISSION')) {
+            if (!saleTypes.has('COMMISSION')) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-commission-${master.id}`,
@@ -638,7 +649,7 @@ export class InvoicesService {
                     total: master.commission,
                 });
             }
-            if (!types.has('SHIPPING') && Number(master.shipping) > 0) {
+            if (!saleTypes.has('SHIPPING') && Number(master.shipping) > 0) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-shipping-${master.id}`,

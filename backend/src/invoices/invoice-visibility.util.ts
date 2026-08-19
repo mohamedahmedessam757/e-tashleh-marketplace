@@ -1,11 +1,21 @@
 export const RETURNS_FEE_BATCH_PREFIX = 'RETURNS_FEE:';
 
+/** Sale payment may already be REFUNDED when fee invoices are issued later. */
+export const FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES = ['SUCCESS', 'REFUNDED'] as const;
+
 export function isReturnsFeeInvoice(inv: {
     shippingBatchKey?: string | null;
     invoiceType?: string | null;
 }): boolean {
     const batch = String(inv?.shippingBatchKey || '');
     return batch.startsWith(RETURNS_FEE_BATCH_PREFIX);
+}
+
+/** Sale MASTER/PART/COMMISSION may be refund-stamped; RETURNS_FEE docs must stay PAID. */
+export function isSaleRefundStampableInvoice(inv: {
+    shippingBatchKey?: string | null;
+}): boolean {
+    return !isReturnsFeeInvoice(inv);
 }
 
 export function filterOrderInvoicesForViewer<T extends {

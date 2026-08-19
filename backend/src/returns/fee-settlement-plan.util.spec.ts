@@ -1,5 +1,5 @@
 import { computeAdjudicationFinancials } from './adjudication-financial.util';
-import { buildFeeSettlementPlan, FeeSettlementLineItem } from './fee-settlement-plan.util';
+import { buildFeeSettlementPlan, FeeSettlementLineItem, makeReturnsFeeBatchKey } from './fee-settlement-plan.util';
 
 const BASE = {
     orderPaidTotal: 100,
@@ -156,6 +156,12 @@ describe('buildFeeSettlementPlan — mapping + invariants', () => {
         });
         expect(a.lineItems.map((l) => l.idempotencyKey)).toEqual(b.lineItems.map((l) => l.idempotencyKey));
         expect(new Set(a.lineItems.map((l) => l.idempotencyKey)).size).toBe(a.lineItems.length);
+    });
+
+    it('fee invoice batch keys are stable per case + doc type', () => {
+        expect(makeReturnsFeeBatchKey('case_1', 'COMMISSION')).toBe('RETURNS_FEE:case_1:COMMISSION');
+        expect(makeReturnsFeeBatchKey('case_1', 'SHIPPING')).toBe('RETURNS_FEE:case_1:SHIPPING');
+        expect(makeReturnsFeeBatchKey('case_1', 'COMMISSION')).toBe(makeReturnsFeeBatchKey('case_1', 'COMMISSION'));
     });
 });
 

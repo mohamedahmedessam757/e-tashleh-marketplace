@@ -30,6 +30,7 @@ interface Labels {
   roundtripShipping?: string;
   adjudicationFee?: string;
   customer: string;
+  payer?: string;
   total: string;
   thankYou: string;
   electronicDoc: string;
@@ -123,6 +124,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
     amount?: number;
     paymentId?: string;
     kind?: string;
+    payer?: string;
   }> = Array.isArray(inv.lineItems) ? inv.lineItems : [];
 
   const feeKindLabel = (kind?: string) => {
@@ -133,6 +135,17 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
     if (k === 'ADJUDICATION_FEE') return labels.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee');
     return labels.commissionAmount;
   };
+
+  const isCaseFeeDoc = String(inv?.shippingBatchKey || '').startsWith('RETURNS_FEE:');
+  const feePayerRaw = lineItems.find((l) => l.payer)?.payer;
+  const feePayerLabel = (() => {
+    const p = String(feePayerRaw || '').toUpperCase();
+    if (p === 'MERCHANT') return isAr ? 'التاجر' : 'Merchant';
+    if (p === 'CUSTOMER') return isAr ? 'العميل' : 'Customer';
+    if (p === 'PLATFORM') return isAr ? 'المنصة' : 'Platform';
+    if (p === 'SHIPPING_COMPANY') return isAr ? 'شركة الشحن' : 'Shipping company';
+    return feePayerRaw || '';
+  })();
 
   const qrValue = `https://e-tashleh.net/invoice/${inv.id}`;
   const TitleIcon =
@@ -222,6 +235,15 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
               <div className="mt-3">
                 <InfoRow icon={Package} label={labels.partName} value={partName} />
               </div>
+              {isCaseFeeDoc && feePayerLabel ? (
+                <div className="mt-3">
+                  <InfoRow
+                    icon={User}
+                    label={labels.payer || (isAr ? 'الدافع' : 'Payer')}
+                    value={feePayerLabel}
+                  />
+                </div>
+              ) : null}
             </>
           ) : docType === 'SHIPPING' ? (
             <>
@@ -231,7 +253,15 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
                 value={carrierName || labels.shippingPending}
               />
               <div className="mt-3">
-                <InfoRow icon={User} label={labels.customer} value={customerName} />
+                {isCaseFeeDoc && feePayerLabel ? (
+                  <InfoRow
+                    icon={User}
+                    label={labels.payer || (isAr ? 'الدافع' : 'Payer')}
+                    value={feePayerLabel}
+                  />
+                ) : (
+                  <InfoRow icon={User} label={labels.customer} value={customerName} />
+                )}
               </div>
             </>
           ) : (

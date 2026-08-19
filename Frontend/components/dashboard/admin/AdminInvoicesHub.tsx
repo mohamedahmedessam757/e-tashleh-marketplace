@@ -140,10 +140,17 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
         key: 'invoiceType',
         header: hub.type || (isAr ? 'النوع' : 'Type'),
         render: (r: any) => (
-          <span
-            className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
-          >
-            {typeLabel(r.invoiceType)}
+          <span className="inline-flex flex-wrap items-center gap-1">
+            <span
+              className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
+            >
+              {typeLabel(r.invoiceType)}
+            </span>
+            {String(r.shippingBatchKey || '').startsWith('RETURNS_FEE:') && (
+              <span className="inline-flex px-2 py-0.5 rounded-lg border border-gold-500/30 bg-gold-500/10 text-gold-400 text-[9px] font-black uppercase tracking-wide">
+                {hub.caseFees || (isAr ? 'رسوم قضية' : 'Case fees')}
+              </span>
+            )}
           </span>
         ),
       },
