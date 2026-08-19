@@ -23,6 +23,8 @@ export interface WalletStats {
   monthlyLoyaltyRewards?: number;
   monthlyReferralRewards?: number;
   loyaltyPoints: number;
+  pendingLoyaltyPoints?: number;
+  availableLoyaltyPoints?: number;
   loyaltyTier: string;
   referralCode: string;
   referralCount: number;
@@ -382,6 +384,16 @@ export const subscribeToWalletUpdates = () => {
             }
         );
 
+    const ordersChannel = supabase
+        .channel(`wallet-orders-${userId}`)
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${userId}` },
+            () => {
+                useCustomerWalletStore.getState().fetchWalletData(true);
+            },
+        );
+
     const withdrawalChannel = supabase
         .channel(`wallet-withdrawals-${userId}`)
         .on(
@@ -407,7 +419,7 @@ export const subscribeToWalletUpdates = () => {
             }
         );
 
-    walletRealtimeChannels = [txChannel, userChannel, walletChannel, withdrawalChannel];
+    walletRealtimeChannels = [txChannel, userChannel, walletChannel, ordersChannel, withdrawalChannel];
     walletRealtimeChannels.forEach((ch) => ch.subscribe());
 
     return {

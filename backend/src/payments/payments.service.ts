@@ -29,6 +29,7 @@ import {
     computeCustomerTotalPurchases,
     computeLedgerNetRewards,
     computePendingLoyaltyFromOrders,
+    computePendingLoyaltyPointsFromOrders,
     computePendingReferralFromOrders,
     computeRefundedAmount,
     computeCustomerAvailableBalance,
@@ -37,6 +38,7 @@ import {
     extractOrderProfitOrderIds,
     sumPrematureOrderProfit,
     sumPrematureReferralProfit,
+    sumPrematureLoyaltyPoints,
     reconcileUserTotalSpent,
     REFERRAL_WINDOW_DAYS,
     splitRewardAggregates,
@@ -2414,6 +2416,7 @@ export class PaymentsService {
 
         let prematureCashbackHeld = 0;
         let prematureReferralHeld = 0;
+        let prematureLoyaltyPointsHeld = 0;
         if (rewardedOrderIds.size > 0) {
             const rewardedOrders = await this.prisma.order.findMany({
                 where: { id: { in: [...rewardedOrderIds] } },
@@ -2433,7 +2436,20 @@ export class PaymentsService {
                 orderProfitTxs,
                 nonTerminalRewardedIds,
             );
+            prematureLoyaltyPointsHeld = sumPrematureLoyaltyPoints(
+                orderProfitTxs,
+                nonTerminalRewardedIds,
+            );
         }
+
+        const pendingLoyaltyPoints = computePendingLoyaltyPointsFromOrders(
+            pendingOwnOrders,
+            rewardedOrderIds,
+        ) + prematureLoyaltyPointsHeld;
+        const availableLoyaltyPoints = Math.max(
+            0,
+            Number(user.loyaltyPoints || 0) - prematureLoyaltyPointsHeld,
+        );
 
         const pendingLoyaltyDisplayed = Number(
             (pendingLoyaltyRewards + prematureCashbackHeld).toFixed(2),
@@ -2477,6 +2493,8 @@ export class PaymentsService {
                 monthlyRewards:
                     rewardSplits.monthlyLoyalty + rewardSplits.monthlyReferral,
                 pendingLoyaltyRewards: pendingLoyaltyDisplayed,
+                pendingLoyaltyPoints,
+                availableLoyaltyPoints,
                 pendingReferralRewards: pendingReferralDisplayed,
                 pendingRewards,
                 refundedAmount,

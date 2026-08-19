@@ -1,6 +1,8 @@
 import {
   computeCustomerAvailableBalance,
   computePendingLoyaltyFromOrders,
+  computePendingLoyaltyPointsFromOrders,
+  sumPrematureLoyaltyPoints,
   sumPrematureOrderProfit,
 } from './customer-wallet-metrics.util';
 
@@ -49,5 +51,31 @@ describe('customer wallet metrics — pending vs reversal', () => {
       0.02,
     );
     expect(pending).toBeGreaterThan(0);
+  });
+
+  it('predicts pending loyalty points from commission the same way as grant', () => {
+    const pendingPts = computePendingLoyaltyPointsFromOrders([
+      { id: 'o-disputed', payments: [{ commission: 100 }] },
+    ]);
+    expect(pendingPts).toBe(100);
+  });
+
+  it('nets premature loyalty points after reversal', () => {
+    const held = sumPrematureLoyaltyPoints(
+      [
+        {
+          type: 'CREDIT',
+          transactionType: 'ORDER_PROFIT',
+          metadata: { orderId: 'o1', commission: 40 },
+        },
+        {
+          type: 'DEBIT',
+          transactionType: 'ORDER_PROFIT',
+          metadata: { orderId: 'o1', commission: 40, pointsReversed: 40 },
+        },
+      ],
+      new Set(['o1']),
+    );
+    expect(held).toBe(0);
   });
 });

@@ -309,6 +309,7 @@ export class LoyaltyService {
           metadata: { 
               orderId: order.id, 
               commission: totalCommission, 
+              earnedPoints,
               rate: `${config.percent * 100}%`,
               capsApplied: earnedProfit < EARNED_RAW,
               skipReason: hitMonthlyCap ? 'monthly_cap' : undefined,

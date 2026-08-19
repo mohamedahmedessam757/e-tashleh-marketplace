@@ -201,6 +201,22 @@ export function computePendingLoyaltyFromOrders(
   );
 }
 
+/** Same grant rule as LoyaltyService: 1 AED platform commission = 1 loyalty point. */
+export function computePendingLoyaltyPointsFromOrders(
+  pendingOrders: Array<{ id?: string; payments: Array<{ commission?: unknown }> }>,
+  excludeOrderIds?: Set<string>,
+): number {
+  return pendingOrders
+    .filter((order) => !order.id || !excludeOrderIds?.has(order.id))
+    .reduce((sum, order) => {
+      const commission = order.payments.reduce(
+        (cSum, p) => cSum + Number(p.commission || 0),
+        0,
+      );
+      return sum + (commission > 0 ? Math.floor(commission) : 0);
+    }, 0);
+}
+
 export function computePendingReferralFromOrders(
   pendingOrders: Array<{ payments: Array<{ commission?: unknown }> }>,
 ): number {
@@ -274,6 +290,39 @@ export function sumPrematureReferralProfit(
       return sum + amount * sign;
     }, 0);
   return Number(Math.max(0, raw).toFixed(2));
+}
+
+export function sumPrematureLoyaltyPoints(
+  txs: Array<{
+    type?: string | null;
+    transactionType?: string | null;
+    metadata?: unknown;
+  }>,
+  nonTerminalOrderIds: Set<string>,
+): number {
+  const raw = txs
+    .filter((tx) => {
+      if (tx.transactionType !== 'ORDER_PROFIT') return false;
+      const meta = (tx.metadata || {}) as {
+        orderId?: string;
+        commission?: unknown;
+        pointsReversed?: unknown;
+      };
+      return !!meta.orderId && nonTerminalOrderIds.has(meta.orderId);
+    })
+    .reduce((sum, tx) => {
+      const meta = (tx.metadata || {}) as {
+        commission?: unknown;
+        pointsReversed?: unknown;
+      };
+      const pts =
+        String(tx.type || '').toUpperCase() === 'DEBIT'
+          ? Number(meta.pointsReversed || 0) || Math.floor(Number(meta.commission || 0))
+          : Math.floor(Number(meta.commission || 0));
+      const sign = String(tx.type || 'CREDIT').toUpperCase() === 'DEBIT' ? -1 : 1;
+      return sum + pts * sign;
+    }, 0);
+  return Math.max(0, Math.floor(raw));
 }
 
 export function computeCustomerAvailableBalance(
