@@ -6,7 +6,11 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FinancialConfigService, LoyaltyTierConfig } from '../common/financial-config.service';
-import { sumMerchantShareByStore } from '../payments/merchant-wallet-metrics.util';
+import {
+  reconcileStoreCounters,
+  sumMerchantShareByStore,
+} from '../payments/merchant-wallet-metrics.util';
+import { computeCustomerTotalPurchases } from '../payments/customer-wallet-metrics.util';
 import {
   CLOSED_DISPUTE_STATUSES,
   CLOSED_RETURN_STATUSES,
@@ -828,7 +832,10 @@ export class LoyaltyService {
         customer: { select: { id: true, customerBalance: true, loyaltyPoints: true } },
       },
     });
-    if (!order?.customer) return;
+    if (!order?.customer) {
+      await this.reverseMerchantCompletionCounters(orderId);
+      return;
+    }
 
     const profitCredits = await this.prisma.walletTransaction.findMany({
       where: {
@@ -936,6 +943,53 @@ export class LoyaltyService {
           metadata: { orderId, caseId, waEvent: 'ORDER_STATUS' },
         }).catch(() => {});
       }
+    }
+
+    await this.syncCustomerSpendAfterRefund(order.customerId);
+    await this.reverseMerchantCompletionCounters(orderId);
+  }
+
+  /** Align users.totalSpent + loyaltyTier with live non-refunded purchases. */
+  private async syncCustomerSpendAfterRefund(customerId: string): Promise<void> {
+    const purchases = await computeCustomerTotalPurchases(this.prisma, customerId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: customerId },
+      select: { totalSpent: true },
+    });
+    if (!user) return;
+    if (Math.abs(Number(user.totalSpent || 0) - purchases) <= 0.01) return;
+    const loyaltyTier = await this.calculateTier(purchases);
+    await this.prisma.user.update({
+      where: { id: customerId },
+      data: { totalSpent: purchases, loyaltyTier },
+    });
+  }
+
+  /**
+   * Re-sync store lifetimeEarnings + completedOrdersCount from live payments.
+   * Idempotent — reconcile overwrites cached counters including zero after refund.
+   */
+  async reverseMerchantCompletionCounters(orderId: string): Promise<void> {
+    const payments = await this.prisma.paymentTransaction.findMany({
+      where: { orderId },
+      include: { offer: { select: { storeId: true } } },
+    });
+    const storeIds = new Set<string>();
+    for (const p of payments) {
+      if (p.offer?.storeId) storeIds.add(p.offer.storeId);
+    }
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { storeId: true },
+    });
+    if (order?.storeId) storeIds.add(order.storeId);
+    if (storeIds.size === 0) return;
+
+    for (const storeId of storeIds) {
+      await reconcileStoreCounters(this.prisma, storeId).catch(() => undefined);
+      await this.merchantPerformance
+        .recalculateAndPersist(storeId)
+        .catch(() => undefined);
     }
   }
 }

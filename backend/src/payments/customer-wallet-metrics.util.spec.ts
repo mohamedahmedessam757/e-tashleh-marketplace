@@ -2,6 +2,7 @@ import {
   computeCustomerAvailableBalance,
   computePendingLoyaltyFromOrders,
   computePendingLoyaltyPointsFromOrders,
+  reconcileUserTotalSpent,
   sumPrematureLoyaltyPoints,
   sumPrematureOrderProfit,
 } from './customer-wallet-metrics.util';
@@ -77,5 +78,26 @@ describe('customer wallet metrics — pending vs reversal', () => {
       new Set(['o1']),
     );
     expect(held).toBe(0);
+  });
+});
+
+describe('reconcileUserTotalSpent', () => {
+  it('persists zero purchases when stored spend is stale after a refund', async () => {
+    const update = jest.fn().mockResolvedValue({});
+    const prisma = { user: { update } } as any;
+    const result = await reconcileUserTotalSpent(prisma, 'u1', 0, 200);
+    expect(result).toBe(0);
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { totalSpent: 0 },
+    });
+  });
+
+  it('does not write when stored spend already matches purchases', async () => {
+    const update = jest.fn();
+    const prisma = { user: { update } } as any;
+    const result = await reconcileUserTotalSpent(prisma, 'u1', 150, 150);
+    expect(result).toBe(150);
+    expect(update).not.toHaveBeenCalled();
   });
 });

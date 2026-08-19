@@ -2708,6 +2708,7 @@ export class PaymentsService {
                 transactionType: true,
                 paymentId: true,
                 escrowId: true,
+                payment: { select: { status: true } },
             },
         }),
         this.prisma.walletTransaction.findMany({
@@ -2821,11 +2822,10 @@ export class PaymentsService {
         (stats as any).ledgerNetProfit = ledgerNetProfit;
         (stats as any).merchantShareTotal = merchantGrossSales;
 
-        // Backfill store counters from payment aggregates (merchant unitPrice, not customer GMV)
+        // Sync store counters from live payment aggregates (including zero after refunds).
         if (
-            merchantGrossSales > 0 &&
-            (Number(store.lifetimeEarnings) === 0 ||
-                Math.abs(Number(store.lifetimeEarnings) - merchantGrossSales) > 0.01)
+            Math.abs(Number(store.lifetimeEarnings) - merchantGrossSales) > 0.01 ||
+            Number(store.completedOrdersCount || 0) !== completedOrderCount
         ) {
             void this.prisma.store
                 .update({
@@ -2834,13 +2834,6 @@ export class PaymentsService {
                         lifetimeEarnings: merchantGrossSales,
                         completedOrdersCount: completedOrderCount,
                     },
-                })
-                .catch(() => undefined);
-        } else if (completedOrderCount > Number(store.completedOrdersCount || 0)) {
-            void this.prisma.store
-                .update({
-                    where: { id: store.id },
-                    data: { completedOrdersCount: completedOrderCount },
                 })
                 .catch(() => undefined);
         }
@@ -2981,6 +2974,7 @@ export class PaymentsService {
                 transactionType: true,
                 paymentId: true,
                 escrowId: true,
+                payment: { select: { status: true } },
             },
         });
         const ledgerNetProfit = computeLedgerNetProfit(vendorTxs);

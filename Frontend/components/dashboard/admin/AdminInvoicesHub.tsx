@@ -189,9 +189,25 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
       {
         key: 'paymentStatus',
         header: hub.paymentStatus || (isAr ? 'حالة الدفع' : 'Payment'),
-        render: (r: any) => (
-          <span className="text-[10px] font-black uppercase text-white/50">{r.paymentStatus || '—'}</span>
-        ),
+        render: (r: any) => {
+          const status = String(r.paymentStatus || r.invoiceStatus || '').toUpperCase();
+          const label =
+            hub.paymentStatusLabels?.[status] ||
+            r.paymentStatus ||
+            r.invoiceStatus ||
+            '—';
+          const tone =
+            status === 'REFUNDED'
+              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+              : status === 'SUCCESS' || status === 'PAID'
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                : 'bg-white/5 text-white/50 border-white/10';
+          return (
+            <span className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${tone}`}>
+              {label}
+            </span>
+          );
+        },
       },
       {
         key: 'issuedAt',

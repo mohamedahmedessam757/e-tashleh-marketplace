@@ -17,6 +17,8 @@ export interface VendorLedgerTx {
   transactionType: string | null;
   paymentId?: string | null;
   escrowId?: string | null;
+  paymentStatus?: string | null;
+  payment?: { status: string } | null;
 }
 
 /** Sale recognition on merchant ledger — payment capture only, not escrow release to available. */
@@ -26,6 +28,7 @@ function isMerchantSaleLedgerCredit(action: VendorLedgerTx): boolean {
   if (txType === 'REFERRAL_PROFIT') return false;
   if (txType === 'ESCROW_RELEASE' || txType === 'ESCROW_TRANSFER') return false;
   if (txType === 'COMMISSION') return false;
+  if (String(action.paymentStatus || action.payment?.status || '').toUpperCase() === 'REFUNDED') return false;
   return (txType === 'PAYMENT' || txType === 'SALE') && !!action.paymentId;
 }
 

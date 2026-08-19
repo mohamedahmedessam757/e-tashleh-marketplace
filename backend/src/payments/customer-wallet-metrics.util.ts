@@ -332,17 +332,14 @@ export function computeCustomerAvailableBalance(
   return Number(Math.max(0, customerBalance - prematureCashbackHeld).toFixed(2));
 }
 
-/** Backfill users.total_spent from payment aggregates when drift detected. */
+/** Backfill users.total_spent from payment aggregates when drift detected (including 0 after refunds). */
 export async function reconcileUserTotalSpent(
   prisma: PrismaService,
   userId: string,
   purchasesFromPayments: number,
   currentTotalSpent: number,
 ): Promise<number> {
-  if (
-    purchasesFromPayments > 0 &&
-    Math.abs(currentTotalSpent - purchasesFromPayments) > 0.01
-  ) {
+  if (Math.abs(currentTotalSpent - purchasesFromPayments) > 0.01) {
     await prisma.user
       .update({
         where: { id: userId },

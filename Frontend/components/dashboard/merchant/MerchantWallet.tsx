@@ -868,7 +868,10 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                                 <div className="flex items-center justify-center gap-2 text-[9px] font-black uppercase whitespace-nowrap">
                                                     {(() => {
                                                         const type = tx.transactionType?.toUpperCase() || 'PAYMENT';
-                                                        const typeLabels = t.dashboard.profile.wallet.transactionTypes;
+                                                        const typeLabels =
+                                                            t.dashboard.profile?.wallet?.transactionTypes ||
+                                                            w.transactionTypes ||
+                                                            {};
 
                                                         const iconConfig: Record<string, { icon: any, color: string }> = {
                                                             'ORDER_PROFIT': { icon: Star, color: 'text-gold-500' },

@@ -86,7 +86,7 @@ export const MerchantStoreTierProgress: React.FC<MerchantStoreTierProgressProps>
               : null;
 
     const ratingVal = performanceSnap?.rankingBreakdown?.rating ?? stats.rating ?? 0;
-    const ordersVal = performanceSnap?.completedOrdersCount ?? stats.completedOrders ?? 0;
+    const ordersVal = stats.completedOrders ?? performanceSnap?.completedOrdersCount ?? 0;
     const salesVal = Number(stats.totalSales || 0);
     const hasNoActivity = ratingVal <= 0 && ordersVal <= 0 && salesVal <= 0;
 
@@ -226,7 +226,7 @@ export const MerchantStoreTierProgress: React.FC<MerchantStoreTierProgressProps>
                             <div className="bg-white/5 rounded-lg p-2 border border-white/5 text-center">
                                 <p className="text-white/30 uppercase font-black">{labels.completedOrders}</p>
                                 <p className="text-white font-bold mt-1">
-                                    {performanceSnap?.completedOrdersCount ?? stats.completedOrders ?? 0}
+                                    {stats.completedOrders ?? performanceSnap?.completedOrdersCount ?? 0}
                                 </p>
                             </div>
                             <div className="bg-white/5 rounded-lg p-2 border border-white/5 text-center">

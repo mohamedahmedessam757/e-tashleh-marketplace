@@ -194,6 +194,13 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         subscribeToFinancialFeed();
         subscribeToWithdrawals();
 
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchAdminFinancials(undefined, true);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
         const handleClickOutside = (event: MouseEvent) => {
             if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
                 setIsTypeFilterOpen(false);
@@ -207,6 +214,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
             unsubscribeFromFinancials();
             unsubscribeFromFinancialFeed();
             unsubscribeFromWithdrawals();
+            document.removeEventListener('visibilitychange', handleVisibility);
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
@@ -781,7 +789,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                     <div className="relative">
                         <GlassCard className="p-0 overflow-hidden bg-black/20 border-white/5 shadow-2xl">
                         <div className="overflow-x-auto text-white">
-                            <table className="w-full text-left whitespace-nowrap border-collapse">
+                            <table className="w-full text-left border-collapse min-w-[1280px]">
                                 <thead className="bg-white/[0.03] text-[10px] text-white/30 uppercase font-black sticky top-0 z-10 backdrop-blur-md">
                                     <tr className="border-b border-white/5">
                                         <th className="px-6 py-6 text-right">{t.admin.billing.ledger.table.transaction}</th>

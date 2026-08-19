@@ -299,9 +299,7 @@ export class InvoicesService {
         const limit = Math.min(100, Math.max(1, Number(filters?.limit) || 25));
         const skip = (page - 1) * limit;
 
-        let baseWhere: Prisma.InvoiceWhereInput = {
-            payment: { status: 'SUCCESS' },
-        };
+        let baseWhere: Prisma.InvoiceWhereInput = {};
 
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
