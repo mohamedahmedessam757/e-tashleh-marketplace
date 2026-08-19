@@ -25,7 +25,7 @@ export const AdminFinancialRefunds: React.FC = () => {
     return () => clearTimeout(timer);
   }, [search, fetchFinancialRefunds]);
 
-  useFinancialTableRealtime(() => fetchFinancialRefunds(search), ['return_requests']);
+  useFinancialTableRealtime(() => fetchFinancialRefunds(search), ['returns', 'disputes']);
 
   const columns = useMemo(() => [
     { key: 'customer', header: bt.customer, render: (row: any) => <BlurredSection isBlurred={isSectionBlurred('customer_name')}><span className="text-sm text-white">{row.customerName || row.customer?.name || '—'}</span></BlurredSection> },
@@ -33,6 +33,8 @@ export const AdminFinancialRefunds: React.FC = () => {
     { key: 'invoice', header: bt.invoice, render: (row: any) => <span className="font-mono text-xs text-gold-500">{row.invoiceNumber || row.invoiceId?.slice(-8) || '—'}</span> },
     { key: 'reason', header: bt.reason, render: (row: any) => <span className="text-xs text-white/50 max-w-[180px] truncate block">{row.reason || row.refundReason || '—'}</span> },
     { key: 'refundAmount', header: bt.refundAmount, render: (row: any) => <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}><span className="font-mono text-sm font-black text-rose-400">{Number(row.refundAmount || row.amount || 0).toLocaleString()} AED</span></BlurredSection> },
+    { key: 'refundDecision', header: bt.refundDecision, render: (row: any) => <span className="text-[10px] font-black uppercase text-white/50">{row.finalRefundDecision || '—'}</span> },
+    { key: 'refundExecutionStatus', header: bt.refundExecutionStatus, render: (row: any) => <span className="text-[10px] font-black uppercase text-white/40">{row.refundExecutionStatus || '—'}</span> },
     { key: 'shippingFee', header: bt.shippingFee, render: (row: any) => <span className="font-mono text-xs text-white/50">{Number(row.shippingFee || 0).toLocaleString()}</span> },
     { key: 'gatewayFee', header: bt.gatewayFee, render: (row: any) => <span className="font-mono text-xs text-white/50">{Number(row.gatewayFee || 0).toLocaleString()}</span> },
     { key: 'costBearer', header: bt.costBearer, render: (row: any) => <span className="text-[10px] font-black uppercase text-white/40">{row.costBearer || '—'}</span> },

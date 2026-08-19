@@ -140,10 +140,17 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
         key: 'invoiceType',
         header: hub.type || (isAr ? 'النوع' : 'Type'),
         render: (r: any) => (
-          <span
-            className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
-          >
-            {typeLabel(r.invoiceType)}
+          <span className="inline-flex flex-wrap items-center gap-1">
+            <span
+              className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
+            >
+              {typeLabel(r.invoiceType)}
+            </span>
+            {String(r.shippingBatchKey || '').startsWith('RETURNS_FEE:') && (
+              <span className="inline-flex px-2 py-0.5 rounded-lg border border-gold-500/30 bg-gold-500/10 text-gold-400 text-[9px] font-black uppercase tracking-wide">
+                {hub.caseFees || (isAr ? 'رسوم قضية' : 'Case fees')}
+              </span>
+            )}
           </span>
         ),
       },
@@ -189,9 +196,25 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
       {
         key: 'paymentStatus',
         header: hub.paymentStatus || (isAr ? 'حالة الدفع' : 'Payment'),
-        render: (r: any) => (
-          <span className="text-[10px] font-black uppercase text-white/50">{r.paymentStatus || '—'}</span>
-        ),
+        render: (r: any) => {
+          const status = String(r.paymentStatus || r.invoiceStatus || '').toUpperCase();
+          const label =
+            hub.paymentStatusLabels?.[status] ||
+            r.paymentStatus ||
+            r.invoiceStatus ||
+            '—';
+          const tone =
+            status === 'REFUNDED'
+              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+              : status === 'SUCCESS' || status === 'PAID'
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                : 'bg-white/5 text-white/50 border-white/10';
+          return (
+            <span className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${tone}`}>
+              {label}
+            </span>
+          );
+        },
       },
       {
         key: 'issuedAt',

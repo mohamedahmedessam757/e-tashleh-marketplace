@@ -82,53 +82,53 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                 onClick={() => onRowClick(item)}
                 className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
             >
-                <td className="px-8 py-6">
-                    <div className="flex items-center gap-4 relative">
-                        <div className="relative w-10 h-10 rounded-xl flex items-center justify-center border transition-colors duration-300 bg-white/5 border-white/10 group-hover:border-white/20">
+                <td className="px-8 py-6 align-top min-w-[220px] max-w-[320px]">
+                    <div className="flex items-start gap-3 min-w-0 overflow-hidden">
+                        <div className="relative w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border transition-colors duration-300 bg-white/5 border-white/10 group-hover:border-white/20">
                             {eventIcon}
                         </div>
-                        <div>
-                            <div className="font-mono text-white font-bold text-sm">
+                        <div className="min-w-0 flex-1 overflow-hidden flex flex-col gap-1">
+                            <div className="font-mono text-white font-bold text-sm leading-snug break-words whitespace-normal">
                                 {isAr ? item.eventTypeAr : item.eventTypeEn}
                             </div>
                             {((isAr
                                 ? (item.metadata as any)?.displayDescriptionAr
                                 : (item.metadata as any)?.displayDescriptionEn) ||
                                 item.description) && (
-                                <div className="text-[10px] text-white/45 font-medium mt-1 max-w-[280px] leading-snug normal-case">
+                                <div className="text-[10px] text-white/45 font-medium leading-snug normal-case break-words whitespace-normal">
                                     {isAr
                                         ? ((item.metadata as any)?.displayDescriptionAr || item.description)
                                         : ((item.metadata as any)?.displayDescriptionEn || item.description)}
                                 </div>
                             )}
-                            <div className="text-[10px] text-white/30 font-black uppercase mt-1">
+                            <div className="text-[10px] text-white/30 font-black uppercase">
                                 {item.source} • #{item.id.slice(-8).toUpperCase()}
                             </div>
                         </div>
                     </div>
                 </td>
-                <td className="px-8 py-6">
-                    <div className="flex flex-col gap-1">
+                <td className="px-8 py-6 align-top min-w-[200px] max-w-[280px]">
+                    <div className="flex flex-col gap-1.5 min-w-0 overflow-hidden">
                         {item.orderNumber && (
-                            <div className="text-xs font-black text-white/80 flex items-center gap-2">
-                                <span className="text-[9px] text-white/20">ORD</span>
-                                {item.orderNumber}
+                            <div className="text-xs font-black text-white/80 flex items-center gap-2 min-w-0">
+                                <span className="text-[9px] text-white/20 shrink-0">ORD</span>
+                                <span className="break-all whitespace-normal leading-snug">{item.orderNumber}</span>
                             </div>
                         )}
-                        <div className="text-[10px] text-white/40 font-bold flex items-center gap-2">
+                        <div className="text-[10px] text-white/40 font-bold flex flex-col gap-1 min-w-0">
                             {item.customerName && (
                                 <BlurredSection isBlurred={isSectionBlurred('customer_name')}>
-                                    <span className="flex items-center gap-1">
-                                        <User size={10} />
-                                        {item.customerName}
+                                    <span className="flex items-center gap-1 min-w-0">
+                                        <User size={10} className="shrink-0" />
+                                        <span className="truncate">{item.customerName}</span>
                                     </span>
                                 </BlurredSection>
                             )}
                             {item.storeName && (
                                 <BlurredSection isBlurred={isSectionBlurred('customer_name')}>
-                                    <span className="flex items-center gap-1 text-gold-500/50">
-                                        <Crown size={10} />
-                                        {item.storeName}
+                                    <span className="flex items-center gap-1 text-gold-500/50 min-w-0">
+                                        <Crown size={10} className="shrink-0" />
+                                        <span className="truncate">{item.storeName}</span>
                                     </span>
                                 </BlurredSection>
                             )}
@@ -137,7 +137,7 @@ export const FinancialFeedRow = React.memo(function FinancialFeedRow({
                             )}
                         </div>
                         {item.financialImpact && (
-                            <span className="inline-flex mt-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-gold-500/10 text-gold-400 border border-gold-500/20">
+                            <span className="inline-flex w-fit max-w-full text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-gold-500/10 text-gold-400 border border-gold-500/20 break-all whitespace-normal leading-snug">
                                 {t.admin.billing.ledger.financialImpact}: {item.financialImpact}
                             </span>
                         )}

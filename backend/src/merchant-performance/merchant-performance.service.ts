@@ -11,6 +11,10 @@ import {
   FinancialConfigService,
   StoreLoyaltyTierConfig,
 } from '../common/financial-config.service';
+import {
+  computeCompletedOrdersCount,
+  computeMerchantGrossSales,
+} from '../payments/merchant-wallet-metrics.util';
 
 const TIER_ORDER: Record<StoreLoyaltyTier, number> = {
   BASIC: 1,
@@ -196,13 +200,14 @@ export class MerchantPerformanceService {
 
     const rules = await this.getStoreTierRules();
     const preserveElite = store.loyaltyTier === StoreLoyaltyTier.ELITE;
+    const liveCompletedOrders = await computeCompletedOrdersCount(this.prisma, storeId);
     const autoTier = this.computeAutoTier({
       rating: Number(store.rating),
       violationPoints: store.owner.violationScore,
       subscriptionTier: store.subscriptionTier,
       subscriptionActive: store.subscriptionActive,
       subscriptionExpiresAt: store.subscriptionExpiresAt,
-      completedOrders: store.completedOrdersCount,
+      completedOrders: liveCompletedOrders,
       storeCreatedAt: store.createdAt,
     }, rules);
 
@@ -237,7 +242,7 @@ export class MerchantPerformanceService {
           store.subscriptionTier,
           store.subscriptionExpiresAt,
         ),
-        completedOrdersCount: store.completedOrdersCount,
+        completedOrdersCount: liveCompletedOrders,
         rating: Number(store.rating),
         lifetimeEarnings: fresh ? Number(fresh.lifetimeEarnings) : undefined,
       });
@@ -280,6 +285,11 @@ export class MerchantPerformanceService {
     });
     if (!store) return null;
 
+    const [liveCompletedOrders, liveGrossSales] = await Promise.all([
+      computeCompletedOrdersCount(this.prisma, store.id),
+      computeMerchantGrossSales(this.prisma, store.id),
+    ]);
+
     const subEffective = this.subscriptionEffective(
       store.subscriptionActive,
       store.subscriptionTier,
@@ -293,7 +303,7 @@ export class MerchantPerformanceService {
       subscriptionTier: store.subscriptionTier,
       subscriptionActive: store.subscriptionActive,
       subscriptionExpiresAt: store.subscriptionExpiresAt,
-      completedOrders: store.completedOrdersCount,
+      completedOrders: liveCompletedOrders,
       storeCreatedAt: store.createdAt,
     }, rules);
 
@@ -303,7 +313,7 @@ export class MerchantPerformanceService {
       nextTier: nextTierUp,
       rating: Number(store.rating),
       violationPoints: store.owner.violationScore,
-      completedOrders: store.completedOrdersCount,
+      completedOrders: liveCompletedOrders,
       storeCreatedAt: store.createdAt,
       subscriptionTier: store.subscriptionTier,
       subscriptionEffective: subEffective,
@@ -344,13 +354,13 @@ export class MerchantPerformanceService {
         effective: subEffective,
         expiresAt: store.subscriptionExpiresAt,
       },
-      completedOrdersCount: store.completedOrdersCount,
+      completedOrdersCount: liveCompletedOrders,
       violationPoints: store.owner.violationScore,
       violationLimits: {
         freezeAt: 50,
         suspendAt: 80,
       },
-      lifetimeEarnings: Number(store.lifetimeEarnings),
+      lifetimeEarnings: liveGrossSales,
       referralCode: store.owner.referralCode,
       currentTierBenefits: tierRow.benefits,
       profitRate: tierRow.rate,

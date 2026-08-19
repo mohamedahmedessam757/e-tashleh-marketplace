@@ -55,9 +55,12 @@ export interface ResolutionCase {
     // Phase 4 Governance
     usageCondition?: string;
     faultParty?: string;
+    finalRefundDecision?: 'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND';
     feeBearer?: string;
     shippingCompanyLiability?: number;
     refundAmount?: number;
+    finalCustomerRefundAmount?: number;
+    refundExecutionStatus?: 'NOT_REQUIRED' | 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED';
     shippingRefund?: number;
     verdictNotes?: string;
     verdictIssuedAt?: string;
@@ -212,6 +215,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                     ? Number((r as any).shippingCompanyLiability)
                     : undefined,
                 refundAmount: (r as any).refundAmount,
+                finalRefundDecision: (r as any).finalRefundDecision,
+                finalCustomerRefundAmount: (r as any).finalCustomerRefundAmount != null
+                    ? Number((r as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (r as any).refundExecutionStatus,
                 shippingRefund: (r as any).shippingRefund,
                 verdictNotes: (r as any).verdictNotes,
                 verdictIssuedAt: (r as any).verdictIssuedAt,
@@ -285,6 +293,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                     ? Number((d as any).shippingCompanyLiability)
                     : undefined,
                 refundAmount: (d as any).refundAmount,
+                finalRefundDecision: (d as any).finalRefundDecision,
+                finalCustomerRefundAmount: (d as any).finalCustomerRefundAmount != null
+                    ? Number((d as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (d as any).refundExecutionStatus,
                 shippingRefund: (d as any).shippingRefund,
                 verdictNotes: (d as any).verdictNotes,
                 verdictIssuedAt: (d as any).verdictIssuedAt,
@@ -391,6 +404,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                     ? Number((r as any).shippingCompanyLiability)
                     : undefined,
                 refundAmount: (r as any).refundAmount,
+                finalRefundDecision: (r as any).finalRefundDecision,
+                finalCustomerRefundAmount: (r as any).finalCustomerRefundAmount != null
+                    ? Number((r as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (r as any).refundExecutionStatus,
                 shippingRefund: (r as any).shippingRefund,
                 verdictNotes: (r as any).verdictNotes,
                 verdictIssuedAt: (r as any).verdictIssuedAt,
@@ -440,6 +458,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 // Governance data
                 faultParty: d.faultParty,
                 refundAmount: d.refundAmount,
+                finalRefundDecision: (d as any).finalRefundDecision,
+                finalCustomerRefundAmount: (d as any).finalCustomerRefundAmount != null
+                    ? Number((d as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (d as any).refundExecutionStatus,
                 shippingRefund: d.shippingRefund,
                 verdictNotes: d.verdictNotes,
                 verdictIssuedAt: d.verdictIssuedAt,
@@ -497,7 +520,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
             const mappedReturns: ResolutionCase[] = returns.map(r => ({
                 id: r.id,
                 caseReference: r.caseReference ?? null,
-                orderId: parseInt(r.orderId) || 0,
+                orderId: String(r.orderId),
                 type: 'return',
                 status: r.status === 'PENDING' ? 'AWAITING_MERCHANT' : r.status,
                 reason: r.reason,
@@ -527,6 +550,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                     ? Number((r as any).shippingCompanyLiability)
                     : undefined,
                 refundAmount: (r as any).refundAmount,
+                finalRefundDecision: (r as any).finalRefundDecision,
+                finalCustomerRefundAmount: (r as any).finalCustomerRefundAmount != null
+                    ? Number((r as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (r as any).refundExecutionStatus,
                 shippingRefund: (r as any).shippingRefund,
                 verdictNotes: (r as any).verdictNotes,
                 verdictIssuedAt: (r as any).verdictIssuedAt,
@@ -570,7 +598,7 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
             const mappedDisputes: ResolutionCase[] = disputes.map(d => ({
                 id: d.id,
                 caseReference: d.caseReference ?? null,
-                orderId: parseInt(d.orderId) || 0,
+                orderId: String(d.orderId),
                 type: 'dispute',
                 status: d.status === 'OPEN' ? 'AWAITING_MERCHANT' : d.status,
                 reason: d.reason,
@@ -600,6 +628,11 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                     ? Number((d as any).shippingCompanyLiability)
                     : undefined,
                 refundAmount: (d as any).refundAmount,
+                finalRefundDecision: (d as any).finalRefundDecision,
+                finalCustomerRefundAmount: (d as any).finalCustomerRefundAmount != null
+                    ? Number((d as any).finalCustomerRefundAmount)
+                    : undefined,
+                refundExecutionStatus: (d as any).refundExecutionStatus,
                 shippingRefund: (d as any).shippingRefund,
                 verdictNotes: (d as any).verdictNotes,
                 verdictIssuedAt: (d as any).verdictIssuedAt,

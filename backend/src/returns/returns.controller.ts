@@ -5,6 +5,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { UserRole } from '@prisma/client';
 import { ReturnsService } from './returns.service';
+import { AdminVerdictDto } from './dto/admin-verdict.dto';
 import { multerMemoryOptions, multerMemoryOptions10Mb } from '../uploads/multer.config';
 
 @Controller('returns')
@@ -173,12 +174,7 @@ export class ReturnsController {
     async issueVerdict(
         @Request() req,
         @Param('id') id: string,
-        @Body() body: { 
-            type: 'return' | 'dispute'; 
-            verdict: 'REFUND' | 'RELEASE_FUNDS' | 'DENY'; 
-            notes: string;
-            extra?: any;
-        }
+        @Body() body: AdminVerdictDto,
     ) {
         if (!body.type || !body.verdict || !body.notes) {
             throw new BadRequestException('Type, Verdict, and Notes are required');
@@ -200,12 +196,7 @@ export class ReturnsController {
     async updateVerdict(
         @Request() req,
         @Param('id') id: string,
-        @Body() body: { 
-            type: 'return' | 'dispute'; 
-            verdict: 'REFUND' | 'RELEASE_FUNDS' | 'DENY'; 
-            notes: string;
-            extra?: any;
-        }
+        @Body() body: AdminVerdictDto,
     ) {
         return this.returnsService.updateVerdict(
             req.user.id,

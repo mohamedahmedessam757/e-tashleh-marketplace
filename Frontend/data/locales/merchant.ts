@@ -85,6 +85,25 @@ export const merchant = {
       maxStoreTier: 'لقد وصلت إلى أعلى مستوى متاح!',
       eliteInviteOnly: 'مستوى ELITE بدعوة من المنصة فقط',
       nextTierBenefits: 'مزايا المستوى القادم',
+      transactionTypes: {
+        ORDER_PROFIT: 'أرباح الطلبات',
+        REFERRAL_PROFIT: 'أرباح الإحالات',
+        PAYMENT: 'عملية دفع',
+        SALE: 'بيع',
+        WITHDRAWAL: 'سحب رصيد',
+        REFUND: 'استرداد مبلغ',
+        COMMISSION: 'عمولة المنصة',
+        PENALTY: 'جزاء / مخالفة',
+        DISPUTE: 'نزاع مالي',
+        LOYALTY_BONUS: 'مكافأة ولاء',
+        WALLET_TOPUP: 'شحن محفظة',
+        GATEWAY_FEE: 'رسوم بوابة الدفع',
+        REFUND_FEE: 'رسوم الاسترداد',
+        SHIPPING_FEE: 'تكاليف الشحن',
+        FRAUD_PENALTY: 'غرامة احتيال',
+        ADJUDICATION_FEE: 'رسوم حكم إداري',
+        ESCROW_RELEASE: 'تحرير ضمان',
+      },
     },
     audit: {
       title: 'سجل النشاط',
@@ -174,6 +193,16 @@ export const merchant = {
       adj_fee_payee_msg: 'بناءً على الحكم، أنت ملزم بسداد رسوم المنصة عبر المحفظة أو Stripe.',
       adj_fee_other_msg: 'الطرف الملزم بسداد رسوم الحكم لم يُكمل الدفع بعد.',
       adj_fee_warning: 'الرصيد غير كافٍ وقت الحكم — يرجى السداد عبر Stripe أو شحن المحفظة ثم الخصم.',
+      finalRefundDecision: 'قرار الاسترداد النهائي',
+      refundDecisionYes: 'سيتم رد المبلغ للعميل',
+      refundDecisionNo: 'لا يوجد رد مبلغ للعميل',
+      finalCustomerRefundAmount: 'الأثر المالي',
+      refundExecutionStatus: 'حالة التنفيذ',
+      refundExecutionNotRequired: 'غير مطلوب',
+      refundExecutionPending: 'قيد الانتظار',
+      refundExecutionProcessing: 'جاري التنفيذ',
+      refundExecutionSucceeded: 'تم الاسترداد',
+      refundExecutionFailed: 'فشل الاسترداد',
     },
     kpi: {
       title: 'مؤشرات الأداء (KPIs)',
@@ -778,6 +807,15 @@ export const merchant = {
         FREEZE_BALANCE: 'إيقاف وحجز رصيد',
         PERMANENT_BAN: 'حظر نهائي'
       }
+    },
+    invoiceDocs: {
+      addendumTitle: 'ملحق رسوم القضية',
+      addendumHint: 'فواتير مستقلة — لا تغيّر أرقام الفاتورة الشاملة الأصلية',
+      caseFees: 'رسوم قضية',
+      payer: 'الدافع',
+      gatewayFee: 'رسوم بوابة الدفع',
+      refundFee: 'رسوم الاسترداد',
+      roundtripShipping: 'شحن ذهاب وعودة',
     }
   },
   en: {
@@ -865,6 +903,25 @@ export const merchant = {
       maxStoreTier: 'You have reached the highest available tier!',
       eliteInviteOnly: 'ELITE tier is invite-only',
       nextTierBenefits: 'Next Tier Benefits',
+      transactionTypes: {
+        ORDER_PROFIT: 'Order profit',
+        REFERRAL_PROFIT: 'Referral profit',
+        PAYMENT: 'Payment',
+        SALE: 'Sale',
+        WITHDRAWAL: 'Withdrawal',
+        REFUND: 'Refund',
+        COMMISSION: 'Platform commission',
+        PENALTY: 'Penalty',
+        DISPUTE: 'Dispute',
+        LOYALTY_BONUS: 'Loyalty bonus',
+        WALLET_TOPUP: 'Wallet top-up',
+        GATEWAY_FEE: 'Gateway fee',
+        REFUND_FEE: 'Refund fee',
+        SHIPPING_FEE: 'Shipping fee',
+        FRAUD_PENALTY: 'Fraud penalty',
+        ADJUDICATION_FEE: 'Adjudication fee',
+        ESCROW_RELEASE: 'Escrow release',
+      },
     },
     audit: {
       title: 'Activity Log',
@@ -954,6 +1011,16 @@ export const merchant = {
       adj_fee_payee_msg: 'Per the verdict, you must pay platform adjudication fees via wallet or Stripe.',
       adj_fee_other_msg: 'The obligated party has not completed adjudication fee payment yet.',
       adj_fee_warning: 'Balance was insufficient at verdict — please pay via Stripe or top up your wallet then deduct.',
+      finalRefundDecision: 'Final refund decision',
+      refundDecisionYes: 'Customer refund approved',
+      refundDecisionNo: 'No customer refund',
+      finalCustomerRefundAmount: 'Financial impact',
+      refundExecutionStatus: 'Execution status',
+      refundExecutionNotRequired: 'Not required',
+      refundExecutionPending: 'Pending',
+      refundExecutionProcessing: 'Processing',
+      refundExecutionSucceeded: 'Refunded',
+      refundExecutionFailed: 'Refund failed',
     },
     kpi: {
       title: 'Performance Indicators (KPIs)',
@@ -1539,6 +1606,15 @@ export const merchant = {
         FREEZE_BALANCE: 'Suspend & Freeze Balance',
         PERMANENT_BAN: 'Permanent Ban'
       }
+    },
+    invoiceDocs: {
+      addendumTitle: 'Case-fee addendum',
+      addendumHint: 'Standalone invoices — they do not change the original master totals',
+      caseFees: 'Case fees',
+      payer: 'Payer',
+      gatewayFee: 'Gateway fee',
+      refundFee: 'Refund fee',
+      roundtripShipping: 'Round-trip shipping',
     }
   }
 };

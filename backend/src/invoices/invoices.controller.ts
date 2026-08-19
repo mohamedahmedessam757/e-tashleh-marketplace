@@ -83,7 +83,7 @@ export class InvoicesController {
             { id: req.user.id, role: req.user.role, storeId: req.user.storeId },
             orderId,
         );
-        return this.invoicesService.getInvoicesByOrder(orderId, req.user.role);
+        return this.invoicesService.getInvoicesByOrder(orderId, req.user.role, req.user.id);
     }
 
     @Get(':id')

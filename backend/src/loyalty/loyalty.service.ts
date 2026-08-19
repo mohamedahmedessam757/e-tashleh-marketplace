@@ -6,7 +6,11 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FinancialConfigService, LoyaltyTierConfig } from '../common/financial-config.service';
-import { sumMerchantShareByStore } from '../payments/merchant-wallet-metrics.util';
+import {
+  reconcileStoreCounters,
+  sumMerchantShareByStore,
+} from '../payments/merchant-wallet-metrics.util';
+import { computeCustomerTotalPurchases } from '../payments/customer-wallet-metrics.util';
 import {
   CLOSED_DISPUTE_STATUSES,
   CLOSED_RETURN_STATUSES,
@@ -309,6 +313,7 @@ export class LoyaltyService {
           metadata: { 
               orderId: order.id, 
               commission: totalCommission, 
+              earnedPoints,
               rate: `${config.percent * 100}%`,
               capsApplied: earnedProfit < EARNED_RAW,
               skipReason: hitMonthlyCap ? 'monthly_cap' : undefined,
@@ -811,5 +816,180 @@ export class LoyaltyService {
     };
 
     return { referrals, totals };
+  }
+
+  /**
+   * Reverse cashback + referral credits after a successful customer refund.
+   * Idempotent via metadata.reverses + caseId.
+   */
+  async reverseRewardsForCustomerRefund(orderId: string, caseId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        orderNumber: true,
+        customerId: true,
+        customer: { select: { id: true, customerBalance: true, loyaltyPoints: true } },
+      },
+    });
+    if (!order?.customer) {
+      await this.reverseMerchantCompletionCounters(orderId);
+      return;
+    }
+
+    const profitCredits = await this.prisma.walletTransaction.findMany({
+      where: {
+        type: 'CREDIT',
+        transactionType: { in: ['ORDER_PROFIT', 'REFERRAL_PROFIT'] },
+        metadata: { path: ['orderId'], equals: orderId },
+      },
+    });
+
+    for (const credit of profitCredits) {
+      const amount = Number(credit.amount || 0);
+
+      const existing = await this.prisma.walletTransaction.findFirst({
+        where: {
+          type: 'DEBIT',
+          transactionType: credit.transactionType,
+          metadata: { path: ['reverses'], equals: credit.id },
+        },
+        select: { id: true },
+      });
+      if (existing) continue;
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: credit.userId },
+        select: { id: true, customerBalance: true, loyaltyPoints: true },
+      });
+      if (!user) continue;
+
+      const debitAmount = Math.min(Math.max(0, amount), Number(user.customerBalance || 0));
+      const remainingLiability = Number(Math.max(0, amount - debitAmount).toFixed(2));
+      const fullyRecovered = remainingLiability <= 0.009;
+      const creditMeta = (credit.metadata || {}) as {
+        commission?: number;
+        earnedPoints?: number;
+      };
+      const pointsToRemove =
+        credit.transactionType === 'ORDER_PROFIT'
+          ? Math.min(
+              Number(user.loyaltyPoints || 0),
+              Math.max(0, Math.floor(Number(creditMeta.commission || creditMeta.earnedPoints || 0))),
+            )
+          : 0;
+
+      if (debitAmount <= 0 && pointsToRemove <= 0) {
+        if (amount > 0) {
+          this.logger.warn(
+            `[LoyaltyEngine] Refund reversal deferred for tx=${credit.id} order=${orderId}: wallet empty, remaining=${amount}`,
+          );
+        }
+        continue;
+      }
+
+      const updated = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(debitAmount > 0 ? { customerBalance: { decrement: debitAmount } } : {}),
+          ...(pointsToRemove > 0 ? { loyaltyPoints: { decrement: pointsToRemove } } : {}),
+        },
+      });
+
+      if (debitAmount > 0) {
+        await this.prisma.walletTransaction.create({
+          data: {
+            userId: user.id,
+            role: 'CUSTOMER',
+            type: 'DEBIT',
+            transactionType: credit.transactionType,
+            amount: debitAmount,
+            currency: 'AED',
+            description:
+              credit.transactionType === 'REFERRAL_PROFIT'
+                ? `Referral reward reversed after refund — order #${order.orderNumber}`
+                : `Cashback reversed after refund — order #${order.orderNumber}`,
+            balanceAfter: Number(updated.customerBalance),
+            metadata: {
+              orderId,
+              caseId,
+              ...(fullyRecovered ? { reverses: credit.id } : {}),
+              originalAmount: amount,
+              remainingLiability,
+              pointsReversed: pointsToRemove,
+            },
+          },
+        });
+      }
+
+      this.loyaltyGateway.emitLoyaltyUpdate(user.id, 'CUSTOMER', {
+        loyaltyPoints: updated.loyaltyPoints,
+        customerBalance: Number(updated.customerBalance),
+        reversed: fullyRecovered,
+        orderId,
+        caseId,
+      });
+
+      if (fullyRecovered || pointsToRemove > 0) {
+        await this.notifications.create({
+          recipientId: user.id,
+          recipientRole: 'CUSTOMER',
+          type: 'loyalty',
+          titleAr: 'تم إلغاء مكافأة الطلب',
+          titleEn: 'Order reward reversed',
+          messageAr: `تم إلغاء الكاش باك / نقاط الولاء للطلب #${order.orderNumber} بعد استرداد المبلغ.`,
+          messageEn: `Cashback / loyalty points for order #${order.orderNumber} were reversed after the refund.`,
+          link: '/dashboard/wallet',
+          metadata: { orderId, caseId, waEvent: 'ORDER_STATUS' },
+        }).catch(() => {});
+      }
+    }
+
+    await this.syncCustomerSpendAfterRefund(order.customerId);
+    await this.reverseMerchantCompletionCounters(orderId);
+  }
+
+  /** Align users.totalSpent + loyaltyTier with live non-refunded purchases. */
+  private async syncCustomerSpendAfterRefund(customerId: string): Promise<void> {
+    const purchases = await computeCustomerTotalPurchases(this.prisma, customerId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: customerId },
+      select: { totalSpent: true },
+    });
+    if (!user) return;
+    if (Math.abs(Number(user.totalSpent || 0) - purchases) <= 0.01) return;
+    const loyaltyTier = await this.calculateTier(purchases);
+    await this.prisma.user.update({
+      where: { id: customerId },
+      data: { totalSpent: purchases, loyaltyTier },
+    });
+  }
+
+  /**
+   * Re-sync store lifetimeEarnings + completedOrdersCount from live payments.
+   * Idempotent — reconcile overwrites cached counters including zero after refund.
+   */
+  async reverseMerchantCompletionCounters(orderId: string): Promise<void> {
+    const payments = await this.prisma.paymentTransaction.findMany({
+      where: { orderId },
+      include: { offer: { select: { storeId: true } } },
+    });
+    const storeIds = new Set<string>();
+    for (const p of payments) {
+      if (p.offer?.storeId) storeIds.add(p.offer.storeId);
+    }
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { storeId: true },
+    });
+    if (order?.storeId) storeIds.add(order.storeId);
+    if (storeIds.size === 0) return;
+
+    for (const storeId of storeIds) {
+      await reconcileStoreCounters(this.prisma, storeId).catch(() => undefined);
+      await this.merchantPerformance
+        .recalculateAndPersist(storeId)
+        .catch(() => undefined);
+    }
   }
 }

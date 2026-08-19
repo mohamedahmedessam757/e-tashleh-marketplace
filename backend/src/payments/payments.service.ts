@@ -29,13 +29,16 @@ import {
     computeCustomerTotalPurchases,
     computeLedgerNetRewards,
     computePendingLoyaltyFromOrders,
+    computePendingLoyaltyPointsFromOrders,
     computePendingReferralFromOrders,
     computeRefundedAmount,
     computeCustomerAvailableBalance,
-    CUSTOMER_PENDING_ORDER_STATUSES,
+    CUSTOMER_PENDING_REWARD_ORDER_STATUSES,
     CUSTOMER_TERMINAL_REWARD_STATUSES,
     extractOrderProfitOrderIds,
     sumPrematureOrderProfit,
+    sumPrematureReferralProfit,
+    sumPrematureLoyaltyPoints,
     reconcileUserTotalSpent,
     REFERRAL_WINDOW_DAYS,
     splitRewardAggregates,
@@ -72,6 +75,7 @@ import {
 import { FinancialConfigService } from '../common/financial-config.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
+import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 
@@ -92,6 +96,7 @@ export class PaymentsService {
         private readonly financialConfig: FinancialConfigService,
         private readonly withdrawalWorkflow: WithdrawalWorkflowService,
         private readonly invoiceSnapshot: InvoiceSnapshotService,
+        private readonly returnsFeeInvoices: ReturnsFeeInvoiceService,
         private readonly completionFinance: OrderCompletionFinanceService,
     ) { }
 
@@ -1707,6 +1712,14 @@ export class PaymentsService {
             })
             .catch(() => {});
 
+        void this.returnsFeeInvoices
+            .issueFromCaseRow(updatedCase, { shippingPaid: true })
+            .catch((err) =>
+                this.logger.warn(
+                    `Fee invoices after shipping Stripe fulfill skipped: ${(err as Error)?.message}`,
+                ),
+            );
+
         return updatedCase;
     }
 
@@ -1932,6 +1945,19 @@ export class PaymentsService {
                 );
         }
 
+        if (settled.updated) {
+            void this.returnsFeeInvoices
+                .issueFromCaseRow(settled.updated, {
+                    adjudicationFeePaid: true,
+                    shippingPaid: true,
+                })
+                .catch((err) =>
+                    this.logger.warn(
+                        `Fee invoices after settlement Stripe fulfill skipped: ${(err as Error)?.message}`,
+                    ),
+                );
+        }
+
         return settled.updated;
     }
 
@@ -2088,6 +2114,14 @@ export class PaymentsService {
                 metadata: { caseId, caseType },
             })
             .catch(() => {});
+
+        void this.returnsFeeInvoices
+            .issueFromCaseRow(result.updatedCase, { adjudicationFeePaid: true })
+            .catch((err) =>
+                this.logger.warn(
+                    `Fee invoices after adjudication Stripe fulfill skipped: ${(err as Error)?.message}`,
+                ),
+            );
 
         return result.updatedCase;
     }
@@ -2339,13 +2373,13 @@ export class PaymentsService {
             this.prisma.order.findMany({
                 where: {
                     customerId: userId,
-                    status: { in: [...CUSTOMER_PENDING_ORDER_STATUSES] },
+                    status: { in: [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES] },
                 },
                 include: { payments: { where: { status: 'SUCCESS' } } },
             }),
             this.prisma.order.findMany({
                 where: {
-                    status: { in: [...CUSTOMER_PENDING_ORDER_STATUSES] },
+                    status: { in: [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES] },
                     customer: {
                         referredById: userId,
                         ...buildActiveReferralWindowFilter(referralWindowCutoff),
@@ -2383,9 +2417,9 @@ export class PaymentsService {
                 where: {
                     userId,
                     role: 'CUSTOMER',
-                    transactionType: 'ORDER_PROFIT',
+                    transactionType: { in: ['ORDER_PROFIT', 'REFERRAL_PROFIT'] },
                 },
-                select: { amount: true, transactionType: true, metadata: true },
+                select: { amount: true, type: true, transactionType: true, metadata: true },
             }),
         ]);
 
@@ -2398,16 +2432,22 @@ export class PaymentsService {
         );
         const rewardSplits = splitRewardAggregates(rewardTxs, startOfMonth);
         const rewardedOrderIds = extractOrderProfitOrderIds(orderProfitTxs);
-        const pendingLoyaltyRewards = computePendingLoyaltyFromOrders(
-            pendingOwnOrders,
-            tierCashbackRate,
+        const pendingLoyaltyRewards = Number(
+            (
+                computePendingLoyaltyFromOrders(
+                    pendingOwnOrders,
+                    tierCashbackRate,
+                    rewardedOrderIds,
+                )
+            ).toFixed(2),
         );
         const pendingReferralRewards = computePendingReferralFromOrders(
-            pendingReferralOrders,
+            pendingReferralOrders.filter((order) => !rewardedOrderIds.has(order.id)),
         );
-        const pendingRewards = pendingLoyaltyRewards + pendingReferralRewards;
 
         let prematureCashbackHeld = 0;
+        let prematureReferralHeld = 0;
+        let prematureLoyaltyPointsHeld = 0;
         if (rewardedOrderIds.size > 0) {
             const rewardedOrders = await this.prisma.order.findMany({
                 where: { id: { in: [...rewardedOrderIds] } },
@@ -2423,12 +2463,37 @@ export class PaymentsService {
                 orderProfitTxs,
                 nonTerminalRewardedIds,
             );
+            prematureReferralHeld = sumPrematureReferralProfit(
+                orderProfitTxs,
+                nonTerminalRewardedIds,
+            );
+            prematureLoyaltyPointsHeld = sumPrematureLoyaltyPoints(
+                orderProfitTxs,
+                nonTerminalRewardedIds,
+            );
         }
+
+        const pendingLoyaltyPoints = computePendingLoyaltyPointsFromOrders(
+            pendingOwnOrders,
+            rewardedOrderIds,
+        ) + prematureLoyaltyPointsHeld;
+        const availableLoyaltyPoints = Math.max(
+            0,
+            Number(user.loyaltyPoints || 0) - prematureLoyaltyPointsHeld,
+        );
+
+        const pendingLoyaltyDisplayed = Number(
+            (pendingLoyaltyRewards + prematureCashbackHeld).toFixed(2),
+        );
+        const pendingReferralDisplayed = Number(
+            (pendingReferralRewards + prematureReferralHeld).toFixed(2),
+        );
+        const pendingRewards = pendingLoyaltyDisplayed + pendingReferralDisplayed;
 
         const rawCustomerBalance = Number(user.customerBalance || 0);
         const availableBalance = computeCustomerAvailableBalance(
             rawCustomerBalance,
-            prematureCashbackHeld,
+            prematureCashbackHeld + prematureReferralHeld,
         );
 
         const totalOrdersCount = ordersCount._count.id;
@@ -2458,8 +2523,10 @@ export class PaymentsService {
                 monthlyReferralRewards: rewardSplits.monthlyReferral,
                 monthlyRewards:
                     rewardSplits.monthlyLoyalty + rewardSplits.monthlyReferral,
-                pendingLoyaltyRewards,
-                pendingReferralRewards,
+                pendingLoyaltyRewards: pendingLoyaltyDisplayed,
+                pendingLoyaltyPoints,
+                availableLoyaltyPoints,
+                pendingReferralRewards: pendingReferralDisplayed,
                 pendingRewards,
                 refundedAmount,
                 walletDeductions: Number(walletDebitStats._sum.amount || 0),
@@ -2672,6 +2739,7 @@ export class PaymentsService {
                 transactionType: true,
                 paymentId: true,
                 escrowId: true,
+                payment: { select: { status: true } },
             },
         }),
         this.prisma.walletTransaction.findMany({
@@ -2785,11 +2853,10 @@ export class PaymentsService {
         (stats as any).ledgerNetProfit = ledgerNetProfit;
         (stats as any).merchantShareTotal = merchantGrossSales;
 
-        // Backfill store counters from payment aggregates (merchant unitPrice, not customer GMV)
+        // Sync store counters from live payment aggregates (including zero after refunds).
         if (
-            merchantGrossSales > 0 &&
-            (Number(store.lifetimeEarnings) === 0 ||
-                Math.abs(Number(store.lifetimeEarnings) - merchantGrossSales) > 0.01)
+            Math.abs(Number(store.lifetimeEarnings) - merchantGrossSales) > 0.01 ||
+            Number(store.completedOrdersCount || 0) !== completedOrderCount
         ) {
             void this.prisma.store
                 .update({
@@ -2798,13 +2865,6 @@ export class PaymentsService {
                         lifetimeEarnings: merchantGrossSales,
                         completedOrdersCount: completedOrderCount,
                     },
-                })
-                .catch(() => undefined);
-        } else if (completedOrderCount > Number(store.completedOrdersCount || 0)) {
-            void this.prisma.store
-                .update({
-                    where: { id: store.id },
-                    data: { completedOrdersCount: completedOrderCount },
                 })
                 .catch(() => undefined);
         }
@@ -2945,6 +3005,7 @@ export class PaymentsService {
                 transactionType: true,
                 paymentId: true,
                 escrowId: true,
+                payment: { select: { status: true } },
             },
         });
         const ledgerNetProfit = computeLedgerNetProfit(vendorTxs);
@@ -3442,6 +3503,12 @@ export class PaymentsService {
 
         if (Number(user.customerBalance) < amount) {
             throw new BadRequestException('Insufficient balance in your rewards wallet');
+        }
+        const walletStats = await this.getCustomerWallet(userId);
+        if (Number(walletStats.availableBalance || 0) < amount) {
+            throw new BadRequestException(
+                'Insufficient available rewards — pending/held cashback cannot be withdrawn',
+            );
         }
 
         const finConfig = await this.financialConfig.getConfig();

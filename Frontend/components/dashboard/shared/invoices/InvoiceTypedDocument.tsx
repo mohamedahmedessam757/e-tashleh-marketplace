@@ -25,7 +25,12 @@ interface Labels {
   lineItems: string;
   platformCompany: string;
   commissionAmount: string;
+  gatewayFee?: string;
+  refundFee?: string;
+  roundtripShipping?: string;
+  adjudicationFee?: string;
   customer: string;
+  payer?: string;
   total: string;
   thankYou: string;
   electronicDoc: string;
@@ -114,8 +119,33 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
         ? Number(inv.shipping || inv.total || 0)
         : Number(inv.commission || inv.total || 0);
 
-  const lineItems: Array<{ partName?: string; amount?: number; paymentId?: string }> =
-    Array.isArray(inv.lineItems) ? inv.lineItems : [];
+  const lineItems: Array<{
+    partName?: string;
+    amount?: number;
+    paymentId?: string;
+    kind?: string;
+    payer?: string;
+  }> = Array.isArray(inv.lineItems) ? inv.lineItems : [];
+
+  const feeKindLabel = (kind?: string) => {
+    const k = String(kind || '').toUpperCase();
+    if (k === 'GATEWAY_FEE') return labels.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee');
+    if (k === 'REFUND_FEE') return labels.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee');
+    if (k === 'ROUNDTRIP_SHIPPING') return labels.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping');
+    if (k === 'ADJUDICATION_FEE') return labels.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee');
+    return labels.commissionAmount;
+  };
+
+  const isCaseFeeDoc = String(inv?.shippingBatchKey || '').startsWith('RETURNS_FEE:');
+  const feePayerRaw = lineItems.find((l) => l.payer)?.payer;
+  const feePayerLabel = (() => {
+    const p = String(feePayerRaw || '').toUpperCase();
+    if (p === 'MERCHANT') return isAr ? 'التاجر' : 'Merchant';
+    if (p === 'CUSTOMER') return isAr ? 'العميل' : 'Customer';
+    if (p === 'PLATFORM') return isAr ? 'المنصة' : 'Platform';
+    if (p === 'SHIPPING_COMPANY') return isAr ? 'شركة الشحن' : 'Shipping company';
+    return feePayerRaw || '';
+  })();
 
   const qrValue = `https://e-tashleh.net/invoice/${inv.id}`;
   const TitleIcon =
@@ -205,6 +235,15 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
               <div className="mt-3">
                 <InfoRow icon={Package} label={labels.partName} value={partName} />
               </div>
+              {isCaseFeeDoc && feePayerLabel ? (
+                <div className="mt-3">
+                  <InfoRow
+                    icon={User}
+                    label={labels.payer || (isAr ? 'الدافع' : 'Payer')}
+                    value={feePayerLabel}
+                  />
+                </div>
+              ) : null}
             </>
           ) : docType === 'SHIPPING' ? (
             <>
@@ -214,7 +253,15 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
                 value={carrierName || labels.shippingPending}
               />
               <div className="mt-3">
-                <InfoRow icon={User} label={labels.customer} value={customerName} />
+                {isCaseFeeDoc && feePayerLabel ? (
+                  <InfoRow
+                    icon={User}
+                    label={labels.payer || (isAr ? 'الدافع' : 'Payer')}
+                    value={feePayerLabel}
+                  />
+                ) : (
+                  <InfoRow icon={User} label={labels.customer} value={customerName} />
+                )}
               </div>
             </>
           ) : (
@@ -237,16 +284,39 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
             </div>
           )}
           {docType === 'COMMISSION' && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400 inv-label">{labels.commissionAmount}</span>
-              <span className="font-mono text-white inv-value">
-                {amount.toLocaleString()} {currency}
-              </span>
-            </div>
+            <>
+              {lineItems.some((l) => l.kind) ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gold-500">
+                    {labels.lineItems}
+                  </p>
+                  {lineItems.map((line, idx) => (
+                    <div
+                      key={`${line.kind || idx}`}
+                      className="flex justify-between text-xs sm:text-sm gap-3"
+                    >
+                      <span className="text-gray-400 inv-label truncate">
+                        {feeKindLabel(line.kind)}
+                      </span>
+                      <span className="font-mono text-white inv-value shrink-0">
+                        {Number(line.amount || 0).toLocaleString()} {currency}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400 inv-label">{labels.commissionAmount}</span>
+                  <span className="font-mono text-white inv-value">
+                    {amount.toLocaleString()} {currency}
+                  </span>
+                </div>
+              )}
+            </>
           )}
           {docType === 'SHIPPING' && (
             <>
-              {lineItems.length > 1 ? (
+              {lineItems.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-gold-500">
                     {labels.lineItems}
@@ -257,7 +327,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
                       className="flex justify-between text-xs sm:text-sm gap-3"
                     >
                       <span className="text-gray-400 inv-label truncate">
-                        {line.partName || partName}
+                        {line.partName || feeKindLabel(line.kind) || partName}
                       </span>
                       <span className="font-mono text-white inv-value shrink-0">
                         {Number(line.amount || 0).toLocaleString()} {currency}

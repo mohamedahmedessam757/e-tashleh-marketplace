@@ -503,6 +503,12 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         return labels[status?.toUpperCase()] || status;
     };
 
+    const pendingLoyaltyPoints = Number(stats?.pendingLoyaltyPoints || 0);
+    const availableLoyaltyPoints = Number(
+      stats?.availableLoyaltyPoints ?? stats?.loyaltyPoints ?? 0,
+    );
+    const loyaltyPointsPending = pendingLoyaltyPoints > 0;
+
     const StatCard = ({ label, value, unit, icon: Icon, colorClass, borderClass, bgClass }: any) => (
         <GlassCard className={`p-4 sm:p-5 flex flex-col justify-between min-h-[100px] sm:min-h-[110px] ${borderClass || ''}`}>
             <div className="flex justify-between items-start w-full">
@@ -608,13 +614,13 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                     borderClass="border-rose-500/10"
                 />
                 <StatCard 
-                    label={wd.loyaltyPoints}
-                    value={stats?.loyaltyPoints || 0}
-                    unit=""
-                    icon={Star}
-                    colorClass="text-gold-500"
-                    bgClass="bg-gold-500/10"
-                    borderClass="border-gold-500/10"
+                    label={loyaltyPointsPending ? (wd.pendingLoyaltyPoints || wd.loyaltyPoints) : wd.loyaltyPoints}
+                    value={loyaltyPointsPending ? pendingLoyaltyPoints : availableLoyaltyPoints}
+                    unit={loyaltyPointsPending ? (isAr ? 'قيد الانتظار' : 'pending') : (isAr ? 'نقطة' : 'pts')}
+                    icon={loyaltyPointsPending ? Clock : Star}
+                    colorClass={loyaltyPointsPending ? 'text-amber-400' : 'text-gold-500'}
+                    bgClass={loyaltyPointsPending ? 'bg-amber-500/10' : 'bg-gold-500/10'}
+                    borderClass={loyaltyPointsPending ? 'border-amber-500/10' : 'border-gold-500/10'}
                 />
                 <StatCard 
                     label={wd.tier}
@@ -1481,7 +1487,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                     <p className="text-[9px] text-white/40 uppercase font-black tracking-widest">{wd.totalRewardsEarned}</p>
                                     <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
                                         <Star size={10} />
-                                        <span className="text-[10px] font-black">{stats?.loyaltyPoints || 0} pts</span>
+                                        <span className="text-[10px] font-black">{(loyaltyPointsPending ? pendingLoyaltyPoints : availableLoyaltyPoints) || 0} pts</span>
                                     </div>
                                 </div>
                                 <h2 className="text-2xl font-black text-white tracking-tighter">

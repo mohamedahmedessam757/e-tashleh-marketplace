@@ -9,6 +9,8 @@ import {
   normalizeSearchQuery,
   mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
+import { filterOrderInvoicesForViewer, isReturnsFeeInvoice } from './invoice-visibility.util';
+import { ReturnsFeeInvoiceService } from './returns-fee-invoice.service';
 
 const invoiceInclude = {
   payment: {
@@ -42,6 +44,7 @@ export class InvoicesService {
     constructor(
         private prisma: PrismaService,
         private readonly auditLogs: AuditLogsService,
+        private readonly returnsFeeInvoices: ReturnsFeeInvoiceService,
     ) { }
 
     private mapAdminInvoiceRow(invoice: Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>) {
@@ -83,13 +86,20 @@ export class InvoicesService {
             issuedAt: invoice.issuedAt,
             invoiceType: (invoice as any).invoiceType || 'MASTER',
             invoiceGroupId: (invoice as any).invoiceGroupId || null,
+            shippingBatchKey: (invoice as any).shippingBatchKey || null,
             isDerived: false,
         };
     }
 
     async getUserInvoices(userId: string) {
         return this.prisma.invoice.findMany({
-            where: { customerId: userId, invoiceType: 'MASTER' },
+            where: {
+                customerId: userId,
+                OR: [
+                    { invoiceType: 'MASTER' },
+                    { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                ],
+            },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -125,7 +135,14 @@ export class InvoicesService {
 
     async getInvoiceById(userId: string, id: string) {
         const invoice = await this.prisma.invoice.findFirst({
-            where: { id, customerId: userId, invoiceType: 'MASTER' },
+            where: {
+                id,
+                customerId: userId,
+                OR: [
+                    { invoiceType: 'MASTER' },
+                    { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                ],
+            },
             include: {
                 payment: {
                     select: { offerId: true },
@@ -285,9 +302,7 @@ export class InvoicesService {
         const limit = Math.min(100, Math.max(1, Number(filters?.limit) || 25));
         const skip = (page - 1) * limit;
 
-        let baseWhere: Prisma.InvoiceWhereInput = {
-            payment: { status: 'SUCCESS' },
-        };
+        let baseWhere: Prisma.InvoiceWhereInput = {};
 
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
@@ -414,8 +429,16 @@ export class InvoicesService {
 
         return this.prisma.invoice.findMany({
             where: {
-                paymentId: { in: paymentIds },
-                invoiceType: 'MASTER',
+                OR: [
+                    {
+                        paymentId: { in: paymentIds },
+                        invoiceType: 'MASTER',
+                    },
+                    {
+                        customerId: userId,
+                        shippingBatchKey: { startsWith: 'RETURNS_FEE:' },
+                    },
+                ],
             },
             include: {
                 payment: {
@@ -450,7 +473,7 @@ export class InvoicesService {
         });
     }
 
-    async getInvoicesByOrder(orderId: string, role?: string) {
+    async getInvoicesByOrder(orderId: string, role?: string, viewerUserId?: string) {
         const r = String(role || '').toUpperCase();
         const isAdmin =
             r === 'ADMIN' ||
@@ -459,11 +482,14 @@ export class InvoicesService {
             r === 'ACCOUNTANT' ||
             r === 'VERIFICATION_OFFICER';
 
+        if (isAdmin) {
+            await this.returnsFeeInvoices
+                .backfillForOrder(orderId, viewerUserId)
+                .catch(() => undefined);
+        }
+
         const invoices = await this.prisma.invoice.findMany({
-            where: {
-                orderId,
-                ...(isAdmin ? {} : { invoiceType: 'MASTER' }),
-            },
+            where: { orderId },
             include: {
                 payment: {
                     select: { offerId: true, status: true },
@@ -554,19 +580,10 @@ export class InvoicesService {
         };
 
         if (!isAdmin) {
-            // One MASTER per payment (latest)
-            const byPayment = new Map<string, (typeof invoices)[number]>();
-            for (const inv of invoices) {
-                if ((inv.invoiceType || 'MASTER') !== 'MASTER') continue;
-                const key = inv.paymentId;
-                const existing = byPayment.get(key);
-                if (!existing || inv.issuedAt > existing.issuedAt) {
-                    byPayment.set(key, inv);
-                }
-            }
-            return Array.from(byPayment.values())
-                .sort((a, b) => a.issuedAt.getTime() - b.issuedAt.getTime())
-                .map(enrich);
+            return filterOrderInvoicesForViewer(invoices, {
+                isAdmin: false,
+                viewerUserId,
+            }).map(enrich);
         }
 
         const enriched = invoices.map(enrich);
@@ -583,7 +600,9 @@ export class InvoicesService {
         for (const [, group] of byPayment) {
             const master = group.find((i) => i.invoiceType === 'MASTER');
             if (!master) continue;
-            const types = new Set(group.map((i) => i.invoiceType));
+            const saleTypes = new Set(
+                group.filter((i) => !isReturnsFeeInvoice(i)).map((i) => i.invoiceType),
+            );
             const baseMeta = {
                 order: master.order,
                 payment: master.payment,
@@ -606,7 +625,7 @@ export class InvoicesService {
                 platformLegalNameAr: master.livePlatformLegalNameAr,
             };
 
-            if (!types.has('PART')) {
+            if (!saleTypes.has('PART')) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-part-${master.id}`,
@@ -618,7 +637,7 @@ export class InvoicesService {
                     total: master.subtotal,
                 });
             }
-            if (!types.has('COMMISSION')) {
+            if (!saleTypes.has('COMMISSION')) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-commission-${master.id}`,
@@ -630,7 +649,7 @@ export class InvoicesService {
                     total: master.commission,
                 });
             }
-            if (!types.has('SHIPPING') && Number(master.shipping) > 0) {
+            if (!saleTypes.has('SHIPPING') && Number(master.shipping) > 0) {
                 derived.push({
                     ...baseMeta,
                     id: `derived-shipping-${master.id}`,

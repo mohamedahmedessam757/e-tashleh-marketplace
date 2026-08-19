@@ -887,9 +887,12 @@ model ReturnRequest {
   // Phase 4 Governance Extensions (Spec §15)
   // VARCHAR(40): CLOSE_COMPLETE_REFUND is 21 chars (was overflowing VARCHAR(20))
   faultParty     String?  @map("fault_party") @db.VarChar(40)
+  finalRefundDecision String? @map("final_refund_decision") @db.VarChar(40)
   refundAmount   Decimal? @map("refund_amount") @db.Decimal(14, 2)
+  finalCustomerRefundAmount Decimal? @default(0) @map("final_customer_refund_amount") @db.Decimal(14, 2)
   shippingRefund Decimal? @map("shipping_refund") @db.Decimal(14, 2)
   stripeFee      Decimal? @map("stripe_fee") @db.Decimal(14, 2)
+  refundExecutionStatus String @default("NOT_REQUIRED") @map("refund_execution_status") @db.VarChar(32)
 
   // 2026 Financial Fee Enforcement
   gatewayFeePct     Decimal? @default(3.00) @map("gateway_fee_pct") @db.Decimal(5, 2)
@@ -956,9 +959,12 @@ model Dispute {
   // Phase 4 Governance
   // VARCHAR(40): CLOSE_COMPLETE_REFUND is 21 chars (was overflowing VARCHAR(20))
   faultParty     String?  @map("fault_party") @db.VarChar(40)
+  finalRefundDecision String? @map("final_refund_decision") @db.VarChar(40)
   refundAmount   Decimal? @map("refund_amount") @db.Decimal(14, 2)
+  finalCustomerRefundAmount Decimal? @default(0) @map("final_customer_refund_amount") @db.Decimal(14, 2)
   shippingRefund Decimal? @map("shipping_refund") @db.Decimal(14, 2)
   stripeFee      Decimal? @map("stripe_fee") @db.Decimal(14, 2)
+  refundExecutionStatus String @default("NOT_REQUIRED") @map("refund_execution_status") @db.VarChar(32)
 
   // 2026 Financial Fee Enforcement
   gatewayFeePct     Decimal? @default(3.00) @map("gateway_fee_pct") @db.Decimal(5, 2)

@@ -110,10 +110,11 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const [faultParty, setFaultParty] = useState<
         'CUSTOMER' | 'MERCHANT' | 'BOTH' | 'SHIPPING_COMPANY' | 'PLATFORM' | 'CLOSE_COMPLETE_REFUND'
     >('MERCHANT');
+    const [finalRefundDecision, setFinalRefundDecision] = useState<'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND'>('REFUND_CUSTOMER');
     const [shippingRefund, setShippingRefund] = useState<number>(0);
     
     // 2026 Phase 5: Financial Adjudication States
-    const [gatewayFeePct, setGatewayFeePct] = useState<number>(2.9);
+    const [gatewayFeePct, setGatewayFeePct] = useState<number>(3);
     const [refundFeePct, setRefundFeePct] = useState<number>(1.50);
     const [shippingRoundtrip, setShippingRoundtrip] = useState<number>(0);
     const [penaltyType, setPenaltyType] = useState<'FRAUD' | 'NEGLIGENCE' | null>(null);
@@ -185,6 +186,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             refundFeePct,
             shippingRoundtrip,
             faultParty,
+            finalRefundDecision,
             maxRefundable:
                 dispute?.maxRefundable != null && dispute.maxRefundable >= 0
                     ? dispute.maxRefundable
@@ -204,7 +206,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
 
     const finPreview = useMemo(
         () => computeFinancialBreakdown(),
-        [orderPaidTotal, gatewayFeePct, refundFeePct, shippingRoundtrip, faultParty, dispute?.maxRefundable],
+        [orderPaidTotal, gatewayFeePct, refundFeePct, shippingRoundtrip, faultParty, finalRefundDecision, dispute?.maxRefundable],
     );
 
     const getFaultPartyLabel = (party?: string) => {
@@ -228,6 +230,19 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     };
 
     useEffect(() => {
+        if (faultParty === 'CLOSE_COMPLETE_REFUND') {
+            setFinalRefundDecision('REFUND_CUSTOMER');
+            if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
+        }
+    }, [faultParty, adminApproval]);
+
+    useEffect(() => {
+        if (adminApproval === 'REJECTED' && faultParty !== 'CLOSE_COMPLETE_REFUND') {
+            setFinalRefundDecision('NO_CUSTOMER_REFUND');
+        }
+    }, [adminApproval, faultParty]);
+
+    useEffect(() => {
         // 2026 Real-time Adjudication Sync
         const role = 'admin';
         (window as any).currentViewRole = role;
@@ -236,6 +251,11 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         if (dispute) {
             setShippingRefund(dispute.shippingRefund || 0);
             if (dispute.verdictNotes) setAdminNotes(dispute.verdictNotes);
+            if ((dispute as any).finalRefundDecision === 'NO_CUSTOMER_REFUND') {
+                setFinalRefundDecision('NO_CUSTOMER_REFUND');
+            } else if ((dispute as any).finalRefundDecision === 'REFUND_CUSTOMER') {
+                setFinalRefundDecision('REFUND_CUSTOMER');
+            }
             
             // Check if order exists, if not, fetch it
             if (!order && !isFetching) {
@@ -381,16 +401,25 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         }
 
         const breakdown = computeFinancialBreakdown();
-        const { net: calculatedNetRefund, retained: platformRetainedAmount } = breakdown;
+        const { retained: platformRetainedAmount } = breakdown;
+        const normalizedFinalRefundAmount =
+            breakdown.finalRefundDecision === 'REFUND_CUSTOMER'
+                ? breakdown.finalCustomerRefundAmount
+                : 0;
 
         const extra = {
             faultParty,
             platformRetainedAmount,
             feeBearer: breakdown.feeBearer,
             customerStripeRefund: breakdown.stripeExecutable,
+            finalRefundDecision: breakdown.finalRefundDecision,
+            finalCustomerRefundAmount: normalizedFinalRefundAmount,
             shippingCompanyLiability: breakdown.shippingCompanyLiability,
             resolutionMode: isCloseCompleteRefund ? 'CLOSE_COMPLETE_REFUND' : undefined,
-            shippingRefund: adminApproval === 'APPROVED' ? shippingRoundtrip : 0,
+            shippingRefund:
+                adminApproval === 'APPROVED' && breakdown.finalRefundDecision === 'REFUND_CUSTOMER'
+                    ? shippingRoundtrip
+                    : 0,
             gatewayFeePct,
             refundFeePct,
             shippingRoundtrip,
@@ -402,11 +431,14 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             adminName,
             adminEmail,
             adminSignature,
-            calculatedNetRefund,
         };
 
         const finalVerdictType =
-            adminApproval === 'APPROVED' || isCloseCompleteRefund ? 'REFUND' : 'DENY';
+            adminApproval === 'REJECTED'
+                ? 'DENY'
+                : breakdown.finalRefundDecision === 'REFUND_CUSTOMER' || isCloseCompleteRefund
+                  ? 'REFUND'
+                  : 'RELEASE_FUNDS';
 
         const caseType = dispute.type === 'return' ? 'return' : 'dispute';
 
@@ -823,8 +855,10 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          </div>
                                                      </button>
                                                      <button 
-                                                         onClick={() => setAdminApproval('REJECTED')}
-                                                         className={`p-6 rounded-3xl border flex items-center gap-6 transition-all ${adminApproval === 'REJECTED' ? 'bg-red-500/10 border-red-500/50 shadow-2xl' : 'bg-white/5 border-white/5 hover:border-white/10 opacity-60'}`}
+                                                         type="button"
+                                                         disabled={isCloseCompleteRefund}
+                                                         onClick={() => !isCloseCompleteRefund && setAdminApproval('REJECTED')}
+                                                         className={`p-6 rounded-3xl border flex items-center gap-6 transition-all ${adminApproval === 'REJECTED' ? 'bg-red-500/10 border-red-500/50 shadow-2xl' : 'bg-white/5 border-white/5 hover:border-white/10 opacity-60'} ${isCloseCompleteRefund ? 'cursor-not-allowed opacity-40' : ''}`}
                                                      >
                                                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${adminApproval === 'REJECTED' ? 'bg-red-500 text-white' : 'bg-white/10 text-white/40'}`}>
                                                              <X size={24} />
@@ -986,6 +1020,57 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      </p>
                                                  </div>
                                              )}
+
+                                            <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
+                                                <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+                                                    {(t.admin.disputeManager.verdictTerminal as any).finalRefundDecisionLabel}
+                                                </label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {[
+                                                        {
+                                                            id: 'REFUND_CUSTOMER',
+                                                            label: (t.admin.disputeManager.verdictTerminal as any).refundDecisionYes,
+                                                            hint: (t.admin.disputeManager.verdictTerminal as any).refundDecisionYesHint,
+                                                        },
+                                                        {
+                                                            id: 'NO_CUSTOMER_REFUND',
+                                                            label: (t.admin.disputeManager.verdictTerminal as any).refundDecisionNo,
+                                                            hint: (t.admin.disputeManager.verdictTerminal as any).refundDecisionNoHint,
+                                                        },
+                                                    ].map((opt) => {
+                                                        const active = finalRefundDecision === opt.id;
+                                                        const disabled =
+                                                            (isCloseCompleteRefund &&
+                                                                opt.id === 'NO_CUSTOMER_REFUND') ||
+                                                            (adminApproval === 'REJECTED' &&
+                                                                opt.id === 'REFUND_CUSTOMER');
+                                                        return (
+                                                            <button
+                                                                key={opt.id}
+                                                                type="button"
+                                                                disabled={disabled}
+                                                                onClick={() =>
+                                                                    !disabled &&
+                                                                    setFinalRefundDecision(opt.id as 'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND')
+                                                                }
+                                                                className={`p-4 rounded-2xl border text-right transition-all ${
+                                                                    active
+                                                                        ? 'bg-emerald-500/10 border-emerald-500/40 text-white'
+                                                                        : 'bg-black/20 border-white/10 text-white/55 hover:bg-white/10'
+                                                                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-3 mb-2">
+                                                                    <span className="text-xs font-black">{opt.label}</span>
+                                                                    {active && <CheckCircle2 size={16} className="text-emerald-400" />}
+                                                                </div>
+                                                                <p className="text-[10px] leading-relaxed text-white/50">
+                                                                    {opt.hint}
+                                                                </p>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                          </div>
 
                                          <div className="space-y-6">
@@ -1084,6 +1169,17 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                             </div>
                                                          )}
 
+                                                         <div className="flex justify-between text-[10px] p-2 rounded-lg bg-white/5 border border-white/10">
+                                                            <span className="text-white/60 font-bold">
+                                                                {(t.admin.disputeManager.verdictTerminal as any).finalRefundDecisionLabel}
+                                                            </span>
+                                                            <span className={`font-mono ${finPreview.refundRequired ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                                {finPreview.refundRequired
+                                                                    ? (t.admin.disputeManager.verdictTerminal as any).refundDecisionYes
+                                                                    : (t.admin.disputeManager.verdictTerminal as any).refundDecisionNo}
+                                                            </span>
+                                                         </div>
+
                                                          {finPreview.showFeesOnCustomerNet && (
                                                          <>
                                                          <div className="flex justify-between text-[10px]">
@@ -1120,6 +1216,18 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                 <span className="text-purple-400 font-mono">{finPreview.shippingCompanyLiability.toFixed(2)} AED</span>
                                                             </div>
                                                          )}
+                                                         {!finPreview.refundRequired && finPreview.shippingBearer === 'CUSTOMER' && shippingRoundtrip > 0 && (
+                                                            <div className="flex justify-between text-[10px]">
+                                                                <span className="text-cyan-400/70 flex items-center gap-2"><Truck size={10} /> {isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)'}</span>
+                                                                <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
+                                                            </div>
+                                                         )}
+                                                         {!finPreview.refundRequired && finPreview.feeBearer === 'CUSTOMER' && finPreview.platformFees > 0 && (
+                                                            <div className="flex justify-between text-[10px]">
+                                                                <span className="text-white/45 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم المنصة (لا تُخصم من استرداد العميل)' : 'Platform fees (not taken from a customer refund)'}</span>
+                                                                <span className="text-white/50 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
+                                                            </div>
+                                                         )}
                                                          {faultParty === 'MERCHANT' && merchantBalance !== null && (finPreview.merchantDebits.shipping + finPreview.merchantDebits.platformFees) > 0 && (
                                                             <div className={`mt-4 p-3 rounded-xl border ${merchantBalance < finPreview.merchantDebits.platformFees ? 'bg-amber-500/10 border-amber-500/30' : 'bg-green-500/5 border-green-500/10'}`}>
                                                                 <div className="flex justify-between items-center">
@@ -1139,10 +1247,14 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          )}
 
                                                          <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                                                             <span className="text-xs font-black text-white uppercase">{isAr ? 'صافي المبلغ المسترد' : 'NET REFUND'}</span>
+                                                             <span className="text-xs font-black text-white uppercase">
+                                                                {finPreview.refundRequired
+                                                                    ? ((t.admin.disputeManager.verdictTerminal as any).finalCustomerRefundAmountLabel || (isAr ? 'المبلغ النهائي المسترد للعميل' : 'FINAL CUSTOMER REFUND'))
+                                                                    : ((t.admin.disputeManager.verdictTerminal as any).customerRefundWillBeZero || (isAr ? 'لن يتم رد أي مبلغ للعميل' : 'NO CUSTOMER REFUND'))}
+                                                             </span>
                                                              <div className="text-right">
                                                                 <span className="text-lg font-black text-green-400 font-mono leading-none">
-                                                                    {finPreview.net.toFixed(2)}
+                                                                    {finPreview.finalCustomerRefundAmount.toFixed(2)}
                                                                 </span>
                                                                 <span className="text-[10px] text-green-400/40 font-black ml-1 uppercase">AED</span>
                                                              </div>
@@ -1150,8 +1262,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          {finPreview.stripeCapped && (
                                                             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[10px] font-bold text-red-200 leading-relaxed">
                                                                 {isAr
-                                                                    ? `تنبيه: صافي الاسترداد ${finPreview.net.toFixed(2)} د.إ — المتاح على Stripe ${finPreview.stripeExecutable.toFixed(2)} د.إ فقط.`
-                                                                    : `Net refund ${finPreview.net.toFixed(2)} AED — only ${finPreview.stripeExecutable.toFixed(2)} AED on Stripe.`}
+                                                                    ? `تنبيه: صافي الاسترداد المحسوب ${finPreview.net.toFixed(2)} د.إ — المتاح على Stripe ${finPreview.stripeExecutable.toFixed(2)} د.إ فقط.`
+                                                                    : `Calculated net refund ${finPreview.net.toFixed(2)} AED — only ${finPreview.stripeExecutable.toFixed(2)} AED available on Stripe.`}
                                                             </div>
                                                          )}
                                                          {isCloseCompleteRefund && (
@@ -1294,8 +1406,16 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                          </div>
                                          <div className="space-y-2 text-[11px] font-bold">
                                              <div className="flex justify-between gap-3 text-white/60">
-                                                 <span>{(t.admin.disputeManager.verdictTerminal as any).customerNetRefundLabel}</span>
-                                                 <span className="text-emerald-400 font-mono">{finPreview.net.toFixed(2)} AED</span>
+                                                 <span>{(t.admin.disputeManager.verdictTerminal as any).finalRefundDecisionLabel}</span>
+                                                 <span className={`font-mono ${finPreview.refundRequired ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                     {finPreview.refundRequired
+                                                         ? (t.admin.disputeManager.verdictTerminal as any).refundDecisionYes
+                                                         : (t.admin.disputeManager.verdictTerminal as any).refundDecisionNo}
+                                                 </span>
+                                             </div>
+                                             <div className="flex justify-between gap-3 text-white/60">
+                                                 <span>{(t.admin.disputeManager.verdictTerminal as any).finalCustomerRefundAmountLabel}</span>
+                                                 <span className="text-emerald-400 font-mono">{finPreview.finalCustomerRefundAmount.toFixed(2)} AED</span>
                                              </div>
                                              {finPreview.platformFees > 0 && (
                                                  <div className="flex justify-between gap-3 text-white/60">
@@ -1526,6 +1646,28 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                    <span className="text-xs font-black text-white font-mono">{(dispute as any).feeBearer}</span>
                                                 </div>
                                             )}
+                                            <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
+                                               <span className="text-[10px] text-white/50 font-bold uppercase">{(t.admin.disputeManager.verdictTerminal as any).finalRefundDecisionLabel}</span>
+                                               <span className={`text-xs font-black font-mono ${dispute.finalRefundDecision === 'REFUND_CUSTOMER' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                   {dispute.finalRefundDecision === 'REFUND_CUSTOMER'
+                                                       ? (t.admin.disputeManager.verdictTerminal as any).refundDecisionYes
+                                                       : (t.admin.disputeManager.verdictTerminal as any).refundDecisionNo}
+                                               </span>
+                                            </div>
+                                            {dispute.refundExecutionStatus && (
+                                                <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
+                                                   <span className="text-[10px] text-white/50 font-bold uppercase">{isAr ? 'حالة تنفيذ الاسترداد' : 'Refund execution status'}</span>
+                                                   <span className="text-xs font-black text-white font-mono">
+                                                     {{
+                                                       NOT_REQUIRED: (t.admin.disputeManager.verdictTerminal as any).refundExecutionNotRequired,
+                                                       PENDING: (t.admin.disputeManager.verdictTerminal as any).refundExecutionPending,
+                                                       PROCESSING: (t.admin.disputeManager.verdictTerminal as any).refundExecutionProcessing,
+                                                       SUCCEEDED: (t.admin.disputeManager.verdictTerminal as any).refundExecutionSucceeded,
+                                                       FAILED: (t.admin.disputeManager.verdictTerminal as any).refundExecutionFailed,
+                                                     }[dispute.refundExecutionStatus] || dispute.refundExecutionStatus}
+                                                   </span>
+                                                </div>
+                                            )}
                                             {((dispute as any).shippingCompanyLiability ?? 0) > 0 && (
                                                 <div className="flex justify-between items-center p-3 bg-purple-500/5 rounded-2xl border border-purple-500/20">
                                                    <span className="text-[10px] text-purple-400/60 font-bold uppercase">{(t.admin.disputeManager.verdictTerminal as any).shippingCompanyLiability}</span>
@@ -1533,8 +1675,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                 </div>
                                             )}
                                             <div className="pt-2 flex justify-between items-center border-t border-white/5 mt-1">
-                                                <span className="text-[10px] font-black text-white uppercase">{(t.admin.disputeManager.verdictTerminal as any).customerNetRefundLabel || (isAr ? 'الصافي المسترد' : 'NET REFUNDED')}</span>
-                                                <span className="text-xl font-black text-green-400 font-mono">{Number(dispute.netRefundAmount ?? dispute.refundAmount ?? 0).toLocaleString()} AED</span>
+                                                <span className="text-[10px] font-black text-white uppercase">{(t.admin.disputeManager.verdictTerminal as any).finalCustomerRefundAmountLabel || (isAr ? 'المبلغ النهائي المسترد' : 'FINAL CUSTOMER REFUND')}</span>
+                                                <span className="text-xl font-black text-green-400 font-mono">{Number(dispute.finalCustomerRefundAmount ?? dispute.netRefundAmount ?? dispute.refundAmount ?? 0).toLocaleString()} AED</span>
                                             </div>
                                          </div>
                                       </div>

@@ -10,9 +10,21 @@ import { ReturnsCronService } from './returns.cron';
 import { PaymentsModule } from '../payments/payments.module';
 import { ViolationsModule } from '../violations/violations.module';
 import { OrdersModule } from '../orders/orders.module';
+import { InvoicesModule } from '../invoices/invoices.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 @Module({
-    imports: [UploadsModule, NotificationsModule, AuditLogsModule, UsersModule, PaymentsModule, ViolationsModule, OrdersModule],
+    imports: [
+        UploadsModule,
+        NotificationsModule,
+        AuditLogsModule,
+        UsersModule,
+        PaymentsModule,
+        ViolationsModule,
+        OrdersModule,
+        InvoicesModule,
+        LoyaltyModule,
+    ],
     controllers: [ReturnsController],
     providers: [ReturnsService, ReturnsCronService],
 })

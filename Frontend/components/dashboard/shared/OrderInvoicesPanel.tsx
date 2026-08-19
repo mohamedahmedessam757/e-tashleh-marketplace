@@ -24,6 +24,93 @@ import {
 } from './invoices/invoiceDocs.types';
 import { printIsolatedHtml } from './../../../utils/print';
 
+const RETURNS_FEE_PREFIX = 'RETURNS_FEE:';
+
+function MasterCaseFeeAddendum({
+    invoices,
+    isAr,
+    docs,
+    forPrint,
+}: {
+    invoices: any[];
+    isAr: boolean;
+    docs: Record<string, string>;
+    forPrint?: boolean;
+}) {
+    const feeDocs = invoices.filter((inv) =>
+        String(inv?.shippingBatchKey || '').startsWith(RETURNS_FEE_PREFIX),
+    );
+    if (feeDocs.length === 0) return null;
+
+    const kindLabel = (kind: string) => {
+        const k = String(kind || '').toUpperCase();
+        if (k === 'GATEWAY_FEE') return docs.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee');
+        if (k === 'REFUND_FEE') return docs.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee');
+        if (k === 'ROUNDTRIP_SHIPPING') return docs.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping');
+        return kind || (isAr ? 'رسوم' : 'Fee');
+    };
+
+    const payerLabel = (payer?: string) => {
+        const p = String(payer || '').toUpperCase();
+        if (p === 'MERCHANT') return docs.payerMerchant || (isAr ? 'التاجر' : 'Merchant');
+        if (p === 'CUSTOMER') return docs.payerCustomer || (isAr ? 'العميل' : 'Customer');
+        if (p === 'PLATFORM') return docs.payerPlatform || (isAr ? 'المنصة' : 'Platform');
+        if (p === 'SHIPPING_COMPANY') return docs.payerShippingCompany || (isAr ? 'شركة الشحن' : 'Shipping company');
+        return payer || '';
+    };
+
+    const wrapClass = forPrint
+        ? 'mt-6 p-4 border border-gray-300 rounded-lg'
+        : 'mt-6 p-4 sm:p-5 rounded-2xl border border-gold-500/25 bg-gold-500/5';
+    const titleClass = forPrint
+        ? 'text-sm font-bold text-gray-900 mb-1'
+        : 'text-sm font-black text-gold-400 uppercase tracking-tight mb-1';
+    const hintClass = forPrint ? 'text-[11px] text-gray-500 mb-3' : 'text-[11px] text-white/40 mb-3';
+    const rowClass = forPrint
+        ? 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-2 border-b border-gray-200 last:border-0'
+        : 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-2 border-b border-white/10 last:border-0';
+
+    return (
+        <div className={wrapClass}>
+            <p className={titleClass}>
+                {docs.addendumTitle || (isAr ? 'ملحق رسوم القضية' : 'Case-fee addendum')}
+            </p>
+            <p className={hintClass}>
+                {docs.addendumHint ||
+                    (isAr
+                        ? 'فواتير مستقلة — لا تغيّر أرقام الفاتورة الشاملة الأصلية'
+                        : 'Standalone invoices — they do not change the original master totals')}
+            </p>
+            {feeDocs.map((fee) => {
+                const lines = Array.isArray(fee.lineItems) ? fee.lineItems : [];
+                return (
+                    <div key={fee.id} className={rowClass}>
+                        <div className="min-w-0">
+                            <p className={forPrint ? 'text-xs font-bold text-gray-800' : 'text-xs font-bold text-white'}>
+                                {fee.invoiceNumber} · {String(fee.invoiceType || '')}
+                            </p>
+                            <p className={forPrint ? 'text-[11px] text-gray-500' : 'text-[11px] text-white/45'}>
+                                {lines.length > 0
+                                    ? lines.map((l: any) => kindLabel(l.kind)).join(' · ')
+                                    : docs.caseFees || (isAr ? 'رسوم قضية' : 'Case fees')}
+                                {fee.lineItems?.[0]?.payer
+                                    ? ` · ${docs.payer || (isAr ? 'الدافع' : 'Payer')}: ${payerLabel(fee.lineItems[0].payer)}`
+                                    : ''}
+                            </p>
+                        </div>
+                        <p className={forPrint ? 'text-sm font-bold text-gray-900' : 'text-sm font-black text-gold-400'}>
+                            {Number(fee.total || 0).toLocaleString()} {fee.currency || 'AED'}
+                            <span className={forPrint ? ' text-[10px] text-gray-500' : ' text-[10px] text-white/40'}>
+                                {' '}
+                                {fee.status}
+                            </span>
+                        </p>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
 
 interface OrderInvoicesPanelProps {
     orderId: string;
@@ -235,7 +322,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     }
 
     const masterInvoices = filterInvoicesByTab(invoices, 'MASTER');
-    const visibleInvoices = isSystemAdmin
+    const hasTypedDocs = invoices.some((inv) => {
+        const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
+        return type !== 'MASTER';
+    });
+    const showDocTabs = isSystemAdmin || hasTypedDocs;
+    const visibleInvoices = showDocTabs
         ? filterInvoicesByTab(invoices, activeDocTab)
         : masterInvoices;
 
@@ -282,7 +374,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         lineItems: docs.lineItems || (isAr ? 'تفصيل القطع' : 'Part breakdown'),
         platformCompany: docs.platformCompany || (isAr ? 'الشركة' : 'Company'),
         commissionAmount: docs.commissionAmount || (isAr ? 'عمولة المنصة' : 'Platform commission'),
+        gatewayFee: docs.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee'),
+        refundFee: docs.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee'),
+        roundtripShipping: docs.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping'),
+        adjudicationFee: docs.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee'),
         customer: docs.customer || (isAr ? 'العميل' : 'Customer'),
+        payer: docs.payer || (isAr ? 'الدافع' : 'Payer'),
         total: docs.total || (isAr ? 'الإجمالي' : 'Total'),
         thankYou: docs.thankYou || (isAr ? 'شكراً لثقتكم واختياركم منصة E-Tashleh.net' : 'Thank you for trusting E-Tashleh.net'),
         electronicDoc: docs.electronicDoc || (isAr ? 'هذه وثيقة إلكترونية موثقة وصادرة من النظام الآلي' : 'Verified electronic document generated by the system'),
@@ -756,9 +853,9 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         </div>
                     )}
 
-                    {isSystemAdmin && (
+                    {showDocTabs && (
                         <div className="flex flex-wrap gap-2 no-print">
-                            {INVOICE_DOC_TABS.map((tab) => {
+                            {(isSystemAdmin ? INVOICE_DOC_TABS : INVOICE_DOC_TABS.filter((tab) => tab === 'MASTER' || filterInvoicesByTab(invoices, tab).length > 0)).map((tab) => {
                                 const count = filterInvoicesByTab(invoices, tab).length;
                                 const active = activeDocTab === tab;
                                 return (
@@ -820,7 +917,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {(!isSystemAdmin || activeDocTab === 'MASTER') && (
+                                        {(activeDocTab === 'MASTER') && (
                                         <button
                                             onClick={() => handleExportExcel(inv)}
                                             disabled={isExporting === inv.id}
@@ -857,8 +954,18 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                             <img src="/logo.png" alt="" className="w-1/2 h-auto max-w-sm" />
                                         </div>
 
-                                        {(!isSystemAdmin || activeDocTab === 'MASTER') ? (
-                                            <InvoiceContentBlock inv={inv} />
+                                        {(activeDocTab === 'MASTER') ? (
+                                            <>
+                                                <InvoiceContentBlock inv={inv} />
+                                                {isSystemAdmin && (
+                                                    <MasterCaseFeeAddendum
+                                                        invoices={invoices}
+                                                        isAr={isAr}
+                                                        docs={docs}
+                                                        forPrint={false}
+                                                    />
+                                                )}
+                                            </>
                                         ) : (
                                             <InvoiceTypedDocument
                                                 inv={inv}
@@ -893,8 +1000,18 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                         color: '#111827',
                     }}
                 >
-                    {(!isSystemAdmin || activeDocTab === 'MASTER' || String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
-                        <InvoiceContentBlock inv={activeInvoice} />
+                    {(String(activeInvoice.invoiceType || 'MASTER') === 'MASTER') ? (
+                        <>
+                            <InvoiceContentBlock inv={activeInvoice} />
+                            {isSystemAdmin && (
+                                <MasterCaseFeeAddendum
+                                    invoices={invoices}
+                                    isAr={isAr}
+                                    docs={docs}
+                                    forPrint
+                                />
+                            )}
+                        </>
                     ) : (
                         <InvoiceTypedDocument
                             inv={activeInvoice}

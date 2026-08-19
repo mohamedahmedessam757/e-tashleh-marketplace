@@ -44,7 +44,7 @@ function clearFinancialRefreshTimers() {
 
 function scheduleDebouncedFinancialsRefresh(
   getState: () => Pick<AdminState, 'fetchAdminFinancials' | 'fetchFinancialFeed' | 'clearNewEventsCount'>,
-  delayMs = 700,
+  delayMs = 250,
 ) {
   if (financialsRefreshDebounceTimer) clearTimeout(financialsRefreshDebounceTimer);
   financialsRefreshDebounceTimer = setTimeout(() => {
@@ -1835,14 +1835,25 @@ export const useAdminStore = create<AdminState>()(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'payment_transactions' },
             (payload) => {
-              const newStatus = (payload.new as any)?.status;
-              const oldStatus = (payload.old as any)?.status;
+              const next = payload.new as Record<string, unknown> | undefined;
+              const prev = payload.old as Record<string, unknown> | undefined;
+              const newStatus = next?.status;
+              const oldStatus = prev?.status;
+              const refundedChanged =
+                Number(next?.refundedAmount ?? next?.refunded_amount ?? 0) !==
+                Number(prev?.refundedAmount ?? prev?.refunded_amount ?? 0);
+              const escrowChanged =
+                String(next?.escrowStatus ?? next?.escrow_status ?? '') !==
+                String(prev?.escrowStatus ?? prev?.escrow_status ?? '');
               if (
                 payload.eventType === 'INSERT' ||
+                payload.eventType === 'DELETE' ||
                 (payload.eventType === 'UPDATE' &&
-                  newStatus &&
-                  newStatus !== oldStatus &&
-                  ['SUCCESS', 'FAILED', 'REFUNDED'].includes(newStatus))
+                  (refundedChanged ||
+                    escrowChanged ||
+                    (newStatus &&
+                      newStatus !== oldStatus &&
+                      ['SUCCESS', 'FAILED', 'REFUNDED'].includes(String(newStatus)))))
               ) {
                 refreshFinancials();
               }
@@ -1861,6 +1872,11 @@ export const useAdminStore = create<AdminState>()(
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'escrow_transactions' },
+            refreshFinancials,
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'invoices' },
             refreshFinancials,
           )
           .subscribe();

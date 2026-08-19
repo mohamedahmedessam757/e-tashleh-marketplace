@@ -886,6 +886,10 @@ export class EscrowService {
             )?.storeId;
 
         if (order && storeId) {
+            const storeBefore = await tx.store.findUnique({
+                where: { id: storeId },
+                select: { ownerId: true, balance: true },
+            });
             const balanceUpdate: Prisma.StoreUpdateInput = {};
             if (ctx.escrowHeldStatus === 'HELD') {
                 balanceUpdate.pendingBalance = { decrement: ctx.merchantAmount };
@@ -895,31 +899,49 @@ export class EscrowService {
                 balanceUpdate.balance = { decrement: ctx.merchantAmount };
             }
             if (Object.keys(balanceUpdate).length > 0) {
-                const storeBefore = await tx.store.findUnique({
-                    where: { id: storeId },
-                    select: { ownerId: true, balance: true },
-                });
                 await tx.store.update({ where: { id: storeId }, data: balanceUpdate });
+            }
 
-                if (ctx.escrowHeldStatus === 'RELEASED' && storeBefore?.ownerId) {
-                    const balanceAfter = Math.max(
-                        0,
-                        Number(storeBefore.balance) - ctx.merchantAmount,
-                    );
+            if (ctx.merchantAmount > 0 && storeBefore?.ownerId) {
+                const existingVendorRefund = await tx.walletTransaction.findFirst({
+                    where: {
+                        paymentId: ctx.paymentId,
+                        userId: storeBefore.ownerId,
+                        role: 'VENDOR',
+                        type: 'DEBIT',
+                        transactionType: { in: ['REFUND', 'refund'] },
+                        ...(ctx.stripeRefundId
+                            ? {
+                                  metadata: {
+                                      path: ['stripeRefundId'],
+                                      equals: ctx.stripeRefundId,
+                                  },
+                              }
+                            : {}),
+                    },
+                    select: { id: true },
+                });
+                if (!existingVendorRefund) {
+                    const isReleasedClawback = ctx.escrowHeldStatus === 'RELEASED';
+                    const balanceAfter = isReleasedClawback
+                        ? Math.max(0, Number(storeBefore.balance) - ctx.merchantAmount)
+                        : Number(storeBefore.balance);
                     await tx.walletTransaction.create({
                         data: {
                             userId: storeBefore.ownerId,
                             role: 'VENDOR',
                             type: 'DEBIT',
-                            transactionType: 'refund',
+                            transactionType: 'REFUND',
                             amount: ctx.merchantAmount,
                             balanceAfter,
                             paymentId: ctx.paymentId,
+                            escrowId: ctx.escrowId,
                             description: `استرداد إداري — خصم من رصيد المتجر (طلب #${ctx.orderNumber || ctx.orderId})`,
                             metadata: {
                                 orderId: ctx.orderId,
                                 stripeRefundId: ctx.stripeRefundId,
-                                clawback: true,
+                                clawback: isReleasedClawback,
+                                ledgerOnly: !isReleasedClawback,
                                 escrowStatus: ctx.escrowHeldStatus,
                             },
                         } as Prisma.WalletTransactionUncheckedCreateInput,

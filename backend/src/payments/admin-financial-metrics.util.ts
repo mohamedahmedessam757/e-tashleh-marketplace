@@ -140,6 +140,14 @@ export function roundMoney(value: number): number {
   return Number(value.toFixed(2));
 }
 
+/** Escrow actually released to merchants, net of released-fund clawbacks. Not sale-capture credits. */
+export function computeTotalReleasedToMerchants(
+  escrowReleased: number,
+  clawbackDebits: number,
+): number {
+  return roundMoney(Math.max(0, escrowReleased - clawbackDebits));
+}
+
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -193,7 +201,7 @@ export async function computeAdminFinancialKpis(
     loyaltyPaidAgg,
     opsLast24h,
     failedUnsettledAgg,
-    walletReleasedAgg,
+    merchantClawbackAgg,
     escrowReleasedAgg,
     completedWithdrawalsAgg,
     penaltiesAgg,
@@ -285,8 +293,9 @@ export async function computeAdminFinancialKpis(
     prisma.walletTransaction.aggregate({
       where: {
         role: 'VENDOR',
-        type: 'CREDIT',
-        transactionType: { in: ['ORDER_PROFIT', 'ESCROW_RELEASE', 'PAYMENT', 'SALE'] },
+        type: 'DEBIT',
+        transactionType: { in: ['REFUND', 'refund'] },
+        metadata: { path: ['clawback'], equals: true },
         ...walletDate,
       },
       _sum: { amount: true },
@@ -370,10 +379,11 @@ export async function computeAdminFinancialKpis(
     Number(customerBalanceAgg._sum.customerBalance || 0) +
     Number(merchantStoreAgg._sum.balance || 0);
 
-  const walletReleased = Number(walletReleasedAgg._sum.amount || 0);
   const escrowReleased = Number(escrowReleasedAgg._sum.merchantAmount || 0);
-  const totalReleasedToMerchants = roundMoney(
-    escrowReleased > 0 ? escrowReleased : walletReleased,
+  const clawbackDebits = Number(merchantClawbackAgg._sum.amount || 0);
+  const totalReleasedToMerchants = computeTotalReleasedToMerchants(
+    escrowReleased,
+    clawbackDebits,
   );
 
   const financialDisputesCount =

@@ -9,6 +9,7 @@ import {
   resolveShippingBatch,
   sumShippingLineItems,
 } from './invoice-snapshot.util';
+import { RETURNS_FEE_BATCH_PREFIX, isReturnsFeeInvoice } from './invoice-visibility.util';
 
 export interface InvoiceBundleContext {
   orderId: string;
@@ -299,6 +300,10 @@ export class InvoiceSnapshotService {
       where: {
         paymentId,
         invoiceType: { in: ['MASTER', 'PART', 'COMMISSION'] },
+        OR: [
+          { shippingBatchKey: null },
+          { NOT: { shippingBatchKey: { startsWith: RETURNS_FEE_BATCH_PREFIX } } },
+        ],
       },
       data: { status: 'REFUNDED' },
     });
@@ -319,6 +324,7 @@ export class InvoiceSnapshotService {
     });
 
     for (const ship of shippingRows) {
+      if (isReturnsFeeInvoice(ship)) continue;
       const lines =
         (ship.lineItems as unknown as ShippingLineItem[] | null) || [];
       const isSeparateOwner =

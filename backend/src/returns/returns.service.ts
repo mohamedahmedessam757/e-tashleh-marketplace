@@ -11,9 +11,18 @@ import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../orders/order-time.constan
 import {
     computeAdjudicationFinancials,
     AdjudicationFinancialResult,
+    FinalRefundDecision,
 } from './adjudication-financial.util';
+import { REFUND_EXECUTION_STATUSES } from './dto/admin-verdict.dto';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
+import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
+import { FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES } from '../invoices/invoice-visibility.util';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import {
+    buildFeeSettlementPlan,
+    makeReturnsLineItemIdempotencyKey,
+} from './fee-settlement-plan.util';
 import {
     normalizeSearchQuery,
     resolveUserIds,
@@ -34,10 +43,104 @@ export class ReturnsService {
         private escrowService: EscrowService,
         private violationsService: ViolationsService,
         private offerFulfillment: OfferFulfillmentService,
+        private returnsFeeInvoices: ReturnsFeeInvoiceService,
+        private loyaltyService: LoyaltyService,
     ) { }
 
     private isMultiItemOrder(order: { requestType?: string | null; parts?: { id: string }[] }) {
         return this.offerFulfillment.isMultiItemOrder(order);
+    }
+
+    private async walletTxExistsByKey(
+        tx: Prisma.TransactionClient,
+        idempotencyKey: string,
+    ): Promise<boolean> {
+        const row = await tx.walletTransaction.findFirst({
+            where: { metadata: { path: ['idempotencyKey'], equals: idempotencyKey } },
+            select: { id: true },
+        });
+        return !!row;
+    }
+
+    private async persistReturnsFeeInvoices(params: {
+        tx: Prisma.TransactionClient;
+        caseId: string;
+        type: 'return' | 'dispute';
+        caseRecord: any;
+        fin: AdjudicationFinancialResult;
+        extra?: any;
+        adminId: string;
+        refundExecutionStatus: string;
+        adjudicationFeePaid: boolean;
+        shippingPaid: boolean;
+    }) {
+        const offerPaymentId = params.caseRecord.offerId
+            ? (await this.escrowService.resolveOfferPaymentBase(params.caseRecord.offerId).catch(() => null))
+                  ?.paymentId
+            : null;
+        const paymentId =
+            offerPaymentId ||
+            (
+                await params.tx.paymentTransaction.findFirst({
+                    where: {
+                        orderId: params.caseRecord.orderId,
+                        status: { in: [...FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES] },
+                    },
+                    orderBy: { paidAt: 'desc' },
+                    select: { id: true },
+                })
+            )?.id;
+        if (!paymentId) return;
+
+        const master = await params.tx.invoice.findFirst({
+            where: { paymentId, invoiceType: 'MASTER' },
+            select: { id: true, invoiceGroupId: true, currency: true, partNameSnapshot: true },
+        });
+        const store = await this.resolveCaseStore(params.caseRecord, params.tx);
+        const shippingRoundtrip = Number(
+            params.extra?.shippingRoundtrip ??
+                params.caseRecord.shippingRoundtrip ??
+                params.caseRecord.shippingRefund ??
+                0,
+        );
+        const plan = buildFeeSettlementPlan({
+            caseId: params.caseId,
+            shippingRoundtrip,
+            refundExecutionStatus: (params.refundExecutionStatus as any) || params.fin.refundExecutionStatusSeed,
+            fin: params.fin,
+            faultPartyHint: params.extra?.faultParty || params.caseRecord.faultParty,
+        });
+        await this.returnsFeeInvoices.ensureFromPlan(
+            plan,
+            {
+                orderId: params.caseRecord.orderId,
+                paymentId,
+                customerId: params.caseRecord.customerId || params.caseRecord.order?.customerId,
+                merchantOwnerId: store?.ownerId || null,
+                adminId: params.adminId,
+                currency: master?.currency || 'AED',
+                partName: master?.partNameSnapshot || null,
+                parentInvoiceId: master?.id || null,
+                invoiceGroupId: master?.invoiceGroupId || master?.id || null,
+                adjudicationFeePaid: params.adjudicationFeePaid,
+                shippingPaid: params.shippingPaid,
+            },
+            params.tx,
+        );
+    }
+
+    private async rebuildFinFromCase(caseRecord: any): Promise<AdjudicationFinancialResult> {
+        const orderAmount = await this.resolveAdjudicationOrderAmount(caseRecord.orderId, caseRecord);
+        return computeAdjudicationFinancials({
+            orderPaidTotal: orderAmount,
+            gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 3),
+            refundFeePct: Number(caseRecord.refundFeePct ?? 1.5),
+            shippingRoundtrip: Number(
+                caseRecord.shippingRoundtrip || caseRecord.shippingRefund || 0,
+            ),
+            faultParty: caseRecord.faultParty || 'MERCHANT',
+            finalRefundDecision: caseRecord.finalRefundDecision,
+        });
     }
 
     private async resolveAcceptedOfferForCase(
@@ -1318,6 +1421,214 @@ export class ReturnsService {
         return null;
     }
 
+    private normalizeFinalRefundDecision(
+        verdict: 'REFUND' | 'RELEASE_FUNDS' | 'DENY',
+        faultParty: string | undefined,
+        explicitDecision: string | undefined,
+    ): FinalRefundDecision {
+        const normalized = String(explicitDecision || '').toUpperCase();
+        if (normalized === 'REFUND_CUSTOMER' || normalized === 'NO_CUSTOMER_REFUND') {
+            return normalized as FinalRefundDecision;
+        }
+        const normalizedFault = String(faultParty || '').toUpperCase();
+        if (normalizedFault === 'CLOSE_COMPLETE_REFUND' || verdict === 'REFUND') {
+            return 'REFUND_CUSTOMER';
+        }
+        return 'NO_CUSTOMER_REFUND';
+    }
+
+    private getRefundExecutionStatusSeed(
+        finalRefundDecision: FinalRefundDecision,
+        finalCustomerRefundAmount: number,
+    ): (typeof REFUND_EXECUTION_STATUSES)[number] {
+        if (finalRefundDecision !== 'REFUND_CUSTOMER' || finalCustomerRefundAmount <= 0) {
+            return 'NOT_REQUIRED';
+        }
+        return 'PENDING';
+    }
+
+    private async retryFailedCustomerRefund(
+        caseId: string,
+        type: 'return' | 'dispute',
+        caseRecord: any,
+        notes: string,
+    ) {
+        const amount = Number(caseRecord.finalCustomerRefundAmount || 0);
+        if (!(amount > 0)) {
+            return (this.prisma as any)[type === 'return' ? 'returnRequest' : 'dispute'].update({
+                where: { id: caseId },
+                data: { refundExecutionStatus: 'NOT_REQUIRED' },
+            });
+        }
+        const refundFinancials = await this.computeAdjudicationStripeRefund(
+            caseRecord,
+            {
+                faultParty: caseRecord.faultParty,
+                gatewayFeePct: caseRecord.gatewayFeePct,
+                refundFeePct: caseRecord.refundFeePct,
+                shippingRoundtrip: caseRecord.shippingRoundtrip,
+                finalRefundDecision: 'REFUND_CUSTOMER',
+            },
+            String(caseRecord.faultParty || '').toUpperCase() === 'CLOSE_COMPLETE_REFUND',
+        );
+        const ctx = await this.executePersistedCustomerRefund({
+            caseId,
+            type,
+            caseRecord,
+            extra: {
+                faultParty: caseRecord.faultParty,
+                shippingRoundtrip: caseRecord.shippingRoundtrip,
+            },
+            isCloseCompleteRefund:
+                String(caseRecord.faultParty || '').toUpperCase() === 'CLOSE_COMPLETE_REFUND',
+            refundFinancials: {
+                ...refundFinancials,
+                customerStripeRefund: amount,
+                finalCustomerRefundAmount: amount,
+            },
+            adjudicationOrderAmount: Number(caseRecord.netRefundAmount || amount),
+            notes,
+        });
+        if (ctx) {
+            this.escrowService.dispatchRefundNotifications(ctx);
+        }
+        return (this.prisma as any)[type === 'return' ? 'returnRequest' : 'dispute'].findUnique({
+            where: { id: caseId },
+        });
+    }
+
+    private async executePersistedCustomerRefund(params: {
+        caseId: string;
+        type: 'return' | 'dispute';
+        caseRecord: any;
+        extra?: any;
+        isCloseCompleteRefund: boolean;
+        refundFinancials: AdjudicationFinancialResult;
+        adjudicationOrderAmount: number;
+        notes: string;
+    }): Promise<StripeRefundContext | null> {
+        const {
+            caseId,
+            type,
+            caseRecord,
+            extra,
+            isCloseCompleteRefund,
+            refundFinancials,
+            adjudicationOrderAmount,
+            notes,
+        } = params;
+        const model = type === 'return' ? 'returnRequest' : 'dispute';
+        await (this.prisma as any)[model]
+            .update({
+                where: { id: caseId },
+                data: { refundExecutionStatus: 'PROCESSING' },
+            })
+            .catch(() => {});
+
+        try {
+            const faultLower = String(extra?.faultParty || caseRecord.faultParty || '').toUpperCase();
+            const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
+            const refundReason = isCloseCompleteRefund
+                ? notes || 'إغلاق النزاع مع استرداد صافي المبلغ للعميل (تم الاسترداد)'
+                : notes || 'Administrative Refund';
+            const offerPaymentBase = caseRecord.offerId
+                ? await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId)
+                : null;
+            const stripeRefundCtx = await this.escrowService.executeStripeRefundOnly(
+                caseRecord.orderId,
+                refundFinancials.customerStripeRefund,
+                refundReason,
+                isCloseCompleteRefund
+                    ? 'LOGISTICS'
+                    : faultLower === 'SHIPPING_COMPANY'
+                      ? 'LOGISTICS'
+                      : isMerchantFault
+                        ? 'MERCHANT'
+                        : 'CUSTOMER',
+                offerPaymentBase?.paymentId ?? undefined,
+            );
+            const shippingRoundtrip = Number(
+                extra?.shippingRoundtrip ?? caseRecord.shippingRoundtrip ?? 0,
+            );
+            await this.prisma.$transaction(async (tx) => {
+                const payment = await tx.paymentTransaction.findUnique({
+                    where: { id: stripeRefundCtx.paymentId },
+                    select: { refundedAmount: true, escrowStatus: true },
+                });
+                const alreadyApplied =
+                    Number(payment?.refundedAmount || 0) >= Number(stripeRefundCtx.refundAmount) - 0.009 &&
+                    String(payment?.escrowStatus || '') === 'REFUNDED';
+                if (!alreadyApplied) {
+                    await this.escrowService.applyRefundDbUpdates(tx, {
+                        ...stripeRefundCtx,
+                        adjudicationLedger: {
+                            caseId,
+                            caseType: type,
+                            faultParty: faultLower,
+                            feeBearer: refundFinancials.feeBearer,
+                            grossPaid: adjudicationOrderAmount,
+                            platformFees: refundFinancials.platformFeesTotal,
+                            shippingDeducted:
+                                refundFinancials.shippingBearer === 'CUSTOMER'
+                                    ? shippingRoundtrip
+                                    : 0,
+                            shippingCompanyLiability: refundFinancials.shippingCompanyLiability,
+                        },
+                    });
+                }
+                await (tx as any)[model].update({
+                    where: { id: caseId },
+                    data: {
+                        refundAmount: stripeRefundCtx.refundAmount,
+                        finalCustomerRefundAmount: stripeRefundCtx.refundAmount,
+                        refundExecutionStatus: 'SUCCEEDED',
+                        ...(String(caseRecord.shippingPaymentStatus || '') === 'WITHHELD_PENDING'
+                            ? {
+                                  shippingPaymentStatus: 'PAID',
+                                  shippingPaymentMethod: 'STRIPE_WITHHOLD',
+                              }
+                            : {}),
+                    },
+                });
+                await tx.order.update({
+                    where: { id: caseRecord.orderId },
+                    data: { status: 'REFUNDED' },
+                });
+            });
+            await this.loyaltyService
+                .reverseRewardsForCustomerRefund(caseRecord.orderId, caseId)
+                .catch((err) =>
+                    console.warn(
+                        `[ADJUDICATION] reward reversal skipped for ${caseId}:`,
+                        err?.message || err,
+                    ),
+                );
+            return stripeRefundCtx;
+        } catch (refundErr: any) {
+            console.error(
+                `[ADJUDICATION] Verdict saved for ${caseId} but Stripe refund failed:`,
+                refundErr?.message || refundErr,
+            );
+            await this.notificationsService
+                .notifyAdmins({
+                    titleAr: 'فشل استرداد Stripe بعد الحكم',
+                    titleEn: 'Stripe refund failed after verdict',
+                    messageAr: `تم حفظ الحكم للقضية #${caseId.substring(0, 8)} لكن فشل استرداد العميل: ${refundErr?.message || 'خطأ غير معروف'}`,
+                    messageEn: `Verdict saved for case #${caseId.substring(0, 8)} but customer refund failed: ${refundErr?.message || 'unknown error'}`,
+                    type: 'system_alert',
+                    link: `/admin/dashboard/admin-dispute-details/${caseId}`,
+                })
+                .catch(() => {});
+            await (this.prisma as any)[model]
+                .update({
+                    where: { id: caseId },
+                    data: { refundExecutionStatus: 'FAILED' },
+                })
+                .catch(() => {});
+            return null;
+        }
+    }
+
     /** Pre-compute refund amounts + Stripe cap (no DB writes). */
     private async computeAdjudicationStripeRefund(
         caseRecord: {
@@ -1347,11 +1658,11 @@ export class ReturnsService {
             faultParty: isCloseCompleteRefund
                 ? 'CLOSE_COMPLETE_REFUND'
                 : String(extra.faultParty || 'MERCHANT'),
+            finalRefundDecision: extra?.finalRefundDecision as
+                | 'REFUND_CUSTOMER'
+                | 'NO_CUSTOMER_REFUND'
+                | undefined,
             maxRefundable,
-            calculatedNetRefund:
-                extra?.calculatedNetRefund != null
-                    ? Number(extra.calculatedNetRefund)
-                    : undefined,
         });
 
         return {
@@ -1417,6 +1728,16 @@ export class ReturnsService {
         if (!caseRecord) throw new NotFoundException('Case not found');
 
         if (caseRecord.verdictLocked && caseRecord.verdictIssuedAt) {
+            const existingDecision = String(caseRecord.finalRefundDecision || '').toUpperCase();
+            const existingStatus = String(caseRecord.refundExecutionStatus || '').toUpperCase();
+            const existingAmount = Number(caseRecord.finalCustomerRefundAmount || 0);
+            if (
+                existingStatus === 'FAILED' &&
+                existingDecision === 'REFUND_CUSTOMER' &&
+                existingAmount > 0
+            ) {
+                return this.retryFailedCustomerRefund(caseId, type, caseRecord, notes);
+            }
             throw new BadRequestException(
                 'الحكم الإداري مقفل ولا يمكن إعادة تنفيذه. استخدم تحديث الحكم إن كان مسموحاً.',
             );
@@ -1437,8 +1758,19 @@ export class ReturnsService {
 
         const faultLowerEarly = String(extra?.faultParty || '').toUpperCase();
         const isCloseCompleteRefund = faultLowerEarly === 'CLOSE_COMPLETE_REFUND';
+        const finalRefundDecision = this.normalizeFinalRefundDecision(
+            verdict,
+            faultLowerEarly,
+            String(extra?.finalRefundDecision || ''),
+        );
+        const refundRequired = finalRefundDecision === 'REFUND_CUSTOMER';
+        if (refundRequired && verdict !== 'REFUND') {
+            throw new BadRequestException(
+                'REFUND_CUSTOMER decision requires REFUND verdict execution path.',
+            );
+        }
 
-        if (verdict === 'REFUND') {
+        if (verdict === 'REFUND' && refundRequired) {
             const orderAmount = await this.resolveAdjudicationOrderAmount(caseRecord.orderId, caseRecord);
             const maxRefundablePre = await this.resolveAdjudicationMaxRefundable(
                 caseRecord.orderId,
@@ -1452,11 +1784,8 @@ export class ReturnsService {
                 faultParty: isCloseCompleteRefund
                     ? 'CLOSE_COMPLETE_REFUND'
                     : String(extra?.faultParty || 'MERCHANT'),
+                finalRefundDecision,
                 maxRefundable: maxRefundablePre,
-                calculatedNetRefund:
-                    extra?.calculatedNetRefund != null
-                        ? Number(extra.calculatedNetRefund)
-                        : undefined,
             });
             const netRefundAmount = preFin.customerStripeRefund;
             if (netRefundAmount > 0 && orderAmount > 0 && maxRefundablePre <= 0) {
@@ -1466,15 +1795,15 @@ export class ReturnsService {
             }
         }
         // CLOSE_COMPLETE: still a money refund — order/case must show REFUNDED (not COMPLETED)
-        const nextStatus = isCloseCompleteRefund
+        const nextStatus = isCloseCompleteRefund || refundRequired
             ? 'REFUNDED'
             : verdict === 'REFUND'
-                ? 'REFUNDED'
+                ? 'RESOLVED'
                 : 'RESOLVED';
-        const orderStatus = isCloseCompleteRefund
+        const orderStatus = isCloseCompleteRefund || refundRequired
             ? 'REFUNDED'
             : verdict === 'REFUND'
-                ? 'REFUNDED'
+                ? 'COMPLETED'
                 : 'COMPLETED';
 
         let stripeRefundCtx: StripeRefundContext | null = null;
@@ -1487,14 +1816,14 @@ export class ReturnsService {
         /** Set during TX when merchant fees must be collected via Stripe later */
         let pendingAdjudicationFee: { amount: number; payee: 'MERCHANT' } | null = null;
 
-        if (verdict === 'REFUND' && extra) {
+        if (refundRequired || extra?.faultParty || caseRecord.faultParty) {
             adjudicationOrderAmount = await this.resolveAdjudicationOrderAmount(
                 caseRecord.orderId,
                 caseRecord,
             );
             refundFinancials = await this.computeAdjudicationStripeRefund(
                 caseRecord,
-                extra,
+                { ...(extra || {}), finalRefundDecision },
                 isCloseCompleteRefund,
             );
             // Stripe refund runs AFTER DB commit (Phase 3) to avoid orphan refunds
@@ -1505,12 +1834,30 @@ export class ReturnsService {
                 status: nextStatus,
                 updatedAt: new Date(),
                 verdictNotes: notes,
-                verdictIssuedAt: new Date(), // 2026 Governance: Always record when verdict is issued
-                verdictLocked: true // Lock the verdict by default to prevent unauthorized tampering
+                verdictIssuedAt: new Date(),
+                verdictLocked: true,
+                finalRefundDecision,
+                finalCustomerRefundAmount: 0,
+                refundAmount: 0,
+                refundExecutionStatus: 'NOT_REQUIRED',
             };
 
             // 2026 Admin Audit Tracking
             console.log(`[ADJUDICATION] Executing verdict for ${type} ${caseId}. Verdict: ${verdict}`);
+
+            const canonicalRefundAmount = refundRequired
+                ? Number(
+                      refundFinancials?.finalCustomerRefundAmount ??
+                          refundFinancials?.customerStripeRefund ??
+                          0,
+                  )
+                : 0;
+            updateData.finalCustomerRefundAmount = canonicalRefundAmount;
+            updateData.refundAmount = canonicalRefundAmount;
+            updateData.refundExecutionStatus = this.getRefundExecutionStatusSeed(
+                finalRefundDecision,
+                canonicalRefundAmount,
+            );
 
             // Phase 4 Governance Extensions
             if (extra) {
@@ -1524,32 +1871,48 @@ export class ReturnsService {
                 
                 // Extended fields for financial breakdown (Refined 2026 Logic)
                 updateData.faultParty = extra.faultParty;
-                
-                // 2026 Financial Automation: If refundAmount is not provided, default to full product cost
-                let finalRefundAmount = Number(extra.refundAmount || 0);
-                if (verdict === 'REFUND' && finalRefundAmount <= 0) {
-                    finalRefundAmount = Number(caseRecord.offer?.unitPrice || caseRecord.order?.acceptedOffer?.unitPrice || 0);
+                updateData.finalRefundDecision = finalRefundDecision;
+
+                const finalCustomerRefundAmount = refundRequired
+                    ? Number(
+                          refundFinancials?.finalCustomerRefundAmount ??
+                              refundFinancials?.customerStripeRefund ??
+                              0,
+                      )
+                    : 0;
+                if (!Number.isFinite(finalCustomerRefundAmount) || finalCustomerRefundAmount < 0) {
+                    throw new BadRequestException('Invalid final customer refund amount');
                 }
-                updateData.refundAmount = finalRefundAmount;
+                if (finalRefundDecision === 'NO_CUSTOMER_REFUND' && finalCustomerRefundAmount > 0.009) {
+                    throw new BadRequestException(
+                        'NO_CUSTOMER_REFUND decision must persist zero customer refund amount.',
+                    );
+                }
+                updateData.finalCustomerRefundAmount = finalCustomerRefundAmount;
+                updateData.refundExecutionStatus = this.getRefundExecutionStatusSeed(
+                    finalRefundDecision,
+                    finalCustomerRefundAmount,
+                );
+                updateData.refundAmount = finalCustomerRefundAmount;
 
                 updateData.shippingRefund = Number(
                     extra.shippingRoundtrip ?? extra.shippingRefund ?? 0,
                 );
                 updateData.stripeFee = extra.stripeFee || 0;
 
-                // 2026 Phase 3: Financial Fee Enforcement Logic (Spec §15)
-                if (verdict === 'REFUND') {
+                // Fee/shipping obligations follow fault party even when customer refund is No.
+                if (extra.faultParty) {
                     const shippingRoundtrip = Number(extra?.shippingRoundtrip || 0);
                     const faultLower = String(extra.faultParty || '').toUpperCase();
                     const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
 
-                    const fin =
-                        refundFinancials ??
-                        (await this.computeAdjudicationStripeRefund(
-                            caseRecord,
-                            extra,
-                            isCloseCompleteRefund,
-                        ));
+                const fin =
+                    refundFinancials ??
+                    (await this.computeAdjudicationStripeRefund(
+                        caseRecord,
+                        { ...extra, finalRefundDecision },
+                        isCloseCompleteRefund,
+                    ));
 
                     updateData.feeBearer = fin.feeBearer;
                     if (fin.shippingCompanyLiability > 0) {
@@ -1568,9 +1931,18 @@ export class ReturnsService {
                                 'تعذر تحديد متجر النزاع لخصم الرسوم المالية.',
                             );
                         }
+                        const idempotencyKey = makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            transactionType === 'ADJUDICATION_FEE'
+                                ? 'MERCHANT_WALLET_PLATFORM_FEE_DEBIT'
+                                : 'MERCHANT_WALLET_SHIPPING_DEBIT',
+                            updateData.refundExecutionStatus || fin.refundExecutionStatusSeed,
+                        );
+                        if (await this.walletTxExistsByKey(tx, idempotencyKey)) {
+                            return 'PAID';
+                        }
                         const merchantBalance = Number(resolvedStore.balance || 0);
                         if (merchantBalance < amount) {
-                            // Do not block verdict — collect via Stripe checkout instead
                             return 'PENDING';
                         }
                         await tx.store.update({
@@ -1588,9 +1960,15 @@ export class ReturnsService {
                                 description,
                                 metadata: {
                                     caseId,
+                                    caseType: type,
                                     orderId: caseRecord.orderId,
                                     faultParty: faultLower,
                                     feeBearer: fin.feeBearer,
+                                    shippingBearer: fin.shippingBearer,
+                                    gatewayFeeAmount: fin.gatewayFeeAmount,
+                                    refundFeeAmount: fin.refundFeeAmount,
+                                    shippingRoundtrip,
+                                    idempotencyKey,
                                 },
                             },
                         });
@@ -1644,12 +2022,24 @@ export class ReturnsService {
                     updateData.refundFeeAmount = fin.refundFeeAmount;
                     updateData.shippingRoundtrip = shippingRoundtrip;
                     updateData.netRefundAmount = fin.netRefundAmount;
-                    updateData.refundAmount = fin.customerStripeRefund;
+                    updateData.finalCustomerRefundAmount = fin.finalCustomerRefundAmount;
+                    updateData.refundAmount = fin.finalCustomerRefundAmount;
+                    updateData.refundExecutionStatus = this.getRefundExecutionStatusSeed(
+                        finalRefundDecision,
+                        fin.finalCustomerRefundAmount,
+                    );
 
                     if (
                         fin.platformRetainedAmount > 0 &&
-                        (isCloseCompleteRefund || fin.feeBearer === 'CUSTOMER')
+                        updateData.adjudicationFeePaymentStatus !== 'PENDING'
                     ) {
+                        const shouldIncrementWallet =
+                            fin.customerStripeRefund > 0 &&
+                            (isCloseCompleteRefund ||
+                                fin.feeBearer === 'CUSTOMER' ||
+                                fin.feeBearer === 'MIXED_CLOSE');
+                        let feesBalanceAfter = 0;
+                        if (shouldIncrementWallet) {
                         let platformWallet = await tx.platformWallet.findFirst();
                         if (!platformWallet) {
                             platformWallet = await tx.platformWallet.create({
@@ -1667,7 +2057,17 @@ export class ReturnsService {
                                 totalRevenue: { increment: fin.platformRetainedAmount },
                             },
                         });
-                        // Visible ledger row for platform fee retention (admin financial feed)
+                            feesBalanceAfter = Number(updatedWallet.feesBalance);
+                        } else {
+                            const pw = await tx.platformWallet.findFirst();
+                            feesBalanceAfter = Number(pw?.feesBalance || 0);
+                        }
+                        const retentionKey = makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'PLATFORM_RETAINED_AMOUNT',
+                            updateData.refundExecutionStatus || fin.refundExecutionStatusSeed,
+                        );
+                        if (!(await this.walletTxExistsByKey(tx, retentionKey))) {
                         await tx.walletTransaction.create({
                             data: {
                                 userId: adminId,
@@ -1678,21 +2078,24 @@ export class ReturnsService {
                                 currency: 'AED',
                                 description: isCloseCompleteRefund
                                     ? `Platform retained gateway+refund fees (CLOSE_COMPLETE) — Case #${caseId.substring(0, 8)}`
-                                    : `Platform retained fees (customer-fault refund) — Case #${caseId.substring(0, 8)}`,
-                                balanceAfter: Number(updatedWallet.feesBalance),
+                                    : `Platform retained fees — Case #${caseId.substring(0, 8)}`,
+                                balanceAfter: feesBalanceAfter,
                                 metadata: {
                                     caseId,
+                                    caseType: type,
                                     orderId: caseRecord.orderId,
                                     feeBearer: fin.feeBearer,
                                     gatewayFeeAmount: fin.gatewayFeeAmount,
                                     refundFeeAmount: fin.refundFeeAmount,
                                     customerStripeRefund: fin.customerStripeRefund,
+                                    idempotencyKey: retentionKey,
                                     resolutionMode: isCloseCompleteRefund
                                         ? 'CLOSE_COMPLETE_REFUND'
                                         : undefined,
                                 },
                             },
                         });
+                        }
                     }
 
                     // Fraud Penalty Logic (Spec §15.4)
@@ -1740,7 +2143,11 @@ export class ReturnsService {
                 }
 
                 // RELEASE_FUNDS / DENY: Move funds to merchant balance (per-offer escrow)
-                if (verdict === 'RELEASE_FUNDS' || verdict === 'DENY') {
+                if (
+                    verdict === 'RELEASE_FUNDS' ||
+                    verdict === 'DENY' ||
+                    (verdict === 'REFUND' && !refundRequired)
+                ) {
                     let paymentId: string | null = null;
                     if (caseRecord.offerId) {
                         const offerBase = await this.escrowService.resolveOfferPaymentBase(
@@ -1838,7 +2245,7 @@ export class ReturnsService {
                 }
 
                 // Phase 1: Shipping Payment Tracking Obligation
-                if (extra.faultParty && verdict === 'REFUND' && refundFinancials) {
+                if (extra.faultParty && refundFinancials) {
                     const bearer = refundFinancials.shippingBearer;
                     const shipObligation = Number(
                         updateData.shippingRefund ?? extra.shippingRoundtrip ?? extra.shippingRefund ?? 0,
@@ -1853,7 +2260,10 @@ export class ReturnsService {
                         }
                     } else if (bearer === 'CUSTOMER') {
                         updateData.shippingPayee = 'CUSTOMER';
-                        if (!updateData.shippingPaymentStatus) {
+                        if (refundRequired && shipObligation > 0) {
+                            updateData.shippingPaymentStatus = 'WITHHELD_PENDING';
+                            updateData.shippingPaymentMethod = 'STRIPE_WITHHOLD';
+                        } else if (!updateData.shippingPaymentStatus) {
                             updateData.shippingPaymentStatus =
                                 shipObligation > 0 ? 'PENDING' : 'PAID';
                         }
@@ -1865,7 +2275,7 @@ export class ReturnsService {
                 }
             }
 
-            if (type === 'return' && verdict === 'REFUND' && !isCloseCompleteRefund) {
+            if (type === 'return' && verdict === 'REFUND' && refundRequired && !isCloseCompleteRefund) {
                 // Approval implies we issue a Return Waybill
                 const handoverDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days handover (Spec §9)
                 updateData.handoverDeadline = handoverDeadline;
@@ -1900,7 +2310,7 @@ export class ReturnsService {
                 data: updateData
             });
 
-            if (type === 'return' && verdict === 'REFUND' && !isCloseCompleteRefund) {
+            if (type === 'return' && verdict === 'REFUND' && refundRequired && !isCloseCompleteRefund) {
                 const isMultiReturn = this.isMultiItemOrder(caseRecord.order);
                 if (isMultiReturn && caseRecord.offerId) {
                     await tx.offer.update({
@@ -1920,10 +2330,10 @@ export class ReturnsService {
                         where: { id: caseRecord.offerId },
                         data: {
                             resolutionLocked: true,
-                            ...(verdict === 'REFUND'
+                            ...(verdict === 'REFUND' && refundRequired
                                 ? { fulfillmentStatus: OfferFulfillmentStatus.CANCELLED }
                                 : {}),
-                            ...(verdict !== 'REFUND' && !isCloseCompleteRefund
+                            ...((verdict !== 'REFUND' || !refundRequired) && !isCloseCompleteRefund
                                 ? {
                                       fulfillmentStatus: OfferFulfillmentStatus.COMPLETED,
                                       completedAt: new Date(),
@@ -1932,7 +2342,7 @@ export class ReturnsService {
                         },
                     });
                     // Refund verdicts (incl. CLOSE_COMPLETE) must surface REFUNDED on the order
-                    if (verdict === 'REFUND' || isCloseCompleteRefund) {
+                    if (refundRequired || isCloseCompleteRefund) {
                         await tx.order.update({
                             where: { id: caseRecord.orderId },
                             data: { status: 'REFUNDED' },
@@ -1947,7 +2357,10 @@ export class ReturnsService {
             }
 
             const auditMetadata: Record<string, unknown> = { verdict, ...extra };
+            auditMetadata.finalRefundDecision = finalRefundDecision;
             if (refundFinancials) {
+                auditMetadata.finalCustomerRefundAmount =
+                    refundFinancials.finalCustomerRefundAmount;
                 auditMetadata.platformRetainedAmount = refundFinancials.platformRetainedAmount;
                 auditMetadata.netRefundAmount = refundFinancials.netRefundAmount;
                 auditMetadata.customerStripeRefund = refundFinancials.customerStripeRefund;
@@ -1966,6 +2379,8 @@ export class ReturnsService {
                     auditMetadata.adjudicationFeePending = true;
                     auditMetadata.adjudicationFeeAmount = pendingAdjudicationFee.amount;
                 }
+            } else {
+                auditMetadata.finalCustomerRefundAmount = 0;
             }
             if (isCloseCompleteRefund) {
                 auditMetadata.platformRetentionReasonAr =
@@ -1988,81 +2403,47 @@ export class ReturnsService {
                 },
             });
 
+            if (refundFinancials) {
+                await this.persistReturnsFeeInvoices({
+                    tx,
+                    caseId,
+                    type,
+                    caseRecord,
+                    fin: refundFinancials,
+                    extra,
+                    adminId,
+                    refundExecutionStatus: String(updateData.refundExecutionStatus || 'NOT_REQUIRED'),
+                    adjudicationFeePaid: String(updateData.adjudicationFeePaymentStatus || '') === 'PAID',
+                    shippingPaid:
+                        String(updateData.shippingPaymentStatus || '') === 'PAID' ||
+                        String(updateData.shippingPaymentStatus || '') === 'WITHHELD_PENDING',
+                });
+            }
+
             return updated;
         }, { timeout: 30000 });
 
         // Phase 3: Stripe refund AFTER verdict is persisted (prevents orphan refunds)
-        if (verdict === 'REFUND' && refundFinancials && refundFinancials.customerStripeRefund > 0) {
-            try {
-                const faultLower = String(extra?.faultParty || '').toUpperCase();
-                const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
-                const refundReason = isCloseCompleteRefund
-                    ? notes || 'إغلاق النزاع مع استرداد صافي المبلغ للعميل (تم الاسترداد)'
-                    : notes || 'Administrative Refund';
-                const offerPaymentBase = caseRecord.offerId
-                    ? await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId)
-                    : null;
-                stripeRefundCtx = await this.escrowService.executeStripeRefundOnly(
-                    caseRecord.orderId,
-                    refundFinancials.customerStripeRefund,
-                    refundReason,
-                    isCloseCompleteRefund
-                        ? 'LOGISTICS'
-                        : faultLower === 'SHIPPING_COMPANY'
-                          ? 'LOGISTICS'
-                          : isMerchantFault
-                            ? 'MERCHANT'
-                            : 'CUSTOMER',
-                    offerPaymentBase?.paymentId ?? undefined,
+        if (verdict === 'REFUND' && refundRequired && refundFinancials && refundFinancials.customerStripeRefund > 0) {
+            stripeRefundCtx = await this.executePersistedCustomerRefund({
+                caseId,
+                type,
+                caseRecord,
+                extra,
+                isCloseCompleteRefund,
+                refundFinancials,
+                adjudicationOrderAmount,
+                notes,
+            });
+        } else if (refundRequired) {
+            await this.loyaltyService
+                .reverseRewardsForCustomerRefund(caseRecord.orderId, caseId)
+                .catch((err) =>
+                    console.warn(
+                        `[ADJUDICATION] reward reversal skipped for ${caseId}:`,
+                        err?.message || err,
+                    ),
                 );
-                const shippingRoundtrip = Number(extra?.shippingRoundtrip || 0);
-                await this.prisma.$transaction(async (tx) => {
-                    await this.escrowService.applyRefundDbUpdates(tx, {
-                        ...stripeRefundCtx!,
-                        adjudicationLedger: {
-                            caseId,
-                            caseType: type,
-                            faultParty: faultLower,
-                            feeBearer: refundFinancials!.feeBearer,
-                            grossPaid: adjudicationOrderAmount,
-                            platformFees: refundFinancials!.platformFeesTotal,
-                            shippingDeducted:
-                                refundFinancials!.shippingBearer === 'CUSTOMER'
-                                    ? shippingRoundtrip
-                                    : 0,
-                            shippingCompanyLiability: refundFinancials!.shippingCompanyLiability,
-                        },
-                    });
-                    if (stripeRefundCtx?.refundAmount != null) {
-                        await (tx as any)[type === 'return' ? 'returnRequest' : 'dispute'].update({
-                            where: { id: caseId },
-                            data: { refundAmount: stripeRefundCtx.refundAmount },
-                        });
-                    }
-                    // Pin order status after escrow/invoice sync so it cannot drift to COMPLETED
-                    if (verdict === 'REFUND' || isCloseCompleteRefund) {
-                        await tx.order.update({
-                            where: { id: caseRecord.orderId },
-                            data: { status: 'REFUNDED' },
-                        });
-                    }
-                });
-            } catch (refundErr: any) {
-                console.error(
-                    `[ADJUDICATION] Verdict saved for ${caseId} but Stripe refund failed:`,
-                    refundErr?.message || refundErr,
-                );
-                await this.notificationsService
-                    .notifyAdmins({
-                        titleAr: 'فشل استرداد Stripe بعد الحكم',
-                        titleEn: 'Stripe refund failed after verdict',
-                        messageAr: `تم حفظ الحكم للقضية #${caseId.substring(0, 8)} لكن فشل استرداد العميل: ${refundErr?.message || 'خطأ غير معروف'}`,
-                        messageEn: `Verdict saved for case #${caseId.substring(0, 8)} but customer refund failed: ${refundErr?.message || 'unknown error'}`,
-                        type: 'system_alert',
-                        link: `/admin/dashboard/admin-dispute-details/${caseId}`,
-                    })
-                    .catch(() => {});
-            }
         }
 
         if (this.isMultiItemOrder(caseRecord.order) && caseRecord.offerId) {
@@ -2075,7 +2456,7 @@ export class ReturnsService {
                     ),
                 );
             // recompute must not wipe REFUNDED after a refund verdict
-            if (verdict === 'REFUND' || isCloseCompleteRefund) {
+            if (refundRequired || isCloseCompleteRefund) {
                 await this.prisma.order
                     .update({
                         where: { id: caseRecord.orderId },
@@ -2306,11 +2687,17 @@ export class ReturnsService {
 
         if (!caseRecord) throw new NotFoundException('Case not found');
         
-        if (caseRecord.verdictLocked) throw new BadRequestException('Verdict is permanently locked and cannot be edited');
+        const failedRefundRetry =
+            String(caseRecord.refundExecutionStatus || '').toUpperCase() === 'FAILED' &&
+            String(caseRecord.finalRefundDecision || '').toUpperCase() === 'REFUND_CUSTOMER' &&
+            Number(caseRecord.finalCustomerRefundAmount || 0) > 0;
+
+        if (caseRecord.verdictLocked && !failedRefundRetry) {
+            throw new BadRequestException('Verdict is permanently locked and cannot be edited');
+        }
             
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        if (caseRecord.verdictIssuedAt && caseRecord.verdictIssuedAt < oneDayAgo) {
-            // Auto-lock if more than 24h passed
+        if (caseRecord.verdictIssuedAt && caseRecord.verdictIssuedAt < oneDayAgo && !failedRefundRetry) {
             await (model as any).update({ where: { id: caseId }, data: { verdictLocked: true } });
             throw new BadRequestException('Verdict edit window (24h) has expired');
         }
@@ -2799,7 +3186,15 @@ export class ReturnsService {
             });
 
             if (!caseRecord) throw new NotFoundException('Case not found');
-            if (caseRecord.shippingPaymentStatus === 'PAID') throw new BadRequestException('Shipping already paid');
+            const shipStatus = String(caseRecord.shippingPaymentStatus || '').toUpperCase();
+            const shipMethod = String(caseRecord.shippingPaymentMethod || '').toUpperCase();
+            if (
+                shipStatus === 'PAID' ||
+                shipStatus === 'WITHHELD_PENDING' ||
+                shipMethod === 'STRIPE_WITHHOLD'
+            ) {
+                throw new BadRequestException('Shipping already paid');
+            }
             
             const amount = Number(caseRecord.shippingRefund);
             if (amount <= 0) throw new BadRequestException('Invalid shipping amount');
@@ -2846,8 +3241,20 @@ export class ReturnsService {
                     amount: amount,
                     currency: 'AED',
                     description: `Shipping cost for ${caseType} #${caseRecord.orderId} (Wallet Deduction)`,
-                    balanceAfter
-                }
+                    balanceAfter,
+                    metadata: {
+                        caseId,
+                        caseType,
+                        orderId: caseRecord.orderId,
+                        shippingBearer: caseRecord.shippingPayee,
+                        shippingRoundtrip: amount,
+                        idempotencyKey: makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'ROUNDTRIP_SHIPPING',
+                            String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED') as any,
+                        ),
+                    },
+                },
             });
 
             // 4. Update Case Status
@@ -2907,6 +3314,20 @@ export class ReturnsService {
                 link: `orders/${caseRecord.orderId}`,
                 metadata: { caseId, caseType }
             });
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: String(caseRecord.adjudicationFeePaymentStatus || '') === 'PAID',
+                shippingPaid: true,
+            }).catch(() => {});
 
             return updatedCase;
         });
@@ -3025,7 +3446,19 @@ export class ReturnsService {
                     currency: 'AED',
                     description: `Adjudication platform fees for ${caseType} #${caseId.substring(0, 8)} (Wallet)`,
                     balanceAfter,
-                    metadata: { caseId, caseType, paymentMethod: 'WALLET' },
+                    metadata: {
+                        caseId,
+                        caseType,
+                        paymentMethod: 'WALLET',
+                        gatewayFeeAmount: Number(caseRecord.gatewayFeeAmount || 0),
+                        refundFeeAmount: Number(caseRecord.refundFeeAmount || 0),
+                        feeBearer: caseRecord.feeBearer,
+                        idempotencyKey: makeReturnsLineItemIdempotencyKey(
+                            caseId,
+                            'MERCHANT_WALLET_PLATFORM_FEE_DEBIT',
+                            String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED') as any,
+                        ),
+                    },
                 },
             });
 
@@ -3055,6 +3488,20 @@ export class ReturnsService {
                     metadata: { caseId, caseType, waEvent: 'ORDER_STATUS' },
                 })
                 .catch(() => {});
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: true,
+                shippingPaid: String(caseRecord.shippingPaymentStatus || '') === 'PAID',
+            }).catch(() => {});
 
             return updated;
         });
@@ -3249,6 +3696,20 @@ export class ReturnsService {
                     },
                 })
                 .catch(() => {});
+
+            const fin = await this.rebuildFinFromCase(caseRecord);
+            await this.persistReturnsFeeInvoices({
+                tx,
+                caseId,
+                type: caseType,
+                caseRecord,
+                fin,
+                extra: {},
+                adminId: userId,
+                refundExecutionStatus: String(caseRecord.refundExecutionStatus || 'NOT_REQUIRED'),
+                adjudicationFeePaid: true,
+                shippingPaid: true,
+            }).catch(() => {});
 
             return (tx as any)[modelName].findUnique({ where: { id: caseId } });
         });
