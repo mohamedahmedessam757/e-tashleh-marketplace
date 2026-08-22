@@ -17,6 +17,7 @@ module.exports = {
         '**/adjudication-financial.util.spec.ts',
         '**/invoice-visibility.util.spec.ts',
         '**/returns-fee-invoice.service.spec.ts',
+        '**/financial-report-export.util.spec.ts',
         '**/customer-wallet-metrics.util.spec.ts',
         '**/merchant-wallet-metrics.util.spec.ts',
         '**/admin-financial-metrics.util.spec.ts',

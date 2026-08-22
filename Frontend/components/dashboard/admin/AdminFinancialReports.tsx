@@ -14,11 +14,13 @@ import {
   Scale,
   ArrowUpRight,
   Crown,
+  Loader2,
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore, type AdminFinancialReportId } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
+import { downloadFinancialReportPdf } from '../../../utils/financialReportPdf';
 
 const REPORT_IDS: AdminFinancialReportId[] = [
   'platform-revenue-summary',
@@ -160,6 +162,75 @@ export const AdminFinancialReports: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [period, setPeriod] = useState<'' | 'monthly' | 'quarterly' | 'yearly'>('');
   const [error, setError] = useState<string | null>(null);
+  const [exportingFormat, setExportingFormat] = useState<'csv' | 'xlsx' | 'pdf' | null>(null);
+
+  const exportParams = useMemo(
+    () => ({
+      startDate,
+      endDate,
+      ...(period ? { period } : {}),
+      lang: isAr ? 'ar' : 'en',
+    }),
+    [startDate, endDate, period, isAr],
+  );
+
+  const handleExport = useCallback(
+    async (format: 'csv' | 'xlsx' | 'pdf') => {
+      setError(null);
+      setExportingFormat(format);
+      try {
+        if (format === 'pdf') {
+          await fetchFinancialReport(selectedReport, exportParams);
+          const data = useAdminStore.getState().financialReportData;
+          if (!data) throw new Error(bt.exportFailed || 'Export failed');
+          await downloadFinancialReportPdf(
+            {
+              reportId: selectedReport,
+              reportData: data,
+              isAr,
+              labels: {
+                platform: bt.platformLegal,
+                generatedAt: bt.generatedAt,
+                period: bt.period,
+                allTime: bt.allTime,
+                from: bt.from,
+                to: bt.to,
+                summarySection: bt.summarySection,
+                detailsSection: bt.detailsSection,
+                rowCount: bt.rowCount,
+                truncatedNote: bt.truncatedNote,
+                types: bt.types as Record<string, string>,
+                columns: columnLabels,
+              },
+              startDate,
+              endDate,
+              period: period || undefined,
+            },
+            `${selectedReport}_${new Date().toISOString().slice(0, 10)}.pdf`,
+          );
+          return;
+        }
+        await exportFinancialReport(selectedReport, format, exportParams);
+      } catch (err) {
+        setError((err as Error).message || bt.exportFailed || 'Export failed');
+      } finally {
+        setExportingFormat(null);
+      }
+    },
+    [
+      bt,
+      columnLabels,
+      endDate,
+      exportFinancialReport,
+      exportParams,
+      fetchFinancialReport,
+      financialReportData,
+      isAr,
+      period,
+      selectedReport,
+      startDate,
+    ],
+  );
 
   const loadReport = useCallback(() => {
     setError(null);
@@ -316,21 +387,26 @@ export const AdminFinancialReports: React.FC = () => {
               {bt.refresh}
             </button>
             {canExport &&
-              (['csv', 'xlsx', 'pdf'] as const).map((format) => (
+              (
+                [
+                  { format: 'csv' as const, label: bt.exportCsv || `${bt.export} CSV` },
+                  { format: 'xlsx' as const, label: bt.exportXlsx || `${bt.export} XLSX` },
+                  { format: 'pdf' as const, label: bt.exportPdf || `${bt.export} PDF` },
+                ] as const
+              ).map(({ format, label }) => (
               <button
                 key={format}
                 type="button"
-                onClick={() =>
-                  exportFinancialReport(selectedReport, format, {
-                    startDate,
-                    endDate,
-                    ...(period ? { period } : {}),
-                  }).catch((err: Error) => setError(err.message))
-                }
-                className="px-4 py-2.5 bg-gold-500/10 hover:bg-gold-500 hover:text-black border border-gold-500/20 text-gold-500 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all"
+                disabled={!!exportingFormat || isLoadingFinancialReport}
+                onClick={() => handleExport(format)}
+                className="px-4 py-2.5 bg-gold-500/10 hover:bg-gold-500 hover:text-black border border-gold-500/20 text-gold-500 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all disabled:opacity-50"
               >
-                <Download size={14} />
-                {bt.export} {format.toUpperCase()}
+                {exportingFormat === format ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                {label}
               </button>
             ))}
           </div>
@@ -354,14 +430,18 @@ export const AdminFinancialReports: React.FC = () => {
               : bt.allTime}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {[
-            { key: 'platformCommissions', ar: 'عمولات المنصة', en: 'Platform Commissions' },
-            { key: 'loyaltyReferralExpenses', ar: 'مصروف الولاء والإحالة', en: 'Loyalty & Referral Expenses' },
-            { key: 'commissionRefunds', ar: 'عمولات مستردة', en: 'Commission Refunds' },
-            { key: 'netPlatformRevenue', ar: 'صافي إيرادات المنصة', en: 'Net Platform Revenue' },
-          ].map((card) => (
+          {(
+            [
+              { key: 'platformCommissions' },
+              { key: 'loyaltyReferralExpenses' },
+              { key: 'commissionRefunds' },
+              { key: 'netPlatformRevenue' },
+            ] as const
+          ).map((card) => (
             <GlassCard key={card.key} className="p-5 bg-[#151310] border-white/5">
-              <p className="text-[10px] font-black uppercase text-white/40 mb-2">{isAr ? card.ar : card.en}</p>
+              <p className="text-[10px] font-black uppercase text-white/40 mb-2">
+                {(bt as any).summaryCards?.[card.key] || columnLabels[card.key] || card.key}
+              </p>
               <p className="text-2xl font-black text-gold-400">
                 {formatMoney(Number((financialReportData.summary as any)[card.key] || 0))}
               </p>

@@ -531,7 +531,7 @@ export interface AdminState {
   fetchFinancialPenalties: (search?: string) => Promise<void>;
   fetchFinancialAudit: (params?: { search?: string; page?: number }) => Promise<void>;
   fetchFinancialReport: (reportId: AdminFinancialReportId, params?: Record<string, string>) => Promise<void>;
-  exportFinancialReport: (reportId: AdminFinancialReportId, format: 'csv' | 'pdf' | 'xlsx', params?: Record<string, string>) => Promise<void>;
+  exportFinancialReport: (reportId: AdminFinancialReportId, format: 'csv' | 'xlsx', params?: Record<string, string>) => Promise<void>;
   fetchAdminInvoiceById: (id: string) => Promise<any | null>;
   resendAdminInvoice: (id: string) => Promise<{ success: boolean; message?: string }>;
   
@@ -2133,6 +2133,7 @@ export const useAdminStore = create<AdminState>()(
             format,
             startDate: params?.startDate ?? financialFilters.startDate ?? '',
             endDate: params?.endDate ?? financialFilters.endDate ?? '',
+            lang: params?.lang === 'en' ? 'en' : 'ar',
           });
           if (params?.period) query.set('period', params.period);
           const res = await fetch(`${API_URL}/payments/admin/financial-reports/${reportId}?${query}`, {
@@ -2146,8 +2147,8 @@ export const useAdminStore = create<AdminState>()(
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          const ext = format === 'csv' ? 'csv' : format === 'pdf' ? 'pdf' : 'xlsx';
-          link.download = `${reportId}_${Date.now()}.${ext}`;
+          const ext = format === 'csv' ? 'csv' : 'xlsx';
+          link.download = `${reportId}_${new Date().toISOString().slice(0, 10)}.${ext}`;
           link.click();
           URL.revokeObjectURL(url);
         } catch (error) {

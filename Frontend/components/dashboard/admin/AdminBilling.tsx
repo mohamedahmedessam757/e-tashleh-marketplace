@@ -126,7 +126,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const unsubscribeFromFinancialFeed = useAdminStore(s => s.unsubscribeFromFinancialFeed);
 
     const exportFinancialCSV = useAdminStore(s => s.exportFinancialCSV);
-    const exportFinancialReport = useAdminStore(s => s.exportFinancialReport);
     const canPerformBilling = useAdminPermissionsStore(s => s.canPerform);
     const canExportFinancials =
       canPerformBilling('billing', 'EXPORT_FINANCIALS') ||
@@ -474,7 +473,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             />
                         </div>
                         {canExportFinancials && (
-                          <>
                             <button
                               type="button"
                               onClick={() => exportFinancialCSV()}
@@ -483,23 +481,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             >
                               <Download size={20} className="group-hover:scale-110 transition-transform" />
                             </button>
-                            {(['xlsx', 'pdf'] as const).map((fmt) => (
-                              <button
-                                key={fmt}
-                                type="button"
-                                onClick={() =>
-                                  exportFinancialReport('platform-revenue-summary', fmt, {
-                                    startDate: financialFilters.startDate || '',
-                                    endDate: financialFilters.endDate || '',
-                                    ...(financialFilters.period ? { period: financialFilters.period } : {}),
-                                  })
-                                }
-                                className="px-3 py-2 bg-gold-500/10 hover:bg-gold-500 hover:text-black text-gold-400 rounded-2xl border border-gold-500/20 text-[9px] font-black uppercase"
-                              >
-                                {fmt.toUpperCase()}
-                              </button>
-                            ))}
-                          </>
                         )}
                         {isHighLevelAdmin && (
                             <button 
