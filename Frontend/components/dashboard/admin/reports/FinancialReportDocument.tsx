@@ -1,6 +1,6 @@
 import React from 'react';
-import type { AdminFinancialReportId } from '../../stores/useAdminStore';
-import { formatReportCell, getDetailColumns, getSummaryEntries } from '../../../utils/financialReportExport';
+import type { AdminFinancialReportId } from '../../../../stores/useAdminStore';
+import { formatReportCell, getDetailColumns, getSummaryEntries } from '../../../../utils/financialReportExport';
 
 export interface FinancialReportDocumentProps {
   reportId: AdminFinancialReportId;
