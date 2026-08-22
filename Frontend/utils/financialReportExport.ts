@@ -48,6 +48,8 @@ export function getDetailColumns(reportId: string, sample: Record<string, unknow
   return [...preferred.filter((k) => keys.includes(k)), ...keys.filter((k) => !preferred.includes(k))];
 }
 
+const SUMMARY_META_KEYS = new Set(['periodStart', 'periodEnd']);
+
 export function getSummaryEntries(
   reportId: string,
   summary: Record<string, unknown>,
@@ -56,7 +58,31 @@ export function getSummaryEntries(
   const ordered = keys?.length ? keys : Object.keys(summary);
   return ordered
     .filter((k) => summary[k] !== undefined && summary[k] !== null)
+    .filter((k) => !SUMMARY_META_KEYS.has(k))
     .map((k) => [k, summary[k]] as [string, unknown]);
+}
+
+export function getReportPeriodText(
+  summary: Record<string, unknown>,
+  isAr: boolean,
+  labels: { from?: string; to?: string; allTime?: string },
+  startDate?: string,
+  endDate?: string,
+  period?: string,
+): string {
+  const periodStart = summary.periodStart || startDate;
+  const periodEnd = summary.periodEnd || endDate;
+  if (periodStart || periodEnd) {
+    return `${labels.from || (isAr ? 'من' : 'From')} ${
+      periodStart
+        ? new Date(String(periodStart)).toLocaleDateString(isAr ? 'ar-AE' : 'en-AE')
+        : '—'
+    } — ${labels.to || (isAr ? 'إلى' : 'To')} ${
+      periodEnd ? new Date(String(periodEnd)).toLocaleDateString(isAr ? 'ar-AE' : 'en-AE') : '—'
+    }`;
+  }
+  if (period) return period;
+  return labels.allTime || (isAr ? 'كل الفترات' : 'All time');
 }
 
 export function formatReportCell(

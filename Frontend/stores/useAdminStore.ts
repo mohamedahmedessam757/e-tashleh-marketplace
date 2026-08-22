@@ -2126,6 +2126,11 @@ export const useAdminStore = create<AdminState>()(
       },
 
       exportFinancialReport: async (reportId, format, params) => {
+        if (format === 'pdf') {
+          throw new Error(
+            'PDF exports are generated client-side from the Reports tab export buttons.',
+          );
+        }
         try {
           const token = localStorage.getItem('access_token');
           const { financialFilters } = get();
