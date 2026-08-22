@@ -21,6 +21,7 @@ import { useAdminStore, type AdminFinancialReportId } from '../../../stores/useA
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { downloadFinancialReportPdf } from '../../../utils/financialReportPdf';
+import { getReportPeriodText, getSummaryEntries } from '../../../utils/financialReportExport';
 
 const REPORT_IDS: AdminFinancialReportId[] = [
   'platform-revenue-summary',
@@ -132,9 +133,6 @@ const STATUS_COLORS: Record<string, string> = {
   SUCCESS: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
 };
 
-function isScalar(val: unknown): val is string | number | boolean {
-  return val == null || ['string', 'number', 'boolean'].includes(typeof val);
-}
 
 export const AdminFinancialReports: React.FC = () => {
   const { t, language } = useLanguage();
@@ -199,8 +197,11 @@ export const AdminFinancialReports: React.FC = () => {
                 detailsSection: bt.detailsSection,
                 rowCount: bt.rowCount,
                 truncatedNote: bt.truncatedNote,
+                reportRef: (bt as any).reportRef,
+                verifiedDocument: (bt as any).verifiedDocument,
                 types: bt.types as Record<string, string>,
                 columns: columnLabels,
+                summaryCards: (bt as any).summaryCards as Record<string, string>,
               },
               startDate,
               endDate,
@@ -252,15 +253,18 @@ export const AdminFinancialReports: React.FC = () => {
   }, [financialReportData]);
 
   const numberLocale = isAr ? 'ar-AE' : 'en-AE';
-  const isPlatformRevenueReport =
-    selectedReport === 'platform-revenue-summary' || selectedReport === 'platform-revenue';
+  const summaryCards = (bt as any).summaryCards as Record<string, string> | undefined;
 
   const summaryEntries = useMemo(() => {
-    if (isPlatformRevenueReport) return [];
     const summary = financialReportData?.summary;
     if (!summary || typeof summary !== 'object') return [];
-    return Object.entries(summary as Record<string, unknown>).filter(([, val]) => isScalar(val));
-  }, [financialReportData, isPlatformRevenueReport]);
+    return getSummaryEntries(selectedReport, summary as Record<string, unknown>);
+  }, [financialReportData, selectedReport]);
+
+  const periodBanner = useMemo(() => {
+    const summary = (financialReportData?.summary || {}) as Record<string, unknown>;
+    return getReportPeriodText(summary, isAr, bt, startDate, endDate, period || undefined);
+  }, [financialReportData, isAr, bt, startDate, endDate, period]);
 
   const formatMoney = (val: number) =>
     `${val.toLocaleString(numberLocale, { maximumFractionDigits: 2 })} AED`;
@@ -413,44 +417,6 @@ export const AdminFinancialReports: React.FC = () => {
         </div>
       </GlassCard>
 
-      
-      {isPlatformRevenueReport && financialReportData?.summary && (
-        <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-            {financialReportData.summary.periodStart || financialReportData.summary.periodEnd
-              ? `${columnLabels.periodStart || (isAr ? 'من' : 'From')} ${
-                  financialReportData.summary.periodStart
-                    ? new Date(financialReportData.summary.periodStart).toLocaleDateString(numberLocale)
-                    : '—'
-                }  —  ${columnLabels.periodEnd || (isAr ? 'إلى' : 'To')} ${
-                  financialReportData.summary.periodEnd
-                    ? new Date(financialReportData.summary.periodEnd).toLocaleDateString(numberLocale)
-                    : '—'
-                }`
-              : bt.allTime}
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {(
-            [
-              { key: 'platformCommissions' },
-              { key: 'loyaltyReferralExpenses' },
-              { key: 'commissionRefunds' },
-              { key: 'netPlatformRevenue' },
-            ] as const
-          ).map((card) => (
-            <GlassCard key={card.key} className="p-5 bg-[#151310] border-white/5">
-              <p className="text-[10px] font-black uppercase text-white/40 mb-2">
-                {(bt as any).summaryCards?.[card.key] || columnLabels[card.key] || card.key}
-              </p>
-              <p className="text-2xl font-black text-gold-400">
-                {formatMoney(Number((financialReportData.summary as any)[card.key] || 0))}
-              </p>
-            </GlassCard>
-          ))}
-          </div>
-        </div>
-      )}
-
       {/* Report type picker */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         {REPORT_IDS.map((id) => {
@@ -545,26 +511,31 @@ export const AdminFinancialReports: React.FC = () => {
 
       {/* Summary KPIs */}
       {summaryEntries.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {summaryEntries.map(([key, val], idx) => {
-            const color = summaryColors[idx % summaryColors.length];
-            return (
-              <GlassCard
-                key={key}
-                className={`p-5 bg-gradient-to-br border ${color.split(' ').slice(2).join(' ')} relative overflow-hidden`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${color.split(' ').slice(0, 2).join(' ')} opacity-50 pointer-events-none`} />
-                <div className="relative">
-                  <p className="text-[9px] font-black text-white/40 uppercase mb-2 leading-tight">
-                    {columnLabels[key] || key}
-                  </p>
-                  <div className="text-lg sm:text-xl font-black text-white font-mono">
-                    {formatCell(key, val)}
+        <div className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/35">{periodBanner}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {summaryEntries.map(([key, val], idx) => {
+              const color = summaryColors[idx % summaryColors.length];
+              return (
+                <GlassCard
+                  key={key}
+                  className={`p-5 bg-gradient-to-br border ${color.split(' ').slice(2).join(' ')} relative overflow-hidden`}
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${color.split(' ').slice(0, 2).join(' ')} opacity-50 pointer-events-none`}
+                  />
+                  <div className="relative">
+                    <p className="text-[9px] font-black text-white/40 uppercase mb-2 leading-tight">
+                      {summaryCards?.[key] || columnLabels[key] || key}
+                    </p>
+                    <div className="text-lg sm:text-xl font-black text-white font-mono">
+                      {formatCell(key, val)}
+                    </div>
                   </div>
-                </div>
-              </GlassCard>
-            );
-          })}
+                </GlassCard>
+              );
+            })}
+          </div>
         </div>
       )}
 
