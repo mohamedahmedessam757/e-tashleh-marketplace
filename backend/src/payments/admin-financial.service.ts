@@ -24,6 +24,18 @@ import {
 } from './merchant-wallet-metrics.util';
 import { countOpenMerchantCases } from './merchant-withdrawal-governance.util';
 import {
+  buildExportMeta,
+  buildStyledCsvPayload,
+  buildSummaryRows,
+  formatExportCell,
+  getDetailColumnOrder,
+  normalizeExportLang,
+  resolveColumnLabel,
+  sanitizeExportFilename,
+  GOLD_FILL,
+  GOLD_HEADER_FONT,
+} from './financial-report-export.util';
+import {
   normalizeSearchQuery,
   resolveUserIds,
   resolveStoreIds,
@@ -1322,97 +1334,109 @@ export class AdminFinancialService {
 
   async exportFinancialReportFile(
     reportId: string,
-    filters: { startDate?: string; endDate?: string; period?: 'monthly' | 'quarterly' | 'yearly' },
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      period?: 'monthly' | 'quarterly' | 'yearly';
+      lang?: string;
+    },
     format: 'csv' | 'xlsx' | 'pdf',
     res: import('express').Response,
   ) {
+    if (format === 'pdf') {
+      throw new BadRequestException(
+        'PDF exports are generated client-side from the Reports tab. Use CSV or XLSX for server download.',
+      );
+    }
+
+    const lang = normalizeExportLang(filters.lang);
     const report = await this.getFinancialReport(reportId, filters);
     const rows = Array.isArray((report as any).rows) ? (report as any).rows : [];
-    const summary = (report as any).summary || {};
-    const flatRows =
-      rows.length > 0
-        ? rows
-        : Object.keys(summary).map((k) => ({ metric: k, amount: summary[k] }));
-    const filename = `${reportId}_${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'pdf' : format}`;
+    const summary = ((report as any).summary || {}) as Record<string, unknown>;
+    const filename = sanitizeExportFilename(reportId, format);
 
     if (format === 'csv') {
-      const headers = Object.keys(flatRows[0] || { metric: '', amount: '' });
-      const escape = (v: unknown) => {
-        const s = String(v ?? '');
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-      };
-      const lines = [
-        headers.join(','),
-        ...flatRows.map((row: any) => headers.map((h) => escape(row[h])).join(',')),
-      ];
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-      res.send('\uFEFF' + lines.join('\n'));
-      return;
-    }
-
-    if (format === 'xlsx') {
-      const ExcelJS = await import('exceljs');
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet('Report');
-      const headers = Object.keys(flatRows[0] || { metric: '', amount: '' });
-      sheet.columns = headers.map((h) => ({ header: h, key: h, width: 24 }));
-      sheet.addRows(flatRows);
-      if (summary && Object.keys(summary).length) {
-        const summarySheet = workbook.addWorksheet('Summary');
-        summarySheet.columns = [
-          { header: 'key', key: 'key', width: 32 },
-          { header: 'value', key: 'value', width: 40 },
-        ];
-        summarySheet.addRows(
-          Object.entries(summary).map(([key, value]) => ({ key, value: String(value ?? '') })),
-        );
-      }
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      const payload = buildStyledCsvPayload(
+        reportId,
+        { generatedAt: (report as any).generatedAt, summary, rows },
+        filters,
+        lang,
       );
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-      await workbook.xlsx.write(res);
-      res.end();
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(payload);
       return;
     }
 
-    // Lightweight text PDF (no new dependency)
-    const lines = [
-      `Report: ${reportId}`,
-      `Generated: ${new Date().toISOString()}`,
-      '',
-      'Summary:',
-      ...Object.entries(summary).map(([k, v]) => `  ${k}: ${v}`),
-      '',
-      'Rows:',
-      ...flatRows.map((r: any) => JSON.stringify(r)),
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'E-Tashleh Admin';
+    const meta = buildExportMeta(reportId, report as any, filters, lang);
+    const summaryRows = buildSummaryRows(reportId, summary, lang);
+    const sampleRow = (rows[0] || {}) as Record<string, unknown>;
+    const columns = getDetailColumnOrder(reportId, sampleRow);
+
+    const summarySheet = workbook.addWorksheet(lang === 'ar' ? 'ملخص' : 'Summary');
+    summarySheet.mergeCells('A1:C1');
+    const titleCell = summarySheet.getCell('A1');
+    titleCell.value = meta.title;
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GOLD_FILL } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    summarySheet.getRow(1).height = 28;
+
+    summarySheet.getCell('A2').value = meta.platform;
+    summarySheet.getCell('A3').value = `${meta.generatedAtLabel}: ${meta.generatedAt}`;
+    summarySheet.getCell('A4').value = `${meta.periodLabel}: ${meta.periodText}`;
+
+    summarySheet.getRow(6).values = [
+      lang === 'ar' ? 'المؤشر' : 'Metric',
+      lang === 'ar' ? 'القيمة' : 'Value',
+      lang === 'ar' ? 'العملة' : 'Currency',
     ];
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    // Minimal valid-ish PDF wrapper for text content
-    const content = lines.join('\n').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
-    const stream = `BT /F1 10 Tf 40 750 Td (${content.slice(0, 1800)}) Tj ET`;
-    const pdf = `%PDF-1.1
-1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
-2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
-3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>endobj
-4 0 obj<< /Length ${stream.length} >>stream
-${stream}
-endstream
-endobj
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000306 00000 n 
-trailer<< /Size 5 /Root 1 0 R >>
-startxref
-${400 + stream.length}
-%%EOF`;
-    res.send(Buffer.from(pdf, 'utf8'));
+    summarySheet.getRow(6).eachCell((cell) => {
+      cell.font = GOLD_HEADER_FONT as any;
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GOLD_FILL } };
+    });
+
+    summaryRows.forEach((row, idx) => {
+      const r = summarySheet.getRow(7 + idx);
+      r.values = [row.label, row.value, meta.currency];
+    });
+
+    const detailsSheet = workbook.addWorksheet(lang === 'ar' ? 'التفاصيل' : 'Details');
+    if (columns.length > 0) {
+      detailsSheet.columns = columns.map((key) => ({
+        header: resolveColumnLabel(key, lang),
+        key,
+        width: 22,
+      }));
+      const headerRow = detailsSheet.getRow(1);
+      headerRow.eachCell((cell) => {
+        cell.font = GOLD_HEADER_FONT as any;
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GOLD_FILL } };
+      });
+      headerRow.height = 22;
+      detailsSheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+      for (const row of rows) {
+        const formatted: Record<string, string> = {};
+        for (const col of columns) {
+          formatted[col] = formatExportCell(col, (row as any)[col], lang);
+        }
+        detailsSheet.addRow(formatted);
+      }
+    }
+
+    detailsSheet.getCell(`A${detailsSheet.rowCount + 2}`).value =
+      `${meta.rowCountLabel}: ${rows.length}`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }
