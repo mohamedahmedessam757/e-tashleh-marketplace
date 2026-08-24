@@ -291,7 +291,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         shippingCollected: 0, shippingProfit: 0, referralPaidOut: 0, referralEarnings: 0,
         referralCount: 0, loyaltyCashbackPaid: 0, pendingWithdrawals: 0, pendingWithdrawalsCount: 0,
         frozenFunds: 0, opsLast24h: 0, todayTransactionsCount: 0,
-        totalRefunds: 0, gatewayFees: 0, pendingLiabilities: 0,
+        totalRefunds: 0, gatewayFees: 0, paymentGatewayFees: 0, pendingLiabilities: 0,
         loyaltyPointsOutstanding: 0, failedUnsettledCount: 0, failedUnsettledAmount: 0, reconciliationDelta: 0,
         grossCommission: 0, totalReleasedToMerchants: 0, completedWithdrawals: 0, completedWithdrawalsCount: 0,
         financialDisputesCount: 0, financialDisputesAmount: 0, totalPenalties: 0, dailyTxCount: 0, monthlyTxCount: 0,
@@ -322,6 +322,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${((kpis.platformCommissions ?? kpis.grossCommission) || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
         { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7' },
         { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
+        { label: t.admin.billing.kpis.paymentGatewayFees || t.admin.billing.kpis.gatewayFees, value: `${(kpis.paymentGatewayFees ?? 0).toLocaleString()} AED`, icon: CreditCard, color: '#f97316' },
         { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${((kpis.netPlatformRevenue ?? kpis.netPlatformPosition) || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
     ], [kpis, t]);
 
@@ -330,7 +331,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         { label: t.admin.billing.kpis.referralEcosystem, value: `${(kpis.referralPaidOut ?? kpis.referralEarnings ?? 0).toLocaleString()} AED`, subValue: `${kpis.referralCount || 0} ${t.admin.billing.kpis.activeReferrals} · ${t.admin.billing.kpis.referralSub}`, icon: Users, color: '#8b5cf6' },
         { label: t.admin.billing.kpis.loyaltyCashback, value: `${(kpis.loyaltyCashbackPaid || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.loyaltySub, icon: TrendingUp, color: '#a855f7' },
         { label: t.admin.billing.kpis.grossCommission, value: `${(kpis.grossCommission || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.grossCommissionSub, icon: Percent, color: '#d4af37' },
-        { label: t.admin.billing.kpis.gatewayFees, value: `${(kpis.gatewayFees || 0).toLocaleString()} AED`, icon: CreditCard, color: '#6366f1' },
+        { label: t.admin.billing.kpis.gatewayFees, value: `${(kpis.gatewayFees || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.gatewayFeesSub, icon: CreditCard, color: '#6366f1' },
     ], [kpis, t]);
 
     const riskKpis = useMemo(() => [

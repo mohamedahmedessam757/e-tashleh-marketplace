@@ -5,6 +5,7 @@ import {
   Package,
   Truck,
   Percent,
+  CreditCard,
   User,
   Building2,
 } from 'lucide-react';
@@ -117,7 +118,9 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
       ? Number(inv.subtotal || inv.total || 0)
       : docType === 'SHIPPING'
         ? Number(inv.shipping || inv.total || 0)
-        : Number(inv.commission || inv.total || 0);
+        : docType === 'GATEWAY_FEE'
+          ? Number(inv.total || 0)
+          : Number(inv.commission || inv.total || 0);
 
   const lineItems: Array<{
     partName?: string;
@@ -149,7 +152,13 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
 
   const qrValue = `https://e-tashleh.net/invoice/${inv.id}`;
   const TitleIcon =
-    docType === 'PART' ? Package : docType === 'SHIPPING' ? Truck : Percent;
+    docType === 'PART'
+      ? Package
+      : docType === 'SHIPPING'
+        ? Truck
+        : docType === 'GATEWAY_FEE'
+          ? CreditCard
+          : Percent;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
@@ -245,6 +254,20 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
                 </div>
               ) : null}
             </>
+          ) : docType === 'GATEWAY_FEE' ? (
+            <>
+              <InfoRow
+                icon={Building2}
+                label={labels.platformCompany}
+                value={platformName}
+              />
+              <div className="mt-3">
+                <InfoRow icon={CreditCard} label={labels.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee')} value={`${amount.toLocaleString()} ${currency}`} />
+              </div>
+              <div className="mt-3">
+                <InfoRow icon={User} label={labels.customer} value={customerName} />
+              </div>
+            </>
           ) : docType === 'SHIPPING' ? (
             <>
               <InfoRow
@@ -314,6 +337,16 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
               )}
             </>
           )}
+          {docType === 'GATEWAY_FEE' && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 inv-label">
+                {labels.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee')}
+              </span>
+              <span className="font-mono text-orange-300 inv-value">
+                {amount.toLocaleString()} {currency}
+              </span>
+            </div>
+          )}
           {docType === 'SHIPPING' && (
             <>
               {lineItems.length > 0 ? (
@@ -354,7 +387,9 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
             {labels.total}
           </p>
           <p className="text-4xl sm:text-5xl font-black text-gold-500 font-mono inv-total-amount">
-            {Math.round(amount).toLocaleString()}
+            {(docType === 'GATEWAY_FEE'
+              ? amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+              : Math.round(amount).toLocaleString())}
             <span className="text-xl sm:text-2xl font-bold ms-2 text-gold-400">
               {currency}
             </span>

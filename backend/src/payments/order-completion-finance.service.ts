@@ -266,6 +266,20 @@ export class OrderCompletionFinanceService {
                     continue;
                 }
 
+                const storedFee = Number(payment.gatewayFee || 0);
+                const gatewayFee =
+                    storedFee > 0
+                        ? storedFee
+                        : await this.financialConfig.computeGatewayFeeForTotal(
+                              Number(payment.totalAmount || 0),
+                          );
+                if (storedFee <= 0 && gatewayFee > 0) {
+                    await this.prisma.paymentTransaction.update({
+                        where: { id: payment.id },
+                        data: { gatewayFee },
+                    });
+                }
+
                 await this.escrowService.holdFunds(
                     payment.id,
                     payment.orderId,
@@ -274,7 +288,7 @@ export class OrderCompletionFinanceService {
                         merchantAmount: unitPrice,
                         shippingAmount: shippingCost,
                         commissionAmount: commission,
-                        gatewayFee: 0,
+                        gatewayFee,
                     },
                 );
 

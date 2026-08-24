@@ -159,6 +159,7 @@ export class PaymentsService {
         const shippingCost = Number(offer.shippingCost);
         const commission = await this.financialConfig.computeCommissionForPrice(unitPrice);
         const totalAmount = unitPrice + shippingCost + commission;
+        const gatewayFee = await this.financialConfig.computeGatewayFeeForTotal(totalAmount);
         const finConfig = await this.financialConfig.getConfig();
         const displayCurrency = finConfig.supportedCurrencies[0] || 'AED';
 
@@ -190,6 +191,7 @@ export class PaymentsService {
                         unitPrice,
                         shippingCost,
                         commission,
+                        gatewayFee,
                         totalAmount,
                         currency: displayCurrency,
                         displayCurrency,
@@ -223,7 +225,7 @@ export class PaymentsService {
                             merchantAmount: unitPrice,
                             shippingAmount: shippingCost,
                             commissionAmount: commission,
-                            gatewayFee: 0,
+                            gatewayFee,
                         },
                         tx,
                     );
@@ -264,14 +266,71 @@ export class PaymentsService {
                         role: 'ADMIN',
                         paymentId: payment.id,
                         type: 'CREDIT',
+                        transactionType: 'COMMISSION',
                         amount: commission,
                         currency: 'AED',
-                        description: `Commission for offer #${offer.offerNumber} â€” Order #${order.orderNumber}`,
-                        balanceAfter: commission, // placeholder â€” in production track admin balance
+                        description: `Commission for offer #${offer.offerNumber} — Order #${order.orderNumber}`,
+                        balanceAfter: commission, // placeholder — in production track admin balance
                     },
                 });
 
-                // 7e. Generate invoice bundle (MASTER + PART + COMMISSION + SHIPPING)
+                // 7d-ii. Gateway fee ledger (Stripe processing expense) — idempotent
+                if (gatewayFee > 0) {
+                    const gatewayFeeExists = await tx.walletTransaction.findFirst({
+                        where: {
+                            paymentId: payment.id,
+                            role: 'ADMIN',
+                            transactionType: 'GATEWAY_FEE',
+                        },
+                        select: { id: true },
+                    });
+                    if (!gatewayFeeExists) {
+                        const adminUser = await tx.user.findFirst({
+                            where: { role: { in: ['SUPER_ADMIN', 'ADMIN'] } },
+                            select: { id: true },
+                            orderBy: { createdAt: 'asc' },
+                        });
+                        // holdFunds already incremented feesBalance; read post-hold balance
+                        const platformWallet = await tx.platformWallet.findFirst({
+                            select: { feesBalance: true },
+                        });
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: adminUser?.id ?? customerId,
+                                role: 'ADMIN',
+                                paymentId: payment.id,
+                                type: 'DEBIT',
+                                transactionType: 'GATEWAY_FEE',
+                                amount: gatewayFee,
+                                currency: 'AED',
+                                description: `Payment gateway fee for offer #${offer.offerNumber} — Order #${order.orderNumber}`,
+                                balanceAfter: Number(platformWallet?.feesBalance ?? gatewayFee),
+                                metadata: {
+                                    source: 'PAYMENT_CAPTURE',
+                                    orderId,
+                                    percentAndFixed: true,
+                                },
+                            },
+                        });
+                        await this.auditLogs.logAction(
+                            {
+                                orderId,
+                                action: 'GATEWAY_FEE_RECORDED',
+                                entity: 'PaymentTransaction',
+                                actorType: ActorType.SYSTEM,
+                                actorId: 'PAYMENT_PROCESSOR',
+                                metadata: {
+                                    paymentId: payment.id,
+                                    gatewayFee,
+                                    totalAmount,
+                                },
+                            },
+                            tx,
+                        );
+                    }
+                }
+
+                // 7e. Generate invoice bundle (MASTER + PART + COMMISSION + SHIPPING + GATEWAY_FEE)
                 const companySnap = await this.resolveCompanySnapshot(tx);
                 const partName =
                     (offer as any).orderPart?.name ||
@@ -284,6 +343,7 @@ export class PaymentsService {
                     unitPrice,
                     shippingCost,
                     commission,
+                    gatewayFee,
                     totalAmount,
                     currency: 'AED',
                     partName,
@@ -320,6 +380,7 @@ export class PaymentsService {
                         transactionNumber,
                         amount: totalAmount,
                         commission,
+                        gatewayFee,
                         orderTransitioned
                     },
                     newState: 'SUCCESS'
@@ -1112,14 +1173,20 @@ export class PaymentsService {
             throw new Error('Stripe payment amount does not match recorded transaction');
         }
 
-        // 2. Atomic Database Transaction â€” claim PENDING â†’ SUCCESS once (webhook + confirm-intent safe)
+        const existingGatewayFee = Number(payment.gatewayFee || 0);
+        const gatewayFee =
+            existingGatewayFee > 0
+                ? existingGatewayFee
+                : await this.financialConfig.computeGatewayFeeForTotal(Number(payment.totalAmount));
+
+        // 2. Atomic Database Transaction — claim PENDING → SUCCESS once (webhook + confirm-intent safe)
         const result = await this.prisma.$transaction(async (tx) => {
             const claim = await tx.paymentTransaction.updateMany({
                 where: { id: payment.id, status: 'PENDING' },
                 data: {
                     status: 'SUCCESS',
                     paidAt: new Date(),
-                    gatewayFee: 0,
+                    gatewayFee,
                 },
             });
 
@@ -1168,7 +1235,7 @@ export class PaymentsService {
                     merchantAmount: merchantNetShare,
                     shippingAmount: shippingCost,
                     commissionAmount: commission,
-                    gatewayFee: 0
+                    gatewayFee,
                 },
                 tx
             );
@@ -1232,14 +1299,68 @@ export class PaymentsService {
                             transactionType: 'COMMISSION',
                             amount: commission,
                             currency: 'AED',
-                            description: `Platform commission for offer #${payment.offer.offerNumber} â€” Order #${payment.order.orderNumber}`,
+                            description: `Platform commission for offer #${payment.offer.offerNumber} — Order #${payment.order.orderNumber}`,
                             balanceAfter: Number(platformWallet?.commissionBalance ?? commission),
                         },
                     });
                 }
             }
 
-            // c. Generate Invoice bundle (MASTER + PART + COMMISSION + SHIPPING)
+            // Gateway fee ledger (Stripe processing) — idempotent
+            if (gatewayFee > 0) {
+                const gatewayFeeExists = await tx.walletTransaction.findFirst({
+                    where: {
+                        paymentId: payment.id,
+                        role: 'ADMIN',
+                        transactionType: 'GATEWAY_FEE',
+                    },
+                    select: { id: true },
+                });
+                if (!gatewayFeeExists) {
+                    const adminUser = await tx.user.findFirst({
+                        where: { role: { in: ['SUPER_ADMIN', 'ADMIN'] } },
+                        select: { id: true },
+                        orderBy: { createdAt: 'asc' },
+                    });
+                    const platformWallet = await tx.platformWallet.findFirst({
+                        select: { feesBalance: true },
+                    });
+                    await tx.walletTransaction.create({
+                        data: {
+                            userId: adminUser?.id ?? payment.customerId,
+                            role: 'ADMIN',
+                            paymentId: payment.id,
+                            type: 'DEBIT',
+                            transactionType: 'GATEWAY_FEE',
+                            amount: gatewayFee,
+                            currency: 'AED',
+                            description: `Payment gateway fee for offer #${payment.offer.offerNumber} — Order #${payment.order.orderNumber}`,
+                            balanceAfter: Number(platformWallet?.feesBalance ?? gatewayFee),
+                            metadata: {
+                                source: 'PAYMENT_CAPTURE',
+                                orderId: payment.orderId,
+                            },
+                        },
+                    });
+                    await this.auditLogs.logAction(
+                        {
+                            orderId: payment.orderId,
+                            action: 'GATEWAY_FEE_RECORDED',
+                            entity: 'PaymentTransaction',
+                            actorType: ActorType.SYSTEM,
+                            actorId: 'PAYMENT_PROCESSOR',
+                            metadata: {
+                                paymentId: payment.id,
+                                gatewayFee,
+                                totalAmount: Number(payment.totalAmount),
+                            },
+                        },
+                        tx,
+                    );
+                }
+            }
+
+            // c. Generate Invoice bundle (MASTER + PART + COMMISSION + SHIPPING + GATEWAY_FEE)
             let invoiceNumber: string | undefined;
             const companySnap = await this.resolveCompanySnapshot(tx);
             const partName =
@@ -1253,6 +1374,7 @@ export class PaymentsService {
                 unitPrice,
                 shippingCost,
                 commission,
+                gatewayFee,
                 totalAmount: Number(payment.totalAmount),
                 currency: 'AED',
                 partName,
@@ -4466,6 +4588,7 @@ export class PaymentsService {
         const upper = txType.toUpperCase();
         if (upper === 'COMMISSION' || upper === 'commission') return 'PLATFORM_REVENUE';
         if (upper === 'ORDER_PROFIT' || upper === 'REFERRAL_PROFIT') return 'PLATFORM_EXPENSE';
+        if (upper === 'GATEWAY_FEE') return 'PLATFORM_EXPENSE';
         if (type === 'CREDIT') return 'USER_LIABILITY';
         return 'NEUTRAL';
     }

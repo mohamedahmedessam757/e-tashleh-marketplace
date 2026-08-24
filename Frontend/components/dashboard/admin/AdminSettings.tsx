@@ -821,7 +821,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {[
-                      { key: 'gatewayFeePercent', labelAr: 'رسوم بوابة الدفع %', labelEn: 'Gateway Fee %', max: 10 },
+                      { key: 'gatewayFeePercent', labelAr: 'رسوم بوابة الدفع %', labelEn: 'Gateway Fee %', max: 10, step: 0.01, decimal: true },
+                      { key: 'gatewayFeeFixedAed', labelAr: 'رسوم بوابة ثابتة (AED)', labelEn: 'Gateway Fee Fixed (AED)', max: 50, step: 0.01, decimal: true },
                       { key: 'escrowHoldHoursCustomer', labelAr: 'ساعات ضمان العميل', labelEn: 'Customer Escrow Hours', max: 168 },
                       { key: 'escrowHoldHoursMerchant', labelAr: 'ساعات ضمان التاجر', labelEn: 'Merchant Escrow Hours', max: 168 },
                       { key: 'payoutDelayDaysMerchant', labelAr: 'تأخير سحب التاجر (أيام)', labelEn: 'Merchant Payout Delay (days)', max: 30 },
@@ -836,9 +837,22 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                           type="number"
                           min={0}
                           max={field.max}
+                          step={field.step ?? 1}
+                          disabled={!isSuperAdmin}
                           value={formData.financial?.[field.key] ?? 0}
-                          onChange={(e) => updateField('financial', field.key, parseInt(e.target.value) || 0)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white outline-none focus:border-gold-500/50"
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (field.decimal) {
+                              const n = raw === '' ? 0 : Number.parseFloat(raw);
+                              const clamped = Number.isFinite(n)
+                                ? Math.min(field.max, Math.max(0, n))
+                                : 0;
+                              updateField('financial', field.key, clamped);
+                            } else {
+                              updateField('financial', field.key, parseInt(e.target.value, 10) || 0);
+                            }
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white outline-none focus:border-gold-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </div>
                     ))}

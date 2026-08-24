@@ -16,8 +16,8 @@ export const REPORT_COLUMN_ORDER: Record<string, string[]> = {
 };
 
 export const REPORT_SUMMARY_KEYS: Record<string, string[]> = {
-  'platform-revenue-summary': ['platformCommissions', 'loyaltyReferralExpenses', 'commissionRefunds', 'netPlatformRevenue', 'periodStart', 'periodEnd'],
-  'platform-revenue': ['platformCommissions', 'loyaltyReferralExpenses', 'commissionRefunds', 'netPlatformRevenue', 'periodStart', 'periodEnd'],
+  'platform-revenue-summary': ['platformCommissions', 'loyaltyReferralExpenses', 'commissionRefunds', 'paymentGatewayFees', 'netPlatformRevenue', 'periodStart', 'periodEnd'],
+  'platform-revenue': ['platformCommissions', 'loyaltyReferralExpenses', 'commissionRefunds', 'paymentGatewayFees', 'netPlatformRevenue', 'periodStart', 'periodEnd'],
   'sales-summary': ['totalSales', 'grossCommission', 'netCommission'],
   'commission-summary': ['grossCommission', 'netCommission', 'gatewayFees'],
   'gateway-fees': ['gatewayFees'],
@@ -36,9 +36,11 @@ const MONEY_KEYS = new Set([
   'merchantAmount', 'commissionAmount', 'totalSpent', 'totalEarned', 'stripeBalance', 'escrowHeld',
   'transferable', 'transferred', 'reconciliationDelta', 'grossCommission', 'netCommission', 'gatewayFees',
   'totalSales', 'totalPenalties', 'totalRefunds', 'shippingCollected', 'platformCommissions',
-  'loyaltyReferralExpenses', 'commissionRefunds', 'netPlatformRevenue', 'pendingAmount', 'approvedAmount',
+  'loyaltyReferralExpenses', 'commissionRefunds', 'paymentGatewayFees', 'netPlatformRevenue', 'pendingAmount', 'approvedAmount',
   'transferredAmount', 'rejectedAmount', 'heldMerchantAmount', 'heldCommissionAmount',
   'releasedMerchantAmount', 'releasedCommissionAmount',
+  'platformRevenue', 'platformCommissionBalance', 'platformFeesBalance', 'netPlatformPosition',
+  'commissionBalance', 'feesBalance', 'totalAmount_summary', 'lastSettlementDelta', 'pendingWithdrawals',
 ]);
 
 export function getDetailColumns(reportId: string, sample: Record<string, unknown>): string[] {

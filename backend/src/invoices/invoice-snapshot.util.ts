@@ -1,4 +1,4 @@
-export type InvoiceDocType = 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION';
+export type InvoiceDocType = 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE';
 
 export interface ShippingLineItem {
   paymentId: string;
@@ -78,6 +78,8 @@ export function invoiceTypePrefix(type: InvoiceDocType): string {
       return 'INV-S';
     case 'COMMISSION':
       return 'INV-C';
+    case 'GATEWAY_FEE':
+      return 'INV-G';
     default:
       return 'INV';
   }

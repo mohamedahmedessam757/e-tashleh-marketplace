@@ -21,6 +21,7 @@ module.exports = {
         '**/customer-wallet-metrics.util.spec.ts',
         '**/merchant-wallet-metrics.util.spec.ts',
         '**/admin-financial-metrics.util.spec.ts',
+        '**/gateway-fee.util.spec.ts',
     ],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',

@@ -85,6 +85,7 @@ const MONEY_KEYS = new Set([
   'platformCommissions',
   'loyaltyReferralExpenses',
   'commissionRefunds',
+  'paymentGatewayFees',
   'netPlatformRevenue',
   'commissionBalance',
   'feesBalance',
