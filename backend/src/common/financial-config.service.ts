@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { computeStripeGatewayFee } from '../payments/gateway-fee.util';
 
 export interface LoyaltyTierConfig {
   percent: number;
@@ -30,6 +31,8 @@ export interface FinancialConfig {
   commissionRatePercent: number;
   minCommissionAed: number;
   gatewayFeePercent: number;
+  /** Fixed AED added on top of percent (Stripe-style, e.g. 0.30). */
+  gatewayFeeFixedAed: number;
   escrowHoldHoursCustomer: number;
   escrowHoldHoursMerchant: number;
   payoutDelayDaysMerchant: number;
@@ -97,7 +100,8 @@ const DEFAULT_STORE_LOYALTY_TIERS: Record<string, StoreLoyaltyTierConfig> = {
 const DEFAULTS: FinancialConfig = {
   commissionRatePercent: 25,
   minCommissionAed: 100,
-  gatewayFeePercent: 0,
+  gatewayFeePercent: 2.99,
+  gatewayFeeFixedAed: 0.3,
   escrowHoldHoursCustomer: 24,
   escrowHoldHoursMerchant: 24,
   payoutDelayDaysMerchant: 0,
@@ -147,6 +151,9 @@ export class FinancialConfigService {
         commissionRatePercent: Number(financial.commissionRate ?? DEFAULTS.commissionRatePercent),
         minCommissionAed: Number(financial.minCommission ?? DEFAULTS.minCommissionAed),
         gatewayFeePercent: Number(financial.gatewayFeePercent ?? DEFAULTS.gatewayFeePercent),
+        gatewayFeeFixedAed: Number(
+          financial.gatewayFeeFixedAed ?? DEFAULTS.gatewayFeeFixedAed,
+        ),
         escrowHoldHoursCustomer: Number(
           financial.escrowHoldHoursCustomer ?? DEFAULTS.escrowHoldHoursCustomer,
         ),
@@ -284,5 +291,16 @@ export class FinancialConfigService {
     if (unitPrice <= 0) return 0;
     const percentCommission = Math.round(unitPrice * (config.commissionRatePercent / 100));
     return Math.max(percentCommission, config.minCommissionAed);
+  }
+
+  /** Stripe-style gateway fee from current (or provided) financial settings. */
+  computeGatewayFee(orderTotal: number, config?: FinancialConfig): number {
+    const c = config ?? DEFAULTS;
+    return computeStripeGatewayFee(orderTotal, c.gatewayFeePercent, c.gatewayFeeFixedAed);
+  }
+
+  async computeGatewayFeeForTotal(orderTotal: number): Promise<number> {
+    const config = await this.getConfig();
+    return this.computeGatewayFee(orderTotal, config);
   }
 }

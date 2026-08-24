@@ -31,6 +31,10 @@ export interface AdminFinancialKpis {
   fullRefunds: number;
   partialRefunds: number;
   gatewayFees: number;
+  /** Stripe processing fees at payment capture — used in net profit formulas. */
+  paymentGatewayFees: number;
+  /** Adjudication/refund fees retained at judgment — display only, not subtracted from net. */
+  adjudicationGatewayFees: number;
   pendingLiabilities: number;
   loyaltyPointsOutstanding: number;
   customerRewardsInWallets: number;
@@ -193,6 +197,7 @@ export async function computeAdminFinancialKpis(
     fullRefundsAgg,
     partialRefundsAgg,
     gatewayFeesAgg,
+    adjudicationFeesAgg,
     loyaltyPointsAgg,
     platformWallet,
     customerBalanceAgg,
@@ -260,6 +265,15 @@ export async function computeAdminFinancialKpis(
     prisma.paymentTransaction.aggregate({
       where: grossSalesWhere,
       _sum: { gatewayFee: true },
+    }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        role: 'ADMIN',
+        type: 'CREDIT',
+        transactionType: 'PLATFORM_FEE_RETENTION',
+        ...walletDate,
+      },
+      _sum: { amount: true },
     }),
     prisma.user.aggregate({ _sum: { loyaltyPoints: true } }),
     prisma.platformWallet.findFirst(),
@@ -357,14 +371,18 @@ export async function computeAdminFinancialKpis(
   const grossCommission = Number(commissionAgg._sum.commission || 0);
   const totalReferralPaid = Number(referralAgg._sum.amount || 0);
   const totalLoyaltyPaid = Number(loyaltyPaidAgg._sum.amount || 0);
-  const totalGatewayFees = Number(gatewayFeesAgg._sum?.gatewayFee || 0);
+  const paymentGatewayFees = Number(gatewayFeesAgg._sum?.gatewayFee || 0);
+  const adjudicationGatewayFees = Number(adjudicationFeesAgg._sum?.amount || 0);
+  const totalGatewayFeesDisplay = paymentGatewayFees + adjudicationGatewayFees;
   const fullRefunds = Number(fullRefundsAgg._sum.refundedAmount || 0);
   const partialRefunds = Number(partialRefundsAgg._sum.refundedAmount || 0);
   const totalRefunds = fullRefunds + partialRefunds;
   const netSales = grossSales - totalRefunds;
   const shippingCollected = Number(shippingAgg._sum.shippingCost || 0);
 
-  const netCommission = grossCommission - totalReferralPaid - totalLoyaltyPaid - totalGatewayFees;
+  // Net profit deducts payment-time Stripe fees only (never adjudication retention).
+  const netCommission =
+    grossCommission - totalReferralPaid - totalLoyaltyPaid - paymentGatewayFees;
   const netPlatformPosition = netCommission - totalRefunds;
 
   const platformCommissionBal = Number(platformWallet?.commissionBalance || 0);
@@ -378,6 +396,7 @@ export async function computeAdminFinancialKpis(
   const userWalletLiabilitiesAed =
     Number(customerBalanceAgg._sum.customerBalance || 0) +
     Number(merchantStoreAgg._sum.balance || 0);
+  const pendingLiabilities = userWalletLiabilitiesAed + paymentGatewayFees;
 
   const escrowReleased = Number(escrowReleasedAgg._sum.merchantAmount || 0);
   const clawbackDebits = Number(merchantClawbackAgg._sum.amount || 0);
@@ -415,8 +434,10 @@ export async function computeAdminFinancialKpis(
     totalRefunds: roundMoney(totalRefunds),
     fullRefunds: roundMoney(fullRefunds),
     partialRefunds: roundMoney(partialRefunds),
-    gatewayFees: roundMoney(totalGatewayFees),
-    pendingLiabilities: roundMoney(userWalletLiabilitiesAed),
+    gatewayFees: roundMoney(totalGatewayFeesDisplay),
+    paymentGatewayFees: roundMoney(paymentGatewayFees),
+    adjudicationGatewayFees: roundMoney(adjudicationGatewayFees),
+    pendingLiabilities: roundMoney(pendingLiabilities),
     loyaltyPointsOutstanding: Number(loyaltyPointsAgg._sum?.loyaltyPoints || 0),
     customerRewardsInWallets: roundMoney(Number(customerRewardsAgg._sum.amount || 0)),
     opsLast24h,
@@ -438,7 +459,8 @@ export async function computeAdminFinancialKpis(
     netPlatformRevenue: roundMoney(
       grossCommission -
         (totalLoyaltyPaid + totalReferralPaid) -
-        Number(commissionRefundsAgg._sum.commission || 0),
+        Number(commissionRefundsAgg._sum.commission || 0) -
+        paymentGatewayFees,
     ),
   };
 }

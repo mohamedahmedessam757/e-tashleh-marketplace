@@ -351,6 +351,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             PART: docs.tabPart || (isAr ? 'قطعة' : 'Part'),
             SHIPPING: docs.tabShipping || (isAr ? 'شحن' : 'Shipping'),
             COMMISSION: docs.tabCommission || (isAr ? 'عمولة' : 'Commission'),
+            GATEWAY_FEE: docs.tabGatewayFee || (isAr ? 'رسوم بوابة' : 'Gateway Fee'),
         };
         return map[tab];
     };
@@ -361,7 +362,9 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                 ? docs.partInvoiceTitle || (isAr ? 'فاتورة القطعة' : 'Part Invoice')
                 : activeDocTab === 'SHIPPING'
                     ? docs.shippingInvoiceTitle || (isAr ? 'فاتورة الشحن' : 'Shipping Invoice')
-                    : docs.commissionInvoiceTitle || (isAr ? 'فاتورة عمولة المنصة' : 'Platform Commission Invoice'),
+                    : activeDocTab === 'GATEWAY_FEE'
+                        ? docs.gatewayFeeInvoiceTitle || (isAr ? 'فاتورة رسوم بوابة الدفع' : 'Gateway Fee Invoice')
+                        : docs.commissionInvoiceTitle || (isAr ? 'فاتورة عمولة المنصة' : 'Platform Commission Invoice'),
         invoiceNumber: docs.invoiceNumber || (isAr ? 'رقم الفاتورة' : 'Invoice #'),
         orderNumber: docs.orderNumber || (isAr ? 'رقم الطلب' : 'Order #'),
         offerNumber: docs.offerNumber || (isAr ? 'رقم العرض' : 'Offer #'),
@@ -455,8 +458,21 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         const subtotal = Number(inv.subtotal || acceptedOffer?.unitPrice || 0);
         const shipping = Number(inv.shipping || 0);
         const commission = Number(inv.commission || 0);
+        const gatewayFeeFromPayment = Number(
+          (order?.payments || []).find((p: any) => p?.id === inv.paymentId)?.gatewayFee ?? 0,
+        );
+        const gatewayFeeFromInv =
+          String(inv.invoiceType || '').toUpperCase() === 'GATEWAY_FEE'
+            ? Number(inv.total || 0)
+            : Number(
+                (invoices || [])
+                  .filter((i: any) => String(i?.invoiceType || '').toUpperCase() === 'GATEWAY_FEE')
+                  .reduce((s: number, i: any) => s + Number(i.total || 0), 0),
+              );
+        const gatewayFee = gatewayFeeFromPayment > 0 ? gatewayFeeFromPayment : gatewayFeeFromInv;
         const merchantPayout = subtotal; // 2026 Standard: Merchant gets the full part price as profit
-        const platformRevenue = commission; // Net profit is the commission added on top
+        // Platform net on this order ≈ commission − gateway fee (loyalty is order-level, shown in KPIs)
+        const platformRevenue = Math.max(0, commission - gatewayFee);
 
         /* ── translation maps ── */
         const conditionMap: Record<string, string> = {
@@ -706,6 +722,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                     <span className="text-gray-400 flex items-center gap-2 inv-label"><TrendingUp size={12} /> {isAr ? 'عمولة المنصة المقتطعة' : 'Platform Commission Taken'}</span>
                                     <span className="text-green-400 font-mono inv-value">+{Math.round(commission).toLocaleString()} AED</span>
                                 </div>
+                                {gatewayFee > 0 && (
+                                <div className="flex justify-between py-2 text-xs">
+                                    <span className="text-gray-400 flex items-center gap-2 inv-label"><CreditCard size={12} /> {isAr ? 'رسوم بوابة الدفع' : 'Gateway fee'}</span>
+                                    <span className="text-orange-400 font-mono inv-value">-{Number(gatewayFee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AED</span>
+                                </div>
+                                )}
                                 <div className="flex justify-between py-2 text-xs">
                                     <span className="text-gray-400 flex items-center gap-2 inv-label"><Truck size={12} /> {isAr ? 'صافي إيراد الشحن' : 'Net Shipping Revenue'}</span>
                                     <span className="text-green-400 font-mono inv-value">+{Math.round(shipping).toLocaleString()} AED</span>
@@ -719,7 +741,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                             <div className="pt-2">
                                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex justify-between items-center shadow-lg">
                                     <span className="text-[10px] font-bold text-green-400 uppercase inv-label">{isAr ? 'إجمالي ربح المنصة الصافي' : 'Total Platform Net Profit'}</span>
-                                    <span className="text-base font-black text-green-400 font-mono inv-value inv-total-amount">{Math.round(platformRevenue).toLocaleString()} AED</span>
+                                    <span className="text-base font-black text-green-400 font-mono inv-value inv-total-amount">{Number(platformRevenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AED</span>
                                 </div>
                             </div>
                         </div>
@@ -969,7 +991,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         ) : (
                                             <InvoiceTypedDocument
                                                 inv={inv}
-                                                docType={activeDocTab as 'PART' | 'SHIPPING' | 'COMMISSION'}
+                                                docType={activeDocTab as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE'}
                                                 isAr={isAr}
                                                 isRTL={isRTL}
                                                 labels={typedLabels}
@@ -1015,7 +1037,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     ) : (
                         <InvoiceTypedDocument
                             inv={activeInvoice}
-                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION'}
+                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE'}
                             isAr={isAr}
                             isRTL={isRTL}
                             labels={typedLabels}

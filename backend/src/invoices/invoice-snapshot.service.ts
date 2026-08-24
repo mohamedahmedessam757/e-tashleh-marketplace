@@ -18,6 +18,8 @@ export interface InvoiceBundleContext {
   unitPrice: number;
   shippingCost: number;
   commission: number;
+  /** Stripe-style processing fee (persisted on payment; invoice when > 0). */
+  gatewayFee?: number;
   totalAmount: number;
   currency?: string;
   partName?: string | null;
@@ -66,7 +68,13 @@ export class InvoiceSnapshotService {
     const base = fallback[0].generate_invoice_number;
     if (type === 'MASTER') return base;
     const prefix =
-      type === 'PART' ? 'INV-P-' : type === 'SHIPPING' ? 'INV-S-' : 'INV-C-';
+      type === 'PART'
+        ? 'INV-P-'
+        : type === 'SHIPPING'
+          ? 'INV-S-'
+          : type === 'GATEWAY_FEE'
+            ? 'INV-G-'
+            : 'INV-C-';
     return base.replace(/^INV-/, prefix);
   }
 
@@ -255,6 +263,46 @@ export class InvoiceSnapshotService {
       }
     }
 
+    // GATEWAY_FEE (Stripe processing fee proof document)
+    const gatewayFee = Number(ctx.gatewayFee) || 0;
+    if (gatewayFee > 0) {
+      const existingGateway = await tx.invoice.findFirst({
+        where: { paymentId: ctx.paymentId, invoiceType: 'GATEWAY_FEE' },
+        select: { id: true },
+      });
+      if (!existingGateway) {
+        const invoiceNumber = await this.nextInvoiceNumber(tx, 'GATEWAY_FEE');
+        await tx.invoice.create({
+          data: {
+            invoiceNumber,
+            orderId: ctx.orderId,
+            paymentId: ctx.paymentId,
+            customerId: ctx.customerId,
+            subtotal: 0,
+            shipping: 0,
+            commission: 0,
+            total: gatewayFee,
+            currency,
+            status: 'PAID',
+            invoiceType: 'GATEWAY_FEE',
+            invoiceGroupId,
+            parentInvoiceId,
+            partNameSnapshot: partName,
+            platformLegalNameEn: ctx.platformLegalNameEn || null,
+            platformLegalNameAr: ctx.platformLegalNameAr || null,
+            lineItems: [
+              {
+                kind: 'GATEWAY_FEE',
+                amount: gatewayFee,
+                label: 'Payment gateway fee',
+              },
+            ] as unknown as Prisma.InputJsonValue,
+          },
+        });
+        createdTypes.push('GATEWAY_FEE');
+      }
+    }
+
     if (createdTypes.length > 0) {
       try {
         await this.auditLogs.logAction(
@@ -299,7 +347,7 @@ export class InvoiceSnapshotService {
     const core = await tx.invoice.updateMany({
       where: {
         paymentId,
-        invoiceType: { in: ['MASTER', 'PART', 'COMMISSION'] },
+        invoiceType: { in: ['MASTER', 'PART', 'COMMISSION', 'GATEWAY_FEE'] },
         OR: [
           { shippingBatchKey: null },
           { NOT: { shippingBatchKey: { startsWith: RETURNS_FEE_BATCH_PREFIX } } },

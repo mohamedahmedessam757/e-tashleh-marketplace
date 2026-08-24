@@ -669,6 +669,28 @@ export class InvoicesService {
                     ],
                 });
             }
+            const paymentGatewayFee = Number(
+              (master as any).payment?.gatewayFee ?? 0,
+            );
+            if (!saleTypes.has('GATEWAY_FEE') && paymentGatewayFee > 0) {
+                derived.push({
+                    ...baseMeta,
+                    id: `derived-gateway-${master.id}`,
+                    invoiceNumber: `${master.invoiceNumber}-G`,
+                    invoiceType: 'GATEWAY_FEE',
+                    subtotal: 0,
+                    shipping: 0,
+                    commission: 0,
+                    total: paymentGatewayFee,
+                    lineItems: [
+                        {
+                            kind: 'GATEWAY_FEE',
+                            amount: paymentGatewayFee,
+                            label: 'Payment gateway fee',
+                        },
+                    ],
+                });
+            }
         }
 
         return [...enriched, ...derived].sort(

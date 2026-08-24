@@ -1021,45 +1021,21 @@ export class AdminFinancialService {
       }
       case 'platform-revenue': {
         const kpis = await computeAdminFinancialKpis(this.prisma, range);
-        const refundDateFilter =
-          range.startDate || range.endDate
-            ? {
-                ...(range.startDate ? { gte: range.startDate } : {}),
-                ...(range.endDate ? { lte: range.endDate } : {}),
-              }
-            : undefined;
-        const commissionRefundsAgg = await this.prisma.paymentTransaction.aggregate({
-          where: {
-            refundedAmount: { gt: 0 },
-            ...(refundDateFilter
-              ? {
-                  OR: [
-                    { paidAt: refundDateFilter },
-                    { paidAt: null, createdAt: refundDateFilter },
-                  ],
-                }
-              : {}),
-          },
-          // PaymentTransaction stores original commission, not a separate "commission refunded"
-          // field. Until a dedicated refunded-commission amount exists, keep summing commission
-          // on refunded payments rather than guessing a ratio from refundedAmount/totalAmount.
-          _sum: { commission: true },
-        });
-        // Net Platform Revenue = Platform Commissions − Loyalty/Referral Expenses − Commission Refunds
+        // Single source of truth — avoid diverging recomputation vs KPI cards
         const platformCommissions = kpis.grossCommission;
         const loyaltyReferralExpenses = roundMoney(
           Number(kpis.loyaltyCashbackPaid || 0) + Number(kpis.referralPaidOut || 0),
         );
-        const commissionRefunds = roundMoney(Number(commissionRefundsAgg._sum.commission || 0));
-        const netPlatformRevenue = roundMoney(
-          platformCommissions - loyaltyReferralExpenses - commissionRefunds,
-        );
+        const commissionRefunds = roundMoney(Number(kpis.commissionRefunds || 0));
+        const paymentGatewayFees = roundMoney(Number(kpis.paymentGatewayFees || 0));
+        const netPlatformRevenue = roundMoney(Number(kpis.netPlatformRevenue || 0));
         return {
           ...base,
           summary: {
             platformCommissions,
             loyaltyReferralExpenses,
             commissionRefunds,
+            paymentGatewayFees,
             netPlatformRevenue,
             periodStart: range.startDate,
             periodEnd: range.endDate,
@@ -1079,6 +1055,11 @@ export class AdminFinancialService {
               metric: 'commissionRefunds',
               label: 'commissionRefunds',
               amount: commissionRefunds,
+            },
+            {
+              metric: 'paymentGatewayFees',
+              label: 'paymentGatewayFees',
+              amount: paymentGatewayFees,
             },
             {
               metric: 'netPlatformRevenue',
@@ -1150,6 +1131,7 @@ export class AdminFinancialService {
         commissionRate: config.commissionRatePercent,
         minCommission: config.minCommissionAed,
         gatewayFeePercent: config.gatewayFeePercent,
+        gatewayFeeFixedAed: config.gatewayFeeFixedAed,
         escrowHoldHoursCustomer: config.escrowHoldHoursCustomer,
         escrowHoldHoursMerchant: config.escrowHoldHoursMerchant,
         payoutDelayDaysMerchant: config.payoutDelayDaysMerchant,
@@ -1178,6 +1160,22 @@ export class AdminFinancialService {
       throw new BadRequestException('Financial audit reason is required (min 10 characters)');
     }
     const { reason: _r, adminName, adminSignature, ...financialFields } = financial;
+
+    if (financialFields.gatewayFeePercent !== undefined) {
+      const pct = Number(financialFields.gatewayFeePercent);
+      if (!Number.isFinite(pct) || pct < 0 || pct > 10) {
+        throw new BadRequestException('gatewayFeePercent must be between 0 and 10');
+      }
+      financialFields.gatewayFeePercent = pct;
+    }
+    if (financialFields.gatewayFeeFixedAed !== undefined) {
+      const fixed = Number(financialFields.gatewayFeeFixedAed);
+      if (!Number.isFinite(fixed) || fixed < 0 || fixed > 50) {
+        throw new BadRequestException('gatewayFeeFixedAed must be between 0 and 50');
+      }
+      financialFields.gatewayFeeFixedAed = fixed;
+    }
+
     const existing = await this.prisma.platformSettings.findUnique({
       where: { settingKey: 'system_config' },
     });
