@@ -11,9 +11,10 @@ import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsSto
 import { invoiceTypeBadgeClass } from '../shared/invoices/invoiceDocs.types';
 
 type InvoiceTab = 'customers' | 'stores';
-type InvoiceTypeFilter = 'ALL' | 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE' | 'REFUND';
+type InvoiceTypeFilter = 'ALL' | 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE' | 'REFUND' | 'CASE_FEES';
 
 const DOC_TAB_STORAGE_KEY = 'admin_invoice_doc_tab';
+const RETURNS_FEE_PREFIX = 'RETURNS_FEE:';
 
 interface AdminInvoicesHubProps {
   onNavigate?: (path: string, id?: string) => void;
@@ -68,7 +69,13 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
       ? hub.searchCustomers || (isAr ? 'بحث العملاء: الاسم / الإيميل / الهاتف / ID' : 'Search customers: name / email / phone / ID')
       : hub.searchStores || (isAr ? 'بحث المتاجر: الاسم / الإيميل / الهاتف / ID' : 'Search stores: name / email / phone / ID');
 
-  const typeLabel = (type?: string) => {
+  const isCaseFeeRow = (r: any) =>
+    String(r?.shippingBatchKey || '').startsWith(RETURNS_FEE_PREFIX);
+
+  const typeLabel = (type?: string, row?: any) => {
+    if (row && isCaseFeeRow(row)) {
+      return hub.caseFees || hub.filterCaseFees || (isAr ? 'رسوم قضية' : 'Case fees');
+    }
     const tpe = String(type || 'MASTER').toUpperCase();
     if (tpe === 'PART') return hub.typePart || (isAr ? 'قطعة' : 'Part');
     if (tpe === 'SHIPPING') return hub.typeShipping || (isAr ? 'شحن' : 'Shipping');
@@ -80,8 +87,18 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
 
   const openInvoice = (orderId: string, type?: string) => {
     try {
+      // Never store CASE_FEES — open real COMMISSION/SHIPPING/MASTER tab
       const tabType = String(type || 'MASTER').toUpperCase();
-      sessionStorage.setItem(DOC_TAB_STORAGE_KEY, tabType);
+      const allowed =
+        tabType === 'MASTER' ||
+        tabType === 'PART' ||
+        tabType === 'SHIPPING' ||
+        tabType === 'COMMISSION' ||
+        tabType === 'GATEWAY_FEE' ||
+        tabType === 'REFUND'
+          ? tabType
+          : 'MASTER';
+      sessionStorage.setItem(DOC_TAB_STORAGE_KEY, allowed);
     } catch {
       /* ignore */
     }
@@ -96,6 +113,10 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
     { id: 'COMMISSION', label: hub.filterCommission || (isAr ? 'عمولة' : 'Commission') },
     { id: 'GATEWAY_FEE', label: hub.filterGatewayFee || (isAr ? 'رسوم بوابة' : 'Gateway Fee') },
     { id: 'REFUND', label: hub.filterRefund || (isAr ? 'استرداد' : 'Refund') },
+    {
+      id: 'CASE_FEES',
+      label: hub.filterCaseFees || hub.caseFees || (isAr ? 'رسوم قضايا' : 'Case fees'),
+    },
   ];
 
   const columns = useMemo(() => {
@@ -146,13 +167,19 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
         render: (r: any) => (
           <span className="inline-flex flex-wrap items-center gap-1">
             <span
-              className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${invoiceTypeBadgeClass(r.invoiceType)}`}
+              className={`inline-flex px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wide ${
+                isCaseFeeRow(r)
+                  ? 'bg-gold-500/15 text-gold-400 border-gold-500/30'
+                  : invoiceTypeBadgeClass(r.invoiceType)
+              }`}
             >
-              {typeLabel(r.invoiceType)}
+              {typeLabel(r.invoiceType, r)}
             </span>
-            {String(r.shippingBatchKey || '').startsWith('RETURNS_FEE:') && (
+            {isCaseFeeRow(r) && (
               <span className="inline-flex px-2 py-0.5 rounded-lg border border-gold-500/30 bg-gold-500/10 text-gold-400 text-[9px] font-black uppercase tracking-wide">
-                {hub.caseFees || (isAr ? 'رسوم قضية' : 'Case fees')}
+                {String(r.invoiceType || '').toUpperCase() === 'SHIPPING'
+                  ? hub.typeShipping || (isAr ? 'شحن' : 'Shipping')
+                  : hub.typeCommission || (isAr ? 'عمولة' : 'Commission')}
               </span>
             )}
           </span>

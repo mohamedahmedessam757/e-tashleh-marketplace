@@ -257,8 +257,22 @@ export class InvoicesService {
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
         }
-        if (filters?.invoiceType && filters.invoiceType !== 'ALL') {
-            baseWhere.invoiceType = filters.invoiceType;
+        const invoiceTypeFilter = String(filters?.invoiceType || 'ALL').toUpperCase();
+        if (invoiceTypeFilter === 'CASE_FEES') {
+            baseWhere.shippingBatchKey = { startsWith: 'RETURNS_FEE:' };
+        } else if (invoiceTypeFilter === 'COMMISSION' || invoiceTypeFilter === 'SHIPPING') {
+            baseWhere.invoiceType = invoiceTypeFilter;
+            baseWhere.AND = [
+                ...(Array.isArray(baseWhere.AND) ? baseWhere.AND : []),
+                {
+                    OR: [
+                        { shippingBatchKey: null },
+                        { NOT: { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } } },
+                    ],
+                },
+            ];
+        } else if (invoiceTypeFilter !== 'ALL') {
+            baseWhere.invoiceType = invoiceTypeFilter;
         }
 
         const search = normalizeSearchQuery(filters?.search);
@@ -326,8 +340,22 @@ export class InvoicesService {
         if (filters?.status && filters.status !== 'ALL') {
             baseWhere.status = filters.status;
         }
-        if (filters?.invoiceType && filters.invoiceType !== 'ALL') {
-            baseWhere.invoiceType = filters.invoiceType;
+        const invoiceTypeFilter = String(filters?.invoiceType || 'ALL').toUpperCase();
+        if (invoiceTypeFilter === 'CASE_FEES') {
+            baseWhere.shippingBatchKey = { startsWith: 'RETURNS_FEE:' };
+        } else if (invoiceTypeFilter === 'COMMISSION' || invoiceTypeFilter === 'SHIPPING') {
+            baseWhere.invoiceType = invoiceTypeFilter;
+            baseWhere.AND = [
+                ...(Array.isArray(baseWhere.AND) ? baseWhere.AND : []),
+                {
+                    OR: [
+                        { shippingBatchKey: null },
+                        { NOT: { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } } },
+                    ],
+                },
+            ];
+        } else if (invoiceTypeFilter !== 'ALL') {
+            baseWhere.invoiceType = invoiceTypeFilter;
         }
 
         const search = normalizeSearchQuery(filters?.search);
