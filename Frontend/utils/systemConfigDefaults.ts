@@ -162,6 +162,8 @@ export function getSystemConfigDefaults(): SystemConfig {
     financial: {
       commissionRate: 25,
       minCommission: 100,
+      gatewayFeePercent: 2.99,
+      gatewayFeeFixedAed: 0.3,
     },
     logistics: {
       globalMinWeightKg: 0,
