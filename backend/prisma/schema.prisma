@@ -1352,7 +1352,7 @@ model Invoice {
   currency   String  @default("AED")
   status     String  @default("PAID") // PAID | REFUNDED | CANCELLED
 
-  /// MASTER | PART | SHIPPING | COMMISSION
+  /// MASTER | PART | SHIPPING | COMMISSION | GATEWAY_FEE | REFUND
   invoiceType          String  @default("MASTER") @map("invoice_type")
   invoiceGroupId       String? @map("invoice_group_id") @db.Uuid
   parentInvoiceId      String? @map("parent_invoice_id") @db.Uuid

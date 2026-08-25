@@ -1,4 +1,10 @@
-export type InvoiceDocTab = 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE';
+export type InvoiceDocTab =
+  | 'MASTER'
+  | 'PART'
+  | 'SHIPPING'
+  | 'COMMISSION'
+  | 'GATEWAY_FEE'
+  | 'REFUND';
 
 export const INVOICE_DOC_TABS: InvoiceDocTab[] = [
   'MASTER',
@@ -6,6 +12,7 @@ export const INVOICE_DOC_TABS: InvoiceDocTab[] = [
   'SHIPPING',
   'COMMISSION',
   'GATEWAY_FEE',
+  'REFUND',
 ];
 
 export function filterInvoicesByTab(invoices: any[], tab: InvoiceDocTab): any[] {
@@ -25,6 +32,8 @@ export function invoiceTypeBadgeClass(type: string): string {
       return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
     case 'GATEWAY_FEE':
       return 'bg-orange-500/15 text-orange-300 border-orange-500/30';
+    case 'REFUND':
+      return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
     default:
       return 'bg-gold-500/15 text-gold-400 border-gold-500/30';
   }

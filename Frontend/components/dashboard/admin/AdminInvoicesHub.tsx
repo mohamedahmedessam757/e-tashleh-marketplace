@@ -11,7 +11,7 @@ import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsSto
 import { invoiceTypeBadgeClass } from '../shared/invoices/invoiceDocs.types';
 
 type InvoiceTab = 'customers' | 'stores';
-type InvoiceTypeFilter = 'ALL' | 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE';
+type InvoiceTypeFilter = 'ALL' | 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE' | 'REFUND';
 
 const DOC_TAB_STORAGE_KEY = 'admin_invoice_doc_tab';
 
@@ -74,6 +74,7 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
     if (tpe === 'SHIPPING') return hub.typeShipping || (isAr ? 'شحن' : 'Shipping');
     if (tpe === 'COMMISSION') return hub.typeCommission || (isAr ? 'عمولة' : 'Commission');
     if (tpe === 'GATEWAY_FEE') return hub.typeGatewayFee || (isAr ? 'رسوم بوابة' : 'Gateway Fee');
+    if (tpe === 'REFUND') return hub.typeRefund || (isAr ? 'استرداد' : 'Refund');
     return hub.typeMaster || (isAr ? 'شاملة' : 'Master');
   };
 
@@ -94,6 +95,7 @@ export const AdminInvoicesHub: React.FC<AdminInvoicesHubProps> = ({ onNavigate }
     { id: 'SHIPPING', label: hub.filterShipping || (isAr ? 'شحن' : 'Shipping') },
     { id: 'COMMISSION', label: hub.filterCommission || (isAr ? 'عمولة' : 'Commission') },
     { id: 'GATEWAY_FEE', label: hub.filterGatewayFee || (isAr ? 'رسوم بوابة' : 'Gateway Fee') },
+    { id: 'REFUND', label: hub.filterRefund || (isAr ? 'استرداد' : 'Refund') },
   ];
 
   const columns = useMemo(() => {

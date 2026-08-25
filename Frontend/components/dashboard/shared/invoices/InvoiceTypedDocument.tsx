@@ -8,6 +8,7 @@ import {
   CreditCard,
   User,
   Building2,
+  RotateCcw,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { InvoiceDocTab } from './invoiceDocs.types';
@@ -27,6 +28,7 @@ interface Labels {
   platformCompany: string;
   commissionAmount: string;
   gatewayFee?: string;
+  refundAmount?: string;
   refundFee?: string;
   roundtripShipping?: string;
   adjudicationFee?: string;
@@ -118,7 +120,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
       ? Number(inv.subtotal || inv.total || 0)
       : docType === 'SHIPPING'
         ? Number(inv.shipping || inv.total || 0)
-        : docType === 'GATEWAY_FEE'
+        : docType === 'GATEWAY_FEE' || docType === 'REFUND'
           ? Number(inv.total || 0)
           : Number(inv.commission || inv.total || 0);
 
@@ -133,6 +135,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
   const feeKindLabel = (kind?: string) => {
     const k = String(kind || '').toUpperCase();
     if (k === 'GATEWAY_FEE') return labels.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee');
+    if (k === 'REFUND') return labels.refundAmount || (isAr ? 'مبلغ الاسترداد' : 'Refund amount');
     if (k === 'REFUND_FEE') return labels.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee');
     if (k === 'ROUNDTRIP_SHIPPING') return labels.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping');
     if (k === 'ADJUDICATION_FEE') return labels.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee');
@@ -158,7 +161,9 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
         ? Truck
         : docType === 'GATEWAY_FEE'
           ? CreditCard
-          : Percent;
+          : docType === 'REFUND'
+            ? RotateCcw
+            : Percent;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
@@ -268,6 +273,24 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
                 <InfoRow icon={User} label={labels.customer} value={customerName} />
               </div>
             </>
+          ) : docType === 'REFUND' ? (
+            <>
+              <InfoRow
+                icon={Building2}
+                label={labels.platformCompany}
+                value={platformName}
+              />
+              <div className="mt-3">
+                <InfoRow icon={User} label={labels.customer} value={customerName} />
+              </div>
+              <div className="mt-3">
+                <InfoRow
+                  icon={RotateCcw}
+                  label={labels.refundAmount || (isAr ? 'مبلغ الاسترداد' : 'Refund amount')}
+                  value={`${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`}
+                />
+              </div>
+            </>
           ) : docType === 'SHIPPING' ? (
             <>
               <InfoRow
@@ -347,6 +370,16 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
               </span>
             </div>
           )}
+          {docType === 'REFUND' && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 inv-label">
+                {labels.refundAmount || (isAr ? 'مبلغ الاسترداد' : 'Refund amount')}
+              </span>
+              <span className="font-mono text-rose-400 inv-value">
+                {amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+              </span>
+            </div>
+          )}
           {docType === 'SHIPPING' && (
             <>
               {lineItems.length > 0 ? (
@@ -381,16 +414,16 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-gold-500/20 to-black/40 rounded-xl p-6 sm:p-8 border-2 border-gold-500 mt-8 inv-total-box flex justify-center">
-        <div className="text-center bg-black/40 px-6 py-4 rounded-xl border border-gold-500/30 max-w-md w-full">
-          <p className="text-[10px] font-black text-gold-500 uppercase tracking-widest mb-1">
+      <div className={`bg-gradient-to-r ${docType === 'REFUND' ? 'from-rose-500/20 to-black/40 border-rose-500' : 'from-gold-500/20 to-black/40 border-gold-500'} rounded-xl p-6 sm:p-8 border-2 mt-8 inv-total-box flex justify-center`}>
+        <div className={`text-center bg-black/40 px-6 py-4 rounded-xl border ${docType === 'REFUND' ? 'border-rose-500/30' : 'border-gold-500/30'} max-w-md w-full`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${docType === 'REFUND' ? 'text-rose-400' : 'text-gold-500'}`}>
             {labels.total}
           </p>
-          <p className="text-4xl sm:text-5xl font-black text-gold-500 font-mono inv-total-amount">
-            {(docType === 'GATEWAY_FEE'
+          <p className={`text-4xl sm:text-5xl font-black font-mono inv-total-amount ${docType === 'REFUND' ? 'text-rose-400' : 'text-gold-500'}`}>
+            {(docType === 'GATEWAY_FEE' || docType === 'REFUND'
               ? amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
               : Math.round(amount).toLocaleString())}
-            <span className="text-xl sm:text-2xl font-bold ms-2 text-gold-400">
+            <span className={`text-xl sm:text-2xl font-bold ms-2 ${docType === 'REFUND' ? 'text-rose-300' : 'text-gold-400'}`}>
               {currency}
             </span>
           </p>

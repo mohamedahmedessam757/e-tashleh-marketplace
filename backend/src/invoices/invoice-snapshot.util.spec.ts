@@ -1,5 +1,7 @@
 import {
+  invoiceTypePrefix,
   mergeShippingLineItems,
+  refundInvoiceBatchKey,
   resolveShippingBatch,
   sumShippingLineItems,
 } from './invoice-snapshot.util';
@@ -49,6 +51,16 @@ describe('invoice-snapshot.util', () => {
       });
       expect(r.isCombined).toBe(false);
       expect(r.shippingBatchKey).toBe('pay-2');
+    });
+  });
+
+  describe('invoiceTypePrefix / refundInvoiceBatchKey', () => {
+    it('uses INV-R for REFUND', () => {
+      expect(invoiceTypePrefix('REFUND')).toBe('INV-R');
+    });
+
+    it('builds REFUND:{stripeRefundId} batch key', () => {
+      expect(refundInvoiceBatchKey('re_abc')).toBe('REFUND:re_abc');
     });
   });
 

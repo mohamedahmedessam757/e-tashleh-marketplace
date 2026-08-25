@@ -76,6 +76,7 @@ import { FinancialConfigService } from '../common/financial-config.service';
 import { WithdrawalWorkflowService } from './withdrawal-workflow.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
 import { ReturnsFeeInvoiceService } from '../invoices/returns-fee-invoice.service';
+import { roundMoney2 } from './cancel-refund.util';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
 
@@ -1529,6 +1530,7 @@ export class PaymentsService {
         payment_intent?: string | { id?: string } | null;
         amount_refunded?: number;
         amount?: number;
+        refunds?: { data?: Array<{ id?: string; amount?: number; status?: string }> };
     }) {
         const piRaw = charge.payment_intent;
         const piId = typeof piRaw === 'string' ? piRaw : piRaw?.id;
@@ -1544,6 +1546,32 @@ export class PaymentsService {
 
         const refundedMajor = charge.amount_refunded / 100;
         const fullRefund = charge.amount_refunded >= charge.amount;
+        const priorRefunded = Number(payment.refundedAmount) || 0;
+        const deltaMajor = Math.max(0, roundMoney2(refundedMajor - priorRefunded));
+        const deltaCents = Math.round(deltaMajor * 100);
+
+        let refundRows = Array.isArray(charge.refunds?.data) ? [...charge.refunds!.data!] : [];
+        if (refundRows.length === 0 && deltaMajor > 0) {
+            try {
+                const listed = await this.stripeService.getStripeClient().refunds.list({
+                    payment_intent: piId,
+                    limit: 20,
+                });
+                refundRows = Array.isArray(listed?.data) ? listed.data : [];
+            } catch (err) {
+                this.logger.warn(
+                    `Refund webhook: could not list refunds for PI ${piId}: ${(err as Error)?.message}`,
+                );
+            }
+        }
+
+        const succeeded = refundRows.filter(
+            (r) => !r.status || String(r.status).toLowerCase() === 'succeeded',
+        );
+        const matchedByAmount = succeeded.find((r) => Number(r.amount) === deltaCents);
+        const stripeRefundId = String(
+            (matchedByAmount || succeeded[succeeded.length - 1] || refundRows[0])?.id || '',
+        ).trim();
 
         await this.prisma.$transaction(async (tx) => {
             await tx.paymentTransaction.update({
@@ -1558,6 +1586,24 @@ export class PaymentsService {
 
             if (fullRefund) {
                 await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, payment.id);
+            }
+
+            // Idempotent proof invoice when webhook carries a refund id (applyRefundDbUpdates is primary path)
+            if (stripeRefundId && deltaMajor > 0 && payment.customerId) {
+                await this.invoiceSnapshot.ensureRefundInvoice(tx, {
+                    orderId: payment.orderId,
+                    paymentId: payment.id,
+                    customerId: payment.customerId,
+                    refundAmount: matchedByAmount
+                        ? roundMoney2(Number(matchedByAmount.amount) / 100)
+                        : deltaMajor,
+                    stripeRefundId,
+                    reason: payment.refundReason || 'STRIPE_CHARGE_REFUNDED',
+                });
+            } else if (deltaMajor > 0 && !stripeRefundId) {
+                this.logger.warn(
+                    `Refund webhook: delta=${deltaMajor} but no stripe refund id for payment=${payment.id}`,
+                );
             }
         });
     }

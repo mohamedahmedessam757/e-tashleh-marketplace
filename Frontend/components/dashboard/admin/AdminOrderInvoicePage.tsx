@@ -21,7 +21,9 @@ function peekDocTab(): InvoiceDocTab | undefined {
       raw === 'MASTER' ||
       raw === 'PART' ||
       raw === 'SHIPPING' ||
-      raw === 'COMMISSION'
+      raw === 'COMMISSION' ||
+      raw === 'GATEWAY_FEE' ||
+      raw === 'REFUND'
     ) {
       return raw;
     }

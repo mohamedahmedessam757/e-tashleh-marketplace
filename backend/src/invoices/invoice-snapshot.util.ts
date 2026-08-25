@@ -1,4 +1,16 @@
-export type InvoiceDocType = 'MASTER' | 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE';
+export type InvoiceDocType =
+  | 'MASTER'
+  | 'PART'
+  | 'SHIPPING'
+  | 'COMMISSION'
+  | 'GATEWAY_FEE'
+  | 'REFUND';
+
+export const REFUND_INVOICE_BATCH_PREFIX = 'REFUND:';
+
+export function refundInvoiceBatchKey(stripeRefundId: string): string {
+  return `${REFUND_INVOICE_BATCH_PREFIX}${String(stripeRefundId || '').trim()}`;
+}
 
 export interface ShippingLineItem {
   paymentId: string;
@@ -80,6 +92,8 @@ export function invoiceTypePrefix(type: InvoiceDocType): string {
       return 'INV-C';
     case 'GATEWAY_FEE':
       return 'INV-G';
+    case 'REFUND':
+      return 'INV-R';
     default:
       return 'INV';
   }

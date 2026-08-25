@@ -97,6 +97,7 @@ export class InvoicesService {
                 customerId: userId,
                 OR: [
                     { invoiceType: 'MASTER' },
+                    { invoiceType: 'REFUND' },
                     { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
                 ],
             },
@@ -134,13 +135,31 @@ export class InvoicesService {
     }
 
     async getInvoiceById(userId: string, id: string) {
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            select: { id: true },
+        });
+
         const invoice = await this.prisma.invoice.findFirst({
             where: {
                 id,
-                customerId: userId,
                 OR: [
-                    { invoiceType: 'MASTER' },
-                    { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                    {
+                        customerId: userId,
+                        OR: [
+                            { invoiceType: 'MASTER' },
+                            { invoiceType: 'REFUND' },
+                            { shippingBatchKey: { startsWith: 'RETURNS_FEE:' } },
+                        ],
+                    },
+                    ...(store
+                        ? [
+                              {
+                                  invoiceType: { in: ['MASTER', 'REFUND'] },
+                                  payment: { offer: { storeId: store.id } },
+                              },
+                          ]
+                        : []),
                 ],
             },
             include: {
@@ -418,7 +437,7 @@ export class InvoicesService {
         const payments = await this.prisma.paymentTransaction.findMany({
             where: { 
                 offer: { storeId: store.id },
-                status: 'SUCCESS'
+                status: { in: ['SUCCESS', 'REFUNDED'] },
             },
             select: { id: true }
         });
@@ -432,7 +451,7 @@ export class InvoicesService {
                 OR: [
                     {
                         paymentId: { in: paymentIds },
-                        invoiceType: 'MASTER',
+                        invoiceType: { in: ['MASTER', 'REFUND'] },
                     },
                     {
                         customerId: userId,
