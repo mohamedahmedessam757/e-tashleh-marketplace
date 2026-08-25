@@ -181,6 +181,20 @@ export interface SystemConfig {
   financial: {
     commissionRate: number;
     minCommission: number;
+    gatewayFeePercent?: number;
+    gatewayFeeFixedAed?: number;
+    escrowHoldHoursCustomer?: number;
+    escrowHoldHoursMerchant?: number;
+    payoutDelayDaysMerchant?: number;
+    payoutDelayDaysCustomer?: number;
+    loyaltyPointsRate?: number;
+    minWithdrawalCustomer?: number;
+    minWithdrawalMerchant?: number;
+    stripeConnectEnabled?: boolean;
+    supportedCurrencies?: string[];
+    loyaltyTiers?: Record<string, any>;
+    customerTierThresholds?: Record<string, number>;
+    storeLoyaltyTiers?: Record<string, any>;
   };
   logistics: {
     globalMinWeightKg?: number;

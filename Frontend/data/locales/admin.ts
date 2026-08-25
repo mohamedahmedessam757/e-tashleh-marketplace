@@ -1648,6 +1648,10 @@ export const admin = {
       enablePreferences: 'تفعيل خطوة التفضيلات',
       commissionRate: 'نسبة العمولة',
       minCommission: 'الحد الأدنى للعمولة (AED)',
+      gatewayFeePercent: 'نسبة رسوم Stripe %',
+      gatewayFeeFixedAed: 'رسوم Stripe الثابتة (AED)',
+      gatewayFeeFormulaHint:
+        'رسوم بوابة الدفع (Stripe) = (مبلغ الطلب × النسبة%) + الرسوم الثابتة — تُطبَّق على المدفوعات الجديدة فقط',
       baseShipping: 'تكلفة الشحن الأساسية',
       shippingRules: 'قواعد الشحن',
       minWeight: 'الوزن الأدنى',
@@ -3243,6 +3247,10 @@ export const admin = {
       enablePreferences: 'Enable Preferences Step',
       commissionRate: 'Commission Rate',
       minCommission: 'Minimum Commission (AED)',
+      gatewayFeePercent: 'Stripe fee %',
+      gatewayFeeFixedAed: 'Stripe fixed fee (AED)',
+      gatewayFeeFormulaHint:
+        'Stripe gateway fee = (order total × percent%) + fixed fee — applies to new payments only',
       baseShipping: 'Base Shipping Cost',
       shippingRules: 'Shipping Rules',
       minWeight: 'Min Weight',

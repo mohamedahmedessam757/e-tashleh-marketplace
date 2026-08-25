@@ -819,10 +819,31 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <p className="text-[11px] text-white/25 font-bold leading-relaxed">
+                      {t.admin.systemSettings?.gatewayFeeFormulaHint ||
+                        (isAr
+                          ? 'رسوم بوابة الدفع (Stripe) = (مبلغ الطلب × النسبة%) + الرسوم الثابتة — تُطبَّق على المدفوعات الجديدة فقط'
+                          : 'Stripe gateway fee = (order total × percent%) + fixed fee — applies to new payments only')}
+                    </p>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {[
-                      { key: 'gatewayFeePercent', labelAr: 'رسوم بوابة الدفع %', labelEn: 'Gateway Fee %', max: 10, step: 0.01, decimal: true },
-                      { key: 'gatewayFeeFixedAed', labelAr: 'رسوم بوابة ثابتة (AED)', labelEn: 'Gateway Fee Fixed (AED)', max: 50, step: 0.01, decimal: true },
+                      {
+                        key: 'gatewayFeePercent',
+                        labelAr: t.admin.systemSettings?.gatewayFeePercent || 'نسبة رسوم Stripe %',
+                        labelEn: t.admin.systemSettings?.gatewayFeePercent || 'Stripe fee %',
+                        max: 10,
+                        step: 0.01,
+                        decimal: true,
+                      },
+                      {
+                        key: 'gatewayFeeFixedAed',
+                        labelAr: t.admin.systemSettings?.gatewayFeeFixedAed || 'رسوم Stripe الثابتة (AED)',
+                        labelEn: t.admin.systemSettings?.gatewayFeeFixedAed || 'Stripe fixed fee (AED)',
+                        max: 50,
+                        step: 0.01,
+                        decimal: true,
+                      },
                       { key: 'escrowHoldHoursCustomer', labelAr: 'ساعات ضمان العميل', labelEn: 'Customer Escrow Hours', max: 168 },
                       { key: 'escrowHoldHoursMerchant', labelAr: 'ساعات ضمان التاجر', labelEn: 'Merchant Escrow Hours', max: 168 },
                       { key: 'payoutDelayDaysMerchant', labelAr: 'تأخير سحب التاجر (أيام)', labelEn: 'Merchant Payout Delay (days)', max: 30 },
@@ -839,7 +860,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                           max={field.max}
                           step={field.step ?? 1}
                           disabled={!isSuperAdmin}
-                          value={formData.financial?.[field.key] ?? 0}
+                          value={formData.financial?.[field.key] ?? (field.key === 'gatewayFeePercent' ? 2.99 : field.key === 'gatewayFeeFixedAed' ? 0.3 : 0)}
                           onChange={(e) => {
                             const raw = e.target.value;
                             if (field.decimal) {
@@ -856,6 +877,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                         />
                       </div>
                     ))}
+                  </div>
                   </div>
 
                   <div className="relative overflow-hidden rounded-[2.5rem] border border-[#635BFF]/25 bg-gradient-to-br from-[#635BFF]/10 via-[#0F1014] to-black p-8 shadow-[0_0_60px_rgba(99,91,255,0.12)]">

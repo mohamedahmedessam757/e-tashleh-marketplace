@@ -1155,6 +1155,14 @@ export class AdminFinancialService {
     financial: Record<string, unknown>,
     auditContext?: { ip?: string | null },
   ) {
+    const admin = await this.prisma.user.findUnique({
+      where: { id: adminId },
+      select: { role: true },
+    });
+    if (String(admin?.role || '').toUpperCase() !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Only SUPER_ADMIN can update financial settings');
+    }
+
     const reason = String(financial.reason || '').trim();
     if (reason.length < 10) {
       throw new BadRequestException('Financial audit reason is required (min 10 characters)');
