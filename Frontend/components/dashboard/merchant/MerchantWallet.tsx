@@ -839,11 +839,11 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                                     <code className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[11px] text-gold-500/80 group-hover:text-gold-500">
                                                         #{tx.order?.orderNumber || tx.payment?.order?.orderNumber || tx.orderNumber || tx.id.slice(0, 8).toUpperCase()}
                                                     </code>
-                                                    {(tx.displayDescriptionAr || tx.displayDescriptionEn) && (
+                                                    {(tx.displayDescriptionAr || tx.displayDescriptionEn || tx.description) && (
                                                         <span className="text-[10px] text-white/45 font-medium max-w-[220px] leading-snug normal-case">
                                                             {isAr
-                                                                ? (tx.displayDescriptionAr || tx.titleAr)
-                                                                : (tx.displayDescriptionEn || tx.titleEn)}
+                                                                ? (tx.displayDescriptionAr || tx.titleAr || tx.description)
+                                                                : (tx.displayDescriptionEn || tx.titleEn || tx.description)}
                                                         </span>
                                                     )}
                                                 </div>

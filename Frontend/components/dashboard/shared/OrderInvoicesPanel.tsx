@@ -352,6 +352,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             SHIPPING: docs.tabShipping || (isAr ? 'شحن' : 'Shipping'),
             COMMISSION: docs.tabCommission || (isAr ? 'عمولة' : 'Commission'),
             GATEWAY_FEE: docs.tabGatewayFee || (isAr ? 'رسوم بوابة' : 'Gateway Fee'),
+            REFUND: docs.tabRefund || (isAr ? 'استرداد' : 'Refund'),
         };
         return map[tab];
     };
@@ -364,7 +365,9 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     ? docs.shippingInvoiceTitle || (isAr ? 'فاتورة الشحن' : 'Shipping Invoice')
                     : activeDocTab === 'GATEWAY_FEE'
                         ? docs.gatewayFeeInvoiceTitle || (isAr ? 'فاتورة رسوم بوابة الدفع' : 'Gateway Fee Invoice')
-                        : docs.commissionInvoiceTitle || (isAr ? 'فاتورة عمولة المنصة' : 'Platform Commission Invoice'),
+                        : activeDocTab === 'REFUND'
+                            ? docs.refundInvoiceTitle || (isAr ? 'فاتورة استرداد' : 'Refund Invoice')
+                            : docs.commissionInvoiceTitle || (isAr ? 'فاتورة عمولة المنصة' : 'Platform Commission Invoice'),
         invoiceNumber: docs.invoiceNumber || (isAr ? 'رقم الفاتورة' : 'Invoice #'),
         orderNumber: docs.orderNumber || (isAr ? 'رقم الطلب' : 'Order #'),
         offerNumber: docs.offerNumber || (isAr ? 'رقم العرض' : 'Offer #'),
@@ -378,6 +381,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         platformCompany: docs.platformCompany || (isAr ? 'الشركة' : 'Company'),
         commissionAmount: docs.commissionAmount || (isAr ? 'عمولة المنصة' : 'Platform commission'),
         gatewayFee: docs.gatewayFee || (isAr ? 'رسوم بوابة الدفع' : 'Gateway fee'),
+        refundAmount: docs.refundAmount || (isAr ? 'مبلغ الاسترداد' : 'Refund amount'),
         refundFee: docs.refundFee || (isAr ? 'رسوم الاسترداد' : 'Refund fee'),
         roundtripShipping: docs.roundtripShipping || (isAr ? 'شحن ذهاب وعودة' : 'Round-trip shipping'),
         adjudicationFee: docs.adjudicationFee || (isAr ? 'رسوم الحكم' : 'Adjudication fee'),
@@ -452,7 +456,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             : '--';
 
         const rawTotal = Number(inv.total || 0);
-        const finalTotal = rawTotal > 0 ? rawTotal : Number(acceptedOffer?.unitPrice || 0);
+        // Preserve negative REFUND totals; only fall back when total is missing/zero
+        const finalTotal = rawTotal !== 0 ? rawTotal : Number(acceptedOffer?.unitPrice || 0);
         const currency = inv.currency || 'AED';
 
         const subtotal = Number(inv.subtotal || acceptedOffer?.unitPrice || 0);
@@ -991,7 +996,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         ) : (
                                             <InvoiceTypedDocument
                                                 inv={inv}
-                                                docType={activeDocTab as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE'}
+                                                docType={activeDocTab as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE' | 'REFUND'}
                                                 isAr={isAr}
                                                 isRTL={isRTL}
                                                 labels={typedLabels}
@@ -1037,7 +1042,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     ) : (
                         <InvoiceTypedDocument
                             inv={activeInvoice}
-                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE'}
+                            docType={(activeInvoice.invoiceType || activeDocTab) as 'PART' | 'SHIPPING' | 'COMMISSION' | 'GATEWAY_FEE' | 'REFUND'}
                             isAr={isAr}
                             isRTL={isRTL}
                             labels={typedLabels}

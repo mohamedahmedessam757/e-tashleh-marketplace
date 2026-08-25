@@ -1,4 +1,7 @@
+import { REFUND_INVOICE_BATCH_PREFIX } from './invoice-snapshot.util';
+
 export const RETURNS_FEE_BATCH_PREFIX = 'RETURNS_FEE:';
+export { REFUND_INVOICE_BATCH_PREFIX };
 
 /** Sale payment may already be REFUNDED when fee invoices are issued later. */
 export const FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES = ['SUCCESS', 'REFUNDED'] as const;
@@ -11,11 +14,19 @@ export function isReturnsFeeInvoice(inv: {
     return batch.startsWith(RETURNS_FEE_BATCH_PREFIX);
 }
 
+export function isRefundProofInvoice(inv: {
+    shippingBatchKey?: string | null;
+    invoiceType?: string | null;
+}): boolean {
+    if (String(inv?.invoiceType || '').toUpperCase() === 'REFUND') return true;
+    return String(inv?.shippingBatchKey || '').startsWith(REFUND_INVOICE_BATCH_PREFIX);
+}
+
 /** Sale MASTER/PART/COMMISSION may be refund-stamped; RETURNS_FEE docs must stay PAID. */
 export function isSaleRefundStampableInvoice(inv: {
     shippingBatchKey?: string | null;
 }): boolean {
-    return !isReturnsFeeInvoice(inv);
+    return !isReturnsFeeInvoice(inv) && !isRefundProofInvoice(inv);
 }
 
 export function filterOrderInvoicesForViewer<T extends {
@@ -47,7 +58,15 @@ export function filterOrderInvoicesForViewer<T extends {
             String(inv.customerId) === viewerUserId,
     );
 
-    return [...Array.from(byPayment.values()), ...feeDocs].sort(
+    // REFUND proof docs: visible to parties on the order (same payments as MASTER, or viewer is customer)
+    const masterPaymentIds = new Set(byPayment.keys());
+    const refundDocs = invoices.filter((inv) => {
+        if (!isRefundProofInvoice(inv)) return false;
+        if (masterPaymentIds.has(inv.paymentId)) return true;
+        return viewerUserId.length > 0 && String(inv.customerId) === viewerUserId;
+    });
+
+    return [...Array.from(byPayment.values()), ...feeDocs, ...refundDocs].sort(
         (a, b) => a.issuedAt.getTime() - b.issuedAt.getTime(),
     );
 }

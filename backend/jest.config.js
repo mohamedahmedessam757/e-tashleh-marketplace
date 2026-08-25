@@ -16,6 +16,7 @@ module.exports = {
         '**/fee-settlement-plan.util.spec.ts',
         '**/adjudication-financial.util.spec.ts',
         '**/invoice-visibility.util.spec.ts',
+        '**/refund-invoice.util.spec.ts',
         '**/returns-fee-invoice.service.spec.ts',
         '**/financial-report-export.util.spec.ts',
         '**/customer-wallet-metrics.util.spec.ts',

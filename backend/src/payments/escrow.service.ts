@@ -795,7 +795,32 @@ export class EscrowService {
                 .getMaxRefundableAmountAed(payment.stripePaymentId!)
                 .catch(() => 0);
             amountToRefund = Math.max(0, Number(payment.totalAmount) - stripeMax);
-            refundResponse = { id: `db-sync-${Date.now()}` };
+            // Stable idempotency key — never Date.now() (retries must not mint new invoices/ledger rows)
+            let syncRefundId = `db-sync:${payment.id}`;
+            try {
+                const stripe = this.stripeService.getStripeClient();
+                const listed = await stripe.refunds.list({
+                    payment_intent: payment.stripePaymentId!,
+                    limit: 20,
+                });
+                const targetCents = Math.round(amountToRefund * 100);
+                const match =
+                    (listed?.data || []).find(
+                        (r: { id?: string; amount?: number; status?: string }) =>
+                            String(r.status || '').toLowerCase() === 'succeeded' &&
+                            Number(r.amount) === targetCents,
+                    ) ||
+                    (listed?.data || []).find(
+                        (r: { id?: string; status?: string }) =>
+                            String(r.status || '').toLowerCase() === 'succeeded',
+                    );
+                if (match?.id) syncRefundId = String(match.id);
+            } catch (err) {
+                this.logger.warn(
+                    `db-sync refund id resolve failed for payment=${payment.id}: ${(err as Error)?.message}`,
+                );
+            }
+            refundResponse = { id: syncRefundId };
         } else {
             if (maxRefundable <= 0) {
                 throw new BadRequestException(
@@ -866,7 +891,23 @@ export class EscrowService {
             },
         });
 
-        // Sync invoice documents for this payment (safe for combined SHIPPING)
+        // Proof invoice for this Stripe refund (partial or full) — before wallet ledger rows
+        const refundInvoice = await this.invoiceSnapshot.ensureRefundInvoice(tx, {
+            orderId: ctx.orderId,
+            paymentId: ctx.paymentId,
+            customerId: ctx.customerId,
+            refundAmount: ctx.refundAmount,
+            stripeRefundId: ctx.stripeRefundId,
+            reason: ctx.reason,
+        });
+        const invoiceMeta = refundInvoice
+            ? {
+                  invoiceId: refundInvoice.id,
+                  invoiceNumber: refundInvoice.invoiceNumber,
+              }
+            : {};
+
+        // Sync sale invoice documents for this payment (safe for combined SHIPPING)
         if (totalRefunded >= ctx.paymentTotalAmount) {
             await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, ctx.paymentId);
         }
@@ -903,6 +944,11 @@ export class EscrowService {
             }
 
             if (ctx.merchantAmount > 0 && storeBefore?.ownerId) {
+                if (!ctx.stripeRefundId) {
+                    this.logger.warn(
+                        `Vendor REFUND wallet skipped: missing stripeRefundId payment=${ctx.paymentId}`,
+                    );
+                } else {
                 const existingVendorRefund = await tx.walletTransaction.findFirst({
                     where: {
                         paymentId: ctx.paymentId,
@@ -910,17 +956,17 @@ export class EscrowService {
                         role: 'VENDOR',
                         type: 'DEBIT',
                         transactionType: { in: ['REFUND', 'refund'] },
-                        ...(ctx.stripeRefundId
-                            ? {
-                                  metadata: {
-                                      path: ['stripeRefundId'],
-                                      equals: ctx.stripeRefundId,
-                                  },
-                              }
-                            : {}),
+                        metadata: {
+                            path: ['stripeRefundId'],
+                            equals: ctx.stripeRefundId,
+                        },
                     },
-                    select: { id: true },
+                    select: { id: true, metadata: true, description: true },
                 });
+                const orderLabel = ctx.orderNumber || ctx.orderId;
+                const vendorDesc = refundInvoice
+                    ? `استرداد إداري — خصم من رصيد المتجر (طلب #${orderLabel} · ${refundInvoice.invoiceNumber})`
+                    : `استرداد إداري — خصم من رصيد المتجر (طلب #${orderLabel})`;
                 if (!existingVendorRefund) {
                     const isReleasedClawback = ctx.escrowHeldStatus === 'RELEASED';
                     const balanceAfter = isReleasedClawback
@@ -936,16 +982,34 @@ export class EscrowService {
                             balanceAfter,
                             paymentId: ctx.paymentId,
                             escrowId: ctx.escrowId,
-                            description: `استرداد إداري — خصم من رصيد المتجر (طلب #${ctx.orderNumber || ctx.orderId})`,
+                            description: vendorDesc,
                             metadata: {
                                 orderId: ctx.orderId,
                                 stripeRefundId: ctx.stripeRefundId,
                                 clawback: isReleasedClawback,
                                 ledgerOnly: !isReleasedClawback,
                                 escrowStatus: ctx.escrowHeldStatus,
+                                ...invoiceMeta,
                             },
                         } as Prisma.WalletTransactionUncheckedCreateInput,
                     });
+                } else if (refundInvoice) {
+                    const prevMeta =
+                        existingVendorRefund.metadata &&
+                        typeof existingVendorRefund.metadata === 'object' &&
+                        !Array.isArray(existingVendorRefund.metadata)
+                            ? (existingVendorRefund.metadata as Record<string, unknown>)
+                            : {};
+                    if (!prevMeta.invoiceNumber) {
+                        await tx.walletTransaction.update({
+                            where: { id: existingVendorRefund.id },
+                            data: {
+                                description: vendorDesc,
+                                metadata: { ...prevMeta, ...invoiceMeta } as Prisma.InputJsonValue,
+                            },
+                        });
+                    }
+                }
                 }
             }
         }
@@ -953,37 +1017,82 @@ export class EscrowService {
         if (ctx.refundAmount > 0 && ctx.customerId) {
             const ledger = ctx.adjudicationLedger;
             const orderLabel = ctx.orderNumber || ctx.orderId;
-            await tx.walletTransaction.create({
-                data: {
+            if (!ctx.stripeRefundId) {
+                this.logger.warn(
+                    `Customer REFUND wallet skipped: missing stripeRefundId payment=${ctx.paymentId}`,
+                );
+            } else {
+            const existingCustomerRefund = await tx.walletTransaction.findFirst({
+                where: {
+                    paymentId: ctx.paymentId,
                     userId: ctx.customerId,
                     role: 'CUSTOMER',
                     type: 'CREDIT',
-                    transactionType: 'REFUND',
-                    amount: ctx.refundAmount,
-                    balanceAfter: 0,
-                    paymentId: ctx.paymentId,
-                    description: ledger
-                        ? `استرداد نزاع/إرجاع — طلب #${orderLabel}`
-                        : `Refund for Order #${orderLabel}`,
+                    transactionType: { in: ['REFUND', 'refund'] },
                     metadata: {
-                        orderId: ctx.orderId,
-                        stripeRefundId: ctx.stripeRefundId,
-                        ...(ledger
-                            ? {
-                                  caseId: ledger.caseId,
-                                  caseType: ledger.caseType,
-                                  faultParty: ledger.faultParty,
-                                  feeBearer: ledger.feeBearer,
-                                  grossPaid: ledger.grossPaid,
-                                  platformFees: ledger.platformFees,
-                                  shippingDeducted: ledger.shippingDeducted,
-                                  shippingCompanyLiability: ledger.shippingCompanyLiability,
-                                  netRefunded: ctx.refundAmount,
-                              }
-                            : {}),
+                        path: ['stripeRefundId'],
+                        equals: ctx.stripeRefundId,
                     },
-                } as Prisma.WalletTransactionUncheckedCreateInput,
+                },
+                select: { id: true, metadata: true },
             });
+            const customerDesc = ledger
+                ? refundInvoice
+                    ? `استرداد نزاع/إرجاع — طلب #${orderLabel} · ${refundInvoice.invoiceNumber}`
+                    : `استرداد نزاع/إرجاع — طلب #${orderLabel}`
+                : refundInvoice
+                  ? `Refund for Order #${orderLabel} · ${refundInvoice.invoiceNumber}`
+                  : `Refund for Order #${orderLabel}`;
+            const customerMeta = {
+                orderId: ctx.orderId,
+                stripeRefundId: ctx.stripeRefundId,
+                ...invoiceMeta,
+                ...(ledger
+                    ? {
+                          caseId: ledger.caseId,
+                          caseType: ledger.caseType,
+                          faultParty: ledger.faultParty,
+                          feeBearer: ledger.feeBearer,
+                          grossPaid: ledger.grossPaid,
+                          platformFees: ledger.platformFees,
+                          shippingDeducted: ledger.shippingDeducted,
+                          shippingCompanyLiability: ledger.shippingCompanyLiability,
+                          netRefunded: ctx.refundAmount,
+                      }
+                    : {}),
+            };
+            if (!existingCustomerRefund) {
+                await tx.walletTransaction.create({
+                    data: {
+                        userId: ctx.customerId,
+                        role: 'CUSTOMER',
+                        type: 'CREDIT',
+                        transactionType: 'REFUND',
+                        amount: ctx.refundAmount,
+                        balanceAfter: 0,
+                        paymentId: ctx.paymentId,
+                        description: customerDesc,
+                        metadata: customerMeta,
+                    } as Prisma.WalletTransactionUncheckedCreateInput,
+                });
+            } else if (refundInvoice) {
+                const prevMeta =
+                    existingCustomerRefund.metadata &&
+                    typeof existingCustomerRefund.metadata === 'object' &&
+                    !Array.isArray(existingCustomerRefund.metadata)
+                        ? (existingCustomerRefund.metadata as Record<string, unknown>)
+                        : {};
+                if (!prevMeta.invoiceNumber) {
+                    await tx.walletTransaction.update({
+                        where: { id: existingCustomerRefund.id },
+                        data: {
+                            description: customerDesc,
+                            metadata: { ...prevMeta, ...invoiceMeta } as Prisma.InputJsonValue,
+                        },
+                    });
+                }
+            }
+            }
         }
     }
 

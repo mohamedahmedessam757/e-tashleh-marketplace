@@ -6,10 +6,12 @@ import {
   InvoiceDocType,
   ShippingLineItem,
   mergeShippingLineItems,
+  refundInvoiceBatchKey,
   resolveShippingBatch,
   sumShippingLineItems,
 } from './invoice-snapshot.util';
 import { RETURNS_FEE_BATCH_PREFIX, isReturnsFeeInvoice } from './invoice-visibility.util';
+import { roundMoney2 } from '../payments/cancel-refund.util';
 
 export interface InvoiceBundleContext {
   orderId: string;
@@ -27,6 +29,19 @@ export interface InvoiceBundleContext {
   shippingType?: string | null;
   cartShipmentId?: string | null;
   offerId?: string | null;
+  platformLegalNameEn?: string | null;
+  platformLegalNameAr?: string | null;
+  actorId?: string | null;
+}
+
+export interface RefundInvoiceContext {
+  orderId: string;
+  paymentId: string;
+  customerId: string;
+  refundAmount: number;
+  stripeRefundId: string;
+  currency?: string;
+  reason?: string | null;
   platformLegalNameEn?: string | null;
   platformLegalNameAr?: string | null;
   actorId?: string | null;
@@ -74,7 +89,9 @@ export class InvoiceSnapshotService {
           ? 'INV-S-'
           : type === 'GATEWAY_FEE'
             ? 'INV-G-'
-            : 'INV-C-';
+            : type === 'REFUND'
+              ? 'INV-R-'
+              : 'INV-C-';
     return base.replace(/^INV-/, prefix);
   }
 
@@ -337,6 +354,170 @@ export class InvoiceSnapshotService {
     };
   }
 
+  /**
+   * Idempotent REFUND proof invoice (negative total).
+   * Keyed by shippingBatchKey = REFUND:{stripeRefundId}.
+   */
+  async ensureRefundInvoice(
+    tx: Tx,
+    ctx: RefundInvoiceContext,
+  ): Promise<{ id: string; invoiceNumber: string; total: number; alreadyExisted: boolean } | null> {
+    const refundAmount = roundMoney2(Number(ctx.refundAmount) || 0);
+    const stripeRefundId = String(ctx.stripeRefundId || '').trim();
+    if (refundAmount <= 0 || !stripeRefundId) {
+      return null;
+    }
+    if (!ctx.orderId || !ctx.paymentId || !ctx.customerId) {
+      this.logger.warn(
+        `ensureRefundInvoice skipped: missing ids order=${ctx.orderId} payment=${ctx.paymentId}`,
+      );
+      return null;
+    }
+
+    const batchKey = refundInvoiceBatchKey(stripeRefundId);
+    const existing = await tx.invoice.findFirst({
+      where: { invoiceType: 'REFUND', shippingBatchKey: batchKey },
+      select: { id: true, invoiceNumber: true, total: true },
+    });
+    if (existing) {
+      const existingTotal = Number(existing.total);
+      const expectedTotal = -refundAmount;
+      // Correct stale/wrong total if a prior writer used a mismatched delta
+      if (roundMoney2(existingTotal) !== roundMoney2(expectedTotal)) {
+        const updated = await tx.invoice.update({
+          where: { id: existing.id },
+          data: {
+            total: expectedTotal,
+            lineItems: [
+              {
+                kind: 'REFUND',
+                amount: expectedTotal,
+                stripeRefundId,
+                reason: ctx.reason || null,
+                label: 'Customer refund',
+              },
+            ] as unknown as Prisma.InputJsonValue,
+          },
+          select: { id: true, invoiceNumber: true, total: true },
+        });
+        return {
+          id: updated.id,
+          invoiceNumber: updated.invoiceNumber,
+          total: Number(updated.total),
+          alreadyExisted: true,
+        };
+      }
+      return {
+        id: existing.id,
+        invoiceNumber: existing.invoiceNumber,
+        total: existingTotal,
+        alreadyExisted: true,
+      };
+    }
+
+    const master = await tx.invoice.findFirst({
+      where: { paymentId: ctx.paymentId, invoiceType: 'MASTER' },
+      select: {
+        id: true,
+        invoiceGroupId: true,
+        platformLegalNameEn: true,
+        platformLegalNameAr: true,
+      },
+    });
+    const invoiceGroupId = master?.invoiceGroupId || null;
+    const parentInvoiceId = master?.id || null;
+    const currency = ctx.currency || 'AED';
+    const total = -refundAmount;
+    const invoiceNumber = await this.nextInvoiceNumber(tx, 'REFUND');
+
+    let created: { id: string; invoiceNumber: string; total: unknown };
+    try {
+      created = await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          orderId: ctx.orderId,
+          paymentId: ctx.paymentId,
+          customerId: ctx.customerId,
+          subtotal: 0,
+          shipping: 0,
+          commission: 0,
+          total,
+          currency,
+          status: 'PAID',
+          invoiceType: 'REFUND',
+          invoiceGroupId,
+          parentInvoiceId,
+          shippingBatchKey: batchKey,
+          platformLegalNameEn:
+            ctx.platformLegalNameEn || master?.platformLegalNameEn || null,
+          platformLegalNameAr:
+            ctx.platformLegalNameAr || master?.platformLegalNameAr || null,
+          lineItems: [
+            {
+              kind: 'REFUND',
+              amount: total,
+              stripeRefundId,
+              reason: ctx.reason || null,
+              label: 'Customer refund',
+            },
+          ] as unknown as Prisma.InputJsonValue,
+        },
+        select: { id: true, invoiceNumber: true, total: true },
+      });
+    } catch (err: any) {
+      // Concurrent create race on unique (shipping_batch_key, invoice_type)
+      const code = err?.code || err?.meta?.code;
+      if (code === 'P2002') {
+        const raced = await tx.invoice.findFirst({
+          where: { invoiceType: 'REFUND', shippingBatchKey: batchKey },
+          select: { id: true, invoiceNumber: true, total: true },
+        });
+        if (raced) {
+          return {
+            id: raced.id,
+            invoiceNumber: raced.invoiceNumber,
+            total: Number(raced.total),
+            alreadyExisted: true,
+          };
+        }
+      }
+      throw err;
+    }
+
+    try {
+      await this.auditLogs.logAction(
+        {
+          orderId: ctx.orderId,
+          action: 'REFUND_INVOICE_CREATED',
+          entity: 'Invoice',
+          actorType: ActorType.SYSTEM,
+          actorId: ctx.actorId || undefined,
+          metadata: {
+            paymentId: ctx.paymentId,
+            invoiceId: created.id,
+            invoiceNumber: created.invoiceNumber,
+            stripeRefundId,
+            total,
+            refundAmount,
+          },
+          newState: 'PAID',
+        },
+        tx,
+      );
+    } catch (auditErr) {
+      this.logger.warn(
+        `REFUND_INVOICE_CREATED audit failed: ${(auditErr as Error)?.message}`,
+      );
+    }
+
+    return {
+      id: created.id,
+      invoiceNumber: created.invoiceNumber,
+      total: Number(created.total),
+      alreadyExisted: false,
+    };
+  }
+
   /** Mark typed invoices for a fully refunded payment without killing combined SHIPPING of other payments. */
   async markPaymentInvoicesRefunded(
     tx: Tx,
@@ -344,6 +525,7 @@ export class InvoiceSnapshotService {
   ): Promise<number> {
     let updated = 0;
 
+    // REFUND proof docs stay PAID (excluded from this type list intentionally).
     const core = await tx.invoice.updateMany({
       where: {
         paymentId,
