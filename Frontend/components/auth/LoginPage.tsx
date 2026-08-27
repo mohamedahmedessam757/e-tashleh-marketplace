@@ -291,6 +291,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         const isOrder =
           pendingRedirect.path === 'order-details' || pendingRedirect.path === 'explore-offer';
         const shortId = pendingRedirect.id ? String(pendingRedirect.id).slice(0, 8) : '';
+        const isShipmentTab =
+          typeof pendingRedirect.search === 'string' &&
+          /(?:^|[?&])tab=waybills(?:&|$)/.test(pendingRedirect.search);
+        if (isOrder && shortId && isShipmentTab) {
+          return language === 'ar'
+            ? `سجّل الدخول لمتابعة شحن طلبك (${shortId}…)`
+            : `Sign in to continue to your shipment (${shortId}…)`;
+        }
         if (isOrder && shortId) {
           return language === 'ar'
             ? `سجّل الدخول لمتابعة طلبك (${shortId}…)`

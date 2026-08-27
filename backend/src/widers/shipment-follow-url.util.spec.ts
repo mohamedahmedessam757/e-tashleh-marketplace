@@ -1,7 +1,52 @@
 import {
+    buildOrderFollowUrl,
     buildShipmentFollowUrl,
     DEFAULT_SHIPMENT_FRONTEND_ORIGIN,
 } from './shipment-follow-url.util';
+
+describe('buildOrderFollowUrl', () => {
+    const orderId = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+
+    it('builds customer order URL without tab', () => {
+        const url = buildOrderFollowUrl({
+            role: 'CUSTOMER',
+            orderId,
+            frontendUrl: 'https://e-tashleh.net',
+        });
+        expect(url).toBe(`https://e-tashleh.net/dashboard/order-details/${orderId}`);
+    });
+
+    it('builds merchant order URL without tab', () => {
+        const url = buildOrderFollowUrl({
+            role: 'MERCHANT',
+            orderId,
+            frontendUrl: 'https://e-tashleh.net/',
+        });
+        expect(url).toBe(`https://e-tashleh.net/dashboard/explore-offer/${orderId}`);
+    });
+
+    it('appends waybills tab for shipments', () => {
+        const url = buildOrderFollowUrl({
+            role: 'CUSTOMER',
+            orderId,
+            frontendUrl: 'https://e-tashleh.net',
+            tab: 'waybills',
+        });
+        expect(url).toBe(
+            `https://e-tashleh.net/dashboard/order-details/${orderId}?tab=waybills`,
+        );
+    });
+
+    it('returns null for invalid orderId', () => {
+        expect(
+            buildOrderFollowUrl({
+                role: 'CUSTOMER',
+                orderId: 'not-a-uuid',
+                frontendUrl: 'https://e-tashleh.net',
+            }),
+        ).toBeNull();
+    });
+});
 
 describe('buildShipmentFollowUrl', () => {
     const orderId = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';

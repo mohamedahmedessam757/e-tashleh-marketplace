@@ -30,7 +30,7 @@ import {
 } from './whatsapp-notification.mapper';
 import { WhatsAppMessageLogService } from './whatsapp-message-log.service';
 import { resolveUserPhone } from '../common/phone/gulf-phone.util';
-import { buildShipmentFollowUrl } from './shipment-follow-url.util';
+import { buildOrderFollowUrl } from './shipment-follow-url.util';
 
 export interface WhatsAppDispatchContext {
     phone: string;
@@ -434,8 +434,27 @@ export class WhatsAppChannelService {
                         `${fields.status_detail || statusDetail} | ${trackingLabel}`,
                     );
                 }
-                const followUrl = this.resolveShipmentFollowUrl(audienceRole, orderId);
-                fields.tracking_number = followUrl ?? 'غير متوفر';
+            }
+
+            // Order + shipment: Nest-generated absolute deep-link for body {{4}} (v3 follow_url;
+            // v2 shipment still maps the same URL into tracking_number).
+            if (family.startsWith('txn_order_') || family.startsWith('txn_shipment_')) {
+                const followUrl = this.resolveOrderFollowUrl(
+                    audienceRole,
+                    orderId,
+                    family.startsWith('txn_shipment_') ? 'waybills' : undefined,
+                );
+                const followValue = followUrl ?? 'غير متوفر';
+                if (!followUrl) {
+                    this.logger.warn(
+                        `WhatsApp follow_url unavailable for ${family} orderId=${orderId ?? 'null'}`,
+                    );
+                }
+                fields.follow_url = followValue;
+                if (family.startsWith('txn_shipment_')) {
+                    // v2 body field name remains tracking_number (same URL value)
+                    fields.tracking_number = followValue;
+                }
             }
 
             if (family.startsWith('txn_invoice_')) {
@@ -555,19 +574,21 @@ export class WhatsAppChannelService {
         return match?.[1] ?? '-';
     }
 
-    private resolveShipmentFollowUrl(
+    private resolveOrderFollowUrl(
         role: WhatsAppAudienceRole,
         orderId: string | null,
+        tab?: 'waybills',
     ): string | null {
         if (!this.config.frontendUrl) {
             this.logger.warn(
-                'WhatsApp shipment link: FRONTEND_URL missing — falling back to https://e-tashleh.net',
+                'WhatsApp follow link: FRONTEND_URL missing — falling back to https://e-tashleh.net',
             );
         }
-        return buildShipmentFollowUrl({
+        return buildOrderFollowUrl({
             role,
             orderId,
             frontendUrl: this.config.frontendUrl,
+            tab,
         });
     }
 
