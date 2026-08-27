@@ -3,13 +3,15 @@
  * Compare TEMPLATE_REGISTRY with Widers getTemplates API.
  * Usage: node scripts/widers-template-audit.mjs
  * Requires: WIDERS_API_TOKEN, optional WIDERS_API_BASE_URL
+ *
+ * Order/shipment v3 are soft-checked (warn only) until Meta APPROVED.
  */
 const baseUrl = (
     process.env.WIDERS_API_BASE_URL?.trim() || 'https://apps.widers.net'
 ).replace(/\/$/, '');
 const token = process.env.WIDERS_API_TOKEN?.trim();
 
-const REGISTRY_NAMES = [
+const REQUIRED_NAMES = [
     'auth_otp_customer_ar_v2',
     'auth_otp_vendor_ar_v2',
     'auth_otp_admin_ar_v2',
@@ -26,6 +28,13 @@ const REGISTRY_NAMES = [
     'txn_verification_vendor_ar_v2',
     'welcome_customer_ar_v2',
     'welcome_vendor_ar_v2',
+];
+
+const OPTIONAL_V3_NAMES = [
+    'txn_order_customer_ar_v3',
+    'txn_order_merchant_ar_v3',
+    'txn_shipment_customer_ar_v3',
+    'txn_shipment_merchant_ar_v3',
 ];
 
 async function main() {
@@ -61,21 +70,30 @@ async function main() {
         }
     }
 
-    const missing = REGISTRY_NAMES.filter((name) => {
-        const lower = name.toLowerCase();
-        const base = lower.replace(/_ar_v2$/, '');
-        return !apiNames.has(lower) && ![...apiNames].some((a) => a.includes(base));
-    });
+    const missingRequired = REQUIRED_NAMES.filter(
+        (name) => !apiNames.has(name.toLowerCase()),
+    );
+    const missingV3 = OPTIONAL_V3_NAMES.filter(
+        (name) => !apiNames.has(name.toLowerCase()),
+    );
 
-    console.log(`Registry: ${REGISTRY_NAMES.length} templates (v2)`);
+    console.log(`Required: ${REQUIRED_NAMES.length} | Optional v3: ${OPTIONAL_V3_NAMES.length}`);
     console.log(`Widers API: ${apiNames.size} templates`);
-    if (missing.length === 0) {
-        console.log('OK — all registry templates found in Widers API');
+
+    if (missingV3.length) {
+        console.warn('Pending order/shipment v3 in Widers (non-fatal):');
+        for (const m of missingV3) console.warn(`  - ${m}`);
+    } else {
+        console.log('OK — order/shipment v3 templates present');
+    }
+
+    if (missingRequired.length === 0) {
+        console.log('OK — all required registry templates found in Widers API');
         process.exit(0);
     }
 
-    console.error('Missing in Widers API:');
-    for (const m of missing) console.error(`  - ${m}`);
+    console.error('Missing required in Widers API:');
+    for (const m of missingRequired) console.error(`  - ${m}`);
     process.exit(1);
 }
 

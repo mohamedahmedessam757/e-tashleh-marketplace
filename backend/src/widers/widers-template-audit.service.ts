@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TEMPLATE_REGISTRY } from './template-registry';
+import { resolveTemplateName, TEMPLATE_REGISTRY } from './template-registry';
 import { WidersService } from './widers.service';
 
 export interface TemplateAuditRow {
@@ -72,7 +72,7 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
 };
 
 function familyBaseFromTemplateName(name: string): string {
-    return name.replace(/_ar_v2$|_en_v2$|_ar$|_en$/, '');
+    return name.replace(/_ar_v3$|_en_v3$|_ar_v2$|_en_v2$|_ar$|_en$/, '');
 }
 
 function extractApiTemplateNames(data: unknown): string[] {
@@ -157,6 +157,8 @@ export class WidersTemplateAuditService {
             order_number: 'ORD-2606-00001',
             status_detail: 'تحديث تجريبي',
             tracking_number: 'TRK-TEST-001',
+            follow_url:
+                'https://e-tashleh.net/dashboard/order-details/00000000-0000-4000-8000-000000000001',
             invoice_number: 'INV-TEST-001',
             amount: '100 AED',
             summary: 'ملخص تجريبي',
@@ -164,9 +166,12 @@ export class WidersTemplateAuditService {
             doc_type: 'رخصة تجارية',
         };
 
-        const def = TEMPLATE_REGISTRY.find(
-            (t) => familyBaseFromTemplateName(t.name) === familyBase,
-        );
+        const activeName = resolveTemplateName(familyBase, 'ar');
+        const def =
+            TEMPLATE_REGISTRY.find((t) => t.name === activeName) ??
+            TEMPLATE_REGISTRY.find(
+                (t) => familyBaseFromTemplateName(t.name) === familyBase,
+            );
         if (!def) return { name: samples.name };
 
         const fields: Record<string, string> = {};

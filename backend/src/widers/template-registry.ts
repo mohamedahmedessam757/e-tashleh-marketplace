@@ -11,11 +11,14 @@ export type TemplateBodyField =
     | 'order_number'
     | 'status_detail'
     | 'tracking_number'
+    | 'follow_url'
     | 'invoice_number'
     | 'amount'
     | 'summary'
     | 'store_name'
     | 'doc_type';
+
+export type TemplateNameVersion = 'v2' | 'v3';
 
 export interface TemplateDefinition {
     name: string;
@@ -41,20 +44,33 @@ const suffix = {
     storeHome: 'home',
 } as const;
 
+/** Families that can cut over between _ar_v2 (button) and _ar_v3 (body follow_url, no button). */
+export const ORDER_SHIPMENT_TEMPLATE_FAMILIES = [
+    'txn_order_customer',
+    'txn_order_merchant',
+    'txn_shipment_customer',
+    'txn_shipment_merchant',
+] as const;
+
+export type OrderShipmentTemplateFamily = (typeof ORDER_SHIPMENT_TEMPLATE_FAMILIES)[number];
+
 function def(
     baseName: string,
     language: WidersTemplateLanguage,
     audience: WidersAudience,
     bodyFields: TemplateBodyField[],
-    opts: Partial<Omit<TemplateDefinition, 'name' | 'language' | 'audience' | 'bodyFields'>> = {},
+    opts: Partial<Omit<TemplateDefinition, 'name' | 'language' | 'audience' | 'bodyFields'>> & {
+        version?: TemplateNameVersion;
+    } = {},
 ): TemplateDefinition {
+    const { version = 'v2', ...rest } = opts;
     return {
-        name: `${baseName}_${language}_v2`,
+        name: `${baseName}_${language}_${version}`,
         language,
         audience,
-        category: opts.category ?? 'UTILITY',
+        category: rest.category ?? 'UTILITY',
         bodyFields,
-        ...opts,
+        ...rest,
     };
 }
 
@@ -74,7 +90,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
-    // Orders — Meta button URLs are static (no {{n}}); do not send button params
+    // Orders v2 — Meta button URLs are static; do not send button params
     def('txn_order_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
         headerText: 'تحديث حالة الطلب',
         buttonLabel: 'عرض الطلب',
@@ -88,7 +104,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
-    // Shipments
+    // Shipments v2 — body {{4}} = platform deep-link; button still static in WABA
     def('txn_shipment_customer', 'ar', 'customer', [
         'name',
         'order_number',
@@ -111,6 +127,52 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonSuffixPattern: suffix.orderMerchant,
         buttonUrlDynamic: false,
     }),
+
+    // Orders / shipments v3 — no URL button; Nest injects absolute follow_url as {{4}}
+    def(
+        'txn_order_customer',
+        'ar',
+        'customer',
+        ['name', 'order_number', 'status_detail', 'follow_url'],
+        {
+            version: 'v3',
+            headerText: 'تحديث حالة الطلب',
+            buttonUrlDynamic: false,
+        },
+    ),
+    def(
+        'txn_order_merchant',
+        'ar',
+        'merchant',
+        ['name', 'order_number', 'status_detail', 'follow_url'],
+        {
+            version: 'v3',
+            headerText: 'تحديث حالة الطلب',
+            buttonUrlDynamic: false,
+        },
+    ),
+    def(
+        'txn_shipment_customer',
+        'ar',
+        'customer',
+        ['name', 'order_number', 'status_detail', 'follow_url'],
+        {
+            version: 'v3',
+            headerText: 'تحديث الشحن',
+            buttonUrlDynamic: false,
+        },
+    ),
+    def(
+        'txn_shipment_merchant',
+        'ar',
+        'merchant',
+        ['name', 'order_number', 'status_detail', 'follow_url'],
+        {
+            version: 'v3',
+            headerText: 'تحديث شحن الطلب',
+            buttonUrlDynamic: false,
+        },
+    ),
 
     // Invoices (per offer)
     def('txn_invoice_customer', 'ar', 'customer', [
@@ -220,13 +282,35 @@ export function getTemplateDefinition(name: string): TemplateDefinition | undefi
     return registryByName.get(name);
 }
 
-/** Widers/Meta template suffix after full Arabic rebuild (June 2026). */
+/** Default Widers/Meta template suffix for families that are not order/shipment cutover. */
 export const TEMPLATE_NAME_VERSION_SUFFIX = '_v2';
+
+const ORDER_SHIPMENT_FAMILY_SET = new Set<string>(ORDER_SHIPMENT_TEMPLATE_FAMILIES);
+
+export function isOrderShipmentTemplateFamily(familyBase: string): boolean {
+    return ORDER_SHIPMENT_FAMILY_SET.has(familyBase);
+}
+
+/**
+ * Cutover for order/shipment templates only.
+ * Default v2 keeps production on approved Meta templates until v3 is APPROVED.
+ * Set WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3 after Meta approval + staging probe.
+ */
+export function getOrderShipmentTemplateVersion(
+    envValue: string | undefined = process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION,
+): TemplateNameVersion {
+    const raw = (envValue ?? 'v2').trim().toLowerCase();
+    return raw === 'v3' ? 'v3' : 'v2';
+}
 
 export function resolveTemplateName(
     familyBase: string,
     language: WidersTemplateLanguage,
 ): string {
+    if (isOrderShipmentTemplateFamily(familyBase)) {
+        const version = getOrderShipmentTemplateVersion();
+        return `${familyBase}_${language}_${version}`;
+    }
     return `${familyBase}_${language}${TEMPLATE_NAME_VERSION_SUFFIX}`;
 }
 

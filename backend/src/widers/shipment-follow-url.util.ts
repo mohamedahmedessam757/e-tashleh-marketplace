@@ -5,14 +5,18 @@ const ORDER_UUID_RE =
 
 export const DEFAULT_SHIPMENT_FRONTEND_ORIGIN = 'https://e-tashleh.net';
 
+export type OrderFollowTab = 'waybills';
+
 /**
- * Absolute dashboard deep-link for WhatsApp shipment body {{4}}.
+ * Absolute dashboard deep-link for WhatsApp body follow_url / shipment {{4}}.
  * No tokens — SPA session gate handles auth via pendingRedirect.
  */
-export function buildShipmentFollowUrl(params: {
+export function buildOrderFollowUrl(params: {
     role: WhatsAppAudienceRole;
     orderId: string | null | undefined;
     frontendUrl?: string | null;
+    /** When set (shipments), appends ?tab=waybills */
+    tab?: OrderFollowTab;
 }): string | null {
     const orderId = params.orderId?.trim();
     if (!orderId || !ORDER_UUID_RE.test(orderId)) {
@@ -27,5 +31,21 @@ export function buildShipmentFollowUrl(params: {
             ? `order-details/${orderId}`
             : `explore-offer/${orderId}`;
 
-    return `${origin}/dashboard/${path}?tab=waybills`;
+    const base = `${origin}/dashboard/${path}`;
+    return params.tab === 'waybills' ? `${base}?tab=waybills` : base;
+}
+
+/**
+ * Absolute dashboard deep-link for WhatsApp shipment body {{4}}.
+ * @deprecated Prefer buildOrderFollowUrl({ tab: 'waybills' })
+ */
+export function buildShipmentFollowUrl(params: {
+    role: WhatsAppAudienceRole;
+    orderId: string | null | undefined;
+    frontendUrl?: string | null;
+}): string | null {
+    return buildOrderFollowUrl({
+        ...params,
+        tab: 'waybills',
+    });
 }
