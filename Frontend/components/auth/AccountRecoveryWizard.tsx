@@ -1,410 +1,929 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, ShieldCheck, AlertCircle, ArrowRight, ArrowLeft, KeyRound, Clock } from 'lucide-react';
+import {
+  ShieldCheck,
+  AlertCircle,
+  Lock,
+  CheckCircle2,
+} from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { authApi } from '../../services/api/auth'; // Ensure this has the new recovery endpoints
+import { authApi } from '../../services/api/auth';
+import {
+  OTP_EXPIRY_SECONDS,
+  formatOtpCountdown,
+  otpSecondsFromMinutes,
+} from '../../utils/otpConfig';
 
 interface AccountRecoveryWizardProps {
-    onBackToLogin: () => void;
-    role: 'customer' | 'merchant';
+  onBackToLogin: () => void;
+  role: 'customer' | 'merchant';
 }
 
-export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({ onBackToLogin, role }) => {
-    const { language } = useLanguage();
-    const isAr = language === 'ar';
+type Step =
+  | 'triage-email'
+  | 'triage-phone'
+  | 'suggest-login'
+  | 'case1-phone'
+  | 'case1-otp'
+  | 'case1-verified'
+  | 'case1-new-phone'
+  | 'case1-new-otp'
+  | 'case2-email'
+  | 'case2-otp'
+  | 'case2-verified'
+  | 'case2-new-email'
+  | 'case2-new-otp'
+  | 'case3-ids'
+  | 'case3-pending'
+  | 'case3-resume'
+  | 'case3-new-contacts'
+  | 'case3-otps'
+  | 'done';
 
-    const [step, setStep] = useState<number>(1);
-    const [email, setEmail] = useState('');
-    const [emailOtp, setEmailOtp] = useState(['', '', '', '', '', '']);
-    const [countryCode, setCountryCode] = useState('+966');
-    const [newPhone, setNewPhone] = useState('');
-    const [phoneOtp, setPhoneOtp] = useState(['', '', '', '', '', '']);
+const COUNTRIES = [
+  { code: '+966', ar: 'السعودية', en: 'Saudi Arabia' },
+  { code: '+971', ar: 'الإمارات', en: 'UAE' },
+  { code: '+973', ar: 'البحرين', en: 'Bahrain' },
+  { code: '+974', ar: 'قطر', en: 'Qatar' },
+  { code: '+965', ar: 'الكويت', en: 'Kuwait' },
+  { code: '+968', ar: 'عمان', en: 'Oman' },
+];
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [shake, setShake] = useState(false);
+export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
+  onBackToLogin,
+  role,
+}) => {
+  const { language } = useLanguage();
+  const isAr = language === 'ar';
 
-    // Security States
-    const [failedAttempts, setFailedAttempts] = useState(0);
-    const [showCaptcha, setShowCaptcha] = useState(false);
+  const [step, setStep] = useState<Step>('triage-email');
+  const [hasEmailAccess, setHasEmailAccess] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [doneMessage, setDoneMessage] = useState('');
 
-    const [resultStatus, setResultStatus] = useState<'APPROVED' | 'PENDING_REVIEW' | null>(null);
-    const [resultMessage, setResultMessage] = useState('');
+  const [countryCode, setCountryCode] = useState('+966');
+  const [oldPhoneLocal, setOldPhoneLocal] = useState('');
+  const [newPhoneLocal, setNewPhoneLocal] = useState('');
+  const [newCountryCode, setNewCountryCode] = useState('+966');
+  const [oldEmail, setOldEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [maskedHint, setMaskedHint] = useState<string | null>(null);
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [phoneOtpDigits, setPhoneOtpDigits] = useState(['', '', '', '', '', '']);
+  const [emailOtpDigits, setEmailOtpDigits] = useState(['', '', '', '', '', '']);
+  const [secondsLeft, setSecondsLeft] = useState(OTP_EXPIRY_SECONDS);
+  const [resumeToken, setResumeToken] = useState('');
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    const countries = [
-        { code: '+966', name: isAr ? 'السعودية' : 'Saudi Arabia', flag: '🇸🇦' },
-        { code: '+971', name: isAr ? 'الإمارات' : 'UAE', flag: '🇦🇪' },
-        { code: '+973', name: isAr ? 'البحرين' : 'Bahrain', flag: '🇧🇭' },
-        { code: '+974', name: isAr ? 'قطر' : 'Qatar', flag: '🇶🇦' },
-        { code: '+965', name: isAr ? 'الكويت' : 'Kuwait', flag: '🇰🇼' },
-        { code: '+968', name: isAr ? 'عمان' : 'Oman', flag: '🇴🇲' },
-    ];
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const t = window.setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [secondsLeft, step]);
 
-    const triggerError = (msg: string) => {
-        setError(msg);
-        setShake(true);
-        setTimeout(() => setShake(false), 500);
-    };
+  const title =
+    role === 'merchant'
+      ? isAr
+        ? 'استرجاع حساب التاجر'
+        : 'Merchant Account Recovery'
+      : isAr
+        ? 'استرجاع حساب العميل'
+        : 'Customer Account Recovery';
 
-    const handleRequestEmailOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!email.includes('@')) {
-            triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
-            return;
-        }
+  const triggerError = (msg: string) => setError(msg);
+  const clearOtp = () => setOtpDigits(['', '', '', '', '', '']);
+  const otpString = (digits: string[]) => digits.join('');
 
-        setIsLoading(true);
-        setError(null);
-        try {
-            await authApi.requestRecoveryEmailOtp(email, role);
-            setStep(2);
-        } catch (err: any) {
-            triggerError(err.response?.data?.message || err.message || 'Error requesting OTP');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const startTimer = (minutes?: number) => {
+    setSecondsLeft(otpSecondsFromMinutes(minutes));
+  };
 
-    const handleVerifyEmailOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const otpString = emailOtp.join('');
-        if (otpString.length !== 6) {
-            triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
-            return;
-        }
+  const handleOtpChange = (
+    index: number,
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+  ) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    setter((prev) => {
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
+    if (digit && index < 5) otpRefs.current[index + 1]?.focus();
+  };
 
-        setIsLoading(true);
-        setError(null);
-        try {
-            await authApi.verifyRecoveryEmailOtp(email, otpString, role);
-            setStep(3);
-        } catch (err: any) {
-            triggerError(err.response?.data?.message || err.message || 'Invalid OTP');
-            setFailedAttempts(prev => {
-                const newCount = prev + 1;
-                if (newCount >= 5) setShowCaptcha(true);
-                return newCount;
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const handleOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent,
+    digits: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+  ) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
 
-    const handleRequestPhoneOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newPhone.length !== 9 || !newPhone.startsWith('5')) {
-            triggerError(isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must start with 5 and be 9 digits');
-            return;
-        }
+  const handleOtpPaste = (
+    e: React.ClipboardEvent,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+  ) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const next = Array(6)
+      .fill('')
+      .map((_, i) => pasted[i] || '');
+    setter(next);
+  };
 
-        setIsLoading(true);
-        setError(null);
-        try {
-            await authApi.requestRecoveryPhoneOtp(email, countryCode + newPhone, role);
-            setStep(4);
-        } catch (err: any) {
-            triggerError(err.response?.data?.message || err.message || 'Error requesting OTP');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const renderOtpRow = (
+    digits: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    refPrefix = 'main',
+  ) => (
+    <div
+      className="flex justify-center gap-1.5 sm:gap-2.5 w-full max-w-sm mx-auto"
+      dir="ltr"
+      onPaste={(e) => handleOtpPaste(e, setter)}
+    >
+      {digits.map((d, i) => (
+        <input
+          key={`${refPrefix}-${i}`}
+          ref={(el) => {
+            otpRefs.current[i] = el;
+          }}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={1}
+          value={d}
+          onChange={(e) => handleOtpChange(i, e.target.value, setter)}
+          onKeyDown={(e) => handleOtpKeyDown(i, e, digits, setter)}
+          className="w-10 h-12 sm:w-12 sm:h-14 flex-1 min-w-0 max-w-[52px] text-center text-lg sm:text-xl font-bold rounded-xl bg-black/40 border border-white/15 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 outline-none"
+        />
+      ))}
+    </div>
+  );
 
-    const handleSubmitRecovery = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const otpString = phoneOtp.join('');
-        if (otpString.length !== 6) {
-            triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        try {
-            const data = await authApi.submitRecovery(email, countryCode + newPhone, otpString, role);
-
-            setResultStatus(data.action);
-            setResultMessage(data.message);
-            setStep(5);
-        } catch (err: any) {
-            triggerError(err.response?.data?.message || err.message || 'Error submitting recovery');
-            setFailedAttempts(prev => {
-                const newCount = prev + 1;
-                if (newCount >= 5) setShowCaptcha(true);
-                return newCount;
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const renderOtpInputs = (otpArray: string[], setOtpArray: (val: string[]) => void) => {
-        return (
-            <div className="flex gap-2 justify-center" dir="ltr">
-                {otpArray.map((digit, index) => (
-                    <input
-                        key={index}
-                        id={`otp-${index}`}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '');
-                            const newOtp = [...otpArray];
-                            newOtp[index] = val;
-                            setOtpArray(newOtp);
-                            if (val && index < 5) {
-                                document.getElementById(`otp-${index + 1}`)?.focus();
-                            }
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Backspace' && !digit && index > 0) {
-                                document.getElementById(`otp-${index - 1}`)?.focus();
-                            }
-                        }}
-                        disabled={showCaptcha}
-                        className={`w-12 h-14 text-center text-xl font-bold bg-[#1A1814] text-white border rounded-lg focus:outline-none transition-all disabled:opacity-50 ${(error || showCaptcha) ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] focus:border-red-500' : 'border-white/20 focus:border-gold-500'
-                            }`}
-                    />
-                ))}
-            </div>
-        );
-    };
-
-    const getTitle = () => {
-        const roleLabelAr = role === 'merchant' ? 'التاجر' : 'العميل';
-        const roleLabelEn = role === 'merchant' ? 'Merchant' : 'Customer';
-
-        if (step === 1) return isAr ? `استرجاع حساب ${roleLabelAr}` : `${roleLabelEn} Account Recovery`;
-        if (step === 2) return isAr ? 'تحقق البريد الإلكتروني' : 'Email Verification';
-        if (step === 3) return isAr ? 'رقم الجوال الجديد' : 'New Phone Number';
-        if (step === 4) return isAr ? 'تحقق رقم الجوال' : 'Phone Verification';
-        return isAr ? 'النتيجة' : 'Result';
-    };
-
-    return (
-        <div className="max-w-md w-full mx-auto space-y-6">
-            <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-white mb-2">{getTitle()}</h2>
-                {step < 5 && (
-                    <p className="text-white/60 text-sm">
-                        {isAr ? 'حماية الحسابات وأموال العملاء هي أولويتنا' : 'Protecting accounts and funds is our priority'}
-                    </p>
-                )}
-            </div>
-
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={step}
-                    initial={{ opacity: 0, x: isAr ? -20 : 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: isAr ? 20 : -20 }}
-                    className={`bg-white/5 border border-white/10 p-6 rounded-2xl ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
-                >
-                    {error && step < 5 && (
-                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-start gap-3 text-red-400">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm font-medium">{error}</p>
-                        </div>
-                    )}
-
-                    {/* STEP 1: EMAIL */}
-                    {step === 1 && (
-                        <form onSubmit={handleRequestEmailOtp} className="space-y-6">
-                            <div>
-                                <label className="block text-sm text-gold-200 mb-2">{isAr ? 'البريد الإلكتروني المرتبط بالحساب' : 'Registered Email'}</label>
-                                <div className="relative">
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                                    <input
-                                        type="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        dir="ltr"
-                                        className={`w-full bg-[#1A1814] border rounded-xl py-4 pr-12 pl-4 text-white placeholder-white/20 focus:outline-none transition-all ${error ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] focus:border-red-500' : 'border-white/10 focus:border-gold-500'
-                                            }`}
-                                        placeholder="example@domain.com"
-                                    />
-                                </div>
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isLoading || !email}
-                                className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isAr ? 'إرسال الرمز' : 'Send Code')}
-                            </button>
-                        </form>
-                    )}
-
-                    {/* STEP 2: identity OTP (WhatsApp on registered number) */}
-                    {step === 2 && (
-                        <form onSubmit={handleVerifyEmailOtp} className="space-y-6 text-center">
-                            <p className="text-sm text-white/70">
-                                {isAr
-                                    ? 'تم إرسال رمز تحقق ذو 6 أرقام إلى واتساب الرقم المسجّل للحساب'
-                                    : 'A 6-digit code was sent to WhatsApp on the phone registered for'}<br />
-                                <strong className="text-gold-400">{email}</strong>
-                            </p>
-
-                            {renderOtpInputs(emailOtp, setEmailOtp)}
-
-                            {showCaptcha ? (
-                                <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-xl space-y-4">
-                                    <p className="text-red-400 font-bold text-sm">
-                                        {isAr ? 'لقد تجاوزت الحد المسموح من المحاولات 🛑' : 'Too many failed attempts 🛑'}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setFailedAttempts(0); setShowCaptcha(false); setError(null); }}
-                                        className="w-full py-3 bg-black/50 hover:bg-black/70 border border-white/20 text-white rounded-lg flex justify-center items-center gap-2 transition-all"
-                                    >
-                                        <ShieldCheck size={18} className="text-green-500" />
-                                        {isAr ? 'أنا لست روبوت (Verify Captcha)' : 'I am human (Verify Captcha)'}
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || emailOtp.join('').length !== 6 || showCaptcha}
-                                    className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center"
-                                >
-                                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isAr ? 'تحقق' : 'Verify')}
-                                </button>
-                            )}
-                        </form>
-                    )}
-
-                    {/* STEP 3: NEW PHONE */}
-                    {step === 3 && (
-                        <form onSubmit={handleRequestPhoneOtp} className="space-y-6">
-                            <div>
-                                <label className="block text-sm text-gold-200 mb-2">{isAr ? 'رقم الجوال الجديد' : 'New Phone Number'}</label>
-                                <div className="flex gap-2" dir="ltr">
-                                    {/* Country Code Dropdown */}
-                                    <div className="relative w-1/3 min-w-[120px]">
-                                        <select
-                                            value={countryCode}
-                                            onChange={(e) => setCountryCode(e.target.value)}
-                                            className="w-full h-full bg-[#1A1814] border border-white/10 rounded-xl px-3 py-4 text-white appearance-none outline-none focus:border-gold-500 transition-all text-sm cursor-pointer font-sans"
-                                            style={{ direction: 'ltr' }}
-                                        >
-                                            {countries.map((c) => (
-                                                <option key={c.code} value={c.code} className="bg-[#1A1814] text-white">
-                                                    {c.flag} {c.code}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
-                                            <ArrowRight className="w-4 h-4 rotate-90" />
-                                        </div>
-                                    </div>
-                                    <div className="relative flex-1">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                                        <input
-                                            type="tel"
-                                            required
-                                            maxLength={9}
-                                            value={newPhone}
-                                            onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ''))}
-                                            className="w-full bg-[#1A1814] border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white text-lg tracking-wider placeholder-white/20 focus:border-gold-500 focus:outline-none transition-all"
-                                            placeholder="5 XX XXX XXX"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isLoading || newPhone.length !== 9}
-                                className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isAr ? 'إرسال رمز التفعيل' : 'Send Activation Code')}
-                            </button>
-                        </form>
-                    )}
-
-                    {/* STEP 4: PHONE OTP */}
-                    {step === 4 && (
-                        <form onSubmit={handleSubmitRecovery} className="space-y-6 text-center">
-                            <p className="text-sm text-white/70">
-                                {isAr ? 'أدخل الرمز المرسل إلى' : 'Enter the code sent to'}<br />
-                                <strong className="text-gold-400" dir="ltr">{countryCode} {newPhone}</strong>
-                            </p>
-
-                            {renderOtpInputs(phoneOtp, setPhoneOtp)}
-
-                            {showCaptcha ? (
-                                <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-xl space-y-4">
-                                    <p className="text-red-400 font-bold text-sm">
-                                        {isAr ? 'لقد تجاوزت الحد المسموح من المحاولات 🛑' : 'Too many failed attempts 🛑'}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setFailedAttempts(0); setShowCaptcha(false); setError(null); }}
-                                        className="w-full py-3 bg-black/50 hover:bg-black/70 border border-white/20 text-white rounded-lg flex justify-center items-center gap-2 transition-all"
-                                    >
-                                        <ShieldCheck size={18} className="text-green-500" />
-                                        {isAr ? 'أنا لست روبوت (Verify Captcha)' : 'I am human (Verify Captcha)'}
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || phoneOtp.join('').length !== 6 || showCaptcha}
-                                    className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center"
-                                >
-                                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isAr ? 'إرسال الطلب النهائي' : 'Submit Request')}
-                                </button>
-                            )}
-                        </form>
-                    )}
-
-                    {/* STEP 5: FINAL RESULT */}
-                    {step === 5 && (
-                        <div className="text-center space-y-6 py-4">
-                            {resultStatus === 'APPROVED' ? (
-                                <>
-                                    <div className="w-20 h-20 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <ShieldCheck size={40} />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-white mb-2">{isAr ? 'تم تغيير الرقم بنجاح' : 'Phone Updated'}</h3>
-                                    <p className="text-white/60 text-sm leading-relaxed max-w-xs mx-auto">
-                                        {isAr ? 'تم استرجاع حسابك وربطه برقم الجوال الجديد فوراً لعدم وجود مخاطر أمنية على الحساب.' : 'Your account was recovered and linked to the new phone securely.'}
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="w-20 h-20 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center mx-auto mb-4 relative">
-                                        <ShieldCheck size={40} className="absolute opacity-20" />
-                                        <Clock size={32} />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-white mb-2">{isAr ? 'قيد المراجعة الأمنية' : 'Pending Security Review'}</h3>
-                                    <p className="text-white/60 text-sm leading-relaxed max-w-xs mx-auto">
-                                        {resultMessage || (isAr ? 'حفاظاً على أمان حسابك (لوجود رصيد أو طلبات نشطة)، سيتم مراجعة الطلب من الإدارة خلال 24 ساعة.' : 'For your security due to active balances or orders, this request requires Admin approval within 24 hours.')}
-                                    </p>
-                                </>
-                            )}
-
-                            <button
-                                onClick={onBackToLogin}
-                                className="mt-8 w-full py-4 bg-[#1A1814] hover:bg-white/5 border border-white/10 text-white font-bold rounded-xl transition-all flex items-center justify-center"
-                            >
-                                {isAr ? 'العودة لتسجيل الدخول' : 'Back to Login'}
-                            </button>
-                        </div>
-                    )}
-
-                </motion.div>
-            </AnimatePresence>
-
-            {step < 5 && (
-                <button
-                    onClick={onBackToLogin}
-                    className="w-full mt-4 text-center text-white/40 hover:text-white transition-colors text-sm py-2"
-                >
-                    {isAr ? 'إلغاء والعودة' : 'Cancel & Return'}
-                </button>
-            )}
-        </div>
+  const resendBtn = (onResend: () => void) =>
+    secondsLeft > 0 ? (
+      <p className="text-center text-xs text-white/40">
+        {isAr ? 'ينتهي خلال' : 'Expires in'} {formatOtpCountdown(secondsLeft)}
+      </p>
+    ) : (
+      <button
+        type="button"
+        disabled={isLoading}
+        onClick={onResend}
+        className="w-full text-sm text-gold-400 hover:text-gold-300 py-2 font-medium disabled:opacity-50"
+      >
+        {isAr ? 'إعادة إرسال الرمز' : 'Resend code'}
+      </button>
     );
+
+  const cardShell = (children: React.ReactNode) => (
+    <div className="w-full max-w-lg mx-auto">
+      <div className="bg-[#1A1814]/95 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gold-500/15 border border-gold-500/30 mb-3">
+            <Lock className="text-gold-400" size={22} />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">{title}</h1>
+          <p className="text-white/50 text-sm mt-2">
+            {isAr
+              ? 'حماية الحسابات وأموال العملاء هي أولويتنا'
+              : 'Protecting accounts and customer funds is our priority'}
+          </p>
+        </div>
+        {error && (
+          <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/40 text-red-300 text-sm rounded-xl p-3">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        {children}
+        <button
+          type="button"
+          onClick={onBackToLogin}
+          className="mt-6 w-full text-center text-white/45 hover:text-white/80 text-sm py-2"
+        >
+          {isAr ? 'إلغاء والعودة' : 'Cancel and return'}
+        </button>
+      </div>
+    </div>
+  );
+
+  const primaryBtn = (label: string, onClick: () => void, disabled?: boolean) => (
+    <button
+      type="button"
+      disabled={disabled || isLoading}
+      onClick={onClick}
+      className="w-full py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-400 hover:to-gold-300 disabled:opacity-50 transition-all"
+    >
+      {isLoading ? (
+        <span className="inline-block w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+      ) : (
+        label
+      )}
+    </button>
+  );
+
+  // ── Handlers ──────────────────────────────────────────────────────
+
+  const onTriageEmail = (yes: boolean) => {
+    setError(null);
+    setHasEmailAccess(yes);
+    setStep('triage-phone');
+  };
+
+  const onTriagePhone = (yes: boolean) => {
+    setError(null);
+    if (hasEmailAccess === true && yes) {
+      setStep('suggest-login');
+      return;
+    }
+    if (hasEmailAccess === true && !yes) {
+      setStep('case1-phone');
+      return;
+    }
+    if (hasEmailAccess === false && yes) {
+      setStep('case2-email');
+      return;
+    }
+    setStep('case3-ids');
+  };
+
+  const runCase1Start = async () => {
+    if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5')) {
+      triggerError(
+        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
+      );
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostPhoneStart({
+        role,
+        oldPhone: oldPhoneLocal,
+        countryCode,
+      });
+      setMaskedHint(res.maskedEmail);
+      clearOtp();
+      startTimer(res.expiresInMinutes);
+      setStep('case1-otp');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase1Verify = async () => {
+    const code = otpString(otpDigits);
+    if (code.length !== 6) {
+      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authApi.recoveryLostPhoneVerifyProof({
+        role,
+        oldPhone: oldPhoneLocal,
+        countryCode,
+        otp: code,
+      });
+      setStep('case1-verified');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Invalid OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase1NewPhoneOtp = async () => {
+    if (newPhoneLocal.length !== 9 || !newPhoneLocal.startsWith('5')) {
+      triggerError(
+        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
+      );
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostPhoneRequestNewOtp({
+        role,
+        oldPhone: oldPhoneLocal,
+        countryCode,
+        newPhone: newPhoneLocal,
+        newCountryCode,
+      });
+      clearOtp();
+      startTimer(res.expiresInMinutes);
+      setMaskedHint(
+        `${newCountryCode} ${newPhoneLocal.slice(0, 2)}****${newPhoneLocal.slice(-2)}`,
+      );
+      setStep('case1-new-otp');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase1Confirm = async () => {
+    const code = otpString(otpDigits);
+    if (code.length !== 6) {
+      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostPhoneConfirm({
+        role,
+        oldPhone: oldPhoneLocal,
+        countryCode,
+        newPhone: newPhoneLocal,
+        newCountryCode,
+        phoneOtp: code,
+      });
+      setDoneMessage(
+        res.message ||
+          (isAr
+            ? 'تم تحديث رقم الجوال بنجاح، ويمكنك الآن تسجيل الدخول باستخدام رقم الجوال الجديد.'
+            : 'Phone updated. You can sign in with your new number.'),
+      );
+      setStep('done');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase2Start = async () => {
+    if (!oldEmail.includes('@')) {
+      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostEmailStart({ role, oldEmail });
+      setMaskedHint(res.maskedPhone);
+      clearOtp();
+      startTimer(res.expiresInMinutes);
+      setStep('case2-otp');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase2Verify = async () => {
+    const code = otpString(otpDigits);
+    if (code.length !== 6) {
+      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authApi.recoveryLostEmailVerifyProof({ role, oldEmail, otp: code });
+      setStep('case2-verified');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Invalid OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase2NewEmailOtp = async () => {
+    if (!newEmail.includes('@')) {
+      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostEmailRequestNewOtp({
+        role,
+        oldEmail,
+        newEmail,
+      });
+      clearOtp();
+      startTimer(res.expiresInMinutes);
+      setMaskedHint(newEmail.replace(/(.{2}).+(@.+)/, '$1***$2'));
+      setStep('case2-new-otp');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase2Confirm = async () => {
+    const code = otpString(otpDigits);
+    if (code.length !== 6) {
+      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostEmailConfirm({
+        role,
+        oldEmail,
+        newEmail,
+        emailOtp: code,
+      });
+      setDoneMessage(
+        res.message ||
+          (isAr
+            ? 'تم تحديث البريد الإلكتروني بنجاح، ويمكنك الآن استخدام البريد الإلكتروني الجديد للدخول إلى حسابك.'
+            : 'Email updated successfully. You can now use the new email to sign in.'),
+      );
+      setStep('done');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase3Submit = async () => {
+    if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5') || !oldEmail.includes('@')) {
+      triggerError(isAr ? 'أدخل الجوال والإيميل المسجّلين بشكل صحيح' : 'Enter valid registered phone and email');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authApi.recoveryLostBothSubmit({
+        role,
+        oldPhone: oldPhoneLocal,
+        countryCode,
+        oldEmail,
+      });
+      setStep('case3-pending');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase3RequestOtps = async () => {
+    if (
+      resumeToken.length < 32 ||
+      newPhoneLocal.length !== 9 ||
+      !newPhoneLocal.startsWith('5') ||
+      !newEmail.includes('@')
+    ) {
+      triggerError(isAr ? 'أكمل جميع الحقول بشكل صحيح' : 'Complete all fields correctly');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostBothRequestOtps({
+        resumeToken,
+        newPhone: newPhoneLocal,
+        newCountryCode,
+        newEmail,
+      });
+      setPhoneOtpDigits(['', '', '', '', '', '']);
+      setEmailOtpDigits(['', '', '', '', '', '']);
+      startTimer(res.expiresInMinutes);
+      setStep('case3-otps');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase3Complete = async () => {
+    const p = otpString(phoneOtpDigits);
+    const e = otpString(emailOtpDigits);
+    if (p.length !== 6 || e.length !== 6) {
+      triggerError(isAr ? 'أدخل رمزي التحقق بالكامل' : 'Enter both OTP codes');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostBothComplete({
+        resumeToken,
+        newPhone: newPhoneLocal,
+        newCountryCode,
+        newEmail,
+        phoneOtp: p,
+        emailOtp: e,
+      });
+      setDoneMessage(
+        res.message ||
+          (isAr
+            ? 'تم التحقق من طلبك وتحديث بيانات الدخول بنجاح. يمكنك الآن الدخول إلى حسابك باستخدام بياناتك الجديدة.'
+            : 'Your request was verified and login details updated. You can sign in with your new credentials.'),
+      );
+      setStep('done');
+    } catch (err: any) {
+      triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── Render steps ──────────────────────────────────────────────────
+
+  const yesNo = (onYes: () => void, onNo: () => void, question: string) =>
+    cardShell(
+      <div className="space-y-4">
+        <p className="text-white text-center font-medium">{question}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onYes}
+            className="py-3 rounded-xl border border-gold-500/40 bg-gold-500/15 text-gold-200 font-bold hover:bg-gold-500/25"
+          >
+            {isAr ? 'نعم' : 'Yes'}
+          </button>
+          <button
+            type="button"
+            onClick={onNo}
+            className="py-3 rounded-xl border border-white/15 bg-white/5 text-white/80 font-bold hover:bg-white/10"
+          >
+            {isAr ? 'لا' : 'No'}
+          </button>
+        </div>
+      </div>,
+    );
+
+  const phoneField = (
+    local: string,
+    setLocal: (v: string) => void,
+    cc: string,
+    setCc: (v: string) => void,
+    label: string,
+  ) => (
+    <div className="space-y-2">
+      <label className="text-xs text-white/50">{label}</label>
+      <div className="flex gap-2" dir="ltr">
+        <select
+          value={cc}
+          onChange={(e) => setCc(e.target.value)}
+          className="bg-black/40 border border-white/15 rounded-xl px-2 text-white text-sm"
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.code}
+            </option>
+          ))}
+        </select>
+        <input
+          value={local}
+          onChange={(e) => setLocal(e.target.value.replace(/\D/g, '').slice(0, 9))}
+          placeholder="5 XX XX XX XX"
+          className="flex-1 bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+        />
+      </div>
+    </div>
+  );
+
+  let body: React.ReactNode = null;
+
+  if (step === 'triage-email') {
+    body = (
+      <div className="w-full max-w-lg mx-auto space-y-3">
+        {yesNo(
+          () => onTriageEmail(true),
+          () => onTriageEmail(false),
+          isAr
+            ? 'هل لديك وصول إلى البريد الإلكتروني المسجل في الحساب؟'
+            : 'Do you have access to the email registered on the account?',
+        )}
+        <button
+          type="button"
+          className="w-full text-sm text-gold-400 underline"
+          onClick={() => {
+            setError(null);
+            setStep('case3-resume');
+          }}
+        >
+          {isAr ? 'لدي رمز استكمال بعد موافقة الإدارة' : 'I have a resume token after admin approval'}
+        </button>
+      </div>
+    );
+  } else if (step === 'triage-phone') {
+    body = yesNo(
+      () => onTriagePhone(true),
+      () => onTriagePhone(false),
+      isAr
+        ? 'هل لديك وصول إلى رقم الجوال المسجل في الحساب؟'
+        : 'Do you have access to the mobile number registered on the account?',
+    );
+  } else if (step === 'suggest-login') {
+    body = cardShell(
+      <div className="space-y-4 text-center">
+        <p className="text-white/80">
+          {isAr
+            ? 'يمكنك تسجيل الدخول بالطريقة العادية باستخدام الجوال أو الإيميل.'
+            : 'You can sign in normally using your phone or email.'}
+        </p>
+        {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
+      </div>,
+    );
+  } else if (step === 'case1-phone') {
+    body = cardShell(
+      <div className="space-y-4">
+        <p className="text-white/60 text-sm text-center">
+          {isAr
+            ? 'أدخل رقم الجوال القديم لتحديد الحساب. سنرسل رمز التحقق إلى الإيميل المسجّل.'
+            : 'Enter your old phone to identify the account. We will send a code to the registered email.'}
+        </p>
+        {phoneField(
+          oldPhoneLocal,
+          setOldPhoneLocal,
+          countryCode,
+          setCountryCode,
+          isAr ? 'رقم الجوال القديم' : 'Old mobile number',
+        )}
+        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1Start)}
+      </div>,
+    );
+  } else if (step === 'case1-otp' || step === 'case1-new-otp' || step === 'case2-otp' || step === 'case2-new-otp') {
+    const isProof = step === 'case1-otp' || step === 'case2-otp';
+    const onSubmit =
+      step === 'case1-otp'
+        ? runCase1Verify
+        : step === 'case1-new-otp'
+          ? runCase1Confirm
+          : step === 'case2-otp'
+            ? runCase2Verify
+            : runCase2Confirm;
+    const onResend =
+      step === 'case1-otp'
+        ? runCase1Start
+        : step === 'case1-new-otp'
+          ? runCase1NewPhoneOtp
+          : step === 'case2-otp'
+            ? runCase2Start
+            : runCase2NewEmailOtp;
+    body = cardShell(
+      <div className="space-y-4">
+        <p className="text-white/60 text-sm text-center">
+          {isAr ? 'أدخل الرمز المرسل إلى' : 'Enter the code sent to'}{' '}
+          <span className="text-gold-400 font-bold">{maskedHint || '••••'}</span>
+        </p>
+        {renderOtpRow(otpDigits, setOtpDigits)}
+        {resendBtn(onResend)}
+        {primaryBtn(
+          isProof
+            ? isAr
+              ? 'تحقق'
+              : 'Verify'
+            : isAr
+              ? 'تأكيد التحديث'
+              : 'Confirm update',
+          onSubmit,
+        )}
+      </div>,
+    );
+  } else if (step === 'case1-verified') {
+    body = cardShell(
+      <div className="space-y-4 text-center">
+        <CheckCircle2 className="mx-auto text-emerald-400" size={36} />
+        <p className="text-white font-bold">
+          {isAr ? 'تم التحقق من هويتك بنجاح.' : 'Identity verified successfully.'}
+        </p>
+        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => {
+          setError(null);
+          setStep('case1-new-phone');
+        })}
+      </div>,
+    );
+  } else if (step === 'case1-new-phone') {
+    body = cardShell(
+      <div className="space-y-4">
+        <p className="text-white/60 text-sm text-center">
+          {isAr
+            ? 'أدخل رقم الجوال الجديد الذي ترغب في إضافته بدلاً من رقم الجوال القديم.'
+            : 'Enter the new mobile number to replace the old one.'}
+        </p>
+        {phoneField(
+          newPhoneLocal,
+          setNewPhoneLocal,
+          newCountryCode,
+          setNewCountryCode,
+          isAr ? 'رقم الجوال الجديد' : 'New mobile number',
+        )}
+        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1NewPhoneOtp)}
+      </div>,
+    );
+  } else if (step === 'case2-email') {
+    body = cardShell(
+      <div className="space-y-4">
+        <p className="text-white/60 text-sm text-center">
+          {isAr
+            ? 'أدخل البريد الإلكتروني القديم. سنرسل رمز التحقق إلى الجوال المسجّل.'
+            : 'Enter the old email. We will send a code to the registered phone.'}
+        </p>
+        <label className="text-xs text-white/50">{isAr ? 'البريد الإلكتروني القديم' : 'Old email'}</label>
+        <input
+          type="email"
+          value={oldEmail}
+          onChange={(e) => setOldEmail(e.target.value)}
+          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+        />
+        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase2Start)}
+      </div>,
+    );
+  } else if (step === 'case2-verified') {
+    body = cardShell(
+      <div className="space-y-4 text-center">
+        <CheckCircle2 className="mx-auto text-emerald-400" size={36} />
+        <p className="text-white font-bold">
+          {isAr ? 'تم التحقق من هويتك بنجاح.' : 'Identity verified successfully.'}
+        </p>
+        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => setStep('case2-new-email'))}
+      </div>,
+    );
+  } else if (step === 'case2-new-email') {
+    body = cardShell(
+      <div className="space-y-4">
+        <p className="text-white/60 text-sm text-center">
+          {isAr
+            ? 'أدخل البريد الإلكتروني الجديد الذي ترغب في إضافته بدلاً من البريد الإلكتروني القديم.'
+            : 'Enter the new email you want to add instead of the old email.'}
+        </p>
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          placeholder="name@example.com"
+        />
+        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase2NewEmailOtp)}
+      </div>,
+    );
+  } else if (step === 'case3-ids') {
+    body = cardShell(
+      <div className="space-y-4">
+        <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm rounded-xl p-3">
+          {isAr
+            ? 'هذه عملية عالية الخطورة. سيتم مراجعة الطلب من الإدارة وتعليق السحب مؤقتاً.'
+            : 'This is a high-risk process. Admin will review and withdrawals will be paused.'}
+        </div>
+        {phoneField(
+          oldPhoneLocal,
+          setOldPhoneLocal,
+          countryCode,
+          setCountryCode,
+          isAr ? 'رقم الجوال المسجّل (المدّعى)' : 'Registered phone (claimed)',
+        )}
+        <input
+          type="email"
+          value={oldEmail}
+          onChange={(e) => setOldEmail(e.target.value)}
+          placeholder={isAr ? 'البريد المسجّل' : 'Registered email'}
+          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+        />
+        {primaryBtn(isAr ? 'إرسال طلب المراجعة' : 'Submit for review', runCase3Submit)}
+        <button
+          type="button"
+          className="w-full text-sm text-gold-400 underline"
+          onClick={() => setStep('case3-resume')}
+        >
+          {isAr ? 'لدي رمز استكمال من الإدارة' : 'I have a resume token from admin'}
+        </button>
+      </div>,
+    );
+  } else if (step === 'case3-pending') {
+    body = cardShell(
+      <div className="space-y-4 text-center">
+        <ShieldCheck className="mx-auto text-gold-400" size={36} />
+        <p className="text-white font-bold">
+          {isAr ? 'تم إرسال طلبك للمراجعة' : 'Your request was submitted for review'}
+        </p>
+        <p className="text-white/50 text-sm">
+          {isAr
+            ? 'سيتم إشعار الإدارة. عمليات السحب معلّقة حتى انتهاء المراجعة.'
+            : 'Admins were notified. Withdrawals are paused until review completes.'}
+        </p>
+        {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
+        <button
+          type="button"
+          className="w-full text-sm text-gold-400 underline"
+          onClick={() => setStep('case3-resume')}
+        >
+          {isAr ? 'لدي رمز استكمال بعد الموافقة' : 'I have a resume token after approval'}
+        </button>
+      </div>,
+    );
+  } else if (step === 'case3-resume') {
+    body = cardShell(
+      <div className="space-y-4">
+        <label className="text-xs text-white/50">
+          {isAr ? 'رمز الاستكمال من الإدارة' : 'Resume token from admin'}
+        </label>
+        <input
+          value={resumeToken}
+          onChange={(e) => setResumeToken(e.target.value.trim())}
+          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white text-sm font-mono outline-none focus:border-gold-500"
+        />
+        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => {
+          if (resumeToken.length < 32) {
+            triggerError(isAr ? 'رمز غير صالح' : 'Invalid token');
+            return;
+          }
+          setStep('case3-new-contacts');
+        })}
+      </div>,
+    );
+  } else if (step === 'case3-new-contacts') {
+    body = cardShell(
+      <div className="space-y-4">
+        {phoneField(
+          newPhoneLocal,
+          setNewPhoneLocal,
+          newCountryCode,
+          setNewCountryCode,
+          isAr ? 'رقم الجوال الجديد' : 'New mobile',
+        )}
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder={isAr ? 'البريد الجديد' : 'New email'}
+          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+        />
+        {primaryBtn(isAr ? 'إرسال رموز التحقق' : 'Send verification codes', runCase3RequestOtps)}
+      </div>,
+    );
+  } else if (step === 'case3-otps') {
+    body = cardShell(
+      <div className="space-y-5">
+        <div>
+          <p className="text-xs text-white/50 mb-2 text-center">
+            {isAr ? 'رمز واتساب للجوال الجديد' : 'WhatsApp OTP for new phone'}
+          </p>
+          {renderOtpRow(phoneOtpDigits, setPhoneOtpDigits)}
+        </div>
+        <div>
+          <p className="text-xs text-white/50 mb-2 text-center">
+            {isAr ? 'رمز الإيميل الجديد' : 'Email OTP for new email'}
+          </p>
+          {renderOtpRow(emailOtpDigits, setEmailOtpDigits)}
+        </div>
+        <p className="text-center text-xs text-white/40">
+          {secondsLeft > 0
+            ? `${isAr ? 'ينتهي خلال' : 'Expires in'} ${formatOtpCountdown(secondsLeft)}`
+            : ''}
+        </p>
+        {secondsLeft <= 0 && (
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={runCase3RequestOtps}
+            className="w-full text-sm text-gold-400 hover:text-gold-300 py-2 font-medium"
+          >
+            {isAr ? 'إعادة إرسال الرموز' : 'Resend codes'}
+          </button>
+        )}
+        {primaryBtn(isAr ? 'تأكيد التحديث' : 'Confirm update', runCase3Complete)}
+      </div>,
+    );
+  } else if (step === 'done') {
+    body = cardShell(
+      <div className="space-y-4 text-center">
+        <CheckCircle2 className="mx-auto text-emerald-400" size={40} />
+        <p className="text-white font-bold text-lg">{doneMessage}</p>
+        {primaryBtn(isAr ? 'تسجيل الدخول' : 'Sign in', onBackToLogin)}
+      </div>,
+    );
+  }
+
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-8">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+          className="w-full"
+        >
+          {body}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
 };
+
+export default AccountRecoveryWizard;

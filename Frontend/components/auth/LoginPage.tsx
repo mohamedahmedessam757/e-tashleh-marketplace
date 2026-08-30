@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Store, Phone, ArrowRight, AlertCircle } from 'lucide-react';
+import { User, Store, Phone, ArrowRight, AlertCircle, Lock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { OTPVerification } from './OTPVerification';
 import { OTPMethodSelection } from './OTPMethodSelection';
@@ -521,8 +521,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           )}
         </button>
 
-        {/* ACCOUNT RECOVERY BUTTON */}
-        <div className="flex justify-center mt-4">
+        {/* ACCOUNT RECOVERY — high-visibility full-width CTA (customer & merchant) */}
+        <div className="mt-5 space-y-2">
+          <p className="text-center text-white/45 text-xs sm:text-sm">
+            {language === 'ar'
+              ? 'فقدت الوصول للجوال أو الإيميل؟'
+              : 'Lost access to your phone or email?'}
+          </p>
           <button
             type="button"
             onClick={(e) => {
@@ -531,9 +536,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onRecoveryClick(activeTab);
               }
             }}
-            className="text-white/40 hover:text-white transition-colors text-sm flex items-center gap-2 py-2 px-4 rounded-full border border-transparent hover:border-white/10 hover:bg-white/5"
+            className="w-full min-h-[52px] px-5 py-3.5 rounded-xl text-base sm:text-lg font-bold flex items-center justify-center gap-2.5 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white border-2 border-gold-300/70 shadow-[0_4px_24px_rgba(168,139,62,0.45)] hover:shadow-[0_6px_28px_rgba(168,139,62,0.55)] transition-all active:scale-[0.98]"
           >
-            🔒 {language === 'ar' ? 'لا أستطيع الوصول إلى رقم الجوال' : 'I cannot access my phone number'}
+            <Lock size={20} className="shrink-0" aria-hidden="true" />
+            {language === 'ar' ? 'لا أستطيع الوصول إلى حسابي' : 'I cannot access my account'}
           </button>
         </div>
       </form>

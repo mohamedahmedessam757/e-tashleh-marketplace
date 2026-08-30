@@ -1,17 +1,28 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+    Injectable,
+    BadRequestException,
+    UnauthorizedException,
+} from '@nestjs/common';
+import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
-import { ActorType, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { OtpService } from './otp.service';
-import { OtpPurpose } from './otp-purpose';
+import { OtpPurpose, OTP_EXPIRY_MINUTES } from './otp-purpose';
+import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import {
     normalizeSearchQuery,
     normalizePhone,
     resolveUserIds,
     isUuid,
 } from '../common/search/admin-entity-search.util';
+
+type UiRole = 'customer' | 'merchant';
+
+const NEUTRAL_START_MSG =
+    'If an account matches, a verification code was sent to the registered contact.';
 
 @Injectable()
 export class RecoveryService {
@@ -21,257 +32,664 @@ export class RecoveryService {
         private auditLogs: AuditLogsService,
         private platformSettings: PlatformSettingsService,
         private otpService: OtpService,
-    ) { }
+    ) {}
 
-    async requestEmailOtp(email: string, role: 'customer' | 'merchant') {
-        const userRole = role === 'merchant' ? 'VENDOR' : 'CUSTOMER';
+    private toDbRole(role: UiRole): 'CUSTOMER' | 'VENDOR' {
+        return role === 'merchant' ? 'VENDOR' : 'CUSTOMER';
+    }
 
-        const user = await this.prisma.user.findFirst({ where: { email, role: userRole } });
-        if (!user) {
-            throw new BadRequestException('Email not found in our records');
-        }
+    private audience(role: UiRole): 'customer' | 'vendor' {
+        return role === 'merchant' ? 'vendor' : 'customer';
+    }
 
-        if (!user.phone) {
-            throw new BadRequestException('No phone on file for this account');
+    private normPhone(phone: string, countryCode?: string): string {
+        return normalizeGulfPhone(phone, countryCode);
+    }
+
+    private maskEmail(email: string): string {
+        const [local, domain] = email.split('@');
+        if (!domain) return '***';
+        const keep = local.slice(0, Math.min(2, local.length));
+        return `${keep}***@${domain}`;
+    }
+
+    private maskPhone(phone: string): string {
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 4) return '****';
+        return `+****${digits.slice(-4)}`;
+    }
+
+    private hashToken(token: string): string {
+        return createHash('sha256').update(token).digest('hex');
+    }
+
+    private async delayNeutral(): Promise<void> {
+        await new Promise((r) => setTimeout(r, 400 + Math.floor(Math.random() * 200)));
+    }
+
+    private async findUserByPhone(phone: string, role: UiRole) {
+        return this.prisma.user.findFirst({
+            where: { phone, role: this.toDbRole(role) },
+        });
+    }
+
+    private async findUserByEmail(email: string, role: UiRole) {
+        return this.prisma.user.findFirst({
+            where: { email: email.trim().toLowerCase(), role: this.toDbRole(role) },
+        });
+    }
+
+    // ─── Case 1: Lost phone ───────────────────────────────────────────
+
+    async lostPhoneStart(oldPhone: string, role: UiRole, countryCode?: string) {
+        const phone = this.normPhone(oldPhone, countryCode);
+        const user = await this.findUserByPhone(phone, role);
+        await this.delayNeutral();
+
+        if (!user?.email) {
+            return {
+                success: true,
+                message: NEUTRAL_START_MSG,
+                maskedEmail: null as string | null,
+                expiresInMinutes: OTP_EXPIRY_MINUTES,
+            };
         }
 
         await this.otpService.issueAndSend({
             channel: 'email',
             email: user.email,
             phone: user.phone ?? undefined,
-            purpose: OtpPurpose.RECOVERY_STEP1,
-            audience: role === 'merchant' ? 'vendor' : 'customer',
+            purpose: OtpPurpose.RECOVERY_PROOF,
+            audience: this.audience(role),
             name: user.name ?? undefined,
             role,
+            metadata: { caseType: 'LOST_PHONE', userId: user.id, oldPhone: phone },
         });
 
-        // Log action
-        await this.prisma.securityLog.create({
-            data: {
-                email,
-                userId: user.id,
-                action: 'RECOVERY_EMAIL_OTP_SENT',
-                isSuccess: true,
-            },
-        });
-
-        // 2026 Global Audit
+        await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_PROOF_SENT', true);
         await this.auditLogs.logAction({
             action: 'RECOVERY_REQUEST',
             entity: 'USER',
             actorType: user.role as any,
             actorId: user.id,
             actorName: user.name,
-            reason: 'OTP Request for Email Recovery',
-            metadata: { email, role }
+            reason: 'Lost-phone recovery: proof OTP to email',
+            metadata: { caseType: 'LOST_PHONE', role },
         });
 
         return {
             success: true,
-            message: 'Verification code sent to your email address on file.',
-            channel: 'email',
+            message: NEUTRAL_START_MSG,
+            maskedEmail: this.maskEmail(user.email),
+            expiresInMinutes: OTP_EXPIRY_MINUTES,
         };
     }
 
-    async verifyEmailOtp(email: string, otp: string, role: 'customer' | 'merchant', ip?: string) {
-        const userRole = role === 'merchant' ? 'VENDOR' : 'CUSTOMER';
-        const user = await this.prisma.user.findFirst({ where: { email, role: userRole } });
-        if (!user?.phone) {
-            throw new BadRequestException('User not found');
+    async lostPhoneVerifyProof(
+        oldPhone: string,
+        otp: string,
+        role: UiRole,
+        countryCode?: string,
+        ip?: string,
+    ) {
+        const phone = this.normPhone(oldPhone, countryCode);
+        const user = await this.findUserByPhone(phone, role);
+        if (!user?.email) {
+            throw new BadRequestException('Invalid verification code');
         }
 
         try {
             await this.otpService.verify({
                 channel: 'email',
                 email: user.email,
-                purpose: OtpPurpose.RECOVERY_STEP1,
+                purpose: OtpPurpose.RECOVERY_PROOF,
                 code: otp,
             });
         } catch (err) {
-            await this.logSecurityEvent(email, `RECOVERY_EMAIL_OTP_FAILED_${role.toUpperCase()}`, false, ip);
+            await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_PROOF_FAILED', false, ip);
             throw err;
         }
 
-        await this.logSecurityEvent(email, `RECOVERY_EMAIL_OTP_VERIFIED_${role.toUpperCase()}`, true, ip);
-        return { success: true };
+        await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_PROOF_OK', true, ip);
+        return {
+            success: true,
+            message: 'تم التحقق من هويتك بنجاح.',
+            messageEn: 'Identity verified successfully.',
+            identityVerified: true,
+        };
     }
 
-    async requestPhoneOtp(email: string, newPhone: string, role: 'customer' | 'merchant', ip?: string) {
-        await this.otpService.assertRecoveryStep1Verified(email, role);
+    async lostPhoneRequestNewOtp(
+        oldPhone: string,
+        newPhoneRaw: string,
+        role: UiRole,
+        countryCode?: string,
+        newCountryCode?: string,
+        ip?: string,
+    ) {
+        const oldNorm = this.normPhone(oldPhone, countryCode);
+        const user = await this.findUserByPhone(oldNorm, role);
+        if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
 
-        const userRole = role === 'merchant' ? 'VENDOR' : 'CUSTOMER';
-        const user = await this.prisma.user.findFirst({ where: { email, role: userRole } });
+        await this.otpService.assertRecoveryProofVerified({
+            role,
+            channel: 'email',
+            email: user.email,
+        });
+
+        const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
+        if (newPhone === oldNorm) {
+            throw new BadRequestException('New phone must differ from the old phone');
+        }
+
+        const taken = await this.prisma.user.findFirst({
+            where: { phone: newPhone, NOT: { id: user.id } },
+            select: { id: true },
+        });
+        if (taken) throw new BadRequestException('This phone number is already in use');
 
         await this.otpService.issueAndSend({
             channel: 'whatsapp',
             phone: newPhone,
-            email,
-            purpose: OtpPurpose.RECOVERY_PHONE,
-            audience: role === 'merchant' ? 'vendor' : 'customer',
-            name: user?.name ?? undefined,
+            email: user.email,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            audience: this.audience(role),
+            name: user.name ?? undefined,
             role,
-            metadata: { newPhone },
+            metadata: { caseType: 'LOST_PHONE', newPhone },
         });
 
-        await this.logSecurityEvent(email, `RECOVERY_PHONE_OTP_SENT_${role.toUpperCase()}`, true, ip);
-        return { success: true, message: 'OTP sent to new phone number via WhatsApp', channel: 'whatsapp' };
+        await this.logSecurityEvent(user.email, 'RECOVERY_NEW_PHONE_OTP_SENT', true, ip);
+        return {
+            success: true,
+            message: 'OTP sent to new phone via WhatsApp',
+            channel: 'whatsapp',
+            expiresInMinutes: OTP_EXPIRY_MINUTES,
+        };
     }
 
-    async submitRecovery(email: string, newPhone: string, phoneOtp: string, role: 'customer' | 'merchant', ip?: string, device?: string) {
-        await this.otpService.assertRecoveryStep1Verified(email, role);
+    async lostPhoneConfirm(
+        oldPhone: string,
+        newPhoneRaw: string,
+        phoneOtp: string,
+        role: UiRole,
+        countryCode?: string,
+        newCountryCode?: string,
+        ip?: string,
+        device?: string,
+    ) {
+        const oldNorm = this.normPhone(oldPhone, countryCode);
+        const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
+        const user = await this.findUserByPhone(oldNorm, role);
+        if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
+
+        await this.otpService.assertRecoveryProofVerified({
+            role,
+            channel: 'email',
+            email: user.email,
+        });
+
+        await this.otpService.verify({
+            channel: 'whatsapp',
+            phone: newPhone,
+            email: user.email,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            code: phoneOtp,
+        });
+
+        const taken = await this.prisma.user.findFirst({
+            where: { phone: newPhone, NOT: { id: user.id } },
+            select: { id: true },
+        });
+        if (taken) throw new BadRequestException('This phone number is already in use');
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                phone: newPhone,
+                recoveryStatus: null,
+                withdrawalsFrozenUntil: new Date(Date.now() + 12 * 60 * 60 * 1000),
+            },
+        });
+
+        await this.prisma.accountRecoveryRequest.create({
+            data: {
+                userId: user.id,
+                caseType: 'LOST_PHONE',
+                oldPhone: oldNorm,
+                newPhone,
+                oldEmail: user.email,
+                status: 'APPROVED',
+                requestIp: ip,
+                requestDevice: device,
+                resolvedAt: new Date(),
+            },
+        });
+
+        await this.auditLogs.logAction({
+            action: 'RECOVERY_APPROVED',
+            entity: 'USER',
+            actorType: user.role as any,
+            actorId: user.id,
+            actorName: user.name,
+            reason: 'Lost-phone recovery completed — phone updated in place',
+            metadata: { oldPhone: oldNorm, newPhone },
+        });
+
+        await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_COMPLETED', true, ip, device);
+
+        return {
+            success: true,
+            action: 'APPROVED',
+            message:
+                'تم تحديث رقم الجوال بنجاح، ويمكنك الآن تسجيل الدخول باستخدام رقم الجوال الجديد.',
+            messageEn:
+                'Phone number updated successfully. You can now sign in with your new number.',
+        };
+    }
+
+    // ─── Case 2: Lost email ───────────────────────────────────────────
+
+    async lostEmailStart(oldEmail: string, role: UiRole) {
+        const email = oldEmail.trim().toLowerCase();
+        const user = await this.findUserByEmail(email, role);
+        await this.delayNeutral();
+
+        if (!user?.phone) {
+            return {
+                success: true,
+                message: NEUTRAL_START_MSG,
+                maskedPhone: null as string | null,
+                expiresInMinutes: OTP_EXPIRY_MINUTES,
+            };
+        }
+
+        await this.otpService.issueAndSend({
+            channel: 'whatsapp',
+            phone: user.phone,
+            email: user.email ?? undefined,
+            purpose: OtpPurpose.RECOVERY_PROOF,
+            audience: this.audience(role),
+            name: user.name ?? undefined,
+            role,
+            metadata: { caseType: 'LOST_EMAIL', userId: user.id },
+        });
+
+        await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_SENT', true);
+        return {
+            success: true,
+            message: NEUTRAL_START_MSG,
+            maskedPhone: this.maskPhone(user.phone),
+            expiresInMinutes: OTP_EXPIRY_MINUTES,
+        };
+    }
+
+    async lostEmailVerifyProof(oldEmail: string, otp: string, role: UiRole, ip?: string) {
+        const email = oldEmail.trim().toLowerCase();
+        const user = await this.findUserByEmail(email, role);
+        if (!user?.phone) throw new BadRequestException('Invalid verification code');
 
         try {
             await this.otpService.verify({
                 channel: 'whatsapp',
-                phone: newPhone,
-                email,
-                purpose: OtpPurpose.RECOVERY_PHONE,
-                code: phoneOtp,
+                phone: user.phone,
+                email: user.email ?? undefined,
+                purpose: OtpPurpose.RECOVERY_PROOF,
+                code: otp,
             });
         } catch (err) {
+            await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_FAILED', false, ip);
             throw err;
         }
 
-        const userRole = role === 'merchant' ? 'VENDOR' : 'CUSTOMER';
-        // OTP Verified. Now Run Risk Engine.
+        await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_OK', true, ip);
+        return {
+            success: true,
+            message: 'تم التحقق من هويتك بنجاح.',
+            messageEn: 'Identity verified successfully.',
+            identityVerified: true,
+        };
+    }
+
+    async lostEmailRequestNewOtp(oldEmail: string, newEmailRaw: string, role: UiRole, ip?: string) {
+        const oldEmailN = oldEmail.trim().toLowerCase();
+        const newEmail = newEmailRaw.trim().toLowerCase();
+        const user = await this.findUserByEmail(oldEmailN, role);
+        if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
+
+        await this.otpService.assertRecoveryProofVerified({
+            role,
+            channel: 'whatsapp',
+            phone: user.phone,
+        });
+
+        if (newEmail === oldEmailN) {
+            throw new BadRequestException('New email must differ from the old email');
+        }
+
+        const taken = await this.prisma.user.findFirst({
+            where: { email: newEmail, NOT: { id: user.id } },
+            select: { id: true },
+        });
+        if (taken) throw new BadRequestException('This email is already in use');
+
+        await this.otpService.issueAndSend({
+            channel: 'email',
+            email: newEmail,
+            phone: user.phone,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            audience: this.audience(role),
+            name: user.name ?? undefined,
+            role,
+            metadata: { caseType: 'LOST_EMAIL', newEmail },
+        });
+
+        await this.logSecurityEvent(oldEmailN, 'RECOVERY_NEW_EMAIL_OTP_SENT', true, ip);
+        return {
+            success: true,
+            channel: 'email',
+            expiresInMinutes: OTP_EXPIRY_MINUTES,
+        };
+    }
+
+    async lostEmailConfirm(
+        oldEmail: string,
+        newEmailRaw: string,
+        emailOtp: string,
+        role: UiRole,
+        ip?: string,
+        device?: string,
+    ) {
+        const oldEmailN = oldEmail.trim().toLowerCase();
+        const newEmail = newEmailRaw.trim().toLowerCase();
+        const user = await this.findUserByEmail(oldEmailN, role);
+        if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
+
+        await this.otpService.assertRecoveryProofVerified({
+            role,
+            channel: 'whatsapp',
+            phone: user.phone,
+        });
+
+        await this.otpService.verify({
+            channel: 'email',
+            email: newEmail,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            code: emailOtp,
+        });
+
+        const taken = await this.prisma.user.findFirst({
+            where: { email: newEmail, NOT: { id: user.id } },
+            select: { id: true },
+        });
+        if (taken) throw new BadRequestException('This email is already in use');
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { email: newEmail, recoveryStatus: null },
+        });
+
+        await this.prisma.accountRecoveryRequest.create({
+            data: {
+                userId: user.id,
+                caseType: 'LOST_EMAIL',
+                oldPhone: user.phone,
+                oldEmail: oldEmailN,
+                newEmail,
+                status: 'APPROVED',
+                requestIp: ip,
+                requestDevice: device,
+                resolvedAt: new Date(),
+            },
+        });
+
+        await this.auditLogs.logAction({
+            action: 'RECOVERY_APPROVED',
+            entity: 'USER',
+            actorType: user.role as any,
+            actorId: user.id,
+            actorName: user.name,
+            reason: 'Lost-email recovery completed — email updated in place',
+            metadata: { oldEmail: oldEmailN, newEmail },
+        });
+
+        return {
+            success: true,
+            action: 'APPROVED',
+            message:
+                'تم تحديث البريد الإلكتروني بنجاح، ويمكنك الآن استخدام البريد الإلكتروني الجديد للدخول إلى حسابك.',
+            messageEn:
+                'Email updated successfully. You can now use the new email to sign in to your account.',
+        };
+    }
+
+    // ─── Case 3: Lost both (High Risk) ────────────────────────────────
+
+    async lostBothSubmit(
+        oldPhone: string,
+        oldEmail: string,
+        role: UiRole,
+        countryCode?: string,
+        ip?: string,
+        device?: string,
+    ) {
+        const phone = this.normPhone(oldPhone, countryCode);
+        const email = oldEmail.trim().toLowerCase();
+        await this.delayNeutral();
+
         const user = await this.prisma.user.findFirst({
-            where: { email, role: userRole },
+            where: {
+                role: this.toDbRole(role),
+                phone,
+                email,
+            },
             include: { store: true },
         });
 
-        if (!user) throw new BadRequestException('User not found');
-
-        // Fetch aggregates in real-time
-        const [ordersCount, disputesCount, returnsCount] = await Promise.all([
-            this.prisma.order.count({
-                where: { customerId: user.id, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
-            }),
-            this.prisma.dispute.count({
-                where: { order: { customerId: user.id }, status: { notIn: ['RESOLVED', 'CLOSED'] } }
-            }),
-            this.prisma.returnRequest.count({
-                where: { order: { customerId: user.id }, status: { notIn: ['REJECTED'] } }
-            })
-        ]);
-
-        // Check aggregates in real-time
-        let balance = Number(user.customerBalance) || 0;
-        let vendorOrdersCount = 0;
-        let merchantDisputesCount = 0;
-
-        if (user.store) {
-            balance += Number(user.store.balance) || 0;
-            const [vOrders, mDisputes] = await Promise.all([
-                this.prisma.order.count({
-                    where: { storeId: user.store.id, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
-                }),
-                this.prisma.dispute.count({
-                    where: { order: { storeId: user.store.id }, status: { notIn: ['RESOLVED'] } }
-                })
-            ]);
-            vendorOrdersCount = vOrders;
-            merchantDisputesCount = mDisputes;
-        }
-
-        const totalActiveOrders = ordersCount + vendorOrdersCount;
-        const totalDisputes = disputesCount + returnsCount + merchantDisputesCount;
-
-        const isHighRisk = balance > 0 || totalActiveOrders > 0 || totalDisputes > 0;
-
-        if (isHighRisk) {
-            // Create Pending Review Request
-            await this.prisma.accountRecoveryRequest.create({
-                data: {
-                    userId: user.id,
-                    oldPhone: user.phone,
-                    newPhone: newPhone,
-                    status: 'PENDING_REVIEW',
-                    balanceSnapshot: balance,
-                    openOrdersCount: totalActiveOrders,
-                    disputesCount: totalDisputes,
-                    requestIp: ip,
-                    requestDevice: device,
-                }
-            });
-
-            await this.prisma.user.update({
-                where: { id: user.id },
-                data: { recoveryStatus: 'PENDING_REVIEW' }
-            });
-
-            // --- NOTIFICATION: ALERT ADMINS ---
-            await this.notifications.notifyAdmins({
-                titleAr: 'طلب استرداد حساب جديد',
-                titleEn: 'New Account Recovery Request',
-                messageAr: `المستخدم ${user.name} قدم طلب استرداد برقم جديد يحتاج مراجعة.`,
-                messageEn: `User ${user.name} submitted a recovery request that requires review.`,
-                type: 'alert',
-                link: '/admin/account-recovery'
-            });
-
-            await this.logSecurityEvent(email, `RECOVERY_QUEUED_FOR_ADMIN_${role.toUpperCase()}`, true, ip, device);
-
-            // 2026 Global Audit
-            await this.auditLogs.logAction({
-                action: 'RECOVERY_SUBMITTED',
-                entity: 'AccountRecoveryRequest',
-                actorType: user.role as any,
-                actorId: user.id,
-                actorName: user.name,
-                reason: 'Recovery request queued for admin review (High Risk)',
-                metadata: { email, newPhone, balance, totalActiveOrders }
-            });
-
+        if (!user) {
             return {
                 success: true,
                 action: 'PENDING_REVIEW',
-                message: 'For your security, this request requires admin review due to active balances or orders.'
+                message:
+                    'If the details match an account, a high-risk recovery request was submitted for admin review.',
             };
+        }
 
-        } else {
-            // Safe to auto-update
-            await this.prisma.user.update({
+        const existing = await this.prisma.accountRecoveryRequest.findFirst({
+            where: {
+                userId: user.id,
+                caseType: 'LOST_BOTH',
+                status: { in: ['PENDING_REVIEW', 'APPROVED_AWAITING_CONTACTS'] },
+            },
+        });
+        if (existing) {
+            return {
+                success: true,
+                action: 'PENDING_REVIEW',
+                requestId: existing.id,
+                message: 'A recovery request is already pending review.',
+            };
+        }
+
+        const snapshot = await this.buildRiskSnapshot(user);
+
+        const request = await this.prisma.accountRecoveryRequest.create({
+            data: {
+                userId: user.id,
+                caseType: 'LOST_BOTH',
+                oldPhone: phone,
+                oldEmail: email,
+                status: 'PENDING_REVIEW',
+                balanceSnapshot: snapshot.balance,
+                openOrdersCount: snapshot.openOrders,
+                disputesCount: snapshot.disputes,
+                requestIp: ip,
+                requestDevice: device,
+            },
+        });
+
+        // Freeze withdrawals immediately until review completes (no auto login disable)
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                recoveryStatus: 'PENDING_REVIEW',
+                withdrawalsFrozen: true,
+                withdrawalFreezeNote: 'High-risk LOST_BOTH recovery — pending admin review',
+                withdrawalsFrozenUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            },
+        });
+
+        await this.notifications.notifyAdmins({
+            titleAr: 'طلب استعادة عالي الخطورة',
+            titleEn: 'High-Risk Account Recovery',
+            messageAr: `المستخدم لا يستطيع الوصول للجوال والإيميل المسجّلين. يرجى التحقق من ملكية الحساب قبل تغيير وسائل الدخول.`,
+            messageEn: `User cannot access registered phone and email. Verify ownership before changing login methods.`,
+            type: 'alert',
+            link: '/dashboard/security-audit',
+        });
+
+        await this.auditLogs.logAction({
+            action: 'RECOVERY_SUBMITTED',
+            entity: 'AccountRecoveryRequest',
+            actorType: user.role as any,
+            actorId: user.id,
+            actorName: user.name,
+            reason: 'High-risk LOST_BOTH recovery ticket opened',
+            metadata: { requestId: request.id, caseType: 'LOST_BOTH' },
+        });
+
+        return {
+            success: true,
+            action: 'PENDING_REVIEW',
+            requestId: request.id,
+            message:
+                'Your high-risk recovery request was submitted. Withdrawals are paused until review completes.',
+        };
+    }
+
+    async lostBothRequestOtps(
+        resumeToken: string,
+        newPhoneRaw: string,
+        newEmailRaw: string,
+        newCountryCode?: string,
+    ) {
+        const request = await this.findRequestByResumeToken(resumeToken);
+        const user = request.user;
+        const role: UiRole = user.role === 'VENDOR' ? 'merchant' : 'customer';
+        const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
+        const newEmail = newEmailRaw.trim().toLowerCase();
+
+        await this.assertContactsAvailable(user.id, newPhone, newEmail);
+
+        await this.otpService.issueAndSend({
+            channel: 'whatsapp',
+            phone: newPhone,
+            email: newEmail,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            audience: this.audience(role),
+            name: user.name ?? undefined,
+            role,
+            metadata: { caseType: 'LOST_BOTH', contact: 'phone', requestId: request.id },
+        });
+
+        await this.otpService.issueAndSend({
+            channel: 'email',
+            email: newEmail,
+            phone: newPhone,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            audience: this.audience(role),
+            name: user.name ?? undefined,
+            role,
+            metadata: { caseType: 'LOST_BOTH', contact: 'email', requestId: request.id },
+        });
+
+        return {
+            success: true,
+            expiresInMinutes: OTP_EXPIRY_MINUTES,
+            message: 'OTP codes sent to the new phone and new email',
+        };
+    }
+
+    async lostBothComplete(
+        resumeToken: string,
+        newPhoneRaw: string,
+        newEmailRaw: string,
+        phoneOtp: string,
+        emailOtp: string,
+        newCountryCode?: string,
+        ip?: string,
+        device?: string,
+    ) {
+        const request = await this.findRequestByResumeToken(resumeToken);
+        const user = request.user;
+        const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
+        const newEmail = newEmailRaw.trim().toLowerCase();
+
+        await this.assertContactsAvailable(user.id, newPhone, newEmail);
+
+        await this.otpService.verify({
+            channel: 'whatsapp',
+            phone: newPhone,
+            email: newEmail,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            code: phoneOtp,
+        });
+        await this.otpService.verify({
+            channel: 'email',
+            email: newEmail,
+            phone: newPhone,
+            purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
+            code: emailOtp,
+        });
+
+        await this.prisma.$transaction([
+            this.prisma.user.update({
                 where: { id: user.id },
                 data: {
                     phone: newPhone,
-                    withdrawalsFrozenUntil: new Date(Date.now() + 12 * 60 * 60 * 1000) // Freeze for 12 hours
-                }
-            });
+                    email: newEmail,
+                    recoveryStatus: null,
+                    withdrawalsFrozen: false,
+                    withdrawalFreezeNote: null,
+                    withdrawalsFrozenUntil: new Date(Date.now() + 12 * 60 * 60 * 1000),
+                },
+            }),
+            this.prisma.accountRecoveryRequest.update({
+                where: { id: request.id },
+                data: {
+                    status: 'APPROVED',
+                    newPhone,
+                    newEmail,
+                    resumeTokenHash: null,
+                    resumeTokenExpiresAt: null,
+                    resolvedAt: new Date(),
+                },
+            }),
+        ]);
 
-            // Persistent Notification for the user
-            await this.notifications.create({
-                recipientId: user.id,
-                recipientRole: role === 'merchant' ? 'VENDOR' : 'CUSTOMER',
-                titleAr: 'تم تحديث رقم الجوال بنجاح ✅',
-                titleEn: 'Phone Number Updated Successfully ✅',
-                messageAr: 'تم تحديث رقم جوالك المرتبط بالحساب. لأمانك، تم تجميد عمليات السحب لمدة 12 ساعة.',
-                messageEn: 'Your account phone number has been updated. For security, withdrawals are frozen for 12 hours.',
-                type: 'alert',
-                link: '/dashboard/profile'
-            });
+        await this.auditLogs.logAction({
+            action: 'RECOVERY_APPROVED',
+            entity: 'AccountRecoveryRequest',
+            actorType: user.role as any,
+            actorId: user.id,
+            actorName: user.name,
+            reason: 'LOST_BOTH recovery completed with dual OTP',
+            metadata: { requestId: request.id, newPhone, newEmail },
+        });
 
-            // 2026 Global Audit
-            await this.auditLogs.logAction({
-                action: 'RECOVERY_AUTO_APPROVED',
-                entity: 'USER',
-                actorType: user.role as any,
-                actorId: user.id,
-                actorName: user.name,
-                reason: 'Account recovery auto-approved (Low Risk)',
-                metadata: { email, newPhone }
-            });
+        await this.logSecurityEvent(newEmail, 'RECOVERY_LOST_BOTH_COMPLETED', true, ip, device);
 
-            await this.logSecurityEvent(email, `RECOVERY_AUTO_APPROVED_${role.toUpperCase()}`, true, ip, device);
-
-            return {
-                success: true,
-                action: 'APPROVED',
-                message: 'Phone number updated successfully.'
-            };
-        }
+        return {
+            success: true,
+            action: 'APPROVED',
+            message:
+                'تم التحقق من طلبك وتحديث بيانات الدخول بنجاح. يمكنك الآن الدخول إلى حسابك باستخدام بياناتك الجديدة.',
+            messageEn:
+                'Your request was verified and login details updated successfully. You can now sign in with your new credentials.',
+        };
     }
 
-    // --- ADMIN APIs ---
+    // ─── Admin ────────────────────────────────────────────────────────
 
     async getPendingRequests(search?: string) {
         const q = normalizeSearchQuery(search);
@@ -281,28 +699,24 @@ export class RecoveryService {
             const or: Prisma.AccountRecoveryRequestWhereInput[] = [
                 { oldPhone: { contains: q, mode: 'insensitive' } },
                 { newPhone: { contains: q, mode: 'insensitive' } },
+                { oldEmail: { contains: q, mode: 'insensitive' } },
+                { newEmail: { contains: q, mode: 'insensitive' } },
                 { user: { name: { contains: q, mode: 'insensitive' } } },
                 { user: { email: { contains: q, mode: 'insensitive' } } },
                 { user: { phone: { contains: q, mode: 'insensitive' } } },
             ];
-
             const phoneNorm = normalizePhone(q);
             if (phoneNorm && phoneNorm !== q) {
                 or.push(
                     { oldPhone: { contains: phoneNorm, mode: 'insensitive' } },
                     { newPhone: { contains: phoneNorm, mode: 'insensitive' } },
-                    { user: { phone: { contains: phoneNorm, mode: 'insensitive' } } },
                 );
             }
-
             if (isUuid(q)) {
-                or.push({ id: q });
-                or.push({ userId: q });
+                or.push({ id: q }, { userId: q });
             }
-
             const userIds = await resolveUserIds(this.prisma, q);
             if (userIds.length) or.push({ userId: { in: userIds } });
-
             where = { OR: or };
         }
 
@@ -311,153 +725,307 @@ export class RecoveryService {
             orderBy: { createdAt: 'desc' },
             include: {
                 user: {
-                    include: {
-                        store: { select: { balance: true, id: true } }
-                    }
-                }
-            }
+                    include: { store: { select: { balance: true, id: true } } },
+                },
+            },
         });
 
-        // Enrich requests with LIVE data to ensure 100% accuracy in the admin dashboard
-        return Promise.all(requests.map(async (req) => {
-            const user = req.user;
-            const userId = req.userId;
-            const storeId = user.store?.id;
-            const isMerchant = user.role === 'VENDOR';
-
-            // Fetch TOTAL activity (all orders ever made/received by this user)
-            const [ordersAsCustomer, ordersAsMerchant, disputesAsCustomer, returnsAsCustomer, disputesAsMerchant] = await Promise.all([
-                this.prisma.order.count({ where: { customerId: userId } }),
-                storeId ? this.prisma.order.count({ where: { storeId } }) : 0,
-                this.prisma.dispute.count({ where: { order: { customerId: userId }, status: { notIn: ['RESOLVED'] } } }),
-                this.prisma.returnRequest.count({ where: { order: { customerId: userId }, status: { notIn: ['REJECTED'] } } }),
-                storeId ? this.prisma.dispute.count({ where: { order: { storeId }, status: { notIn: ['RESOLVED'] } } }) : 0
-            ]);
-
-            const liveOrders = ordersAsCustomer + ordersAsMerchant;
-            const liveDisputes = disputesAsCustomer + returnsAsCustomer + disputesAsMerchant;
-
-            // Calculate live balance based on role
-            let liveBalance = isMerchant && user.store ? Number(user.store.balance) : Number((user as any).customerBalance);
-
-            return {
-                ...req,
-                balanceSnapshot: liveBalance || 0,
-                openOrdersCount: liveOrders,
-                disputesCount: liveDisputes,
-                userRole: user.role // Explicitly pass the role for frontend navigation
-            };
+        return requests.map((req) => ({
+            ...req,
+            userRole: req.user.role,
+            userName: req.user.name,
         }));
     }
 
-    async resolveRequest(requestId: string, action: 'APPROVE' | 'REJECT', adminId?: string, ip?: string, userAgent?: string) {
+    async resolveRequest(
+        requestId: string,
+        action: 'APPROVE' | 'REJECT',
+        adminId?: string,
+        ip?: string,
+        userAgent?: string,
+        rejectionReason?: string,
+    ) {
         const request = await this.prisma.accountRecoveryRequest.findUnique({
             where: { id: requestId },
-            include: { user: true }
+            include: { user: true },
         });
 
         if (!request || request.status !== 'PENDING_REVIEW') {
             throw new BadRequestException('Request not found or already resolved');
         }
 
-        if (action === 'APPROVE') {
-            // Update phone
+        if (action === 'REJECT') {
             await this.prisma.user.update({
                 where: { id: request.userId },
                 data: {
-                    phone: request.newPhone,
-                    recoveryStatus: 'APPROVED',
-                    withdrawalsFrozenUntil: new Date(Date.now() + 12 * 60 * 60 * 1000) // Freeze withdrawals for 12h after manual approval
-                }
+                    recoveryStatus: null,
+                    // Lift the automatic high-risk freeze from this ticket (manual fraud freeze is separate)
+                    withdrawalsFrozen: false,
+                    withdrawalFreezeNote: null,
+                    withdrawalsFrozenUntil: null,
+                },
             });
 
-            // --- NOTIFICATION: NOTIFY USER OF APPROVAL ---
-            await this.notifications.notifyUser(request.userId, request.user.role, {
-                titleAr: 'تمت الموافقة على استرداد الحساب',
-                titleEn: 'Account Recovery Approved',
-                messageAr: 'تم تحديث رقم هاتفك. لأمانك، تم تجميد السحب لمدة 12 ساعة.',
-                messageEn: 'Your phone number was updated. For security, withdrawals are frozen for 12 hours.',
-                type: 'system'
+            await this.prisma.accountRecoveryRequest.update({
+                where: { id: requestId },
+                data: {
+                    status: 'REJECTED',
+                    rejectionReason: rejectionReason || null,
+                    resolvedAt: new Date(),
+                    resolvedBy: adminId || null,
+                },
             });
 
-            // --- NOTIFICATION: SECURITY ALERT (NEW DEVICE/IDENTITY) ---
-            await this.notifications.notifyUser(request.userId, request.user.role, {
-                titleAr: 'تنبيه أمني: تحديث هوية الحساب',
-                titleEn: 'Security Alert: Account Identity Updated',
-                messageAr: 'تم التعرف على رقم هاتف جديد كجهاز موثوق. إذا لم تكن أنت من قام بهذا التغيير، يرجى التواصل معنا فوراً.',
-                messageEn: 'A new phone number has been recognized as a trusted device. If you did not authorize this, contact support immediately.',
-                type: 'alert'
-            });
-
-            await this.logSecurityEvent(request.user.email, 'RECOVERY_MANUALLY_APPROVED', true);
-        } else {
-            await this.prisma.user.update({
-                where: { id: request.userId },
-                data: { recoveryStatus: null }
-            });
-
-            // --- NOTIFICATION: NOTIFY USER OF REJECTION ---
             await this.notifications.notifyUser(request.userId, request.user.role, {
                 titleAr: 'تم رفض طلب استرداد الحساب',
                 titleEn: 'Account Recovery Rejected',
-                messageAr: 'نأسف، تم رفض طلب تحديث هاتفك. يرجى التواصل مع الدعم.',
-                messageEn: 'Sorry, your recovery request was rejected. Please contact support.',
-                type: 'alert'
+                messageAr: 'تم رفض طلب الاستعادة. لم يتم تغيير بيانات الدخول.',
+                messageEn: 'Your recovery request was rejected. Login details were not changed.',
+                type: 'alert',
             });
 
-            await this.logSecurityEvent(request.user.email, 'RECOVERY_MANUALLY_REJECTED', true);
+            await this.auditLogs.logAction({
+                action: 'RECOVERY_REJECTED',
+                entity: 'AccountRecoveryRequest',
+                actorType: 'ADMIN',
+                actorId: adminId,
+                reason: rejectionReason || 'Admin rejected recovery',
+                metadata: { requestId },
+            });
+
+            return { success: true, status: 'REJECTED' };
         }
 
-        // --- NEW: RECORD ADMIN ACTIVITY LOG ---
-        const logData = {
-            adminId: adminId || null,
-            action: `ACCOUNT_RECOVERY_${action}`,
-            ipAddress: ip,
-            userAgent: userAgent,
-            email: request.user.email,
-            metadata: {
-                requestId,
-                targetUserId: request.userId,
-                snapshot: {
-                    balance: request.balanceSnapshot,
-                    orders: request.openOrdersCount,
-                    disputes: request.disputesCount
-                }
-            }
-        };
+        // APPROVE — for LOST_BOTH: issue resume token; for legacy phone-only with newPhone: apply immediately
+        if (request.caseType === 'LOST_BOTH' || !request.newPhone) {
+            const rawToken = randomBytes(32).toString('hex');
+            const hash = this.hashToken(rawToken);
+            const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-        // 2026 Admin Session Management: Deduplicated Activity Logging
-        await this.platformSettings.logAdminActivity(
-            adminId || 'SYSTEM',
-            request.user.email,
-            `ACCOUNT_RECOVERY_${action}`,
-            logData.metadata,
-            { ip, ua: userAgent }
-        );
+            await this.prisma.accountRecoveryRequest.update({
+                where: { id: requestId },
+                data: {
+                    status: 'APPROVED_AWAITING_CONTACTS',
+                    resumeTokenHash: hash,
+                    resumeTokenExpiresAt: expires,
+                    resolvedAt: new Date(),
+                    resolvedBy: adminId || null,
+                },
+            });
 
-        // 2026 Global Audit
-        await this.auditLogs.logAction({
-            action: action === 'APPROVE' ? 'RECOVERY_APPROVED' : 'RECOVERY_REJECTED',
-            entity: 'AccountRecoveryRequest',
-            actorType: 'ADMIN',
-            actorId: adminId,
-            reason: `Admin ${action.toLowerCase()}d account recovery for ${request.user.email}`,
-            metadata: { requestId, targetUserId: request.userId, action }
+            await this.prisma.user.update({
+                where: { id: request.userId },
+                data: { recoveryStatus: 'APPROVED_AWAITING_CONTACTS' },
+            });
+
+            await this.platformSettings.logAdminActivity(
+                adminId || 'SYSTEM',
+                request.user.email || request.userId,
+                'ACCOUNT_RECOVERY_APPROVE',
+                { requestId, caseType: request.caseType },
+                { ip, ua: userAgent },
+            );
+
+            await this.auditLogs.logAction({
+                action: 'RECOVERY_APPROVED',
+                entity: 'AccountRecoveryRequest',
+                actorType: 'ADMIN',
+                actorId: adminId,
+                reason: 'Admin approved — awaiting user contact update via resume token',
+                metadata: { requestId },
+            });
+
+            return {
+                success: true,
+                status: 'APPROVED_AWAITING_CONTACTS',
+                resumeToken: rawToken,
+                resumeTokenExpiresAt: expires.toISOString(),
+                warning:
+                    'Copy this resume token now. It is shown once. Deliver it to the user via a verified channel.',
+            };
+        }
+
+        // Legacy LOST_PHONE with newPhone already on request
+        await this.prisma.user.update({
+            where: { id: request.userId },
+            data: {
+                phone: request.newPhone,
+                recoveryStatus: 'APPROVED',
+                withdrawalsFrozenUntil: new Date(Date.now() + 12 * 60 * 60 * 1000),
+            },
         });
-
-        // Update request status
-        return this.prisma.accountRecoveryRequest.update({
+        await this.prisma.accountRecoveryRequest.update({
             where: { id: requestId },
             data: {
-                status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+                status: 'APPROVED',
                 resolvedAt: new Date(),
-                resolvedBy: adminId || null
-            }
+                resolvedBy: adminId || null,
+            },
         });
+
+        return { success: true, status: 'APPROVED' };
     }
 
-    private async logSecurityEvent(email: string, action: string, isSuccess: boolean, ip?: string, device?: string) {
-        const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+    async adminFreezeUser(userId: string, adminId: string, note?: string, ip?: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new BadRequestException('User not found');
+
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                withdrawalsFrozen: true,
+                withdrawalFreezeNote: note || 'Manual freeze after recovery fraud review',
+                suspendedUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                suspendReason: note || 'Manual freeze — suspected account takeover',
+            },
+        });
+
+        await this.auditLogs.logAction({
+            action: 'USER_FROZEN',
+            entity: 'USER',
+            actorType: 'ADMIN',
+            actorId: adminId,
+            reason: note || 'Manual freeze from recovery panel',
+            metadata: { userId, ip },
+        });
+
+        return { success: true };
+    }
+
+    // ─── Legacy wrappers (deprecated) ─────────────────────────────────
+
+    async requestEmailOtp(email: string, role: UiRole) {
+        throw new BadRequestException(
+            'This recovery flow was updated. Please use the new account recovery wizard.',
+        );
+    }
+
+    async verifyEmailOtp(_email: string, _otp: string, _role: UiRole, _ip?: string) {
+        throw new BadRequestException(
+            'This recovery flow was updated. Please use the new account recovery wizard.',
+        );
+    }
+
+    async requestPhoneOtp(_email: string, _newPhone: string, _role: UiRole, _ip?: string) {
+        throw new BadRequestException(
+            'This recovery flow was updated. Please use the new account recovery wizard.',
+        );
+    }
+
+    async submitRecovery(
+        _email: string,
+        _newPhone: string,
+        _phoneOtp: string,
+        _role: UiRole,
+        _ip?: string,
+        _device?: string,
+    ) {
+        throw new BadRequestException(
+            'This recovery flow was updated. Please use the new account recovery wizard.',
+        );
+    }
+
+    // ─── helpers ──────────────────────────────────────────────────────
+
+    private async findRequestByResumeToken(resumeToken: string) {
+        const hash = this.hashToken(resumeToken);
+        const request = await this.prisma.accountRecoveryRequest.findFirst({
+            where: {
+                resumeTokenHash: hash,
+                status: 'APPROVED_AWAITING_CONTACTS',
+                resumeTokenExpiresAt: { gt: new Date() },
+            },
+            include: { user: true },
+        });
+        if (!request) {
+            throw new UnauthorizedException('Invalid or expired resume token');
+        }
+        return request;
+    }
+
+    private async assertContactsAvailable(userId: string, newPhone: string, newEmail: string) {
+        const [phoneTaken, emailTaken] = await Promise.all([
+            this.prisma.user.findFirst({
+                where: { phone: newPhone, NOT: { id: userId } },
+                select: { id: true },
+            }),
+            this.prisma.user.findFirst({
+                where: { email: newEmail, NOT: { id: userId } },
+                select: { id: true },
+            }),
+        ]);
+        if (phoneTaken) throw new BadRequestException('This phone number is already in use');
+        if (emailTaken) throw new BadRequestException('This email is already in use');
+    }
+
+    private async buildRiskSnapshot(user: {
+        id: string;
+        customerBalance: unknown;
+        store?: { id: string; balance: unknown } | null;
+    }) {
+        const [ordersCount, disputesCount, returnsCount] = await Promise.all([
+            this.prisma.order.count({
+                where: {
+                    customerId: user.id,
+                    status: { notIn: ['COMPLETED', 'CANCELLED'] },
+                },
+            }),
+            this.prisma.dispute.count({
+                where: {
+                    order: { customerId: user.id },
+                    status: { notIn: ['RESOLVED', 'CLOSED'] },
+                },
+            }),
+            this.prisma.returnRequest.count({
+                where: {
+                    order: { customerId: user.id },
+                    status: { notIn: ['REJECTED'] },
+                },
+            }),
+        ]);
+
+        let balance = Number(user.customerBalance) || 0;
+        let vendorOrders = 0;
+        let merchantDisputes = 0;
+        if (user.store) {
+            balance += Number(user.store.balance) || 0;
+            const [vOrders, mDisputes] = await Promise.all([
+                this.prisma.order.count({
+                    where: {
+                        storeId: user.store.id,
+                        status: { notIn: ['COMPLETED', 'CANCELLED'] },
+                    },
+                }),
+                this.prisma.dispute.count({
+                    where: {
+                        order: { storeId: user.store.id },
+                        status: { notIn: ['RESOLVED'] },
+                    },
+                }),
+            ]);
+            vendorOrders = vOrders;
+            merchantDisputes = mDisputes;
+        }
+
+        return {
+            balance,
+            openOrders: ordersCount + vendorOrders,
+            disputes: disputesCount + returnsCount + merchantDisputes,
+        };
+    }
+
+    private async logSecurityEvent(
+        email: string | null | undefined,
+        action: string,
+        isSuccess: boolean,
+        ip?: string,
+        device?: string,
+    ) {
+        if (!email) return;
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            select: { id: true },
+        });
         await this.prisma.securityLog.create({
             data: {
                 email,
@@ -465,8 +1033,8 @@ export class RecoveryService {
                 action,
                 isSuccess,
                 ipAddress: ip,
-                device: device,
-            }
+                device,
+            },
         });
     }
 }

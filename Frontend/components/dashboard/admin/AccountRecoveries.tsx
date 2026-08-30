@@ -1,263 +1,327 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
-import { ShieldAlert, CheckCircle, XCircle, Search, User, Store, ExternalLink } from 'lucide-react';
+import {
+  ShieldAlert,
+  CheckCircle,
+  XCircle,
+  Snowflake,
+  Copy,
+  ExternalLink,
+} from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { client } from '../../../services/api/client';
 import { supabase } from '../../../services/supabase';
 import { AdminSearchInput } from './AdminSearchInput';
 
 interface RecoveryRequest {
-    id: string;
-    userId: string;
-    userName: string; // Joined from user table
-    oldPhone: string | null;
-    newPhone: string;
-    status: 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
-    balanceSnapshot: number;
-    openOrdersCount: number;
-    disputesCount: number;
-    createdAt: string;
-    userRole: string;
+  id: string;
+  userId: string;
+  userName: string;
+  caseType: string;
+  oldPhone: string | null;
+  newPhone: string | null;
+  oldEmail: string | null;
+  newEmail: string | null;
+  status: string;
+  balanceSnapshot: number;
+  openOrdersCount: number;
+  disputesCount: number;
+  createdAt: string;
+  userRole: string;
 }
 
 export const AccountRecoveries: React.FC = () => {
-    const { language } = useLanguage();
-    const isAr = language === 'ar';
-    const [requests, setRequests] = useState<RecoveryRequest[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+  const { language } = useLanguage();
+  const isAr = language === 'ar';
+  const [requests, setRequests] = useState<RecoveryRequest[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastResumeToken, setLastResumeToken] = useState<{
+    id: string;
+    token: string;
+  } | null>(null);
 
-    const fetchRequests = useCallback(async (search?: string) => {
-        try {
-            const res = await client.get('/auth/recovery/admin/requests', {
-                params: search?.trim() ? { search: search.trim() } : undefined,
-            });
-            const data = res.data;
+  const fetchRequests = useCallback(async (search?: string) => {
+    try {
+      const res = await client.get('/auth/recovery/admin/requests', {
+        params: search?.trim() ? { search: search.trim() } : undefined,
+      });
+      const data = res.data;
+      const mapped = data.map((r: any) => ({
+        id: r.id,
+        userId: r.userId,
+        userName: r.user?.name || r.userName || 'Unknown',
+        caseType: r.caseType || 'LOST_PHONE',
+        oldPhone: r.oldPhone,
+        newPhone: r.newPhone,
+        oldEmail: r.oldEmail,
+        newEmail: r.newEmail,
+        status: r.status,
+        balanceSnapshot: Number(r.balanceSnapshot),
+        openOrdersCount: r.openOrdersCount,
+        disputesCount: r.disputesCount,
+        createdAt: r.createdAt,
+        userRole: r.userRole || r.user?.role,
+      }));
+      setRequests(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-            const mapped = data.map((r: any) => ({
-                id: r.id,
-                userId: r.userId,
-                userName: r.user?.name || 'Unknown',
-                oldPhone: r.oldPhone,
-                newPhone: r.newPhone,
-                status: r.status,
-                balanceSnapshot: Number(r.balanceSnapshot),
-                openOrdersCount: r.openOrdersCount,
-                disputesCount: r.disputesCount,
-                createdAt: r.createdAt,
-                userRole: r.userRole
-            }));
-            setRequests(mapped);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  useEffect(() => {
+    const channel = supabase
+      .channel('account-recovery-live')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'account_recovery_requests',
+        },
+        () => {
+          fetchRequests(searchTerm);
+        },
+      )
+      .subscribe();
 
-    useEffect(() => {
-        const channel = supabase
-            .channel('account-recovery-live')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'account_recovery_requests'
-                },
-                () => {
-                    fetchRequests(searchTerm);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchRequests, searchTerm]);
-
-    useEffect(() => {
-        const timer = window.setTimeout(() => {
-            fetchRequests(searchTerm);
-        }, 400);
-        return () => window.clearTimeout(timer);
-    }, [searchTerm, fetchRequests]);
-
-    const handleAction = async (id: string, action: 'APPROVE' | 'REJECT') => {
-        if (!window.confirm(isAr ? 'هل أنت متأكد من هذا الإجراء؟' : 'Are you sure about this action?')) return;
-
-        try {
-            await client.post('/auth/recovery/admin/resolve', { requestId: id, action });
-
-            setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED' } : r));
-        } catch (err) {
-            alert(isAr ? 'فشلت العملية' : 'Action failed');
-        }
+    return () => {
+      supabase.removeChannel(channel);
     };
+  }, [fetchRequests, searchTerm]);
 
-    const navigateToProfile = (userId: string, role: string) => {
-        // Logic to determine if user is merchant or customer based on context or request data
-        // In this system, we can dispatch an admin-nav event
-        const isMerchant = role === 'VENDOR' || role === 'merchant';
-        const path = isMerchant ? 'store-profile' : 'customer-profile';
-        window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id: userId } }));
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchRequests(searchTerm);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm, fetchRequests]);
+
+  const handleAction = async (id: string, action: 'APPROVE' | 'REJECT') => {
+    let rejectionReason: string | undefined;
+    if (action === 'REJECT') {
+      rejectionReason =
+        window.prompt(
+          isAr ? 'سبب الرفض (اختياري):' : 'Rejection reason (optional):',
+        ) || undefined;
+    } else if (
+      !window.confirm(isAr ? 'هل أنت متأكد من الموافقة؟' : 'Confirm approval?')
+    ) {
+      return;
+    }
+
+    try {
+      const res = await client.post('/auth/recovery/admin/resolve', {
+        requestId: id,
+        action,
+        rejectionReason,
+      });
+      if (res.data?.resumeToken) {
+        setLastResumeToken({ id, token: res.data.resumeToken });
+        window.alert(
+          isAr
+            ? 'تم إصدار رمز الاستكمال — انسخه الآن ووصّله للعميل عبر قناة موثوقة.'
+            : 'Resume token issued — copy it now and deliver it to the user via a verified channel.',
+        );
+      }
+      fetchRequests(searchTerm);
+    } catch {
+      alert(isAr ? 'فشلت العملية' : 'Action failed');
+    }
+  };
+
+  const handleFreeze = async (userId: string) => {
+    const note =
+      window.prompt(
+        isAr
+          ? 'ملاحظة التجميد اليدوي (احتيال/استيلاء):'
+          : 'Manual freeze note (fraud/takeover):',
+      ) || undefined;
+    if (
+      !window.confirm(
+        isAr
+          ? 'تجميد الحساب يدوياً (سحب + تعليق مؤقت)؟'
+          : 'Manually freeze this account (withdrawals + temporary suspend)?',
+      )
+    ) {
+      return;
+    }
+    try {
+      await client.post('/auth/recovery/admin/freeze-user', { userId, note });
+      alert(isAr ? 'تم تجميد الحساب' : 'Account frozen');
+    } catch {
+      alert(isAr ? 'فشل التجميد' : 'Freeze failed');
+    }
+  };
+
+  const navigateToProfile = (userId: string, role: string) => {
+    const isMerchant = role === 'VENDOR' || role === 'merchant';
+    const path = isMerchant ? 'store-profile' : 'customer-profile';
+    window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path, id: userId } }));
+  };
+
+  const caseLabel = (t: string) => {
+    if (t === 'LOST_BOTH') return isAr ? 'فقد الاتنين (عالي الخطورة)' : 'Lost both (High Risk)';
+    if (t === 'LOST_EMAIL') return isAr ? 'فقد الإيميل' : 'Lost email';
+    return isAr ? 'فقد الجوال' : 'Lost phone';
+  };
+
+  const statusLabel = (s: string) => {
+    const map: Record<string, [string, string]> = {
+      PENDING_REVIEW: ['قيد المراجعة', 'Pending review'],
+      APPROVED_AWAITING_CONTACTS: ['بانتظار بيانات جديدة', 'Awaiting new contacts'],
+      APPROVED: ['مكتمل', 'Completed'],
+      REJECTED: ['مرفوض', 'Rejected'],
     };
+    const pair = map[s] || [s, s];
+    return isAr ? pair[0] : pair[1];
+  };
 
-    const requestsList = requests;
+  return (
+    <GlassCard className="p-6">
+      <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+        <h3 className="text-xl font-bold text-white flex items-center gap-3">
+          <ShieldAlert className="text-orange-500" />
+          {isAr ? 'مراجعات استرجاع الحسابات' : 'Account Recovery Reviews'}
+        </h3>
+        <AdminSearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder={isAr ? 'بحث بالاسم، الرقم أو المعرف...' : 'Search name, phone or ID...'}
+          className="w-72"
+        />
+      </div>
 
-    return (
-        <GlassCard className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                    <ShieldAlert className="text-orange-500" />
-                    {isAr ? 'مراجعات استرجاع الحسابات' : 'Account Recovery Reviews'}
-                </h3>
+      {lastResumeToken && (
+        <div className="mb-4 p-4 rounded-xl border border-gold-500/40 bg-gold-500/10 text-sm text-gold-100">
+          <div className="font-bold mb-2">
+            {isAr ? 'رمز الاستكمال (يُعرض مرة واحدة)' : 'Resume token (shown once)'}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <code className="text-xs break-all bg-black/40 px-2 py-1 rounded">
+              {lastResumeToken.token}
+            </code>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 text-gold-300 hover:text-white"
+              onClick={() => navigator.clipboard.writeText(lastResumeToken.token)}
+            >
+              <Copy size={14} /> {isAr ? 'نسخ' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
 
-                <AdminSearchInput
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder={isAr ? 'بحث بالاسم، الرقم أو المعرف...' : 'Search name, phone or ID...'}
-                    className="w-72"
-                />
-            </div>
-
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-white/[0.05] text-[10px] text-white/30 uppercase tracking-[0.15em] font-black bg-black/20">
-                            <th className="py-5 px-6 text-start w-[10%]">{isAr ? 'رقم الطلب' : 'Request ID'}</th>
-                            <th className="py-5 px-6 text-start w-[15%]">{isAr ? 'العميل' : 'Customer'}</th>
-                            <th className="py-5 px-6 text-center w-[25%]">{isAr ? 'الرقم القديم ← الجديد' : 'Old → New Phone'}</th>
-                            <th className="py-5 px-6 text-start w-[20%]">{isAr ? 'ملخص المخاطر/الرصيد' : 'Risk/Balance'}</th>
-                            <th className="py-5 px-6 text-start w-[12%]">{isAr ? 'التاريخ' : 'Date'}</th>
-                            <th className="py-5 px-6 text-start w-[10%]">{isAr ? 'الحالة' : 'Status'}</th>
-                            <th className="py-5 px-6 text-end w-[8%]">{isAr ? 'إجراءات' : 'Actions'}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan={7} className="text-center py-12 text-white/40">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-xs font-bold uppercase tracking-widest">{isAr ? 'جاري التحميل...' : 'Loading Requests...'}</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : requestsList.length === 0 ? (
-                            <tr>
-                                <td colSpan={7} className="text-center py-12 text-white/20">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Search size={40} strokeWidth={1} className="opacity-20 mb-2" />
-                                        <span className="text-sm font-medium">
-                                            {isAr ? 'لم يتم العثور على طلبات مطابقة' : 'No matching requests found'}
-                                        </span>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : requestsList.map((req) => (
-                            <tr key={req.id} className="group hover:bg-white/[0.02] transition-all duration-300 border-b border-white/[0.03] last:border-0 relative overflow-hidden">
-                                <td className="py-6 px-6 font-mono text-[10px] text-gold-500/50 text-start w-[10%]">
-                                    <span className="opacity-40">#</span>{req.id.split('-').pop()}
-                                </td>
-                                <td className="py-6 px-6 text-start w-[15%]">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm text-white font-bold tracking-tight group-hover:text-gold-500 transition-colors line-clamp-1">{req.userName}</span>
-                                        <span className="text-[9px] text-white/20 uppercase tracking-tighter">Verified User</span>
-                                    </div>
-                                </td>
-                                <td className="py-6 px-6 w-[25%] text-center">
-                                    <div className="flex items-center justify-center gap-3" dir="ltr">
-                                        <span className="text-white/20 text-xs font-mono line-through decoration-red-500/50">{req.oldPhone || 'N/A'}</span>
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-1 h-1 rounded-full bg-gold-500 animate-ping"></div>
-                                            <span className="text-gold-500/40 font-black">→</span>
-                                        </div>
-                                        <span className="text-white font-black font-mono text-sm bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 shadow-inner">{req.newPhone}</span>
-                                    </div>
-                                </td>
-                                <td className="py-6 px-6 text-start w-[20%]">
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className={`text-base font-black tracking-tighter ${req.balanceSnapshot > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                                                {req.balanceSnapshot.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                            </span>
-                                            <span className="text-[9px] text-white/30 font-bold uppercase">AED</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-[9px] text-white/40">
-                                                {isAr ? 'طلبات:' : 'Orders:'} <span className="text-white/60">{req.openOrdersCount}</span>
-                                            </span>
-                                            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-[9px] text-white/40">
-                                                {isAr ? 'نزاعات:' : 'Disputes:'} <span className="text-white/60">{req.disputesCount}</span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-6 px-6 text-start w-[12%]">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-white/50 font-bold">
-                                            {new Date(req.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { day: '2-digit', month: 'short' })}
-                                        </span>
-                                        <span className="text-[9px] text-white/20 uppercase">{new Date(req.createdAt).getFullYear()}</span>
-                                    </div>
-                                </td>
-                                <td className="py-6 px-6 text-start w-[10%]">
-                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm ${
-                                        req.status === 'APPROVED' ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10' :
-                                        req.status === 'REJECTED' ? 'bg-red-500/5 text-red-400 border-red-500/10' :
-                                        'bg-gold-500/5 text-gold-400 border-gold-500/10'
-                                    }`}>
-                                        <div className={`w-1 h-1 rounded-full animate-pulse ${
-                                            req.status === 'APPROVED' ? 'bg-emerald-400' :
-                                            req.status === 'REJECTED' ? 'bg-red-400' : 'bg-gold-400'
-                                        }`}></div>
-                                        <span className="text-[9px] font-black uppercase tracking-tight">
-                                            {isAr ? (req.status === 'APPROVED' ? 'تم القبول' : req.status === 'REJECTED' ? 'مرفوض' : 'قيد المراجعة') : req.status}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="py-6 px-6 text-end w-[8%]">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button 
-                                            onClick={() => navigateToProfile(req.userId, req.userRole)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all border border-white/10 group-hover:border-white/20"
-                                            title={isAr ? 'عرض الملف الشخصي' : 'View Profile'}
-                                        >
-                                            {req.userRole === 'VENDOR' ? <Store size={16} /> : <User size={16} />}
-                                        </button>
-
-                                        {req.status === 'PENDING_REVIEW' && (
-                                            <>
-                                                <button
-                                                    onClick={() => handleAction(req.id, 'APPROVE')}
-                                                    className="w-9 h-9 flex items-center justify-center bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-xl transition-all duration-300 border border-emerald-500/10 shadow-lg"
-                                                    title="Approve"
-                                                >
-                                                    <CheckCircle size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAction(req.id, 'REJECT')}
-                                                    className="w-9 h-9 flex items-center justify-center bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all duration-300 border border-red-500/10 shadow-lg"
-                                                    title="Reject"
-                                                >
-                                                    <XCircle size={16} />
-                                                </button>
-                                            </>
-                                        )}
-                                        
-                                        {req.status !== 'PENDING_REVIEW' && (
-                                            <button className="w-9 h-9 flex items-center justify-center text-white/10 hover:text-white transition-colors">
-                                                <ExternalLink size={16} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </GlassCard>
-    );
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[900px]">
+          <thead>
+            <tr className="border-b border-white/[0.05] text-[10px] text-white/30 uppercase tracking-[0.15em] font-black bg-black/20">
+              <th className="py-4 px-4 text-start">{isAr ? 'النوع' : 'Case'}</th>
+              <th className="py-4 px-4 text-start">{isAr ? 'المستخدم' : 'User'}</th>
+              <th className="py-4 px-4 text-start">{isAr ? 'البيانات' : 'Details'}</th>
+              <th className="py-4 px-4 text-start">{isAr ? 'المخاطر' : 'Risk'}</th>
+              <th className="py-4 px-4 text-start">{isAr ? 'الحالة' : 'Status'}</th>
+              <th className="py-4 px-4 text-end">{isAr ? 'إجراءات' : 'Actions'}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="text-center py-12 text-white/40">
+                  {isAr ? 'جاري التحميل...' : 'Loading...'}
+                </td>
+              </tr>
+            ) : requests.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-12 text-white/20">
+                  {isAr ? 'لا توجد طلبات' : 'No requests'}
+                </td>
+              </tr>
+            ) : (
+              requests.map((r) => (
+                <tr key={r.id} className="hover:bg-white/[0.02]">
+                  <td className="py-4 px-4 text-sm text-white/80">
+                    <span
+                      className={
+                        r.caseType === 'LOST_BOTH'
+                          ? 'text-orange-300 font-bold'
+                          : 'text-white/70'
+                      }
+                    >
+                      {caseLabel(r.caseType)}
+                    </span>
+                    <div className="text-[10px] text-white/30 font-mono mt-1">
+                      {r.id.slice(0, 8)}…
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-sm text-white">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-gold-300"
+                      onClick={() => navigateToProfile(r.userId, r.userRole)}
+                    >
+                      {r.userName} <ExternalLink size={12} />
+                    </button>
+                    <div className="text-[10px] text-white/40">{r.userRole}</div>
+                  </td>
+                  <td className="py-4 px-4 text-xs text-white/60 space-y-1">
+                    <div>
+                      {isAr ? 'جوال:' : 'Phone:'} {r.oldPhone || '—'} → {r.newPhone || '—'}
+                    </div>
+                    <div>
+                      {isAr ? 'إيميل:' : 'Email:'} {r.oldEmail || '—'} → {r.newEmail || '—'}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-xs text-white/60">
+                    <div>
+                      {Number(r.balanceSnapshot).toFixed(2)} AED
+                    </div>
+                    <div>
+                      {isAr ? 'طلبات:' : 'Orders:'} {r.openOrdersCount} ·{' '}
+                      {isAr ? 'نزاعات:' : 'Disputes:'} {r.disputesCount}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-xs text-white/70">{statusLabel(r.status)}</td>
+                  <td className="py-4 px-4 text-end">
+                    <div className="inline-flex flex-wrap gap-2 justify-end">
+                      {r.status === 'PENDING_REVIEW' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleAction(r.id, 'APPROVE')}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold inline-flex items-center gap-1"
+                          >
+                            <CheckCircle size={12} /> {isAr ? 'موافقة' : 'Approve'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAction(r.id, 'REJECT')}
+                            className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-xs font-bold inline-flex items-center gap-1"
+                          >
+                            <XCircle size={12} /> {isAr ? 'رفض' : 'Reject'}
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleFreeze(r.userId)}
+                        className="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-200 text-xs font-bold inline-flex items-center gap-1"
+                        title={isAr ? 'تجميد يدوي' : 'Manual freeze'}
+                      >
+                        <Snowflake size={12} /> {isAr ? 'تجميد' : 'Freeze'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </GlassCard>
+  );
 };
+
+export default AccountRecoveries;
