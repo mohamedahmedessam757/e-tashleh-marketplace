@@ -2,6 +2,7 @@ import {
     Injectable,
     BadRequestException,
     UnauthorizedException,
+    ForbiddenException,
     Logger,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
@@ -9,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { UsersService } from '../users/users.service';
 import { Prisma } from '@prisma/client';
 import { OtpService } from './otp.service';
 import { OtpPurpose, OTP_EXPIRY_MINUTES } from './otp-purpose';
@@ -22,8 +24,16 @@ import {
 
 type UiRole = 'customer' | 'merchant';
 
-const NEUTRAL_START_MSG =
-    'If an account matches, a verification code was sent to the registered contact.';
+const MSG_EMAIL_NOT_REGISTERED =
+    'لا يوجد حساب مسجّل بهذا البريد الإلكتروني لنوع الحساب المحدد. استخدم البريد المسجّل مسبقاً في النظام.';
+const MSG_PHONE_NOT_REGISTERED =
+    'لا يوجد حساب مسجّل برقم الجوال هذا لنوع الحساب المحدد. استخدم الرقم المسجّل مسبقاً في النظام.';
+const MSG_WRONG_ACCOUNT_TYPE =
+    'نوع الحساب غير مطابق (جرّب التبديل بين عميل/تاجر).';
+const MSG_PROOF_SENT_EMAIL =
+    'تم إرسال رمز التحقق إلى البريد الإلكتروني المسجّل في النظام.';
+const MSG_PROOF_SENT_PHONE =
+    'تم إرسال رمز التحقق إلى رقم الجوال المسجّل في النظام عبر واتساب.';
 
 @Injectable()
 export class RecoveryService {
@@ -35,6 +45,7 @@ export class RecoveryService {
         private auditLogs: AuditLogsService,
         private platformSettings: PlatformSettingsService,
         private otpService: OtpService,
+        private usersService: UsersService,
     ) {}
 
     private toDbRole(role: UiRole): 'CUSTOMER' | 'VENDOR' {
@@ -70,34 +81,101 @@ export class RecoveryService {
         await new Promise((r) => setTimeout(r, 400 + Math.floor(Math.random() * 200)));
     }
 
-    private async findUserByPhone(phone: string, role: UiRole) {
-        return this.prisma.user.findFirst({
-            where: { phone, role: this.toDbRole(role) },
-        });
+    /**
+     * Resolve a user by registered email for the selected panel role.
+     * Never sends OTP unless this returns a user — same gate as login.
+     */
+    private async requireRegisteredByEmail(emailRaw: string, role: UiRole) {
+        const email = emailRaw.trim().toLowerCase();
+        const user =
+            (await this.usersService.findByEmail(email)) ||
+            (email !== emailRaw.trim()
+                ? await this.usersService.findByEmail(emailRaw.trim())
+                : null);
+
+        if (!user?.email) {
+            await this.logSecurityEvent(email, 'RECOVERY_UNREGISTERED_EMAIL', false);
+            throw new BadRequestException(MSG_EMAIL_NOT_REGISTERED);
+        }
+
+        if (user.role !== this.toDbRole(role)) {
+            await this.logSecurityEvent(user.email, 'RECOVERY_WRONG_ROLE', false);
+            throw new ForbiddenException(MSG_WRONG_ACCOUNT_TYPE);
+        }
+
+        return user;
     }
 
-    private async findUserByEmail(email: string, role: UiRole) {
-        return this.prisma.user.findFirst({
-            where: { email: email.trim().toLowerCase(), role: this.toDbRole(role) },
-        });
+    /**
+     * Resolve a user by registered phone (multi-format, same as login).
+     * OTP is only ever sent to the phone stored on that account.
+     */
+    private async requireRegisteredByPhone(
+        phoneRaw: string,
+        role: UiRole,
+        countryCode?: string,
+    ) {
+        const phone = this.normPhone(phoneRaw, countryCode);
+        const user = await this.usersService.findByPhone(phone);
+
+        if (!user?.phone) {
+            await this.logSecurityEvent(phone, 'RECOVERY_UNREGISTERED_PHONE', false);
+            throw new BadRequestException(MSG_PHONE_NOT_REGISTERED);
+        }
+
+        if (user.role !== this.toDbRole(role)) {
+            await this.logSecurityEvent(
+                user.email || phone,
+                'RECOVERY_WRONG_ROLE',
+                false,
+            );
+            throw new ForbiddenException(MSG_WRONG_ACCOUNT_TYPE);
+        }
+
+        return user;
+    }
+
+    /** Soft lookup (verify/confirm paths) — no existence leak beyond invalid OTP. */
+    private async findRegisteredByEmail(emailRaw: string, role: UiRole) {
+        try {
+            return await this.requireRegisteredByEmail(emailRaw, role);
+        } catch {
+            return null;
+        }
+    }
+
+    private async findRegisteredByPhone(
+        phoneRaw: string,
+        role: UiRole,
+        countryCode?: string,
+    ) {
+        try {
+            return await this.requireRegisteredByPhone(phoneRaw, role, countryCode);
+        } catch {
+            return null;
+        }
+    }
+
+    private storedPhoneMatchesClaim(
+        storedPhone: string | null | undefined,
+        storedCountryCode: string | null | undefined,
+        claimPhone: string,
+    ): boolean {
+        if (!storedPhone) return false;
+        const storedNorm = this.normPhone(storedPhone, storedCountryCode);
+        if (storedNorm === claimPhone) return true;
+        // Multi-format: if login-style lookup of claim resolves to same digits as stored
+        const claimDigits = claimPhone.replace(/\D/g, '');
+        const storedDigits = storedNorm.replace(/\D/g, '');
+        return claimDigits.length >= 9 && storedDigits.endsWith(claimDigits.slice(-9));
     }
 
     // ─── Case 1: Lost phone — identify by accessible email ────────────
 
     async lostPhoneStart(emailRaw: string, role: UiRole) {
-        const email = emailRaw.trim().toLowerCase();
-        const user = await this.findUserByEmail(email, role);
         await this.delayNeutral();
-
-        if (!user?.email) {
-            return {
-                success: true,
-                message: NEUTRAL_START_MSG,
-                // Always return a masked form of the submitted email (anti-enumeration)
-                maskedEmail: this.maskEmail(email),
-                expiresInMinutes: OTP_EXPIRY_MINUTES,
-            };
-        }
+        // Gate: registered email must exist — never OTP arbitrary inboxes
+        const user = await this.requireRegisteredByEmail(emailRaw, role);
 
         await this.otpService.issueAndSend({
             channel: 'email',
@@ -123,15 +201,16 @@ export class RecoveryService {
 
         return {
             success: true,
-            message: NEUTRAL_START_MSG,
+            otpSent: true,
+            accountRegistered: true,
+            message: MSG_PROOF_SENT_EMAIL,
             maskedEmail: this.maskEmail(user.email),
             expiresInMinutes: OTP_EXPIRY_MINUTES,
         };
     }
 
     async lostPhoneVerifyProof(emailRaw: string, otp: string, role: UiRole, ip?: string) {
-        const email = emailRaw.trim().toLowerCase();
-        const user = await this.findUserByEmail(email, role);
+        const user = await this.findRegisteredByEmail(emailRaw, role);
         if (!user?.email) {
             throw new BadRequestException('Invalid verification code');
         }
@@ -164,9 +243,8 @@ export class RecoveryService {
         newCountryCode?: string,
         ip?: string,
     ) {
-        const email = emailRaw.trim().toLowerCase();
-        const user = await this.findUserByEmail(email, role);
-        if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
+        // Identifying contact must already be a registered account email
+        const user = await this.requireRegisteredByEmail(emailRaw, role);
 
         await this.otpService.assertRecoveryProofVerified({
             role,
@@ -175,7 +253,10 @@ export class RecoveryService {
         });
 
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
-        if (user.phone && newPhone === user.phone) {
+        if (
+            user.phone &&
+            this.storedPhoneMatchesClaim(user.phone, user.countryCode, newPhone)
+        ) {
             throw new BadRequestException('New phone must differ from the old phone');
         }
 
@@ -193,7 +274,7 @@ export class RecoveryService {
             audience: this.audience(role),
             name: user.name ?? undefined,
             role,
-            metadata: { caseType: 'LOST_PHONE', newPhone },
+            metadata: { caseType: 'LOST_PHONE', userId: user.id, newPhone },
         });
 
         await this.logSecurityEvent(user.email, 'RECOVERY_NEW_PHONE_OTP_SENT', true, ip);
@@ -214,10 +295,8 @@ export class RecoveryService {
         ip?: string,
         device?: string,
     ) {
-        const email = emailRaw.trim().toLowerCase();
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
-        const user = await this.findUserByEmail(email, role);
-        if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
+        const user = await this.requireRegisteredByEmail(emailRaw, role);
 
         await this.otpService.assertRecoveryProofVerified({
             role,
@@ -289,23 +368,14 @@ export class RecoveryService {
     // ─── Case 2: Lost email — identify by accessible phone ────────────
 
     async lostEmailStart(phoneRaw: string, role: UiRole, countryCode?: string) {
-        const phone = this.normPhone(phoneRaw, countryCode);
-        const user = await this.findUserByPhone(phone, role);
         await this.delayNeutral();
-
-        if (!user?.phone) {
-            return {
-                success: true,
-                message: NEUTRAL_START_MSG,
-                // Always return a masked form of the submitted phone (anti-enumeration)
-                maskedPhone: this.maskPhone(phone),
-                expiresInMinutes: OTP_EXPIRY_MINUTES,
-            };
-        }
+        // Gate: registered phone must exist — never WhatsApp OTP to arbitrary numbers
+        const user = await this.requireRegisteredByPhone(phoneRaw, role, countryCode);
 
         await this.otpService.issueAndSend({
             channel: 'whatsapp',
-            phone: user.phone,
+            // Always deliver to the phone on file, not a client-invented format
+            phone: user.phone!,
             email: user.email ?? undefined,
             purpose: OtpPurpose.RECOVERY_PROOF,
             audience: this.audience(role),
@@ -314,11 +384,17 @@ export class RecoveryService {
             metadata: { caseType: 'LOST_EMAIL', userId: user.id },
         });
 
-        await this.logSecurityEvent(user.email || phone, 'RECOVERY_LOST_EMAIL_PROOF_SENT', true);
+        await this.logSecurityEvent(
+            user.email || user.phone!,
+            'RECOVERY_LOST_EMAIL_PROOF_SENT',
+            true,
+        );
         return {
             success: true,
-            message: NEUTRAL_START_MSG,
-            maskedPhone: this.maskPhone(user.phone),
+            otpSent: true,
+            accountRegistered: true,
+            message: MSG_PROOF_SENT_PHONE,
+            maskedPhone: this.maskPhone(user.phone!),
             expiresInMinutes: OTP_EXPIRY_MINUTES,
         };
     }
@@ -330,8 +406,7 @@ export class RecoveryService {
         countryCode?: string,
         ip?: string,
     ) {
-        const phone = this.normPhone(phoneRaw, countryCode);
-        const user = await this.findUserByPhone(phone, role);
+        const user = await this.findRegisteredByPhone(phoneRaw, role, countryCode);
         if (!user?.phone) throw new BadRequestException('Invalid verification code');
 
         try {
@@ -344,7 +419,7 @@ export class RecoveryService {
             });
         } catch (err) {
             await this.logSecurityEvent(
-                user.email || phone,
+                user.email || user.phone,
                 'RECOVERY_LOST_EMAIL_PROOF_FAILED',
                 false,
                 ip,
@@ -352,7 +427,12 @@ export class RecoveryService {
             throw err;
         }
 
-        await this.logSecurityEvent(user.email || phone, 'RECOVERY_LOST_EMAIL_PROOF_OK', true, ip);
+        await this.logSecurityEvent(
+            user.email || user.phone,
+            'RECOVERY_LOST_EMAIL_PROOF_OK',
+            true,
+            ip,
+        );
         return {
             success: true,
             message: 'تم التحقق من هويتك بنجاح.',
@@ -368,15 +448,13 @@ export class RecoveryService {
         countryCode?: string,
         ip?: string,
     ) {
-        const phone = this.normPhone(phoneRaw, countryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
-        const user = await this.findUserByPhone(phone, role);
-        if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
+        const user = await this.requireRegisteredByPhone(phoneRaw, role, countryCode);
 
         await this.otpService.assertRecoveryProofVerified({
             role,
             channel: 'whatsapp',
-            phone: user.phone,
+            phone: user.phone!,
         });
 
         if (user.email && newEmail === user.email.trim().toLowerCase()) {
@@ -392,15 +470,20 @@ export class RecoveryService {
         await this.otpService.issueAndSend({
             channel: 'email',
             email: newEmail,
-            phone: user.phone,
+            phone: user.phone!,
             purpose: OtpPurpose.RECOVERY_NEW_CONTACT,
             audience: this.audience(role),
             name: user.name ?? undefined,
             role,
-            metadata: { caseType: 'LOST_EMAIL', newEmail },
+            metadata: { caseType: 'LOST_EMAIL', userId: user.id, newEmail },
         });
 
-        await this.logSecurityEvent(user.email || phone, 'RECOVERY_NEW_EMAIL_OTP_SENT', true, ip);
+        await this.logSecurityEvent(
+            user.email || user.phone!,
+            'RECOVERY_NEW_EMAIL_OTP_SENT',
+            true,
+            ip,
+        );
         return {
             success: true,
             channel: 'email',
@@ -417,15 +500,13 @@ export class RecoveryService {
         ip?: string,
         device?: string,
     ) {
-        const phone = this.normPhone(phoneRaw, countryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
-        const user = await this.findUserByPhone(phone, role);
-        if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
+        const user = await this.requireRegisteredByPhone(phoneRaw, role, countryCode);
 
         await this.otpService.assertRecoveryProofVerified({
             role,
             channel: 'whatsapp',
-            phone: user.phone,
+            phone: user.phone!,
         });
 
         await this.otpService.verify({
@@ -487,38 +568,49 @@ export class RecoveryService {
     // ─── Case 3: Lost both (High Risk) ────────────────────────────────
 
     /**
-     * Resolve LOST_BOTH claimant by phone OR email (same role), then require
-     * both claimed contacts to match that single user after normalization.
+     * Resolve LOST_BOTH claimant by registered phone OR email (same role), then
+     * require BOTH claimed contacts to match that single account on file.
      */
     private async resolveLostBothUser(phone: string, email: string, role: UiRole) {
         const dbRole = this.toDbRole(role);
-        const [byPhone, byEmail] = await Promise.all([
-            this.prisma.user.findFirst({
-                where: { role: dbRole, phone },
-                include: { store: true },
-            }),
-            this.prisma.user.findFirst({
-                where: { role: dbRole, email },
-                include: { store: true },
-            }),
+        const [byPhoneRaw, byEmailRaw] = await Promise.all([
+            this.usersService.findByPhone(phone),
+            this.usersService.findByEmail(email),
         ]);
 
+        const byPhone =
+            byPhoneRaw && byPhoneRaw.role === dbRole && byPhoneRaw.phone ? byPhoneRaw : null;
+        const byEmail =
+            byEmailRaw && byEmailRaw.role === dbRole && byEmailRaw.email ? byEmailRaw : null;
+
         if (byPhone && byEmail && byPhone.id !== byEmail.id) {
-            return { user: null as typeof byPhone | null, reason: 'conflicting_users' as const };
+            return { user: null as null, reason: 'conflicting_users' as const };
         }
 
-        const user = byPhone || byEmail || null;
-        if (!user) {
+        const matched = byPhone || byEmail;
+        if (!matched) {
             return { user: null, reason: 'no_match' as const };
         }
 
-        const userEmail = (user.email || '').trim().toLowerCase();
-        const userPhone = user.phone ? this.normPhone(user.phone) : '';
-        const phoneOk = !!userPhone && userPhone === phone;
+        const userEmail = (matched.email || '').trim().toLowerCase();
         const emailOk = !!userEmail && userEmail === email;
+        const phoneOk = this.storedPhoneMatchesClaim(
+            matched.phone,
+            matched.countryCode,
+            phone,
+        );
 
-        if (!phoneOk || !emailOk) {
+        // Both registered contacts on the account must match the claim
+        if (!emailOk || !phoneOk) {
             return { user: null, reason: 'partial_mismatch' as const };
+        }
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: matched.id },
+            include: { store: true },
+        });
+        if (!user) {
+            return { user: null, reason: 'no_match' as const };
         }
 
         return { user, reason: 'matched' as const };
@@ -1105,20 +1197,25 @@ export class RecoveryService {
     }
 
     private async logSecurityEvent(
-        email: string | null | undefined,
+        emailOrPhone: string | null | undefined,
         action: string,
         isSuccess: boolean,
         ip?: string,
         device?: string,
     ) {
-        if (!email) return;
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-            select: { id: true },
-        });
+        if (!emailOrPhone) return;
+        const key = emailOrPhone.trim();
+        const looksLikeEmail = key.includes('@');
+        const user = looksLikeEmail
+            ? await this.prisma.user.findUnique({
+                  where: { email: key.toLowerCase() },
+                  select: { id: true },
+              })
+            : await this.usersService.findByPhone(key);
+
         await this.prisma.securityLog.create({
             data: {
-                email,
+                email: looksLikeEmail ? key.toLowerCase() : key,
                 userId: user?.id,
                 action,
                 isSuccess,
