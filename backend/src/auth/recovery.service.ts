@@ -90,7 +90,8 @@ export class RecoveryService {
             return {
                 success: true,
                 message: NEUTRAL_START_MSG,
-                maskedEmail: null as string | null,
+                // Always return a masked form of the submitted email (anti-enumeration)
+                maskedEmail: this.maskEmail(email),
                 expiresInMinutes: OTP_EXPIRY_MINUTES,
             };
         }
@@ -293,7 +294,8 @@ export class RecoveryService {
             return {
                 success: true,
                 message: NEUTRAL_START_MSG,
-                maskedPhone: null as string | null,
+                // Always return a masked form of the submitted phone (anti-enumeration)
+                maskedPhone: this.maskPhone(phone),
                 expiresInMinutes: OTP_EXPIRY_MINUTES,
             };
         }
