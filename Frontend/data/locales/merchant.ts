@@ -470,18 +470,30 @@ export const merchant = {
     },
     exploreOffer: {
       freeEditWindow: 'مهلة التعديل المجاني',
+      editOfferBtn: 'تعديل العرض',
+      cancelDeleteOfferBtn: 'إلغاء وحذف العرض',
+      editConfirmDialog: {
+        title: 'متابعة تعديل العرض؟',
+        body: 'يمكنك تعديل عرضك خلال 15 دقيقة فقط من وقت تقديمه.\n\nبعد انتهاء مدة الـ 15 دقيقة لن يكون التعديل متاحًا، ويمكنك فقط اختيار حذف العرض إذا كان الحذف ما زال ضمن المدة المسموح بها.\n\nهل ترغب في متابعة تعديل العرض؟',
+        confirm: 'نعم، متابعة التعديل',
+        cancel: 'إلغاء'
+      },
       voluntaryWithdrawBtn: 'إلغاء والانسحاب من الطلب',
       voluntaryWithdrawCountdown: 'المتبقي للانسحاب من الطلب',
       voluntaryWithdrawDialog: {
-        title: 'إلغاء والانسحاب من الطلب؟',
-        body: 'إذا انسحبت بإرادتك من هذا الطلب، سيُعتبر الطلب ملغياً بالنسبة لك ولن تتمكن من تقديم أي عرض آخر عليه. يمكنك التقديم على طلبات أخرى.',
-        confirm: 'تأكيد الانسحاب',
+        title: 'هل أنت متأكد من رغبتك في حذف العرض؟',
+        bullets: [
+          'لن تتمكن من تقديم عرض جديد على نفس الطلب.',
+          'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
+          'بعد مرور 23 ساعة لن يكون بإمكانك حذف العرض.'
+        ],
+        confirm: 'تأكيد حذف العرض',
         cancel: 'تراجع (الاحتفاظ بالعرض)'
       },
       blockedFromOrder: 'لقد انسحبت من هذا الطلب ولا يمكنك تقديم عرض جديد عليه.',
       governance: {
         editWindow: 'لديك 15 دقيقة لتعديل أو حذف عرضك بعد الإرسال مباشرة.',
-        voluntaryWindow: 'بعد 15 دقيقة يمكنك الانسحاب الطوعي من الطلب حتى ساعة قبل مرحلة اختيار العميل. الانسحاب يمنعك من التقديم على هذا الطلب فقط.',
+        voluntaryWindow: 'بعد 15 دقيقة يمكنك الانسحاب الطوعي من الطلب حتى ساعة قبل مرحلة اختيار العميل. الانسحاب يسجّل مخالفة ويمنعك من التقديم على هذه القطعة.',
         cutoff: 'يتوقف النظام عن استقبال العروض قبل 15 دقيقة من نهاية الـ 24 ساعة.'
       }
     },
@@ -1317,18 +1329,30 @@ export const merchant = {
     },
     exploreOffer: {
       freeEditWindow: 'Free Edit Window',
+      editOfferBtn: 'Edit Offer',
+      cancelDeleteOfferBtn: 'Cancel & Delete Offer',
+      editConfirmDialog: {
+        title: 'Continue editing this offer?',
+        body: 'You can edit your offer only within 15 minutes of submitting it.\n\nAfter the 15-minute window ends, editing will no longer be available. You may only delete the offer if deletion is still within the allowed period.\n\nDo you want to continue editing the offer?',
+        confirm: 'Yes, continue editing',
+        cancel: 'Cancel'
+      },
       voluntaryWithdrawBtn: 'Cancel & Withdraw from Request',
       voluntaryWithdrawCountdown: 'Time left to withdraw from request',
       voluntaryWithdrawDialog: {
-        title: 'Cancel & Withdraw from Request?',
-        body: 'If you voluntarily withdraw from this request, it will be cancelled for you and you cannot submit any further offer on it. You may still bid on other requests.',
-        confirm: 'Confirm Withdrawal',
+        title: 'Are you sure you want to delete this offer?',
+        bullets: [
+          'You will not be able to submit a new offer on the same request.',
+          'A violation will be recorded against the store for cancelling the offer.',
+          'After 23 hours you will no longer be able to delete the offer.'
+        ],
+        confirm: 'Confirm Delete Offer',
         cancel: 'Keep Offer'
       },
       blockedFromOrder: 'You have withdrawn from this request and cannot submit a new offer on it.',
       governance: {
         editWindow: 'You have 15 minutes to edit or delete your offer immediately after submission.',
-        voluntaryWindow: 'After 15 minutes you may voluntarily withdraw until 1 hour before customer selection. Withdrawal blocks you from this request only.',
+        voluntaryWindow: 'After 15 minutes you may voluntarily withdraw until 1 hour before customer selection. Withdrawal records a violation and blocks you from this part.',
         cutoff: 'The system stops accepting offers 15 minutes before the 24-hour collection ends.'
       }
     },

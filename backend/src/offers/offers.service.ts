@@ -1,16 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { StoresService } from '../stores/stores.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { ActorType, OrderStatus } from '@prisma/client';
+import { ActorType, OrderStatus, ViolationTargetType } from '@prisma/client';
 import { getVoluntaryWithdrawEnd } from './offer-governance.util';
 import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
 import { LogisticsConfigService } from '../common/logistics-config.service';
+import { ViolationsService } from '../violations/violations.service';
 
 @Injectable()
 export class OffersService {
+    private readonly logger = new Logger(OffersService.name);
+
     constructor(
         private prisma: PrismaService,
         private storesService: StoresService,
@@ -18,6 +21,7 @@ export class OffersService {
         private auditLogs: AuditLogsService,
         private biddingRestriction: OfferBiddingRestrictionService,
         private logisticsConfig: LogisticsConfigService,
+        private violationsService: ViolationsService,
     ) { }
 
     async create(userId: string, createOfferDto: CreateOfferDto) {
@@ -468,7 +472,8 @@ export class OffersService {
 
     /**
      * Voluntary withdrawal — after 15m free window, before 1h pre-selection.
-     * Blocks re-bidding on this order; does not count as governance violation.
+     * Blocks re-bidding on this part; records a store Violation (VOLUNTARY_OFFER_WITHDRAW)
+     * and counts toward the monthly deletion quota.
      */
     async voluntaryWithdraw(userId: string, offerId: string) {
         const store = await this.storesService.findMyStore(userId);
@@ -553,6 +558,28 @@ export class OffersService {
             kind: 'VOLUNTARY_WITHDRAW',
         });
 
+        // Record governance Violation (idempotent per offer via dedupSuffix)
+        const issuedViolation = await this.violationsService.autoIssue({
+            code: 'VOLUNTARY_OFFER_WITHDRAW',
+            targetUserId: userId,
+            targetStoreId: store.id,
+            targetType: ViolationTargetType.MERCHANT,
+            orderId: existing.orderId,
+            reason: `Voluntary offer withdrawal after free edit window. Offer #${offerMeta?.offerNumber || offerId} on order #${order.orderNumber}.`,
+            metadata: {
+                offerId,
+                offerNumber: offerMeta?.offerNumber,
+                orderPartId: existing.orderPartId,
+                withdrawalType: 'voluntary',
+            },
+            dedupSuffix: `offer:${offerId}`,
+        });
+        if (!issuedViolation) {
+            this.logger.warn(
+                `VOLUNTARY_OFFER_WITHDRAW autoIssue returned null for offer=${offerId} store=${store.id} — ensure violation type exists.`,
+            );
+        }
+
         await this.auditLogs.logAction({
             orderId: existing.orderId,
             action: 'VOLUNTARY_WITHDRAW_OFFER',
@@ -569,6 +596,8 @@ export class OffersService {
                 orderPartId: existing.orderPartId,
                 modificationKind: 'VOLUNTARY_WITHDRAW',
                 withdrawalType: 'voluntary',
+                violationId: issuedViolation?.id ?? null,
+                violationCode: 'VOLUNTARY_OFFER_WITHDRAW',
             },
         });
 
@@ -586,10 +615,10 @@ export class OffersService {
             .create({
                 recipientId: userId,
                 recipientRole: 'VENDOR',
-                titleAr: 'تم التراجع عن العرض',
-                titleEn: 'Offer Withdrawn',
-                messageAr: `تم الانسحاب من القطعة على الطلب #${order.orderNumber}. لن تتمكن من تقديم عرض على هذه القطعة مرة أخرى. يمكنك التقديم على قطع/طلبات أخرى.`,
-                messageEn: `You withdrew from a part on request #${order.orderNumber}. You cannot re-bid on that part. You may still bid on other parts/requests.`,
+                titleAr: 'تم التراجع عن العرض وتسجيل مخالفة',
+                titleEn: 'Offer Withdrawn — Violation Recorded',
+                messageAr: `تم الانسحاب من القطعة على الطلب #${order.orderNumber}. تم تسجيل مخالفة على المتجر ولن تتمكن من تقديم عرض على هذه القطعة مرة أخرى.`,
+                messageEn: `You withdrew from a part on request #${order.orderNumber}. A store violation was recorded and you cannot re-bid on that part.`,
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${existing.orderId}`,
             })

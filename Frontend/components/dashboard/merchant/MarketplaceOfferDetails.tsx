@@ -207,6 +207,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const [isVoluntaryWithdrawDialogOpen, setIsVoluntaryWithdrawDialogOpen] = useState(false);
     const [isVoluntaryWithdrawing, setIsVoluntaryWithdrawing] = useState(false);
     const [offerToVoluntaryWithdraw, setOfferToVoluntaryWithdraw] = useState<any | null>(null);
+    const [isEditConfirmDialogOpen, setIsEditConfirmDialogOpen] = useState(false);
+    const [offerPendingEdit, setOfferPendingEdit] = useState<any | null>(null);
     // Tab State
     const deepLink = useMemo(() => readDashboardDeepLink(), []);
     const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'waybills'>(
@@ -1965,13 +1967,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                         type="button"
                                                                                         onClick={(e) => {
                                                                                             e.stopPropagation();
-                                                                                            setEditOfferId(partOffer.id);
-                                                                                            setIsBidding(true);
+                                                                                            setOfferPendingEdit(partOffer);
+                                                                                            setIsEditConfirmDialogOpen(true);
                                                                                         }}
                                                                                         className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/25"
                                                                                     >
                                                                                         <Edit3 size={14} />
-                                                                                        {isAr ? 'تعديل العرض' : 'Edit Offer'}
+                                                                                        {exploreOfferT?.editOfferBtn || (isAr ? 'تعديل العرض' : 'Edit Offer')}
                                                                                     </button>
                                                                                     <button
                                                                                         type="button"
@@ -1983,7 +1985,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                         className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-white/5 hover:bg-white/10 text-white/70 border border-white/10"
                                                                                     >
                                                                                         <XCircle size={14} />
-                                                                                        {isAr ? 'إلغاء وحذف العرض' : 'Cancel & Delete Offer'}
+                                                                                        {exploreOfferT?.cancelDeleteOfferBtn || (isAr ? 'إلغاء وحذف العرض' : 'Cancel & Delete Offer')}
                                                                                     </button>
                                                                                 </div>
                                                                             )}
@@ -3127,6 +3129,72 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 )}
             </AnimatePresence>
 
+            {/* EDIT OFFER CONFIRMATION DIALOG */}
+            <AnimatePresence>
+                {isEditConfirmDialogOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#1A1814] border border-gold-500/30 rounded-3xl p-6 shadow-2xl relative"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-[50px] rounded-full pointer-events-none" />
+                            <div className="flex flex-col items-center text-center space-y-4 relative z-10">
+                                <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400">
+                                    <Edit3 size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-white">
+                                    {exploreOfferT?.editConfirmDialog?.title ||
+                                        (isAr ? 'متابعة تعديل العرض؟' : 'Continue editing this offer?')}
+                                </h3>
+                                <p className="text-sm text-white/50 leading-relaxed px-2 whitespace-pre-line">
+                                    {exploreOfferT?.editConfirmDialog?.body ||
+                                        (isAr
+                                            ? 'يمكنك تعديل عرضك خلال 15 دقيقة فقط من وقت تقديمه.\n\nبعد انتهاء مدة الـ 15 دقيقة لن يكون التعديل متاحًا، ويمكنك فقط اختيار حذف العرض إذا كان الحذف ما زال ضمن المدة المسموح بها.\n\nهل ترغب في متابعة تعديل العرض؟'
+                                            : 'You can edit your offer only within 15 minutes of submitting it.\n\nAfter the 15-minute window ends, editing will no longer be available. You may only delete the offer if deletion is still within the allowed period.\n\nDo you want to continue editing the offer?')}
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-3 mt-8 relative z-10">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!offerPendingEdit?.id) return;
+                                        setEditOfferId(offerPendingEdit.id);
+                                        setIsBidding(true);
+                                        setIsEditConfirmDialogOpen(false);
+                                        setOfferPendingEdit(null);
+                                    }}
+                                    className="w-full py-3.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-bold transition-all shadow-lg flex items-center justify-center gap-2"
+                                >
+                                    <Edit3 size={18} />
+                                    <span>
+                                        {exploreOfferT?.editConfirmDialog?.confirm ||
+                                            (isAr ? 'نعم، متابعة التعديل' : 'Yes, continue editing')}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsEditConfirmDialogOpen(false);
+                                        setOfferPendingEdit(null);
+                                    }}
+                                    className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-bold transition-colors border border-white/5"
+                                >
+                                    {exploreOfferT?.editConfirmDialog?.cancel ||
+                                        (isAr ? 'إلغاء' : 'Cancel')}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* VOLUNTARY WITHDRAW DIALOG */}
             <AnimatePresence>
                 {isVoluntaryWithdrawDialogOpen && (
@@ -3140,7 +3208,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md bg-[#1A1814] border border-amber-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+                            className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#1A1814] border border-amber-500/30 rounded-3xl p-6 shadow-2xl relative"
                         >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[50px] rounded-full pointer-events-none" />
                             <div className="flex flex-col items-center text-center space-y-4 relative z-10">
@@ -3149,14 +3217,28 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 </div>
                                 <h3 className="text-xl font-bold text-white">
                                     {exploreOfferT?.voluntaryWithdrawDialog?.title ||
-                                        (isAr ? 'تراجع عن العرض؟' : 'Withdraw this offer?')}
-                                </h3>
-                                <p className="text-sm text-white/50 leading-relaxed px-2">
-                                    {exploreOfferT?.voluntaryWithdrawDialog?.body ||
                                         (isAr
-                                            ? 'التراجع يعد ضمن الحد الشهري (50) ويمنعك من إعادة التقديم على نفس القطعة حتى نهاية جمع العروض. يمكنك التقديم على قطع/طلبات أخرى.'
-                                            : 'Withdrawal counts toward the monthly limit (50) and blocks re-bidding on this part until collection ends. You may still bid on other parts/requests.')}
-                                </p>
+                                            ? 'هل أنت متأكد من رغبتك في حذف العرض؟'
+                                            : 'Are you sure you want to delete this offer?')}
+                                </h3>
+                                <ul className="w-full text-sm text-white/50 leading-relaxed px-2 space-y-2 text-start list-disc list-inside">
+                                    {(
+                                        exploreOfferT?.voluntaryWithdrawDialog?.bullets ||
+                                        (isAr
+                                            ? [
+                                                  'لن تتمكن من تقديم عرض جديد على نفس الطلب.',
+                                                  'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
+                                                  'بعد مرور 23 ساعة لن يكون بإمكانك حذف العرض.',
+                                              ]
+                                            : [
+                                                  'You will not be able to submit a new offer on the same request.',
+                                                  'A violation will be recorded against the store for cancelling the offer.',
+                                                  'After 23 hours you will no longer be able to delete the offer.',
+                                              ])
+                                    ).map((line: string, idx: number) => (
+                                        <li key={idx}>{line}</li>
+                                    ))}
+                                </ul>
                             </div>
                             <div className="flex flex-col gap-3 mt-8 relative z-10">
                                 <button
@@ -3172,7 +3254,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     )}
                                     <span>
                                         {exploreOfferT?.voluntaryWithdrawDialog?.confirm ||
-                                            (isAr ? 'تأكيد الانسحاب' : 'Confirm Withdrawal')}
+                                            (isAr ? 'تأكيد حذف العرض' : 'Confirm Delete Offer')}
                                     </span>
                                 </button>
                                 <button
