@@ -66,8 +66,14 @@ export const WIRED_TEMPLATE_EVENTS: Record<string, string[]> = {
     ],
     welcome_customer: ['auth.service:register CUSTOMER → sendByFamily'],
     welcome_vendor: [
+        'waEvent:STORE_ACTIVATION (stores.service ACTIVE only)',
+    ],
+    txn_store_under_review: [
         'auth.service:register VENDOR → sendByFamily',
-        'waEvent:STORE_ACTIVATION (stores.service ACTIVE)',
+        'waEvent:STORE_UNDER_REVIEW (doc re-upload → PENDING_REVIEW)',
+    ],
+    txn_chat_message: [
+        'waEvent:CHAT_MESSAGE (chat.service dispatchChatNotification)',
     ],
 };
 

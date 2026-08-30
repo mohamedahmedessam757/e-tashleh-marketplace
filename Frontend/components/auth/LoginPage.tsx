@@ -7,6 +7,7 @@ import { OTPMethodSelection } from './OTPMethodSelection';
 import { authApi } from '@/services/api/auth';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import type { PendingRedirect } from '../../utils/widersDeepLink';
+import { isLikelyWhatsAppInAppBrowser } from '../../utils/widersDeepLink';
 import { saveRegisterPrefill, type RegisterPrefill } from '../../utils/registerPrefill';
 
 interface LoginPageProps {
@@ -315,6 +316,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       {redirectLabel && (
         <div className="bg-gold-500/10 border border-gold-500/30 text-gold-300 p-4 rounded-xl text-sm text-center">
           {redirectLabel}
+        </div>
+      )}
+      {pendingRedirect && isLikelyWhatsAppInAppBrowser() && (
+        <div className="bg-white/5 border border-white/10 text-white/50 p-3 rounded-xl text-xs text-center leading-relaxed">
+          {language === 'ar'
+            ? 'إن كنت مسجّلاً مسبقاً في متصفح الهاتف (Chrome/Safari)، افتح هذا الرابط من هناك للدخول مباشرة دون إعادة تسجيل.'
+            : 'If you are already signed in in Chrome/Safari, open this link there to continue without signing in again.'}
         </div>
       )}
       {roleMismatch && (

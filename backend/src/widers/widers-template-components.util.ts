@@ -14,6 +14,8 @@ const BODY_FIELD_DEFAULTS: Partial<Record<TemplateBodyField, string>> = {
     summary: '-',
     store_name: 'متجر',
     doc_type: 'مستند',
+    sender_name: 'مستخدم',
+    message_preview: 'رسالة جديدة',
 };
 
 /** Widers dashboard variable keys (إعداد القالب → متغيرات النظام) */
@@ -29,6 +31,8 @@ const WIDERS_PARAMETER_NAMES: Partial<Record<TemplateBodyField, string>> = {
     summary: 'summary',
     store_name: 'store_name',
     doc_type: 'doc_type',
+    sender_name: 'sender_name',
+    message_preview: 'message_preview',
 };
 
 /** Meta (#100) and Widers often reject empty template variables. */

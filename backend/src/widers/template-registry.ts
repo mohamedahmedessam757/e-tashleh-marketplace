@@ -16,7 +16,9 @@ export type TemplateBodyField =
     | 'amount'
     | 'summary'
     | 'store_name'
-    | 'doc_type';
+    | 'doc_type'
+    | 'sender_name'
+    | 'message_preview';
 
 export type TemplateNameVersion = 'v2' | 'v3';
 
@@ -229,11 +231,30 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonLabel: 'ابدأ الآن',
         buttonUrlDynamic: false,
     }),
+    // Store activated successfully — ONLY after admin sets ACTIVE (not at register)
     def('welcome_vendor', 'ar', 'vendor', ['name'], {
         category: 'UTILITY',
         buttonLabel: 'ابدأ الآن',
         buttonUrlDynamic: false,
     }),
+    // Merchant store under admin review (sent at register / PENDING_REVIEW)
+    def('txn_store_under_review', 'ar', 'vendor', ['name'], {
+        category: 'UTILITY',
+        buttonLabel: 'لوحة التاجر',
+        buttonUrlDynamic: false,
+        buttonSuffixPattern: suffix.storeHome,
+    }),
+    // New chat message — {{1}} sender · {{2}} preview · {{3}} follow_url
+    def(
+        'txn_chat_message',
+        'ar',
+        'customer',
+        ['sender_name', 'message_preview', 'follow_url'],
+        {
+            category: 'UTILITY',
+            buttonUrlDynamic: false,
+        },
+    ),
 ];
 
 const registryByName = new Map(

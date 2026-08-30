@@ -238,7 +238,12 @@ export class StoresService {
                     messageAr: 'لقد قمت بتحديث مستندات قانونية هامة. تم تعليق حسابك مؤقتاً حتى يقوم المسؤول بمراجعة التحديثات وتفعيل المتجر.',
                     messageEn: 'You have updated important legal documents. Your account is temporarily suspended until an admin reviews the updates.',
                     type: 'SYSTEM',
-                    link: '/dashboard/merchant/profile'
+                    link: '/dashboard/merchant/profile',
+                    metadata: {
+                        docType: 'store_under_review',
+                        storeId: store.id,
+                        waEvent: 'STORE_UNDER_REVIEW',
+                    },
                 }).catch(() => {});
             } else {
                 // Active orders exist: Queue review for later to prevent business interruption

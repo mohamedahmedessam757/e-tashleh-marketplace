@@ -311,7 +311,7 @@ export class AuthService {
 
         const family =
             user.role === 'VENDOR'
-                ? 'welcome_vendor'
+                ? 'txn_store_under_review'
                 : user.role === 'CUSTOMER'
                   ? 'welcome_customer'
                   : null;
