@@ -36,6 +36,7 @@ export const AccountRecoveries: React.FC = () => {
   const [requests, setRequests] = useState<RecoveryRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [lastResumeToken, setLastResumeToken] = useState<{
     id: string;
     token: string;
@@ -43,6 +44,7 @@ export const AccountRecoveries: React.FC = () => {
 
   const fetchRequests = useCallback(async (search?: string) => {
     try {
+      setLoadError(null);
       const res = await client.get('/auth/recovery/admin/requests', {
         params: search?.trim() ? { search: search.trim() } : undefined,
       });
@@ -64,12 +66,27 @@ export const AccountRecoveries: React.FC = () => {
         userRole: r.userRole || r.user?.role,
       }));
       setRequests(mapped);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const status = err?.response?.status;
+      if (status === 403) {
+        setLoadError(
+          isAr
+            ? 'لا تملك صلاحية عرض طلبات الاسترجاع (security-audit).'
+            : 'Missing permission to view recovery requests (security-audit).',
+        );
+      } else {
+        setLoadError(
+          isAr
+            ? 'تعذّر تحميل طلبات الاسترجاع. حاول مرة أخرى.'
+            : 'Failed to load recovery requests. Please try again.',
+        );
+      }
+      setRequests([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAr]);
 
   useEffect(() => {
     const channel = supabase
@@ -194,6 +211,12 @@ export const AccountRecoveries: React.FC = () => {
         />
       </div>
 
+      {loadError && (
+        <div className="mb-4 p-4 rounded-xl border border-red-500/40 bg-red-500/10 text-sm text-red-200">
+          {loadError}
+        </div>
+      )}
+
       {lastResumeToken && (
         <div className="mb-4 p-4 rounded-xl border border-gold-500/40 bg-gold-500/10 text-sm text-gold-100">
           <div className="font-bold mb-2">
@@ -236,12 +259,28 @@ export const AccountRecoveries: React.FC = () => {
             ) : requests.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-12 text-white/20">
-                  {isAr ? 'لا توجد طلبات' : 'No requests'}
+                  {loadError
+                    ? isAr
+                      ? '—'
+                      : '—'
+                    : isAr
+                      ? 'لا توجد طلبات'
+                      : 'No requests'}
                 </td>
               </tr>
             ) : (
-              requests.map((r) => (
-                <tr key={r.id} className="hover:bg-white/[0.02]">
+              requests.map((r) => {
+                const isHighRiskPending =
+                  r.caseType === 'LOST_BOTH' && r.status === 'PENDING_REVIEW';
+                return (
+                <tr
+                  key={r.id}
+                  className={
+                    isHighRiskPending
+                      ? 'bg-orange-500/10 hover:bg-orange-500/15 border-l-2 border-orange-400'
+                      : 'hover:bg-white/[0.02]'
+                  }
+                >
                   <td className="py-4 px-4 text-sm text-white/80">
                     <span
                       className={
@@ -252,6 +291,11 @@ export const AccountRecoveries: React.FC = () => {
                     >
                       {caseLabel(r.caseType)}
                     </span>
+                    {isHighRiskPending && (
+                      <div className="text-[10px] text-orange-300/80 mt-1 font-bold uppercase tracking-wide">
+                        {isAr ? 'يتطلب مراجعة فورية' : 'Needs immediate review'}
+                      </div>
+                    )}
                     <div className="text-[10px] text-white/30 font-mono mt-1">
                       {r.id.slice(0, 8)}…
                     </div>
@@ -315,7 +359,8 @@ export const AccountRecoveries: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

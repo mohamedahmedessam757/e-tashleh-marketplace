@@ -185,14 +185,14 @@ export class RecoveryController {
 
     @Get('admin/requests')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
-    @Permissions('users', 'view')
+    @Permissions('security-audit', 'view')
     getPendingRequests(@Query('search') search?: string) {
         return this.recoveryService.getPendingRequests(search);
     }
 
     @Post('admin/resolve')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
-    @Permissions('users', 'edit')
+    @Permissions('security-audit', 'edit')
     resolveRequest(
         @Body() body: AdminResolveRecoveryDto,
         @Req() req: Request & { user: { id: string } },
@@ -211,7 +211,7 @@ export class RecoveryController {
 
     @Post('admin/freeze-user')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
-    @Permissions('users', 'edit')
+    @Permissions('security-audit', 'edit')
     freezeUser(
         @Body() body: AdminFreezeUserDto,
         @Req() req: Request & { user: { id: string } },

@@ -212,12 +212,27 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         role,
         email: proofEmail.trim(),
       });
+      if (!res?.otpSent && res?.accountRegistered === false) {
+        triggerError(
+          isAr
+            ? 'لا يوجد حساب مسجّل بهذا البريد. استخدم البريد المسجّل في النظام.'
+            : 'No registered account with this email.',
+        );
+        return;
+      }
       setMaskedHint(res.maskedEmail);
       clearOtp();
       startTimer(res.expiresInMinutes);
       setStep('case1-otp');
     } catch (err: any) {
-      triggerError(err.response?.data?.message || err.message || 'Error');
+      const msg = err.response?.data?.message;
+      triggerError(
+        (Array.isArray(msg) ? msg[0] : msg) ||
+          err.message ||
+          (isAr
+            ? 'لا يوجد حساب مسجّل بهذا البريد الإلكتروني'
+            : 'No registered account with this email'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -319,12 +334,27 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         phone: proofPhoneLocal,
         countryCode: proofCountryCode,
       });
+      if (!res?.otpSent && res?.accountRegistered === false) {
+        triggerError(
+          isAr
+            ? 'لا يوجد حساب مسجّل بهذا الرقم. استخدم الرقم المسجّل في النظام.'
+            : 'No registered account with this phone.',
+        );
+        return;
+      }
       setMaskedHint(res.maskedPhone);
       clearOtp();
       startTimer(res.expiresInMinutes);
       setStep('case2-otp');
     } catch (err: any) {
-      triggerError(err.response?.data?.message || err.message || 'Error');
+      const msg = err.response?.data?.message;
+      triggerError(
+        (Array.isArray(msg) ? msg[0] : msg) ||
+          err.message ||
+          (isAr
+            ? 'لا يوجد حساب مسجّل برقم الجوال هذا'
+            : 'No registered account with this phone'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -767,8 +797,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       <div className="space-y-4 w-full min-w-0">
         <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-xs sm:text-sm rounded-xl p-3 leading-relaxed">
           {isAr
-            ? 'هذه عملية عالية الخطورة. سيتم مراجعة الطلب من الإدارة وتعليق السحب مؤقتاً.'
-            : 'This is a high-risk process. Admin will review and withdrawals will be paused.'}
+            ? 'هذه عملية عالية الخطورة. أدخل الجوال والبريد المسجّلين مسبقاً في النظام فقط (وليس بيانات جديدة). ستراجع الإدارة الطلب ويُعلَّق السحب مؤقتاً.'
+            : 'High-risk process. Enter only the phone and email already registered on the account (not new contacts). Admin will review and withdrawals will be paused.'}
         </div>
         {phoneField(
           claimedOldPhoneLocal,
@@ -796,13 +826,15 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     body = cardShell(
       <div className="space-y-4 text-center">
         <ShieldCheck className="mx-auto text-gold-400" size={36} />
-        <p className="text-white font-bold">
-          {isAr ? 'تم إرسال طلبك للمراجعة' : 'Your request was submitted for review'}
-        </p>
-        <p className="text-white/50 text-sm">
+        <p className="text-white font-bold text-base sm:text-lg">
           {isAr
-            ? 'سيتم إشعار الإدارة. عمليات السحب معلّقة حتى انتهاء المراجعة.'
-            : 'Admins were notified. Withdrawals are paused until review completes.'}
+            ? 'طلب استعادة عالي الخطورة قيد المراجعة'
+            : 'High-risk recovery request under review'}
+        </p>
+        <p className="text-white/55 text-xs sm:text-sm leading-relaxed px-1">
+          {isAr
+            ? 'إذا تطابقت البيانات مع حساب مسجّل، تم إشعار الإدارة وتعليق السحب حتى انتهاء المراجعة. لا يتم تغيير وسائل الدخول تلقائياً.'
+            : 'If the details match a registered account, admins were notified and withdrawals are paused until review completes. Login methods are not changed automatically.'}
         </p>
         {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
         <button
