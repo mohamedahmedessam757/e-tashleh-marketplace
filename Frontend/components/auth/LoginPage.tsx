@@ -417,9 +417,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             </div>
 
-            <div className="flex w-full min-w-0 gap-2 items-stretch" dir="ltr">
+            <div className="flex w-full min-w-0 gap-2" dir="ltr">
               {/* Country Code Dropdown */}
-              <div className="relative shrink-0 w-[6.5rem] sm:w-[7.5rem]">
+              <div className="relative w-[32%] min-w-[100px] max-w-[130px] shrink-0">
                 <select
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
@@ -432,20 +432,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
                   <ArrowRight className="w-4 h-4 rotate-90" />
                 </div>
               </div>
 
               {/* Phone Number Input with Masking */}
               <div className="relative flex-1 min-w-0">
-                <div className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-4 pointer-events-none z-10">
+                <div className="absolute top-1/2 -translate-y-1/2 left-4 pointer-events-none z-10">
                   <Phone className={`w-5 h-5 transition-colors ${error ? 'text-red-500' : 'text-gold-500'}`} />
                 </div>
 
                 {/* Mask Visualization Overlay - "Typing Animation" */}
                 <div
-                  className="absolute inset-0 pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 flex items-center text-base sm:text-lg tracking-wider pointer-events-none select-none font-sans overflow-hidden"
+                  className="absolute inset-0 pl-12 pr-4 py-4 flex items-center text-lg tracking-wider pointer-events-none select-none font-sans"
                   aria-hidden="true"
                 >
                   <span className="text-transparent">{getFormattedPhone()}</span>
@@ -457,7 +457,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <input
                   type="tel"
                   required
-                  className={`w-full min-w-0 bg-white/5 border rounded-xl pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 text-white outline-none transition-all placeholder-transparent text-base sm:text-lg tracking-wider text-center z-0 font-sans ${error ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-gold-500'}`}
+                  className={`w-full min-w-0 bg-white/5 border rounded-xl pl-12 pr-4 py-4 text-white outline-none transition-all placeholder-transparent text-base sm:text-lg tracking-wider text-center z-0 font-sans ${error ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-gold-500'}`}
                   placeholder="5 XX XX XX XX"
                   value={getFormattedPhone()}
                   onChange={handlePhoneChange}
