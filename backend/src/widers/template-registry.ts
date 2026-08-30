@@ -237,9 +237,10 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonLabel: 'ابدأ الآن',
         buttonUrlDynamic: false,
     }),
-    // Merchant store under admin review (sent at register / PENDING_REVIEW)
-    def('txn_store_under_review', 'ar', 'vendor', ['name'], {
+    // Merchant store under admin review — body is fully static in Meta/Widers (no {{n}})
+    def('txn_store_under_review', 'ar', 'vendor', [], {
         category: 'UTILITY',
+        headerText: 'حسابك قيد المراجعة',
         buttonLabel: 'لوحة التاجر',
         buttonUrlDynamic: false,
         buttonSuffixPattern: suffix.storeHome,

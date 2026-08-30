@@ -27,7 +27,7 @@ Single source for which in-app events dispatch which Widers template families.
 | `txn_verification_customer` | `txn_verification_customer_ar_v2` | `VERIFICATION` | `ORDER` / `system_alert` + `metadata.verification` |
 | `txn_verification_vendor` | `txn_verification_vendor_ar_v2` | `VERIFICATION` | Same, merchant role |
 | `welcome_customer` | `welcome_customer_ar_v2` | — (direct) | After register — `auth.service.ts` |
-| `txn_store_under_review` | `txn_store_under_review_ar_v2` | `STORE_UNDER_REVIEW` | Vendor register + doc re-upload → `PENDING_REVIEW` |
+| `txn_store_under_review` | `txn_store_under_review_ar_v2` | `STORE_UNDER_REVIEW` | Vendor register + doc re-upload → `PENDING_REVIEW`. **Body fully static (0 variables).** Header: حسابك قيد المراجعة |
 | `welcome_vendor` | `welcome_vendor_ar_v2` | `STORE_ACTIVATION` | Admin sets store `ACTIVE` only (`docType: store_activation`) |
 | `txn_chat_message` | `txn_chat_message_ar_v2` | `CHAT_MESSAGE` | New chat message — body `{{1}}` sender_name · `{{2}}` message_preview · `{{3}}` follow_url |
 
