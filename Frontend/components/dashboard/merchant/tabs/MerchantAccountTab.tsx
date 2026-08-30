@@ -337,10 +337,13 @@ export const MerchantAccountTab: React.FC = () => {
                             </p>
                             <input
                                 type="text"
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
                                 value={otpCode}
-                                onChange={(e) => setOtpCode(e.target.value)}
+                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                 placeholder="123456"
-                                className="w-full bg-[#151310] border border-white/10 rounded-xl px-4 py-3 text-white mb-4 outline-none focus:border-gold-500"
+                                maxLength={6}
+                                className="w-full bg-[#151310] border border-white/10 rounded-xl px-4 py-3 text-white mb-4 outline-none focus:border-gold-500 tracking-widest text-center text-lg"
                             />
                             <div className="flex gap-3">
                                 <button

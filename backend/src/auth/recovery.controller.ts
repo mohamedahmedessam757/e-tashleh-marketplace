@@ -38,34 +38,27 @@ import { Throttle } from '@nestjs/throttler';
 export class RecoveryController {
     constructor(private readonly recoveryService: RecoveryService) {}
 
-    // ── Case 1: Lost phone ────────────────────────────────────────────
+    // ── Case 1: Lost phone (identify by email) ────────────────────────
 
     @Post('case/lost-phone/start')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     lostPhoneStart(@Body() dto: LostPhoneStartDto) {
-        return this.recoveryService.lostPhoneStart(dto.oldPhone, dto.role, dto.countryCode);
+        return this.recoveryService.lostPhoneStart(dto.email, dto.role);
     }
 
     @Post('case/lost-phone/verify-proof')
     @Throttle({ default: { limit: 10, ttl: 60_000 } })
     lostPhoneVerifyProof(@Body() dto: LostPhoneVerifyProofDto, @Ip() ip: string) {
-        return this.recoveryService.lostPhoneVerifyProof(
-            dto.oldPhone,
-            dto.otp,
-            dto.role,
-            dto.countryCode,
-            ip,
-        );
+        return this.recoveryService.lostPhoneVerifyProof(dto.email, dto.otp, dto.role, ip);
     }
 
     @Post('case/lost-phone/request-new-phone-otp')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     lostPhoneRequestNew(@Body() dto: LostPhoneRequestNewDto, @Ip() ip: string) {
         return this.recoveryService.lostPhoneRequestNewOtp(
-            dto.oldPhone,
+            dto.email,
             dto.newPhone,
             dto.role,
-            dto.countryCode,
             dto.newCountryCode,
             ip,
         );
@@ -80,38 +73,44 @@ export class RecoveryController {
     ) {
         const device = req.headers['user-agent'] || 'Unknown Device';
         return this.recoveryService.lostPhoneConfirm(
-            dto.oldPhone,
+            dto.email,
             dto.newPhone,
             dto.phoneOtp,
             dto.role,
-            dto.countryCode,
             dto.newCountryCode,
             ip,
             device,
         );
     }
 
-    // ── Case 2: Lost email ────────────────────────────────────────────
+    // ── Case 2: Lost email (identify by phone) ────────────────────────
 
     @Post('case/lost-email/start')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     lostEmailStart(@Body() dto: LostEmailStartDto) {
-        return this.recoveryService.lostEmailStart(dto.oldEmail, dto.role);
+        return this.recoveryService.lostEmailStart(dto.phone, dto.role, dto.countryCode);
     }
 
     @Post('case/lost-email/verify-proof')
     @Throttle({ default: { limit: 10, ttl: 60_000 } })
     lostEmailVerifyProof(@Body() dto: LostEmailVerifyProofDto, @Ip() ip: string) {
-        return this.recoveryService.lostEmailVerifyProof(dto.oldEmail, dto.otp, dto.role, ip);
+        return this.recoveryService.lostEmailVerifyProof(
+            dto.phone,
+            dto.otp,
+            dto.role,
+            dto.countryCode,
+            ip,
+        );
     }
 
     @Post('case/lost-email/request-new-email-otp')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     lostEmailRequestNew(@Body() dto: LostEmailRequestNewDto, @Ip() ip: string) {
         return this.recoveryService.lostEmailRequestNewOtp(
-            dto.oldEmail,
+            dto.phone,
             dto.newEmail,
             dto.role,
+            dto.countryCode,
             ip,
         );
     }
@@ -125,10 +124,11 @@ export class RecoveryController {
     ) {
         const device = req.headers['user-agent'] || 'Unknown Device';
         return this.recoveryService.lostEmailConfirm(
-            dto.oldEmail,
+            dto.phone,
             dto.newEmail,
             dto.emailOtp,
             dto.role,
+            dto.countryCode,
             ip,
             device,
         );

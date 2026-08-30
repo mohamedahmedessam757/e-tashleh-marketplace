@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
@@ -13,6 +13,8 @@ import {
   formatOtpCountdown,
   otpSecondsFromMinutes,
 } from '../../utils/otpConfig';
+import { emptyOtpDigits, otpDigitsToCode } from '../../utils/otpDigits';
+import { OtpDigitInputs } from './OtpDigitInputs';
 
 interface AccountRecoveryWizardProps {
   onBackToLogin: () => void;
@@ -22,13 +24,12 @@ interface AccountRecoveryWizardProps {
 type Step =
   | 'triage-email'
   | 'triage-phone'
-  | 'suggest-login'
-  | 'case1-phone'
+  | 'case1-email'
   | 'case1-otp'
   | 'case1-verified'
   | 'case1-new-phone'
   | 'case1-new-otp'
-  | 'case2-email'
+  | 'case2-phone'
   | 'case2-otp'
   | 'case2-verified'
   | 'case2-new-email'
@@ -57,24 +58,25 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const isAr = language === 'ar';
 
   const [step, setStep] = useState<Step>('triage-email');
-  const [hasEmailAccess, setHasEmailAccess] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doneMessage, setDoneMessage] = useState('');
 
-  const [countryCode, setCountryCode] = useState('+966');
-  const [oldPhoneLocal, setOldPhoneLocal] = useState('');
+  const [proofEmail, setProofEmail] = useState('');
+  const [proofPhoneLocal, setProofPhoneLocal] = useState('');
+  const [proofCountryCode, setProofCountryCode] = useState('+966');
   const [newPhoneLocal, setNewPhoneLocal] = useState('');
   const [newCountryCode, setNewCountryCode] = useState('+966');
-  const [oldEmail, setOldEmail] = useState('');
+  const [claimedOldEmail, setClaimedOldEmail] = useState('');
+  const [claimedOldPhoneLocal, setClaimedOldPhoneLocal] = useState('');
+  const [claimedCountryCode, setClaimedCountryCode] = useState('+966');
   const [newEmail, setNewEmail] = useState('');
   const [maskedHint, setMaskedHint] = useState<string | null>(null);
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
-  const [phoneOtpDigits, setPhoneOtpDigits] = useState(['', '', '', '', '', '']);
-  const [emailOtpDigits, setEmailOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState(() => emptyOtpDigits());
+  const [phoneOtpDigits, setPhoneOtpDigits] = useState(() => emptyOtpDigits());
+  const [emailOtpDigits, setEmailOtpDigits] = useState(() => emptyOtpDigits());
   const [secondsLeft, setSecondsLeft] = useState(OTP_EXPIRY_SECONDS);
   const [resumeToken, setResumeToken] = useState('');
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -92,78 +94,26 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         : 'Customer Account Recovery';
 
   const triggerError = (msg: string) => setError(msg);
-  const clearOtp = () => setOtpDigits(['', '', '', '', '', '']);
-  const otpString = (digits: string[]) => digits.join('');
+  const clearOtp = () => setOtpDigits(emptyOtpDigits());
+  const otpString = (digits: string[]) => otpDigitsToCode(digits);
 
   const startTimer = (minutes?: number) => {
     setSecondsLeft(otpSecondsFromMinutes(minutes));
   };
 
-  const handleOtpChange = (
-    index: number,
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<string[]>>,
-  ) => {
-    const digit = value.replace(/\D/g, '').slice(-1);
-    setter((prev) => {
-      const next = [...prev];
-      next[index] = digit;
-      return next;
-    });
-    if (digit && index < 5) otpRefs.current[index + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (
-    index: number,
-    e: React.KeyboardEvent,
-    digits: string[],
-    setter: React.Dispatch<React.SetStateAction<string[]>>,
-  ) => {
-    if (e.key === 'Backspace' && !digits[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (
-    e: React.ClipboardEvent,
-    setter: React.Dispatch<React.SetStateAction<string[]>>,
-  ) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pasted) return;
-    const next = Array(6)
-      .fill('')
-      .map((_, i) => pasted[i] || '');
-    setter(next);
-  };
-
   const renderOtpRow = (
     digits: string[],
     setter: React.Dispatch<React.SetStateAction<string[]>>,
-    refPrefix = 'main',
+    idPrefix = 'main',
   ) => (
-    <div
+    <OtpDigitInputs
+      value={digits}
+      onChange={setter}
+      idPrefix={idPrefix}
+      disabled={isLoading}
       className="flex w-full max-w-[280px] sm:max-w-sm mx-auto justify-between gap-1 sm:gap-2"
-      dir="ltr"
-      onPaste={(e) => handleOtpPaste(e, setter)}
-    >
-      {digits.map((d, i) => (
-        <input
-          key={`${refPrefix}-${i}`}
-          ref={(el) => {
-            otpRefs.current[i] = el;
-          }}
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={1}
-          value={d}
-          onChange={(e) => handleOtpChange(i, e.target.value, setter)}
-          onKeyDown={(e) => handleOtpKeyDown(i, e, digits, setter)}
-          className="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 flex-1 min-w-0 max-w-[48px] text-center text-base sm:text-xl font-bold rounded-lg sm:rounded-xl bg-black/40 border border-white/15 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 outline-none"
-        />
-      ))}
-    </div>
+      inputClassName="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 flex-1 min-w-0 max-w-[48px] text-center text-base sm:text-xl font-bold rounded-lg sm:rounded-xl bg-black/40 border border-white/15 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 outline-none disabled:opacity-50"
+    />
   );
 
   const resendBtn = (onResend: () => void) =>
@@ -234,32 +184,25 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   const onTriageEmail = (yes: boolean) => {
     setError(null);
-    setHasEmailAccess(yes);
+    if (yes) {
+      setStep('case1-email');
+      return;
+    }
     setStep('triage-phone');
   };
 
   const onTriagePhone = (yes: boolean) => {
     setError(null);
-    if (hasEmailAccess === true && yes) {
-      setStep('suggest-login');
-      return;
-    }
-    if (hasEmailAccess === true && !yes) {
-      setStep('case1-phone');
-      return;
-    }
-    if (hasEmailAccess === false && yes) {
-      setStep('case2-email');
+    if (yes) {
+      setStep('case2-phone');
       return;
     }
     setStep('case3-ids');
   };
 
   const runCase1Start = async () => {
-    if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5')) {
-      triggerError(
-        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
-      );
+    if (!proofEmail.includes('@')) {
+      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
       return;
     }
     setIsLoading(true);
@@ -267,8 +210,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       const res = await authApi.recoveryLostPhoneStart({
         role,
-        oldPhone: oldPhoneLocal,
-        countryCode,
+        email: proofEmail.trim(),
       });
       setMaskedHint(res.maskedEmail);
       clearOtp();
@@ -292,8 +234,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       await authApi.recoveryLostPhoneVerifyProof({
         role,
-        oldPhone: oldPhoneLocal,
-        countryCode,
+        email: proofEmail.trim(),
         otp: code,
       });
       setStep('case1-verified');
@@ -316,8 +257,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       const res = await authApi.recoveryLostPhoneRequestNewOtp({
         role,
-        oldPhone: oldPhoneLocal,
-        countryCode,
+        email: proofEmail.trim(),
         newPhone: newPhoneLocal,
         newCountryCode,
       });
@@ -345,8 +285,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       const res = await authApi.recoveryLostPhoneConfirm({
         role,
-        oldPhone: oldPhoneLocal,
-        countryCode,
+        email: proofEmail.trim(),
         newPhone: newPhoneLocal,
         newCountryCode,
         phoneOtp: code,
@@ -366,14 +305,20 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   };
 
   const runCase2Start = async () => {
-    if (!oldEmail.includes('@')) {
-      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
+    if (proofPhoneLocal.length !== 9 || !proofPhoneLocal.startsWith('5')) {
+      triggerError(
+        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
+      );
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const res = await authApi.recoveryLostEmailStart({ role, oldEmail });
+      const res = await authApi.recoveryLostEmailStart({
+        role,
+        phone: proofPhoneLocal,
+        countryCode: proofCountryCode,
+      });
       setMaskedHint(res.maskedPhone);
       clearOtp();
       startTimer(res.expiresInMinutes);
@@ -394,7 +339,12 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      await authApi.recoveryLostEmailVerifyProof({ role, oldEmail, otp: code });
+      await authApi.recoveryLostEmailVerifyProof({
+        role,
+        phone: proofPhoneLocal,
+        countryCode: proofCountryCode,
+        otp: code,
+      });
       setStep('case2-verified');
     } catch (err: any) {
       triggerError(err.response?.data?.message || err.message || 'Invalid OTP');
@@ -413,7 +363,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       const res = await authApi.recoveryLostEmailRequestNewOtp({
         role,
-        oldEmail,
+        phone: proofPhoneLocal,
+        countryCode: proofCountryCode,
         newEmail,
       });
       clearOtp();
@@ -438,7 +389,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       const res = await authApi.recoveryLostEmailConfirm({
         role,
-        oldEmail,
+        phone: proofPhoneLocal,
+        countryCode: proofCountryCode,
         newEmail,
         emailOtp: code,
       });
@@ -457,7 +409,11 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   };
 
   const runCase3Submit = async () => {
-    if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5') || !oldEmail.includes('@')) {
+    if (
+      claimedOldPhoneLocal.length !== 9 ||
+      !claimedOldPhoneLocal.startsWith('5') ||
+      !claimedOldEmail.includes('@')
+    ) {
       triggerError(isAr ? 'أدخل الجوال والإيميل المسجّلين بشكل صحيح' : 'Enter valid registered phone and email');
       return;
     }
@@ -466,9 +422,9 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     try {
       await authApi.recoveryLostBothSubmit({
         role,
-        oldPhone: oldPhoneLocal,
-        countryCode,
-        oldEmail,
+        oldPhone: claimedOldPhoneLocal,
+        countryCode: claimedCountryCode,
+        oldEmail: claimedOldEmail,
       });
       setStep('case3-pending');
     } catch (err: any) {
@@ -497,8 +453,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         newCountryCode,
         newEmail,
       });
-      setPhoneOtpDigits(['', '', '', '', '', '']);
-      setEmailOtpDigits(['', '', '', '', '', '']);
+      setPhoneOtpDigits(emptyOtpDigits());
+      setEmailOtpDigits(emptyOtpDigits());
       startTimer(res.expiresInMinutes);
       setStep('case3-otps');
     } catch (err: any) {
@@ -675,31 +631,18 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         ? 'هل لديك وصول إلى رقم الجوال المسجل في الحساب؟'
         : 'Do you have access to the mobile number registered on the account?',
     );
-  } else if (step === 'suggest-login') {
-    body = cardShell(
-      <div className="space-y-4 text-center">
-        <p className="text-white/80">
-          {isAr
-            ? 'يمكنك تسجيل الدخول بالطريقة العادية باستخدام الجوال أو الإيميل.'
-            : 'You can sign in normally using your phone or email.'}
-        </p>
-        {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
-      </div>,
-    );
-  } else if (step === 'case1-phone') {
+  } else if (step === 'case1-email') {
     body = cardShell(
       <div className="space-y-4 w-full min-w-0">
         <p className="text-white/60 text-xs sm:text-sm text-center leading-relaxed px-1">
           {isAr
-            ? 'أدخل رقم الجوال القديم لتحديد الحساب. سنرسل رمز التحقق إلى الإيميل المسجّل.'
-            : 'Enter your old phone to identify the account. We will send a code to the registered email.'}
+            ? 'أدخل البريد الإلكتروني المسجّل لتحديد الحساب. سنرسل رمز التحقق إلى هذا البريد.'
+            : 'Enter the registered email to identify the account. We will send a code to this email.'}
         </p>
-        {phoneField(
-          oldPhoneLocal,
-          setOldPhoneLocal,
-          countryCode,
-          setCountryCode,
-          isAr ? 'رقم الجوال القديم' : 'Old mobile number',
+        {emailField(
+          proofEmail,
+          setProofEmail,
+          isAr ? 'البريد الإلكتروني المسجّل' : 'Registered email',
         )}
         {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1Start)}
       </div>,
@@ -775,18 +718,20 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1NewPhoneOtp)}
       </div>,
     );
-  } else if (step === 'case2-email') {
+  } else if (step === 'case2-phone') {
     body = cardShell(
       <div className="space-y-4 w-full min-w-0">
         <p className="text-white/60 text-xs sm:text-sm text-center leading-relaxed px-1">
           {isAr
-            ? 'أدخل البريد الإلكتروني القديم. سنرسل رمز التحقق إلى الجوال المسجّل.'
-            : 'Enter the old email. We will send a code to the registered phone.'}
+            ? 'أدخل رقم الجوال المسجّل لتحديد الحساب. سنرسل رمز التحقق عبر واتساب.'
+            : 'Enter the registered phone to identify the account. We will send a WhatsApp code.'}
         </p>
-        {emailField(
-          oldEmail,
-          setOldEmail,
-          isAr ? 'البريد الإلكتروني القديم' : 'Old email',
+        {phoneField(
+          proofPhoneLocal,
+          setProofPhoneLocal,
+          proofCountryCode,
+          setProofCountryCode,
+          isAr ? 'رقم الجوال المسجّل' : 'Registered mobile number',
         )}
         {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase2Start)}
       </div>,
@@ -826,15 +771,15 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
             : 'This is a high-risk process. Admin will review and withdrawals will be paused.'}
         </div>
         {phoneField(
-          oldPhoneLocal,
-          setOldPhoneLocal,
-          countryCode,
-          setCountryCode,
+          claimedOldPhoneLocal,
+          setClaimedOldPhoneLocal,
+          claimedCountryCode,
+          setClaimedCountryCode,
           isAr ? 'رقم الجوال المسجّل (المدّعى)' : 'Registered phone (claimed)',
         )}
         {emailField(
-          oldEmail,
-          setOldEmail,
+          claimedOldEmail,
+          setClaimedOldEmail,
           isAr ? 'البريد المسجّل' : 'Registered email',
         )}
         {primaryBtn(isAr ? 'إرسال طلب المراجعة' : 'Submit for review', runCase3Submit)}

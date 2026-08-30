@@ -134,19 +134,17 @@ export const authApi = {
         return response.data;
     },
 
-    // Recovery API — redesigned 3-case flow
+    // Recovery API — Case1 identify by email; Case2 identify by phone
     recoveryLostPhoneStart: async (payload: {
         role: 'customer' | 'merchant';
-        oldPhone: string;
-        countryCode?: string;
+        email: string;
     }) => {
         const response = await client.post('/auth/recovery/case/lost-phone/start', payload);
         return response.data;
     },
     recoveryLostPhoneVerifyProof: async (payload: {
         role: 'customer' | 'merchant';
-        oldPhone: string;
-        countryCode?: string;
+        email: string;
         otp: string;
     }) => {
         const response = await client.post('/auth/recovery/case/lost-phone/verify-proof', payload);
@@ -154,8 +152,7 @@ export const authApi = {
     },
     recoveryLostPhoneRequestNewOtp: async (payload: {
         role: 'customer' | 'merchant';
-        oldPhone: string;
-        countryCode?: string;
+        email: string;
         newPhone: string;
         newCountryCode?: string;
     }) => {
@@ -167,8 +164,7 @@ export const authApi = {
     },
     recoveryLostPhoneConfirm: async (payload: {
         role: 'customer' | 'merchant';
-        oldPhone: string;
-        countryCode?: string;
+        email: string;
         newPhone: string;
         newCountryCode?: string;
         phoneOtp: string;
@@ -178,14 +174,16 @@ export const authApi = {
     },
     recoveryLostEmailStart: async (payload: {
         role: 'customer' | 'merchant';
-        oldEmail: string;
+        phone: string;
+        countryCode?: string;
     }) => {
         const response = await client.post('/auth/recovery/case/lost-email/start', payload);
         return response.data;
     },
     recoveryLostEmailVerifyProof: async (payload: {
         role: 'customer' | 'merchant';
-        oldEmail: string;
+        phone: string;
+        countryCode?: string;
         otp: string;
     }) => {
         const response = await client.post('/auth/recovery/case/lost-email/verify-proof', payload);
@@ -193,7 +191,8 @@ export const authApi = {
     },
     recoveryLostEmailRequestNewOtp: async (payload: {
         role: 'customer' | 'merchant';
-        oldEmail: string;
+        phone: string;
+        countryCode?: string;
         newEmail: string;
     }) => {
         const response = await client.post(
@@ -204,7 +203,8 @@ export const authApi = {
     },
     recoveryLostEmailConfirm: async (payload: {
         role: 'customer' | 'merchant';
-        oldEmail: string;
+        phone: string;
+        countryCode?: string;
         newEmail: string;
         emailOtp: string;
     }) => {
