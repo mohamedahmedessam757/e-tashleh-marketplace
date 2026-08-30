@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
@@ -41,12 +41,12 @@ type Step =
   | 'done';
 
 const COUNTRIES = [
-  { code: '+966', ar: 'السعودية', en: 'Saudi Arabia' },
-  { code: '+971', ar: 'الإمارات', en: 'UAE' },
-  { code: '+973', ar: 'البحرين', en: 'Bahrain' },
-  { code: '+974', ar: 'قطر', en: 'Qatar' },
-  { code: '+965', ar: 'الكويت', en: 'Kuwait' },
-  { code: '+968', ar: 'عمان', en: 'Oman' },
+  { code: '+966', ar: 'Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠØ©', en: 'Saudi Arabia' },
+  { code: '+971', ar: 'Ø§Ù„Ø¥Ù…Ø§Ø±Ø§Øª', en: 'UAE' },
+  { code: '+973', ar: 'Ø§Ù„Ø¨Ø­Ø±ÙŠÙ†', en: 'Bahrain' },
+  { code: '+974', ar: 'Ù‚Ø·Ø±', en: 'Qatar' },
+  { code: '+965', ar: 'Ø§Ù„ÙƒÙˆÙŠØª', en: 'Kuwait' },
+  { code: '+968', ar: 'Ø¹Ù…Ø§Ù†', en: 'Oman' },
 ];
 
 export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
@@ -85,10 +85,10 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const title =
     role === 'merchant'
       ? isAr
-        ? 'استرجاع حساب التاجر'
+        ? 'Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ø­Ø³Ø§Ø¨ Ø§Ù„ØªØ§Ø¬Ø±'
         : 'Merchant Account Recovery'
       : isAr
-        ? 'استرجاع حساب العميل'
+        ? 'Ø§Ø³ØªØ±Ø¬Ø§Ø¹ Ø­Ø³Ø§Ø¨ Ø§Ù„Ø¹Ù…ÙŠÙ„'
         : 'Customer Account Recovery';
 
   const triggerError = (msg: string) => setError(msg);
@@ -143,7 +143,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     refPrefix = 'main',
   ) => (
     <div
-      className="flex justify-center gap-1.5 sm:gap-2.5 w-full max-w-sm mx-auto"
+      className="flex w-full max-w-[320px] sm:max-w-sm mx-auto justify-between gap-1.5 sm:gap-2"
       dir="ltr"
       onPaste={(e) => handleOtpPaste(e, setter)}
     >
@@ -160,7 +160,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           value={d}
           onChange={(e) => handleOtpChange(i, e.target.value, setter)}
           onKeyDown={(e) => handleOtpKeyDown(i, e, digits, setter)}
-          className="w-10 h-12 sm:w-12 sm:h-14 flex-1 min-w-0 max-w-[52px] text-center text-lg sm:text-xl font-bold rounded-xl bg-black/40 border border-white/15 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 outline-none"
+          className="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 shrink-0 text-center text-base sm:text-xl font-bold rounded-xl bg-white/5 border border-white/10 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500/40 outline-none"
         />
       ))}
     </div>
@@ -168,8 +168,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   const resendBtn = (onResend: () => void) =>
     secondsLeft > 0 ? (
-      <p className="text-center text-xs text-white/40">
-        {isAr ? 'ينتهي خلال' : 'Expires in'} {formatOtpCountdown(secondsLeft)}
+      <p className="text-center text-xs sm:text-sm text-white/40 font-mono">
+        {isAr ? 'ÙŠÙ†ØªÙ‡ÙŠ Ø®Ù„Ø§Ù„' : 'Expires in'} {formatOtpCountdown(secondsLeft)}
       </p>
     ) : (
       <button
@@ -178,39 +178,40 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         onClick={onResend}
         className="w-full text-sm text-gold-400 hover:text-gold-300 py-2 font-medium disabled:opacity-50"
       >
-        {isAr ? 'إعادة إرسال الرمز' : 'Resend code'}
+        {isAr ? 'Ø¥Ø¹Ø§Ø¯Ø© Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…Ø²' : 'Resend code'}
       </button>
     );
 
-  const cardShell = (children: React.ReactNode) => (
-    <div className="w-full max-w-lg mx-auto">
-      <div className="bg-[#1A1814]/95 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gold-500/15 border border-gold-500/30 mb-3">
-            <Lock className="text-gold-400" size={22} />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">{title}</h1>
-          <p className="text-white/50 text-sm mt-2">
-            {isAr
-              ? 'حماية الحسابات وأموال العملاء هي أولويتنا'
-              : 'Protecting accounts and customer funds is our priority'}
-          </p>
+  /** Content only â€” AuthLayout already provides the outer card (avoid nested cards / overflow). */
+  const contentShell = (children: React.ReactNode) => (
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="text-center mb-5 sm:mb-6">
+        <div className="inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gold-500/15 border border-gold-500/30 mb-3">
+          <Lock className="text-gold-400" size={20} />
         </div>
-        {error && (
-          <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/40 text-red-300 text-sm rounded-xl p-3">
-            <AlertCircle size={16} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-        {children}
-        <button
-          type="button"
-          onClick={onBackToLogin}
-          className="mt-6 w-full text-center text-white/45 hover:text-white/80 text-sm py-2"
-        >
-          {isAr ? 'إلغاء والعودة' : 'Cancel and return'}
-        </button>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-snug px-1">
+          {title}
+        </h1>
+        <p className="text-white/50 text-xs sm:text-sm mt-2 leading-relaxed px-1">
+          {isAr
+            ? 'Ø­Ù…Ø§ÙŠØ© Ø§Ù„Ø­Ø³Ø§Ø¨Ø§Øª ÙˆØ£Ù…ÙˆØ§Ù„ Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ Ù‡ÙŠ Ø£ÙˆÙ„ÙˆÙŠØªÙ†Ø§'
+            : 'Protecting accounts and customer funds is our priority'}
+        </p>
       </div>
+      {error && (
+        <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/40 text-red-300 text-xs sm:text-sm rounded-xl p-3">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span className="break-words min-w-0">{error}</span>
+        </div>
+      )}
+      <div className="space-y-4 w-full min-w-0">{children}</div>
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="mt-5 sm:mt-6 w-full text-center text-white/45 hover:text-white/80 text-sm py-2"
+      >
+        {isAr ? 'Ø¥Ù„ØºØ§Ø¡ ÙˆØ§Ù„Ø¹ÙˆØ¯Ø©' : 'Cancel and return'}
+      </button>
     </div>
   );
 
@@ -219,7 +220,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       type="button"
       disabled={disabled || isLoading}
       onClick={onClick}
-      className="w-full py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-400 hover:to-gold-300 disabled:opacity-50 transition-all"
+      className="w-full min-h-[48px] py-3 sm:py-3.5 rounded-xl font-bold text-black text-sm sm:text-base bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-400 hover:to-gold-300 disabled:opacity-50 transition-all active:scale-[0.99]"
     >
       {isLoading ? (
         <span className="inline-block w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -229,7 +230,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     </button>
   );
 
-  // ── Handlers ──────────────────────────────────────────────────────
+  // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const onTriageEmail = (yes: boolean) => {
     setError(null);
@@ -257,7 +258,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase1Start = async () => {
     if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5')) {
       triggerError(
-        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
+        isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ù€ 5 ÙˆÙ…ÙƒÙˆÙ† Ù…Ù† 9 Ø£Ø±Ù‚Ø§Ù…' : 'Phone must be 9 digits starting with 5',
       );
       return;
     }
@@ -283,7 +284,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase1Verify = async () => {
     const code = otpString(otpDigits);
     if (code.length !== 6) {
-      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      triggerError(isAr ? 'Ø§Ù„Ø±Ù…Ø² ØºÙŠØ± Ù…ÙƒØªÙ…Ù„' : 'Incomplete code');
       return;
     }
     setIsLoading(true);
@@ -306,7 +307,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase1NewPhoneOtp = async () => {
     if (newPhoneLocal.length !== 9 || !newPhoneLocal.startsWith('5')) {
       triggerError(
-        isAr ? 'رقم الجوال يجب أن يبدأ بـ 5 ومكون من 9 أرقام' : 'Phone must be 9 digits starting with 5',
+        isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ù€ 5 ÙˆÙ…ÙƒÙˆÙ† Ù…Ù† 9 Ø£Ø±Ù‚Ø§Ù…' : 'Phone must be 9 digits starting with 5',
       );
       return;
     }
@@ -336,7 +337,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase1Confirm = async () => {
     const code = otpString(otpDigits);
     if (code.length !== 6) {
-      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      triggerError(isAr ? 'Ø§Ù„Ø±Ù…Ø² ØºÙŠØ± Ù…ÙƒØªÙ…Ù„' : 'Incomplete code');
       return;
     }
     setIsLoading(true);
@@ -353,7 +354,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       setDoneMessage(
         res.message ||
           (isAr
-            ? 'تم تحديث رقم الجوال بنجاح، ويمكنك الآن تسجيل الدخول باستخدام رقم الجوال الجديد.'
+            ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø¨Ù†Ø¬Ø§Ø­ØŒ ÙˆÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ø¢Ù† ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ø¬Ø¯ÙŠØ¯.'
             : 'Phone updated. You can sign in with your new number.'),
       );
       setStep('done');
@@ -366,7 +367,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   const runCase2Start = async () => {
     if (!oldEmail.includes('@')) {
-      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
+      triggerError(isAr ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ØºÙŠØ± ØµØ§Ù„Ø­' : 'Invalid email');
       return;
     }
     setIsLoading(true);
@@ -387,7 +388,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase2Verify = async () => {
     const code = otpString(otpDigits);
     if (code.length !== 6) {
-      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      triggerError(isAr ? 'Ø§Ù„Ø±Ù…Ø² ØºÙŠØ± Ù…ÙƒØªÙ…Ù„' : 'Incomplete code');
       return;
     }
     setIsLoading(true);
@@ -404,7 +405,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   const runCase2NewEmailOtp = async () => {
     if (!newEmail.includes('@')) {
-      triggerError(isAr ? 'البريد الإلكتروني غير صالح' : 'Invalid email');
+      triggerError(isAr ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ØºÙŠØ± ØµØ§Ù„Ø­' : 'Invalid email');
       return;
     }
     setIsLoading(true);
@@ -429,7 +430,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const runCase2Confirm = async () => {
     const code = otpString(otpDigits);
     if (code.length !== 6) {
-      triggerError(isAr ? 'الرمز غير مكتمل' : 'Incomplete code');
+      triggerError(isAr ? 'Ø§Ù„Ø±Ù…Ø² ØºÙŠØ± Ù…ÙƒØªÙ…Ù„' : 'Incomplete code');
       return;
     }
     setIsLoading(true);
@@ -444,7 +445,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       setDoneMessage(
         res.message ||
           (isAr
-            ? 'تم تحديث البريد الإلكتروني بنجاح، ويمكنك الآن استخدام البريد الإلكتروني الجديد للدخول إلى حسابك.'
+            ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø¨Ù†Ø¬Ø§Ø­ØŒ ÙˆÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ø¢Ù† Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ø¬Ø¯ÙŠØ¯ Ù„Ù„Ø¯Ø®ÙˆÙ„ Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨Ùƒ.'
             : 'Email updated successfully. You can now use the new email to sign in.'),
       );
       setStep('done');
@@ -457,7 +458,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   const runCase3Submit = async () => {
     if (oldPhoneLocal.length !== 9 || !oldPhoneLocal.startsWith('5') || !oldEmail.includes('@')) {
-      triggerError(isAr ? 'أدخل الجوال والإيميل المسجّلين بشكل صحيح' : 'Enter valid registered phone and email');
+      triggerError(isAr ? 'Ø£Ø¯Ø®Ù„ Ø§Ù„Ø¬ÙˆØ§Ù„ ÙˆØ§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ø§Ù„Ù…Ø³Ø¬Ù‘Ù„ÙŠÙ† Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­' : 'Enter valid registered phone and email');
       return;
     }
     setIsLoading(true);
@@ -484,7 +485,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       !newPhoneLocal.startsWith('5') ||
       !newEmail.includes('@')
     ) {
-      triggerError(isAr ? 'أكمل جميع الحقول بشكل صحيح' : 'Complete all fields correctly');
+      triggerError(isAr ? 'Ø£ÙƒÙ…Ù„ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­' : 'Complete all fields correctly');
       return;
     }
     setIsLoading(true);
@@ -511,7 +512,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     const p = otpString(phoneOtpDigits);
     const e = otpString(emailOtpDigits);
     if (p.length !== 6 || e.length !== 6) {
-      triggerError(isAr ? 'أدخل رمزي التحقق بالكامل' : 'Enter both OTP codes');
+      triggerError(isAr ? 'Ø£Ø¯Ø®Ù„ Ø±Ù…Ø²ÙŠ Ø§Ù„ØªØ­Ù‚Ù‚ Ø¨Ø§Ù„ÙƒØ§Ù…Ù„' : 'Enter both OTP codes');
       return;
     }
     setIsLoading(true);
@@ -528,7 +529,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       setDoneMessage(
         res.message ||
           (isAr
-            ? 'تم التحقق من طلبك وتحديث بيانات الدخول بنجاح. يمكنك الآن الدخول إلى حسابك باستخدام بياناتك الجديدة.'
+            ? 'ØªÙ… Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø·Ù„Ø¨Ùƒ ÙˆØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ù†Ø¬Ø§Ø­. ÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ø¢Ù† Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨Ùƒ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨ÙŠØ§Ù†Ø§ØªÙƒ Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø©.'
             : 'Your request was verified and login details updated. You can sign in with your new credentials.'),
       );
       setStep('done');
@@ -539,26 +540,28 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     }
   };
 
-  // ── Render steps ──────────────────────────────────────────────────
+  // â”€â”€ Render steps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const yesNo = (onYes: () => void, onNo: () => void, question: string) =>
-    cardShell(
+    contentShell(
       <div className="space-y-4">
-        <p className="text-white text-center font-medium">{question}</p>
-        <div className="grid grid-cols-2 gap-3">
+        <p className="text-white text-center text-sm sm:text-base font-medium leading-relaxed px-1">
+          {question}
+        </p>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onYes}
-            className="py-3 rounded-xl border border-gold-500/40 bg-gold-500/15 text-gold-200 font-bold hover:bg-gold-500/25"
+            className="min-h-[48px] py-3 rounded-xl border border-gold-500/40 bg-gold-500/15 text-gold-200 font-bold hover:bg-gold-500/25 text-sm sm:text-base"
           >
-            {isAr ? 'نعم' : 'Yes'}
+            {isAr ? 'Ù†Ø¹Ù…' : 'Yes'}
           </button>
           <button
             type="button"
             onClick={onNo}
-            className="py-3 rounded-xl border border-white/15 bg-white/5 text-white/80 font-bold hover:bg-white/10"
+            className="min-h-[48px] py-3 rounded-xl border border-white/15 bg-white/5 text-white/80 font-bold hover:bg-white/10 text-sm sm:text-base"
           >
-            {isAr ? 'لا' : 'No'}
+            {isAr ? 'Ù„Ø§' : 'No'}
           </button>
         </div>
       </div>,
@@ -571,16 +574,17 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     setCc: (v: string) => void,
     label: string,
   ) => (
-    <div className="space-y-2">
-      <label className="text-xs text-white/50">{label}</label>
-      <div className="flex gap-2" dir="ltr">
+    <div className="w-full min-w-0 space-y-2">
+      <label className="block text-xs sm:text-sm text-white/50 text-start">{label}</label>
+      <div className="flex w-full min-w-0 gap-2 items-stretch" dir="ltr">
         <select
           value={cc}
           onChange={(e) => setCc(e.target.value)}
-          className="bg-black/40 border border-white/15 rounded-xl px-2 text-white text-sm"
+          className="shrink-0 w-[5.5rem] sm:w-[6.25rem] bg-white/5 border border-white/10 rounded-xl px-2 py-3.5 text-white text-sm outline-none focus:border-gold-500 appearance-none"
+          style={{ direction: 'ltr' }}
         >
           {COUNTRIES.map((c) => (
-            <option key={c.code} value={c.code}>
+            <option key={c.code} value={c.code} className="bg-[#1A1814]">
               {c.code}
             </option>
           ))}
@@ -588,8 +592,9 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
         <input
           value={local}
           onChange={(e) => setLocal(e.target.value.replace(/\D/g, '').slice(0, 9))}
-          placeholder="5 XX XX XX XX"
-          className="flex-1 bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          placeholder="5XXXXXXXX"
+          inputMode="numeric"
+          className="min-w-0 flex-1 w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-base outline-none focus:border-gold-500 tracking-wide"
         />
       </div>
     </div>
@@ -598,52 +603,66 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   let body: React.ReactNode = null;
 
   if (step === 'triage-email') {
-    body = (
-      <div className="w-full max-w-lg mx-auto space-y-3">
-        {yesNo(
-          () => onTriageEmail(true),
-          () => onTriageEmail(false),
-          isAr
-            ? 'هل لديك وصول إلى البريد الإلكتروني المسجل في الحساب؟'
-            : 'Do you have access to the email registered on the account?',
-        )}
+    body = contentShell(
+      <div className="space-y-4">
+        <p className="text-white text-center text-sm sm:text-base font-medium leading-relaxed px-1">
+          {isAr
+            ? 'Ù‡Ù„ Ù„Ø¯ÙŠÙƒ ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ù…Ø³Ø¬Ù„ ÙÙŠ Ø§Ù„Ø­Ø³Ø§Ø¨ØŸ'
+            : 'Do you have access to the email registered on the account?'}
+        </p>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => onTriageEmail(true)}
+            className="min-h-[48px] py-3 rounded-xl border border-gold-500/40 bg-gold-500/15 text-gold-200 font-bold hover:bg-gold-500/25"
+          >
+            {isAr ? 'Ù†Ø¹Ù…' : 'Yes'}
+          </button>
+          <button
+            type="button"
+            onClick={() => onTriageEmail(false)}
+            className="min-h-[48px] py-3 rounded-xl border border-white/15 bg-white/5 text-white/80 font-bold hover:bg-white/10"
+          >
+            {isAr ? 'Ù„Ø§' : 'No'}
+          </button>
+        </div>
         <button
           type="button"
-          className="w-full text-sm text-gold-400 underline"
+          className="w-full text-xs sm:text-sm text-gold-400 underline pt-1"
           onClick={() => {
             setError(null);
             setStep('case3-resume');
           }}
         >
-          {isAr ? 'لدي رمز استكمال بعد موافقة الإدارة' : 'I have a resume token after admin approval'}
+          {isAr ? 'Ù„Ø¯ÙŠ Ø±Ù…Ø² Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ø¨Ø¹Ø¯ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©' : 'I have a resume token after admin approval'}
         </button>
-      </div>
+      </div>,
     );
   } else if (step === 'triage-phone') {
     body = yesNo(
       () => onTriagePhone(true),
       () => onTriagePhone(false),
       isAr
-        ? 'هل لديك وصول إلى رقم الجوال المسجل في الحساب؟'
+        ? 'Ù‡Ù„ Ù„Ø¯ÙŠÙƒ ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù…Ø³Ø¬Ù„ ÙÙŠ Ø§Ù„Ø­Ø³Ø§Ø¨ØŸ'
         : 'Do you have access to the mobile number registered on the account?',
     );
   } else if (step === 'suggest-login') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4 text-center">
         <p className="text-white/80">
           {isAr
-            ? 'يمكنك تسجيل الدخول بالطريقة العادية باستخدام الجوال أو الإيميل.'
+            ? 'ÙŠÙ…ÙƒÙ†Ùƒ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ø§Ù„Ø·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¹Ø§Ø¯ÙŠØ© Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø£Ùˆ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„.'
             : 'You can sign in normally using your phone or email.'}
         </p>
-        {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
+        {primaryBtn(isAr ? 'Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„' : 'Back to login', onBackToLogin)}
       </div>,
     );
   } else if (step === 'case1-phone') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
-        <p className="text-white/60 text-sm text-center">
+        <p className="text-white/60 text-xs sm:text-sm text-center leading-relaxed px-1">
           {isAr
-            ? 'أدخل رقم الجوال القديم لتحديد الحساب. سنرسل رمز التحقق إلى الإيميل المسجّل.'
+            ? 'Ø£Ø¯Ø®Ù„ Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù‚Ø¯ÙŠÙ… Ù„ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ø­Ø³Ø§Ø¨. Ø³Ù†Ø±Ø³Ù„ Ø±Ù…Ø² Ø§Ù„ØªØ­Ù‚Ù‚ Ø¥Ù„Ù‰ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ø§Ù„Ù…Ø³Ø¬Ù‘Ù„.'
             : 'Enter your old phone to identify the account. We will send a code to the registered email.'}
         </p>
         {phoneField(
@@ -651,9 +670,9 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           setOldPhoneLocal,
           countryCode,
           setCountryCode,
-          isAr ? 'رقم الجوال القديم' : 'Old mobile number',
+          isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù‚Ø¯ÙŠÙ…' : 'Old mobile number',
         )}
-        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1Start)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…Ø²' : 'Send code', runCase1Start)}
       </div>,
     );
   } else if (step === 'case1-otp' || step === 'case1-new-otp' || step === 'case2-otp' || step === 'case2-new-otp') {
@@ -674,45 +693,45 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           : step === 'case2-otp'
             ? runCase2Start
             : runCase2NewEmailOtp;
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <p className="text-white/60 text-sm text-center">
-          {isAr ? 'أدخل الرمز المرسل إلى' : 'Enter the code sent to'}{' '}
-          <span className="text-gold-400 font-bold">{maskedHint || '••••'}</span>
+          {isAr ? 'Ø£Ø¯Ø®Ù„ Ø§Ù„Ø±Ù…Ø² Ø§Ù„Ù…Ø±Ø³Ù„ Ø¥Ù„Ù‰' : 'Enter the code sent to'}{' '}
+          <span className="text-gold-400 font-bold">{maskedHint || 'â€¢â€¢â€¢â€¢'}</span>
         </p>
         {renderOtpRow(otpDigits, setOtpDigits)}
         {resendBtn(onResend)}
         {primaryBtn(
           isProof
             ? isAr
-              ? 'تحقق'
+              ? 'ØªØ­Ù‚Ù‚'
               : 'Verify'
             : isAr
-              ? 'تأكيد التحديث'
+              ? 'ØªØ£ÙƒÙŠØ¯ Ø§Ù„ØªØ­Ø¯ÙŠØ«'
               : 'Confirm update',
           onSubmit,
         )}
       </div>,
     );
   } else if (step === 'case1-verified') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4 text-center">
         <CheckCircle2 className="mx-auto text-emerald-400" size={36} />
         <p className="text-white font-bold">
-          {isAr ? 'تم التحقق من هويتك بنجاح.' : 'Identity verified successfully.'}
+          {isAr ? 'ØªÙ… Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ù‡ÙˆÙŠØªÙƒ Ø¨Ù†Ø¬Ø§Ø­.' : 'Identity verified successfully.'}
         </p>
-        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => {
+        {primaryBtn(isAr ? 'Ù…ØªØ§Ø¨Ø¹Ø©' : 'Continue', () => {
           setError(null);
           setStep('case1-new-phone');
         })}
       </div>,
     );
   } else if (step === 'case1-new-phone') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <p className="text-white/60 text-sm text-center">
           {isAr
-            ? 'أدخل رقم الجوال الجديد الذي ترغب في إضافته بدلاً من رقم الجوال القديم.'
+            ? 'Ø£Ø¯Ø®Ù„ Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ø¬Ø¯ÙŠØ¯ Ø§Ù„Ø°ÙŠ ØªØ±ØºØ¨ ÙÙŠ Ø¥Ø¶Ø§ÙØªÙ‡ Ø¨Ø¯Ù„Ø§Ù‹ Ù…Ù† Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù‚Ø¯ÙŠÙ….'
             : 'Enter the new mobile number to replace the old one.'}
         </p>
         {phoneField(
@@ -720,63 +739,63 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           setNewPhoneLocal,
           newCountryCode,
           setNewCountryCode,
-          isAr ? 'رقم الجوال الجديد' : 'New mobile number',
+          isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ø¬Ø¯ÙŠØ¯' : 'New mobile number',
         )}
-        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase1NewPhoneOtp)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…Ø²' : 'Send code', runCase1NewPhoneOtp)}
       </div>,
     );
   } else if (step === 'case2-email') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <p className="text-white/60 text-sm text-center">
           {isAr
-            ? 'أدخل البريد الإلكتروني القديم. سنرسل رمز التحقق إلى الجوال المسجّل.'
+            ? 'Ø£Ø¯Ø®Ù„ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ…. Ø³Ù†Ø±Ø³Ù„ Ø±Ù…Ø² Ø§Ù„ØªØ­Ù‚Ù‚ Ø¥Ù„Ù‰ Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù…Ø³Ø¬Ù‘Ù„.'
             : 'Enter the old email. We will send a code to the registered phone.'}
         </p>
-        <label className="text-xs text-white/50">{isAr ? 'البريد الإلكتروني القديم' : 'Old email'}</label>
+        <label className="text-xs text-white/50">{isAr ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ…' : 'Old email'}</label>
         <input
           type="email"
           value={oldEmail}
           onChange={(e) => setOldEmail(e.target.value)}
-          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-sm sm:text-base outline-none focus:border-gold-500"
         />
-        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase2Start)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…Ø²' : 'Send code', runCase2Start)}
       </div>,
     );
   } else if (step === 'case2-verified') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4 text-center">
         <CheckCircle2 className="mx-auto text-emerald-400" size={36} />
         <p className="text-white font-bold">
-          {isAr ? 'تم التحقق من هويتك بنجاح.' : 'Identity verified successfully.'}
+          {isAr ? 'ØªÙ… Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ù‡ÙˆÙŠØªÙƒ Ø¨Ù†Ø¬Ø§Ø­.' : 'Identity verified successfully.'}
         </p>
-        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => setStep('case2-new-email'))}
+        {primaryBtn(isAr ? 'Ù…ØªØ§Ø¨Ø¹Ø©' : 'Continue', () => setStep('case2-new-email'))}
       </div>,
     );
   } else if (step === 'case2-new-email') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <p className="text-white/60 text-sm text-center">
           {isAr
-            ? 'أدخل البريد الإلكتروني الجديد الذي ترغب في إضافته بدلاً من البريد الإلكتروني القديم.'
+            ? 'Ø£Ø¯Ø®Ù„ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ø¬Ø¯ÙŠØ¯ Ø§Ù„Ø°ÙŠ ØªØ±ØºØ¨ ÙÙŠ Ø¥Ø¶Ø§ÙØªÙ‡ Ø¨Ø¯Ù„Ø§Ù‹ Ù…Ù† Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ….'
             : 'Enter the new email you want to add instead of the old email.'}
         </p>
         <input
           type="email"
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
-          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-sm sm:text-base outline-none focus:border-gold-500"
           placeholder="name@example.com"
         />
-        {primaryBtn(isAr ? 'إرسال الرمز' : 'Send code', runCase2NewEmailOtp)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…Ø²' : 'Send code', runCase2NewEmailOtp)}
       </div>,
     );
   } else if (step === 'case3-ids') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm rounded-xl p-3">
           {isAr
-            ? 'هذه عملية عالية الخطورة. سيتم مراجعة الطلب من الإدارة وتعليق السحب مؤقتاً.'
+            ? 'Ù‡Ø°Ù‡ Ø¹Ù…Ù„ÙŠØ© Ø¹Ø§Ù„ÙŠØ© Ø§Ù„Ø®Ø·ÙˆØ±Ø©. Ø³ÙŠØªÙ… Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø·Ù„Ø¨ Ù…Ù† Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© ÙˆØªØ¹Ù„ÙŠÙ‚ Ø§Ù„Ø³Ø­Ø¨ Ù…Ø¤Ù‚ØªØ§Ù‹.'
             : 'This is a high-risk process. Admin will review and withdrawals will be paused.'}
         </div>
         {phoneField(
@@ -784,61 +803,61 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           setOldPhoneLocal,
           countryCode,
           setCountryCode,
-          isAr ? 'رقم الجوال المسجّل (المدّعى)' : 'Registered phone (claimed)',
+          isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ù…Ø³Ø¬Ù‘Ù„ (Ø§Ù„Ù…Ø¯Ù‘Ø¹Ù‰)' : 'Registered phone (claimed)',
         )}
         <input
           type="email"
           value={oldEmail}
           onChange={(e) => setOldEmail(e.target.value)}
-          placeholder={isAr ? 'البريد المسجّل' : 'Registered email'}
-          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          placeholder={isAr ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ù…Ø³Ø¬Ù‘Ù„' : 'Registered email'}
+          className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-sm sm:text-base outline-none focus:border-gold-500"
         />
-        {primaryBtn(isAr ? 'إرسال طلب المراجعة' : 'Submit for review', runCase3Submit)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©' : 'Submit for review', runCase3Submit)}
         <button
           type="button"
           className="w-full text-sm text-gold-400 underline"
           onClick={() => setStep('case3-resume')}
         >
-          {isAr ? 'لدي رمز استكمال من الإدارة' : 'I have a resume token from admin'}
+          {isAr ? 'Ù„Ø¯ÙŠ Ø±Ù…Ø² Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ù…Ù† Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©' : 'I have a resume token from admin'}
         </button>
       </div>,
     );
   } else if (step === 'case3-pending') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4 text-center">
         <ShieldCheck className="mx-auto text-gold-400" size={36} />
         <p className="text-white font-bold">
-          {isAr ? 'تم إرسال طلبك للمراجعة' : 'Your request was submitted for review'}
+          {isAr ? 'ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨Ùƒ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©' : 'Your request was submitted for review'}
         </p>
         <p className="text-white/50 text-sm">
           {isAr
-            ? 'سيتم إشعار الإدارة. عمليات السحب معلّقة حتى انتهاء المراجعة.'
+            ? 'Ø³ÙŠØªÙ… Ø¥Ø´Ø¹Ø§Ø± Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©. Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø³Ø­Ø¨ Ù…Ø¹Ù„Ù‘Ù‚Ø© Ø­ØªÙ‰ Ø§Ù†ØªÙ‡Ø§Ø¡ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.'
             : 'Admins were notified. Withdrawals are paused until review completes.'}
         </p>
-        {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
+        {primaryBtn(isAr ? 'Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„' : 'Back to login', onBackToLogin)}
         <button
           type="button"
           className="w-full text-sm text-gold-400 underline"
           onClick={() => setStep('case3-resume')}
         >
-          {isAr ? 'لدي رمز استكمال بعد الموافقة' : 'I have a resume token after approval'}
+          {isAr ? 'Ù„Ø¯ÙŠ Ø±Ù…Ø² Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ø¨Ø¹Ø¯ Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©' : 'I have a resume token after approval'}
         </button>
       </div>,
     );
   } else if (step === 'case3-resume') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         <label className="text-xs text-white/50">
-          {isAr ? 'رمز الاستكمال من الإدارة' : 'Resume token from admin'}
+          {isAr ? 'Ø±Ù…Ø² Ø§Ù„Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ù…Ù† Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©' : 'Resume token from admin'}
         </label>
         <input
           value={resumeToken}
           onChange={(e) => setResumeToken(e.target.value.trim())}
-          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white text-sm font-mono outline-none focus:border-gold-500"
+          className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-xs sm:text-sm font-mono outline-none focus:border-gold-500 break-all"
         />
-        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => {
+        {primaryBtn(isAr ? 'Ù…ØªØ§Ø¨Ø¹Ø©' : 'Continue', () => {
           if (resumeToken.length < 32) {
-            triggerError(isAr ? 'رمز غير صالح' : 'Invalid token');
+            triggerError(isAr ? 'Ø±Ù…Ø² ØºÙŠØ± ØµØ§Ù„Ø­' : 'Invalid token');
             return;
           }
           setStep('case3-new-contacts');
@@ -846,43 +865,43 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       </div>,
     );
   } else if (step === 'case3-new-contacts') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4">
         {phoneField(
           newPhoneLocal,
           setNewPhoneLocal,
           newCountryCode,
           setNewCountryCode,
-          isAr ? 'رقم الجوال الجديد' : 'New mobile',
+          isAr ? 'Ø±Ù‚Ù… Ø§Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ø¬Ø¯ÙŠØ¯' : 'New mobile',
         )}
         <input
           type="email"
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
-          placeholder={isAr ? 'البريد الجديد' : 'New email'}
-          className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-3 text-white outline-none focus:border-gold-500"
+          placeholder={isAr ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¬Ø¯ÙŠØ¯' : 'New email'}
+          className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-3.5 text-white text-sm sm:text-base outline-none focus:border-gold-500"
         />
-        {primaryBtn(isAr ? 'إرسال رموز التحقق' : 'Send verification codes', runCase3RequestOtps)}
+        {primaryBtn(isAr ? 'Ø¥Ø±Ø³Ø§Ù„ Ø±Ù…ÙˆØ² Ø§Ù„ØªØ­Ù‚Ù‚' : 'Send verification codes', runCase3RequestOtps)}
       </div>,
     );
   } else if (step === 'case3-otps') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-5">
         <div>
           <p className="text-xs text-white/50 mb-2 text-center">
-            {isAr ? 'رمز واتساب للجوال الجديد' : 'WhatsApp OTP for new phone'}
+            {isAr ? 'Ø±Ù…Ø² ÙˆØ§ØªØ³Ø§Ø¨ Ù„Ù„Ø¬ÙˆØ§Ù„ Ø§Ù„Ø¬Ø¯ÙŠØ¯' : 'WhatsApp OTP for new phone'}
           </p>
           {renderOtpRow(phoneOtpDigits, setPhoneOtpDigits)}
         </div>
         <div>
           <p className="text-xs text-white/50 mb-2 text-center">
-            {isAr ? 'رمز الإيميل الجديد' : 'Email OTP for new email'}
+            {isAr ? 'Ø±Ù…Ø² Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ø§Ù„Ø¬Ø¯ÙŠØ¯' : 'Email OTP for new email'}
           </p>
           {renderOtpRow(emailOtpDigits, setEmailOtpDigits)}
         </div>
         <p className="text-center text-xs text-white/40">
           {secondsLeft > 0
-            ? `${isAr ? 'ينتهي خلال' : 'Expires in'} ${formatOtpCountdown(secondsLeft)}`
+            ? `${isAr ? 'ÙŠÙ†ØªÙ‡ÙŠ Ø®Ù„Ø§Ù„' : 'Expires in'} ${formatOtpCountdown(secondsLeft)}`
             : ''}
         </p>
         {secondsLeft <= 0 && (
@@ -892,32 +911,32 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
             onClick={runCase3RequestOtps}
             className="w-full text-sm text-gold-400 hover:text-gold-300 py-2 font-medium"
           >
-            {isAr ? 'إعادة إرسال الرموز' : 'Resend codes'}
+            {isAr ? 'Ø¥Ø¹Ø§Ø¯Ø© Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø±Ù…ÙˆØ²' : 'Resend codes'}
           </button>
         )}
-        {primaryBtn(isAr ? 'تأكيد التحديث' : 'Confirm update', runCase3Complete)}
+        {primaryBtn(isAr ? 'ØªØ£ÙƒÙŠØ¯ Ø§Ù„ØªØ­Ø¯ÙŠØ«' : 'Confirm update', runCase3Complete)}
       </div>,
     );
   } else if (step === 'done') {
-    body = cardShell(
+    body = contentShell(
       <div className="space-y-4 text-center">
         <CheckCircle2 className="mx-auto text-emerald-400" size={40} />
         <p className="text-white font-bold text-lg">{doneMessage}</p>
-        {primaryBtn(isAr ? 'تسجيل الدخول' : 'Sign in', onBackToLogin)}
+        {primaryBtn(isAr ? 'ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„' : 'Sign in', onBackToLogin)}
       </div>,
     );
   }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-8">
+    <div className="w-full max-w-full overflow-x-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-          className="w-full"
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18 }}
+          className="w-full min-w-0"
         >
           {body}
         </motion.div>
@@ -927,3 +946,4 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 };
 
 export default AccountRecoveryWizard;
+

@@ -171,7 +171,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
 
       {error && <OtpErrorCard message={error} />}
 
-      <div className="flex gap-2 justify-center direction-ltr" dir="ltr">
+      <div className="flex w-full max-w-[320px] sm:max-w-sm mx-auto justify-between gap-1.5 sm:gap-2" dir="ltr">
         {otp.map((digit, index) => (
           <input
             key={index}
@@ -183,7 +183,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
             disabled={isVerifying || isExpired}
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
-            className="w-10 h-12 md:w-12 md:h-14 rounded-xl bg-white/5 border border-white/10 text-center text-xl font-bold text-white focus:border-gold-500 outline-none transition-all focus:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 shrink-0 rounded-xl bg-white/5 border border-white/10 text-center text-lg sm:text-xl font-bold text-white focus:border-gold-500 outline-none transition-all focus:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         ))}
       </div>
