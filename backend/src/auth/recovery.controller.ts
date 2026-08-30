@@ -1,6 +1,33 @@
-import { Controller, Post, Body, Req, Ip, Get, UseGuards, Query } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Body,
+    Req,
+    Ip,
+    Get,
+    UseGuards,
+    Query,
+} from '@nestjs/common';
 import { RecoveryService } from './recovery.service';
-import { RequestEmailOtpDto, VerifyEmailOtpDto, RequestPhoneOtpDto, SubmitRecoveryDto } from './dto/recovery.dto';
+import {
+    LostPhoneStartDto,
+    LostPhoneVerifyProofDto,
+    LostPhoneRequestNewDto,
+    LostPhoneConfirmDto,
+    LostEmailStartDto,
+    LostEmailVerifyProofDto,
+    LostEmailRequestNewDto,
+    LostEmailConfirmDto,
+    LostBothSubmitDto,
+    LostBothRequestOtpsDto,
+    LostBothCompleteDto,
+    AdminResolveRecoveryDto,
+    AdminFreezeUserDto,
+    RequestEmailOtpDto,
+    VerifyEmailOtpDto,
+    RequestPhoneOtpDto,
+    SubmitRecoveryDto,
+} from './dto/recovery.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
@@ -9,50 +36,221 @@ import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth/recovery')
 export class RecoveryController {
-    constructor(private readonly recoveryService: RecoveryService) { }
+    constructor(private readonly recoveryService: RecoveryService) {}
 
-    @Post('request-email-otp')
+    // ── Case 1: Lost phone ────────────────────────────────────────────
+
+    @Post('case/lost-phone/start')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async requestEmailOtp(@Body() dto: RequestEmailOtpDto) {
-        return this.recoveryService.requestEmailOtp(dto.email, dto.role);
+    lostPhoneStart(@Body() dto: LostPhoneStartDto) {
+        return this.recoveryService.lostPhoneStart(dto.oldPhone, dto.role, dto.countryCode);
     }
 
-    @Post('verify-email-otp')
+    @Post('case/lost-phone/verify-proof')
     @Throttle({ default: { limit: 10, ttl: 60_000 } })
-    async verifyEmailOtp(@Body() dto: VerifyEmailOtpDto, @Ip() ip: string) {
-        return this.recoveryService.verifyEmailOtp(dto.email, dto.otp, dto.role, ip);
+    lostPhoneVerifyProof(@Body() dto: LostPhoneVerifyProofDto, @Ip() ip: string) {
+        return this.recoveryService.lostPhoneVerifyProof(
+            dto.oldPhone,
+            dto.otp,
+            dto.role,
+            dto.countryCode,
+            ip,
+        );
     }
 
-    @Post('request-phone-otp')
+    @Post('case/lost-phone/request-new-phone-otp')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async requestPhoneOtp(@Body() dto: RequestPhoneOtpDto, @Ip() ip: string) {
-        return this.recoveryService.requestPhoneOtp(dto.email, dto.newPhone, dto.role, ip);
+    lostPhoneRequestNew(@Body() dto: LostPhoneRequestNewDto, @Ip() ip: string) {
+        return this.recoveryService.lostPhoneRequestNewOtp(
+            dto.oldPhone,
+            dto.newPhone,
+            dto.role,
+            dto.countryCode,
+            dto.newCountryCode,
+            ip,
+        );
     }
 
-    @Post('submit')
+    @Post('case/lost-phone/confirm')
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    async submitRecovery(@Body() dto: SubmitRecoveryDto, @Req() req: Request, @Ip() ip: string) {
+    lostPhoneConfirm(
+        @Body() dto: LostPhoneConfirmDto,
+        @Req() req: Request,
+        @Ip() ip: string,
+    ) {
         const device = req.headers['user-agent'] || 'Unknown Device';
-        return this.recoveryService.submitRecovery(dto.email, dto.newPhone, dto.phoneOtp, dto.role, ip, device);
+        return this.recoveryService.lostPhoneConfirm(
+            dto.oldPhone,
+            dto.newPhone,
+            dto.phoneOtp,
+            dto.role,
+            dto.countryCode,
+            dto.newCountryCode,
+            ip,
+            device,
+        );
     }
+
+    // ── Case 2: Lost email ────────────────────────────────────────────
+
+    @Post('case/lost-email/start')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    lostEmailStart(@Body() dto: LostEmailStartDto) {
+        return this.recoveryService.lostEmailStart(dto.oldEmail, dto.role);
+    }
+
+    @Post('case/lost-email/verify-proof')
+    @Throttle({ default: { limit: 10, ttl: 60_000 } })
+    lostEmailVerifyProof(@Body() dto: LostEmailVerifyProofDto, @Ip() ip: string) {
+        return this.recoveryService.lostEmailVerifyProof(dto.oldEmail, dto.otp, dto.role, ip);
+    }
+
+    @Post('case/lost-email/request-new-email-otp')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    lostEmailRequestNew(@Body() dto: LostEmailRequestNewDto, @Ip() ip: string) {
+        return this.recoveryService.lostEmailRequestNewOtp(
+            dto.oldEmail,
+            dto.newEmail,
+            dto.role,
+            ip,
+        );
+    }
+
+    @Post('case/lost-email/confirm')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    lostEmailConfirm(
+        @Body() dto: LostEmailConfirmDto,
+        @Req() req: Request,
+        @Ip() ip: string,
+    ) {
+        const device = req.headers['user-agent'] || 'Unknown Device';
+        return this.recoveryService.lostEmailConfirm(
+            dto.oldEmail,
+            dto.newEmail,
+            dto.emailOtp,
+            dto.role,
+            ip,
+            device,
+        );
+    }
+
+    // ── Case 3: Lost both ─────────────────────────────────────────────
+
+    @Post('case/lost-both/submit')
+    @Throttle({ default: { limit: 3, ttl: 60_000 } })
+    lostBothSubmit(@Body() dto: LostBothSubmitDto, @Req() req: Request, @Ip() ip: string) {
+        const device = req.headers['user-agent'] || 'Unknown Device';
+        return this.recoveryService.lostBothSubmit(
+            dto.oldPhone,
+            dto.oldEmail,
+            dto.role,
+            dto.countryCode,
+            ip,
+            device,
+        );
+    }
+
+    @Post('case/lost-both/request-otps')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    lostBothRequestOtps(@Body() dto: LostBothRequestOtpsDto) {
+        return this.recoveryService.lostBothRequestOtps(
+            dto.resumeToken,
+            dto.newPhone,
+            dto.newEmail,
+            dto.newCountryCode,
+        );
+    }
+
+    @Post('case/lost-both/complete')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    lostBothComplete(
+        @Body() dto: LostBothCompleteDto,
+        @Req() req: Request,
+        @Ip() ip: string,
+    ) {
+        const device = req.headers['user-agent'] || 'Unknown Device';
+        return this.recoveryService.lostBothComplete(
+            dto.resumeToken,
+            dto.newPhone,
+            dto.newEmail,
+            dto.phoneOtp,
+            dto.emailOtp,
+            dto.newCountryCode,
+            ip,
+            device,
+        );
+    }
+
+    // ── Admin ─────────────────────────────────────────────────────────
 
     @Get('admin/requests')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @Permissions('users', 'view')
-    async getPendingRequests(@Query('search') search?: string) {
+    getPendingRequests(@Query('search') search?: string) {
         return this.recoveryService.getPendingRequests(search);
     }
 
     @Post('admin/resolve')
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @Permissions('users', 'edit')
-    async resolveRequest(
-        @Body() body: { requestId: string, action: 'APPROVE' | 'REJECT' },
+    resolveRequest(
+        @Body() body: AdminResolveRecoveryDto,
         @Req() req: Request & { user: { id: string } },
-        @Ip() ip: string
+        @Ip() ip: string,
     ) {
-        const adminId = req.user.id;
         const userAgent = req.headers['user-agent'] || 'Unknown';
-        return this.recoveryService.resolveRequest(body.requestId, body.action, adminId, ip, userAgent);
+        return this.recoveryService.resolveRequest(
+            body.requestId,
+            body.action,
+            req.user.id,
+            ip,
+            userAgent,
+            body.rejectionReason,
+        );
+    }
+
+    @Post('admin/freeze-user')
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @Permissions('users', 'edit')
+    freezeUser(
+        @Body() body: AdminFreezeUserDto,
+        @Req() req: Request & { user: { id: string } },
+        @Ip() ip: string,
+    ) {
+        return this.recoveryService.adminFreezeUser(body.userId, req.user.id, body.note, ip);
+    }
+
+    // ── Legacy (deprecated) ───────────────────────────────────────────
+
+    @Post('request-email-otp')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    requestEmailOtp(@Body() dto: RequestEmailOtpDto) {
+        return this.recoveryService.requestEmailOtp(dto.email, dto.role);
+    }
+
+    @Post('verify-email-otp')
+    @Throttle({ default: { limit: 10, ttl: 60_000 } })
+    verifyEmailOtp(@Body() dto: VerifyEmailOtpDto, @Ip() ip: string) {
+        return this.recoveryService.verifyEmailOtp(dto.email, dto.otp, dto.role, ip);
+    }
+
+    @Post('request-phone-otp')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    requestPhoneOtp(@Body() dto: RequestPhoneOtpDto, @Ip() ip: string) {
+        return this.recoveryService.requestPhoneOtp(dto.email, dto.newPhone, dto.role, ip);
+    }
+
+    @Post('submit')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    submitRecovery(@Body() dto: SubmitRecoveryDto, @Req() req: Request, @Ip() ip: string) {
+        const device = req.headers['user-agent'] || 'Unknown Device';
+        return this.recoveryService.submitRecovery(
+            dto.email,
+            dto.newPhone,
+            dto.phoneOtp,
+            dto.role,
+            ip,
+            device,
+        );
     }
 }

@@ -358,9 +358,48 @@ export class OtpService {
                 email: email.trim().toLowerCase(),
                 channel: 'email',
                 role,
-                purpose: OtpPurpose.RECOVERY_STEP1,
+                purpose: { in: [OtpPurpose.RECOVERY_STEP1, OtpPurpose.RECOVERY_PROOF] },
                 verifiedAt: { gte: since },
             },
+            orderBy: { verifiedAt: 'desc' },
+        });
+
+        if (!verified) {
+            throw new UnauthorizedException('Session expired. Please restart the recovery process.');
+        }
+    }
+
+    /** Assert recent RECOVERY_PROOF (email or WhatsApp) within 15 minutes. */
+    async assertRecoveryProofVerified(params: {
+        role: string;
+        channel: OtpChannel;
+        email?: string;
+        phone?: string;
+    }): Promise<void> {
+        const since = new Date(Date.now() - 15 * 60 * 1000);
+        const where: {
+            channel: OtpChannel;
+            role: string;
+            purpose: OtpPurpose;
+            verifiedAt: { gte: Date };
+            email?: string;
+            phone?: string;
+        } = {
+            channel: params.channel,
+            role: params.role,
+            purpose: OtpPurpose.RECOVERY_PROOF,
+            verifiedAt: { gte: since },
+        };
+        if (params.channel === 'email' && params.email) {
+            where.email = params.email.trim().toLowerCase();
+        } else if (params.channel === 'whatsapp' && params.phone) {
+            where.phone = this.normalizePhone(params.phone);
+        } else {
+            throw new UnauthorizedException('Session expired. Please restart the recovery process.');
+        }
+
+        const verified = await this.prisma.otpChallenge.findFirst({
+            where,
             orderBy: { verifiedAt: 'desc' },
         });
 

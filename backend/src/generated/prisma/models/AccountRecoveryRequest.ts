@@ -41,14 +41,20 @@ export type AccountRecoveryRequestSumAggregateOutputType = {
 export type AccountRecoveryRequestMinAggregateOutputType = {
   id: string | null
   userId: string | null
+  caseType: string | null
   oldPhone: string | null
   newPhone: string | null
+  oldEmail: string | null
+  newEmail: string | null
   status: string | null
   balanceSnapshot: runtime.Decimal | null
   openOrdersCount: number | null
   disputesCount: number | null
   requestIp: string | null
   requestDevice: string | null
+  rejectionReason: string | null
+  resumeTokenHash: string | null
+  resumeTokenExpiresAt: Date | null
   resolvedAt: Date | null
   resolvedBy: string | null
   createdAt: Date | null
@@ -58,14 +64,20 @@ export type AccountRecoveryRequestMinAggregateOutputType = {
 export type AccountRecoveryRequestMaxAggregateOutputType = {
   id: string | null
   userId: string | null
+  caseType: string | null
   oldPhone: string | null
   newPhone: string | null
+  oldEmail: string | null
+  newEmail: string | null
   status: string | null
   balanceSnapshot: runtime.Decimal | null
   openOrdersCount: number | null
   disputesCount: number | null
   requestIp: string | null
   requestDevice: string | null
+  rejectionReason: string | null
+  resumeTokenHash: string | null
+  resumeTokenExpiresAt: Date | null
   resolvedAt: Date | null
   resolvedBy: string | null
   createdAt: Date | null
@@ -75,14 +87,20 @@ export type AccountRecoveryRequestMaxAggregateOutputType = {
 export type AccountRecoveryRequestCountAggregateOutputType = {
   id: number
   userId: number
+  caseType: number
   oldPhone: number
   newPhone: number
+  oldEmail: number
+  newEmail: number
   status: number
   balanceSnapshot: number
   openOrdersCount: number
   disputesCount: number
   requestIp: number
   requestDevice: number
+  rejectionReason: number
+  resumeTokenHash: number
+  resumeTokenExpiresAt: number
   resolvedAt: number
   resolvedBy: number
   createdAt: number
@@ -106,14 +124,20 @@ export type AccountRecoveryRequestSumAggregateInputType = {
 export type AccountRecoveryRequestMinAggregateInputType = {
   id?: true
   userId?: true
+  caseType?: true
   oldPhone?: true
   newPhone?: true
+  oldEmail?: true
+  newEmail?: true
   status?: true
   balanceSnapshot?: true
   openOrdersCount?: true
   disputesCount?: true
   requestIp?: true
   requestDevice?: true
+  rejectionReason?: true
+  resumeTokenHash?: true
+  resumeTokenExpiresAt?: true
   resolvedAt?: true
   resolvedBy?: true
   createdAt?: true
@@ -123,14 +147,20 @@ export type AccountRecoveryRequestMinAggregateInputType = {
 export type AccountRecoveryRequestMaxAggregateInputType = {
   id?: true
   userId?: true
+  caseType?: true
   oldPhone?: true
   newPhone?: true
+  oldEmail?: true
+  newEmail?: true
   status?: true
   balanceSnapshot?: true
   openOrdersCount?: true
   disputesCount?: true
   requestIp?: true
   requestDevice?: true
+  rejectionReason?: true
+  resumeTokenHash?: true
+  resumeTokenExpiresAt?: true
   resolvedAt?: true
   resolvedBy?: true
   createdAt?: true
@@ -140,14 +170,20 @@ export type AccountRecoveryRequestMaxAggregateInputType = {
 export type AccountRecoveryRequestCountAggregateInputType = {
   id?: true
   userId?: true
+  caseType?: true
   oldPhone?: true
   newPhone?: true
+  oldEmail?: true
+  newEmail?: true
   status?: true
   balanceSnapshot?: true
   openOrdersCount?: true
   disputesCount?: true
   requestIp?: true
   requestDevice?: true
+  rejectionReason?: true
+  resumeTokenHash?: true
+  resumeTokenExpiresAt?: true
   resolvedAt?: true
   resolvedBy?: true
   createdAt?: true
@@ -244,14 +280,20 @@ export type AccountRecoveryRequestGroupByArgs<ExtArgs extends runtime.Types.Exte
 export type AccountRecoveryRequestGroupByOutputType = {
   id: string
   userId: string
+  caseType: string
   oldPhone: string | null
-  newPhone: string
+  newPhone: string | null
+  oldEmail: string | null
+  newEmail: string | null
   status: string
   balanceSnapshot: runtime.Decimal
   openOrdersCount: number
   disputesCount: number
   requestIp: string | null
   requestDevice: string | null
+  rejectionReason: string | null
+  resumeTokenHash: string | null
+  resumeTokenExpiresAt: Date | null
   resolvedAt: Date | null
   resolvedBy: string | null
   createdAt: Date
@@ -284,14 +326,20 @@ export type AccountRecoveryRequestWhereInput = {
   NOT?: Prisma.AccountRecoveryRequestWhereInput | Prisma.AccountRecoveryRequestWhereInput[]
   id?: Prisma.UuidFilter<"AccountRecoveryRequest"> | string
   userId?: Prisma.UuidFilter<"AccountRecoveryRequest"> | string
+  caseType?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   oldPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
-  newPhone?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
+  newPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  oldEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  newEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   status?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   balanceSnapshot?: Prisma.DecimalFilter<"AccountRecoveryRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   disputesCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   requestIp?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   requestDevice?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenHash?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenExpiresAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedBy?: Prisma.UuidNullableFilter<"AccountRecoveryRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AccountRecoveryRequest"> | Date | string
@@ -302,14 +350,20 @@ export type AccountRecoveryRequestWhereInput = {
 export type AccountRecoveryRequestOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  caseType?: Prisma.SortOrder
   oldPhone?: Prisma.SortOrderInput | Prisma.SortOrder
-  newPhone?: Prisma.SortOrder
+  newPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  oldEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  newEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   balanceSnapshot?: Prisma.SortOrder
   openOrdersCount?: Prisma.SortOrder
   disputesCount?: Prisma.SortOrder
   requestIp?: Prisma.SortOrderInput | Prisma.SortOrder
   requestDevice?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  resumeTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  resumeTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   resolvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -323,14 +377,20 @@ export type AccountRecoveryRequestWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AccountRecoveryRequestWhereInput[]
   NOT?: Prisma.AccountRecoveryRequestWhereInput | Prisma.AccountRecoveryRequestWhereInput[]
   userId?: Prisma.UuidFilter<"AccountRecoveryRequest"> | string
+  caseType?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   oldPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
-  newPhone?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
+  newPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  oldEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  newEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   status?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   balanceSnapshot?: Prisma.DecimalFilter<"AccountRecoveryRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   disputesCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   requestIp?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   requestDevice?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenHash?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenExpiresAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedBy?: Prisma.UuidNullableFilter<"AccountRecoveryRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AccountRecoveryRequest"> | Date | string
@@ -341,14 +401,20 @@ export type AccountRecoveryRequestWhereUniqueInput = Prisma.AtLeast<{
 export type AccountRecoveryRequestOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  caseType?: Prisma.SortOrder
   oldPhone?: Prisma.SortOrderInput | Prisma.SortOrder
-  newPhone?: Prisma.SortOrder
+  newPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  oldEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  newEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   balanceSnapshot?: Prisma.SortOrder
   openOrdersCount?: Prisma.SortOrder
   disputesCount?: Prisma.SortOrder
   requestIp?: Prisma.SortOrderInput | Prisma.SortOrder
   requestDevice?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  resumeTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  resumeTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   resolvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,14 +432,20 @@ export type AccountRecoveryRequestScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AccountRecoveryRequestScalarWhereWithAggregatesInput | Prisma.AccountRecoveryRequestScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"AccountRecoveryRequest"> | string
   userId?: Prisma.UuidWithAggregatesFilter<"AccountRecoveryRequest"> | string
+  caseType?: Prisma.StringWithAggregatesFilter<"AccountRecoveryRequest"> | string
   oldPhone?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
-  newPhone?: Prisma.StringWithAggregatesFilter<"AccountRecoveryRequest"> | string
+  newPhone?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
+  oldEmail?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
+  newEmail?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"AccountRecoveryRequest"> | string
   balanceSnapshot?: Prisma.DecimalWithAggregatesFilter<"AccountRecoveryRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntWithAggregatesFilter<"AccountRecoveryRequest"> | number
   disputesCount?: Prisma.IntWithAggregatesFilter<"AccountRecoveryRequest"> | number
   requestIp?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
   requestDevice?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenHash?: Prisma.StringNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedBy?: Prisma.UuidNullableWithAggregatesFilter<"AccountRecoveryRequest"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AccountRecoveryRequest"> | Date | string
@@ -382,14 +454,20 @@ export type AccountRecoveryRequestScalarWhereWithAggregatesInput = {
 
 export type AccountRecoveryRequestCreateInput = {
   id?: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -400,14 +478,20 @@ export type AccountRecoveryRequestCreateInput = {
 export type AccountRecoveryRequestUncheckedCreateInput = {
   id?: string
   userId: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -416,14 +500,20 @@ export type AccountRecoveryRequestUncheckedCreateInput = {
 
 export type AccountRecoveryRequestUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -434,14 +524,20 @@ export type AccountRecoveryRequestUpdateInput = {
 export type AccountRecoveryRequestUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,14 +547,20 @@ export type AccountRecoveryRequestUncheckedUpdateInput = {
 export type AccountRecoveryRequestCreateManyInput = {
   id?: string
   userId: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -467,14 +569,20 @@ export type AccountRecoveryRequestCreateManyInput = {
 
 export type AccountRecoveryRequestUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,14 +592,20 @@ export type AccountRecoveryRequestUpdateManyMutationInput = {
 export type AccountRecoveryRequestUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -511,14 +625,20 @@ export type AccountRecoveryRequestOrderByRelationAggregateInput = {
 export type AccountRecoveryRequestCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  caseType?: Prisma.SortOrder
   oldPhone?: Prisma.SortOrder
   newPhone?: Prisma.SortOrder
+  oldEmail?: Prisma.SortOrder
+  newEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   balanceSnapshot?: Prisma.SortOrder
   openOrdersCount?: Prisma.SortOrder
   disputesCount?: Prisma.SortOrder
   requestIp?: Prisma.SortOrder
   requestDevice?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  resumeTokenHash?: Prisma.SortOrder
+  resumeTokenExpiresAt?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -534,14 +654,20 @@ export type AccountRecoveryRequestAvgOrderByAggregateInput = {
 export type AccountRecoveryRequestMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  caseType?: Prisma.SortOrder
   oldPhone?: Prisma.SortOrder
   newPhone?: Prisma.SortOrder
+  oldEmail?: Prisma.SortOrder
+  newEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   balanceSnapshot?: Prisma.SortOrder
   openOrdersCount?: Prisma.SortOrder
   disputesCount?: Prisma.SortOrder
   requestIp?: Prisma.SortOrder
   requestDevice?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  resumeTokenHash?: Prisma.SortOrder
+  resumeTokenExpiresAt?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -551,14 +677,20 @@ export type AccountRecoveryRequestMaxOrderByAggregateInput = {
 export type AccountRecoveryRequestMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  caseType?: Prisma.SortOrder
   oldPhone?: Prisma.SortOrder
   newPhone?: Prisma.SortOrder
+  oldEmail?: Prisma.SortOrder
+  newEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   balanceSnapshot?: Prisma.SortOrder
   openOrdersCount?: Prisma.SortOrder
   disputesCount?: Prisma.SortOrder
   requestIp?: Prisma.SortOrder
   requestDevice?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
+  resumeTokenHash?: Prisma.SortOrder
+  resumeTokenExpiresAt?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   resolvedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -615,14 +747,20 @@ export type AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput = {
 
 export type AccountRecoveryRequestCreateWithoutUserInput = {
   id?: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -631,14 +769,20 @@ export type AccountRecoveryRequestCreateWithoutUserInput = {
 
 export type AccountRecoveryRequestUncheckedCreateWithoutUserInput = {
   id?: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -677,14 +821,20 @@ export type AccountRecoveryRequestScalarWhereInput = {
   NOT?: Prisma.AccountRecoveryRequestScalarWhereInput | Prisma.AccountRecoveryRequestScalarWhereInput[]
   id?: Prisma.UuidFilter<"AccountRecoveryRequest"> | string
   userId?: Prisma.UuidFilter<"AccountRecoveryRequest"> | string
+  caseType?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   oldPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
-  newPhone?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
+  newPhone?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  oldEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  newEmail?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   status?: Prisma.StringFilter<"AccountRecoveryRequest"> | string
   balanceSnapshot?: Prisma.DecimalFilter<"AccountRecoveryRequest"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   disputesCount?: Prisma.IntFilter<"AccountRecoveryRequest"> | number
   requestIp?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
   requestDevice?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenHash?: Prisma.StringNullableFilter<"AccountRecoveryRequest"> | string | null
+  resumeTokenExpiresAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedAt?: Prisma.DateTimeNullableFilter<"AccountRecoveryRequest"> | Date | string | null
   resolvedBy?: Prisma.UuidNullableFilter<"AccountRecoveryRequest"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AccountRecoveryRequest"> | Date | string
@@ -693,14 +843,20 @@ export type AccountRecoveryRequestScalarWhereInput = {
 
 export type AccountRecoveryRequestCreateManyUserInput = {
   id?: string
+  caseType?: string
   oldPhone?: string | null
-  newPhone: string
+  newPhone?: string | null
+  oldEmail?: string | null
+  newEmail?: string | null
   status?: string
   balanceSnapshot?: runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: number
   disputesCount?: number
   requestIp?: string | null
   requestDevice?: string | null
+  rejectionReason?: string | null
+  resumeTokenHash?: string | null
+  resumeTokenExpiresAt?: Date | string | null
   resolvedAt?: Date | string | null
   resolvedBy?: string | null
   createdAt?: Date | string
@@ -709,14 +865,20 @@ export type AccountRecoveryRequestCreateManyUserInput = {
 
 export type AccountRecoveryRequestUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -725,14 +887,20 @@ export type AccountRecoveryRequestUpdateWithoutUserInput = {
 
 export type AccountRecoveryRequestUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -741,14 +909,20 @@ export type AccountRecoveryRequestUncheckedUpdateWithoutUserInput = {
 
 export type AccountRecoveryRequestUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  caseType?: Prisma.StringFieldUpdateOperationsInput | string
   oldPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  newPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  newPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oldEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  newEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   balanceSnapshot?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   openOrdersCount?: Prisma.IntFieldUpdateOperationsInput | number
   disputesCount?: Prisma.IntFieldUpdateOperationsInput | number
   requestIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resumeTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resolvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -760,14 +934,20 @@ export type AccountRecoveryRequestUncheckedUpdateManyWithoutUserInput = {
 export type AccountRecoveryRequestSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  caseType?: boolean
   oldPhone?: boolean
   newPhone?: boolean
+  oldEmail?: boolean
+  newEmail?: boolean
   status?: boolean
   balanceSnapshot?: boolean
   openOrdersCount?: boolean
   disputesCount?: boolean
   requestIp?: boolean
   requestDevice?: boolean
+  rejectionReason?: boolean
+  resumeTokenHash?: boolean
+  resumeTokenExpiresAt?: boolean
   resolvedAt?: boolean
   resolvedBy?: boolean
   createdAt?: boolean
@@ -778,14 +958,20 @@ export type AccountRecoveryRequestSelect<ExtArgs extends runtime.Types.Extension
 export type AccountRecoveryRequestSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  caseType?: boolean
   oldPhone?: boolean
   newPhone?: boolean
+  oldEmail?: boolean
+  newEmail?: boolean
   status?: boolean
   balanceSnapshot?: boolean
   openOrdersCount?: boolean
   disputesCount?: boolean
   requestIp?: boolean
   requestDevice?: boolean
+  rejectionReason?: boolean
+  resumeTokenHash?: boolean
+  resumeTokenExpiresAt?: boolean
   resolvedAt?: boolean
   resolvedBy?: boolean
   createdAt?: boolean
@@ -796,14 +982,20 @@ export type AccountRecoveryRequestSelectCreateManyAndReturn<ExtArgs extends runt
 export type AccountRecoveryRequestSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  caseType?: boolean
   oldPhone?: boolean
   newPhone?: boolean
+  oldEmail?: boolean
+  newEmail?: boolean
   status?: boolean
   balanceSnapshot?: boolean
   openOrdersCount?: boolean
   disputesCount?: boolean
   requestIp?: boolean
   requestDevice?: boolean
+  rejectionReason?: boolean
+  resumeTokenHash?: boolean
+  resumeTokenExpiresAt?: boolean
   resolvedAt?: boolean
   resolvedBy?: boolean
   createdAt?: boolean
@@ -814,21 +1006,27 @@ export type AccountRecoveryRequestSelectUpdateManyAndReturn<ExtArgs extends runt
 export type AccountRecoveryRequestSelectScalar = {
   id?: boolean
   userId?: boolean
+  caseType?: boolean
   oldPhone?: boolean
   newPhone?: boolean
+  oldEmail?: boolean
+  newEmail?: boolean
   status?: boolean
   balanceSnapshot?: boolean
   openOrdersCount?: boolean
   disputesCount?: boolean
   requestIp?: boolean
   requestDevice?: boolean
+  rejectionReason?: boolean
+  resumeTokenHash?: boolean
+  resumeTokenExpiresAt?: boolean
   resolvedAt?: boolean
   resolvedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AccountRecoveryRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "oldPhone" | "newPhone" | "status" | "balanceSnapshot" | "openOrdersCount" | "disputesCount" | "requestIp" | "requestDevice" | "resolvedAt" | "resolvedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["accountRecoveryRequest"]>
+export type AccountRecoveryRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "caseType" | "oldPhone" | "newPhone" | "oldEmail" | "newEmail" | "status" | "balanceSnapshot" | "openOrdersCount" | "disputesCount" | "requestIp" | "requestDevice" | "rejectionReason" | "resumeTokenHash" | "resumeTokenExpiresAt" | "resolvedAt" | "resolvedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["accountRecoveryRequest"]>
 export type AccountRecoveryRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -847,14 +1045,26 @@ export type $AccountRecoveryRequestPayload<ExtArgs extends runtime.Types.Extensi
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
+    /**
+     * LOST_PHONE | LOST_EMAIL | LOST_BOTH
+     */
+    caseType: string
     oldPhone: string | null
-    newPhone: string
+    newPhone: string | null
+    oldEmail: string | null
+    newEmail: string | null
+    /**
+     * PENDING_REVIEW | APPROVED_AWAITING_CONTACTS | APPROVED | REJECTED
+     */
     status: string
     balanceSnapshot: runtime.Decimal
     openOrdersCount: number
     disputesCount: number
     requestIp: string | null
     requestDevice: string | null
+    rejectionReason: string | null
+    resumeTokenHash: string | null
+    resumeTokenExpiresAt: Date | null
     resolvedAt: Date | null
     resolvedBy: string | null
     createdAt: Date
@@ -1285,14 +1495,20 @@ export interface Prisma__AccountRecoveryRequestClient<T, Null = never, ExtArgs e
 export interface AccountRecoveryRequestFieldRefs {
   readonly id: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly userId: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly caseType: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly oldPhone: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly newPhone: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly oldEmail: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly newEmail: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly status: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly balanceSnapshot: Prisma.FieldRef<"AccountRecoveryRequest", 'Decimal'>
   readonly openOrdersCount: Prisma.FieldRef<"AccountRecoveryRequest", 'Int'>
   readonly disputesCount: Prisma.FieldRef<"AccountRecoveryRequest", 'Int'>
   readonly requestIp: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly requestDevice: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly rejectionReason: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly resumeTokenHash: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
+  readonly resumeTokenExpiresAt: Prisma.FieldRef<"AccountRecoveryRequest", 'DateTime'>
   readonly resolvedAt: Prisma.FieldRef<"AccountRecoveryRequest", 'DateTime'>
   readonly resolvedBy: Prisma.FieldRef<"AccountRecoveryRequest", 'String'>
   readonly createdAt: Prisma.FieldRef<"AccountRecoveryRequest", 'DateTime'>

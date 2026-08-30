@@ -134,24 +134,110 @@ export const authApi = {
         return response.data;
     },
 
-    // Recovery API endpoints
-    requestRecoveryEmailOtp: async (email: string, role: 'customer' | 'merchant') => {
-        const response = await client.post('/auth/recovery/request-email-otp', { email, role });
+    // Recovery API — redesigned 3-case flow
+    recoveryLostPhoneStart: async (payload: {
+        role: 'customer' | 'merchant';
+        oldPhone: string;
+        countryCode?: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-phone/start', payload);
         return response.data;
     },
-
-    verifyRecoveryEmailOtp: async (email: string, otp: string, role: 'customer' | 'merchant') => {
-        const response = await client.post('/auth/recovery/verify-email-otp', { email, otp, role });
+    recoveryLostPhoneVerifyProof: async (payload: {
+        role: 'customer' | 'merchant';
+        oldPhone: string;
+        countryCode?: string;
+        otp: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-phone/verify-proof', payload);
         return response.data;
     },
-
-    requestRecoveryPhoneOtp: async (email: string, newPhone: string, role: 'customer' | 'merchant') => {
-        const response = await client.post('/auth/recovery/request-phone-otp', { email, newPhone, role });
+    recoveryLostPhoneRequestNewOtp: async (payload: {
+        role: 'customer' | 'merchant';
+        oldPhone: string;
+        countryCode?: string;
+        newPhone: string;
+        newCountryCode?: string;
+    }) => {
+        const response = await client.post(
+            '/auth/recovery/case/lost-phone/request-new-phone-otp',
+            payload,
+        );
         return response.data;
     },
-
-    submitRecovery: async (email: string, newPhone: string, phoneOtp: string, role: 'customer' | 'merchant') => {
-        const response = await client.post('/auth/recovery/submit', { email, newPhone, phoneOtp, role });
+    recoveryLostPhoneConfirm: async (payload: {
+        role: 'customer' | 'merchant';
+        oldPhone: string;
+        countryCode?: string;
+        newPhone: string;
+        newCountryCode?: string;
+        phoneOtp: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-phone/confirm', payload);
+        return response.data;
+    },
+    recoveryLostEmailStart: async (payload: {
+        role: 'customer' | 'merchant';
+        oldEmail: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-email/start', payload);
+        return response.data;
+    },
+    recoveryLostEmailVerifyProof: async (payload: {
+        role: 'customer' | 'merchant';
+        oldEmail: string;
+        otp: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-email/verify-proof', payload);
+        return response.data;
+    },
+    recoveryLostEmailRequestNewOtp: async (payload: {
+        role: 'customer' | 'merchant';
+        oldEmail: string;
+        newEmail: string;
+    }) => {
+        const response = await client.post(
+            '/auth/recovery/case/lost-email/request-new-email-otp',
+            payload,
+        );
+        return response.data;
+    },
+    recoveryLostEmailConfirm: async (payload: {
+        role: 'customer' | 'merchant';
+        oldEmail: string;
+        newEmail: string;
+        emailOtp: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-email/confirm', payload);
+        return response.data;
+    },
+    recoveryLostBothSubmit: async (payload: {
+        role: 'customer' | 'merchant';
+        oldPhone: string;
+        countryCode?: string;
+        oldEmail: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-both/submit', payload);
+        return response.data;
+    },
+    recoveryLostBothRequestOtps: async (payload: {
+        resumeToken: string;
+        newPhone: string;
+        newCountryCode?: string;
+        newEmail: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-both/request-otps', payload);
+        return response.data;
+    },
+    recoveryLostBothComplete: async (payload: {
+        resumeToken: string;
+        newPhone: string;
+        newCountryCode?: string;
+        newEmail: string;
+        phoneOtp: string;
+        emailOtp: string;
+    }) => {
+        const response = await client.post('/auth/recovery/case/lost-both/complete', payload);
         return response.data;
     },
 

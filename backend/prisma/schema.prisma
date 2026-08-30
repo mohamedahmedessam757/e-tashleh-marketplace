@@ -1107,18 +1107,27 @@ model OrderChatMessage {
 model AccountRecoveryRequest {
   id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId   String  @map("user_id") @db.Uuid
+  /// LOST_PHONE | LOST_EMAIL | LOST_BOTH
+  caseType String  @default("LOST_PHONE") @map("case_type")
   oldPhone String? @map("old_phone")
-  newPhone String  @map("new_phone")
-  status   String  @default("PENDING_REVIEW") // PENDING_REVIEW, APPROVED, REJECTED
+  newPhone String? @map("new_phone")
+  oldEmail String? @map("old_email")
+  newEmail String? @map("new_email")
+  /// PENDING_REVIEW | APPROVED_AWAITING_CONTACTS | APPROVED | REJECTED
+  status   String  @default("PENDING_REVIEW")
 
   // Risk Profile Snapshot
   balanceSnapshot Decimal @default(0) @db.Decimal(14, 2)
   openOrdersCount Int     @default(0)
   disputesCount   Int     @default(0)
 
-  // Security Metdata
+  // Security Metadata
   requestIp     String? @map("request_ip")
   requestDevice String? @map("request_device")
+
+  rejectionReason       String?   @map("rejection_reason") @db.Text
+  resumeTokenHash       String?   @map("resume_token_hash")
+  resumeTokenExpiresAt  DateTime? @map("resume_token_expires_at") @db.Timestamptz
 
   resolvedAt DateTime? @map("resolved_at") @db.Timestamptz
   resolvedBy String?   @map("resolved_by") @db.Uuid // Admin ID
@@ -1130,6 +1139,7 @@ model AccountRecoveryRequest {
 
   @@index([status])
   @@index([userId])
+  @@index([caseType])
   @@map("account_recovery_requests")
 }
 
