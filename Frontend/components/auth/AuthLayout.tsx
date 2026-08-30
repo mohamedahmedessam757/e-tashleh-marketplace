@@ -29,7 +29,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       : 'max-w-md sm:max-w-lg';
 
   return (
-    <div className="min-h-screen min-h-[100dvh] pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 px-3 sm:px-6 md:px-8 flex flex-col items-center justify-start sm:justify-center relative overflow-x-hidden">
+    <div
+      className="min-h-screen min-h-[100dvh] pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 px-3 sm:px-6 md:px-8 flex flex-col items-center justify-start sm:justify-center relative overflow-x-clip overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[min(500px,80vw)] h-[min(500px,80vw)] bg-gold-500/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[min(500px,80vw)] h-[min(500px,80vw)] bg-white/5 rounded-full blur-[120px]" />
@@ -65,7 +67,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         <div className="bg-[#1A1814]/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 relative overflow-hidden w-full min-w-0 box-border">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent opacity-50" />
 
-          <div className="w-full min-w-0 overflow-x-hidden">{children}</div>
+          {/* Do not use overflow-x-hidden here — it forces overflow-y:auto and shows a gold RTL scrollbar */}
+          <div className="w-full min-w-0 max-w-full">{children}</div>
         </div>
 
         <div className="text-center mt-6 sm:mt-8 flex flex-col items-center gap-2 px-2">
