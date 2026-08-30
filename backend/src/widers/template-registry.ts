@@ -44,7 +44,7 @@ const suffix = {
     storeHome: 'home',
 } as const;
 
-/** Families that can cut over between _ar_v2 (button) and _ar_v3 (body follow_url, no button). */
+/** Families that always resolve to _ar_v3 (body follow_url, no CTA button). */
 export const ORDER_SHIPMENT_TEMPLATE_FAMILIES = [
     'txn_order_customer',
     'txn_order_merchant',
@@ -90,45 +90,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
-    // Orders v2 — Meta button URLs are static; do not send button params
-    def('txn_order_customer', 'ar', 'customer', ['name', 'order_number', 'status_detail'], {
-        headerText: 'تحديث حالة الطلب',
-        buttonLabel: 'عرض الطلب',
-        buttonSuffixPattern: suffix.orderCustomer,
-        buttonUrlDynamic: false,
-    }),
-    def('txn_order_merchant', 'ar', 'merchant', ['name', 'order_number', 'status_detail'], {
-        headerText: 'تحديث حالة الطلب',
-        buttonLabel: 'فتح الطلب',
-        buttonSuffixPattern: suffix.orderMerchant,
-        buttonUrlDynamic: false,
-    }),
-
-    // Shipments v2 — body {{4}} = platform deep-link; button still static in WABA
-    def('txn_shipment_customer', 'ar', 'customer', [
-        'name',
-        'order_number',
-        'status_detail',
-        'tracking_number',
-    ], {
-        headerText: 'تحديث الشحن',
-        buttonLabel: 'تتبع الشحنة',
-        buttonSuffixPattern: suffix.orderCustomer,
-        buttonUrlDynamic: false,
-    }),
-    def('txn_shipment_merchant', 'ar', 'merchant', [
-        'name',
-        'order_number',
-        'status_detail',
-        'tracking_number',
-    ], {
-        headerText: 'تحديث شحن الطلب',
-        buttonLabel: 'فتح الطلب',
-        buttonSuffixPattern: suffix.orderMerchant,
-        buttonUrlDynamic: false,
-    }),
-
-    // Orders / shipments v3 — no URL button; Nest injects absolute follow_url as {{4}}
+    // Orders / shipments — Meta _ar_v3: no URL button; Nest injects absolute follow_url as {{4}}
     def(
         'txn_order_customer',
         'ar',
@@ -292,15 +254,16 @@ export function isOrderShipmentTemplateFamily(familyBase: string): boolean {
 }
 
 /**
- * Cutover for order/shipment templates only.
- * Default v2 keeps production on approved Meta templates until v3 is APPROVED.
- * Set WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3 after Meta approval + staging probe.
+ * Order/shipment templates are permanently on Meta `_ar_v3` (body follow_url, no button).
+ * Env override kept only for emergency rollback probes — set
+ * WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v2 only if those Meta templates still exist.
+ * Default: v3.
  */
 export function getOrderShipmentTemplateVersion(
     envValue: string | undefined = process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION,
 ): TemplateNameVersion {
-    const raw = (envValue ?? 'v2').trim().toLowerCase();
-    return raw === 'v3' ? 'v3' : 'v2';
+    const raw = (envValue ?? 'v3').trim().toLowerCase();
+    return raw === 'v2' ? 'v2' : 'v3';
 }
 
 export function resolveTemplateName(
