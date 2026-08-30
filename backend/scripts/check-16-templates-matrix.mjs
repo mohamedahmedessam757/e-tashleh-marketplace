@@ -1,6 +1,6 @@
 /**
  * Zero-send matrix: expected APPROVED templates vs Meta/Widers list.
- * Order/shipment v3 are optional until Meta APPROVED + cutover.
+ * Order/shipment use _ar_v3 (required). Retired _ar_v2 order/shipment are optional-gone.
  */
 import fs from 'fs';
 import path from 'path';
@@ -30,21 +30,21 @@ const REQUIRED = [
   'txn_waybill_customer_ar_v2',
   'txn_invoice_merchant_ar_v2',
   'txn_invoice_customer_ar_v2',
-  'txn_shipment_merchant_ar_v2',
-  'txn_shipment_customer_ar_v2',
-  'txn_order_merchant_ar_v2',
-  'txn_order_customer_ar_v2',
+  'txn_shipment_merchant_ar_v3',
+  'txn_shipment_customer_ar_v3',
+  'txn_order_merchant_ar_v3',
+  'txn_order_customer_ar_v3',
   'txn_offer_restriction_vendor_ar_v2',
   'txn_violation_customer_ar_v2',
   'txn_violation_vendor_ar_v2',
 ];
 
-/** Body follow_url, no URL button — create in Meta before setting WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3 */
-const OPTIONAL_V3 = [
-  'txn_order_customer_ar_v3',
-  'txn_order_merchant_ar_v3',
-  'txn_shipment_customer_ar_v3',
-  'txn_shipment_merchant_ar_v3',
+/** Retired — safe to delete in Meta after Nest cutover to v3 */
+const RETIRED_V2 = [
+  'txn_order_customer_ar_v2',
+  'txn_order_merchant_ar_v2',
+  'txn_shipment_customer_ar_v2',
+  'txn_shipment_merchant_ar_v2',
 ];
 
 const res = await fetch(`${api}/getTemplates?token=${encodeURIComponent(token)}`);
@@ -60,12 +60,9 @@ for (const e of REQUIRED) {
   console.log(ok ? 'OK' : 'MISSING', e);
 }
 
-console.log('\n--- order/shipment v3 (optional until APPROVED) ---');
-let missingV3 = 0;
-for (const e of OPTIONAL_V3) {
-  const ok = names.has(e);
-  if (!ok) missingV3++;
-  console.log(ok ? 'OK' : 'PENDING', e);
+console.log('\n--- retired order/shipment v2 (delete in Meta when ready) ---');
+for (const e of RETIRED_V2) {
+  console.log(names.has(e) ? 'STILL_PRESENT (delete OK)' : 'GONE', e);
 }
 
 if (missingRequired === 0) {
@@ -73,9 +70,4 @@ if (missingRequired === 0) {
 } else {
   console.log(`\nMISSING required ${missingRequired}`);
 }
-console.log(
-  missingV3 === 0
-    ? `v3 ready ${OPTIONAL_V3.length}/${OPTIONAL_V3.length}`
-    : `v3 pending ${missingV3}/${OPTIONAL_V3.length} (safe — production stays on v2)`,
-);
 process.exit(missingRequired === 0 ? 0 : 1);

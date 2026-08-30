@@ -6,7 +6,7 @@ import {
     TEMPLATE_REGISTRY,
 } from './template-registry';
 
-describe('order/shipment template version cutover', () => {
+describe('order/shipment template version (v3 default)', () => {
     const prev = process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION;
 
     afterEach(() => {
@@ -17,16 +17,19 @@ describe('order/shipment template version cutover', () => {
         }
     });
 
-    it('defaults to v2 when env unset', () => {
+    it('defaults to v3 when env unset', () => {
         delete process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION;
-        expect(getOrderShipmentTemplateVersion(undefined)).toBe('v2');
+        expect(getOrderShipmentTemplateVersion(undefined)).toBe('v3');
         expect(resolveTemplateName('txn_order_customer', 'ar')).toBe(
-            'txn_order_customer_ar_v2',
+            'txn_order_customer_ar_v3',
+        );
+        expect(resolveTemplateName('txn_shipment_merchant', 'ar')).toBe(
+            'txn_shipment_merchant_ar_v3',
         );
     });
 
-    it('resolves order/shipment families to _ar_v3 when env=v3', () => {
-        process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION = 'v3';
+    it('resolves all four families to _ar_v3', () => {
+        delete process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION;
         expect(resolveTemplateName('txn_order_customer', 'ar')).toBe(
             'txn_order_customer_ar_v3',
         );
@@ -41,13 +44,15 @@ describe('order/shipment template version cutover', () => {
         );
     });
 
-    it('keeps non-order families on _ar_v2 even when env=v3', () => {
-        process.env.WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION = 'v3';
+    it('keeps non-order families on _ar_v2', () => {
         expect(resolveTemplateName('txn_invoice_customer', 'ar')).toBe(
             'txn_invoice_customer_ar_v2',
         );
         expect(resolveTemplateName('txn_violation_customer', 'ar')).toBe(
             'txn_violation_customer_ar_v2',
+        );
+        expect(resolveTemplateName('welcome_customer', 'ar')).toBe(
+            'welcome_customer_ar_v2',
         );
     });
 
@@ -78,18 +83,13 @@ describe('order/shipment v3 template definitions', () => {
         }
     });
 
-    it('keeps v2 order templates at 3 body fields with static button metadata', () => {
-        const def = getTemplateDefinition('txn_order_customer_ar_v2');
-        expect(def!.bodyFields).toEqual(['name', 'order_number', 'status_detail']);
-        expect(def!.buttonUrlDynamic).toBe(false);
-        expect(def!.buttonSuffixPattern).toBe('order-details/{orderId}');
-    });
-
-    it('keeps both v2 and v3 names in the registry', () => {
+    it('does not keep retired order/shipment _ar_v2 definitions', () => {
         const names = TEMPLATE_REGISTRY.map((t) => t.name);
-        expect(names).toContain('txn_order_customer_ar_v2');
+        expect(names).not.toContain('txn_order_customer_ar_v2');
+        expect(names).not.toContain('txn_order_merchant_ar_v2');
+        expect(names).not.toContain('txn_shipment_customer_ar_v2');
+        expect(names).not.toContain('txn_shipment_merchant_ar_v2');
         expect(names).toContain('txn_order_customer_ar_v3');
-        expect(names).toContain('txn_shipment_merchant_ar_v2');
         expect(names).toContain('txn_shipment_merchant_ar_v3');
     });
 });

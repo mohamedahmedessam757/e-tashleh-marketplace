@@ -436,8 +436,7 @@ export class WhatsAppChannelService {
                 }
             }
 
-            // Order + shipment: Nest-generated absolute deep-link for body {{4}} (v3 follow_url;
-            // v2 shipment still maps the same URL into tracking_number).
+            // Order + shipment v3: Nest-generated absolute deep-link as body {{4}} (follow_url).
             if (family.startsWith('txn_order_') || family.startsWith('txn_shipment_')) {
                 const followUrl = this.resolveOrderFollowUrl(
                     audienceRole,
@@ -451,10 +450,6 @@ export class WhatsAppChannelService {
                     );
                 }
                 fields.follow_url = followValue;
-                if (family.startsWith('txn_shipment_')) {
-                    // v2 body field name remains tracking_number (same URL value)
-                    fields.tracking_number = followValue;
-                }
             }
 
             if (family.startsWith('txn_invoice_')) {

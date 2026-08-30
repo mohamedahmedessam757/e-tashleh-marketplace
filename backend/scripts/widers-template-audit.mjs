@@ -3,8 +3,6 @@
  * Compare TEMPLATE_REGISTRY with Widers getTemplates API.
  * Usage: node scripts/widers-template-audit.mjs
  * Requires: WIDERS_API_TOKEN, optional WIDERS_API_BASE_URL
- *
- * Order/shipment v3 are soft-checked (warn only) until Meta APPROVED.
  */
 const baseUrl = (
     process.env.WIDERS_API_BASE_URL?.trim() || 'https://apps.widers.net'
@@ -15,10 +13,10 @@ const REQUIRED_NAMES = [
     'auth_otp_customer_ar_v2',
     'auth_otp_vendor_ar_v2',
     'auth_otp_admin_ar_v2',
-    'txn_order_customer_ar_v2',
-    'txn_order_merchant_ar_v2',
-    'txn_shipment_customer_ar_v2',
-    'txn_shipment_merchant_ar_v2',
+    'txn_order_customer_ar_v3',
+    'txn_order_merchant_ar_v3',
+    'txn_shipment_customer_ar_v3',
+    'txn_shipment_merchant_ar_v3',
     'txn_invoice_customer_ar_v2',
     'txn_invoice_merchant_ar_v2',
     'txn_waybill_customer_ar_v2',
@@ -30,11 +28,11 @@ const REQUIRED_NAMES = [
     'welcome_vendor_ar_v2',
 ];
 
-const OPTIONAL_V3_NAMES = [
-    'txn_order_customer_ar_v3',
-    'txn_order_merchant_ar_v3',
-    'txn_shipment_customer_ar_v3',
-    'txn_shipment_merchant_ar_v3',
+const RETIRED_V2_NAMES = [
+    'txn_order_customer_ar_v2',
+    'txn_order_merchant_ar_v2',
+    'txn_shipment_customer_ar_v2',
+    'txn_shipment_merchant_ar_v2',
 ];
 
 async function main() {
@@ -73,18 +71,18 @@ async function main() {
     const missingRequired = REQUIRED_NAMES.filter(
         (name) => !apiNames.has(name.toLowerCase()),
     );
-    const missingV3 = OPTIONAL_V3_NAMES.filter(
-        (name) => !apiNames.has(name.toLowerCase()),
+    const stillRetired = RETIRED_V2_NAMES.filter((name) =>
+        apiNames.has(name.toLowerCase()),
     );
 
-    console.log(`Required: ${REQUIRED_NAMES.length} | Optional v3: ${OPTIONAL_V3_NAMES.length}`);
+    console.log(`Required: ${REQUIRED_NAMES.length}`);
     console.log(`Widers API: ${apiNames.size} templates`);
 
-    if (missingV3.length) {
-        console.warn('Pending order/shipment v3 in Widers (non-fatal):');
-        for (const m of missingV3) console.warn(`  - ${m}`);
+    if (stillRetired.length) {
+        console.warn('Retired order/shipment v2 still in Widers (safe to delete):');
+        for (const m of stillRetired) console.warn(`  - ${m}`);
     } else {
-        console.log('OK — order/shipment v3 templates present');
+        console.log('OK — retired order/shipment v2 already removed from Widers');
     }
 
     if (missingRequired.length === 0) {

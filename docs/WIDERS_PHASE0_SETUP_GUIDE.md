@@ -1203,8 +1203,8 @@ Domain → NotificationsService.create → WhatsAppChannelService.maybeSend → 
 # ملحق د — قوالب الطلب/الشحن v3 (رابط في النص — بدون زر)
 
 > **الهدف:** إزالة زر URL الثابت المضلل، وجعل Nest يولّد رابط الطلب/الشحن ويرسله كـ `{{4}}` داخل Body.
-> **لا تحذف** قوالب `_ar_v2` حتى بعد موافقة v3 والتحقق الحي.
-> **Cutover في Nest:** `WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3` (الافتراضي `v2`).
+> **الحالة (آب 2026):** Nest يعتمد على `_ar_v3` افتراضياً. بعد اختبار الإرسال الحي يمكن حذف قوالب `_ar_v2` الأربعة من Meta.
+> **Env:** `WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3` (افتراضي).
 
 ## إنشاء في Widers/Meta (يدوي)
 
@@ -1295,11 +1295,15 @@ Footer: `إي-تشليح | E-TASHLEH`
 
 بعد الضغط: إن كان المستخدم مسجّل دخول بنفس الدور تُفتح الصفحة مباشرة؛ وإلا OTP تسجيل الدخول الحالي ثم `pendingRedirect` لنفس الطلب/الشحن. لا JWT في الرابط.
 
-## شروط القبول قبل الإنتاج على v3
+## شروط القبول قبل حذف قوالب v2 من Meta
 
-- [ ] الأربعة `APPROVED` في Meta
+- [x] الأربعة `APPROVED` في Meta
 - [ ] عدد أزرار URL = 0
 - [ ] bodyVars = 4 لكل قالب
-- [ ] إرسال تجريبي على staging مع `WIDERS_ORDER_SHIPMENT_TEMPLATE_VERSION=v3`
+- [ ] إرسال تجريبي ناجح: `node backend/scripts/probe-order-shipment-v3.mjs`
 - [ ] الرابط في نص الرسالة يفتح الطلب الصحيح بعد الدخول
-- [ ] Rollback جاهز: إعادة env إلى `v2`
+- [ ] بعد النجاح: احذف من Widers/Meta:
+  - `txn_order_customer_ar_v2`
+  - `txn_order_merchant_ar_v2`
+  - `txn_shipment_customer_ar_v2`
+  - `txn_shipment_merchant_ar_v2`
