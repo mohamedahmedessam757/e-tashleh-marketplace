@@ -15,23 +15,16 @@ export class RecoveryRoleDto {
 }
 
 export class LostPhoneStartDto extends RecoveryRoleDto {
-    @IsString()
+    /** Accessible registered email — used to identify the account */
+    @IsEmail()
     @IsNotEmpty()
-    oldPhone: string;
-
-    @IsOptional()
-    @IsString()
-    countryCode?: string;
+    email: string;
 }
 
 export class LostPhoneVerifyProofDto extends RecoveryRoleDto {
-    @IsString()
+    @IsEmail()
     @IsNotEmpty()
-    oldPhone: string;
-
-    @IsOptional()
-    @IsString()
-    countryCode?: string;
+    email: string;
 
     @IsString()
     @Length(6, 6)
@@ -39,13 +32,9 @@ export class LostPhoneVerifyProofDto extends RecoveryRoleDto {
 }
 
 export class LostPhoneRequestNewDto extends RecoveryRoleDto {
-    @IsString()
+    @IsEmail()
     @IsNotEmpty()
-    oldPhone: string;
-
-    @IsOptional()
-    @IsString()
-    countryCode?: string;
+    email: string;
 
     @IsString()
     @IsNotEmpty()
@@ -63,15 +52,24 @@ export class LostPhoneConfirmDto extends LostPhoneRequestNewDto {
 }
 
 export class LostEmailStartDto extends RecoveryRoleDto {
-    @IsEmail()
+    /** Accessible registered phone — used to identify the account */
+    @IsString()
     @IsNotEmpty()
-    oldEmail: string;
+    phone: string;
+
+    @IsOptional()
+    @IsString()
+    countryCode?: string;
 }
 
 export class LostEmailVerifyProofDto extends RecoveryRoleDto {
-    @IsEmail()
+    @IsString()
     @IsNotEmpty()
-    oldEmail: string;
+    phone: string;
+
+    @IsOptional()
+    @IsString()
+    countryCode?: string;
 
     @IsString()
     @Length(6, 6)
@@ -79,9 +77,13 @@ export class LostEmailVerifyProofDto extends RecoveryRoleDto {
 }
 
 export class LostEmailRequestNewDto extends RecoveryRoleDto {
-    @IsEmail()
+    @IsString()
     @IsNotEmpty()
-    oldEmail: string;
+    phone: string;
+
+    @IsOptional()
+    @IsString()
+    countryCode?: string;
 
     @IsEmail()
     @IsNotEmpty()

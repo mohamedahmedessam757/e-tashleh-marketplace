@@ -79,11 +79,11 @@ export class RecoveryService {
         });
     }
 
-    // ─── Case 1: Lost phone ───────────────────────────────────────────
+    // ─── Case 1: Lost phone — identify by accessible email ────────────
 
-    async lostPhoneStart(oldPhone: string, role: UiRole, countryCode?: string) {
-        const phone = this.normPhone(oldPhone, countryCode);
-        const user = await this.findUserByPhone(phone, role);
+    async lostPhoneStart(emailRaw: string, role: UiRole) {
+        const email = emailRaw.trim().toLowerCase();
+        const user = await this.findUserByEmail(email, role);
         await this.delayNeutral();
 
         if (!user?.email) {
@@ -103,7 +103,7 @@ export class RecoveryService {
             audience: this.audience(role),
             name: user.name ?? undefined,
             role,
-            metadata: { caseType: 'LOST_PHONE', userId: user.id, oldPhone: phone },
+            metadata: { caseType: 'LOST_PHONE', userId: user.id },
         });
 
         await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_PROOF_SENT', true);
@@ -113,7 +113,7 @@ export class RecoveryService {
             actorType: user.role as any,
             actorId: user.id,
             actorName: user.name,
-            reason: 'Lost-phone recovery: proof OTP to email',
+            reason: 'Lost-phone recovery: proof OTP to accessible email',
             metadata: { caseType: 'LOST_PHONE', role },
         });
 
@@ -125,15 +125,9 @@ export class RecoveryService {
         };
     }
 
-    async lostPhoneVerifyProof(
-        oldPhone: string,
-        otp: string,
-        role: UiRole,
-        countryCode?: string,
-        ip?: string,
-    ) {
-        const phone = this.normPhone(oldPhone, countryCode);
-        const user = await this.findUserByPhone(phone, role);
+    async lostPhoneVerifyProof(emailRaw: string, otp: string, role: UiRole, ip?: string) {
+        const email = emailRaw.trim().toLowerCase();
+        const user = await this.findUserByEmail(email, role);
         if (!user?.email) {
             throw new BadRequestException('Invalid verification code');
         }
@@ -160,15 +154,14 @@ export class RecoveryService {
     }
 
     async lostPhoneRequestNewOtp(
-        oldPhone: string,
+        emailRaw: string,
         newPhoneRaw: string,
         role: UiRole,
-        countryCode?: string,
         newCountryCode?: string,
         ip?: string,
     ) {
-        const oldNorm = this.normPhone(oldPhone, countryCode);
-        const user = await this.findUserByPhone(oldNorm, role);
+        const email = emailRaw.trim().toLowerCase();
+        const user = await this.findUserByEmail(email, role);
         if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
 
         await this.otpService.assertRecoveryProofVerified({
@@ -178,7 +171,7 @@ export class RecoveryService {
         });
 
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
-        if (newPhone === oldNorm) {
+        if (user.phone && newPhone === user.phone) {
             throw new BadRequestException('New phone must differ from the old phone');
         }
 
@@ -209,18 +202,17 @@ export class RecoveryService {
     }
 
     async lostPhoneConfirm(
-        oldPhone: string,
+        emailRaw: string,
         newPhoneRaw: string,
         phoneOtp: string,
         role: UiRole,
-        countryCode?: string,
         newCountryCode?: string,
         ip?: string,
         device?: string,
     ) {
-        const oldNorm = this.normPhone(oldPhone, countryCode);
+        const email = emailRaw.trim().toLowerCase();
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
-        const user = await this.findUserByPhone(oldNorm, role);
+        const user = await this.findUserByEmail(email, role);
         if (!user?.email) throw new BadRequestException('Session expired. Restart recovery.');
 
         await this.otpService.assertRecoveryProofVerified({
@@ -243,6 +235,8 @@ export class RecoveryService {
         });
         if (taken) throw new BadRequestException('This phone number is already in use');
 
+        const previousPhone = user.phone;
+
         await this.prisma.user.update({
             where: { id: user.id },
             data: {
@@ -256,7 +250,7 @@ export class RecoveryService {
             data: {
                 userId: user.id,
                 caseType: 'LOST_PHONE',
-                oldPhone: oldNorm,
+                oldPhone: previousPhone,
                 newPhone,
                 oldEmail: user.email,
                 status: 'APPROVED',
@@ -273,7 +267,7 @@ export class RecoveryService {
             actorId: user.id,
             actorName: user.name,
             reason: 'Lost-phone recovery completed — phone updated in place',
-            metadata: { oldPhone: oldNorm, newPhone },
+            metadata: { oldPhone: previousPhone, newPhone, identifiedBy: 'email' },
         });
 
         await this.logSecurityEvent(user.email, 'RECOVERY_LOST_PHONE_COMPLETED', true, ip, device);
@@ -288,11 +282,11 @@ export class RecoveryService {
         };
     }
 
-    // ─── Case 2: Lost email ───────────────────────────────────────────
+    // ─── Case 2: Lost email — identify by accessible phone ────────────
 
-    async lostEmailStart(oldEmail: string, role: UiRole) {
-        const email = oldEmail.trim().toLowerCase();
-        const user = await this.findUserByEmail(email, role);
+    async lostEmailStart(phoneRaw: string, role: UiRole, countryCode?: string) {
+        const phone = this.normPhone(phoneRaw, countryCode);
+        const user = await this.findUserByPhone(phone, role);
         await this.delayNeutral();
 
         if (!user?.phone) {
@@ -315,7 +309,7 @@ export class RecoveryService {
             metadata: { caseType: 'LOST_EMAIL', userId: user.id },
         });
 
-        await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_SENT', true);
+        await this.logSecurityEvent(user.email || phone, 'RECOVERY_LOST_EMAIL_PROOF_SENT', true);
         return {
             success: true,
             message: NEUTRAL_START_MSG,
@@ -324,9 +318,15 @@ export class RecoveryService {
         };
     }
 
-    async lostEmailVerifyProof(oldEmail: string, otp: string, role: UiRole, ip?: string) {
-        const email = oldEmail.trim().toLowerCase();
-        const user = await this.findUserByEmail(email, role);
+    async lostEmailVerifyProof(
+        phoneRaw: string,
+        otp: string,
+        role: UiRole,
+        countryCode?: string,
+        ip?: string,
+    ) {
+        const phone = this.normPhone(phoneRaw, countryCode);
+        const user = await this.findUserByPhone(phone, role);
         if (!user?.phone) throw new BadRequestException('Invalid verification code');
 
         try {
@@ -338,11 +338,16 @@ export class RecoveryService {
                 code: otp,
             });
         } catch (err) {
-            await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_FAILED', false, ip);
+            await this.logSecurityEvent(
+                user.email || phone,
+                'RECOVERY_LOST_EMAIL_PROOF_FAILED',
+                false,
+                ip,
+            );
             throw err;
         }
 
-        await this.logSecurityEvent(email, 'RECOVERY_LOST_EMAIL_PROOF_OK', true, ip);
+        await this.logSecurityEvent(user.email || phone, 'RECOVERY_LOST_EMAIL_PROOF_OK', true, ip);
         return {
             success: true,
             message: 'تم التحقق من هويتك بنجاح.',
@@ -351,10 +356,16 @@ export class RecoveryService {
         };
     }
 
-    async lostEmailRequestNewOtp(oldEmail: string, newEmailRaw: string, role: UiRole, ip?: string) {
-        const oldEmailN = oldEmail.trim().toLowerCase();
+    async lostEmailRequestNewOtp(
+        phoneRaw: string,
+        newEmailRaw: string,
+        role: UiRole,
+        countryCode?: string,
+        ip?: string,
+    ) {
+        const phone = this.normPhone(phoneRaw, countryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
-        const user = await this.findUserByEmail(oldEmailN, role);
+        const user = await this.findUserByPhone(phone, role);
         if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
 
         await this.otpService.assertRecoveryProofVerified({
@@ -363,7 +374,7 @@ export class RecoveryService {
             phone: user.phone,
         });
 
-        if (newEmail === oldEmailN) {
+        if (user.email && newEmail === user.email.trim().toLowerCase()) {
             throw new BadRequestException('New email must differ from the old email');
         }
 
@@ -384,7 +395,7 @@ export class RecoveryService {
             metadata: { caseType: 'LOST_EMAIL', newEmail },
         });
 
-        await this.logSecurityEvent(oldEmailN, 'RECOVERY_NEW_EMAIL_OTP_SENT', true, ip);
+        await this.logSecurityEvent(user.email || phone, 'RECOVERY_NEW_EMAIL_OTP_SENT', true, ip);
         return {
             success: true,
             channel: 'email',
@@ -393,16 +404,17 @@ export class RecoveryService {
     }
 
     async lostEmailConfirm(
-        oldEmail: string,
+        phoneRaw: string,
         newEmailRaw: string,
         emailOtp: string,
         role: UiRole,
+        countryCode?: string,
         ip?: string,
         device?: string,
     ) {
-        const oldEmailN = oldEmail.trim().toLowerCase();
+        const phone = this.normPhone(phoneRaw, countryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
-        const user = await this.findUserByEmail(oldEmailN, role);
+        const user = await this.findUserByPhone(phone, role);
         if (!user?.phone) throw new BadRequestException('Session expired. Restart recovery.');
 
         await this.otpService.assertRecoveryProofVerified({
@@ -424,6 +436,8 @@ export class RecoveryService {
         });
         if (taken) throw new BadRequestException('This email is already in use');
 
+        const previousEmail = user.email;
+
         await this.prisma.user.update({
             where: { id: user.id },
             data: { email: newEmail, recoveryStatus: null },
@@ -434,7 +448,7 @@ export class RecoveryService {
                 userId: user.id,
                 caseType: 'LOST_EMAIL',
                 oldPhone: user.phone,
-                oldEmail: oldEmailN,
+                oldEmail: previousEmail,
                 newEmail,
                 status: 'APPROVED',
                 requestIp: ip,
@@ -450,8 +464,10 @@ export class RecoveryService {
             actorId: user.id,
             actorName: user.name,
             reason: 'Lost-email recovery completed — email updated in place',
-            metadata: { oldEmail: oldEmailN, newEmail },
+            metadata: { oldEmail: previousEmail, newEmail, identifiedBy: 'phone' },
         });
+
+        await this.logSecurityEvent(newEmail, 'RECOVERY_LOST_EMAIL_COMPLETED', true, ip, device);
 
         return {
             success: true,
