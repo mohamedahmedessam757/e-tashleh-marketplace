@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, MessageSquare, RefreshCcw } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
 import { OtpErrorCard } from './OtpErrorCard';
+import { OtpDigitInputs } from './OtpDigitInputs';
+import { emptyOtpDigits } from '../../utils/otpDigits';
 import { OTP_EXPIRY_SECONDS, formatOtpCountdown } from '../../utils/otpConfig';
 
 export interface RegistrationOtpCodes {
@@ -26,16 +28,13 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
 }) => {
     const { t, language } = useLanguage();
 
-    const [emailOtp, setEmailOtp] = useState(['', '', '', '', '', '']);
-    const [whatsappOtp, setWhatsappOtp] = useState(['', '', '', '', '', '']);
+    const [emailOtp, setEmailOtp] = useState(() => emptyOtpDigits());
+    const [whatsappOtp, setWhatsappOtp] = useState(() => emptyOtpDigits());
 
     const [timer, setTimer] = useState(OTP_EXPIRY_SECONDS);
     const [isVerifying, setIsVerifying] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const emailInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const whatsappInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -43,41 +42,6 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
         }, 1000);
         return () => clearInterval(interval);
     }, []);
-
-    const handleOtpChange = (
-        type: 'email' | 'whatsapp',
-        index: number,
-        value: string,
-    ) => {
-        if (isNaN(Number(value))) return;
-        setError(null);
-
-        if (type === 'email') {
-            const newOtp = [...emailOtp];
-            newOtp[index] = value;
-            setEmailOtp(newOtp);
-            if (value && index < 5) emailInputRefs.current[index + 1]?.focus();
-        } else {
-            const newOtp = [...whatsappOtp];
-            newOtp[index] = value;
-            setWhatsappOtp(newOtp);
-            if (value && index < 5) whatsappInputRefs.current[index + 1]?.focus();
-        }
-    };
-
-    const handleKeyDown = (
-        type: 'email' | 'whatsapp',
-        index: number,
-        e: React.KeyboardEvent,
-    ) => {
-        if (e.key === 'Backspace') {
-            if (type === 'email' && !emailOtp[index] && index > 0) {
-                emailInputRefs.current[index - 1]?.focus();
-            } else if (type === 'whatsapp' && !whatsappOtp[index] && index > 0) {
-                whatsappInputRefs.current[index - 1]?.focus();
-            }
-        }
-    };
 
     const isComplete = emailOtp.every(d => d !== '') && whatsappOtp.every(d => d !== '');
 
@@ -96,8 +60,7 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
                     language === 'ar' ? 'رمز واتساب غير صحيح' : 'Invalid WhatsApp code',
                 ),
             );
-            setWhatsappOtp(['', '', '', '', '', '']);
-            whatsappInputRefs.current[0]?.focus();
+            setWhatsappOtp(emptyOtpDigits());
             setIsVerifying(false);
         }
     };
@@ -108,8 +71,7 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
         try {
             await onResendWhatsapp();
             setTimer(OTP_EXPIRY_SECONDS);
-            setWhatsappOtp(['', '', '', '', '', '']);
-            whatsappInputRefs.current[0]?.focus();
+            setWhatsappOtp(emptyOtpDigits());
         } catch (err: unknown) {
             setError(
                 formatApiErrorMessage(
@@ -131,7 +93,7 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
         pendingProvider?: boolean,
     ) => {
         const otpArray = type === 'email' ? emailOtp : whatsappOtp;
-        const refs = type === 'email' ? emailInputRefs : whatsappInputRefs;
+        const setOtpArray = type === 'email' ? setEmailOtp : setWhatsappOtp;
 
         return (
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl space-y-6 transition-all hover:bg-white/10">
@@ -153,22 +115,17 @@ export const CustomerRegistrationOTP: React.FC<CustomerRegistrationOTPProps> = (
                     </p>
                 )}
 
-                <div className="flex w-full max-w-[320px] sm:max-w-sm mx-auto justify-between gap-1.5 sm:gap-2 px-1" dir="ltr">
-                    {otpArray.map((digit, index) => (
-                        <input
-                            key={index}
-                            ref={(el) => { refs.current[index] = el; }}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            disabled={isVerifying}
-                            onChange={(e) => handleOtpChange(type, index, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(type, index, e)}
-                            className="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 shrink-0 rounded-xl bg-white/5 border border-white/10 text-center text-lg sm:text-xl font-bold text-white focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all focus:bg-white/10 disabled:opacity-50"
-                        />
-                    ))}
-                </div>
+                <OtpDigitInputs
+                    value={otpArray}
+                    onChange={(digits) => {
+                        setError(null);
+                        setOtpArray(digits);
+                    }}
+                    disabled={isVerifying}
+                    idPrefix={type}
+                    autoFocus={type === 'whatsapp'}
+                    inputClassName="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 shrink-0 rounded-xl bg-white/5 border border-white/10 text-center text-lg sm:text-xl font-bold text-white focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all focus:bg-white/10 disabled:opacity-50"
+                />
             </div>
         );
     };

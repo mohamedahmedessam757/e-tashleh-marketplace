@@ -126,8 +126,9 @@ export const ContactChangeModal: React.FC<ContactChangeModalProps> = ({
               inputMode="numeric"
               autoComplete="one-time-code"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder={language === 'ar' ? 'رمز التحقق' : 'OTP code'}
+              maxLength={6}
               className="w-full bg-[#151310] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-gold-500 outline-none mb-4 tracking-widest text-center text-lg"
               disabled={busy}
             />

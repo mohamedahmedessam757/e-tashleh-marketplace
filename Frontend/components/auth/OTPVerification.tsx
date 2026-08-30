@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, MessageSquare, Mail, RefreshCcw } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
 import { OtpErrorCard } from './OtpErrorCard';
+import { OtpDigitInputs } from './OtpDigitInputs';
+import { emptyOtpDigits } from '../../utils/otpDigits';
 import {
   OTP_EXPIRY_SECONDS,
   formatOtpCountdown,
@@ -34,14 +36,13 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
   onResend,
 }) => {
   const { t, language } = useLanguage();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(() => emptyOtpDigits());
   const [timer, setTimer] = useState(
     initialExpiresInSeconds ?? OTP_EXPIRY_SECONDS,
   );
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const isExpired = timer <= 0;
   const isWhatsapp = method === 'whatsapp';
@@ -70,27 +71,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
   }, [initialExpiresInSeconds]);
 
   const clearOtpInputs = () => {
-    setOtp(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
-  };
-
-  const handleChange = (index: number, value: string) => {
-    if (isVerifying || isExpired || isNaN(Number(value))) return;
-    setError(null);
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (isVerifying || isExpired) return;
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+    setOtp(emptyOtpDigits());
   };
 
   const handleVerify = async () => {
@@ -171,22 +152,15 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
 
       {error && <OtpErrorCard message={error} />}
 
-      <div className="flex w-full max-w-[320px] sm:max-w-sm mx-auto justify-between gap-1.5 sm:gap-2" dir="ltr">
-        {otp.map((digit, index) => (
-          <input
-            key={index}
-            ref={(el) => { inputRefs.current[index] = el; }}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={digit}
-            disabled={isVerifying || isExpired}
-            onChange={(e) => handleChange(index, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(index, e)}
-            className="w-9 h-11 sm:w-11 sm:h-12 md:w-12 md:h-14 shrink-0 rounded-xl bg-white/5 border border-white/10 text-center text-lg sm:text-xl font-bold text-white focus:border-gold-500 outline-none transition-all focus:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        ))}
-      </div>
+      <OtpDigitInputs
+        value={otp}
+        onChange={(digits) => {
+          setError(null);
+          setOtp(digits);
+        }}
+        disabled={isVerifying || isExpired}
+        autoFocus
+      />
 
       <button
         onClick={handleVerify}
