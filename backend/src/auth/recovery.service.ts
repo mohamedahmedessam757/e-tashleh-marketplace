@@ -2,6 +2,7 @@ import {
     Injectable,
     BadRequestException,
     UnauthorizedException,
+    Logger,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -26,6 +27,8 @@ const NEUTRAL_START_MSG =
 
 @Injectable()
 export class RecoveryService {
+    private readonly logger = new Logger(RecoveryService.name);
+
     constructor(
         private prisma: PrismaService,
         private notifications: NotificationsService,
@@ -483,6 +486,56 @@ export class RecoveryService {
 
     // ─── Case 3: Lost both (High Risk) ────────────────────────────────
 
+    /**
+     * Resolve LOST_BOTH claimant by phone OR email (same role), then require
+     * both claimed contacts to match that single user after normalization.
+     */
+    private async resolveLostBothUser(phone: string, email: string, role: UiRole) {
+        const dbRole = this.toDbRole(role);
+        const [byPhone, byEmail] = await Promise.all([
+            this.prisma.user.findFirst({
+                where: { role: dbRole, phone },
+                include: { store: true },
+            }),
+            this.prisma.user.findFirst({
+                where: { role: dbRole, email },
+                include: { store: true },
+            }),
+        ]);
+
+        if (byPhone && byEmail && byPhone.id !== byEmail.id) {
+            return { user: null as typeof byPhone | null, reason: 'conflicting_users' as const };
+        }
+
+        const user = byPhone || byEmail || null;
+        if (!user) {
+            return { user: null, reason: 'no_match' as const };
+        }
+
+        const userEmail = (user.email || '').trim().toLowerCase();
+        const userPhone = user.phone ? this.normPhone(user.phone) : '';
+        const phoneOk = !!userPhone && userPhone === phone;
+        const emailOk = !!userEmail && userEmail === email;
+
+        if (!phoneOk || !emailOk) {
+            return { user: null, reason: 'partial_mismatch' as const };
+        }
+
+        return { user, reason: 'matched' as const };
+    }
+
+    private async safeNotifyAdmins(
+        data: Parameters<NotificationsService['notifyAdmins']>[0],
+    ): Promise<void> {
+        try {
+            await this.notifications.notifyAdmins(data);
+        } catch (err) {
+            this.logger.error(
+                `notifyAdmins failed during recovery: ${(err as Error)?.message || err}`,
+            );
+        }
+    }
+
     async lostBothSubmit(
         oldPhone: string,
         oldEmail: string,
@@ -495,22 +548,35 @@ export class RecoveryService {
         const email = oldEmail.trim().toLowerCase();
         await this.delayNeutral();
 
-        const user = await this.prisma.user.findFirst({
-            where: {
-                role: this.toDbRole(role),
-                phone,
-                email,
-            },
-            include: { store: true },
-        });
+        const neutralPending = {
+            success: true as const,
+            action: 'PENDING_REVIEW' as const,
+            message:
+                'If the details match an account, a high-risk recovery request was submitted for admin review.',
+        };
+
+        const { user, reason } = await this.resolveLostBothUser(phone, email, role);
 
         if (!user) {
-            return {
-                success: true,
-                action: 'PENDING_REVIEW',
-                message:
-                    'If the details match an account, a high-risk recovery request was submitted for admin review.',
-            };
+            this.logger.warn(
+                `LOST_BOTH unmatched role=${role} reason=${reason} phone=${this.maskPhone(phone)} email=${this.maskEmail(email)}`,
+            );
+            await this.logSecurityEvent(
+                email,
+                'RECOVERY_LOST_BOTH_UNMATCHED',
+                false,
+                ip,
+                device,
+            );
+            await this.safeNotifyAdmins({
+                titleAr: 'محاولة استعادة عالية الخطورة — لم تُطابق حساباً',
+                titleEn: 'High-risk recovery attempt — no matching account',
+                messageAr: `تم تقديم مطالبة فقد الجوال والإيميل دون مطابقة حساب (${this.maskPhone(phone)} / ${this.maskEmail(email)}). راجع سجلات الأمان.`,
+                messageEn: `A lost-both claim did not match an account (${this.maskPhone(phone)} / ${this.maskEmail(email)}). Review security logs.`,
+                type: 'alert',
+                link: '/dashboard/security-audit',
+            });
+            return neutralPending;
         }
 
         const existing = await this.prisma.accountRecoveryRequest.findFirst({
@@ -521,9 +587,9 @@ export class RecoveryService {
             },
         });
         if (existing) {
+            this.logger.log(`LOST_BOTH existing ticket ${existing.id} for user ${user.id}`);
             return {
-                success: true,
-                action: 'PENDING_REVIEW',
+                ...neutralPending,
                 requestId: existing.id,
                 message: 'A recovery request is already pending review.',
             };
@@ -557,11 +623,13 @@ export class RecoveryService {
             },
         });
 
-        await this.notifications.notifyAdmins({
+        await this.safeNotifyAdmins({
             titleAr: 'طلب استعادة عالي الخطورة',
             titleEn: 'High-Risk Account Recovery',
-            messageAr: `المستخدم لا يستطيع الوصول للجوال والإيميل المسجّلين. يرجى التحقق من ملكية الحساب قبل تغيير وسائل الدخول.`,
-            messageEn: `User cannot access registered phone and email. Verify ownership before changing login methods.`,
+            messageAr:
+                'العميل لا يستطيع الوصول إلى رقم الجوال المسجل والبريد الإلكتروني المسجل. يرجى التحقق من ملكية الحساب قبل تغيير وسائل الدخول.',
+            messageEn:
+                'User cannot access the registered mobile number and registered email. Verify ownership before changing login methods.',
             type: 'alert',
             link: '/dashboard/security-audit',
         });
@@ -575,6 +643,10 @@ export class RecoveryService {
             reason: 'High-risk LOST_BOTH recovery ticket opened',
             metadata: { requestId: request.id, caseType: 'LOST_BOTH' },
         });
+
+        await this.logSecurityEvent(email, 'RECOVERY_LOST_BOTH_SUBMITTED', true, ip, device);
+
+        this.logger.log(`LOST_BOTH ticket ${request.id} created for user ${user.id}`);
 
         return {
             success: true,

@@ -796,13 +796,15 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
     body = cardShell(
       <div className="space-y-4 text-center">
         <ShieldCheck className="mx-auto text-gold-400" size={36} />
-        <p className="text-white font-bold">
-          {isAr ? 'تم إرسال طلبك للمراجعة' : 'Your request was submitted for review'}
-        </p>
-        <p className="text-white/50 text-sm">
+        <p className="text-white font-bold text-base sm:text-lg">
           {isAr
-            ? 'سيتم إشعار الإدارة. عمليات السحب معلّقة حتى انتهاء المراجعة.'
-            : 'Admins were notified. Withdrawals are paused until review completes.'}
+            ? 'طلب استعادة عالي الخطورة قيد المراجعة'
+            : 'High-risk recovery request under review'}
+        </p>
+        <p className="text-white/55 text-xs sm:text-sm leading-relaxed px-1">
+          {isAr
+            ? 'إذا تطابقت البيانات مع حساب مسجّل، تم إشعار الإدارة وتعليق السحب حتى انتهاء المراجعة. لا يتم تغيير وسائل الدخول تلقائياً.'
+            : 'If the details match a registered account, admins were notified and withdrawals are paused until review completes. Login methods are not changed automatically.'}
         </p>
         {primaryBtn(isAr ? 'العودة لتسجيل الدخول' : 'Back to login', onBackToLogin)}
         <button
