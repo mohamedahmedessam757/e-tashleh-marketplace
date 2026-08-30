@@ -136,7 +136,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
 
   /** Content only — AuthLayout already provides the outer card */
   const cardShell = (children: React.ReactNode) => (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-full">
       <div className="text-center mb-5 sm:mb-6 px-0.5">
         <div className="inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gold-500/15 border border-gold-500/30 mb-3">
           <Lock className="text-gold-400" size={20} />
@@ -971,7 +971,7 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-full">
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
