@@ -220,6 +220,18 @@ export const authApi = {
         const response = await client.post('/auth/recovery/case/lost-both/submit', payload);
         return response.data;
     },
+    recoveryLostBothValidateResume: async (payload: { resumeToken: string }) => {
+        const response = await client.post(
+            '/auth/recovery/case/lost-both/validate-resume',
+            payload,
+        );
+        return response.data as {
+            valid: boolean;
+            maskedOldPhone: string | null;
+            maskedOldEmail: string | null;
+            expiresAt: string | null;
+        };
+    },
     recoveryLostBothRequestOtps: async (payload: {
         resumeToken: string;
         newPhone: string;

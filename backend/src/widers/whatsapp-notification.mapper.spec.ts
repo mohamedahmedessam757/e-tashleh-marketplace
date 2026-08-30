@@ -281,6 +281,46 @@ describe('resolveTemplateFamily', () => {
       ).toBe('welcome_vendor');
     });
 
+    it('STORE_UNDER_REVIEW → txn_store_under_review (even SYSTEM)', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'SYSTEM',
+            metadata: { waEvent: 'STORE_UNDER_REVIEW', docType: 'store_under_review' },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_store_under_review');
+    });
+
+    it('CHAT_MESSAGE → txn_chat_message (even SYSTEM)', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'SYSTEM',
+            metadata: {
+              waEvent: 'CHAT_MESSAGE',
+              senderName: 'أحمد',
+              messagePreview: 'مرحبا',
+            },
+          },
+          'CUSTOMER',
+        ),
+      ).toBe('txn_chat_message');
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'SYSTEM',
+            metadata: { waEvent: 'CHAT_MESSAGE' },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_chat_message');
+    });
+
     it('OFFER_BIDDING_RESTRICTED → txn_offer_restriction_vendor', () => {
       expect(
         resolveTemplateFamily(

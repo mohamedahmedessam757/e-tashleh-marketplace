@@ -106,10 +106,16 @@ export function parseUrlToState(): NavigationState {
         sessionStorage.setItem('pending_referral_code', refCode.toUpperCase());
     }
 
-    if (path === '/' || path === '/role-selection') return { view: 'role-selection' };
+    if (path === '/' || path === '/role-selection') {
+        return { view: 'role-selection', search: window.location.search || undefined };
+    }
     if (path === '/landing') return { view: 'landing' };
-    if (path === '/auth/customer-login') return { view: 'customer-login' };
-    if (path === '/auth/merchant-login') return { view: 'merchant-login' };
+    if (path === '/auth/customer-login') {
+        return { view: 'customer-login', search: window.location.search || undefined };
+    }
+    if (path === '/auth/merchant-login') {
+        return { view: 'merchant-login', search: window.location.search || undefined };
+    }
     if (path === '/auth/admin-login') return { view: 'admin-login' };
     if (path === '/auth/register') return { view: 'customer-register' };
     if (path === '/auth/merchant-register') return { view: 'vendor-register' };

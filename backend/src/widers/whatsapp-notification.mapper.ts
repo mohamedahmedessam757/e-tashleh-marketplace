@@ -14,7 +14,9 @@ export type WhatsAppEvent =
     | 'WAYBILL_ISSUED'
     | 'VERIFICATION'
     | 'DOCUMENT'
-    | 'STORE_ACTIVATION';
+    | 'STORE_ACTIVATION'
+    | 'STORE_UNDER_REVIEW'
+    | 'CHAT_MESSAGE';
 
 export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'ORDER_CREATED',
@@ -30,6 +32,8 @@ export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'VERIFICATION',
     'DOCUMENT',
     'STORE_ACTIVATION',
+    'STORE_UNDER_REVIEW',
+    'CHAT_MESSAGE',
 ] as const;
 
 export interface NotificationDispatchInput {
@@ -170,6 +174,10 @@ function resolveByWaEvent(
     switch (waEvent) {
         case 'STORE_ACTIVATION':
             return role === 'MERCHANT' ? 'welcome_vendor' : null;
+        case 'STORE_UNDER_REVIEW':
+            return role === 'MERCHANT' ? 'txn_store_under_review' : null;
+        case 'CHAT_MESSAGE':
+            return 'txn_chat_message';
         case 'DOCUMENT':
             return role === 'MERCHANT' ? 'txn_document_vendor' : null;
         case 'WAYBILL_ISSUED':
@@ -221,6 +229,11 @@ export function resolveTemplateFamily(
     // Blocked types (unless waEvent DOCUMENT already handled above)
     if (['REFERRAL', 'CHAT', 'FINANCIAL', 'WALLET', 'SYSTEM'].includes(type)) {
         return null;
+    }
+
+    // Store under review (register / PENDING_REVIEW)
+    if (role === 'MERCHANT' && docType === 'store_under_review') {
+        return 'txn_store_under_review';
     }
 
     // Store activation → welcome_vendor (PHASE0 / Meta header: تم تفعيل متجرك بنجاح)

@@ -470,6 +470,30 @@ export class WhatsAppChannelService {
                 fields.status_detail = statusDetail;
             }
 
+            if (family === 'txn_chat_message') {
+                const senderName =
+                    typeof params.metadata?.senderName === 'string'
+                        ? params.metadata.senderName
+                        : typeof params.metadata?.sender_name === 'string'
+                          ? params.metadata.sender_name
+                          : 'مستخدم';
+                const preview =
+                    typeof params.metadata?.messagePreview === 'string'
+                        ? params.metadata.messagePreview
+                        : typeof params.metadata?.message_preview === 'string'
+                          ? params.metadata.message_preview
+                          : statusDetail;
+                fields.sender_name = truncateWhatsAppParam(senderName, 60);
+                fields.message_preview = truncateWhatsAppParam(preview, 80);
+                const chatFollow =
+                    typeof params.metadata?.followUrl === 'string'
+                        ? params.metadata.followUrl
+                        : typeof params.link === 'string' && params.link.startsWith('http')
+                          ? params.link
+                          : this.resolveChatFollowUrl(params.link, params.metadata);
+                fields.follow_url = truncateWhatsAppParam(chatFollow || 'غير متوفر', 200);
+            }
+
             // txn_offer_restriction_vendor_ar_v2 / txn_violation_*:
             // {{1}} name · {{2}} store_name · {{3}} status_detail
             if (family.startsWith('txn_offer_restriction_') || family.startsWith('txn_violation_')) {
@@ -585,6 +609,29 @@ export class WhatsAppChannelService {
             frontendUrl: this.config.frontendUrl,
             tab,
         });
+    }
+
+    /** Absolute chat deep-link for WhatsApp follow_url */
+    private resolveChatFollowUrl(
+        link?: string | null,
+        metadata?: Record<string, unknown> | null,
+    ): string | null {
+        const origin = (
+            this.config.frontendUrl?.trim().replace(/\/$/, '') ||
+            'https://e-tashleh.net'
+        ) as string;
+
+        const chatId =
+            (typeof metadata?.chatId === 'string' && metadata.chatId) ||
+            (typeof link === 'string' && link.match(/chats\/([a-zA-Z0-9_-]+)/)?.[1]) ||
+            null;
+        if (!chatId) {
+            if (typeof link === 'string' && link.startsWith('/')) {
+                return `${origin}${link}`;
+            }
+            return null;
+        }
+        return `${origin}/dashboard/chats/${chatId}`;
     }
 
     private async resolveTrackingNumber(

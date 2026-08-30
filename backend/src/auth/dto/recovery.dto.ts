@@ -6,6 +6,7 @@ import {
     IsIn,
     IsOptional,
     MinLength,
+    ValidateIf,
 } from 'class-validator';
 
 export class RecoveryRoleDto {
@@ -129,6 +130,13 @@ export class LostBothRequestOtpsDto {
     newEmail: string;
 }
 
+export class LostBothValidateResumeDto {
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(32)
+    resumeToken: string;
+}
+
 export class LostBothCompleteDto extends LostBothRequestOtpsDto {
     @IsString()
     @Length(6, 6)
@@ -148,8 +156,11 @@ export class AdminResolveRecoveryDto {
     @IsIn(['APPROVE', 'REJECT'])
     action: 'APPROVE' | 'REJECT';
 
-    @IsOptional()
+    /** Required when action is REJECT — emailed to the registered address */
+    @ValidateIf((o: AdminResolveRecoveryDto) => o.action === 'REJECT')
     @IsString()
+    @IsNotEmpty()
+    @MinLength(5)
     rejectionReason?: string;
 }
 

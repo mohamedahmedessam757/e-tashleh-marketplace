@@ -679,6 +679,20 @@ export class ChatService {
             return;
         }
 
+        const sender = await this.prisma.user.findUnique({
+            where: { id: senderId },
+            select: { name: true },
+        });
+        const senderName = sender?.name?.trim() || 'مستخدم';
+        const messagePreview = text
+            ? text.replace(/\s+/g, ' ').trim().slice(0, 80)
+            : 'مرفق جديد';
+        const frontendOrigin = (
+            process.env.FRONTEND_URL?.trim().replace(/\/$/, '') ||
+            'https://e-tashleh.net'
+        );
+        const followUrl = `${frontendOrigin}/dashboard/chats/${chat.id}`;
+
         await this.notificationsService.create({
             recipientId: recipient.recipientId,
             recipientRole: recipient.recipientRole,
@@ -688,6 +702,13 @@ export class ChatService {
             messageEn,
             type: 'SYSTEM',
             link: `/dashboard/chats/${chat.id}`,
+            metadata: {
+                waEvent: 'CHAT_MESSAGE',
+                chatId: chat.id,
+                senderName,
+                messagePreview,
+                followUrl,
+            },
         });
     }
 

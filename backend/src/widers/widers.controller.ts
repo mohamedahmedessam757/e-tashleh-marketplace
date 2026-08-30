@@ -76,7 +76,41 @@ function notificationPayloadForFamily(
                     type: 'SUCCESS',
                     titleAr: 'تم تفعيل متجرك المشترك!',
                     titleEn: 'Store activated',
-                    metadata: { docType: 'store_activation', storeId: orderId },
+                    metadata: { docType: 'store_activation', storeId: orderId, waEvent: 'STORE_ACTIVATION' },
+                },
+            };
+        case 'txn_store_under_review':
+            return {
+                role: 'MERCHANT',
+                input: {
+                    ...base,
+                    recipientRole: 'MERCHANT',
+                    type: 'SYSTEM',
+                    titleAr: 'طلب متجرك قيد المراجعة',
+                    titleEn: 'Store under review',
+                    metadata: {
+                        docType: 'store_under_review',
+                        waEvent: 'STORE_UNDER_REVIEW',
+                    },
+                },
+            };
+        case 'txn_chat_message':
+            return {
+                role: 'CUSTOMER',
+                input: {
+                    ...base,
+                    recipientRole: 'CUSTOMER',
+                    type: 'SYSTEM',
+                    titleAr: 'رسالة جديدة',
+                    titleEn: 'New message',
+                    link: '/dashboard/chats/probe-chat-1',
+                    metadata: {
+                        waEvent: 'CHAT_MESSAGE',
+                        chatId: 'probe-chat-1',
+                        senderName: 'أحمد',
+                        messagePreview: 'مرحبا، هل القطعة متوفرة؟',
+                        followUrl: 'https://e-tashleh.net/dashboard/chats/probe-chat-1',
+                    },
                 },
             };
         case 'txn_order_customer':
@@ -282,6 +316,8 @@ export class WidersController {
 
         const allFamilies = [
             'welcome_vendor',
+            'txn_store_under_review',
+            'txn_chat_message',
             'txn_order_customer',
             'txn_order_merchant',
             'txn_shipment_customer',
