@@ -8,11 +8,25 @@ interface AuthLayoutProps {
   onBack: () => void;
   title: string;
   wide?: boolean;
+  /** Narrower card — login screens only */
+  narrow?: boolean;
 }
 
-export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, onBack, title, wide = false }) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({
+  children,
+  onBack,
+  title,
+  wide = false,
+  narrow = false,
+}) => {
   const { language } = useLanguage();
   const BackIcon = language === 'ar' ? IconArrowRight : IconArrowLeft;
+
+  const widthClass = wide
+    ? 'max-w-4xl'
+    : narrow
+      ? 'max-w-[360px] sm:max-w-md'
+      : 'max-w-md sm:max-w-lg';
 
   return (
     <div className="min-h-screen min-h-[100dvh] pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 px-3 sm:px-6 md:px-8 flex flex-col items-center justify-start sm:justify-center relative overflow-x-hidden">
@@ -21,9 +35,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, onBack, title,
         <div className="absolute bottom-[-10%] right-[-10%] w-[min(500px,80vw)] h-[min(500px,80vw)] bg-white/5 rounded-full blur-[120px]" />
       </div>
 
-      <div
-        className={`auth-enter w-full min-w-0 ${wide ? 'max-w-4xl' : 'max-w-md sm:max-w-lg md:max-w-xl'} transition-all duration-500`}
-      >
+      <div className={`auth-enter w-full min-w-0 ${widthClass} transition-all duration-500`}>
         <div className="flex items-center justify-between gap-2 mb-5 sm:mb-8 min-w-0">
           <button
             type="button"

@@ -882,6 +882,11 @@ function AppContent() {
                   onBack={currentView === 'terms' || currentView === 'wallet-loyalty-terms' ? handleBackFromTerms : (currentView === 'customer-register' || currentView === 'forgot-password' || currentView === 'reset-password' || currentView === 'account-recovery' ? handleBackToLogin : handleBackToHome)}
                   title={getTitle()}
                   wide={currentView === 'vendor-register' || currentView === 'terms' || currentView === 'wallet-loyalty-terms'}
+                  narrow={
+                    currentView === 'login' ||
+                    currentView === 'customer-login' ||
+                    currentView === 'merchant-login'
+                  }
                 >
                   <Suspense fallback={<AuthLoader />}>
                     {currentView === 'login' && (
