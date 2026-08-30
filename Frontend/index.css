@@ -44,7 +44,8 @@ body {
   background-color: #1A1814;
   font-family: var(--font-sans);
   margin: 0;
-  overflow-x: hidden;
+  /* clip avoids the overflow-x:hidden → overflow-y:auto quirk that shows a gold RTL scrollbar */
+  overflow-x: clip;
 }
 
 .transform-gpu {
