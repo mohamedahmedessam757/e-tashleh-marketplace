@@ -129,6 +129,13 @@ export class LostBothRequestOtpsDto {
     newEmail: string;
 }
 
+export class LostBothValidateResumeDto {
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(32)
+    resumeToken: string;
+}
+
 export class LostBothCompleteDto extends LostBothRequestOtpsDto {
     @IsString()
     @Length(6, 6)
@@ -148,8 +155,10 @@ export class AdminResolveRecoveryDto {
     @IsIn(['APPROVE', 'REJECT'])
     action: 'APPROVE' | 'REJECT';
 
+    /** Required when action is REJECT — emailed to the registered address */
     @IsOptional()
     @IsString()
+    @MinLength(5)
     rejectionReason?: string;
 }
 

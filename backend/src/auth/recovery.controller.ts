@@ -21,6 +21,7 @@ import {
     LostBothSubmitDto,
     LostBothRequestOtpsDto,
     LostBothCompleteDto,
+    LostBothValidateResumeDto,
     AdminResolveRecoveryDto,
     AdminFreezeUserDto,
     RequestEmailOtpDto,
@@ -148,6 +149,12 @@ export class RecoveryController {
             ip,
             device,
         );
+    }
+
+    @Post('case/lost-both/validate-resume')
+    @Throttle({ default: { limit: 10, ttl: 60_000 } })
+    lostBothValidateResume(@Body() dto: LostBothValidateResumeDto) {
+        return this.recoveryService.validateResumeToken(dto.resumeToken);
     }
 
     @Post('case/lost-both/request-otps')

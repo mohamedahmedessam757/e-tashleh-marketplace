@@ -11,6 +11,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import { UsersService } from '../users/users.service';
+import { EmailChannelService } from '../email/email-channel.service';
 import { Prisma } from '@prisma/client';
 import { OtpService } from './otp.service';
 import { OtpPurpose, OTP_EXPIRY_MINUTES } from './otp-purpose';
@@ -34,6 +35,8 @@ const MSG_PROOF_SENT_EMAIL =
     'تم إرسال رمز التحقق إلى البريد الإلكتروني المسجّل في النظام.';
 const MSG_PROOF_SENT_PHONE =
     'تم إرسال رمز التحقق إلى رقم الجوال المسجّل في النظام عبر واتساب.';
+const MSG_REJECT_REASON_REQUIRED =
+    'سبب الرفض إلزامي وسيُرسل إلى الإيميل المسجّل للعميل/التاجر.';
 
 @Injectable()
 export class RecoveryService {
@@ -46,6 +49,7 @@ export class RecoveryService {
         private platformSettings: PlatformSettingsService,
         private otpService: OtpService,
         private usersService: UsersService,
+        private emailChannel: EmailChannelService,
     ) {}
 
     private toDbRole(role: UiRole): 'CUSTOMER' | 'VENDOR' {
@@ -847,6 +851,8 @@ export class RecoveryService {
                     resolvedAt: new Date(),
                 },
             }),
+            // Invalidate all sessions — old login methods no longer apply
+            this.prisma.session.deleteMany({ where: { userId: user.id } }),
         ]);
 
         await this.auditLogs.logAction({
@@ -855,8 +861,15 @@ export class RecoveryService {
             actorType: user.role as any,
             actorId: user.id,
             actorName: user.name,
-            reason: 'LOST_BOTH recovery completed with dual OTP',
-            metadata: { requestId: request.id, newPhone, newEmail },
+            reason: 'LOST_BOTH recovery completed with dual OTP — old contacts replaced, sessions revoked',
+            metadata: {
+                requestId: request.id,
+                newPhone,
+                newEmail,
+                oldPhone: request.oldPhone,
+                oldEmail: request.oldEmail,
+                sessionsRevoked: true,
+            },
         });
 
         await this.logSecurityEvent(newEmail, 'RECOVERY_LOST_BOTH_COMPLETED', true, ip, device);
@@ -868,6 +881,21 @@ export class RecoveryService {
                 'تم التحقق من طلبك وتحديث بيانات الدخول بنجاح. يمكنك الآن الدخول إلى حسابك باستخدام بياناتك الجديدة.',
             messageEn:
                 'Your request was verified and login details updated successfully. You can now sign in with your new credentials.',
+        };
+    }
+
+    /** Validate resume token and return masked registered contacts only (no PII leak). */
+    async validateResumeToken(resumeToken: string) {
+        const request = await this.findRequestByResumeToken(resumeToken);
+        const user = request.user;
+        const oldPhone = request.oldPhone || user.phone || '';
+        const oldEmail = request.oldEmail || user.email || '';
+
+        return {
+            valid: true,
+            maskedOldPhone: oldPhone ? this.maskPhone(oldPhone) : null,
+            maskedOldEmail: oldEmail ? this.maskEmail(oldEmail) : null,
+            expiresAt: request.resumeTokenExpiresAt?.toISOString() ?? null,
         };
     }
 
@@ -937,6 +965,11 @@ export class RecoveryService {
         }
 
         if (action === 'REJECT') {
+            const reason = (rejectionReason || '').trim();
+            if (reason.length < 5) {
+                throw new BadRequestException(MSG_REJECT_REASON_REQUIRED);
+            }
+
             await this.prisma.user.update({
                 where: { id: request.userId },
                 data: {
@@ -952,17 +985,39 @@ export class RecoveryService {
                 where: { id: requestId },
                 data: {
                     status: 'REJECTED',
-                    rejectionReason: rejectionReason || null,
+                    rejectionReason: reason,
                     resolvedAt: new Date(),
                     resolvedBy: adminId || null,
                 },
             });
 
+            const registeredEmail = request.user.email?.trim().toLowerCase() || null;
+            let emailSent = false;
+            if (registeredEmail) {
+                try {
+                    const sendResult = await this.emailChannel.sendRecoveryRejectionEmail({
+                        to: registeredEmail,
+                        name: request.user.name || 'مستخدم',
+                        reason,
+                    });
+                    emailSent = sendResult.sent;
+                    if (!sendResult.sent) {
+                        this.logger.warn(
+                            `Rejection email failed for request ${requestId}: ${sendResult.error}`,
+                        );
+                    }
+                } catch (err) {
+                    this.logger.error(
+                        `Rejection email exception for request ${requestId}: ${(err as Error)?.message || err}`,
+                    );
+                }
+            }
+
             await this.notifications.notifyUser(request.userId, request.user.role, {
                 titleAr: 'تم رفض طلب استرداد الحساب',
                 titleEn: 'Account Recovery Rejected',
-                messageAr: 'تم رفض طلب الاستعادة. لم يتم تغيير بيانات الدخول.',
-                messageEn: 'Your recovery request was rejected. Login details were not changed.',
+                messageAr: `تم رفض طلب الاستعادة. لم يتم تغيير بيانات الدخول. السبب: ${reason}`,
+                messageEn: `Your recovery request was rejected. Login details were not changed. Reason: ${reason}`,
                 type: 'alert',
             });
 
@@ -971,11 +1026,23 @@ export class RecoveryService {
                 entity: 'AccountRecoveryRequest',
                 actorType: 'ADMIN',
                 actorId: adminId,
-                reason: rejectionReason || 'Admin rejected recovery',
-                metadata: { requestId },
+                reason,
+                metadata: {
+                    requestId,
+                    emailSent,
+                    maskedEmail: registeredEmail ? this.maskEmail(registeredEmail) : null,
+                },
             });
 
-            return { success: true, status: 'REJECTED' };
+            return {
+                success: true,
+                status: 'REJECTED',
+                emailSent,
+                maskedEmail: registeredEmail ? this.maskEmail(registeredEmail) : null,
+                warning: emailSent
+                    ? 'Rejection reason was emailed to the registered address.'
+                    : 'Rejection saved; email to registered address failed or was unavailable — deliver the reason manually if needed.',
+            };
         }
 
         // APPROVE — for LOST_BOTH: issue resume token; for legacy phone-only with newPhone: apply immediately
@@ -1000,11 +1067,36 @@ export class RecoveryService {
                 data: { recoveryStatus: 'APPROVED_AWAITING_CONTACTS' },
             });
 
+            const registeredEmail = request.user.email?.trim().toLowerCase() || null;
+            let emailSent = false;
+            if (registeredEmail) {
+                try {
+                    const sendResult = await this.emailChannel.sendRecoveryResumeToken({
+                        to: registeredEmail,
+                        name: request.user.name || 'مستخدم',
+                        resumeToken: rawToken,
+                        expiresAt: expires,
+                    });
+                    emailSent = sendResult.sent;
+                    if (!sendResult.sent) {
+                        this.logger.warn(
+                            `Resume token email failed for request ${requestId}: ${sendResult.error}`,
+                        );
+                    }
+                } catch (err) {
+                    this.logger.error(
+                        `Resume token email exception for request ${requestId}: ${(err as Error)?.message || err}`,
+                    );
+                }
+            }
+
+            const maskedEmail = registeredEmail ? this.maskEmail(registeredEmail) : null;
+
             await this.platformSettings.logAdminActivity(
                 adminId || 'SYSTEM',
                 request.user.email || request.userId,
                 'ACCOUNT_RECOVERY_APPROVE',
-                { requestId, caseType: request.caseType },
+                { requestId, caseType: request.caseType, emailSent, maskedEmail },
                 { ip, ua: userAgent },
             );
 
@@ -1013,8 +1105,8 @@ export class RecoveryService {
                 entity: 'AccountRecoveryRequest',
                 actorType: 'ADMIN',
                 actorId: adminId,
-                reason: 'Admin approved — awaiting user contact update via resume token',
-                metadata: { requestId },
+                reason: 'Admin approved — resume token issued; awaiting user contact update',
+                metadata: { requestId, emailSent, maskedEmail },
             });
 
             return {
@@ -1022,8 +1114,11 @@ export class RecoveryService {
                 status: 'APPROVED_AWAITING_CONTACTS',
                 resumeToken: rawToken,
                 resumeTokenExpiresAt: expires.toISOString(),
-                warning:
-                    'Copy this resume token now. It is shown once. Deliver it to the user via a verified channel.',
+                emailSent,
+                maskedEmail,
+                warning: emailSent
+                    ? `Resume token emailed to ${maskedEmail}. Copy below is a one-time admin backup.`
+                    : 'Email to registered address failed or unavailable. Copy the resume token now and deliver it via a verified channel.',
             };
         }
 
@@ -1126,7 +1221,7 @@ export class RecoveryService {
     }
 
     private async assertContactsAvailable(userId: string, newPhone: string, newEmail: string) {
-        const [phoneTaken, emailTaken] = await Promise.all([
+        const [phoneTakenExact, emailTaken, phoneTakenFlexible] = await Promise.all([
             this.prisma.user.findFirst({
                 where: { phone: newPhone, NOT: { id: userId } },
                 select: { id: true },
@@ -1135,8 +1230,11 @@ export class RecoveryService {
                 where: { email: newEmail, NOT: { id: userId } },
                 select: { id: true },
             }),
+            this.usersService.findByPhone(newPhone),
         ]);
-        if (phoneTaken) throw new BadRequestException('This phone number is already in use');
+        if (phoneTakenExact || (phoneTakenFlexible && phoneTakenFlexible.id !== userId)) {
+            throw new BadRequestException('This phone number is already in use');
+        }
         if (emailTaken) throw new BadRequestException('This email is already in use');
     }
 

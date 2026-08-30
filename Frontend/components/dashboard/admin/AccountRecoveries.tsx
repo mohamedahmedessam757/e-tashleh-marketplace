@@ -119,12 +119,32 @@ export const AccountRecoveries: React.FC = () => {
   const handleAction = async (id: string, action: 'APPROVE' | 'REJECT') => {
     let rejectionReason: string | undefined;
     if (action === 'REJECT') {
+      const warned = window.confirm(
+        isAr
+          ? 'تنبيه: سبب الرفض سيُرسل إلى الإيميل المسجّل للعميل/التاجر. المتابعة؟'
+          : 'Warning: the rejection reason will be emailed to the registered address. Continue?',
+      );
+      if (!warned) return;
       rejectionReason =
         window.prompt(
-          isAr ? 'سبب الرفض (اختياري):' : 'Rejection reason (optional):',
+          isAr
+            ? 'سبب الرفض (إلزامي — سيُرسل بالإيميل):'
+            : 'Rejection reason (required — will be emailed):',
         ) || undefined;
+      if (!rejectionReason || rejectionReason.trim().length < 5) {
+        alert(
+          isAr
+            ? 'سبب الرفض إلزامي (5 أحرف على الأقل) وسيُرسل للبريد المسجّل.'
+            : 'Rejection reason is required (min 5 chars) and will be emailed.',
+        );
+        return;
+      }
     } else if (
-      !window.confirm(isAr ? 'هل أنت متأكد من الموافقة؟' : 'Confirm approval?')
+      !window.confirm(
+        isAr
+          ? 'الموافقة ستُرسل رمز الاستكمال تلقائياً إلى الإيميل المسجّل. المتابعة؟'
+          : 'Approval will email the resume token to the registered address. Continue?',
+      )
     ) {
       return;
     }
@@ -137,15 +157,35 @@ export const AccountRecoveries: React.FC = () => {
       });
       if (res.data?.resumeToken) {
         setLastResumeToken({ id, token: res.data.resumeToken });
+        const emailed = res.data.emailSent
+          ? isAr
+            ? `تم إرسال الرمز إلى ${res.data.maskedEmail || 'الإيميل المسجّل'}.`
+            : `Token emailed to ${res.data.maskedEmail || 'registered email'}.`
+          : isAr
+            ? 'تعذّر إرسال الإيميل — انسخ الرمز ووصّله يدوياً.'
+            : 'Email failed — copy the token and deliver it manually.';
         window.alert(
-          isAr
-            ? 'تم إصدار رمز الاستكمال — انسخه الآن ووصّله للعميل عبر قناة موثوقة.'
-            : 'Resume token issued — copy it now and deliver it to the user via a verified channel.',
+          (isAr
+            ? 'تمت الموافقة. انسخ رمز الاستكمال الآن (يظهر مرة واحدة).\n'
+            : 'Approved. Copy the resume token now (shown once).\n') + emailed,
         );
+      } else if (action === 'REJECT') {
+        const emailed = res.data?.emailSent
+          ? isAr
+            ? `تم إرسال سبب الرفض إلى ${res.data.maskedEmail || 'الإيميل المسجّل'}.`
+            : `Rejection emailed to ${res.data.maskedEmail || 'registered email'}.`
+          : isAr
+            ? 'تم الرفض؛ تعذّر إرسال إيميل السبب.'
+            : 'Rejected; reason email failed.';
+        window.alert(emailed);
       }
       fetchRequests(searchTerm);
-    } catch {
-      alert(isAr ? 'فشلت العملية' : 'Action failed');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      alert(
+        (Array.isArray(msg) ? msg[0] : msg) ||
+          (isAr ? 'فشلت العملية' : 'Action failed'),
+      );
     }
   };
 
@@ -220,7 +260,9 @@ export const AccountRecoveries: React.FC = () => {
       {lastResumeToken && (
         <div className="mb-4 p-4 rounded-xl border border-gold-500/40 bg-gold-500/10 text-sm text-gold-100">
           <div className="font-bold mb-2">
-            {isAr ? 'رمز الاستكمال (يُعرض مرة واحدة)' : 'Resume token (shown once)'}
+            {isAr
+              ? 'رمز الاستكمال (نسخة احتياطية للأدمن — يُعرض مرة واحدة؛ أُرسل أيضاً للإيميل المسجّل إن نجح الإرسال)'
+              : 'Resume token (admin backup — shown once; also emailed to registered address if send succeeded)'}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <code className="text-xs break-all bg-black/40 px-2 py-1 rounded">

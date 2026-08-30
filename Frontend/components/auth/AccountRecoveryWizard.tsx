@@ -77,6 +77,8 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   const [emailOtpDigits, setEmailOtpDigits] = useState(() => emptyOtpDigits());
   const [secondsLeft, setSecondsLeft] = useState(OTP_EXPIRY_SECONDS);
   const [resumeToken, setResumeToken] = useState('');
+  const [maskedOldPhone, setMaskedOldPhone] = useState<string | null>(null);
+  const [maskedOldEmail, setMaskedOldEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -459,6 +461,30 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
       setStep('case3-pending');
     } catch (err: any) {
       triggerError(err.response?.data?.message || err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runCase3ValidateResume = async () => {
+    if (resumeToken.length < 32) {
+      triggerError(isAr ? 'رمز غير صالح' : 'Invalid token');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryLostBothValidateResume({ resumeToken });
+      setMaskedOldPhone(res.maskedOldPhone);
+      setMaskedOldEmail(res.maskedOldEmail);
+      setStep('case3-new-contacts');
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      triggerError(
+        (Array.isArray(msg) ? msg[0] : msg) ||
+          err.message ||
+          (isAr ? 'رمز الاستكمال غير صالح أو منتهي' : 'Invalid or expired resume token'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -849,6 +875,11 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
   } else if (step === 'case3-resume') {
     body = cardShell(
       <div className="space-y-4 w-full min-w-0">
+        <p className="text-white/60 text-xs sm:text-sm text-center leading-relaxed px-1">
+          {isAr
+            ? 'أدخل رمز الاستكمال الذي وصل إلى بريدك المسجّل بعد موافقة الإدارة.'
+            : 'Enter the resume code emailed to your registered address after admin approval.'}
+        </p>
         <label className="text-xs sm:text-sm text-white/50 block text-start">
           {isAr ? 'رمز الاستكمال من الإدارة' : 'Resume token from admin'}
         </label>
@@ -859,18 +890,30 @@ export const AccountRecoveryWizard: React.FC<AccountRecoveryWizardProps> = ({
           dir="ltr"
           autoComplete="off"
         />
-        {primaryBtn(isAr ? 'متابعة' : 'Continue', () => {
-          if (resumeToken.length < 32) {
-            triggerError(isAr ? 'رمز غير صالح' : 'Invalid token');
-            return;
-          }
-          setStep('case3-new-contacts');
-        })}
+        {primaryBtn(isAr ? 'متابعة' : 'Continue', runCase3ValidateResume)}
       </div>,
     );
   } else if (step === 'case3-new-contacts') {
     body = cardShell(
       <div className="space-y-4 w-full min-w-0">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 text-start">
+          <p className="text-xs text-white/40 font-medium">
+            {isAr ? 'البيانات المسجّلة حالياً (مموّهة)' : 'Current registered contacts (masked)'}
+          </p>
+          <p className="text-sm text-white/80 font-mono dir-ltr" dir="ltr">
+            {isAr ? 'الجوال: ' : 'Phone: '}
+            {maskedOldPhone || '—'}
+          </p>
+          <p className="text-sm text-white/80 font-mono dir-ltr" dir="ltr">
+            {isAr ? 'البريد: ' : 'Email: '}
+            {maskedOldEmail || '—'}
+          </p>
+        </div>
+        <p className="text-white/60 text-xs sm:text-sm text-center leading-relaxed px-1">
+          {isAr
+            ? 'أدخل رقم جوال وبريد إلكتروني جديدين غير مستخدمين في النظام.'
+            : 'Enter a new phone and email that are not already used in the system.'}
+        </p>
         {phoneField(
           newPhoneLocal,
           setNewPhoneLocal,
