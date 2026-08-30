@@ -765,7 +765,11 @@ export class RecoveryService {
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
 
-        await this.assertContactsAvailable(user.id, newPhone, newEmail);
+        await this.assertContactsAvailable(user.id, newPhone, newEmail, {
+            oldPhone: user.phone,
+            oldCountryCode: user.countryCode,
+            oldEmail: user.email,
+        });
 
         await this.otpService.issueAndSend({
             channel: 'whatsapp',
@@ -811,7 +815,11 @@ export class RecoveryService {
         const newPhone = this.normPhone(newPhoneRaw, newCountryCode);
         const newEmail = newEmailRaw.trim().toLowerCase();
 
-        await this.assertContactsAvailable(user.id, newPhone, newEmail);
+        await this.assertContactsAvailable(user.id, newPhone, newEmail, {
+            oldPhone: user.phone,
+            oldCountryCode: user.countryCode,
+            oldEmail: user.email,
+        });
 
         await this.otpService.verify({
             channel: 'whatsapp',
@@ -1220,7 +1228,27 @@ export class RecoveryService {
         return request;
     }
 
-    private async assertContactsAvailable(userId: string, newPhone: string, newEmail: string) {
+    private async assertContactsAvailable(
+        userId: string,
+        newPhone: string,
+        newEmail: string,
+        opts?: {
+            oldPhone?: string | null;
+            oldCountryCode?: string | null;
+            oldEmail?: string | null;
+        },
+    ) {
+        if (
+            opts?.oldPhone &&
+            this.storedPhoneMatchesClaim(opts.oldPhone, opts.oldCountryCode, newPhone)
+        ) {
+            throw new BadRequestException('New phone must differ from the old phone');
+        }
+        const oldEmailNorm = opts?.oldEmail?.trim().toLowerCase();
+        if (oldEmailNorm && oldEmailNorm === newEmail) {
+            throw new BadRequestException('New email must differ from the old email');
+        }
+
         const [phoneTakenExact, emailTaken, phoneTakenFlexible] = await Promise.all([
             this.prisma.user.findFirst({
                 where: { phone: newPhone, NOT: { id: userId } },

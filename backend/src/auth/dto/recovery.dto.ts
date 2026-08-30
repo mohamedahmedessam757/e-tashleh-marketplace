@@ -6,6 +6,7 @@ import {
     IsIn,
     IsOptional,
     MinLength,
+    ValidateIf,
 } from 'class-validator';
 
 export class RecoveryRoleDto {
@@ -156,8 +157,9 @@ export class AdminResolveRecoveryDto {
     action: 'APPROVE' | 'REJECT';
 
     /** Required when action is REJECT — emailed to the registered address */
-    @IsOptional()
+    @ValidateIf((o: AdminResolveRecoveryDto) => o.action === 'REJECT')
     @IsString()
+    @IsNotEmpty()
     @MinLength(5)
     rejectionReason?: string;
 }
