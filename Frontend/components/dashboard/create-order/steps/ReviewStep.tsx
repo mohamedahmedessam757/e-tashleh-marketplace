@@ -5,18 +5,45 @@ import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { usePlatformSettingsStore } from '../../../../stores/usePlatformSettingsStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
+import { useObjectUrl } from '../../../../utils/objectUrl';
 
 interface ReviewStepProps {
     onConfirm: () => void;
 }
 
+const ReviewThumb: React.FC<{
+    file: File;
+    type: 'image' | 'video';
+    onOpen: (url: string) => void;
+}> = ({ file, type, onOpen }) => {
+    const url = useObjectUrl(file);
+    if (!url) return null;
+    return (
+        <div
+            className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold-500/50 transition-colors relative"
+            onClick={() => onOpen(url)}
+        >
+            {type === 'video' ? (
+                <>
+                    <video src={url} className="w-full h-full object-cover opacity-60" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Video size={20} className="text-white drop-shadow-md" />
+                    </div>
+                </>
+            ) : (
+                <img src={url} alt="part" className="w-full h-full object-cover" />
+            )}
+        </div>
+    );
+};
+
 export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
-    const { vehicle, parts, requestType, shippingType, preferences, updatePreferences, isSubmitting } = useCreateOrderStore();
+    const { vehicle, parts, requestType, shippingType, preferences, isSubmitting } = useCreateOrderStore();
     const { isPreferencesStepEnabled } = usePlatformSettingsStore();
     const { t, language } = useLanguage();
     const isRTL = language === 'ar';
 
-    const SummaryItem = ({ icon: Icon, label, value }: any) => (
+    const SummaryItem = ({ icon: Icon, label, value }: { icon: React.ComponentType<{ size?: number }>; label: string; value: React.ReactNode }) => (
         <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
             <div className="p-2 bg-white/5 rounded-lg text-white/60">
                 <Icon size={16} />
@@ -40,7 +67,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
             {/* Media Lightbox */}
             {selectedMedia && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
                     onClick={() => setSelectedMedia(null)}
                 >
                     <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
@@ -158,7 +185,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
 
                     <div className="space-y-4">
                         {parts.map((p, idx) => (
-                            <GlassCard key={idx} className="bg-white/5 border border-white/10 p-4 relative">
+                            <GlassCard key={p.id} enableBlur={false} className="bg-white/5 border border-white/10 p-4 relative">
                                 <span className="absolute top-4 right-4 text-xs font-bold text-white/30">#{idx + 1}</span>
                                 <h4 className="font-bold text-gold-400 mb-2">{p.name}</h4>
                                 <div className="text-sm text-white/80 mb-3 bg-black/20 p-3 rounded-lg overflow-hidden text-ellipsis">
@@ -173,17 +200,20 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                                 {p.images.length > 0 && (
                                     <div className="flex gap-2 overflow-x-auto pb-2">
                                         {p.images.map((img, i) => (
-                                            <div key={i} className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold-500/50 transition-colors" onClick={() => setSelectedMedia({ type: 'image', url: URL.createObjectURL(img) })}>
-                                                <img src={URL.createObjectURL(img)} alt="part" className="w-full h-full object-cover" />
-                                            </div>
+                                            <ReviewThumb
+                                                key={`${p.id}-img-${i}-${img.name}-${img.size}`}
+                                                file={img}
+                                                type="image"
+                                                onOpen={(url) => setSelectedMedia({ type: 'image', url })}
+                                            />
                                         ))}
                                         {p.video && (
-                                            <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold-500/50 transition-colors relative" onClick={() => setSelectedMedia({ type: 'video', url: URL.createObjectURL(p.video!) })}>
-                                                <video src={URL.createObjectURL(p.video)} className="w-full h-full object-cover opacity-60" />
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <Video size={20} className="text-white drop-shadow-md" />
-                                                </div>
-                                            </div>
+                                            <ReviewThumb
+                                                key={`${p.id}-video-${p.video.name}-${p.video.size}`}
+                                                file={p.video}
+                                                type="video"
+                                                onOpen={(url) => setSelectedMedia({ type: 'video', url })}
+                                            />
                                         )}
                                     </div>
                                 )}
@@ -201,7 +231,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                     disabled={isSubmitting}
                     className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : (
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="animate-spin" size={20} />
+                            {t.dashboard.createOrder.review.sending || (isRTL ? 'جاري إرسال الطلب…' : 'Sending order…')}
+                        </>
+                    ) : (
                         <>
                             <CheckCircle2 size={20} />
                             {t.dashboard.createOrder.review.confirm}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { useCreateOrderStore, consumeCreateOrderPrefill } from '../../../stores/useCreateOrderStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
@@ -18,8 +18,23 @@ interface CreateOrderWizardProps {
   onNavigate?: (path: string, id?: string) => void;
 }
 
+type StepKey = 'vehicle' | 'part' | 'preferences' | 'review';
+
 export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete, onNavigate }) => {
-  const { step, setStep, submitOrder, reset, prefillVehicle, vehicle, parts, preferences, setShowErrors, requestType } = useCreateOrderStore();
+  const {
+    step,
+    setStep,
+    submitOrder,
+    reset,
+    prefillVehicle,
+    vehicle,
+    parts,
+    preferences,
+    setShowErrors,
+    requestType,
+    ensurePartsUploaded,
+    isUploadingParts,
+  } = useCreateOrderStore();
   const {
     isPreferencesStepEnabled,
     isLoading: isFeatureFlagsLoading,
@@ -65,12 +80,17 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     }
   }, [SHOW_PREFERENCES_STEP, step, setStep]);
 
-  const steps = [
-    { id: 1, title: t.dashboard.createOrder.steps.vehicle },
-    { id: 2, title: t.dashboard.createOrder.steps.part },
-    ...(SHOW_PREFERENCES_STEP ? [{ id: 3, title: t.dashboard.createOrder.steps.preferences }] : []),
-    { id: 4, title: t.dashboard.createOrder.steps.review },
-  ];
+  // Logical ids stay 1..4 for navigation; displayNumber is 1..N for visible steps only
+  const steps = (
+    [
+      { id: 1, key: 'vehicle' as StepKey, title: t.dashboard.createOrder.steps.vehicle },
+      { id: 2, key: 'part' as StepKey, title: t.dashboard.createOrder.steps.part },
+      ...(SHOW_PREFERENCES_STEP
+        ? [{ id: 3, key: 'preferences' as StepKey, title: t.dashboard.createOrder.steps.preferences }]
+        : []),
+      { id: 4, key: 'review' as StepKey, title: t.dashboard.createOrder.steps.review },
+    ] as Array<{ id: number; key: StepKey; title: string }>
+  ).map((s, index) => ({ ...s, displayNumber: index + 1 }));
 
   // Adjust step IDs for navigation if preferences is skipped
   const getNextStep = (current: number) => {
@@ -83,7 +103,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     return current - 1;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Validation Setup
     setShowErrors(true);
     let hasError = false;
@@ -122,6 +142,24 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       return;
     }
 
+    // Eager upload when leaving the parts step so confirm is API-only
+    if (step === 2) {
+      try {
+        await ensurePartsUploaded();
+      } catch (err) {
+        console.error('Part upload failed', err);
+        addNotification({
+          type: 'system',
+          titleKey: 'alert',
+          message: language === 'ar' ? 'فشل رفع الملفات. حاول مرة أخرى.' : 'Failed to upload files. Please try again.',
+          priority: 'urgent',
+        });
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        return;
+      }
+    }
+
     // Success (Move Next)
     setShowErrors(false);
     setStep(getNextStep(step));
@@ -156,6 +194,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     }
   };
 
+  const activeStepIndex = Math.max(steps.findIndex((s) => s.id === step), 0);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
@@ -176,19 +216,19 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
             initial={{ width: '0%' }}
             animate={{
               width: isReady
-                ? `${(Math.max(steps.findIndex((s) => s.id === step), 0) / Math.max(steps.length - 1, 1)) * 100}%`
+                ? `${(activeStepIndex / Math.max(steps.length - 1, 1)) * 100}%`
                 : '0%',
             }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
         </div>
 
-        {steps.map((s) => {
-          const isActive = step === s.id;
-          const isCompleted = step > s.id;
+        {steps.map((s, index) => {
+          const isActive = s.id === step;
+          const isCompleted = index < activeStepIndex;
 
           return (
-            <div key={s.id} className="relative flex flex-col items-center group">
+            <div key={s.key} className="relative flex flex-col items-center group">
               <motion.div
                 animate={{
                   backgroundColor: isActive || isCompleted ? '#1A1814' : '#1A1814',
@@ -201,7 +241,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
                 {isCompleted ? (
                   <Check size={20} className="text-gold-400" />
                 ) : (
-                  <span className={`font-bold ${isActive ? 'text-gold-400' : 'text-white/30'}`}>{s.id}</span>
+                  <span className={`font-bold ${isActive ? 'text-gold-400' : 'text-white/30'}`}>{s.displayNumber}</span>
                 )}
               </motion.div>
               <span className={`absolute top-14 text-xs font-bold transition-colors ${isActive ? 'text-gold-400' : 'text-white/30'}`}>
@@ -212,8 +252,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         })}
       </div>
 
-      {/* Main Content Card */}
-      <GlassCard enableHover={false} className="bg-[#1A1814]/80 backdrop-blur-xl border border-gold-500/10 p-6 md:p-10 min-h-[400px] flex flex-col">
+      {/* Main Content Card — no nested backdrop-blur (mobile dirty-band fix) */}
+      <GlassCard enableHover={false} enableBlur={false} className="bg-[#1A1814]/80 border border-gold-500/10 p-6 md:p-10 min-h-[400px] flex flex-col">
         <div className="flex-1">
           <AnimatePresence mode="wait">
             {step === 1 && <VehicleDetailsStep key="step1" />}
@@ -228,7 +268,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
           <div className="flex justify-between items-center pt-8 mt-8 border-t border-white/5">
             <button
               onClick={handleBack}
-              disabled={step === 1}
+              disabled={step === 1 || isUploadingParts}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-colors font-medium ${step === 1 ? 'opacity-0 cursor-default' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
             >
               <PrevIcon size={20} />
@@ -236,11 +276,21 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
             </button>
 
             <button
-              onClick={handleNext}
-              className={`flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
+              onClick={() => void handleNext()}
+              disabled={isUploadingParts}
+              className={`flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
             >
-              {t.dashboard.createOrder.next}
-              <NextIcon size={20} />
+              {isUploadingParts ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  {t.dashboard.createOrder.uploading || (language === 'ar' ? 'جاري رفع الملفات…' : 'Uploading files…')}
+                </>
+              ) : (
+                <>
+                  {t.dashboard.createOrder.next}
+                  <NextIcon size={20} />
+                </>
+              )}
             </button>
           </div>
         )}

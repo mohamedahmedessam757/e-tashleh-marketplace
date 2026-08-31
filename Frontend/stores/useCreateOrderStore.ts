@@ -41,6 +41,9 @@ export interface PartItem {
   video: File | null;
   videoPreview: string | null;
   notes?: string;
+  /** Parallel to images[]; empty string = not uploaded yet */
+  uploadedImageUrls?: string[];
+  uploadedVideoUrl?: string | null;
 }
 
 export interface OrderState {
@@ -54,6 +57,7 @@ export interface OrderState {
     vin: string;
     vinImage?: File | null;
   };
+  vinImageUploadedUrl: string | null;
 
   // Phase 2: Parts
   requestType: 'single' | 'multiple';
@@ -66,6 +70,7 @@ export interface OrderState {
   };
 
   isSubmitting: boolean;
+  isUploadingParts: boolean;
   showErrors: boolean; // Controls visual validation display
 
   // Actions
@@ -84,6 +89,7 @@ export interface OrderState {
   updatePreferences: (field: string, value: any) => void;
   reset: () => void;
   prefillVehicle: (data: { make: string; model: string; year?: string }) => void;
+  ensurePartsUploaded: () => Promise<void>;
   submitOrder: () => Promise<string>;
   setShowErrors: (show: boolean) => void;
 }
@@ -97,12 +103,15 @@ const getInitialPart = (): PartItem => ({
   images: [],
   video: null,
   videoPreview: null,
-  notes: ''
+  notes: '',
+  uploadedImageUrls: [],
+  uploadedVideoUrl: null,
 });
 
 /** Module-level: one in-flight submit + stable idempotency key across retries */
 let submitInflight: Promise<string> | null = null;
 let pendingClientRequestId: string | null = null;
+let uploadInflight: Promise<void> | null = null;
 
 const newClientRequestId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -125,6 +134,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     vin: '',
     vinImage: null
   },
+  vinImageUploadedUrl: null,
 
   requestType: 'single',
   shippingType: 'separate',
@@ -135,12 +145,20 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   },
 
   isSubmitting: false,
+  isUploadingParts: false,
   showErrors: false,
 
   setStep: (step) => set({ step, showErrors: false }), // Reset errors on step change
 
   updateVehicle: (updates) =>
-    set((state) => ({ vehicle: { ...state.vehicle, ...updates } })),
+    set((state) => {
+      const next = { vehicle: { ...state.vehicle, ...updates } };
+      // Clear cached VIN upload when the local file changes
+      if ('vinImage' in updates) {
+        return { ...next, vinImageUploadedUrl: null };
+      }
+      return next;
+    }),
 
   setRequestType: (type) => set((state) => {
     // Logic: If switching to single, keep only first part. If multiple, ensure at least one.
@@ -176,21 +194,39 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   }),
 
   updatePart: (id, field, value) => set((state) => ({
-    parts: state.parts.map(p =>
-      p.id === id ? { ...p, [field]: value } : p
-    )
+    parts: state.parts.map(p => {
+      if (p.id !== id) return p;
+      const next = { ...p, [field]: value };
+      if (field === 'video') {
+        next.uploadedVideoUrl = null;
+      }
+      return next;
+    })
   })),
 
   addPartImage: (id, file) => set((state) => ({
     parts: state.parts.map(p =>
-      p.id === id ? { ...p, images: [...p.images, file] } : p
+      p.id === id
+        ? {
+            ...p,
+            images: [...p.images, file],
+            uploadedImageUrls: [...(p.uploadedImageUrls || []), ''],
+          }
+        : p
     )
   })),
 
   removePartImage: (id, imageIndex) => set((state) => ({
-    parts: state.parts.map(p =>
-      p.id === id ? { ...p, images: p.images.filter((_, i) => i !== imageIndex) } : p
-    )
+    parts: state.parts.map(p => {
+      if (p.id !== id) return p;
+      const urls = [...(p.uploadedImageUrls || [])];
+      urls.splice(imageIndex, 1);
+      return {
+        ...p,
+        images: p.images.filter((_, i) => i !== imageIndex),
+        uploadedImageUrls: urls,
+      };
+    })
   })),
 
   updatePreferences: (field, value) =>
@@ -199,14 +235,17 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   reset: () => {
     pendingClientRequestId = null;
     submitInflight = null;
+    uploadInflight = null;
     set({
       step: 1,
       vehicle: { make: '', model: '', year: '', vin: '', vinImage: null },
+      vinImageUploadedUrl: null,
       requestType: 'single',
       shippingType: 'separate',
       parts: [getInitialPart()],
       preferences: { condition: null },
       isSubmitting: false,
+      isUploadingParts: false,
       showErrors: false
     });
   },
@@ -214,6 +253,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   prefillVehicle: (data) => {
     pendingClientRequestId = null;
     submitInflight = null;
+    uploadInflight = null;
     set({
       step: 1,
       vehicle: {
@@ -223,16 +263,87 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
         vin: '',
         vinImage: null,
       },
+      vinImageUploadedUrl: null,
       requestType: 'single',
       shippingType: 'separate',
       parts: [getInitialPart()],
       preferences: { condition: null },
       isSubmitting: false,
+      isUploadingParts: false,
       showErrors: false,
     });
   },
 
   setShowErrors: (show) => set({ showErrors: show }),
+
+  ensurePartsUploaded: async () => {
+    if (uploadInflight) return uploadInflight;
+
+    uploadInflight = (async () => {
+      set({ isUploadingParts: true });
+      const state = get();
+      const nextParts = state.parts.map((part) => ({
+        ...part,
+        uploadedImageUrls: [...(part.uploadedImageUrls || [])],
+      }));
+      let vinImageUploadedUrl = state.vinImageUploadedUrl;
+
+      try {
+        const { storageService } = await import('../services/storage');
+        const uploadPromises: Promise<void>[] = [];
+
+        for (const part of nextParts) {
+          while (part.uploadedImageUrls!.length < part.images.length) {
+            part.uploadedImageUrls!.push('');
+          }
+          // Drop stale URL slots if images were removed somehow
+          if (part.uploadedImageUrls!.length > part.images.length) {
+            part.uploadedImageUrls = part.uploadedImageUrls!.slice(0, part.images.length);
+          }
+          part.images.forEach((file, index) => {
+            if (part.uploadedImageUrls![index]) return;
+            uploadPromises.push(
+              storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${part.id}`).then((url) => {
+                part.uploadedImageUrls![index] = url;
+              })
+            );
+          });
+          if (part.video && !part.uploadedVideoUrl) {
+            uploadPromises.push(
+              storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then((url) => {
+                part.uploadedVideoUrl = url;
+              })
+            );
+          }
+          if (!part.video) {
+            part.uploadedVideoUrl = null;
+          }
+        }
+
+        if (state.vehicle.vinImage && !vinImageUploadedUrl) {
+          uploadPromises.push(
+            storageService.uploadFile(state.vehicle.vinImage, 'marketplace-uploads', 'orders/vin').then((url) => {
+              vinImageUploadedUrl = url;
+            })
+          );
+        }
+        if (!state.vehicle.vinImage) {
+          vinImageUploadedUrl = null;
+        }
+
+        await Promise.all(uploadPromises);
+        set({ parts: nextParts, vinImageUploadedUrl, isUploadingParts: false });
+      } catch (err) {
+        // Persist any URLs that finished so a retry only uploads the rest
+        set({ parts: nextParts, vinImageUploadedUrl, isUploadingParts: false });
+        throw err;
+      } finally {
+        uploadInflight = null;
+      }
+    })();
+
+    return uploadInflight;
+  },
 
   submitOrder: async () => {
     // Hard lock: double-tap / concurrent calls share one promise (no second upload)
@@ -249,52 +360,29 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
 
     submitInflight = (async () => {
       try {
+        // Ensure uploads finished (no-op if already done in step 2)
+        await get().ensurePartsUploaded();
+
         const state = get();
-
-        // 1. Upload All Files Concurrently
-        const { storageService } = await import('../services/storage');
-
-        // Prepare an array of upload promises
-        const uploadPromises: Promise<void>[] = [];
-        const processedParts: any[] = [];
-
-        for (const part of state.parts) {
-          const partData: any = { ...part, images: [], video: null };
-          processedParts.push(partData);
-
-          // Upload images
-          part.images.forEach((file, index) => {
-            uploadPromises.push(
-              storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${part.id}`).then(url => {
-                partData.images[index] = url; // Maintain order
-              })
-            );
-          });
-
-          // Upload video
-          if (part.video) {
-            uploadPromises.push(
-              storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then(url => {
-                partData.video = url;
-              })
-            );
+        const processedParts = state.parts.map((part) => {
+          const urls = [...(part.uploadedImageUrls || [])];
+          while (urls.length < part.images.length) urls.push('');
+          if (urls.some((u) => !u) || (part.video && !part.uploadedVideoUrl)) {
+            throw new Error('Part media upload incomplete');
           }
+          return {
+            name: part.name,
+            description: part.description,
+            notes: part.notes,
+            images: urls,
+            video: part.uploadedVideoUrl || undefined,
+          };
+        });
+
+        if (state.vehicle.vinImage && !state.vinImageUploadedUrl) {
+          throw new Error('VIN image upload incomplete');
         }
 
-        // Upload VIN Image
-        let vinImageUrl = null;
-        if (state.vehicle.vinImage) {
-          uploadPromises.push(
-            storageService.uploadFile(state.vehicle.vinImage, 'marketplace-uploads', 'orders/vin').then(url => {
-              vinImageUrl = url;
-            })
-          );
-        }
-
-        // Wait for all uploads to complete simultaneously
-        await Promise.all(uploadPromises);
-
-        // 3. Prepare Payload
         const yearInt = parseInt(state.vehicle.year) || new Date().getFullYear();
 
         const payload = {
@@ -302,17 +390,11 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           vehicleModel: state.vehicle.model,
           vehicleYear: yearInt,
           vin: state.vehicle.vin,
-          vinImage: vinImageUrl,
+          vinImage: state.vinImageUploadedUrl,
 
           requestType: state.requestType,
           shippingType: state.shippingType,
-          parts: processedParts.map(p => ({
-            name: p.name,
-            description: p.description,
-            notes: p.notes,
-            images: p.images,
-            video: p.video || undefined
-          })),
+          parts: processedParts,
 
           // Legacy Support (First part details)
           partName: state.parts[0].name,
@@ -323,18 +405,13 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           clientRequestId,
         };
 
-        // 4. Call Backend API
         const { ordersApi } = await import('../services/api/orders');
         const newOrder = await ordersApi.create(payload);
 
-        // Success: clear idempotency key so the next order gets a fresh UUID
         pendingClientRequestId = null;
-
-        // Return the ID for the success modal
         return newOrder.id as string;
 
       } catch (err) {
-        // Keep pendingClientRequestId so a retry reuses the same key
         console.error('Submission failed', err);
         throw err;
       } finally {

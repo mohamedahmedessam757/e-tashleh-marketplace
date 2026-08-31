@@ -1,24 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, FileText, UploadCloud, X, Plus, Trash2, AlertTriangle, Info, Truck, Video, AlertCircle, Camera } from 'lucide-react';
 import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
-
-/** Stable object URL with revoke on unmount / file change */
-const useObjectUrl = (file: File | null | undefined): string | null => {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!file) {
-      setUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(file);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [file]);
-  return url;
-};
+import { useObjectUrl } from '../../../../utils/objectUrl';
 
 const PartImagePreview: React.FC<{
   file: File;
