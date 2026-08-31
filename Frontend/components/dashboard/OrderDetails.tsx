@@ -1022,10 +1022,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 )}
 
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
-                    <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-2xl font-bold text-white">
+                    <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                                <h1 className="text-xl sm:text-2xl font-bold text-white leading-snug break-words">
                                     {(order.parts && order.parts.length > 1)
                                         ? (language === 'ar' ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
                                         : order.part}
@@ -1045,13 +1045,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                                 )}
                             </div>
-                            <div className="text-white/60 text-sm flex items-center gap-2">
+                            <div className="text-white/60 text-sm flex flex-wrap items-center gap-x-2 gap-y-1 break-all">
                                 <span>{(t.dashboard.orders as any).orderId} {formatOrderDisplayId(order)}</span>
-                                <span>•</span>
+                                <span className="text-white/30">•</span>
                                 <span>{order.car}</span>
                             </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
 
                             {/* Simulation buttons removed for production/customer view */}
 
@@ -1213,11 +1213,11 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                     {/* Extended Tracking View Trigger */}
                     {!['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             {shouldShowVerificationBanner(order.status) && (
-                                <VerificationPhaseBanner className="mb-6" status={order.status} />
+                                <VerificationPhaseBanner className="mb-4 sm:mb-6" status={order.status} />
                             )}
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-4 sm:mb-6 min-w-0 overflow-hidden">
                                 <StatusTimeline
                                     currentStatus={(timelineStatus || order.status) as any}
                                     fulfillmentSummary={fulfillmentSummary}

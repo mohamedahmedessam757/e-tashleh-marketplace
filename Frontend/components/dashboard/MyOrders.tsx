@@ -286,43 +286,43 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                         `}
                                     onClick={() => onNavigate('order-details', order.id)}
                                     >
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 min-w-0">
 
-                                            <div className="flex items-center gap-5">
-                                                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                                    <Box size={24} className="text-white/30 group-hover:text-gold-400 transition-colors" />
+                                            <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                                    <Box size={22} className="text-white/30 group-hover:text-gold-400 transition-colors sm:w-6 sm:h-6" />
                                                 </div>
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-1">
-                                                        <span className="font-mono text-xs text-white/40">#{order.orderNumber}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                                                        <span className="text-xs text-white/40 flex items-center gap-1">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                                                        <span className="font-mono text-[11px] sm:text-xs text-white/40 truncate max-w-full">#{order.orderNumber}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20 hidden xs:inline-block shrink-0"></span>
+                                                        <span className="text-[11px] sm:text-xs text-white/40 flex items-center gap-1 shrink-0">
                                                             <Calendar size={12} />
                                                             {new Date(order.createdAt).toLocaleDateString()}
                                                         </span>
                                                     </div>
-                                                    <h3 className="font-bold text-white text-lg">
+                                                    <h3 className="font-bold text-white text-base sm:text-lg leading-snug break-words">
                                                         {(order.parts && order.parts.length > 1)
                                                             ? (language === 'ar' ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
                                                             : order.part}
                                                     </h3>
-                                                    <p className="text-sm text-white/60">{order.car}</p>
+                                                    <p className="text-sm text-white/60 truncate">{order.car}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between md:justify-end gap-4 md:gap-6 ps-0 md:ps-0 min-w-0 flex-wrap">
-                                                <div className="flex flex-col items-end gap-2">
+                                            <div className="flex items-start sm:items-center justify-between md:justify-end gap-3 md:gap-6 min-w-0 w-full md:w-auto">
+                                                <div className="flex flex-col items-start md:items-end gap-2 min-w-0 flex-1">
                                                     {/* Always show actual status badge */}
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex flex-wrap items-center gap-2 max-w-full">
                                                         <Badge status={order.status as StatusType} />
                                                         {(() => {
                                                             const shipment = shipments.find(s => s.orderId === order.id);
                                                             if (shipment && !['CANCELLED', 'AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status)) {
                                                                 return (
-                                                                    <div className="flex items-center gap-2">
+                                                                    <>
                                                                         <Badge status={shipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                                                                         <OrderStatusCountdown order={order} variant="compact" />
-                                                                    </div>
+                                                                    </>
                                                                 );
                                                             }
                                                             return null;
@@ -336,7 +336,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                             order.status === 'AWAITING_SELECTION' &&
                                                             !(order.offers?.some((o) => o.status !== 'rejected'))
                                                         ) && (
-                                                        <OrderStatusCountdown order={order} variant="compact" className="mt-1" />
+                                                        <OrderStatusCountdown order={order} variant="compact" className="mt-0.5" />
                                                     )}
 
                                                     {order.warranty_end_at &&
@@ -362,19 +362,19 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                     })()}
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 shrink-0 self-center">
                                                     {/* Action Buttons */}
                                                     {canCancelOrder(order.id) && !expired && (
                                                         <button
                                                             onClick={(e) => handleCancel(e, order.id)}
-                                                            className="p-2 hover:bg-red-500/20 rounded-full text-white/30 hover:text-red-500 transition-colors"
+                                                            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-red-500/20 rounded-full text-white/30 hover:text-red-500 transition-colors"
                                                             title={t.dashboard.orders.cancelConfirm || "Cancel Order"}
                                                         >
                                                             <XCircle size={18} />
                                                         </button>
                                                     )}
 
-                                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:bg-gold-500 transition-all">
+                                                    <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:bg-gold-500 transition-all">
                                                         <ArrowIcon size={16} />
                                                     </div>
                                                 </div>

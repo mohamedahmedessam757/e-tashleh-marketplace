@@ -121,27 +121,27 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     return (
         <>
             <div
-                className={`rounded-2xl p-6 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 contain-paint ${isSelected
+                className={`rounded-2xl p-4 sm:p-6 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 contain-paint min-w-0 ${isSelected
                     ? 'bg-gradient-to-br from-gold-500/10 to-transparent border-2 border-gold-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]'
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
                     } ${disabled ? 'opacity-50 grayscale-[50%] pointer-events-none' : ''}`}
             >
                 {/* Header: Store & Price */}
-                <div className="flex justify-between items-start gap-4 mb-6">
+                <div className="flex flex-wrap justify-between items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
                     {/* Merchant Info */}
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                         {/* Store Logo */}
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center font-bold text-white text-xl overflow-hidden shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center font-bold text-white text-xl overflow-hidden shrink-0">
                             {storeLogo ? (
                                 <img src={storeLogo} alt="Store" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             ) : (
                                 <ShieldCheck size={18} className="text-gold-400/40" />
                             )}
                         </div>
-                        <div>
-                            <h3 className="font-bold text-white text-lg flex items-center gap-1.5">
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 flex-wrap">
                                 <span className="text-gold-400 text-sm font-mono tracking-wide">ID</span>
-                                <span>{storeCode || '---'}</span>
+                                <span className="truncate max-w-[9rem] sm:max-w-none">{storeCode || '---'}</span>
                             </h3>
                             <div className="flex items-center gap-2 text-sm mt-1 min-h-[20px]">
                                 {reviewCountValue > 0 ? (
@@ -167,7 +167,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                     {offerImage && (
                         <div
                             onClick={() => setIsImageModalOpen(true)}
-                            className="w-24 h-24 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 shadow-lg cursor-pointer relative group/image"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 shadow-lg cursor-pointer relative group/image"
                         >
                             <img src={offerImage} alt="Offer Part" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
@@ -177,13 +177,13 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                     )}
 
                     {/* Price Section */}
-                    <div className="text-right shrink-0">
+                    <div className="text-end shrink-0 ms-auto sm:ms-0">
                         <div className="flex flex-col items-end">
-                            <div className="text-3xl font-bold text-gold-400 number-font">
+                            <div className="text-2xl sm:text-3xl font-bold text-gold-400 number-font">
                                 {priceValue.toLocaleString()}
                                 <span className="text-sm font-medium text-white/50 ml-1">AED</span>
                             </div>
-                            <div className="text-xs text-white/40 mt-1 flex items-center gap-1 justify-end">
+                            <div className="text-xs text-white/40 mt-1 flex items-center gap-1 justify-end flex-wrap">
                                 {offersT?.finalPrice || 'Final Price'}
                                 {isShippingIncluded && (
                                     <span className="text-green-400 ml-1">
@@ -196,23 +196,23 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                 </div>
 
                 {/* Separator */}
-                <div className="h-px w-full bg-white/5 my-5" />
+                <div className="h-px w-full bg-white/5 my-4 sm:my-5" />
 
                 {/* Offer Metadata Row */}
-                <div className="flex flex-wrap items-center gap-4 mb-5 px-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.offerNumber || 'Offer No.'}</span>
-                        <span className="text-sm font-medium text-white/80 font-mono tracking-tight">{offerNumber || '---'}</span>
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-5 px-0 sm:px-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.offerNumber || 'Offer No.'}</span>
+                        <span className="text-xs sm:text-sm font-medium text-white/80 font-mono tracking-tight truncate" title={offerNumber || '---'}>{offerNumber || '---'}</span>
                     </div>
-                    <div className="w-1 h-1 rounded-full bg-white/20" />
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.storeCode || 'Store ID'}</span>
-                        <span className="text-sm font-medium text-white/80 font-mono tracking-tight">{storeCode || '---'}</span>
+                    <div className="w-1 h-1 rounded-full bg-white/20 hidden sm:block shrink-0" />
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.storeCode || 'Store ID'}</span>
+                        <span className="text-xs sm:text-sm font-medium text-white/80 font-mono tracking-tight truncate">{storeCode || '---'}</span>
                     </div>
-                    <div className="w-1 h-1 rounded-full bg-white/20" />
+                    <div className="w-1 h-1 rounded-full bg-white/20 hidden sm:block shrink-0" />
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.submittedAt || 'Date'}</span>
-                        <span className="text-sm font-medium text-white/80">
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.submittedAt || 'Date'}</span>
+                        <span className="text-xs sm:text-sm font-medium text-white/80">
                              {submittedAt
                                 ? new Date(submittedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                                 : '---'}
@@ -221,13 +221,13 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                 </div>
 
                 {/* Details Grid - Enhanced with Translation & New Fields */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
                     {/* Condition */}
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80">
+                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0">
                         <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.condition || 'Condition'}</span>
-                            <span className="text-sm font-medium">{conditionText}</span>
+                            <span className="text-sm font-medium truncate">{conditionText}</span>
                         </div>
                     </div>
 
@@ -243,11 +243,11 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                     )}
 
                     {/* Part Type */}
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80">
+                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0">
                         <Tag size={16} className="text-purple-400 shrink-0" />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.type || 'Type'}</span>
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium truncate">
                                 {offersT?.partTypes?.[(partType || 'Original').toLowerCase()] || partType || 'Original'}
                             </span>
                         </div>

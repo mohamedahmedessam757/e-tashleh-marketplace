@@ -45,15 +45,15 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
     onReset,
     hasActiveFilters,
 }) => (
-    <div className="px-4 md:px-6 py-4 border-b border-white/5 bg-gradient-to-b from-[#1A1814] to-[#13110E] shrink-0">
+    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-white/5 bg-gradient-to-b from-[#1A1814] to-[#13110E] shrink-0">
         <div className="max-w-4xl mx-auto space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center shrink-0">
                         <SlidersHorizontal size={14} className="text-gold-400" />
                     </div>
-                    <div>
-                        <p className="text-xs font-bold text-white/90">
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-white/90 truncate">
                             {isAr ? 'ترتيب وتصفية العروض' : 'Sort & filter offers'}
                         </p>
                         <p className="text-[10px] text-white/40 mt-0.5">
@@ -64,7 +64,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-[10px] font-mono text-white/45">
                         <Tag size={10} className="text-gold-500/60" />
                         {isAr ? `الحد الأقصى 10` : `Max 10`}
@@ -73,7 +73,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                         <button
                             type="button"
                             onClick={onReset}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-gold-300 bg-gold-500/10 border border-gold-500/25 hover:bg-gold-500/20 transition-colors"
+                            className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-full text-[10px] font-bold text-gold-300 bg-gold-500/10 border border-gold-500/25 hover:bg-gold-500/20 transition-colors"
                         >
                             <RotateCcw size={11} />
                             {isAr ? 'إعادة ضبط' : 'Reset'}
@@ -83,14 +83,14 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <ArrowUpDown size={12} className="text-gold-500/70" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
                             {isAr ? 'ترتيب السعر' : 'Price order'}
                         </span>
                     </div>
-                    <div className="relative flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                    <div className="relative grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                         {PRICE_SORT_OPTIONS.map((opt) => {
                             const active = priceSort === opt.id;
                             return (
@@ -98,7 +98,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => onPriceSort(opt.id)}
-                                    className={`relative flex-1 z-10 py-2 px-1 rounded-lg text-[11px] font-bold transition-colors duration-150 ${
+                                    className={`relative z-10 min-h-[40px] py-2 px-1 rounded-lg text-[10px] sm:text-[11px] font-bold leading-tight transition-colors duration-150 ${
                                         active ? 'text-black' : 'text-white/45 hover:text-white/70'
                                     }`}
                                 >
@@ -107,21 +107,21 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                             className="absolute inset-0 rounded-lg bg-gradient-to-b from-gold-400 to-gold-600 shadow-[0_2px_12px_rgba(212,175,55,0.35)]"
                                         />
                                     )}
-                                    <span className="relative z-10">{isAr ? opt.ar : opt.en}</span>
+                                    <span className="relative z-10 block text-center">{isAr ? opt.ar : opt.en}</span>
                                 </button>
                             );
                         })}
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-3">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <Shield size={12} className="text-gold-500/70" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
                             {isAr ? 'الضمان' : 'Warranty'}
                         </span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="grid grid-cols-4 gap-1.5">
                         {WARRANTY_OPTIONS.map((opt) => {
                             const active = warrantyFilter === opt.id;
                             return (
@@ -129,7 +129,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => onWarrantyFilter(opt.id)}
-                                    className={`relative overflow-hidden px-3.5 py-2 rounded-xl text-[11px] font-bold transition-colors duration-150 border ${
+                                    className={`relative overflow-hidden min-h-[40px] px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold leading-tight transition-colors duration-150 border ${
                                         active
                                             ? 'border-gold-500/50 text-gold-100 shadow-[0_0_20px_rgba(212,175,55,0.12)]'
                                             : 'border-white/[0.08] bg-white/[0.02] text-white/40 hover:border-white/15 hover:text-white/65'
@@ -138,9 +138,9 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                     {active && (
                                         <span className="absolute inset-0 bg-gradient-to-br from-gold-500/25 via-gold-600/10 to-transparent" />
                                     )}
-                                    <span className="relative flex items-center gap-1.5">
+                                    <span className="relative flex items-center justify-center gap-1">
                                         {active && (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shadow-[0_0_6px_rgba(212,175,55,0.8)]" />
+                                            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-gold-400 shadow-[0_0_6px_rgba(212,175,55,0.8)]" />
                                         )}
                                         {isAr ? opt.ar : opt.en}
                                     </span>
@@ -424,8 +424,8 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                 className="fixed inset-0 md:inset-6 lg:inset-10 z-[70] flex flex-col bg-[#13110E] md:rounded-3xl border border-white/5 shadow-2xl overflow-hidden animate-modal-snap-in"
             >
                 {/* Header */}
-                <div className="flex items-center gap-4 p-6 border-b border-white/5 bg-[#1A1814] shrink-0">
-                    <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6 border-b border-white/5 bg-[#1A1814] shrink-0">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
                         {partImage ? (
                             <img
                                 src={partImage}
@@ -447,18 +447,18 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                         </div>
                         <h2
                             id={titleId}
-                            className="text-white font-bold text-lg leading-tight truncate"
+                            className="text-white font-bold text-base sm:text-lg leading-tight truncate"
                         >
                             {partName}
                         </h2>
                         {partDescription && (
-                            <p className="text-white/50 text-sm line-clamp-1 mt-0.5">{partDescription}</p>
+                            <p className="text-white/50 text-xs sm:text-sm line-clamp-1 mt-0.5">{partDescription}</p>
                         )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <div className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/30 flex items-center justify-center font-bold text-gold-400 text-lg">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gold-500/20 border border-gold-500/30 flex items-center justify-center font-bold text-gold-400 text-base sm:text-lg">
                                 {displayedOffers.length}
                             </div>
                             <span className="text-[10px] text-white/40 mt-1 uppercase tracking-tighter">
@@ -471,7 +471,7 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                             type="button"
                             onClick={onClose}
                             aria-label={isAr ? 'إغلاق' : 'Close'}
-                            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+                            className="w-11 h-11 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                         >
                             <X size={18} />
                         </button>
