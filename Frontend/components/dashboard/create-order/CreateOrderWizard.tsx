@@ -10,7 +10,6 @@ import { VehicleDetailsStep } from './steps/VehicleDetailsStep';
 import { PartDetailsStep } from './steps/PartDetailsStep';
 import { PreferencesStep } from './steps/PreferencesStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { GlassCard } from '../../ui/GlassCard';
 import { OrderSuccessModal } from './OrderSuccessModal';
 
 interface CreateOrderWizardProps {
@@ -252,8 +251,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         })}
       </div>
 
-      {/* Main Content Card — no nested backdrop-blur (mobile dirty-band fix) */}
-      <GlassCard enableHover={false} enableBlur={false} className="bg-[#1A1814]/80 border border-gold-500/10 p-6 md:p-10 min-h-[400px] flex flex-col">
+      {/* Main Content Card — solid opaque surface (no glass/blur stacking on mobile) */}
+      <div className="no-entrance-anim bg-[#1A1814] border border-gold-500/10 rounded-2xl p-6 md:p-10 min-h-[400px] flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
         <div className="flex-1">
           <AnimatePresence mode="wait">
             {step === 1 && <VehicleDetailsStep key="step1" />}
@@ -294,7 +293,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
             </button>
           </div>
         )}
-      </GlassCard>
+      </div>
 
       <OrderSuccessModal
         isOpen={!!createdOrderId}

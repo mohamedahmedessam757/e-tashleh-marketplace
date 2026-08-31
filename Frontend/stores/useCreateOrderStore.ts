@@ -85,6 +85,8 @@ export interface OrderState {
   updatePart: (id: string, field: keyof PartItem, value: any) => void;
   addPartImage: (id: string, file: File) => void;
   removePartImage: (id: string, imageIndex: number) => void;
+  uploadPartImageNow: (partId: string, imageIndex: number) => Promise<void>;
+  uploadPartVideoNow: (partId: string) => Promise<void>;
 
   updatePreferences: (field: string, value: any) => void;
   reset: () => void;
@@ -112,6 +114,8 @@ const getInitialPart = (): PartItem => ({
 let submitInflight: Promise<string> | null = null;
 let pendingClientRequestId: string | null = null;
 let uploadInflight: Promise<void> | null = null;
+/** Coalesce concurrent uploads for the same part image/video slot */
+const slotUploadInflight = new Map<string, Promise<string>>();
 
 const newClientRequestId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -150,15 +154,29 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
 
   setStep: (step) => set({ step, showErrors: false }), // Reset errors on step change
 
-  updateVehicle: (updates) =>
+  updateVehicle: (updates) => {
     set((state) => {
       const next = { vehicle: { ...state.vehicle, ...updates } };
-      // Clear cached VIN upload when the local file changes
       if ('vinImage' in updates) {
         return { ...next, vinImageUploadedUrl: null };
       }
       return next;
-    }),
+    });
+    const vin = get().vehicle.vinImage;
+    if (vin instanceof File && !get().vinImageUploadedUrl) {
+      void (async () => {
+        try {
+          const { storageService } = await import('../services/storage');
+          const url = await storageService.uploadFile(vin, 'marketplace-uploads', 'orders/vin');
+          if (get().vehicle.vinImage === vin) {
+            set({ vinImageUploadedUrl: url });
+          }
+        } catch (err) {
+          console.error('Immediate VIN upload failed', err);
+        }
+      })();
+    }
+  },
 
   setRequestType: (type) => set((state) => {
     // Logic: If switching to single, keep only first part. If multiple, ensure at least one.
@@ -193,28 +211,40 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     return { parts: state.parts.filter(p => p.id !== id) };
   }),
 
-  updatePart: (id, field, value) => set((state) => ({
-    parts: state.parts.map(p => {
-      if (p.id !== id) return p;
-      const next = { ...p, [field]: value };
-      if (field === 'video') {
-        next.uploadedVideoUrl = null;
-      }
-      return next;
-    })
-  })),
+  updatePart: (id, field, value) => {
+    set((state) => ({
+      parts: state.parts.map(p => {
+        if (p.id !== id) return p;
+        const next = { ...p, [field]: value };
+        if (field === 'video') {
+          next.uploadedVideoUrl = null;
+        }
+        return next;
+      })
+    }));
+    // Start video upload immediately when a file is attached
+    if (field === 'video' && value instanceof File) {
+      void get().uploadPartVideoNow(id);
+    }
+  },
 
-  addPartImage: (id, file) => set((state) => ({
-    parts: state.parts.map(p =>
-      p.id === id
-        ? {
-            ...p,
-            images: [...p.images, file],
-            uploadedImageUrls: [...(p.uploadedImageUrls || []), ''],
-          }
-        : p
-    )
-  })),
+  addPartImage: (id, file) => {
+    let newIndex = -1;
+    set((state) => ({
+      parts: state.parts.map(p => {
+        if (p.id !== id) return p;
+        newIndex = p.images.length;
+        return {
+          ...p,
+          images: [...p.images, file],
+          uploadedImageUrls: [...(p.uploadedImageUrls || []), ''],
+        };
+      })
+    }));
+    if (newIndex >= 0) {
+      void get().uploadPartImageNow(id, newIndex);
+    }
+  },
 
   removePartImage: (id, imageIndex) => set((state) => ({
     parts: state.parts.map(p => {
@@ -229,6 +259,78 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     })
   })),
 
+  uploadPartImageNow: async (partId: string, imageIndex: number) => {
+    const part = get().parts.find((p) => p.id === partId);
+    const file = part?.images[imageIndex];
+    if (!file) return;
+    if (part?.uploadedImageUrls?.[imageIndex]) return;
+
+    const slotKey = `img:${partId}:${imageIndex}:${file.name}:${file.size}:${file.lastModified}`;
+    const existing = slotUploadInflight.get(slotKey);
+    if (existing) {
+      await existing;
+      return;
+    }
+
+    const job = (async () => {
+      const { storageService } = await import('../services/storage');
+      return storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${partId}`);
+    })();
+    slotUploadInflight.set(slotKey, job);
+
+    try {
+      const url = await job;
+      set((state) => ({
+        parts: state.parts.map((p) => {
+          if (p.id !== partId) return p;
+          if (p.images[imageIndex] !== file) return p;
+          const urls = [...(p.uploadedImageUrls || [])];
+          while (urls.length < p.images.length) urls.push('');
+          urls[imageIndex] = url;
+          return { ...p, uploadedImageUrls: urls };
+        }),
+      }));
+    } catch (err) {
+      console.error('Immediate part image upload failed', err);
+    } finally {
+      slotUploadInflight.delete(slotKey);
+    }
+  },
+
+  uploadPartVideoNow: async (partId: string) => {
+    const part = get().parts.find((p) => p.id === partId);
+    const file = part?.video;
+    if (!file || part?.uploadedVideoUrl) return;
+
+    const slotKey = `vid:${partId}:${file.name}:${file.size}:${file.lastModified}`;
+    const existing = slotUploadInflight.get(slotKey);
+    if (existing) {
+      await existing;
+      return;
+    }
+
+    const job = (async () => {
+      const { storageService } = await import('../services/storage');
+      return storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${partId}/video`);
+    })();
+    slotUploadInflight.set(slotKey, job);
+
+    try {
+      const url = await job;
+      set((state) => ({
+        parts: state.parts.map((p) => {
+          if (p.id !== partId) return p;
+          if (p.video !== file) return p;
+          return { ...p, uploadedVideoUrl: url };
+        }),
+      }));
+    } catch (err) {
+      console.error('Immediate part video upload failed', err);
+    } finally {
+      slotUploadInflight.delete(slotKey);
+    }
+  },
+
   updatePreferences: (field, value) =>
     set((state) => ({ preferences: { ...state.preferences, [field]: value } })),
 
@@ -236,6 +338,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     pendingClientRequestId = null;
     submitInflight = null;
     uploadInflight = null;
+    slotUploadInflight.clear();
     set({
       step: 1,
       vehicle: { make: '', model: '', year: '', vin: '', vinImage: null },
@@ -254,6 +357,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     pendingClientRequestId = null;
     submitInflight = null;
     uploadInflight = null;
+    slotUploadInflight.clear();
     set({
       step: 1,
       vehicle: {
@@ -302,6 +406,16 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           }
           part.images.forEach((file, index) => {
             if (part.uploadedImageUrls![index]) return;
+            const slotKey = `img:${part.id}:${index}:${file.name}:${file.size}:${file.lastModified}`;
+            const pending = slotUploadInflight.get(slotKey);
+            if (pending) {
+              uploadPromises.push(
+                pending.then((url) => {
+                  part.uploadedImageUrls![index] = url;
+                })
+              );
+              return;
+            }
             uploadPromises.push(
               storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${part.id}`).then((url) => {
                 part.uploadedImageUrls![index] = url;
@@ -309,11 +423,21 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
             );
           });
           if (part.video && !part.uploadedVideoUrl) {
-            uploadPromises.push(
-              storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then((url) => {
-                part.uploadedVideoUrl = url;
-              })
-            );
+            const slotKey = `vid:${part.id}:${part.video.name}:${part.video.size}:${part.video.lastModified}`;
+            const pending = slotUploadInflight.get(slotKey);
+            if (pending) {
+              uploadPromises.push(
+                pending.then((url) => {
+                  part.uploadedVideoUrl = url;
+                })
+              );
+            } else {
+              uploadPromises.push(
+                storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then((url) => {
+                  part.uploadedVideoUrl = url;
+                })
+              );
+            }
           }
           if (!part.video) {
             part.uploadedVideoUrl = null;

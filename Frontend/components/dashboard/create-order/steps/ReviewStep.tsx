@@ -4,7 +4,6 @@ import { CheckCircle2, Car, Package, Settings, AlertCircle, Loader2, Truck, Vide
 import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { usePlatformSettingsStore } from '../../../../stores/usePlatformSettingsStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { GlassCard } from '../../../ui/GlassCard';
 import { useObjectUrl } from '../../../../utils/objectUrl';
 
 interface ReviewStepProps {
@@ -44,13 +43,13 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
     const isRTL = language === 'ar';
 
     const SummaryItem = ({ icon: Icon, label, value }: { icon: React.ComponentType<{ size?: number }>; label: string; value: React.ReactNode }) => (
-        <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-            <div className="p-2 bg-white/5 rounded-lg text-white/60">
+        <div className="flex items-start gap-3 p-3 bg-[#151310] rounded-xl border border-white/10">
+            <div className="p-2 bg-[#1A1814] rounded-lg text-white/60 shrink-0">
                 <Icon size={16} />
             </div>
-            <div>
-                <div className="text-xs text-white/40 mb-1">{label}</div>
-                <div className="text-sm font-bold text-white leading-tight">{value || '-'}</div>
+            <div className="min-w-0">
+                <div className="text-xs text-white/50 mb-1">{label}</div>
+                <div className="text-sm font-bold text-white leading-tight break-words">{value || '-'}</div>
             </div>
         </div>
     );
@@ -185,14 +184,14 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
 
                     <div className="space-y-4">
                         {parts.map((p, idx) => (
-                            <GlassCard key={p.id} enableBlur={false} className="bg-white/5 border border-white/10 p-4 relative">
+                            <div key={p.id} className="bg-[#151310] border border-white/10 rounded-2xl p-4 relative">
                                 <span className="absolute top-4 right-4 text-xs font-bold text-white/30">#{idx + 1}</span>
                                 <h4 className="font-bold text-gold-400 mb-2">{p.name}</h4>
-                                <div className="text-sm text-white/80 mb-3 bg-black/20 p-3 rounded-lg overflow-hidden text-ellipsis">
+                                <div className="text-sm text-white/80 mb-3 bg-[#0F0E0C] p-3 rounded-lg overflow-hidden text-ellipsis">
                                     {p.description}
                                 </div>
                                 {p.notes && (
-                                    <div className="text-xs text-white/50 mb-3 italic bg-white/5 p-2 rounded">
+                                    <div className="text-xs text-white/50 mb-3 italic bg-[#1A1814] p-2 rounded">
                                         <span className="text-gold-500/70 mr-1">{isRTL ? "ملاحظات:" : "Notes:"}</span>
                                         "{p.notes}"
                                     </div>
@@ -217,7 +216,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                                         )}
                                     </div>
                                 )}
-                            </GlassCard>
+                            </div>
                         ))}
                     </div>
 
