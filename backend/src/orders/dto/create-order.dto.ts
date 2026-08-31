@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateNested, IsArray, ArrayMinSize } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateNested, IsArray, ArrayMinSize, ArrayMaxSize, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOrderPartDto {
@@ -28,8 +28,8 @@ export class CreateOrderPartDto {
 export class CreateOrderDto {
     // Top-level fields from Frontend Store
     @IsString()
-    @IsOptional()
-    requestType?: string;
+    @IsIn(['single', 'multiple'])
+    requestType: 'single' | 'multiple';
 
     @IsString()
     @IsOptional()
@@ -60,6 +60,7 @@ export class CreateOrderDto {
     @IsArray()
     @ValidateNested({ each: true })
     @ArrayMinSize(1)
+    @ArrayMaxSize(10)
     @Type(() => CreateOrderPartDto)
     parts: CreateOrderPartDto[];
 

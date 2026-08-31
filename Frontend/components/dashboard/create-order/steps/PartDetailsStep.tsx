@@ -1,10 +1,11 @@
 import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, FileText, UploadCloud, X, Plus, Trash2, AlertTriangle, Info, Truck, Video, AlertCircle, Camera } from 'lucide-react';
-import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
+import { useCreateOrderStore, MAX_PARTS_PER_ORDER } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
 import { useObjectUrl } from '../../../../utils/objectUrl';
+import { normalizePartName } from '../../../../utils/normalizePartName';
 
 const PartImagePreview: React.FC<{
   file: File;
@@ -108,7 +109,7 @@ export const PartDetailsStep: React.FC = () => {
             onClick={() => setRequestType('multiple')}
             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${requestType === 'multiple' ? 'bg-gold-500 text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
           >
-            {isRTL ? "عدة قطع (حتى 12)" : "Multiple Parts (up to 12)"}
+            {isRTL ? `عدة قطع (حتى ${MAX_PARTS_PER_ORDER})` : `Multiple Parts (up to ${MAX_PARTS_PER_ORDER})`}
           </button>
         </div>
       </div>
@@ -153,8 +154,8 @@ export const PartDetailsStep: React.FC = () => {
                   <Info size={20} className="shrink-0 mt-1" />
                   <p className="whitespace-pre-line">
                     {isRTL
-                      ? <>خيار تجميع الطلبات يتييح شحن من قطعتين الى 12 قطعة في شحنه واحدة بدلا من شحن كل قطعة لوحدها ،<br />على ان لاتبقى في سلتك لتجميع الشحنات أكثر من 7 أيام<br />ولو لم تقم بطلب الشحن قبل ذلك تشحن تلقائياً.</>
-                      : "Combined shipping allows 2-12 items in one shipment instead of shipping each part separately.\nItems can remain in your consolidation cart for up to 7 days.\nIf not shipped by then, they will be shipped automatically."
+                      ? <>خيار تجميع الطلبات يتييح شحن من قطعتين الى {MAX_PARTS_PER_ORDER} قطع في شحنه واحدة بدلا من شحن كل قطعة لوحدها ،<br />على ان لاتبقى في سلتك لتجميع الشحنات أكثر من 7 أيام<br />ولو لم تقم بطلب الشحن قبل ذلك تشحن تلقائياً.</>
+                      : `Combined shipping allows 2-${MAX_PARTS_PER_ORDER} items in one shipment instead of shipping each part separately.\nItems can remain in your consolidation cart for up to 7 days.\nIf not shipped by then, they will be shipped automatically.`
                     }
                   </p>
                 </div>
@@ -204,6 +205,21 @@ export const PartDetailsStep: React.FC = () => {
                   <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-red-500 text-xs flex items-center gap-1 mt-2 font-medium">
                     <AlertCircle size={14} />
                     {isRTL ? 'يرجى إدخال اسم القطعة' : 'Please enter part name'}
+                  </motion.p>
+                )}
+                {requestType === 'multiple' &&
+                  part.name.trim() &&
+                  parts.some(
+                    (other, i) =>
+                      i !== index &&
+                      normalizePartName(other.name) === normalizePartName(part.name),
+                  ) && (
+                  <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-red-400 text-xs flex items-start gap-1 mt-2 font-medium whitespace-pre-line">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                    {t.dashboard.createOrder.rules?.duplicatePartName ||
+                      (isRTL
+                        ? 'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.'
+                        : 'You cannot add the same part more than once in this request.\nPlease add a different part.')}
                   </motion.p>
                 )}
               </div>
@@ -356,7 +372,7 @@ export const PartDetailsStep: React.FC = () => {
       {/* Add Part Button */}
       {requestType === 'multiple' && (
         <div className="space-y-4">
-          {parts.length < 12 && (
+          {parts.length < MAX_PARTS_PER_ORDER && (
             <button
               onClick={addPart}
               className={`w-full py-4 rounded-xl border-2 border-dashed transition-all flex items-center justify-center gap-2 font-medium ${showErrors && parts.length < 2 ? 'border-red-500 bg-red-500/10 text-red-400 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'border-white/10 hover:border-gold-500/50 hover:bg-gold-500/5 text-white/60 hover:text-gold-400'}`}

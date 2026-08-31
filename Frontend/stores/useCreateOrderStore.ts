@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import { isDuplicatePartNameAmong } from '../utils/normalizePartName';
 
 export const CREATE_ORDER_PREFILL_KEY = 'create_order_prefill';
+export const MAX_PARTS_PER_ORDER = 10;
 
 export interface CreateOrderPrefillPayload {
   make: string;
@@ -194,9 +196,11 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   setShippingType: (type) => set({ shippingType: type }),
 
   addPart: () => set((state) => {
-    if (state.parts.length >= 12) {
-      alert("عذراً، لا يمكنك إضافة أكثر من 12 قطعة في الطلب الواحد.\nSorry, you cannot add more than 12 parts per order.");
-      return state; // Max 12
+    if (state.parts.length >= MAX_PARTS_PER_ORDER) {
+      alert(
+        `عذراً، لا يمكنك إضافة أكثر من ${MAX_PARTS_PER_ORDER} قطع في الطلب الواحد.\nSorry, you cannot add more than ${MAX_PARTS_PER_ORDER} parts per order.`,
+      );
+      return state;
     }
     return {
       parts: [
@@ -212,6 +216,17 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   }),
 
   updatePart: (id, field, value) => {
+    if (field === 'name' && typeof value === 'string') {
+      const state = get();
+      const idx = state.parts.findIndex((p) => p.id === id);
+      const otherNames = state.parts.map((p) => p.name);
+      if (isDuplicatePartNameAmong(value, otherNames, idx >= 0 ? idx : undefined)) {
+        alert(
+          'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.\n\nYou cannot add the same part more than once in this request.\nPlease add a different part.',
+        );
+        return;
+      }
+    }
     set((state) => ({
       parts: state.parts.map(p => {
         if (p.id !== id) return p;
