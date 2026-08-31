@@ -52,7 +52,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                         transition={{ type: 'tween', duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
                         className={`
               fixed top-0 bottom-0 ${isAr ? 'right-0' : 'left-0'}
-              w-[280px] bg-[#151310] border-r border-white/10 z-50
+              w-[280px] bg-[#151310] border-e border-white/10 z-50
               flex flex-col shadow-2xl
             `}
                     >
@@ -105,7 +105,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                                         <span className="font-medium text-sm">{item.label}</span>
 
                                         {currentPath === item.id && (
-                                            <div className={`w-1.5 h-1.5 rounded-full bg-gold-400 ${isAr ? 'mr-auto' : 'ml-auto'}`} />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-gold-400 ms-auto" />
                                         )}
                                     </button>
                                 );

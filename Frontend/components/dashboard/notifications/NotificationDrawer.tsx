@@ -171,8 +171,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         if (uid) markAllAsRead(uid, role);
     }, [markAllAsRead, role]);
 
-    // Single light slide — no spring, no blur, no per-row layout animations
-    const slideFrom = isAr ? '-100%' : '100%';
+    // Match NavigationDrawer: AR from right, EN from left
+    const slideFrom = isAr ? '100%' : '-100%';
 
     return (
         <AnimatePresence>
@@ -192,7 +192,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                         animate={{ x: 0 }}
                         exit={{ x: slideFrom }}
                         transition={{ type: 'tween', duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-                        className={`absolute top-0 bottom-0 ${isAr ? 'left-0' : 'right-0'} w-full max-w-[400px] bg-[#0A0A0A] border-x border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[110] flex flex-col`}
+                        className={`absolute top-0 bottom-0 ${isAr ? 'right-0' : 'left-0'} w-full max-w-[400px] bg-[#0A0A0A] border-e border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[110] flex flex-col`}
                     >
                         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0F0E0C]">
                             <div className="flex items-center gap-3">

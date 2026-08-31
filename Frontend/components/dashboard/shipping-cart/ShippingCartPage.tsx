@@ -75,7 +75,7 @@ export const ShippingCartPage: React.FC = () => {
     }, [items, selectedOfferIds]);
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto pb-56 md:pb-48">
+        <div className="space-y-6 md:space-y-8 max-w-4xl mx-auto pb-56 md:pb-48 min-w-0 px-0">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -167,7 +167,7 @@ export const ShippingCartPage: React.FC = () => {
                 <motion.div
                     initial={{ y: 100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="fixed bottom-0 left-0 right-0 bg-[#0a0f1a]/95 backdrop-blur-2xl border-t border-white/10 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+                    className="fixed bottom-0 inset-x-0 bg-[#0a0f1a]/95 backdrop-blur-2xl border-t border-white/10 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pb-[env(safe-area-inset-bottom)]"
                 >
                     <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-6">
                         <div className="flex-1 w-full flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">

@@ -79,7 +79,7 @@ export const InfoCenter: React.FC = () => {
 
         {/* Content Area */}
         <div className="lg:col-span-3">
-          <GlassCard className="min-h-[500px] p-6 md:p-10 bg-[#1A1814]/80">
+          <GlassCard className="min-h-0 md:min-h-[500px] p-4 md:p-10 bg-[#1A1814]/80 min-w-0">
             <AnimatePresence mode="wait">
 
               {/* ABOUT */}
@@ -202,7 +202,7 @@ export const InfoCenter: React.FC = () => {
                   <h2 className="text-2xl font-bold text-white mb-6">{t.dashboard.infoCenter.tabs.contact}</h2>
 
                   {/* Contact Info Cards */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                     <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center gap-3">
                       <div className="p-2 bg-gold-500/20 text-gold-400 rounded-lg"><Mail size={20} /></div>
                       <div>
@@ -220,7 +220,7 @@ export const InfoCenter: React.FC = () => {
                   </div>
 
                   {showSuccess ? (
-                    <div className="p-8 bg-green-500/10 border border-green-500/20 rounded-xl text-center flex flex-col items-center">
+                    <div className="p-4 md:p-8 bg-green-500/10 border border-green-500/20 rounded-xl text-center flex flex-col items-center">
                       <CheckCircle2 size={48} className="text-green-400 mb-4" />
                       <h3 className="text-xl font-bold text-white mb-2">{t.support.successTitle}</h3>
                       <p className="text-white/60">{t.support.successMessage}</p>

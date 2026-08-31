@@ -186,11 +186,11 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                     <div className="flex flex-col gap-2 w-full md:w-auto">
                         <label className="text-xs font-bold text-white/50 px-1">{language === 'ar' ? 'البحث في الطلبات' : 'Search in orders'}</label>
                         <div className="relative w-full md:w-64">
-                            <Search size={16} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/30" />
+                            <Search size={16} className="absolute top-1/2 -translate-y-1/2 start-3 text-white/30" />
                             <input
                                 type="text"
                                 placeholder={(t.dashboard.orders as any).searchPlaceholder || (language === 'ar' ? 'بحث عن الطلبات...' : 'Search orders...')}
-                                className="bg-black/20 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-gold-500/50 w-full placeholder:text-white/20"
+                                className="bg-black/20 border border-white/10 rounded-xl py-2.5 ps-10 pe-4 text-sm text-white focus:outline-none focus:border-gold-500/50 w-full placeholder:text-white/20"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -202,11 +202,11 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                         <div className="flex flex-col gap-2 w-full sm:w-auto">
                             <label className="text-xs font-bold text-white/50 px-1">{language === 'ar' ? 'فلترة حسب الحالة' : 'Filter by Status'}</label>
                             <div className="relative">
-                                <Filter size={14} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/40" />
+                                <Filter size={14} className="absolute top-1/2 -translate-y-1/2 start-3 text-white/40" />
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 pl-9 pr-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
+                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 ps-9 pe-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
                                     style={{ colorScheme: 'dark' }}
                                 >
                                     <option value="ALL" className="text-black bg-white">{language === 'ar' ? 'جميع الحالات' : 'All Statuses'}</option>
@@ -222,11 +222,11 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                         <div className="flex flex-col gap-2 w-full sm:w-auto">
                             <label className="text-xs font-bold text-white/50 px-1">{language === 'ar' ? 'فلترة حسب العروض' : 'Filter by Offers'}</label>
                             <div className="relative">
-                                <Tag size={14} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/40" />
+                                <Tag size={14} className="absolute top-1/2 -translate-y-1/2 start-3 text-white/40" />
                                 <select
                                     value={offersFilter}
                                     onChange={(e) => setOffersFilter(e.target.value)}
-                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 pl-9 pr-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
+                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 ps-9 pe-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
                                     style={{ colorScheme: 'dark' }}
                                 >
                                     <option value="ALL" className="text-black bg-white">{language === 'ar' ? 'جميع الطلبات' : 'All Orders'}</option>
@@ -241,11 +241,11 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                         <div className="flex flex-col gap-2 w-full sm:w-auto">
                             <label className="text-xs font-bold text-white/50 px-1">{language === 'ar' ? 'الدفع' : 'Payment'}</label>
                             <div className="relative">
-                                <CreditCard size={14} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/40" />
+                                <CreditCard size={14} className="absolute top-1/2 -translate-y-1/2 start-3 text-white/40" />
                                 <select
                                     value={paymentFilter}
                                     onChange={(e) => setPaymentFilter(e.target.value)}
-                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 pl-9 pr-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
+                                    className="bg-black/20 border border-white/10 rounded-xl py-2.5 ps-9 pe-8 text-sm text-white focus:outline-none appearance-none cursor-pointer w-full sm:w-auto hover:border-white/20"
                                     style={{ colorScheme: 'dark' }}
                                 >
                                     <option value="ALL" className="text-black bg-white">{language === 'ar' ? 'الكل' : 'All'}</option>
@@ -275,14 +275,14 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                     enableBlur={false}
                                     className={`
                             p-6 cursor-pointer hover:border-gold-500/30 transition-all group bg-[#151310]
-                            ${language === 'ar' ? 'border-r-4' : 'border-l-4'}
-                            ${order.status === 'COMPLETED' ? 'border-r-green-500' :
-                                            order.status === 'SHIPPED' ? 'border-r-purple-500' : 
-                                                order.status === 'AWAITING_PAYMENT' ? 'border-r-orange-500' :
-                                                    isOrderExpired(order) ? 'border-r-red-500' : 
-                                                    ['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(order.status) ? 'border-r-yellow-500' :
-                                                            order.status === 'CANCELLED' ? 'border-r-gray-600' :
-                                                                'border-r-gold-500'}
+                            border-s-4
+                            ${order.status === 'COMPLETED' ? 'border-s-green-500' :
+                                            order.status === 'SHIPPED' ? 'border-s-purple-500' : 
+                                                order.status === 'AWAITING_PAYMENT' ? 'border-s-orange-500' :
+                                                    isOrderExpired(order) ? 'border-s-red-500' : 
+                                                    ['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(order.status) ? 'border-s-yellow-500' :
+                                                            order.status === 'CANCELLED' ? 'border-s-gray-600' :
+                                                                'border-s-gold-500'}
                         `}
                                     onClick={() => onNavigate('order-details', order.id)}
                                     >
@@ -310,7 +310,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between md:justify-end gap-6 pl-16 md:pl-0">
+                                            <div className="flex items-center justify-between md:justify-end gap-4 md:gap-6 ps-0 md:ps-0 min-w-0 flex-wrap">
                                                 <div className="flex flex-col items-end gap-2">
                                                     {/* Always show actual status badge */}
                                                     <div className="flex items-center gap-2">

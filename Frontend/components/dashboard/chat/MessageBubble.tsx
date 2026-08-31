@@ -56,7 +56,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAcceptO
         >
           {/* Support Ticket Card Layout */}
           {(message.subject || message.priority) ? (
-            <div className="flex flex-col w-full min-w-[320px]">
+            <div className="flex flex-col w-full min-w-0 max-w-full">
               {/* Card Header */}
               <div className="p-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">

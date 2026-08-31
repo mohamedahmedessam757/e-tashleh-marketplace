@@ -1296,7 +1296,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             </div>
 
             {/* 2. Main Grid: Actions/Offers (Left) vs Summary (Right) */}
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-4 md:gap-8 min-w-0">
 
                 {/* Main Content Area (Offers, Tracking, etc) - Spans 2 cols */}
                 <div className="lg:col-span-2 space-y-6">

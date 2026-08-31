@@ -234,7 +234,7 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
                         className="space-y-8"
                     >
                         {/* Score Overview */}
-                        <GlassCard className="p-8 border-white/5 overflow-hidden relative group">
+                        <GlassCard className="p-4 md:p-8 border-white/5 overflow-hidden relative group">
                 <div className={`absolute top-0 right-0 w-64 h-64 ${scoreInfo.bg} blur-[120px] -z-10 transition-colors duration-1000`} />
                 
                 <div className="flex flex-col lg:flex-row justify-between items-center gap-12">
@@ -297,7 +297,7 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
 
                 <div className="grid gap-4">
                     {myViolations.length > 0 ? myViolations.map((v) => (
-                        <GlassCard key={v.id} className={`p-8 border-white/5 hover:border-white/10 transition-all relative group ${highlightId === v.id ? 'ring-2 ring-gold-500/50 border-gold-500/40' : ''}`}>
+                        <GlassCard key={v.id} className={`p-4 md:p-8 border-white/5 hover:border-white/10 transition-all relative group ${highlightId === v.id ? 'ring-2 ring-gold-500/50 border-gold-500/40' : ''}`}>
                             {/* Card Background Glow */}
                             <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -537,8 +537,8 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
                                         <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{vt.guidelines.typeTable.title}</h4>
                                     </div>
 
-                                    <div className="overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.02]">
-                                        <table className="w-full text-left">
+                                    <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-white/[0.02]">
+                                        <table className="w-full text-left min-w-[520px]">
                                             <thead>
                                                 <tr className="border-b border-white/5 bg-white/5">
                                                     <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.typeTable.name}</th>
@@ -579,8 +579,8 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
                                         <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{vt.guidelines.thresholdTable.title}</h4>
                                     </div>
 
-                                    <div className="overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.02]">
-                                        <table className="w-full text-left">
+                                    <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-white/[0.02]">
+                                        <table className="w-full text-left min-w-[520px]">
                                             <thead>
                                                 <tr className="border-b border-white/5 bg-white/5">
                                                     <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.thresholdTable.points}</th>

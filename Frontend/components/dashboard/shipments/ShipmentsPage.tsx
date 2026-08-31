@@ -21,15 +21,15 @@ export const ShipmentsPage: React.FC<{ onNavigate?: (path: string, id?: any) => 
     }, [fetchShipments, startRealtime, stopRealtime]);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8 min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <Truck className="text-purple-400" size={32} />
-                        {t.dashboard.menu.shipments}
+            <div className="flex flex-wrap items-start sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                        <Truck className="text-purple-400 shrink-0" size={28} />
+                        <span className="truncate">{t.dashboard.menu.shipments}</span>
                     </h1>
-                    <p className="text-white/50 mt-2">{t.dashboard.shipments?.subtitle || (isAr ? 'تتبع شحناتك ومعرفة موقعها الحالي' : 'Track your shipments and their current status')}</p>
+                    <p className="text-white/50 mt-2 text-sm md:text-base">{t.dashboard.shipments?.subtitle || (isAr ? 'تتبع شحناتك ومعرفة موقعها الحالي' : 'Track your shipments and their current status')}</p>
                 </div>
                 <button 
                     onClick={fetchShipments} 
