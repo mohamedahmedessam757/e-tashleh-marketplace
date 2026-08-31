@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { OrderActiveSla } from '../../types/orderSla';
 import { useOrderActiveSla } from '../../hooks/useOrderActiveSla';
+import { getServerNowMs } from '../../utils/serverClock';
+import { ordersApi } from '../../services/api/orders';
+import { useOrderStore } from '../../stores/useOrderStore';
 
 type OrderLike = Parameters<typeof useOrderActiveSla>[0];
 
@@ -34,6 +37,15 @@ const TERMINAL_STATUSES = new Set([
   'RESOLVED',
   'WARRANTY_EXPIRED',
   'RETURNED',
+]);
+
+/** Statuses the backend enforceExpiredSla endpoint may cancel */
+const ENFORCEABLE_STATUSES = new Set([
+  'AWAITING_OFFERS',
+  'COLLECTING_OFFERS',
+  'AWAITING_SELECTION',
+  'AWAITING_PAYMENT',
+  'PARTIALLY_PAID',
 ]);
 
 const URGENCY_STYLES = {
@@ -71,6 +83,24 @@ function formatRemaining(ms: number) {
   return { h, m, s };
 }
 
+/** Module-level coalesce so list + detail don't double-hit the API */
+const enforceInflight = new Set<string>();
+
+async function enforceIfExpired(order: OrderLike) {
+  if (!order?.id) return;
+  if (!ENFORCEABLE_STATUSES.has(String(order.status || ''))) return;
+  const id = String(order.id);
+  if (enforceInflight.has(id)) return;
+  enforceInflight.add(id);
+  try {
+    await ordersApi.enforceExpiredSla(id);
+    await useOrderStore.getState().fetchOrder(id);
+  } catch (err) {
+    console.warn('[OrderStatusCountdown] enforceExpiredSla failed', err);
+    enforceInflight.delete(id);
+  }
+}
+
 export const OrderStatusCountdown: React.FC<Props> = ({
   activeSla: activeSlaProp,
   order,
@@ -88,20 +118,43 @@ export const OrderStatusCountdown: React.FC<Props> = ({
     [sla?.endsAt],
   );
 
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => getServerNowMs());
+  const enforcedForEndRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!endsAtMs || isTerminal) return;
-    // Compact list mode: 30s tick; detail/hero keep 1s
+    // Compact list mode: 30s visual tick; detail/hero keep 1s
     const ms = variant === 'compact' ? 30000 : 1000;
-    const id = window.setInterval(() => setNow(Date.now()), ms);
-    return () => window.clearInterval(id);
+    const tick = () => setNow(getServerNowMs());
+    tick();
+    const id = window.setInterval(tick, ms);
+    // Fire once at deadline so list rows enforce without waiting for the next 30s tick
+    const remaining = endsAtMs - getServerNowMs();
+    let deadlineId: number | undefined;
+    if (remaining > 0) {
+      deadlineId = window.setTimeout(tick, Math.min(remaining + 50, 2_147_000_000));
+    }
+    return () => {
+      window.clearInterval(id);
+      if (deadlineId != null) window.clearTimeout(deadlineId);
+    };
   }, [endsAtMs, isTerminal, variant]);
+
+  const remainingMs = endsAtMs != null ? endsAtMs - now : null;
+  const isExpired =
+    remainingMs != null && (remainingMs <= 0 || sla?.urgency === 'expired');
+
+  // Near-realtime transition: ask server when display clock hits zero
+  useEffect(() => {
+    if (!isExpired || !order?.id || isTerminal) return;
+    const key = `${order.id}:${endsAtMs}`;
+    if (enforcedForEndRef.current === key) return;
+    enforcedForEndRef.current = key;
+    void enforceIfExpired(order);
+  }, [isExpired, order, isTerminal, endsAtMs]);
 
   if (isTerminal || !sla || !endsAtMs) return null;
 
-  const remainingMs = endsAtMs - now;
-  const isExpired = remainingMs <= 0 || sla.urgency === 'expired';
   // Hide countdown once the window has elapsed (parent should refetch to CANCELLED)
   if (isExpired) return null;
 
@@ -117,7 +170,7 @@ export const OrderStatusCountdown: React.FC<Props> = ({
     slaBucket?.[labelKey] ??
     (isAr ? 'الوقت المتبقي' : 'Time remaining');
 
-  const { h, m, s } = formatRemaining(remainingMs);
+  const { h, m, s } = formatRemaining(remainingMs!);
 
   const progress = sla.progressPercent ?? 0;
   const ringRadius = variant === 'hero' ? 36 : 14;

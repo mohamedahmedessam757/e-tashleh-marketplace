@@ -584,7 +584,7 @@ export class OrderCleanupService {
         const now = new Date();
         const expiredOrders = await this.prisma.order.findMany({
             where: {
-                status: OrderStatus.AWAITING_PAYMENT,
+                status: { in: [OrderStatus.AWAITING_PAYMENT, OrderStatus.PARTIALLY_PAID] },
                 OR: [
                     { paymentDeadlineAt: { lte: now } },
                     { paymentDeadlineAt: null },

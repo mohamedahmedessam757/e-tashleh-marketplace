@@ -8,13 +8,14 @@ type OrderLike = {
   status?: string;
   selectionDeadlineAt?: string | null;
   paymentDeadlineAt?: string | null;
+  revealOffersAt?: string | null;
   createdAt?: string;
   date?: string;
   updatedAt?: string | null;
 } | null | undefined;
 
 /**
- * When selection/payment SLA has elapsed client-side but status is still open,
+ * When selection/payment/collection SLA has elapsed (server clock) but status is still open,
  * immediately ask the backend to cancel (idempotent). Cron remains the safety net.
  */
 export function useEnforceExpiredOrderSla(order: OrderLike) {
@@ -31,11 +32,10 @@ export function useEnforceExpiredOrderSla(order: OrderLike) {
       try {
         const result = await ordersApi.enforceExpiredSla(order.id!);
         if (cancelled) return;
-        if (result?.changed) {
-          await useOrderStore.getState().fetchOrder(order.id!);
-        } else {
-          // Status may already be cancelled via cron/realtime — refresh once.
-          await useOrderStore.getState().fetchOrder(order.id!);
+        // Always refresh — cron/realtime may have won the race
+        await useOrderStore.getState().fetchOrder(order.id!);
+        if (!result?.changed) {
+          // keep inFlight so we don't hammer; cleared when status changes
         }
       } catch (err) {
         console.warn('[useEnforceExpiredOrderSla] failed', err);
@@ -51,6 +51,7 @@ export function useEnforceExpiredOrderSla(order: OrderLike) {
     order?.status,
     order?.selectionDeadlineAt,
     order?.paymentDeadlineAt,
+    order?.revealOffersAt,
     order?.updatedAt,
   ]);
 }

@@ -16,7 +16,9 @@ export class MaintenanceGuard implements CanActivate {
       url.includes('/auth/') ||
       url.includes('/platform-settings') ||
       url.includes('/system/') ||
-      url.includes('/public/documents/')
+      url.includes('/public/documents/') ||
+      url.includes('/meta/server-time') ||
+      url.includes('/health')
     ) {
       return true;
     }

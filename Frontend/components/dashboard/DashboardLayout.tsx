@@ -21,6 +21,7 @@ import { RestrictionAlertBanner } from './shared/RestrictionAlertBanner';
 import { getCurrentUserId } from '../../utils/auth';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
 import { refreshOrderSlaFromApi } from '../../utils/orderSla';
+import { syncServerClock } from '../../utils/serverClock';
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -180,6 +181,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // CUSTOMER & MERCHANT & ADMIN DATA WATCHER
   const vendorStoreId = useVendorStore((s) => s.storeId);
+
+  // Align countdown clocks with server (display only; transitions stay server-authoritative)
+  useEffect(() => {
+    void syncServerClock(true);
+    const id = window.setInterval(() => {
+      void syncServerClock();
+    }, 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     // Reset the store if role changed to prevent data leakage between roles
     const orderStore = useOrderStore.getState();

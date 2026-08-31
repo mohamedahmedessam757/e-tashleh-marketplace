@@ -111,13 +111,27 @@ export class OrderSlaService {
         );
       }
 
-      case OrderStatus.PARTIALLY_PAID:
+      case OrderStatus.PARTIALLY_PAID: {
+        const partialPayDeadlineMs = this.toMs(order.paymentDeadlineAt);
+        const partialPayStartedMs =
+          this.toMs(order.offerAcceptedAt) ??
+          this.toMs(order.updatedAt) ??
+          this.toMs(order.createdAt);
+        if (partialPayDeadlineMs != null && partialPayStartedMs != null) {
+          return this.buildSlaUntil(
+            status,
+            'sla.payment',
+            partialPayStartedMs,
+            partialPayDeadlineMs,
+          );
+        }
         return this.buildSla(
           status,
           'sla.payment',
-          this.toMs(order.updatedAt) ?? this.toMs(order.createdAt),
+          partialPayStartedMs,
           this.durationConfig.hoursToMs(cfg.paymentTimeoutHours),
         );
+      }
 
       case OrderStatus.PREPARATION:
         return this.buildSla(

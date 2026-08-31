@@ -1,4 +1,5 @@
 import type { Order } from '../stores/useOrderStore';
+import { getServerNowMs } from './serverClock';
 
 /** Open marketplace orders a merchant can still bid on (selection phase is closed) */
 export const MERCHANT_MARKETPLACE_OPEN_STATUSES = [
@@ -35,7 +36,7 @@ export function isEligibleMerchantIncomingOrder(order: {
         return false;
     }
 
-    const now = Date.now();
+    const now = getServerNowMs();
     if (order.offersStopAt) {
         const stop = new Date(order.offersStopAt).getTime();
         if (!Number.isNaN(stop) && stop <= now) return false;
