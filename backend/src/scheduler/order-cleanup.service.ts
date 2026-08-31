@@ -47,16 +47,24 @@ export class OrderCleanupService {
             await this.handleCriticalPreparationFailures();
             await this.handleNonMatchingToCorrection();
             await this.handleCorrectionPeriodExpiry();
+            // Formerly hourly — keep ≤1 minute lag when nobody has the order open
+            await this.handleOfferAutoCompletion();
+            await this.handleSingleItemOrderAutoCompletion();
+            await this.handleAssemblyCartExpiry();
+            await this.expireActiveWarranties();
         });
         if (!ran) this.logger.debug('Order cleanup skipped (locked by another instance).');
     }
 
-    // Run every hour to auto-complete offers after return window (multi-item) and single-item orders
+    // Safety-net duplicate (idempotent handlers). Primary path is the minute cron above.
     @Cron(CronExpression.EVERY_HOUR)
     async handleDeliveredReturnsAutoCompletion() {
-        this.logger.debug('Running Delivered Orders Auto-Completion Job...');
-        await this.handleOfferAutoCompletion();
-        await this.handleSingleItemOrderAutoCompletion();
+        this.logger.debug('Running Delivered Orders Auto-Completion Job (hourly safety net)...');
+        const { ran } = await this.cronLock.runWithLock('order-cleanup-delivered-hourly', async () => {
+            await this.handleOfferAutoCompletion();
+            await this.handleSingleItemOrderAutoCompletion();
+        });
+        if (!ran) this.logger.debug('Delivered auto-completion skipped (locked).');
     }
 
     /** Remind customers ~2 hours before per-offer return window expires (with catch-up) */
@@ -268,10 +276,18 @@ export class OrderCleanupService {
         }
     }
 
-    // Run every hour to check PREPARATION (assembly cart) items for 7-day limits and reminders
+    // Safety-net for assembly cart (primary path runs every minute)
     @Cron(CronExpression.EVERY_HOUR)
     async handleAssemblyCartCron() {
-        this.logger.debug('Running Assembly Cart Auto-Ship & Notifications Job...');
+        this.logger.debug('Running Assembly Cart Auto-Ship & Notifications Job (hourly safety net)...');
+        const { ran } = await this.cronLock.runWithLock('order-cleanup-assembly-hourly', async () => {
+            await this.handleAssemblyCartExpiry();
+        });
+        if (!ran) this.logger.debug('Assembly cart cron skipped (locked).');
+    }
+
+    private async handleAssemblyCartExpiry() {
+        this.logger.debug('Checking assembly-cart / long prep timeouts...');
         const now = new Date();
         const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
         const assemblyHoursLimit = assemblyDays * 24;
@@ -306,7 +322,7 @@ export class OrderCleanupService {
 
                         if (pendingOfferIds.length > 0) {
                             // Force shipment of remaining items
-                            await this.ordersService.requestShipping(order.customerId, [], pendingOfferIds);
+                            await this.ordersService.requestShipping(order.customerId, [], pendingOfferIds, true);
                             
                             // Notify Customer
                             await this.notificationsService.create({
@@ -383,6 +399,35 @@ export class OrderCleanupService {
                 }
             } catch (err) {
                 this.logger.error(`Error processing assembly cart auto-ship for order ${order.id}:`, err);
+            }
+        }
+    }
+
+    private async expireActiveWarranties() {
+        const now = new Date();
+        const expiredOrders = await this.prisma.order.findMany({
+            where: {
+                status: OrderStatus.WARRANTY_ACTIVE,
+                warranty_end_at: { lt: now },
+            },
+            select: {
+                id: true,
+                orderNumber: true,
+                customerId: true,
+                storeId: true,
+                store: { select: { ownerId: true } },
+            },
+        });
+
+        for (const order of expiredOrders) {
+            try {
+                await this.ordersService.enforceExpiredSla(order.id, {
+                    type: ActorType.SYSTEM,
+                    id: 'system-scheduler',
+                    name: 'System Scheduler',
+                });
+            } catch (err) {
+                this.logger.error(`Failed warranty enforce for ${order.id}:`, err);
             }
         }
     }

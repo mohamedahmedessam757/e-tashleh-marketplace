@@ -1213,14 +1213,15 @@ export class OrdersService {
                         fulfillmentStatus: true,
                         deliveredAt: true,
                         resolutionLocked: true,
+                        shippedFromCart: true,
                     },
                 },
                 parts: { select: { id: true, name: true } },
                 payments: {
-                    where: { status: 'COMPLETED' },
+                    where: { status: { in: ['SUCCESS', 'COMPLETED'] } },
                     orderBy: { createdAt: 'asc' },
                     take: 1,
-                    select: { createdAt: true, status: true },
+                    select: { createdAt: true, paidAt: true, status: true },
                 },
                 store: { select: { id: true, ownerId: true } },
             },
@@ -1282,6 +1283,7 @@ export class OrdersService {
                 );
                 return { changed: true, order: updated, reason: 'revealed_selection' };
             }
+            // Legacy AWAITING_OFFERS cannot FSM-transition to AWAITING_SELECTION
             return { changed: false, order, reason: 'not_expired' };
         }
 
@@ -1350,8 +1352,73 @@ export class OrdersService {
             return { changed: true, order: updated, reason: 'cancelled_payment' };
         }
 
-        // --- Preparation → delayed ---
+        // --- Preparation: assembly-cart hard limit, then 48h → delayed ---
         if (status === OrderStatus.PREPARATION) {
+            const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
+            const assemblyMs = assemblyDays * 24 * 60 * 60 * 1000;
+            const paidAtMs =
+                (order.payments[0]?.paidAt
+                    ? new Date(order.payments[0].paidAt).getTime()
+                    : null) ??
+                (order.payments[0]?.createdAt
+                    ? new Date(order.payments[0].createdAt).getTime()
+                    : null) ??
+                new Date(order.updatedAt).getTime();
+
+            if (Date.now() - paidAtMs >= assemblyMs) {
+                if (String(order.requestType || '').toLowerCase() === 'multiple') {
+                    const pendingOfferIds = order.offers
+                        .filter((o) => o.status === 'accepted' && !o.shippedFromCart)
+                        .map((o) => o.id);
+                    if (pendingOfferIds.length > 0) {
+                        await this.requestShipping(order.customerId, [], pendingOfferIds, true);
+                    }
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: true,
+                        order: refreshed ?? order,
+                        reason: 'assembly_auto_ship',
+                    };
+                }
+
+                const updated = await this.transitionStatus(
+                    orderId,
+                    OrderStatus.CANCELLED,
+                    systemActor,
+                    `System: Auto-cancelled after ${assemblyDays} days without preparation`,
+                    meta,
+                );
+                for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
+                    const store = await this.prisma.store.findUnique({
+                        where: { id: offer.storeId! },
+                        select: { id: true, ownerId: true },
+                    });
+                    if (store) {
+                        await this.violationsService.autoIssue({
+                            code: 'LATE_PREPARATION_AUTO_CANCEL',
+                            targetUserId: store.ownerId,
+                            targetStoreId: store.id,
+                            targetType: ViolationTargetType.MERCHANT,
+                            orderId: order.id,
+                            reason: `Order #${order.orderNumber} auto-cancelled after ${assemblyDays} days without preparation.`,
+                            metadata: { orderNumber: order.orderNumber },
+                            dedupSuffix: store.id,
+                        }).catch((e) => this.logger.warn(`assembly cancel violation failed: ${e?.message || e}`));
+                    }
+                }
+                await this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'تم إلغاء طلبك لعدم استجابة التاجر',
+                    titleEn: 'Order Cancelled: Merchant Inaction',
+                    messageAr: `تم إلغاء الطلب #${order.orderNumber} تلقائياً لعدم تجهيزه خلال مهلة ${assemblyDays} أيام.`,
+                    messageEn: `Order #${order.orderNumber} was auto-cancelled as the merchant failed to prepare it within ${assemblyDays} days.`,
+                    type: 'system_alert',
+                    link: `/dashboard/orders/${order.id}`,
+                }).catch(() => undefined);
+                return { changed: true, order: updated, reason: 'assembly_auto_cancel' };
+            }
+
             if (!expired) return { changed: false, order, reason: 'not_expired' };
             const graceMs = this.orderDurationConfig.hoursToMs(durationCfg.delayedPreparationGraceHours);
             const delayedDeadline = new Date(Date.now() + graceMs);
