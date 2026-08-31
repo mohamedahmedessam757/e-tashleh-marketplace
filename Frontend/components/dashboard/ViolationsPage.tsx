@@ -502,65 +502,65 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
             {/* System Guidelines Modal */}
             <AnimatePresence>
                 {isGuidelinesModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/95 backdrop-blur-xl">
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                            className="w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-t-3xl sm:rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh]"
                         >
                             {/* Modal Header */}
-                            <div className="p-12 border-b border-white/5 bg-gradient-to-br from-white/5 to-transparent relative">
+                            <div className="p-4 sm:p-6 md:p-10 border-b border-white/5 bg-gradient-to-br from-white/5 to-transparent relative shrink-0">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[100px] rounded-full -z-10" />
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-3 text-white/40 mb-2">
-                                            <Info size={20} />
+                                <div className="flex justify-between items-start gap-3">
+                                    <div className="space-y-2 min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 sm:gap-3 text-white/40 mb-1 sm:mb-2">
+                                            <Info size={18} className="shrink-0" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">{isAr ? 'مرجع النظام' : 'System Reference'}</span>
                                         </div>
-                                        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{vt.guidelines.title}</h3>
-                                        <p className="text-xs text-white/30 font-medium uppercase tracking-widest mt-2">{vt.guidelines.subtitle}</p>
+                                        <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter leading-tight">{vt.guidelines.title}</h3>
+                                        <p className="text-[11px] sm:text-xs text-white/30 font-medium uppercase tracking-widest mt-1 sm:mt-2 leading-relaxed">{vt.guidelines.subtitle}</p>
                                     </div>
-                                    <button onClick={() => setIsGuidelinesModalOpen(false)} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 text-white/60 flex items-center justify-center transition-all hover:rotate-90">
-                                        <X size={24} />
+                                    <button onClick={() => setIsGuidelinesModalOpen(false)} className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 text-white/60 flex items-center justify-center transition-all hover:rotate-90 shrink-0" aria-label={isAr ? 'إغلاق' : 'Close'}>
+                                        <X size={22} />
                                     </button>
                                 </div>
                             </div>
 
                             {/* Scrolling Content */}
-                            <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-16">
+                            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 custom-scrollbar space-y-10 sm:space-y-16">
                                 {/* Violation Types Table */}
-                                <section className="space-y-8">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
-                                            <Shield size={20} />
+                                <section className="space-y-4 sm:space-y-8">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 shrink-0">
+                                            <Shield size={18} />
                                         </div>
-                                        <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{vt.guidelines.typeTable.title}</h4>
+                                        <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-widest italic leading-snug">{vt.guidelines.typeTable.title}</h4>
                                     </div>
 
-                                    <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-white/[0.02]">
-                                        <table className="w-full text-left min-w-[520px]">
+                                    <div className="overflow-x-auto rounded-2xl sm:rounded-[2rem] border border-white/5 bg-white/[0.02] -mx-1">
+                                        <table className="w-full text-left min-w-[480px]">
                                             <thead>
                                                 <tr className="border-b border-white/5 bg-white/5">
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.typeTable.name}</th>
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.points}</th>
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.fine}</th>
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.decay}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.typeTable.name}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.points}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.fine}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.typeTable.decay}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/[0.03]">
                                                 {violationTypes.map((type) => (
                                                     <tr key={type.id} className="hover:bg-white/[0.04] transition-colors group">
-                                                        <td className="px-8 py-5">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5">
                                                             <div className="font-bold text-white text-xs">{isAr ? type.nameAr : type.nameEn}</div>
                                                             <div className="text-[9px] text-white/20 mt-1">{isAr ? type.descriptionAr : type.descriptionEn}</div>
                                                         </td>
-                                                        <td className="px-8 py-5 text-center">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-center">
                                                             <span className="text-xs font-black text-red-500 font-mono">+{type.points}</span>
                                                         </td>
-                                                        <td className="px-8 py-5 text-center">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-center">
                                                             <span className="text-xs font-black text-white font-mono">{Number(type.fineAmount).toLocaleString()} <span className="text-[9px] text-white/20">AED</span></span>
                                                         </td>
-                                                        <td className="px-8 py-5 text-center">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-center">
                                                             <span className="text-xs font-bold text-white/40 uppercase tracking-tighter italic">{type.decayDays} {isAr ? 'يوم' : 'DAYS'}</span>
                                                         </td>
                                                     </tr>
@@ -571,34 +571,34 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
                                 </section>
 
                                 {/* Penalty Thresholds Table */}
-                                <section className="space-y-8">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
-                                            <Scale size={20} />
+                                <section className="space-y-4 sm:space-y-8">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 shrink-0">
+                                            <Scale size={18} />
                                         </div>
-                                        <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{vt.guidelines.thresholdTable.title}</h4>
+                                        <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-widest italic leading-snug">{vt.guidelines.thresholdTable.title}</h4>
                                     </div>
 
-                                    <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-white/[0.02]">
-                                        <table className="w-full text-left min-w-[520px]">
+                                    <div className="overflow-x-auto rounded-2xl sm:rounded-[2rem] border border-white/5 bg-white/[0.02] -mx-1">
+                                        <table className="w-full text-left min-w-[480px]">
                                             <thead>
                                                 <tr className="border-b border-white/5 bg-white/5">
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.thresholdTable.points}</th>
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.thresholdTable.action}</th>
-                                                    <th className="px-8 py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.thresholdTable.duration}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.thresholdTable.points}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest">{vt.guidelines.thresholdTable.action}</th>
+                                                    <th className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">{vt.guidelines.thresholdTable.duration}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/[0.03]">
                                                 {[...thresholds].sort((a,b) => a.thresholdPoints - b.thresholdPoints).map((threshold) => (
                                                     <tr key={threshold.id} className="hover:bg-white/[0.04] transition-colors">
-                                                        <td className="px-8 py-5">
-                                                            <span className="text-lg font-black text-white font-mono">{threshold.thresholdPoints} <span className="text-[10px] text-white/20">PTS</span></span>
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5">
+                                                            <span className="text-base sm:text-lg font-black text-white font-mono">{threshold.thresholdPoints} <span className="text-[10px] text-white/20">PTS</span></span>
                                                         </td>
-                                                        <td className="px-8 py-5">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5">
                                                             <div className="font-bold text-white text-xs">{isAr ? threshold.nameAr : threshold.nameEn}</div>
                                                             <div className="text-[9px] text-white/20 mt-1 lowercase">{isAr ? threshold.action : threshold.action.replace(/_/g, ' ')}</div>
                                                         </td>
-                                                        <td className="px-8 py-5 text-center">
+                                                        <td className="px-3 sm:px-6 md:px-8 py-3 sm:py-5 text-center">
                                                             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">
                                                                 {threshold.suspendDurationDays || 0} {isAr ? 'أيام' : 'DAYS'}
                                                             </span>
@@ -612,10 +612,10 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
                             </div>
                             
                             {/* Footer / CTA */}
-                            <div className="p-12 border-t border-white/5 bg-white/[0.01]">
+                            <div className="p-4 sm:p-6 md:p-8 border-t border-white/5 bg-white/[0.01] shrink-0 safe-area-pb">
                                 <button 
                                     onClick={() => setIsGuidelinesModalOpen(false)}
-                                    className="w-full py-6 rounded-[2rem] bg-white text-black text-xs font-black uppercase tracking-[0.3em] hover:bg-white/90 transition-all shadow-2xl shadow-white/5"
+                                    className="w-full py-4 sm:py-5 md:py-6 rounded-2xl sm:rounded-[2rem] bg-white text-black text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-white/90 transition-all shadow-2xl shadow-white/5 min-h-[48px]"
                                 >
                                     {isAr ? 'فهمت التعليمات' : 'I Understand the Guidelines'}
                                 </button>

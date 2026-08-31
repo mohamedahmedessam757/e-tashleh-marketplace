@@ -54,13 +54,13 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   const isAr = language === 'ar';
 
   const steps = [
-    { id: 'request', label: { ar: 'تقديم الطلب', en: 'Request' } },
-    { id: 'offers', label: { ar: 'العروض', en: 'Offers' } },
-    { id: 'payment', label: { ar: 'الدفع', en: 'Payment' } },
-    { id: 'preparation', label: { ar: 'التجهيز', en: 'Preparation' } },
-    { id: 'verification', label: { ar: 'فحص القطعة', en: 'Part Inspection' } },
-    { id: 'shipping', label: { ar: 'الشحن', en: 'Shipping' } },
-    { id: 'delivery', label: { ar: 'الاستلام', en: 'Delivery' } },
+    { id: 'request', label: { ar: 'تقديم الطلب', en: 'Request' }, short: { ar: 'طلب', en: 'Req' } },
+    { id: 'offers', label: { ar: 'العروض', en: 'Offers' }, short: { ar: 'عروض', en: 'Offers' } },
+    { id: 'payment', label: { ar: 'الدفع', en: 'Payment' }, short: { ar: 'دفع', en: 'Pay' } },
+    { id: 'preparation', label: { ar: 'التجهيز', en: 'Preparation' }, short: { ar: 'تجهيز', en: 'Prep' } },
+    { id: 'verification', label: { ar: 'فحص القطعة', en: 'Part Inspection' }, short: { ar: 'فحص', en: 'Check' } },
+    { id: 'shipping', label: { ar: 'الشحن', en: 'Shipping' }, short: { ar: 'شحن', en: 'Ship' } },
+    { id: 'delivery', label: { ar: 'الاستلام', en: 'Delivery' }, short: { ar: 'استلام', en: 'Recv' } },
   ];
 
   const n = steps.length;
@@ -127,17 +127,18 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
           : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
 
   return (
-    <div className="w-full py-8 px-2 sm:px-4 isolate" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="w-full py-4 sm:py-8 px-0 sm:px-2 md:px-4 isolate overflow-x-auto" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="min-w-[300px] sm:min-w-0">
       {/* Circles + connector line (line aligned to circle centers) */}
-      <div className="relative h-10 w-full">
+      <div className="relative h-8 sm:h-10 w-full">
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 bg-white/10 rounded-full pointer-events-none"
+          className="absolute top-1/2 h-0.5 sm:h-1 -translate-y-1/2 bg-white/10 rounded-full pointer-events-none"
           style={{ left: sideInset, width: trackSpan }}
           aria-hidden
         />
         {!isCancelled && (
           <div
-            className={`absolute top-1/2 h-1 -translate-y-1/2 rounded-full pointer-events-none transition-[width] duration-500 ease-out ${
+            className={`absolute top-1/2 h-0.5 sm:h-1 -translate-y-1/2 rounded-full pointer-events-none transition-[width] duration-500 ease-out ${
               isDelayed ? 'bg-red-500' : 'bg-gold-500'
             }`}
             style={
@@ -149,7 +150,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
           />
         )}
 
-        <div className="relative z-[1] flex h-10 w-full">
+        <div className="relative z-[1] flex h-8 sm:h-10 w-full">
           {steps.map((step, idx) => {
             const isCompleted =
               !isCancelled &&
@@ -167,7 +168,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
               >
                 <div
                   className={[
-                    'w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0',
+                    'w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center shrink-0',
                     'outline-none shadow-none ring-0 bg-clip-padding',
                     isCurrentDelayed
                       ? 'bg-red-900 border-red-500 text-red-300'
@@ -178,11 +179,11 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   ].join(' ')}
                 >
                   {isCurrentDelayed ? (
-                    <AlertTriangle size={16} className="text-red-400" />
+                    <AlertTriangle size={14} className="text-red-400 sm:w-4 sm:h-4" />
                   ) : isCompleted ? (
-                    <Check size={16} />
+                    <Check size={14} className="sm:w-4 sm:h-4" />
                   ) : (
-                    <div className="w-2 h-2 rounded-full bg-current" />
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-current" />
                   )}
                 </div>
               </div>
@@ -192,7 +193,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
       </div>
 
       {/* Labels under matching columns */}
-      <div className="mt-3 flex w-full">
+      <div className="mt-2 sm:mt-3 flex w-full">
         {steps.map((step, idx) => {
           const isCompleted = idx <= activeIndex && !isCancelled;
           const isCurrent = idx === activeIndex && !isCancelled;
@@ -204,7 +205,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
               className="flex flex-1 flex-col items-center min-w-0 px-0.5"
             >
               <span
-                className={`text-[10px] md:text-xs font-bold text-center leading-tight ${
+                className={`text-[8px] sm:text-[10px] md:text-xs font-bold text-center leading-tight break-words hyphens-auto ${
                   isCurrentDelayed
                     ? 'text-red-400'
                     : isCompleted
@@ -212,7 +213,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                       : 'text-white/30'
                 }`}
               >
-                {isAr ? step.label.ar : step.label.en}
+                <span className="sm:hidden">{isAr ? step.short.ar : step.short.en}</span>
+                <span className="hidden sm:inline">{isAr ? step.label.ar : step.label.en}</span>
               </span>
               {fulfillmentSummary &&
                 fulfillmentSummary.total > 1 &&
@@ -286,6 +288,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
             : 'Merchant preparation delayed — Final grace period active'}
         </div>
       )}
+      </div>
     </div>
   );
 };
