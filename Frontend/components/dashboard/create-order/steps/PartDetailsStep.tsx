@@ -1,9 +1,75 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, FileText, UploadCloud, X, Plus, Trash2, AlertTriangle, Info, Truck, Video, AlertCircle, Camera } from 'lucide-react';
-import { useCreateOrderStore, PartItem } from '../../../../stores/useCreateOrderStore';
+import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
+
+/** Stable object URL with revoke on unmount / file change */
+const useObjectUrl = (file: File | null | undefined): string | null => {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file) {
+      setUrl(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+  return url;
+};
+
+const PartImagePreview: React.FC<{
+  file: File;
+  onRemove: () => void;
+}> = ({ file, onRemove }) => {
+  const url = useObjectUrl(file);
+  if (!url) return null;
+  return (
+    <div className="w-24 h-24 rounded-xl bg-black/40 border border-white/10 relative group/img overflow-hidden">
+      <img
+        src={url}
+        alt="preview"
+        className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 p-1 bg-red-500/80 rounded-full text-white hover:bg-red-600 transition-colors opacity-0 group-hover/img:opacity-100"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+};
+
+const PartVideoPreview: React.FC<{
+  file: File;
+  onRemove: () => void;
+}> = ({ file, onRemove }) => {
+  const url = useObjectUrl(file);
+  if (!url) return null;
+  return (
+    <div className="relative w-full max-w-[200px] bg-black/40 rounded-lg overflow-hidden border border-white/10">
+      <video
+        src={url}
+        className="w-full h-32 object-cover"
+        controls
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-lg z-10"
+      >
+        <X size={14} />
+      </button>
+      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-xs text-white font-mono">
+        {(file.size / (1024 * 1024)).toFixed(1)} MB
+      </div>
+    </div>
+  );
+};
 
 export const PartDetailsStep: React.FC = () => {
   const {
@@ -223,19 +289,11 @@ export const PartDetailsStep: React.FC = () => {
 
                   {/* Image Previews */}
                   {part.images.map((file, imgIdx) => (
-                    <div key={imgIdx} className="w-24 h-24 rounded-xl bg-black/40 border border-white/10 relative group/img overflow-hidden">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt="preview"
-                        className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity"
-                      />
-                      <button
-                        onClick={() => removePartImage(part.id, imgIdx)}
-                        className="absolute top-1 right-1 p-1 bg-red-500/80 rounded-full text-white hover:bg-red-600 transition-colors opacity-0 group-hover/img:opacity-100"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
+                    <PartImagePreview
+                      key={`${part.id}-img-${imgIdx}-${file.name}-${file.size}`}
+                      file={file}
+                      onRemove={() => removePartImage(part.id, imgIdx)}
+                    />
                   ))}
                 </div>
                 {showErrors && part.images.length === 0 && (
@@ -254,22 +312,10 @@ export const PartDetailsStep: React.FC = () => {
                 </label>
 
                 {part.video ? (
-                  <div className="relative w-full max-w-[200px] bg-black/40 rounded-lg overflow-hidden border border-white/10">
-                    <video
-                      src={URL.createObjectURL(part.video)}
-                      className="w-full h-32 object-cover"
-                      controls
-                    />
-                    <button
-                      onClick={() => updatePart(part.id, 'video', null)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-lg z-10"
-                    >
-                      <X size={14} />
-                    </button>
-                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-xs text-white font-mono">
-                      {(part.video.size / (1024 * 1024)).toFixed(1)} MB
-                    </div>
-                  </div>
+                  <PartVideoPreview
+                    file={part.video}
+                    onRemove={() => updatePart(part.id, 'video', null)}
+                  />
                 ) : (
                   <label className="flex items-center justify-center w-full max-w-[200px] h-32 border-2 border-dashed border-white/10 rounded-lg cursor-pointer hover:border-gold-500/50 hover:bg-white/5 transition-all group">
                     <div className="text-center">

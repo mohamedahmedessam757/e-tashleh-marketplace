@@ -544,6 +544,9 @@ model Order {
   requestType       String?  @map("request_type")
   shippingType      String?  @map("shipping_type")
 
+  /// Client-generated UUID for create idempotency (null for legacy rows)
+  clientRequestId String? @map("client_request_id")
+
   // Financials
   totalAmount Decimal? @map("total_amount") @db.Decimal(14, 2)
 
@@ -599,6 +602,7 @@ model Order {
   // Violations & Penalties
   violations Violation[]
 
+  @@unique([customerId, clientRequestId], map: "orders_customer_client_request_id_key")
   @@index([customerId])
   @@index([storeId])
   @@index([status])

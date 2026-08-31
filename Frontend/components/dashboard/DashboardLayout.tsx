@@ -179,6 +179,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }, [role]);
 
   // CUSTOMER & MERCHANT & ADMIN DATA WATCHER
+  const vendorStoreId = useVendorStore((s) => s.storeId);
   useEffect(() => {
     // Reset the store if role changed to prevent data leakage between roles
     const orderStore = useOrderStore.getState();
@@ -187,12 +188,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     void refreshOrderSlaFromApi(true);
 
     // Start Realtime WebSockets for zero-latency sync (replaces legacy polling)
-    startRealtime(getCurrentUserId() || undefined, role);
+    const merchantStoreId = role === 'merchant' ? vendorStoreId || undefined : undefined;
+    startRealtime(getCurrentUserId() || undefined, role, merchantStoreId);
 
     return () => {
       stopRealtime();
     };
-  }, [role, startRealtime, stopRealtime]);
+  }, [role, vendorStoreId, startRealtime, stopRealtime]);
 
   // Define Menu Items per Role
   const customerNavItems = [

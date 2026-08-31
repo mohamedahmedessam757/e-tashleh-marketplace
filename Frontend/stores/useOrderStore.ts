@@ -15,7 +15,24 @@ import { useAdminStore } from './useAdminStore';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const REALTIME_DEBOUNCE_MS = 300; // 2026 High-Performance Threshold
+const REALTIME_DEBOUNCE_MS = 2000; // Throttle list refreshes on mobile after order bursts
+/** Accumulate order ids during debounce so a burst of creates is not reduced to the last event only */
+const pendingRealtimeOrderIds = new Set<string>();
+let pendingRealtimeNeedsSilent = false;
+let silentFetchInflight: Promise<void> | null = null;
+const SILENT_FETCH_MAX_LIMIT = 40;
+
+const dedupeOrdersById = (orders: Order[]): Order[] => {
+    const seen = new Set<string>();
+    const out: Order[] = [];
+    for (const o of orders) {
+        const id = String(o.id);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(o);
+    }
+    return out;
+};
 
 // --- FSM CONFIGURATION (Must match Backend) ---
 const TRANSITION_RULES: Record<StatusType, StatusType[]> = {
@@ -537,7 +554,7 @@ interface OrderState {
     fetchMoreOrders: (params?: { search?: string; status?: string }) => Promise<void>;
     silentFetch: () => Promise<void>;
     mapBackendOrders: (items: any[]) => Order[];
-    startRealtime: (userId?: string, role?: string) => void;
+    startRealtime: (userId?: string, role?: string, storeId?: string) => void;
     stopRealtime: () => void;
     clearOrders: () => void;
     resetForRole: (role: string) => void;
@@ -567,16 +584,41 @@ interface OrderState {
     getOrderById: (id: string) => Order | undefined;
 }
 
-const handleGlobalRealtimeEvent = (source: string) => {
-    console.log(`⚡ Realtime Update: ${source} changed. Debouncing fetch...`);
+const handleGlobalRealtimeEvent = (source: string, payload?: { new?: Record<string, unknown>; old?: Record<string, unknown> }) => {
+    const row = (payload?.new || payload?.old) as Record<string, unknown> | undefined;
+    const targetOrderId = row
+        ? String(row.order_id ?? row.orderId ?? (source.includes('orders') ? row.id : '') || '')
+        : '';
+
+    if (targetOrderId) {
+        pendingRealtimeOrderIds.add(targetOrderId);
+    } else {
+        pendingRealtimeNeedsSilent = true;
+    }
+
     if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
     realtimeDebounceTimer = setTimeout(() => {
+        const ids = Array.from(pendingRealtimeOrderIds);
+        const needSilent = pendingRealtimeNeedsSilent;
+        pendingRealtimeOrderIds.clear();
+        pendingRealtimeNeedsSilent = false;
+
         const { activeOrderId, fetchOrder, silentFetch } = useOrderStore.getState();
+
+        // Detail view: refresh the open order; skip heavy list reload
         if (activeOrderId) {
-            fetchOrder(activeOrderId);
-        } else {
-            silentFetch();
+            void fetchOrder(activeOrderId);
+            return;
         }
+
+        // Many unknown/batched changes → one capped silent refresh
+        if (needSilent || ids.length === 0 || ids.length > 5) {
+            void silentFetch();
+            return;
+        }
+
+        // Few targeted updates (incl. new inserts): fetch each id (prepend if missing)
+        void Promise.all(ids.map((id) => fetchOrder(id)));
     }, REALTIME_DEBOUNCE_MS);
 };
 
@@ -659,7 +701,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         set({ lastFetchRole: role });
     },
 
-    startRealtime: (userId?: string, role?: string) => {
+    startRealtime: (userId?: string, role?: string, storeId?: string) => {
         const { subscription } = get();
         if (subscription) return; // Already listening
 
@@ -674,18 +716,25 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders', filter: filterString },
-                () => handleGlobalRealtimeEvent('orders table')
+                (payload) => handleGlobalRealtimeEvent('orders table', payload as { new?: Record<string, unknown>; old?: Record<string, unknown> })
             )
             .subscribe();
 
         // 2. Initial Fetch immediately
         get().fetchOrders();
 
-        // Also listen to offers table for real-time offer status changes
+        // Offers: filter by store when merchant session has storeId (cuts irrelevant fan-out)
+        const offersFilter =
+            storeId && (role === 'merchant' || role === 'vendor')
+                ? `store_id=eq.${storeId}`
+                : undefined;
+
         const offersChannel = supabase.channel(`offers-realtime-${userId || 'global'}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-                handleGlobalRealtimeEvent('offers table');
-            })
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'offers', filter: offersFilter },
+                (payload) => handleGlobalRealtimeEvent('offers table', payload as { new?: Record<string, unknown>; old?: Record<string, unknown> }),
+            )
             .subscribe();
 
         set({ subscription: { ordersChannel: channel, offersChannel } });
@@ -714,9 +763,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                         mappedOrder,
                         { trustOffers: true },
                     );
-                    return { orders: newOrders };
+                    return { orders: dedupeOrdersById(newOrders) };
                 }
-                return { orders: [mappedOrder, ...state.orders] };
+                return { orders: dedupeOrdersById([mappedOrder, ...state.orders]) };
             });
         } catch (err) {
             console.error(`Failed to fetch order ${id}`, err);
@@ -751,7 +800,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 status 
             });
 
-            const mappedOrders = mergeMappedOrdersWithExisting(orders, get().mapBackendOrders(result.items));
+            const mappedOrders = dedupeOrdersById(
+                mergeMappedOrdersWithExisting(orders, get().mapBackendOrders(result.items)),
+            );
 
             set({
                 orders: mappedOrders,
@@ -782,10 +833,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 ...params 
             });
 
-            const newMappedOrders = mergeMappedOrdersWithExisting(orders, get().mapBackendOrders(result.items));
+            const existingIds = new Set(orders.map((o) => String(o.id)));
+            const incoming = mergeMappedOrdersWithExisting(orders, get().mapBackendOrders(result.items));
+            const onlyNew = incoming.filter((o) => !existingIds.has(String(o.id)));
 
             set({
-                orders: [...orders, ...newMappedOrders],
+                orders: dedupeOrdersById([...orders, ...onlyNew]),
                 total: result.total,
                 page: nextPage,
                 hasMore: result.hasMore,
@@ -798,27 +851,38 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     },
 
     silentFetch: async () => {
+        if (silentFetchInflight) return silentFetchInflight;
+
         const { isLoading, isFetchingMore, page, limit, activeOrderId } = get();
         if (isFetchingMore) return;
         // Detail pages refresh via fetchOrder(activeOrderId) from global realtime
         if (activeOrderId) return;
         if (isLoading) return;
 
-        try {
-            // Strategic Refresh: Fetch the current view + first page of active items
-            const result = await ordersApi.getAll({ page: 1, limit: Math.max(page * limit, 50) });
-            const mappedOrders = mergeMappedOrdersWithExisting(get().orders, get().mapBackendOrders(result.items));
-            
-            set((state) => ({ 
-                orders: mappedOrders, 
-                total: result.total, 
-                hasMore: result.hasMore,
-                // Update specific orders if they were expanded/detailed in UI? 
-                // mappedOrders already contains the latest list state.
-            }));
-        } catch (err) {
-            console.error('Silent fetch failed', err);
-        }
+        silentFetchInflight = (async () => {
+            try {
+                // Cap window so mobile never reloads unbounded lists after paging
+                const fetchLimit = Math.min(Math.max(page * limit, limit), SILENT_FETCH_MAX_LIMIT);
+                const result = await ordersApi.getAll({ page: 1, limit: fetchLimit });
+                const mappedOrders = dedupeOrdersById(
+                    mergeMappedOrdersWithExisting(get().orders, get().mapBackendOrders(result.items)),
+                );
+                const syncedPage = Math.max(1, Math.ceil(mappedOrders.length / limit));
+
+                set({
+                    orders: mappedOrders,
+                    total: result.total,
+                    page: syncedPage,
+                    hasMore: mappedOrders.length < result.total,
+                });
+            } catch (err) {
+                console.error('Silent fetch failed', err);
+            } finally {
+                silentFetchInflight = null;
+            }
+        })();
+
+        return silentFetchInflight;
     },
 
     // Extracted mapping logic for reuse

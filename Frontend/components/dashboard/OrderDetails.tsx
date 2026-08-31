@@ -90,23 +90,25 @@ export const CountdownTimer = ({ targetDate, label, compact = false, hideExpired
     const [timeLeft, setTimeLeft] = useState<{ h: number, m: number, s: number } | null>(null);
 
     useEffect(() => {
-        const interval = setInterval(() => {
+        const tick = () => {
             const now = new Date().getTime();
             const target = new Date(targetDate).getTime();
             const diff = target - now;
 
             if (diff <= 0) {
                 setTimeLeft(null);
-                clearInterval(interval);
             } else {
                 const h = Math.floor(diff / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((diff % (1000 * 60)) / 1000);
                 setTimeLeft({ h, m, s });
             }
-        }, 1000);
+        };
+        tick();
+        // List cards use compact: slower tick to avoid N×1s timers on mobile
+        const interval = setInterval(tick, compact ? 30000 : 1000);
         return () => clearInterval(interval);
-    }, [targetDate]);
+    }, [targetDate, compact]);
 
     if (!timeLeft) return hideExpiredText ? null : <span className="text-red-500 font-bold text-xs">{t.dashboard.common?.expired || 'Expired'}</span>;
 
