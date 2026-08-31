@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested, IsArray, ArrayMinSize } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateNested, IsArray, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOrderPartDto {
@@ -83,4 +83,10 @@ export class CreateOrderDto {
     @IsBoolean()
     @IsOptional()
     warrantyPreferred?: boolean;
+
+    /** Client UUID for create idempotency (optional for legacy clients) */
+    @IsOptional()
+    @IsUUID('4')
+    @MaxLength(64)
+    clientRequestId?: string;
 }

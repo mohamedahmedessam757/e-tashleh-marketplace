@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Search, Box, Calendar, MapPin, ChevronRight, ChevronLeft, Car, AlertTriangle, FileText, Clock, Info, Shield, Truck, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
@@ -220,22 +220,13 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
 
             {/* Requests Feed */}
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <AnimatePresence mode="popLayout">
                     {openRequests.length > 0 ? (
-                        openRequests.map((req, idx) => (
-                            <motion.div
-                                key={req.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ delay: idx * 0.05 }}
-                            >
-                                {(() => {
+                        openRequests.map((req) => {
                                     const myOffersOnThisOrder = getActiveOffersForStore(req.offers, storeId);
                                     const hasMyOffer = myOffersOnThisOrder.length > 0;
 
                                     return (
-                                        <GlassCard className={`p-5 flex flex-col justify-between h-full bg-[#151310] hover:border-gold-500/30 transition-all group relative overflow-hidden ${hasMyOffer ? 'border-green-500/15' : ''}`}>
+                                        <GlassCard key={req.id} enableBlur={false} className={`p-5 flex flex-col justify-between h-full bg-[#151310] hover:border-gold-500/30 transition-all group relative overflow-hidden ${hasMyOffer ? 'border-green-500/15' : ''}`}>
                                             {/* Top Border Indicator */}
                                             <div className={`absolute top-0 left-0 w-full h-1 ${hasMyOffer ? 'bg-green-500/40 group-hover:bg-green-500' : 'bg-gold-500/20 group-hover:bg-gold-500'} transition-colors`} />
 
@@ -322,16 +313,13 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
                                     </button>
                                         </GlassCard>
                                     );
-                                })()}
-                            </motion.div>
-                        ))
+                        })
                     ) : (
                         <div className="col-span-full py-20 text-center text-white/30 border border-dashed border-white/10 rounded-2xl">
                             <Box size={40} className="mx-auto mb-4 opacity-20" />
                             <p>{t.dashboard.merchant.marketplace.noRequests}</p>
                         </div>
                     )}
-                </AnimatePresence>
             </div>
         </div>
     );

@@ -55,6 +55,7 @@ export type OrderMinAggregateOutputType = {
   warrantyPreferred: boolean | null
   requestType: string | null
   shippingType: string | null
+  clientRequestId: string | null
   totalAmount: runtime.Decimal | null
   revealOffersAt: Date | null
   offersStopAt: Date | null
@@ -92,6 +93,7 @@ export type OrderMaxAggregateOutputType = {
   warrantyPreferred: boolean | null
   requestType: string | null
   shippingType: string | null
+  clientRequestId: string | null
   totalAmount: runtime.Decimal | null
   revealOffersAt: Date | null
   offersStopAt: Date | null
@@ -130,6 +132,7 @@ export type OrderCountAggregateOutputType = {
   warrantyPreferred: number
   requestType: number
   shippingType: number
+  clientRequestId: number
   totalAmount: number
   revealOffersAt: number
   offersStopAt: number
@@ -181,6 +184,7 @@ export type OrderMinAggregateInputType = {
   warrantyPreferred?: true
   requestType?: true
   shippingType?: true
+  clientRequestId?: true
   totalAmount?: true
   revealOffersAt?: true
   offersStopAt?: true
@@ -218,6 +222,7 @@ export type OrderMaxAggregateInputType = {
   warrantyPreferred?: true
   requestType?: true
   shippingType?: true
+  clientRequestId?: true
   totalAmount?: true
   revealOffersAt?: true
   offersStopAt?: true
@@ -256,6 +261,7 @@ export type OrderCountAggregateInputType = {
   warrantyPreferred?: true
   requestType?: true
   shippingType?: true
+  clientRequestId?: true
   totalAmount?: true
   revealOffersAt?: true
   offersStopAt?: true
@@ -381,6 +387,7 @@ export type OrderGroupByOutputType = {
   warrantyPreferred: boolean | null
   requestType: string | null
   shippingType: string | null
+  clientRequestId: string | null
   totalAmount: runtime.Decimal | null
   revealOffersAt: Date | null
   offersStopAt: Date | null
@@ -442,6 +449,7 @@ export type OrderWhereInput = {
   warrantyPreferred?: Prisma.BoolNullableFilter<"Order"> | boolean | null
   requestType?: Prisma.StringNullableFilter<"Order"> | string | null
   shippingType?: Prisma.StringNullableFilter<"Order"> | string | null
+  clientRequestId?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalNullableFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersStopAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -499,6 +507,7 @@ export type OrderOrderByWithRelationInput = {
   warrantyPreferred?: Prisma.SortOrderInput | Prisma.SortOrder
   requestType?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingType?: Prisma.SortOrderInput | Prisma.SortOrder
+  clientRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   revealOffersAt?: Prisma.SortOrderInput | Prisma.SortOrder
   offersStopAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -542,6 +551,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   orderNumber?: string
   acceptedOfferId?: string
+  customerId_clientRequestId?: Prisma.OrderCustomerIdClientRequestIdCompoundUniqueInput
   AND?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   OR?: Prisma.OrderWhereInput[]
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
@@ -560,6 +570,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   warrantyPreferred?: Prisma.BoolNullableFilter<"Order"> | boolean | null
   requestType?: Prisma.StringNullableFilter<"Order"> | string | null
   shippingType?: Prisma.StringNullableFilter<"Order"> | string | null
+  clientRequestId?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalNullableFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersStopAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -596,7 +607,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   shipments?: Prisma.ShipmentListRelationFilter
   escrowTransactions?: Prisma.EscrowTransactionListRelationFilter
   violations?: Prisma.ViolationListRelationFilter
-}, "id" | "orderNumber" | "acceptedOfferId">
+}, "id" | "orderNumber" | "acceptedOfferId" | "customerId_clientRequestId">
 
 export type OrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -616,6 +627,7 @@ export type OrderOrderByWithAggregationInput = {
   warrantyPreferred?: Prisma.SortOrderInput | Prisma.SortOrder
   requestType?: Prisma.SortOrderInput | Prisma.SortOrder
   shippingType?: Prisma.SortOrderInput | Prisma.SortOrder
+  clientRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   revealOffersAt?: Prisma.SortOrderInput | Prisma.SortOrder
   offersStopAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -662,6 +674,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   warrantyPreferred?: Prisma.BoolNullableWithAggregatesFilter<"Order"> | boolean | null
   requestType?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   shippingType?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  clientRequestId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalNullableWithAggregatesFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   offersStopAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
@@ -698,6 +711,7 @@ export type OrderCreateInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -754,6 +768,7 @@ export type OrderUncheckedCreateInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -806,6 +821,7 @@ export type OrderUpdateInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -862,6 +878,7 @@ export type OrderUncheckedUpdateInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -916,6 +933,7 @@ export type OrderCreateManyInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -952,6 +970,7 @@ export type OrderUpdateManyMutationInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -989,6 +1008,7 @@ export type OrderUncheckedUpdateManyInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1019,6 +1039,11 @@ export type OrderOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type OrderCustomerIdClientRequestIdCompoundUniqueInput = {
+  customerId: string
+  clientRequestId: string
+}
+
 export type OrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
@@ -1037,6 +1062,7 @@ export type OrderCountOrderByAggregateInput = {
   warrantyPreferred?: Prisma.SortOrder
   requestType?: Prisma.SortOrder
   shippingType?: Prisma.SortOrder
+  clientRequestId?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   revealOffersAt?: Prisma.SortOrder
   offersStopAt?: Prisma.SortOrder
@@ -1080,6 +1106,7 @@ export type OrderMaxOrderByAggregateInput = {
   warrantyPreferred?: Prisma.SortOrder
   requestType?: Prisma.SortOrder
   shippingType?: Prisma.SortOrder
+  clientRequestId?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   revealOffersAt?: Prisma.SortOrder
   offersStopAt?: Prisma.SortOrder
@@ -1117,6 +1144,7 @@ export type OrderMinOrderByAggregateInput = {
   warrantyPreferred?: Prisma.SortOrder
   requestType?: Prisma.SortOrder
   shippingType?: Prisma.SortOrder
+  clientRequestId?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
   revealOffersAt?: Prisma.SortOrder
   offersStopAt?: Prisma.SortOrder
@@ -1519,6 +1547,7 @@ export type OrderCreateWithoutCustomerInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1573,6 +1602,7 @@ export type OrderUncheckedCreateWithoutCustomerInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1656,6 +1686,7 @@ export type OrderScalarWhereInput = {
   warrantyPreferred?: Prisma.BoolNullableFilter<"Order"> | boolean | null
   requestType?: Prisma.StringNullableFilter<"Order"> | string | null
   shippingType?: Prisma.StringNullableFilter<"Order"> | string | null
+  clientRequestId?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalNullableFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersStopAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -1692,6 +1723,7 @@ export type OrderCreateWithoutStoreInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1746,6 +1778,7 @@ export type OrderUncheckedCreateWithoutStoreInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1824,6 +1857,7 @@ export type OrderCreateWithoutVerificationDocumentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1879,6 +1913,7 @@ export type OrderUncheckedCreateWithoutVerificationDocumentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -1946,6 +1981,7 @@ export type OrderUpdateWithoutVerificationDocumentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2001,6 +2037,7 @@ export type OrderUncheckedUpdateWithoutVerificationDocumentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2052,6 +2089,7 @@ export type OrderCreateWithoutOffersInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2107,6 +2145,7 @@ export type OrderUncheckedCreateWithoutOffersInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2163,6 +2202,7 @@ export type OrderCreateWithoutAcceptedOfferInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2218,6 +2258,7 @@ export type OrderUncheckedCreateWithoutAcceptedOfferInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2285,6 +2326,7 @@ export type OrderUpdateWithoutOffersInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2340,6 +2382,7 @@ export type OrderUncheckedUpdateWithoutOffersInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2402,6 +2445,7 @@ export type OrderUpdateWithoutAcceptedOfferInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2457,6 +2501,7 @@ export type OrderUncheckedUpdateWithoutAcceptedOfferInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2508,6 +2553,7 @@ export type OrderCreateWithoutAuditLogsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2563,6 +2609,7 @@ export type OrderUncheckedCreateWithoutAuditLogsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2630,6 +2677,7 @@ export type OrderUpdateWithoutAuditLogsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2685,6 +2733,7 @@ export type OrderUncheckedUpdateWithoutAuditLogsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2736,6 +2785,7 @@ export type OrderCreateWithoutPartsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2791,6 +2841,7 @@ export type OrderUncheckedCreateWithoutPartsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -2858,6 +2909,7 @@ export type OrderUpdateWithoutPartsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2913,6 +2965,7 @@ export type OrderUncheckedUpdateWithoutPartsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2964,6 +3017,7 @@ export type OrderCreateWithoutReturnsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3019,6 +3073,7 @@ export type OrderUncheckedCreateWithoutReturnsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3086,6 +3141,7 @@ export type OrderUpdateWithoutReturnsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3141,6 +3197,7 @@ export type OrderUncheckedUpdateWithoutReturnsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3192,6 +3249,7 @@ export type OrderCreateWithoutDisputesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3247,6 +3305,7 @@ export type OrderUncheckedCreateWithoutDisputesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3314,6 +3373,7 @@ export type OrderUpdateWithoutDisputesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3369,6 +3429,7 @@ export type OrderUncheckedUpdateWithoutDisputesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3420,6 +3481,7 @@ export type OrderCreateWithoutOrderChatsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3475,6 +3537,7 @@ export type OrderUncheckedCreateWithoutOrderChatsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3542,6 +3605,7 @@ export type OrderUpdateWithoutOrderChatsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3597,6 +3661,7 @@ export type OrderUncheckedUpdateWithoutOrderChatsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3648,6 +3713,7 @@ export type OrderCreateWithoutShippingAddressesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3703,6 +3769,7 @@ export type OrderUncheckedCreateWithoutShippingAddressesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3770,6 +3837,7 @@ export type OrderUpdateWithoutShippingAddressesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3825,6 +3893,7 @@ export type OrderUncheckedUpdateWithoutShippingAddressesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3876,6 +3945,7 @@ export type OrderCreateWithoutPaymentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3931,6 +4001,7 @@ export type OrderUncheckedCreateWithoutPaymentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -3998,6 +4069,7 @@ export type OrderUpdateWithoutPaymentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4053,6 +4125,7 @@ export type OrderUncheckedUpdateWithoutPaymentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4104,6 +4177,7 @@ export type OrderCreateWithoutEscrowTransactionsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4159,6 +4233,7 @@ export type OrderUncheckedCreateWithoutEscrowTransactionsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4226,6 +4301,7 @@ export type OrderUpdateWithoutEscrowTransactionsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4281,6 +4357,7 @@ export type OrderUncheckedUpdateWithoutEscrowTransactionsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4332,6 +4409,7 @@ export type OrderCreateWithoutInvoicesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4387,6 +4465,7 @@ export type OrderUncheckedCreateWithoutInvoicesInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4454,6 +4533,7 @@ export type OrderUpdateWithoutInvoicesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4509,6 +4589,7 @@ export type OrderUncheckedUpdateWithoutInvoicesInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4560,6 +4641,7 @@ export type OrderCreateWithoutShippingWaybillsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4615,6 +4697,7 @@ export type OrderUncheckedCreateWithoutShippingWaybillsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4682,6 +4765,7 @@ export type OrderUpdateWithoutShippingWaybillsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4737,6 +4821,7 @@ export type OrderUncheckedUpdateWithoutShippingWaybillsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4788,6 +4873,7 @@ export type OrderCreateWithoutShipmentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4843,6 +4929,7 @@ export type OrderUncheckedCreateWithoutShipmentsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -4910,6 +4997,7 @@ export type OrderUpdateWithoutShipmentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4965,6 +5053,7 @@ export type OrderUncheckedUpdateWithoutShipmentsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5016,6 +5105,7 @@ export type OrderCreateWithoutReviewsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5071,6 +5161,7 @@ export type OrderUncheckedCreateWithoutReviewsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5138,6 +5229,7 @@ export type OrderUpdateWithoutReviewsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5193,6 +5285,7 @@ export type OrderUncheckedUpdateWithoutReviewsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5244,6 +5337,7 @@ export type OrderCreateWithoutViolationsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5299,6 +5393,7 @@ export type OrderUncheckedCreateWithoutViolationsInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5366,6 +5461,7 @@ export type OrderUpdateWithoutViolationsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5421,6 +5517,7 @@ export type OrderUncheckedUpdateWithoutViolationsInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5472,6 +5569,7 @@ export type OrderCreateWithoutVerificationTasksInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5527,6 +5625,7 @@ export type OrderUncheckedCreateWithoutVerificationTasksInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5594,6 +5693,7 @@ export type OrderUpdateWithoutVerificationTasksInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5649,6 +5749,7 @@ export type OrderUncheckedUpdateWithoutVerificationTasksInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5701,6 +5802,7 @@ export type OrderCreateManyCustomerInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5737,6 +5839,7 @@ export type OrderUpdateWithoutCustomerInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5791,6 +5894,7 @@ export type OrderUncheckedUpdateWithoutCustomerInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5844,6 +5948,7 @@ export type OrderUncheckedUpdateManyWithoutCustomerInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5881,6 +5986,7 @@ export type OrderCreateManyStoreInput = {
   warrantyPreferred?: boolean | null
   requestType?: string | null
   shippingType?: string | null
+  clientRequestId?: string | null
   totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Date | string | null
   offersStopAt?: Date | string | null
@@ -5917,6 +6023,7 @@ export type OrderUpdateWithoutStoreInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5971,6 +6078,7 @@ export type OrderUncheckedUpdateWithoutStoreInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6024,6 +6132,7 @@ export type OrderUncheckedUpdateManyWithoutStoreInput = {
   warrantyPreferred?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   requestType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shippingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   revealOffersAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersStopAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6228,6 +6337,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   warrantyPreferred?: boolean
   requestType?: boolean
   shippingType?: boolean
+  clientRequestId?: boolean
   totalAmount?: boolean
   revealOffersAt?: boolean
   offersStopAt?: boolean
@@ -6286,6 +6396,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   warrantyPreferred?: boolean
   requestType?: boolean
   shippingType?: boolean
+  clientRequestId?: boolean
   totalAmount?: boolean
   revealOffersAt?: boolean
   offersStopAt?: boolean
@@ -6327,6 +6438,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   warrantyPreferred?: boolean
   requestType?: boolean
   shippingType?: boolean
+  clientRequestId?: boolean
   totalAmount?: boolean
   revealOffersAt?: boolean
   offersStopAt?: boolean
@@ -6368,6 +6480,7 @@ export type OrderSelectScalar = {
   warrantyPreferred?: boolean
   requestType?: boolean
   shippingType?: boolean
+  clientRequestId?: boolean
   totalAmount?: boolean
   revealOffersAt?: boolean
   offersStopAt?: boolean
@@ -6388,7 +6501,7 @@ export type OrderSelectScalar = {
   rejectionCount?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "storeId" | "status" | "vehicleMake" | "vehicleModel" | "vehicleYear" | "vin" | "vinImage" | "partName" | "partDescription" | "partImages" | "conditionPref" | "warrantyPreferred" | "requestType" | "shippingType" | "totalAmount" | "revealOffersAt" | "offersStopAt" | "selectionDeadlineAt" | "offersDeadlineAt" | "paymentDeadlineAt" | "delayedPreparationDeadlineAt" | "correctionDeadlineAt" | "verificationSubmittedAt" | "warranty_active_at" | "warranty_end_at" | "deliveredAt" | "createdAt" | "updatedAt" | "adminNotes" | "acceptedOfferId" | "verificationTaskId" | "rejectionCount", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "storeId" | "status" | "vehicleMake" | "vehicleModel" | "vehicleYear" | "vin" | "vinImage" | "partName" | "partDescription" | "partImages" | "conditionPref" | "warrantyPreferred" | "requestType" | "shippingType" | "clientRequestId" | "totalAmount" | "revealOffersAt" | "offersStopAt" | "selectionDeadlineAt" | "offersDeadlineAt" | "paymentDeadlineAt" | "delayedPreparationDeadlineAt" | "correctionDeadlineAt" | "verificationSubmittedAt" | "warranty_active_at" | "warranty_end_at" | "deliveredAt" | "createdAt" | "updatedAt" | "adminNotes" | "acceptedOfferId" | "verificationTaskId" | "rejectionCount", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   store?: boolean | Prisma.Order$storeArgs<ExtArgs>
@@ -6463,6 +6576,10 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     warrantyPreferred: boolean | null
     requestType: string | null
     shippingType: string | null
+    /**
+     * Client-generated UUID for create idempotency (null for legacy rows)
+     */
+    clientRequestId: string | null
     totalAmount: runtime.Decimal | null
     revealOffersAt: Date | null
     offersStopAt: Date | null
@@ -6943,6 +7060,7 @@ export interface OrderFieldRefs {
   readonly warrantyPreferred: Prisma.FieldRef<"Order", 'Boolean'>
   readonly requestType: Prisma.FieldRef<"Order", 'String'>
   readonly shippingType: Prisma.FieldRef<"Order", 'String'>
+  readonly clientRequestId: Prisma.FieldRef<"Order", 'String'>
   readonly totalAmount: Prisma.FieldRef<"Order", 'Decimal'>
   readonly revealOffersAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly offersStopAt: Prisma.FieldRef<"Order", 'DateTime'>

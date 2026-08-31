@@ -136,8 +136,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
   const handleSubmit = async () => {
     try {
       const newOrderId = await submitOrder();
-      useOrderStore.getState().fetchOrders(); // Sync
-
+      void useOrderStore.getState().fetchOrder(newOrderId);
       addNotification({
         type: 'system',
         titleKey: 'adminAlert',

@@ -92,9 +92,11 @@ export const OrderStatusCountdown: React.FC<Props> = ({
 
   useEffect(() => {
     if (!endsAtMs || isTerminal) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    // Compact list mode: 30s tick; detail/hero keep 1s
+    const ms = variant === 'compact' ? 30000 : 1000;
+    const id = window.setInterval(() => setNow(Date.now()), ms);
     return () => window.clearInterval(id);
-  }, [endsAtMs, isTerminal]);
+  }, [endsAtMs, isTerminal, variant]);
 
   if (isTerminal || !sla || !endsAtMs) return null;
 

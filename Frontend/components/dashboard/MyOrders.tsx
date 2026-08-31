@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { Badge, StatusType } from '../ui/Badge';
 import { Search, Filter, Calendar, Box, ChevronRight, ChevronLeft, RefreshCw, XCircle, Trash2, CreditCard, Tag, Clock, AlertCircle } from 'lucide-react';
@@ -261,25 +261,19 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
 
             {/* Orders List */}
             <div className="space-y-4">
-                <AnimatePresence mode="popLayout">
                     {loading ? (
                         <div className="text-center py-20">
                             <RefreshCw className="animate-spin mx-auto text-gold-500 mb-4" size={32} />
                             <p className="text-white/50">Loading orders...</p>
                         </div>
                     ) : filteredOrders.length > 0 ? (
-                        filteredOrders.map((order, idx) => {
+                        filteredOrders.map((order) => {
                             const expired = isOrderExpired(order);
                             return (
-                                <motion.div
+                                    <GlassCard
                                     key={order.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: idx * 0.05 }}
-                                    onClick={() => onNavigate('order-details', order.id)}
-                                >
-                                    <GlassCard className={`
+                                    enableBlur={false}
+                                    className={`
                             p-6 cursor-pointer hover:border-gold-500/30 transition-all group bg-[#151310]
                             ${language === 'ar' ? 'border-r-4' : 'border-l-4'}
                             ${order.status === 'COMPLETED' ? 'border-r-green-500' :
@@ -289,7 +283,9 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                     ['AWAITING_OFFERS', 'COLLECTING_OFFERS'].includes(order.status) ? 'border-r-yellow-500' :
                                                             order.status === 'CANCELLED' ? 'border-r-gray-600' :
                                                                 'border-r-gold-500'}
-                        `}>
+                        `}
+                                    onClick={() => onNavigate('order-details', order.id)}
+                                    >
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
                                             <div className="flex items-center gap-5">
@@ -386,7 +382,6 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
 
                                         </div>
                                     </GlassCard>
-                                </motion.div>
                             );
                         })
                     ) : (
@@ -398,7 +393,6 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                             <p className="text-white/40 text-sm">{t.dashboard.orders.notFoundDesc}</p>
                         </div>
                     )}
-                </AnimatePresence>
             </div>
         </div>
     );

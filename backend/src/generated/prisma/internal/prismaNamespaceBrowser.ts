@@ -362,6 +362,7 @@ export const OrderScalarFieldEnum = {
   warrantyPreferred: 'warrantyPreferred',
   requestType: 'requestType',
   shippingType: 'shippingType',
+  clientRequestId: 'clientRequestId',
   totalAmount: 'totalAmount',
   revealOffersAt: 'revealOffersAt',
   offersStopAt: 'offersStopAt',

@@ -100,6 +100,21 @@ const getInitialPart = (): PartItem => ({
   notes: ''
 });
 
+/** Module-level: one in-flight submit + stable idempotency key across retries */
+let submitInflight: Promise<string> | null = null;
+let pendingClientRequestId: string | null = null;
+
+const newClientRequestId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export const useCreateOrderStore = create<OrderState>((set, get) => ({
   step: 1,
 
@@ -181,18 +196,24 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   updatePreferences: (field, value) =>
     set((state) => ({ preferences: { ...state.preferences, [field]: value } })),
 
-  reset: () => set({
-    step: 1,
-    vehicle: { make: '', model: '', year: '', vin: '', vinImage: null },
-    requestType: 'single',
-    shippingType: 'separate',
-    parts: [getInitialPart()],
-    preferences: { condition: null },
-    isSubmitting: false,
-    showErrors: false
-  }),
+  reset: () => {
+    pendingClientRequestId = null;
+    submitInflight = null;
+    set({
+      step: 1,
+      vehicle: { make: '', model: '', year: '', vin: '', vinImage: null },
+      requestType: 'single',
+      shippingType: 'separate',
+      parts: [getInitialPart()],
+      preferences: { condition: null },
+      isSubmitting: false,
+      showErrors: false
+    });
+  },
 
-  prefillVehicle: (data) =>
+  prefillVehicle: (data) => {
+    pendingClientRequestId = null;
+    submitInflight = null;
     set({
       step: 1,
       vehicle: {
@@ -208,98 +229,120 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       preferences: { condition: null },
       isSubmitting: false,
       showErrors: false,
-    }),
+    });
+  },
 
   setShowErrors: (show) => set({ showErrors: show }),
 
   submitOrder: async () => {
+    // Hard lock: double-tap / concurrent calls share one promise (no second upload)
+    if (submitInflight) return submitInflight;
+    if (get().isSubmitting) {
+      return Promise.reject(new Error('Order submission already in progress'));
+    }
+
     set({ isSubmitting: true });
-    try {
-      const state = get();
+    if (!pendingClientRequestId) {
+      pendingClientRequestId = newClientRequestId();
+    }
+    const clientRequestId = pendingClientRequestId;
 
-      // 1. Upload All Files Concurrently
-      const { storageService } = await import('../services/storage');
+    submitInflight = (async () => {
+      try {
+        const state = get();
 
-      // Prepare an array of upload promises
-      const uploadPromises: Promise<void>[] = [];
-      const processedParts: any[] = [];
+        // 1. Upload All Files Concurrently
+        const { storageService } = await import('../services/storage');
 
-      for (const part of state.parts) {
-        const partData: any = { ...part, images: [], video: null };
-        processedParts.push(partData);
+        // Prepare an array of upload promises
+        const uploadPromises: Promise<void>[] = [];
+        const processedParts: any[] = [];
 
-        // Upload images
-        part.images.forEach((file, index) => {
+        for (const part of state.parts) {
+          const partData: any = { ...part, images: [], video: null };
+          processedParts.push(partData);
+
+          // Upload images
+          part.images.forEach((file, index) => {
+            uploadPromises.push(
+              storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${part.id}`).then(url => {
+                partData.images[index] = url; // Maintain order
+              })
+            );
+          });
+
+          // Upload video
+          if (part.video) {
+            uploadPromises.push(
+              storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then(url => {
+                partData.video = url;
+              })
+            );
+          }
+        }
+
+        // Upload VIN Image
+        let vinImageUrl = null;
+        if (state.vehicle.vinImage) {
           uploadPromises.push(
-            storageService.uploadFile(file, 'marketplace-uploads', `orders/parts/${part.id}`).then(url => {
-              partData.images[index] = url; // Maintain order
-            })
-          );
-        });
-
-        // Upload video
-        if (part.video) {
-          uploadPromises.push(
-            storageService.uploadFile(part.video, 'marketplace-uploads', `orders/parts/${part.id}/video`).then(url => {
-              partData.video = url;
+            storageService.uploadFile(state.vehicle.vinImage, 'marketplace-uploads', 'orders/vin').then(url => {
+              vinImageUrl = url;
             })
           );
         }
+
+        // Wait for all uploads to complete simultaneously
+        await Promise.all(uploadPromises);
+
+        // 3. Prepare Payload
+        const yearInt = parseInt(state.vehicle.year) || new Date().getFullYear();
+
+        const payload = {
+          vehicleMake: state.vehicle.make,
+          vehicleModel: state.vehicle.model,
+          vehicleYear: yearInt,
+          vin: state.vehicle.vin,
+          vinImage: vinImageUrl,
+
+          requestType: state.requestType,
+          shippingType: state.shippingType,
+          parts: processedParts.map(p => ({
+            name: p.name,
+            description: p.description,
+            notes: p.notes,
+            images: p.images,
+            video: p.video || undefined
+          })),
+
+          // Legacy Support (First part details)
+          partName: state.parts[0].name,
+          partDescription: state.parts[0].description,
+          partImages: processedParts[0].images,
+
+          conditionPref: state.preferences.condition,
+          clientRequestId,
+        };
+
+        // 4. Call Backend API
+        const { ordersApi } = await import('../services/api/orders');
+        const newOrder = await ordersApi.create(payload);
+
+        // Success: clear idempotency key so the next order gets a fresh UUID
+        pendingClientRequestId = null;
+
+        // Return the ID for the success modal
+        return newOrder.id as string;
+
+      } catch (err) {
+        // Keep pendingClientRequestId so a retry reuses the same key
+        console.error('Submission failed', err);
+        throw err;
+      } finally {
+        set({ isSubmitting: false });
+        submitInflight = null;
       }
+    })();
 
-      // Upload VIN Image
-      let vinImageUrl = null;
-      if (state.vehicle.vinImage) {
-        uploadPromises.push(
-          storageService.uploadFile(state.vehicle.vinImage, 'marketplace-uploads', 'orders/vin').then(url => {
-            vinImageUrl = url;
-          })
-        );
-      }
-
-      // Wait for all uploads to complete simultaneously
-      await Promise.all(uploadPromises);
-
-      // 3. Prepare Payload
-      const yearInt = parseInt(state.vehicle.year) || new Date().getFullYear();
-
-      const payload = {
-        vehicleMake: state.vehicle.make,
-        vehicleModel: state.vehicle.model,
-        vehicleYear: yearInt,
-        vin: state.vehicle.vin,
-        vinImage: vinImageUrl,
-
-        requestType: state.requestType,
-        shippingType: state.shippingType,
-        parts: processedParts.map(p => ({
-          name: p.name,
-          description: p.description,
-          notes: p.notes,
-          images: p.images,
-          video: p.video || undefined
-        })),
-
-        // Legacy Support (First part details)
-        partName: state.parts[0].name,
-        partDescription: state.parts[0].description,
-        partImages: processedParts[0].images,
-
-        conditionPref: state.preferences.condition
-      };
-
-      // 4. Call Backend API
-      const { ordersApi } = await import('../services/api/orders');
-      const newOrder = await ordersApi.create(payload);
-
-      // Return the ID for the success modal
-      return newOrder.id;
-
-    } catch (err) {
-      console.error('Submission failed', err);
-      throw err;
-    } finally {
-      set({ isSubmitting: false });
-    }
+    return submitInflight;
   }
 }));

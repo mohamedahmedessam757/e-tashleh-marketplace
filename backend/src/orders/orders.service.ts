@@ -79,7 +79,17 @@ export class OrdersService {
 
     async create(customerId: string, createOrderDto: CreateOrderDto): Promise<Order> {
         // [Verified] Type safety confirmed: 'parts' relation exists in Prisma Client
-        
+        const clientRequestId = createOrderDto.clientRequestId?.trim() || undefined;
+
+        // Idempotency: replay returns the same order (no second row / no re-notify)
+        if (clientRequestId) {
+            const existing = await this.prisma.order.findFirst({
+                where: { customerId, clientRequestId },
+                include: { parts: true },
+            });
+            if (existing) return existing;
+        }
+
         // --- 2026 Governance Enforcement: Order Limit ---
         const customer = await this.prisma.user.findUnique({
             where: { id: customerId },
@@ -96,89 +106,119 @@ export class OrdersService {
         const durationCfg = await this.orderDurationConfig.getConfig();
         const collectionMs = this.orderDurationConfig.hoursToMs(durationCfg.offerCollectionHours);
 
-        // 2. Transaction: Create Order + Parts + Audit Log + Update Count
-        const result = await this.prisma.$transaction(async (tx) => {
-            // Increment daily count
-            await tx.user.update({
-                where: { id: customerId },
-                data: { dailyOrderCount: { increment: 1 } }
-            });
-
-            // Helper: Get primary part for legacy fields compatibility
-            // Ensure parts exists and has at least one item, otherwise default to empty/null logic
-            const primaryPart = (createOrderDto.parts && createOrderDto.parts.length > 0) ? createOrderDto.parts[0] : null;
-            const primaryName = primaryPart ? primaryPart.name : (createOrderDto.partName || 'Multi-Part Order');
-            const primaryDesc = primaryPart ? primaryPart.description : (createOrderDto.partDescription || 'See parts list');
-            const primaryImages = primaryPart ? primaryPart.images : (createOrderDto.partImages || []);
-
-            const order = await tx.order.create({
-                data: {
-                    vehicleMake: createOrderDto.vehicleMake,
-                    vehicleModel: createOrderDto.vehicleModel,
-                    vehicleYear: createOrderDto.vehicleYear,
-                    vin: createOrderDto.vin,
-                    vinImage: createOrderDto.vinImage,
-                    requestType: createOrderDto.requestType,
-                    shippingType: createOrderDto.shippingType,
-
-                    // Legacy Support: Populate single-part fields from the first part
-                    partName: primaryName,
-                    partDescription: primaryDesc,
-                    partImages: primaryImages,
-
-                    conditionPref: createOrderDto.conditionPref,
-                    warrantyPreferred: createOrderDto.warrantyPreferred,
-
-                    customerId,
-                    orderNumber,
-                    status: OrderStatus.COLLECTING_OFFERS,
-                    revealOffersAt: new Date(Date.now() + collectionMs),
-                    offersStopAt: new Date(Date.now() + collectionMs - 15 * 60 * 1000),
-                    selectionDeadlineAt: null, // Set dynamically upon reveal
-
-                    // New Relation: Create all parts
-                    // @ts-ignore: IDE stale type definition
-                    parts: {
-                        create: createOrderDto.parts ? createOrderDto.parts.map(part => ({
-                            name: part.name,
-                            description: part.description,
-                            notes: part.notes,
-                            images: part.images || [],
-                            video: part.video,
-                        })) : []
-                    }
-                },
-                include: {
-                    // @ts-ignore: IDE stale type definition
-                    parts: true // Return parts in response
-                }
-            });
-
-            // Update Audit Log to reflect new structure
-            await this.auditLogs.logAction({
-                orderId: order.id,
-                action: 'CREATE',
-                entity: 'Order',
-                actorType: ActorType.CUSTOMER,
-                actorId: customerId,
-                actorName: 'Customer', // In real app, fetch name
-                newState: OrderStatus.COLLECTING_OFFERS,
-                metadata: {
-                    car: `${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel} ${createOrderDto.vehicleYear}`,
-                    partsCount: createOrderDto.parts ? createOrderDto.parts.length : 0,
-                    vinImage: createOrderDto.vinImage,
-                    // Captured from frontend payload
-                    requestType: createOrderDto.requestType,
-                    shippingType: createOrderDto.shippingType
-                },
-            }, tx);
-
-            return order;
-        });
-
-        // 3. Notification: Notify Customer & Admin (Async)
+        let result: Order;
         try {
-            // Notify Customer with welcoming tone
+            // 2. Transaction: Create Order + Parts + Audit Log + Update Count
+            result = await this.prisma.$transaction(async (tx) => {
+                // Increment daily count
+                await tx.user.update({
+                    where: { id: customerId },
+                    data: { dailyOrderCount: { increment: 1 } }
+                });
+
+                // Helper: Get primary part for legacy fields compatibility
+                // Ensure parts exists and has at least one item, otherwise default to empty/null logic
+                const primaryPart = (createOrderDto.parts && createOrderDto.parts.length > 0) ? createOrderDto.parts[0] : null;
+                const primaryName = primaryPart ? primaryPart.name : (createOrderDto.partName || 'Multi-Part Order');
+                const primaryDesc = primaryPart ? primaryPart.description : (createOrderDto.partDescription || 'See parts list');
+                const primaryImages = primaryPart ? primaryPart.images : (createOrderDto.partImages || []);
+
+                const order = await tx.order.create({
+                    data: {
+                        vehicleMake: createOrderDto.vehicleMake,
+                        vehicleModel: createOrderDto.vehicleModel,
+                        vehicleYear: createOrderDto.vehicleYear,
+                        vin: createOrderDto.vin,
+                        vinImage: createOrderDto.vinImage,
+                        requestType: createOrderDto.requestType,
+                        shippingType: createOrderDto.shippingType,
+
+                        // Legacy Support: Populate single-part fields from the first part
+                        partName: primaryName,
+                        partDescription: primaryDesc,
+                        partImages: primaryImages,
+
+                        conditionPref: createOrderDto.conditionPref,
+                        warrantyPreferred: createOrderDto.warrantyPreferred,
+                        clientRequestId: clientRequestId ?? null,
+
+                        customerId,
+                        orderNumber,
+                        status: OrderStatus.COLLECTING_OFFERS,
+                        revealOffersAt: new Date(Date.now() + collectionMs),
+                        offersStopAt: new Date(Date.now() + collectionMs - 15 * 60 * 1000),
+                        selectionDeadlineAt: null, // Set dynamically upon reveal
+
+                        // New Relation: Create all parts
+                        // @ts-ignore: IDE stale type definition
+                        parts: {
+                            create: createOrderDto.parts ? createOrderDto.parts.map(part => ({
+                                name: part.name,
+                                description: part.description,
+                                notes: part.notes,
+                                images: part.images || [],
+                                video: part.video,
+                            })) : []
+                        }
+                    },
+                    include: {
+                        // @ts-ignore: IDE stale type definition
+                        parts: true // Return parts in response
+                    }
+                });
+
+                // Update Audit Log to reflect new structure
+                await this.auditLogs.logAction({
+                    orderId: order.id,
+                    action: 'CREATE',
+                    entity: 'Order',
+                    actorType: ActorType.CUSTOMER,
+                    actorId: customerId,
+                    actorName: 'Customer', // In real app, fetch name
+                    newState: OrderStatus.COLLECTING_OFFERS,
+                    metadata: {
+                        car: `${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel} ${createOrderDto.vehicleYear}`,
+                        partsCount: createOrderDto.parts ? createOrderDto.parts.length : 0,
+                        vinImage: createOrderDto.vinImage,
+                        // Captured from frontend payload
+                        requestType: createOrderDto.requestType,
+                        shippingType: createOrderDto.shippingType
+                    },
+                }, tx);
+
+                return order;
+            });
+        } catch (error) {
+            // Concurrent duplicate create with same clientRequestId → return winner
+            if (
+                clientRequestId &&
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002'
+            ) {
+                const existing = await this.prisma.order.findFirst({
+                    where: { customerId, clientRequestId },
+                    include: { parts: true },
+                });
+                if (existing) return existing;
+            }
+            throw error;
+        }
+
+        // 3. Notifications / WhatsApp: fire-and-forget after commit (do not block HTTP)
+        void this.dispatchOrderCreatedNotifications(customerId, result.id, orderNumber, createOrderDto)
+            .catch((e) => this.logger.error('Failed to send order-created notifications', e));
+
+        return result;
+    }
+
+    /** Background fan-out after order commit — never awaited on the create HTTP path */
+    private async dispatchOrderCreatedNotifications(
+        customerId: string,
+        orderId: string,
+        orderNumber: string,
+        createOrderDto: CreateOrderDto,
+    ): Promise<void> {
+        try {
             await this.notifications.create({
                 recipientId: customerId,
                 recipientRole: 'CUSTOMER',
@@ -188,21 +228,19 @@ export class OrdersService {
                 messageEn: `Thank you for your trust! Order #${orderNumber} is now under review, and we'll bring you the best offers soon.`,
                 type: 'ORDER',
                 link: `/dashboard/orders`,
-                metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' }
+                metadata: { orderId, orderNumber, waEvent: 'ORDER_CREATED' }
             });
 
-            // Notify Admin
             await this.notifications.notifyAdmins({
                 titleAr: 'طلب جديد في السوق!',
                 titleEn: 'New Order in Marketplace!',
                 messageAr: `تم إنشاء طلب جديد رقم ${orderNumber} بانتظار عروض التجار.`,
                 messageEn: `A new order #${orderNumber} has been created, awaiting merchant offers.`,
                 type: 'ORDER',
-                link: `/admin/orders/${result.id}`,
-                metadata: { orderId: result.id, orderNumber }
+                link: `/admin/orders/${orderId}`,
+                metadata: { orderId, orderNumber }
             });
 
-            // 4. Notify Relevant Merchants (Matching Car Expertise) - 2026 Smart Routing
             const matchingStores = await this.prisma.store.findMany({
                 where: {
                     status: 'ACTIVE',
@@ -218,8 +256,6 @@ export class OrdersService {
                 const merchantMessageAr = `طلب جديد لسيارة ${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel}. هل تتوفر لديك القطعة؟ قدم عرضك الآن!`;
                 const merchantMessageEn = `New request for ${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel}. Do you have the part? Submit your offer now!`;
 
-                // Parallel so WhatsApp dispatches complete before the HTTP response ends
-                // (sequential await of N merchants was too slow / easy to drop).
                 await Promise.allSettled(
                     matchingStores.map((store) =>
                         this.notifications.create({
@@ -230,17 +266,15 @@ export class OrdersService {
                             messageAr: merchantMessageAr,
                             messageEn: merchantMessageEn,
                             type: 'ORDER',
-                            link: `/merchant/orders/${result.id}`,
-                            metadata: { orderId: result.id, orderNumber, waEvent: 'ORDER_CREATED' },
+                            link: `/merchant/orders/${orderId}`,
+                            metadata: { orderId, orderNumber, waEvent: 'ORDER_CREATED' },
                         }),
                     ),
                 );
             }
         } catch (e) {
-            console.error('Failed to send notification', e);
+            this.logger.error('Failed to send notification', e instanceof Error ? e.stack : e);
         }
-
-        return result;
     }
 
 
