@@ -12,6 +12,7 @@ import { PreferencesStep } from './steps/PreferencesStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { OrderSuccessModal } from './OrderSuccessModal';
 import { OrderCreateQuotaBanner } from './OrderCreateQuotaBanner';
+import { OrderCreateRuleAlert } from './OrderCreateRuleAlert';
 import { hasDuplicatePartNames } from '../../../utils/normalizePartName';
 import { ordersApi } from '../../../services/api/orders';
 
@@ -23,6 +24,24 @@ function extractApiErrorMessage(error: unknown, fallback: string, preferAr: bool
   if (typeof data.message === 'string' && data.message.trim()) return data.message;
   if (Array.isArray(data.message) && data.message[0]) return String(data.message[0]);
   return fallback;
+}
+
+/** Show toast + full red glow banner with the same message text. */
+function raiseRuleAlert(
+  message: string,
+  opts: {
+    addNotification: (n: any) => void;
+    setRuleAlertMessage: (m: string | null) => void;
+    titleKey?: string;
+  },
+) {
+  opts.setRuleAlertMessage(message);
+  opts.addNotification({
+    type: 'system',
+    titleKey: opts.titleKey || 'alert',
+    message,
+    priority: 'urgent',
+  });
 }
 
 interface CreateOrderWizardProps {
@@ -46,6 +65,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     requestType,
     ensurePartsUploaded,
     isUploadingParts,
+    ruleAlertMessage,
+    setRuleAlertMessage,
   } = useCreateOrderStore();
   const {
     isPreferencesStepEnabled,
@@ -121,35 +142,45 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     setShowErrors(true);
     let hasError = false;
     const rules = t.dashboard.createOrder.rules;
+    const notify = (message: string) =>
+      raiseRuleAlert(message, { addNotification, setRuleAlertMessage });
 
     if (step === 1) {
       if (!vehicle.make || !vehicle.model || !vehicle.year) {
-        addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'يرجى تعبئة جميع بيانات المركبة الإلزامية' : 'Please fill all mandatory vehicle details', priority: 'urgent' });
+        notify(
+          language === 'ar'
+            ? 'يرجى تعبئة جميع بيانات المركبة الإلزامية'
+            : 'Please fill all mandatory vehicle details',
+        );
         hasError = true;
       }
     }
 
     if (step === 2 && !hasError) {
       if (requestType === 'multiple' && parts.length < 2) {
-        addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'لقد اخترت (عدة قطع)، يجب إضافة قطعتين على الأقل للمتابعة' : 'You selected (Multiple Parts), please add at least 2 parts to continue', priority: 'urgent' });
+        notify(
+          language === 'ar'
+            ? 'لقد اخترت (عدة قطع)، يجب إضافة قطعتين على الأقل للمتابعة'
+            : 'You selected (Multiple Parts), please add at least 2 parts to continue',
+        );
         hasError = true;
       } else if (requestType === 'multiple' && hasDuplicatePartNames(parts.map((p) => p.name))) {
-        addNotification({
-          type: 'system',
-          titleKey: 'alert',
-          message:
-            rules?.duplicatePartName ||
+        notify(
+          rules?.duplicatePartName ||
             (language === 'ar'
-              ? 'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.'
-              : 'You cannot add the same part more than once in this request.'),
-          priority: 'urgent',
-        });
+              ? 'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.'
+              : 'You cannot add the same part more than once in this request.\nPlease add a different part.'),
+        );
         hasError = true;
       } else {
         // Validate ALL parts
         const isValid = parts.every(p => p.name && p.description && p.images.length > 0);
         if (!isValid) {
-          addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'يرجى تعبئة جميع البيانات الإلزامية وإرفاق صورة واحدة على الأقل لكل قطعة' : 'Please fill all mandatory details and attach at least one image for all parts', priority: 'urgent' });
+          notify(
+            language === 'ar'
+              ? 'يرجى تعبئة جميع البيانات الإلزامية وإرفاق صورة واحدة على الأقل لكل قطعة'
+              : 'Please fill all mandatory details and attach at least one image for all parts',
+          );
           hasError = true;
         }
       }
@@ -159,16 +190,12 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         try {
           const quota = await ordersApi.getCreateQuota();
           if (requestType === 'multiple' && !quota.multiple.canCreate) {
-            addNotification({
-              type: 'system',
-              titleKey: 'alert',
-              message:
-                rules?.multipleCooldown ||
+            notify(
+              rules?.multipleCooldown ||
                 (language === 'ar'
-                  ? 'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة.'
-                  : 'You cannot submit another multiple request until 24 hours have passed.'),
-              priority: 'urgent',
-            });
+                  ? 'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة على طلبك المجمع السابق (غير الملغى).'
+                  : 'You cannot submit another multiple request until 24 hours have passed since your previous active multiple request.'),
+            );
             hasError = true;
             setQuotaRefreshKey((k) => k + 1);
           } else if (requestType === 'single') {
@@ -182,29 +209,21 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
                 Number(v.year) === yearNum,
             );
             if (blockedLoose) {
-              addNotification({
-                type: 'system',
-                titleKey: 'alert',
-                message:
-                  rules?.singleVehicleDuplicate ||
+              notify(
+                rules?.singleVehicleDuplicate ||
                   (language === 'ar'
-                    ? 'لا يمكنك تقديم أكثر من طلب مفرد واحد خلال 24 ساعة لنفس السيارة.'
-                    : 'You cannot submit more than one single request within 24 hours for the same vehicle.'),
-                priority: 'urgent',
-              });
+                    ? 'لا يمكنك تقديم أكثر من طلب مفرد واحد خلال 24 ساعة لنفس السيارة.\nإذا كنت تحتاج إلى عدة قطع لنفس السيارة، يرجى استخدام الطلب المجمع، حيث يمكنك إضافة عدة قطع في طلب واحد، مع إمكانية اختيار طريقة الشحن لكل قطعة بشكل منفصل أو شحن جميع القطع معاً.'
+                    : 'You cannot submit more than one single request within 24 hours for the same vehicle.\nIf you need multiple parts for the same vehicle, please use a multiple request where you can add several parts in one order and choose shipping per part or combined.'),
+              );
               hasError = true;
               setQuotaRefreshKey((k) => k + 1);
             } else if (quota.single.remaining <= 0) {
-              addNotification({
-                type: 'system',
-                titleKey: 'alert',
-                message:
-                  rules?.singleLimit ||
+              notify(
+                rules?.singleLimit ||
                   (language === 'ar'
-                    ? 'لقد وصلت إلى الحد الأقصى لطلبات المفرد خلال 24 ساعة.'
-                    : 'You have reached the single-request limit for 24 hours.'),
-                priority: 'urgent',
-              });
+                    ? 'لقد وصلت إلى الحد الأقصى (10) طلبات مفردة خلال 24 ساعة. يمكنك المحاولة مرة أخرى بعد انتهاء المدة.'
+                    : 'You have reached the maximum of 10 single requests within 24 hours. Try again after the window resets.'),
+              );
               hasError = true;
               setQuotaRefreshKey((k) => k + 1);
             }
@@ -217,7 +236,9 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
 
     if (step === 3 && SHOW_PREFERENCES_STEP && !hasError) {
       if (!preferences.condition) {
-        addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'يرجى اختيار حالة القطعة' : 'Please select part condition', priority: 'urgent' });
+        notify(
+          language === 'ar' ? 'يرجى اختيار حالة القطعة' : 'Please select part condition',
+        );
         hasError = true;
       }
     }
@@ -234,12 +255,9 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         await ensurePartsUploaded();
       } catch (err) {
         console.error('Part upload failed', err);
-        addNotification({
-          type: 'system',
-          titleKey: 'alert',
-          message: language === 'ar' ? 'فشل رفع الملفات. حاول مرة أخرى.' : 'Failed to upload files. Please try again.',
-          priority: 'urgent',
-        });
+        notify(
+          language === 'ar' ? 'فشل رفع الملفات. حاول مرة أخرى.' : 'Failed to upload files. Please try again.',
+        );
         setShake(true);
         setTimeout(() => setShake(false), 500);
         return;
@@ -247,12 +265,14 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     }
 
     // Success (Move Next)
+    setRuleAlertMessage(null);
     setShowErrors(false);
     setStep(getNextStep(step));
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Mobile UX fix
   };
 
   const handleBack = () => {
+    setRuleAlertMessage(null);
     setStep(getPrevStep(step));
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Mobile UX fix
   };
@@ -261,6 +281,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     try {
       const newOrderId = await submitOrder();
       void useOrderStore.getState().fetchOrder(newOrderId);
+      setRuleAlertMessage(null);
       addNotification({
         type: 'system',
         titleKey: 'adminAlert',
@@ -274,11 +295,11 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       const fallback =
         t.dashboard.createOrder.rules?.createFailed ||
         (language === 'ar' ? 'فشل إنشاء الطلب. حاول مرة أخرى.' : 'Failed to create order. Please try again.');
-      addNotification({
-        type: 'system',
+      const msg = extractApiErrorMessage(error, fallback, language === 'ar');
+      raiseRuleAlert(msg, {
+        addNotification,
+        setRuleAlertMessage,
         titleKey: 'adminAlert',
-        message: extractApiErrorMessage(error, fallback, language === 'ar'),
-        priority: 'urgent'
       });
       setQuotaRefreshKey((k) => k + 1);
     }
@@ -299,6 +320,11 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       </div>
 
       <OrderCreateQuotaBanner refreshKey={quotaRefreshKey} />
+
+      <OrderCreateRuleAlert
+        message={ruleAlertMessage}
+        onDismiss={() => setRuleAlertMessage(null)}
+      />
 
       {/* Progress Stepper */}
       <div className="relative flex justify-between items-center px-4 md:px-12 mb-12">
