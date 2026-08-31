@@ -209,10 +209,12 @@ export const customer = {
         alert: 'يرجى مراجعة تفاصيل طلبك بدقة قبل الإرسال لضمان وصول العروض المناسبة.',
         vehicleInfo: 'معلومات السيارة',
         partDetails: 'تفاصيل القطعة',
-        confirm: 'تأكيد وإرسال الطلب'
+        confirm: 'تأكيد وإرسال الطلب',
+        sending: 'جاري إرسال الطلب…'
       },
       successAlert: 'طلب جديد في السوق',
       next: 'التالي',
+      uploading: 'جاري رفع الملفات…',
       back: 'السابق'
     },
     orders: {
@@ -1245,10 +1247,12 @@ export const customer = {
         alert: 'Please review your order details carefully before submitting to ensure accurate offers.',
         vehicleInfo: 'Vehicle Information',
         partDetails: 'Part Details',
-        confirm: 'Confirm & Submit Order'
+        confirm: 'Confirm & Submit Order',
+        sending: 'Sending order…'
       },
       successAlert: 'New Market Request',
       next: 'Next',
+      uploading: 'Uploading files…',
       back: 'Back'
     },
     orders: {
