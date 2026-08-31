@@ -5,7 +5,7 @@ import { StoresService } from '../stores/stores.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType, OrderStatus, ViolationTargetType } from '@prisma/client';
-import { getVoluntaryWithdrawEnd } from './offer-governance.util';
+import { getVoluntaryWithdrawEnd, computeCanEditUntil } from './offer-governance.util';
 import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { ViolationsService } from '../violations/violations.service';
@@ -61,7 +61,9 @@ export class OffersService {
         
         const now = new Date();
         if (orderInfo.offersStopAt && now > orderInfo.offersStopAt) {
-            throw new BadRequestException('Bidding time has strictly expired for this order (reveal phase approaching).');
+            throw new BadRequestException(
+                'Bidding has closed for this order (1 hour before offer reveal). Submission is no longer allowed.',
+            );
         }
 
         // Part-level lock: only voluntary withdraw blocks re-bid on that part (not free-window delete)
@@ -143,7 +145,7 @@ export class OffersService {
             offerImage: createOfferDto.offerImage,
             cylinders: createOfferDto.cylinders,
             shippingCost: computedShipping,
-            canEditUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 Minute window
+            canEditUntil: computeCanEditUntil(now, orderInfo.offersStopAt),
         };
 
         // Only include orderPartId if provided (avoids DB error if column doesn't exist yet)
@@ -231,14 +233,14 @@ export class OffersService {
                 metadata: { orderId: orderInfo.id, offerId: offer.id }
             }).catch(() => {});
 
-            // 8. Notify Merchant about their 15-minute edit window (Governance Info)
+            // 8. Notify Merchant about free edit window (Governance Info)
             this.notificationsService.create({
                 recipientId: userId,
                 recipientRole: 'VENDOR',
                 titleAr: 'تم إرسال عرضك بنجاح ✅',
                 titleEn: 'Offer Submitted Successfully ✅',
-                messageAr: 'لديك 15 دقيقة لتعديل عرضك مجاناً، أو حذفه (يعد ضمن الحد الشهري مع إمكانية إعادة التقديم على نفس القطعة). بعد المهلة يمكنك التراجع/الانسحاب الطوعي حتى ساعة قبل اختيار العميل — الانسحاب يمنع إعادة التقديم على نفس القطعة.',
-                messageEn: 'You have 15 minutes to edit for free, or delete (counts toward the monthly limit; you may re-bid on the same part). After that, voluntary withdraw until 1 hour before selection — withdraw blocks re-bidding on that part only.',
+                messageAr: 'لديك حتى 3 ساعات لتعديل عرضك مجاناً (أو حتى ساعة قبل كشف العروض أيهما أقرب)، أو حذفه (يعد ضمن الحد الشهري مع إمكانية إعادة التقديم على نفس القطعة). بعد المهلة يمكنك الانسحاب الطوعي حتى ساعة قبل الكشف — الانسحاب يمنع إعادة التقديم على نفس القطعة.',
+                messageEn: 'You have up to 3 hours to edit for free (or until 1 hour before reveal, whichever is sooner), or delete (counts toward the monthly limit; you may re-bid on the same part). After that, voluntary withdraw until 1 hour before reveal — withdraw blocks re-bidding on that part only.',
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${orderInfo.id}`
             }).catch(() => {});
@@ -379,12 +381,14 @@ export class OffersService {
         const now = new Date();
         if (existing.canEditUntil && now > existing.canEditUntil) {
             throw new BadRequestException(
-                'The 15-minute edit window has expired. Use voluntary withdrawal from the request page if still within the allowed period.',
+                'The free edit window (up to 3 hours, or until bidding stops) has expired. Use voluntary withdrawal if still within the allowed period.',
             );
         }
 
         if (order.offersStopAt && now > order.offersStopAt) {
-            throw new BadRequestException('Cannot edit offer — 24h bidding phase is ending.');
+            throw new BadRequestException(
+                'Cannot edit offer — bidding closed 1 hour before offer reveal.',
+            );
         }
 
         // Build update data — only include fields that were provided
@@ -471,7 +475,7 @@ export class OffersService {
     }
 
     /**
-     * Voluntary withdrawal — after 15m free window, before 1h pre-selection.
+     * Voluntary withdrawal — after free-edit window, before 1h pre-reveal (offersStopAt).
      * Blocks re-bidding on this part; records a store Violation (VOLUNTARY_OFFER_WITHDRAW)
      * and counts toward the monthly deletion quota.
      */
@@ -495,6 +499,7 @@ export class OffersService {
                         orderNumber: true,
                         revealOffersAt: true,
                         createdAt: true,
+                        offersStopAt: true,
                     },
                 },
             },
@@ -517,17 +522,24 @@ export class OffersService {
         const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
         if (!canEditUntil || now <= canEditUntil) {
             throw new BadRequestException(
-                'Use free cancel during the 15-minute edit window instead of voluntary withdrawal.',
+                'Use free cancel during the free edit window instead of voluntary withdrawal.',
+            );
+        }
+
+        if (order.offersStopAt && now > order.offersStopAt) {
+            throw new BadRequestException(
+                'The voluntary withdrawal window has closed (1 hour before offer reveal).',
             );
         }
 
         const voluntaryEnd = getVoluntaryWithdrawEnd({
             revealOffersAt: order.revealOffersAt,
             createdAt: order.createdAt,
+            offersStopAt: order.offersStopAt,
         });
         if (now >= voluntaryEnd) {
             throw new BadRequestException(
-                'The voluntary withdrawal window has closed (1 hour before customer selection).',
+                'The voluntary withdrawal window has closed (1 hour before offer reveal).',
             );
         }
 
@@ -647,6 +659,7 @@ export class OffersService {
                         status: true,
                         revealOffersAt: true,
                         createdAt: true,
+                        offersStopAt: true,
                     },
                 },
             },
@@ -662,6 +675,7 @@ export class OffersService {
             const voluntaryEnd = getVoluntaryWithdrawEnd({
                 revealOffersAt: order.revealOffersAt,
                 createdAt: order.createdAt,
+                offersStopAt: order.offersStopAt,
             });
             const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
             if (
@@ -756,7 +770,15 @@ export class OffersService {
                 orderId: true,
                 offerNumber: true,
                 canEditUntil: true,
-                order: { select: { id: true, status: true, customerId: true, orderNumber: true } },
+                order: {
+                    select: {
+                        id: true,
+                        status: true,
+                        customerId: true,
+                        orderNumber: true,
+                        offersStopAt: true,
+                    },
+                },
             },
         });
 
@@ -772,14 +794,20 @@ export class OffersService {
             throw new BadRequestException('Cannot cancel offer — bidding is closed or order has progressed.');
         }
 
-        // --- 2026 Governance Rule: Free Cancel only within 15m ---
+        const now = new Date();
+        if (existing.order.offersStopAt && now > existing.order.offersStopAt) {
+            throw new BadRequestException(
+                'Cannot cancel offer — bidding closed 1 hour before offer reveal.',
+            );
+        }
+
+        // Free cancel only within free-edit window (up to 3h, capped by offersStopAt)
         const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
-        if (!canEditUntil || new Date() > canEditUntil) {
+        if (!canEditUntil || now > canEditUntil) {
             throw new BadRequestException(
                 'Free edit window has expired. Use voluntary withdrawal if still within the allowed period.',
             );
         }
-        // ------------------------------------------------------
 
         // Free-window cancel: soft-delete so monthly/part counters stay auditable.
         // Does NOT lock the part — merchant may re-bid during collection.
@@ -994,13 +1022,13 @@ export class OffersService {
             const stats = await this.biddingRestriction.ensureMonthBucket(params.storeId);
             const kindAr: Record<typeof params.kind, string> = {
                 EDIT: 'تعديل عرض',
-                CANCEL: 'إلغاء وحذف عرض (نافذة 15د)',
+                CANCEL: 'إلغاء وحذف عرض (نافذة التعديل الحر)',
                 VOLUNTARY_WITHDRAW: 'تراجع / انسحاب طوعي من القطعة',
                 VIOLATION_WITHDRAW: 'سحب عرض (حوكمة)',
             };
             const kindEn: Record<typeof params.kind, string> = {
                 EDIT: 'Offer edited',
-                CANCEL: 'Offer cancelled & deleted (15m window)',
+                CANCEL: 'Offer cancelled & deleted (free-edit window)',
                 VOLUNTARY_WITHDRAW: 'Voluntary withdraw from part',
                 VIOLATION_WITHDRAW: 'Offer withdrawn (governance)',
             };

@@ -33,6 +33,7 @@ import { resolveCompletionWarranty } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { OrderCreateQuotaService } from './order-create-quota.service';
 import { ORDER_CREATE_RULES } from './order-create-rules.util';
+import { computeOffersStopAt } from '../offers/offer-governance.util';
 
 @Injectable()
 export class OrdersService {
@@ -161,7 +162,7 @@ export class OrdersService {
                         orderNumber,
                         status: OrderStatus.COLLECTING_OFFERS,
                         revealOffersAt: new Date(Date.now() + collectionMs),
-                        offersStopAt: new Date(Date.now() + collectionMs - 15 * 60 * 1000),
+                        offersStopAt: computeOffersStopAt(new Date(Date.now() + collectionMs)),
                         selectionDeadlineAt: null, // Set dynamically upon reveal
 
                         // New Relation: Create all parts
@@ -2113,7 +2114,7 @@ export class OrdersService {
         const collectionMs = this.orderDurationConfig.hoursToMs(durationCfg.offerCollectionHours);
         const now = Date.now();
         const newDeadline = new Date(now + collectionMs);
-        const offersStopAt = new Date(now + collectionMs - 15 * 60 * 1000);
+        const offersStopAt = computeOffersStopAt(newDeadline);
 
         const updated = await this.prisma.order.update({
             where: { id: orderId },

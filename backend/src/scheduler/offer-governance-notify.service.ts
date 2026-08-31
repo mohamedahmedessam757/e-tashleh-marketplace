@@ -52,6 +52,7 @@ export class OfferGovernanceNotifyService {
                         orderNumber: true,
                         revealOffersAt: true,
                         createdAt: true,
+                        offersStopAt: true,
                     },
                 },
                 store: { select: { ownerId: true, name: true } },
@@ -65,6 +66,7 @@ export class OfferGovernanceNotifyService {
             const voluntaryEnd = getVoluntaryWithdrawEnd({
                 revealOffersAt: offer.order.revealOffersAt,
                 createdAt: offer.order.createdAt,
+                offersStopAt: offer.order.offersStopAt,
             });
             if (now >= voluntaryEnd) continue;
 
@@ -74,8 +76,8 @@ export class OfferGovernanceNotifyService {
                     recipientRole: 'VENDOR',
                     titleAr: 'يمكنك الآن الانسحاب من الطلب',
                     titleEn: 'Voluntary Withdrawal Window Open',
-                    messageAr: `انتهت مهلة التعديل المجاني لعرضك على الطلب #${offer.order!.orderNumber}. يمكنك الانسحاب الطوعي حتى ${voluntaryEnd.toLocaleString('ar-EG')}.`,
-                    messageEn: `Your free edit window ended for order #${offer.order!.orderNumber}. You may voluntarily withdraw until ${voluntaryEnd.toISOString()}.`,
+                    messageAr: `انتهت مهلة التعديل المجاني لعرضك على الطلب #${offer.order!.orderNumber}. يمكنك الانسحاب الطوعي حتى ${voluntaryEnd.toLocaleString('ar-EG')} (ساعة قبل كشف العروض).`,
+                    messageEn: `Your free edit window ended for order #${offer.order!.orderNumber}. You may voluntarily withdraw until ${voluntaryEnd.toISOString()} (1 hour before reveal).`,
                     type: 'system_alert',
                     link: `/dashboard/merchant/orders/${offer.orderId}`,
                     metadata: { offerId: offer.id, notifyKey: 'VOLUNTARY_WINDOW_OPENED' },
@@ -99,6 +101,7 @@ export class OfferGovernanceNotifyService {
                         orderNumber: true,
                         revealOffersAt: true,
                         createdAt: true,
+                        offersStopAt: true,
                     },
                 },
                 store: { select: { ownerId: true } },
@@ -111,18 +114,20 @@ export class OfferGovernanceNotifyService {
             const voluntaryEnd = getVoluntaryWithdrawEnd({
                 revealOffersAt: offer.order.revealOffersAt,
                 createdAt: offer.order.createdAt,
+                offersStopAt: offer.order.offersStopAt,
             });
             const msUntilEnd = voluntaryEnd.getTime() - now.getTime();
+            // Remind when ≤ 65 minutes remain until bidding/voluntary stop
             if (msUntilEnd <= 0 || msUntilEnd > 65 * 60 * 1000) continue;
 
             await this.notifyOnce(offer.id, offer.orderId, 'VOLUNTARY_WINDOW_CLOSING', async () => {
                 await this.notifications.create({
                     recipientId: offer.store!.ownerId!,
                     recipientRole: 'VENDOR',
-                    titleAr: 'تبقى ساعة واحدة للانسحاب من الطلب',
-                    titleEn: '1 Hour Left to Withdraw from Request',
-                    messageAr: `تبقى ساعة واحدة لإمكانية الانسحاب الطوعي من الطلب #${offer.order!.orderNumber} قبل مرحلة اختيار العميل.`,
-                    messageEn: `One hour remains to voluntarily withdraw from request #${offer.order!.orderNumber} before customer selection.`,
+                    titleAr: 'تبقى أقل من ساعة للانسحاب من الطلب',
+                    titleEn: 'Less Than 1 Hour Left to Withdraw',
+                    messageAr: `تبقى وقت قصير لإمكانية الانسحاب الطوعي من الطلب #${offer.order!.orderNumber} قبل إغلاق باب التقديم (ساعة قبل كشف العروض).`,
+                    messageEn: `Little time remains to voluntarily withdraw from request #${offer.order!.orderNumber} before bidding closes (1 hour before reveal).`,
                     type: 'system_alert',
                     link: `/dashboard/merchant/orders/${offer.orderId}`,
                     metadata: { offerId: offer.id, notifyKey: 'VOLUNTARY_WINDOW_CLOSING' },
