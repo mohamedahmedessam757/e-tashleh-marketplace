@@ -175,45 +175,45 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
         const themeHex = isReturn ? '#06b6d4' : '#f59e0b';
 
         return (
-            <div className={`${isPrint ? 'bg-white text-black p-8' : 'bg-white/5 text-white p-6 md:p-8'} relative overflow-hidden transition-all duration-500`}>
+            <div className={`${isPrint ? 'bg-white text-black p-8' : 'bg-white/5 text-white p-4 sm:p-6 md:p-8'} relative overflow-hidden transition-all duration-500 min-w-0`}>
                 {/* Watermark Logo */}
                 <div className={`absolute inset-0 flex items-center justify-center ${isPrint ? 'opacity-[0.04]' : 'opacity-[0.06]'} pointer-events-none`}>
-                    <img src="/logo.png" alt="" className={isPrint ? 'w-[400px] filter invert' : 'w-[300px]'} />
+                    <img src="/logo.png" alt="" className={isPrint ? 'w-[400px] filter invert' : 'w-[200px] sm:w-[300px]'} />
                 </div>
 
-                <div className={`flex justify-between items-start mb-8 border-b ${isPrint ? 'border-gray-200' : 'border-white/10'} pb-6 relative z-10`}>
-                    <div className="flex gap-4 items-center">
-                        <img src="/logo.png" alt="Logo" className={`w-16 h-16 object-contain ${isPrint ? 'filter invert' : ''}`} />
-                        <div>
-                            <h2 className={`text-2xl font-black tracking-tighter uppercase ${isPrint ? 'text-black' : 'text-white'}`}>
+                <div className={`flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6 mb-6 sm:mb-8 border-b ${isPrint ? 'border-gray-200' : 'border-white/10'} pb-4 sm:pb-6 relative z-10`}>
+                    <div className="flex gap-3 sm:gap-4 items-center min-w-0">
+                        <img src="/logo.png" alt="Logo" className={`w-12 h-12 sm:w-16 sm:h-16 object-contain shrink-0 ${isPrint ? 'filter invert' : ''}`} />
+                        <div className="min-w-0">
+                            <h2 className={`text-lg sm:text-2xl font-black tracking-tighter uppercase leading-tight ${isPrint ? 'text-black' : 'text-white'}`}>
                                 {isAr ? (isReturn ? 'بوليصة إرجاع' : 'بوليصة شحن') : (isReturn ? 'RETURN WAYBILL' : 'SHIPPING WAYBILL')}
                             </h2>
-                            <p className={`${isPrint ? 'text-gray-500' : 'text-white/40'} text-[10px] font-black mt-1 uppercase tracking-[0.3em]`}>
+                            <p className={`${isPrint ? 'text-gray-500' : 'text-white/40'} text-[10px] font-black mt-1 uppercase tracking-[0.2em] sm:tracking-[0.3em]`}>
                                 E-TASHLEH.NET MARKETPLACE
                             </p>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <img src={qrUrl} alt="QR Code" className={`w-24 h-24 border ${isPrint ? 'border-gray-200' : 'border-white/10'} p-1 bg-white`} />
-                        <div className={`font-mono text-[10px] font-black mt-2 text-center ${isPrint ? 'text-gray-800' : (isReturn ? 'text-cyan-500' : 'text-amber-500/70')}`}>{wb.waybillNumber}</div>
+                    <div className="text-center sm:text-end shrink-0 self-center sm:self-start">
+                        <img src={qrUrl} alt="QR Code" className={`w-20 h-20 sm:w-24 sm:h-24 border ${isPrint ? 'border-gray-200' : 'border-white/10'} p-1 bg-white mx-auto`} />
+                        <div className={`font-mono text-[10px] font-black mt-2 text-center break-all max-w-[7rem] sm:max-w-none ${isPrint ? 'text-gray-800' : (isReturn ? 'text-cyan-500' : 'text-amber-500/70')}`}>{wb.waybillNumber}</div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8 relative z-10">
-                    <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 mb-6 sm:mb-8 relative z-10">
+                    <div className="space-y-4 min-w-0">
                         <div>
                             <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isPrint ? 'text-gray-400 border-gray-100' : `text-${themeColor}-500/40 border-${themeColor}-500/10`} border-b pb-1`}>
                                 {isAr ? 'المرسِل (From)' : 'Sender (From)'}
                             </h3>
                             
                             {/* Header Logic: Returns show Sender Name, Forward shows Platform Authority */}
-                            <div className={`font-black text-xl tracking-tighter ${isPrint ? 'text-black' : 'text-white'}`}>
+                            <div className={`font-black text-lg sm:text-xl tracking-tighter break-words ${isPrint ? 'text-black' : 'text-white'}`}>
                                 {isReturn ? (wb.senderName || 'Customer') : 'E-TASHLEH.NET'}
                             </div>
 
                             {/* Store Authorization (Crucial for Forward Shipments) */}
                             {!isReturn && (
-                                <div className={`text-sm font-semibold mt-1 ${isPrint ? 'text-gray-700' : 'text-white/70'}`}>
+                                <div className={`text-sm font-semibold mt-1 break-words ${isPrint ? 'text-gray-700' : 'text-white/70'}`}>
                                     {isAr ? 'مفوّض عن المتجر:' : 'Authorized for Store:'} <span className={isPrint ? '' : 'text-amber-500'}>{wb.storeName}</span>
                                 </div>
                             )}
@@ -221,20 +221,20 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                             {/* Detailed Logistics Metadata (2026 Schema) */}
                             {(wb.senderPhone || wb.senderCity) ? (
                                 <>
-                                    <div className={`text-sm font-bold mt-1 ${isPrint ? 'text-gray-700' : 'text-white/70'}`}>
+                                    <div className={`text-sm font-bold mt-1 break-all ${isPrint ? 'text-gray-700' : 'text-white/70'}`}>
                                         {wb.senderPhone}
                                     </div>
-                                    <div className={`text-xs font-black mt-1 uppercase tracking-wider ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
+                                    <div className={`text-xs font-black mt-1 uppercase tracking-wider break-words ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
                                         {wb.senderCity}{wb.senderCity && wb.senderCountry ? ', ' : ''}{wb.senderCountry}
                                     </div>
-                                    <div className={`text-xs mt-2 leading-relaxed max-w-xs ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
+                                    <div className={`text-xs mt-2 leading-relaxed max-w-xs break-words ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
                                         {wb.senderAddress}
                                     </div>
                                 </>
                             ) : (
                                 /* Legacy/Missing Data Fallback: Store Code */
                                 !isReturn && wb.storeCode && (
-                                    <div className={`text-[10px] mt-1 uppercase font-mono ${isPrint ? 'text-gray-500' : 'text-white/30'}`}>
+                                    <div className={`text-[10px] mt-1 uppercase font-mono break-all ${isPrint ? 'text-gray-500' : 'text-white/30'}`}>
                                         Store Code: {wb.storeCode}
                                     </div>
                                 )
@@ -242,7 +242,7 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                         </div>
                     </div>
                     
-                    <div className="space-y-4 text-left md:text-right">
+                    <div className="space-y-4 text-start md:text-end min-w-0">
                         <div>
                             <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isPrint ? 'text-gray-400 border-gray-100' : `text-${themeColor}-500/40 border-${themeColor}-500/10`} border-b pb-1`}>
                                 {isAr ? 'المرسَل إليه (To)' : 'Recipient (To)'}
@@ -255,26 +255,26 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                                 </div>
                             )}
 
-                            <div className={`font-black text-xl tracking-tighter ${isPrint ? 'text-black' : 'text-white'}`}>
+                            <div className={`font-black text-lg sm:text-xl tracking-tighter break-words ${isPrint ? 'text-black' : 'text-white'}`}>
                                 {role === 'MERCHANT' ? (isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer') : wb.recipientName}
                             </div>
-                            <div className={`text-sm font-bold mt-1 font-mono ${isPrint ? 'text-gray-700' : 'text-white/60'}`}>
+                            <div className={`text-sm font-bold mt-1 font-mono break-all ${isPrint ? 'text-gray-700' : 'text-white/60'}`}>
                                 {role === 'MERCHANT' ? '---' : wb.recipientPhone}
                             </div>
-                            <div className={`text-xs font-black mt-1 uppercase tracking-wider ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
+                            <div className={`text-xs font-black mt-1 uppercase tracking-wider break-words ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
                                 {wb.recipientCity}, {wb.recipientCountry}
                             </div>
-                            <div className={`text-xs mt-2 leading-relaxed md:ml-auto max-w-xs ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
+                            <div className={`text-xs mt-2 leading-relaxed md:ms-auto max-w-xs break-words ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
                                 {role === 'MERCHANT' ? (isAr ? 'العنوان مخفي للخصوصية' : 'Address Hidden for Privacy') : wb.recipientAddress}
                             </div>
-                            <div className="flex flex-wrap gap-2 mt-4">
+                            <div className="flex flex-wrap gap-2 mt-4 md:justify-end">
                                 {wb.customerCode && (
-                                    <div className={`text-[10px] uppercase font-black px-3 py-1 rounded-lg ${isPrint ? 'bg-gray-100 text-gray-700' : 'bg-white/5 text-white/30 border border-white/5'}`}>
+                                    <div className={`text-[10px] uppercase font-black px-3 py-1 rounded-lg break-all ${isPrint ? 'bg-gray-100 text-gray-700' : 'bg-white/5 text-white/30 border border-white/5'}`}>
                                         {isAr ? 'معرف العميل' : 'Client Node ID'}: {wb.customerCode}
                                     </div>
                                 )}
                                 {isReturn && wb.storeCode && (
-                                    <div className={`text-[10px] uppercase font-black px-3 py-1 rounded-lg ${isPrint ? 'bg-gray-100 text-gray-700' : 'bg-gold-500/10 text-gold-500/70 border border-gold-500/20'}`}>
+                                    <div className={`text-[10px] uppercase font-black px-3 py-1 rounded-lg break-all ${isPrint ? 'bg-gray-100 text-gray-700' : 'bg-gold-500/10 text-gold-500/70 border border-gold-500/20'}`}>
                                         {isAr ? 'كود المتجر' : 'Store Code'}: {wb.storeCode}
                                     </div>
                                 )}
@@ -284,38 +284,40 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                 </div>
 
                 <div className={`border rounded-xl overflow-hidden relative z-10 ${isPrint ? 'border-gray-200' : 'border-white/10 shadow-2xl'}`}>
-                    <table className="w-full text-left">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[280px]">
                         <thead className={isPrint ? 'bg-gray-50 border-b border-gray-200' : 'bg-white/5 border-b border-white/10'}>
                             <tr>
-                                <th className={`py-3 px-4 text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'} ${isAr ? 'text-right' : 'text-left'}`}>
+                                <th className={`py-3 px-3 sm:px-4 text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'} ${isAr ? 'text-right' : 'text-left'}`}>
                                 {isAr ? 'الصنف والتفاصيل' : 'Item Description'}
                                 </th>
-                                <th className={`py-3 px-4 text-center text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'}`}>Qty</th>
-                                <th className={`py-3 px-4 ${isAr ? 'text-left' : 'text-right'} text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'}`}>
+                                <th className={`py-3 px-3 sm:px-4 text-center text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'}`}>Qty</th>
+                                <th className={`py-3 px-3 sm:px-4 ${isAr ? 'text-left' : 'text-right'} text-[10px] font-black uppercase tracking-widest ${isPrint ? 'text-gray-500' : 'text-white/40'}`}>
                                     {isAr ? 'القيمة' : 'Value'} ({wb.currency})
                                 </th>
                             </tr>
                         </thead>
                         <tbody className={`divide-y ${isPrint ? 'divide-gray-100' : 'divide-white/5'}`}>
                             <tr>
-                                <td className={`py-5 px-4 ${isAr ? 'text-right' : 'text-left'}`}>
-                                    <div className={`font-black ${isPrint ? 'text-black' : 'text-white'}`}>{wb.partName}</div>
-                                    <div className={`text-xs mt-1 font-medium ${isPrint ? 'text-gray-500' : 'text-white/30'}`}>{wb.partDescription || 'Auto part / قطع غيار'}</div>
+                                <td className={`py-4 sm:py-5 px-3 sm:px-4 ${isAr ? 'text-right' : 'text-left'}`}>
+                                    <div className={`font-black text-sm sm:text-base break-words ${isPrint ? 'text-black' : 'text-white'}`}>{wb.partName}</div>
+                                    <div className={`text-xs mt-1 font-medium break-words ${isPrint ? 'text-gray-500' : 'text-white/30'}`}>{wb.partDescription || 'Auto part / قطع غيار'}</div>
                                 </td>
-                                <td className={`py-5 px-4 text-center font-mono font-black ${isPrint ? 'text-gray-700' : 'text-white/50'}`}>1</td>
-                                <td className={`py-5 px-4 ${isAr ? 'text-left' : 'text-right'} font-mono font-black ${isPrint ? 'text-black' : `text-${themeColor}-500`}`}>
+                                <td className={`py-4 sm:py-5 px-3 sm:px-4 text-center font-mono font-black ${isPrint ? 'text-gray-700' : 'text-white/50'}`}>1</td>
+                                <td className={`py-4 sm:py-5 px-3 sm:px-4 ${isAr ? 'text-left' : 'text-right'} font-mono font-black whitespace-nowrap ${isPrint ? 'text-black' : `text-${themeColor}-500`}`}>
                                     {Number(wb.finalPrice).toLocaleString()}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                    </div>
 
                     {/* 2026 Dedicated Logistics Band: Round-trip Shipping */}
                     {Number(wb.shippingRefund) > 0 && (
-                        <div className={`p-4 border-t border-dashed ${isPrint ? 'border-gray-300 bg-gray-50/50' : 'border-white/10 bg-cyan-500/5'} flex justify-between items-center`}>
-                            <div className="flex items-center gap-3">
-                                <Truck size={16} className={isPrint ? 'text-gray-600' : 'text-cyan-400'} />
-                                <div>
+                        <div className={`p-3 sm:p-4 border-t border-dashed ${isPrint ? 'border-gray-300 bg-gray-50/50' : 'border-white/10 bg-cyan-500/5'} flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2`}>
+                            <div className="flex items-center gap-3 min-w-0">
+                                <Truck size={16} className={`shrink-0 ${isPrint ? 'text-gray-600' : 'text-cyan-400'}`} />
+                                <div className="min-w-0">
                                     <div className={`text-[11px] font-black uppercase tracking-widest ${isPrint ? 'text-black' : 'text-cyan-400'}`}>
                                         {isAr ? 'الشحن ذهاباً وإياباً' : 'Round-trip Shipping'}
                                     </div>
@@ -324,13 +326,13 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                                     </div>
                                 </div>
                             </div>
-                            <div className={`font-mono font-black text-sm ${isPrint ? 'text-black' : 'text-cyan-400'}`}>
+                            <div className={`font-mono font-black text-sm shrink-0 ${isPrint ? 'text-black' : 'text-cyan-400'}`}>
                                 {Number(wb.shippingRefund).toLocaleString()} {wb.currency}
                             </div>
                         </div>
                     )}
 
-                    <div className={`p-4 flex justify-between items-center ${isPrint ? 'bg-gray-50 border-t border-gray-200' : 'bg-white/5 border-t border-white/5'}`}>
+                    <div className={`p-3 sm:p-4 flex justify-between items-center ${isPrint ? 'bg-gray-50 border-t border-gray-200' : 'bg-white/5 border-t border-white/5'}`}>
                         <div className={`text-[10px] font-bold uppercase tracking-widest ${isPrint ? 'text-gray-400' : 'text-white/20'}`}>
                             {isAr ? 'تاريخ الإصدار' : 'Issue Date'}: {new Date(wb.issuedAt).toLocaleDateString()}
                         </div>
@@ -389,11 +391,11 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
             )}
 
             {!isPrinting && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 min-w-0">
                     {String(orderStatus || '').toUpperCase() === 'REFUNDED' && (
-                        <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4 flex items-start gap-3">
+                        <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-4 sm:px-5 py-3.5 sm:py-4 flex items-start gap-3">
                             <ShieldAlert className="text-indigo-300 shrink-0 mt-0.5" size={18} />
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-sm font-black text-indigo-200 uppercase tracking-wider">
                                     {isAr ? 'طلب مسترد — تنويه على البوليصة' : 'Refunded order — waybill notice'}
                                 </p>
@@ -542,26 +544,26 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                             )}
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            <h3 className="text-lg font-black text-white flex items-center gap-3 uppercase tracking-widest text-cyan-500/80">
-                                <Truck className="text-cyan-500" />
-                                {isAr ? 'بوليصات الشحن الموثقة (2026)' : 'Verified Shipping Waybills'}
+                        <div className="space-y-4 sm:space-y-6">
+                            <h3 className="text-sm sm:text-lg font-black text-white flex items-center gap-2 sm:gap-3 uppercase tracking-wider sm:tracking-widest text-cyan-500/80">
+                                <Truck className="text-cyan-500 shrink-0" size={20} />
+                                <span className="leading-snug">{isAr ? 'بوليصات الشحن الموثقة (2026)' : 'Verified Shipping Waybills'}</span>
                             </h3>
                             
-                            <div className="grid gap-6">
+                            <div className="grid gap-4 sm:gap-6">
                                 {Array.isArray(waybills) && waybills.map((wb, idx) => (
-                                    <GlassCard key={wb.id} className="p-0 overflow-hidden relative border-white/10 group">
+                                    <GlassCard key={wb.id} className="p-0 overflow-hidden relative border-white/10 group min-w-0">
                                         {/* Action Header */}
-                                        <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-black border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                                        <div className="p-3 sm:p-4 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-black border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)] shrink-0 text-sm">
                                                     {idx + 1}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <div className="text-[10px] font-black uppercase tracking-widest text-white/30">{isAr ? 'رقم التتبع' : 'Tracking ID'}</div>
-                                                    <div className="font-mono font-black text-white tracking-tighter">{wb.waybillNumber}</div>
+                                                    <div className="font-mono font-black text-white tracking-tighter text-sm sm:text-base break-all">{wb.waybillNumber}</div>
                                                     {wb.partNames?.length > 1 && (
-                                                        <p className="text-[10px] text-blue-300/80 mt-0.5">
+                                                        <p className="text-[10px] text-blue-300/80 mt-0.5 break-words">
                                                             {isAr ? 'قطع:' : 'Parts:'}{' '}
                                                             {wb.partNames.join(isAr ? ' · ' : ', ')}
                                                         </p>
@@ -575,9 +577,9 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                                                 {wb.shipments?.[0] && (
-                                                    <div className="mr-4 flex flex-col items-end">
+                                                    <div className="me-auto sm:me-2 sm:ms-0 flex flex-col items-start sm:items-end">
                                                         <span className="text-[8px] text-cyan-500 font-black uppercase tracking-widest">{isAr ? 'دفعة الشحن' : 'Shipping Batch'}</span>
                                                         <span className="text-[10px] text-white/50 font-mono">#{wb.shipments[0].id.substring(0, 8)}</span>
                                                     </div>
@@ -592,23 +594,24 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                                                         }
                                                     }}
                                                     disabled={isExporting === wb.id}
-                                                    className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white font-black rounded-xl transition-all border border-white/10 disabled:opacity-50 text-[10px] uppercase"
+                                                    className="flex items-center justify-center gap-1.5 min-h-[40px] flex-1 sm:flex-none px-3 sm:px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white font-black rounded-xl transition-all border border-white/10 disabled:opacity-50 text-[10px] uppercase"
                                                 >
                                                     {isExporting === wb.id ? (
                                                         <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                                                     ) : <Download size={14} />}
-                                                    <span>{wb.shipments?.[0] ? (isAr ? 'تصدير الدفعة' : 'Export Batch') : (isAr ? 'تصدير Excel' : 'Excel')}</span>
+                                                    <span className="truncate">{wb.shipments?.[0] ? (isAr ? 'تصدير' : 'Export') : (isAr ? 'Excel' : 'Excel')}</span>
                                                 </button>
                                                 <button 
                                                     onClick={() => handlePrint(wb)} 
-                                                    className={`flex items-center gap-2 px-5 py-2.5 ${wb.waybillNumber?.startsWith('RTN') ? 'bg-cyan-500 hover:bg-cyan-600 shadow-cyan-500/20' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'} text-black font-black rounded-xl transition-all shadow-lg text-[10px] uppercase`}
+                                                    className={`flex items-center justify-center gap-1.5 min-h-[40px] flex-1 sm:flex-none px-3 sm:px-5 py-2.5 ${wb.waybillNumber?.startsWith('RTN') ? 'bg-cyan-500 hover:bg-cyan-600 shadow-cyan-500/20' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'} text-black font-black rounded-xl transition-all shadow-lg text-[10px] uppercase`}
                                                 >
                                                     <Printer size={14} />
-                                                    <span>{isAr ? 'طباعة / PDF' : 'Print'}</span>
+                                                    <span>{isAr ? 'طباعة' : 'Print'}</span>
                                                 </button>
                                                 <button 
                                                     onClick={() => toggleCollapse(wb.id)}
-                                                    className="p-2 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg transition-all border border-white/10 ml-1"
+                                                    className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg transition-all border border-white/10"
+                                                    aria-label={collapsedIds.has(wb.id) ? 'Expand' : 'Collapse'}
                                                 >
                                                     {collapsedIds.has(wb.id) ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                                 </button>
@@ -617,7 +620,7 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
 
                                         {/* Invoice Visual Content */}
                                         {!collapsedIds.has(wb.id) && (
-                                            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                                            <div className="animate-in fade-in slide-in-from-top-2 duration-500 overflow-x-clip">
                                                 <WaybillVisualContent wb={wb} isPrint={false} />
                                             </div>
                                         )}

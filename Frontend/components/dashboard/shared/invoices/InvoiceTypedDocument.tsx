@@ -55,10 +55,10 @@ const InfoRow: React.FC<{ icon: any; label: string; value: string }> = ({
   label,
   value,
 }) => (
-  <div className="flex items-start gap-2 text-xs sm:text-sm">
+  <div className="flex flex-wrap sm:flex-nowrap items-start gap-2 text-xs sm:text-sm min-w-0">
     <Icon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0 inv-icon" />
     <span className="text-gray-400 shrink-0 inv-label">{label}:</span>
-    <span className="text-white font-semibold break-all inv-value">{value || '--'}</span>
+    <span className="text-white font-semibold break-all inv-value min-w-0">{value || '--'}</span>
   </div>
 );
 
@@ -166,7 +166,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
             : Percent;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-w-0">
       <div
         className="hidden print:flex inv-print-logo-header justify-between items-center border-b-2 border-[#b8860b] pb-6 mb-8"
       >
@@ -183,45 +183,45 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-white/10 inv-section">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-5 sm:pb-6 border-b border-white/10 inv-section">
+        <div className="min-w-0 w-full sm:w-auto">
           <div className="flex items-center gap-3 mb-1">
-            <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
-            <h1 className="text-xl sm:text-2xl font-bold text-white inv-value">
+            <img src="/logo.png" alt="E-Tashleh" className="w-9 h-9 sm:w-10 sm:h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+            <h1 className="text-lg sm:text-2xl font-bold text-white inv-value">
               E-Tashleh.net
             </h1>
           </div>
-          <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-              <span className="inv-label">{labels.invoiceNumber}:</span>
-              <span className="font-mono font-bold text-white inv-value">
+          <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+              <span className="inv-label shrink-0">{labels.invoiceNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value break-all">
                 {invoiceNumber}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-              <span className="inv-label">{labels.orderNumber}:</span>
-              <span className="font-mono font-bold text-white inv-value">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+              <span className="inv-label shrink-0">{labels.orderNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value break-all">
                 {orderNumber}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-              <span className="inv-label">{labels.offerNumber}:</span>
-              <span className="font-mono font-bold text-white inv-value">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+              <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+              <span className="inv-label shrink-0">{labels.offerNumber}:</span>
+              <span className="font-mono font-bold text-white inv-value break-all">
                 {offerNumber}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gold-500 inv-icon" />
-              <span className="inv-label">{labels.issueDate}:</span>
-              <span className="font-mono text-white inv-value">{invoiceDate}</span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+              <Calendar className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+              <span className="inv-label shrink-0">{labels.issueDate}:</span>
+              <span className="font-mono text-white inv-value break-words">{invoiceDate}</span>
             </div>
             {inv.invoiceGroupId && (
-              <div className="flex items-center gap-2">
-                <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-                <span className="inv-label">{labels.groupId}:</span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+                <span className="inv-label shrink-0">{labels.groupId}:</span>
                 <span className="font-mono text-white/70 inv-value text-[11px]">
                   {String(inv.invoiceGroupId).slice(0, 8)}…
                 </span>
@@ -229,7 +229,7 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gold-500/10 border border-gold-500/20">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gold-500/10 border border-gold-500/20 shrink-0">
           <TitleIcon className="w-5 h-5 text-gold-500" />
           <span className="text-xs font-black uppercase tracking-wider text-gold-400">
             {labels.invoiceTitle}
@@ -237,8 +237,8 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-        <div className="inv-section bg-white/5 rounded-xl p-4 border border-white/10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
+        <div className="inv-section bg-white/5 rounded-xl p-3.5 sm:p-4 border border-white/10 min-w-0">
           {docType === 'COMMISSION' ? (
             <>
               <InfoRow
