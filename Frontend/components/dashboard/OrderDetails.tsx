@@ -106,8 +106,8 @@ export const CountdownTimer = ({ targetDate, label, compact = false, hideExpired
             }
         };
         tick();
-        // List cards use compact: slower tick to avoid N×1s timers on mobile
-        const interval = setInterval(tick, compact ? 30000 : 1000);
+        // List cards use compact: still tick every 1s so merchant governance timers stay live
+        const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
     }, [targetDate, compact]);
 

@@ -474,7 +474,7 @@ export const merchant = {
       cancelDeleteOfferBtn: 'إلغاء وحذف العرض',
       editConfirmDialog: {
         title: 'متابعة تعديل العرض؟',
-        body: 'يمكنك تعديل عرضك خلال 15 دقيقة فقط من وقت تقديمه.\n\nبعد انتهاء مدة الـ 15 دقيقة لن يكون التعديل متاحًا، ويمكنك فقط اختيار حذف العرض إذا كان الحذف ما زال ضمن المدة المسموح بها.\n\nهل ترغب في متابعة تعديل العرض؟',
+        body: 'يمكنك تعديل عرضك خلال 3 ساعات من وقت تقديمه، أو حتى ساعة قبل كشف العروض للعميل (أيهما أقرب).\n\nبعد انتهاء مهلة التعديل لن يكون التعديل متاحًا، ويمكنك الانسحاب الطوعي إن بقي الوقت قبل إيقاف التقديم.\n\nهل ترغب في متابعة تعديل العرض؟',
         confirm: 'نعم، متابعة التعديل',
         cancel: 'إلغاء'
       },
@@ -492,9 +492,9 @@ export const merchant = {
       },
       blockedFromOrder: 'لقد انسحبت من هذا الطلب ولا يمكنك تقديم عرض جديد عليه.',
       governance: {
-        editWindow: 'لديك 15 دقيقة لتعديل أو حذف عرضك بعد الإرسال مباشرة.',
-        voluntaryWindow: 'بعد 15 دقيقة يمكنك الانسحاب الطوعي من الطلب حتى ساعة قبل مرحلة اختيار العميل. الانسحاب يسجّل مخالفة ويمنعك من التقديم على هذه القطعة.',
-        cutoff: 'يتوقف النظام عن استقبال العروض قبل 15 دقيقة من نهاية الـ 24 ساعة.'
+        editWindow: 'لديك حتى 3 ساعات لتعديل أو حذف عرضك بعد الإرسال (أو حتى ساعة قبل كشف العروض أيهما أقرب).',
+        voluntaryWindow: 'بعد انتهاء مهلة التعديل الحر يمكنك الانسحاب الطوعي حتى ساعة قبل كشف العروض للعميل. الانسحاب يسجّل مخالفة ويمنعك من التقديم على هذه القطعة.',
+        cutoff: 'يتوقف النظام عن استقبال العروض والتعديل والحذف والانسحاب قبل ساعة من نهاية جمع العروض (عند الساعة 23 لطلب 24 ساعة).'
       }
     },
     menu: {
@@ -1333,7 +1333,7 @@ export const merchant = {
       cancelDeleteOfferBtn: 'Cancel & Delete Offer',
       editConfirmDialog: {
         title: 'Continue editing this offer?',
-        body: 'You can edit your offer only within 15 minutes of submitting it.\n\nAfter the 15-minute window ends, editing will no longer be available. You may only delete the offer if deletion is still within the allowed period.\n\nDo you want to continue editing the offer?',
+        body: 'You can edit your offer within 3 hours of submitting it, or until 1 hour before offers are revealed to the customer (whichever comes first).\n\nAfter the free edit window ends, editing is no longer available. You may voluntarily withdraw if time remains before bidding stops.\n\nDo you want to continue editing the offer?',
         confirm: 'Yes, continue editing',
         cancel: 'Cancel'
       },
@@ -1351,9 +1351,9 @@ export const merchant = {
       },
       blockedFromOrder: 'You have withdrawn from this request and cannot submit a new offer on it.',
       governance: {
-        editWindow: 'You have 15 minutes to edit or delete your offer immediately after submission.',
-        voluntaryWindow: 'After 15 minutes you may voluntarily withdraw until 1 hour before customer selection. Withdrawal records a violation and blocks you from this part.',
-        cutoff: 'The system stops accepting offers 15 minutes before the 24-hour collection ends.'
+        editWindow: 'You have up to 3 hours to edit or delete your offer after submission (or until 1 hour before reveal, whichever is sooner).',
+        voluntaryWindow: 'After the free edit window you may voluntarily withdraw until 1 hour before offer reveal. Withdrawal records a violation and blocks you from this part.',
+        cutoff: 'The system stops accepting offers, edits, deletes, and withdrawals 1 hour before collection ends (hour 23 for a 24-hour request).'
       }
     },
     menu: {

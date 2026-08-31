@@ -3,18 +3,22 @@
  * Server enforces the same rules — never trust these alone for authorization.
  */
 
+import { getServerNowMs } from './serverClock';
+
 export interface OfferGovernanceOrder {
   revealOffersAt?: string | Date | null;
   createdAt: string | Date;
+  offersStopAt?: string | Date | null;
 }
 
 export interface OfferGovernanceOffer {
   canEditUntil?: string | Date | null;
 }
 
-const FREE_CANCEL_BUFFER_MS = 30_000;
+/** Small skew buffer only — do not inflate free-edit window. */
+const FREE_CANCEL_BUFFER_MS = 2_000;
 const REVEAL_OFFSET_MS = 24 * 60 * 60 * 1000;
-const VOLUNTARY_END_BEFORE_REVEAL_MS = 60 * 60 * 1000;
+const BIDDING_STOP_BEFORE_REVEAL_MS = 60 * 60 * 1000;
 
 export function getRevealAt(order: OfferGovernanceOrder): number {
   if (order.revealOffersAt) {
@@ -24,14 +28,17 @@ export function getRevealAt(order: OfferGovernanceOrder): number {
 }
 
 export function getVoluntaryWithdrawEnd(order: OfferGovernanceOrder): Date {
-  return new Date(getRevealAt(order) - VOLUNTARY_END_BEFORE_REVEAL_MS);
+  if (order.offersStopAt) {
+    return new Date(order.offersStopAt);
+  }
+  return new Date(getRevealAt(order) - BIDDING_STOP_BEFORE_REVEAL_MS);
 }
 
 export function getOfferGovernanceWindow(
   order: OfferGovernanceOrder,
   offer: OfferGovernanceOffer,
 ) {
-  const now = Date.now();
+  const now = getServerNowMs();
   const canEditUntilMs = offer.canEditUntil
     ? new Date(offer.canEditUntil).getTime()
     : 0;

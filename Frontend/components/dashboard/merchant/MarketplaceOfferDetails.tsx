@@ -61,6 +61,7 @@ import {
     computeShipmentDeliverySummary,
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow } from '../../../utils/offerGovernance';
+import { syncServerClock } from '../../../utils/serverClock';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
@@ -223,12 +224,23 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     // Shipping Request State
     const [isRequestingShipping, setIsRequestingShipping] = useState(false);
+    const [govTick, setGovTick] = useState(0);
 
     
     // Fetch stats on mount to ensure governance metrics are fresh
     useEffect(() => {
         fetchDashboardStats();
     }, [fetchDashboardStats]);
+
+    // Keep governance lock/unlock aligned with server wall clock
+    useEffect(() => {
+        void syncServerClock(true);
+        const id = window.setInterval(() => {
+            void syncServerClock(false);
+            setGovTick((n) => n + 1);
+        }, 1000);
+        return () => window.clearInterval(id);
+    }, []);
 
     // Fetch merchant's real offers from API on mount and after submissions
     const fetchMyOffers = useCallback(async () => {
@@ -1929,8 +1941,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                         {/* 2026 Governance: Edit/Withdraw Logic */}
                                                         {(order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') && (
                                                             <div className="mt-3 space-y-2">
-                                                                {/* Edit Timer (15 min window) */}
-                                                                {partOffer.canEditUntil && new Date(partOffer.canEditUntil) > new Date() && (
+                                                                {(() => {
+                                                                    void govTick; // re-evaluate free/voluntary windows each second
+                                                                    const gov = getOfferGovernanceWindow(order, partOffer);
+                                                                    return (
+                                                                        <>
+                                                                {/* Free edit timer (up to 3h, capped by order stop) */}
+                                                                {gov.isFreeCancelWindow && partOffer.canEditUntil && (
                                                                     <div className="flex items-center justify-between bg-gold-500/10 px-3 py-2 rounded-xl border border-gold-500/20">
                                                                         <span className="text-[10px] font-bold text-gold-400 uppercase tracking-widest flex items-center gap-1">
                                                                             <Clock size={12} />
@@ -1944,10 +1961,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     </div>
                                                                 )}
 
-                                                                {(() => {
-                                                                    const gov = getOfferGovernanceWindow(order, partOffer);
-                                                                    return (
-                                                                        <>
                                                                             {gov.isVoluntaryWithdrawWindow && (
                                                                                 <div className="flex items-center justify-between bg-amber-500/10 px-3 py-2 rounded-xl border border-amber-500/20 mb-2">
                                                                                     <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
@@ -2943,7 +2956,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         </h3>
 
                         <div className="space-y-4 relative z-10">
-                            {/* 15m Rule */}
+                            {/* Free edit window (up to 3h) */}
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 shrink-0">
                                     <Clock size={16} />
@@ -2953,8 +2966,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.editWindow ||
                                             (isAr
-                                                ? 'خلال 15 دقيقة: تعديل مجاني بدون عدّاد حذف، أو إلغاء وحذف (يعدّ في الـ 50 مع السماح بإعادة التقديم على نفس القطعة).'
-                                                : 'Within 15m: free edit (no deletion count), or cancel & delete (counts toward 50; re-bid on same part allowed).')}
+                                                ? 'خلال حتى 3 ساعات (أو حتى ساعة قبل كشف العروض): تعديل مجاني بدون عدّاد حذف، أو إلغاء وحذف (يعدّ في الـ 50 مع السماح بإعادة التقديم على نفس القطعة).'
+                                                : 'Within up to 3 hours (or until 1h before reveal): free edit (no deletion count), or cancel & delete (counts toward 50; re-bid on same part allowed).')}
                                     </div>
                                 </div>
                             </div>
@@ -2965,28 +2978,28 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <AlertTriangle size={16} />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'تراجع بعد 15 دقيقة' : 'Withdraw after 15 minutes'}</div>
+                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'انسحاب بعد مهلة التعديل' : 'Withdraw after free edit window'}</div>
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.voluntaryWindow ||
                                             (isAr
-                                                ? 'بعد 15 دقيقة يمكنك التراجع حتى ساعة قبل اختيار العميل. التراجع يعدّ في الـ 50 ويمنع إعادة التقديم على نفس القطعة فقط.'
-                                                : 'After 15 minutes you may withdraw until 1h before selection. Counts toward 50 and blocks re-bidding on that part only.')}
+                                                ? 'بعد انتهاء مهلة التعديل يمكنك التراجع حتى ساعة قبل كشف العروض. التراجع يعدّ في الـ 50 ويمنع إعادة التقديم على نفس القطعة فقط.'
+                                                : 'After the free edit window you may withdraw until 1h before reveal. Counts toward 50 and blocks re-bidding on that part only.')}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 23:45 Cutoff */}
+                            {/* Hour 23 cutoff */}
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
                                     <ShieldCheck size={16} />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'موعد الإغلاق (23:45)' : 'Cutoff Time (23:45)'}</div>
+                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'موعد الإغلاق (ساعة 23)' : 'Cutoff Time (Hour 23)'}</div>
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.cutoff ||
                                             (isAr
-                                                ? 'يتوقف النظام عن استقبال العروض قبل 15 دقيقة من نهاية الـ 24 ساعة.'
-                                                : 'Submission stops 15 minutes before the 24h collection ends.')}
+                                                ? 'يتوقف النظام عن استقبال العروض والتعديل والحذف والانسحاب قبل ساعة من نهاية جمع العروض.'
+                                                : 'Submission, edit, delete, and withdraw stop 1 hour before collection ends.')}
                                     </div>
                                 </div>
                             </div>
@@ -3026,13 +3039,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 <ul className="text-[10px] text-white/45 leading-relaxed space-y-1.5 list-disc pr-4 pl-4">
                                     <li>
                                         {isAr
-                                            ? 'خلال 15 دقيقة: «تعديل العرض» يحدّث السعر/المواصفات بدون عدّاد حذف. «إلغاء وحذف» يعدّ ضمن الـ 50 ويسمح بإعادة التقديم على نفس القطعة.'
-                                            : 'Within 15m: Edit updates the offer with no deletion count. Cancel & Delete counts toward 50 and allows re-bidding on the same part.'}
+                                            ? 'خلال مهلة التعديل الحر (حتى 3 ساعات أو حتى ساعة قبل الكشف): «تعديل العرض» يحدّث السعر/المواصفات بدون عدّاد حذف. «إلغاء وحذف» يعدّ ضمن الـ 50 ويسمح بإعادة التقديم على نفس القطعة.'
+                                            : 'During the free edit window (up to 3h or until 1h before reveal): Edit updates the offer with no deletion count. Cancel & Delete counts toward 50 and allows re-bidding on the same part.'}
                                     </li>
                                     <li>
                                         {isAr
-                                            ? 'بعد 15 دقيقة: «تراجع» يعدّ ضمن الـ 50 ويمنع إعادة التقديم على نفس القطعة حتى نهاية جمع العروض (مفرد أو مجمع).'
-                                            : 'After 15m: Withdraw counts toward 50 and blocks re-bidding on that part until collection ends (single or multi-part).'}
+                                            ? 'بعد مهلة التعديل: «تراجع» يعدّ ضمن الـ 50 ويمنع إعادة التقديم على نفس القطعة حتى نهاية جمع العروض (مفرد أو مجمع).'
+                                            : 'After the free edit window: Withdraw counts toward 50 and blocks re-bidding on that part until collection ends (single or multi-part).'}
                                     </li>
                                     <li>
                                         {isAr
@@ -3156,8 +3169,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 <p className="text-sm text-white/50 leading-relaxed px-2 whitespace-pre-line">
                                     {exploreOfferT?.editConfirmDialog?.body ||
                                         (isAr
-                                            ? 'يمكنك تعديل عرضك خلال 15 دقيقة فقط من وقت تقديمه.\n\nبعد انتهاء مدة الـ 15 دقيقة لن يكون التعديل متاحًا، ويمكنك فقط اختيار حذف العرض إذا كان الحذف ما زال ضمن المدة المسموح بها.\n\nهل ترغب في متابعة تعديل العرض؟'
-                                            : 'You can edit your offer only within 15 minutes of submitting it.\n\nAfter the 15-minute window ends, editing will no longer be available. You may only delete the offer if deletion is still within the allowed period.\n\nDo you want to continue editing the offer?')}
+                                            ? 'يمكنك تعديل عرضك خلال 3 ساعات من وقت تقديمه، أو حتى ساعة قبل كشف العروض (أيهما أقرب).\n\nبعد انتهاء مهلة التعديل لن يكون التعديل متاحًا، ويمكنك الانسحاب الطوعي إن بقي الوقت قبل إيقاف التقديم.\n\nهل ترغب في متابعة تعديل العرض؟'
+                                            : 'You can edit your offer within 3 hours of submitting it, or until 1 hour before offer reveal (whichever comes first).\n\nAfter the free edit window ends, editing is no longer available. You may voluntarily withdraw if time remains before bidding stops.\n\nDo you want to continue editing the offer?')}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 mt-8 relative z-10">
@@ -3301,8 +3314,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 </h3>
                                 <p className="text-sm text-white/50 leading-relaxed px-2">
                                     {isAr 
-                                        ? 'سيتم حذف العرض ويُحسب ضمن الحد الشهري (50). يمكنك تقديم عرض جديد على نفس القطعة طالما مهلة الـ 15 دقيقة / باب الجمع ما زال مفتوحاً. للتعديل دون حذف استخدم زر «تعديل العرض».' 
-                                        : 'The offer will be deleted and count toward the monthly limit (50). You may re-submit on the same part while collection is open. To change price without deleting, use Edit Offer.'}
+                                        ? 'سيتم حذف العرض ويُحسب ضمن الحد الشهري (50). يمكنك تقديم عرض جديد على نفس القطعة طالما مهلة التعديل الحر / باب الجمع ما زال مفتوحاً. للتعديل دون حذف استخدم زر «تعديل العرض».' 
+                                        : 'The offer will be deleted and count toward the monthly limit (50). You may re-submit on the same part while the free-edit / collection window remains open. To change price without deleting, use Edit Offer.'}
                                 </p>
                             </div>
 

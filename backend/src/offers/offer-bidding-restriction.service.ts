@@ -73,7 +73,7 @@ export class OfferBiddingRestrictionService {
     }
 
     /**
-     * +1 monthly deletion (cancel within 15m or voluntary withdraw).
+     * +1 monthly deletion (cancel within free-edit window or voluntary withdraw).
      * At 35: warn merchant + admins. At 50: auto 5-day bidding restriction.
      */
     async recordDeletion(storeId: string, meta?: { orderNumber?: string; kind?: string }) {
