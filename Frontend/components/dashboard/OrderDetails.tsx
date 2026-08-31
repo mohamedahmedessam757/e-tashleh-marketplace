@@ -1286,11 +1286,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             </div>
                         </div>
                     ) : (
+                        <div className="p-4 sm:p-6 min-w-0 overflow-hidden">
                         <StatusTimeline
                             currentStatus={(timelineStatus || order.status) as any}
                             fulfillmentSummary={fulfillmentSummary}
                             shipmentDeliverySummary={shipmentDeliverySummary}
                         />
+                        </div>
                     )}
                 </GlassCard>
             </div>
