@@ -15,6 +15,7 @@ type OrderLike = {
   shippedAt?: string | Date | null;
   deliveredAt?: string | Date | null;
   offerAcceptedAt?: string | Date | null;
+  warranty_end_at?: string | Date | null;
   payments?: Array<{ createdAt?: string | Date | null; status?: string | null }> | null;
 };
 
@@ -33,6 +34,7 @@ export function useOrderActiveSla(order: OrderLike | null | undefined): OrderAct
     order?.shippedAt,
     order?.deliveredAt,
     order?.offerAcceptedAt,
+    order?.warranty_end_at,
     order?.payments,
   ]);
 }

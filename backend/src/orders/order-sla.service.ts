@@ -22,6 +22,7 @@ type OrderLike = {
   shippedAt?: Date | string | null;
   deliveredAt?: Date | string | null;
   offerAcceptedAt?: Date | string | null;
+  warranty_end_at?: Date | string | null;
   payments?: Array<{ createdAt?: Date | string | null; status?: string | null }> | null;
 };
 
@@ -155,7 +156,7 @@ export class OrderSlaService {
       case OrderStatus.NON_MATCHING:
         return this.buildSla(
           status,
-          'sla.correction',
+          'sla.nonMatchingGrace',
           this.toMs(order.updatedAt),
           this.durationConfig.minutesToMs(cfg.nonMatchingGraceMinutes),
         );
@@ -189,6 +190,19 @@ export class OrderSlaService {
           this.toMs(order.deliveredAt) ?? this.toMs(order.updatedAt),
           this.durationConfig.hoursToMs(returnHours),
         );
+      }
+
+      case OrderStatus.WARRANTY_ACTIVE: {
+        const endMs = this.toMs(order.warranty_end_at);
+        const startMs = this.toMs(order.updatedAt) ?? this.toMs(order.deliveredAt);
+        if (endMs != null && startMs != null && endMs > startMs) {
+          return this.buildSlaUntil(status, 'sla.return', startMs, endMs);
+        }
+        if (endMs != null) {
+          // Degenerate range: still expose endsAt for countdown/enforce
+          return this.buildSlaUntil(status, 'sla.return', endMs - 1000, endMs);
+        }
+        return null;
       }
 
       default:

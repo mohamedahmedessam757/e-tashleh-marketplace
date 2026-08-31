@@ -133,7 +133,7 @@ export const WarrantyBadge = ({ endDate, status, onReplace }: { endDate: string,
 
     useEffect(() => {
         const calculate = () => {
-            const now = new Date().getTime();
+            const now = getServerNowMs();
             const target = new Date(endDate).getTime();
             const diff = target - now;
 

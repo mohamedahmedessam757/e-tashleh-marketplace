@@ -39,13 +39,23 @@ const TERMINAL_STATUSES = new Set([
   'RETURNED',
 ]);
 
-/** Statuses the backend enforceExpiredSla endpoint may cancel */
+/** Statuses with timer-driven server transitions (or safe no-op enforce) */
 const ENFORCEABLE_STATUSES = new Set([
   'AWAITING_OFFERS',
   'COLLECTING_OFFERS',
   'AWAITING_SELECTION',
   'AWAITING_PAYMENT',
   'PARTIALLY_PAID',
+  'PREPARATION',
+  'DELAYED_PREPARATION',
+  'NON_MATCHING',
+  'CORRECTION_PERIOD',
+  'DELIVERED',
+  'PARTIALLY_DELIVERED',
+  'WARRANTY_ACTIVE',
+  // Display-only shipping SLAs — enforce is a no-op but keeps one code path
+  'SHIPPED',
+  'PARTIALLY_SHIPPED',
 ]);
 
 const URGENCY_STYLES = {

@@ -16,6 +16,7 @@ type OrderLike = {
   shippedAt?: string | Date | null;
   deliveredAt?: string | Date | null;
   offerAcceptedAt?: string | Date | null;
+  warranty_end_at?: string | Date | null;
   payments?: Array<{ createdAt?: string | Date | null; status?: string | null }> | null;
 };
 
@@ -219,6 +220,18 @@ export function resolveOrderActiveSla(
         toMs(order.deliveredAt) ?? toMs(order.updatedAt),
         H(returnHours),
       );
+    }
+
+    case 'WARRANTY_ACTIVE': {
+      const endMs = toMs(order.warranty_end_at);
+      const startMs = toMs(order.updatedAt) ?? toMs(order.deliveredAt);
+      if (endMs != null && startMs != null && endMs > startMs) {
+        return buildSlaUntil(status, 'sla.return', startMs, endMs);
+      }
+      if (endMs != null) {
+        return buildSlaUntil(status, 'sla.return', endMs - 1000, endMs);
+      }
+      return null;
     }
 
     default:

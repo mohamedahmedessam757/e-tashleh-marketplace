@@ -4,7 +4,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStateMachine } from './fsm/order-state-machine.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ActorType, Order, OrderStatus, Prisma, ShipmentStatus, StoreLoyaltyTier } from '@prisma/client';
+import { ActorType, Order, OrderStatus, Prisma, ShipmentStatus, StoreLoyaltyTier, ViolationTargetType } from '@prisma/client';
 import { FindAllOrdersDto } from './dto/find-all-orders.dto';
 
 import { ChatService } from '../chat/chat.service';
@@ -20,6 +20,7 @@ import { OfferFulfillmentStatus } from '@prisma/client';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
+import { ViolationsService } from '../violations/violations.service';
 import {
   isUuid,
   mergeWhereWithSearch,
@@ -55,6 +56,8 @@ export class OrdersService {
         private orderDurationConfig: OrderDurationConfigService,
         private logisticsConfig: LogisticsConfigService,
         private orderSla: OrderSlaService,
+        @Inject(forwardRef(() => ViolationsService))
+        private violationsService: ViolationsService,
     ) { }
 
     /** Side-effects when an order reaches a chat-lock terminal status. */
@@ -1189,9 +1192,9 @@ export class OrdersService {
     }
 
     /**
-     * Idempotent SLA enforcement for near-realtime cancel when selection/payment
-     * windows elapse (cron remains the safety net). Safe for customer/merchant/admin
-     * callers who already passed order access checks.
+     * Idempotent near-realtime SLA / timer enforcement for one order.
+     * Mirrors minute/hourly cron transitions; cron remains the safety net.
+     * Server clock + FSM only — clients never cancel locally.
      */
     async enforceExpiredSla(
         orderId: string,
@@ -1202,99 +1205,406 @@ export class OrdersService {
             include: {
                 offers: {
                     where: { status: { not: 'rejected' } },
-                    select: { id: true, status: true },
+                    select: {
+                        id: true,
+                        status: true,
+                        storeId: true,
+                        orderPartId: true,
+                        fulfillmentStatus: true,
+                        deliveredAt: true,
+                        resolutionLocked: true,
+                    },
                 },
+                parts: { select: { id: true, name: true } },
+                payments: {
+                    where: { status: 'COMPLETED' },
+                    orderBy: { createdAt: 'asc' },
+                    take: 1,
+                    select: { createdAt: true, status: true },
+                },
+                store: { select: { id: true, ownerId: true } },
             },
         });
         if (!order) throw new NotFoundException('Order not found');
 
-        if (order.status === OrderStatus.CANCELLED) {
-            return { changed: false, order, reason: 'already_cancelled' };
+        const terminal = new Set<OrderStatus>([
+            OrderStatus.CANCELLED,
+            OrderStatus.CLOSED,
+            OrderStatus.REFUNDED,
+            OrderStatus.COMPLETED,
+            OrderStatus.WARRANTY_EXPIRED,
+        ]);
+        if (terminal.has(order.status as OrderStatus)) {
+            return { changed: false, order, reason: 'already_terminal' };
         }
 
         const durationCfg = await this.orderDurationConfig.getConfig();
         const status = order.status as OrderStatus;
+        const systemActor =
+            actor.type === ActorType.SYSTEM
+                ? actor
+                : { type: ActorType.SYSTEM, id: 'system-sla-enforce', name: 'SLA Enforce' };
+        const meta = { triggeredBy: actor.id, triggerActorType: actor.type, source: 'enforceExpiredSla' };
+        const expired = this.orderSla.isSlaExpired(order, durationCfg);
 
-        const shouldCancelSelection =
-            status === OrderStatus.AWAITING_SELECTION &&
-            (order.offers.length === 0 || this.orderSla.isSlaExpired(order, durationCfg));
-
-        const shouldCancelPayment =
-            (status === OrderStatus.AWAITING_PAYMENT || status === OrderStatus.PARTIALLY_PAID) &&
-            this.orderSla.isSlaExpired(order, durationCfg);
-
-        const shouldCancelCollectingEmpty =
-            (status === OrderStatus.AWAITING_OFFERS || status === OrderStatus.COLLECTING_OFFERS) &&
-            order.offers.length === 0 &&
-            this.orderSla.isSlaExpired(order, durationCfg);
-
-        if (!shouldCancelSelection && !shouldCancelPayment && !shouldCancelCollectingEmpty) {
+        // --- Collection → reveal or cancel ---
+        if (status === OrderStatus.COLLECTING_OFFERS || status === OrderStatus.AWAITING_OFFERS) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const hasOffers = order.offers.length > 0;
+            if (!hasOffers) {
+                const updated = await this.transitionStatus(
+                    orderId,
+                    OrderStatus.CANCELLED,
+                    systemActor,
+                    'System: No offers received after collection window.',
+                    meta,
+                );
+                await this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'انتهت مهلة جمع العروض',
+                    titleEn: 'Collection Period Ended',
+                    messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`,
+                    messageEn: `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`,
+                    type: 'system_alert',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
+                }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+                return { changed: true, order: updated, reason: 'cancelled_no_offers' };
+            }
+            if (status === OrderStatus.COLLECTING_OFFERS) {
+                const updated = await this.transitionStatus(
+                    orderId,
+                    OrderStatus.AWAITING_SELECTION,
+                    systemActor,
+                    'System: Reveal time reached. Transitioning to Selection phase.',
+                    meta,
+                );
+                return { changed: true, order: updated, reason: 'revealed_selection' };
+            }
             return { changed: false, order, reason: 'not_expired' };
         }
 
-        let cancelReason: string;
-        let titleAr: string;
-        let titleEn: string;
-        let messageAr: string;
-        let messageEn: string;
-
-        if (shouldCancelSelection) {
-            cancelReason =
-                order.offers.length === 0
+        // --- Selection cancel ---
+        if (status === OrderStatus.AWAITING_SELECTION) {
+            if (order.offers.length > 0 && !expired) {
+                return { changed: false, order, reason: 'not_expired' };
+            }
+            const noOffers = order.offers.length === 0;
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.CANCELLED,
+                systemActor,
+                noOffers
                     ? 'System: No offers received after collection window.'
-                    : `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`;
-            titleAr = order.offers.length === 0 ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض';
-            titleEn = order.offers.length === 0 ? 'Collection Period Ended' : 'Selection Period Expired';
-            messageAr =
-                order.offers.length === 0
+                    : `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`,
+                meta,
+            );
+            await this.notifications.create({
+                recipientId: order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: noOffers ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض',
+                titleEn: noOffers ? 'Collection Period Ended' : 'Selection Period Expired',
+                messageAr: noOffers
                     ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
-                    : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`;
-            messageEn =
-                order.offers.length === 0
+                    : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
+                messageEn: noOffers
                     ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
-                    : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`;
-        } else if (shouldCancelPayment) {
-            cancelReason = `System: Payment period expired after ${durationCfg.paymentTimeoutHours} hours`;
-            titleAr = 'انتهت مهلة الدفع';
-            titleEn = 'Payment Period Expired';
-            messageAr = `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`;
-            messageEn = `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`;
-        } else {
-            cancelReason = 'System: Offer collection window ended with no offers.';
-            titleAr = 'انتهت مهلة جمع العروض';
-            titleEn = 'Collection Period Ended';
-            messageAr = `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`;
-            messageEn = `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`;
+                    : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
+                type: 'system_alert',
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
+            }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+            return { changed: true, order: updated, reason: 'cancelled_selection' };
         }
 
-        const updated = await this.transitionStatus(
-            orderId,
-            OrderStatus.CANCELLED,
-            actor.type === ActorType.SYSTEM
-                ? actor
-                : { type: ActorType.SYSTEM, id: 'system-sla-enforce', name: 'SLA Enforce' },
-            cancelReason,
-            { triggeredBy: actor.id, triggerActorType: actor.type, source: 'enforceExpiredSla' },
-        );
-
-        await this.notifications.create({
-            recipientId: order.customerId,
-            recipientRole: 'CUSTOMER',
-            titleAr,
-            titleEn,
-            messageAr,
-            messageEn,
-            type: 'system_alert',
-            link: `/dashboard/orders/${order.id}`,
-            metadata: {
+        // --- Payment cancel ---
+        if (status === OrderStatus.AWAITING_PAYMENT || status === OrderStatus.PARTIALLY_PAID) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.CANCELLED,
+                systemActor,
+                `System: Payment period expired after ${durationCfg.paymentTimeoutHours} hours`,
+                meta,
+            );
+            await this.violationsService.autoIssue({
+                code: 'ACCEPT_OFFER_NO_PAYMENT',
+                targetUserId: order.customerId,
+                targetType: ViolationTargetType.CUSTOMER,
                 orderId: order.id,
-                orderNumber: order.orderNumber,
-                waEvent: 'ORDER_STATUS',
-                status: 'CANCELLED',
-            },
-        }).catch((e) => this.logger.warn(`enforceExpiredSla notify failed: ${e?.message || e}`));
+                reason: `Customer accepted offer for order #${order.orderNumber} but did not pay within deadline.`,
+                metadata: { orderNumber: order.orderNumber },
+            }).catch((e) => this.logger.warn(`enforce payment violation failed: ${e?.message || e}`));
+            await this.notifications.create({
+                recipientId: order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: 'انتهت مهلة الدفع',
+                titleEn: 'Payment Period Expired',
+                messageAr: `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`,
+                messageEn: `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`,
+                type: 'system_alert',
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
+            }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+            return { changed: true, order: updated, reason: 'cancelled_payment' };
+        }
 
-        return { changed: true, order: updated, reason: 'cancelled' };
+        // --- Preparation → delayed ---
+        if (status === OrderStatus.PREPARATION) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const graceMs = this.orderDurationConfig.hoursToMs(durationCfg.delayedPreparationGraceHours);
+            const delayedDeadline = new Date(Date.now() + graceMs);
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.DELAYED_PREPARATION,
+                systemActor,
+                'Merchant exceeded preparation SLA timeframe',
+                meta,
+            );
+            await this.prisma.order.update({
+                where: { id: orderId },
+                data: { delayedPreparationDeadlineAt: delayedDeadline },
+            });
+            for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
+                await this.notifications.notifyMerchantByStoreId(offer.storeId!, {
+                    titleAr: 'تحذير عاجل: لقد تأخرت في التجهيز',
+                    titleEn: 'Urgent: Delayed Preparation SLA',
+                    messageAr: `تجاوز الطلب #${order.orderNumber} مهلة التجهيز. أمامك مهلة إضافية قبل الإلغاء التلقائي.`,
+                    messageEn: `Order #${order.orderNumber} exceeded prep SLA. Extra grace period started before auto-cancel.`,
+                    type: 'system_alert',
+                    link: `/merchant/orders/${order.id}`,
+                }).catch(() => undefined);
+            }
+            const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+            return { changed: true, order: refreshed ?? updated, reason: 'delayed_preparation' };
+        }
+
+        // --- Delayed prep cancel ---
+        if (status === OrderStatus.DELAYED_PREPARATION) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.CANCELLED,
+                systemActor,
+                'System: Exceeded extra grace period for preparation. Order abandoned by merchant.',
+                meta,
+            );
+            for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
+                const store = await this.prisma.store.findUnique({
+                    where: { id: offer.storeId! },
+                    select: { id: true, ownerId: true },
+                });
+                if (store) {
+                    await this.violationsService.autoIssue({
+                        code: 'LATE_SHIPPING',
+                        targetUserId: store.ownerId,
+                        targetStoreId: store.id,
+                        targetType: ViolationTargetType.MERCHANT,
+                        orderId: order.id,
+                        reason: `Merchant exceeded preparation SLA on order #${order.orderNumber}.`,
+                        metadata: { orderNumber: order.orderNumber },
+                        dedupSuffix: store.id,
+                    }).catch((e) => this.logger.warn(`enforce late shipping violation failed: ${e?.message || e}`));
+                }
+            }
+            await this.notifications.create({
+                recipientId: order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: 'إلغاء الطلب لعدم استجابة التاجر',
+                titleEn: 'Order Cancelled: Merchant Missed Prep Deadline',
+                messageAr: `تم إلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز.`,
+                messageEn: `Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline.`,
+                type: 'ORDER',
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
+            }).catch(() => undefined);
+            return { changed: true, order: updated, reason: 'cancelled_delayed_prep' };
+        }
+
+        // --- Non-matching → correction ---
+        if (status === OrderStatus.NON_MATCHING) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.CORRECTION_PERIOD,
+                systemActor,
+                'System: Non-matching grace elapsed, entering CORRECTION_PERIOD.',
+                meta,
+            );
+            return { changed: true, order: updated, reason: 'correction_period' };
+        }
+
+        // --- Correction timeout cancel ---
+        if (status === OrderStatus.CORRECTION_PERIOD) {
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.CANCELLED,
+                systemActor,
+                'System: Merchant failed to provide corrected verification within correction limit.',
+                meta,
+            );
+            if (order.storeId) {
+                const store = await this.prisma.store.findUnique({
+                    where: { id: order.storeId },
+                    select: { id: true, ownerId: true },
+                });
+                if (store) {
+                    await this.violationsService.autoIssue({
+                        code: 'LATE_CORRECTION',
+                        targetUserId: store.ownerId,
+                        targetStoreId: store.id,
+                        targetType: ViolationTargetType.MERCHANT,
+                        orderId: order.id,
+                        reason: `Merchant did not provide corrected verification within deadline on order #${order.orderNumber}.`,
+                        metadata: { orderNumber: order.orderNumber },
+                    }).catch((e) => this.logger.warn(`enforce late correction violation failed: ${e?.message || e}`));
+                }
+            }
+            await this.notifications.create({
+                recipientId: order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: 'إلغاء الطلب واسترجاع المبلغ',
+                titleEn: 'Order Cancelled & Refunded',
+                messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة.`,
+                messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part.`,
+                type: 'ORDER',
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
+            }).catch(() => undefined);
+            return { changed: true, order: updated, reason: 'cancelled_correction' };
+        }
+
+        // --- Delivered return window → COMPLETED (single-item) ---
+        if (status === OrderStatus.DELIVERED) {
+            if (this.offerFulfillment.isMultiItemOrder(order)) {
+                // Multi: complete per-offer windows then re-read
+                let any = false;
+                for (const offer of order.offers) {
+                    if (
+                        offer.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED ||
+                        !offer.deliveredAt ||
+                        offer.resolutionLocked
+                    ) {
+                        continue;
+                    }
+                    const ends = this.offerFulfillment.getOfferReturnWindowEndsAt(offer);
+                    if (!ends || ends.getTime() > Date.now()) continue;
+                    const result = await this.offerFulfillment.completeOfferAfterWindow(offer.id);
+                    if (result) {
+                        any = true;
+                        const payment = await this.prisma.paymentTransaction.findFirst({
+                            where: { offerId: offer.id, status: 'SUCCESS' },
+                        });
+                        if (payment) {
+                            await this.escrowService
+                                .releaseFundsForPayment(payment.id, 'AUTO_48H')
+                                .catch((e) => this.logger.warn(`Escrow release skipped: ${e?.message}`));
+                        }
+                    }
+                }
+                const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                return {
+                    changed: any || refreshed?.status !== status,
+                    order: refreshed ?? order,
+                    reason: any ? 'offer_windows_completed' : 'not_expired',
+                };
+            }
+            if (!expired) return { changed: false, order, reason: 'not_expired' };
+            const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+            const updated = await this.transitionStatus(
+                orderId,
+                OrderStatus.COMPLETED,
+                systemActor,
+                `System: Auto-completed after ${returnHours}-hour return/dispute window expired`,
+                meta,
+            );
+            await this.notifications.create({
+                recipientId: order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: 'انتهاء فترة الاسترجاع للطلب',
+                titleEn: 'Return period expired for order',
+                messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع.`,
+                messageEn: `Order #${order.orderNumber} has been completed because the return/dispute window expired.`,
+                type: 'system_alert',
+                link: `/dashboard/orders/${order.id}`,
+                metadata: { orderId: order.id, waEvent: 'ORDER_STATUS', graceWindowExpired: true },
+            }).catch(() => undefined);
+            return { changed: true, order: updated, reason: 'completed_return_window' };
+        }
+
+        // --- Partial delivery: per-offer windows ---
+        if (status === OrderStatus.PARTIALLY_DELIVERED) {
+            let any = false;
+            for (const offer of order.offers) {
+                if (
+                    offer.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED ||
+                    !offer.deliveredAt ||
+                    offer.resolutionLocked
+                ) {
+                    continue;
+                }
+                const ends = this.offerFulfillment.getOfferReturnWindowEndsAt(offer);
+                if (!ends || ends.getTime() > Date.now()) continue;
+                const result = await this.offerFulfillment.completeOfferAfterWindow(offer.id);
+                if (result) {
+                    any = true;
+                    const payment = await this.prisma.paymentTransaction.findFirst({
+                        where: { offerId: offer.id, status: 'SUCCESS' },
+                    });
+                    if (payment) {
+                        await this.escrowService
+                            .releaseFundsForPayment(payment.id, 'AUTO_48H')
+                            .catch((e) => this.logger.warn(`Escrow release skipped: ${e?.message}`));
+                    }
+                }
+            }
+            const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+            return {
+                changed: any || refreshed?.status !== status,
+                order: refreshed ?? order,
+                reason: any ? 'offer_windows_completed' : 'not_expired',
+            };
+        }
+
+        // --- Warranty expiry ---
+        if (status === OrderStatus.WARRANTY_ACTIVE) {
+            const endAt = order.warranty_end_at ? new Date(order.warranty_end_at).getTime() : null;
+            if (endAt == null || endAt > Date.now()) {
+                return { changed: false, order, reason: 'not_expired' };
+            }
+            try {
+                const updated = await this.transitionStatus(
+                    orderId,
+                    OrderStatus.WARRANTY_EXPIRED,
+                    systemActor,
+                    'System: Warranty period ended.',
+                    meta,
+                );
+                await this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'انتهاء فترة الضمان',
+                    titleEn: 'Warranty Period Expired',
+                    messageAr: `انتهت فترة الضمان الخاصة بطلبك #${order.orderNumber}.`,
+                    messageEn: `The warranty period for order #${order.orderNumber} has expired.`,
+                    type: 'ORDER_UPDATE',
+                    link: `/dashboard/orders/${order.id}`,
+                }).catch(() => undefined);
+                return { changed: true, order: updated, reason: 'warranty_expired' };
+            } catch (e) {
+                // Fallback if FSM rejects — match legacy warranty scheduler write
+                const updated = await this.prisma.order.update({
+                    where: { id: orderId },
+                    data: { status: OrderStatus.WARRANTY_EXPIRED, updatedAt: new Date() },
+                });
+                return { changed: true, order: updated, reason: 'warranty_expired' };
+            }
+        }
+
+        // SHIPPED / PARTIALLY_SHIPPED countdowns are display SLAs (no auto status change)
+        return { changed: false, order, reason: 'not_expired' };
     }
 
     async acceptOfferForPart(orderId: string, partId: string, offerId: string, customerId: string) {
