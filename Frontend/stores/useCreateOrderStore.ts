@@ -74,6 +74,8 @@ export interface OrderState {
   isSubmitting: boolean;
   isUploadingParts: boolean;
   showErrors: boolean; // Controls visual validation display
+  /** Full create-rule violation message shown in red glow banner */
+  ruleAlertMessage: string | null;
 
   // Actions
   setStep: (step: number) => void;
@@ -96,6 +98,7 @@ export interface OrderState {
   ensurePartsUploaded: () => Promise<void>;
   submitOrder: () => Promise<string>;
   setShowErrors: (show: boolean) => void;
+  setRuleAlertMessage: (message: string | null) => void;
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -153,8 +156,11 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   isSubmitting: false,
   isUploadingParts: false,
   showErrors: false,
+  ruleAlertMessage: null,
 
   setStep: (step) => set({ step, showErrors: false }), // Reset errors on step change
+
+  setRuleAlertMessage: (message) => set({ ruleAlertMessage: message }),
 
   updateVehicle: (updates) => {
     set((state) => {
@@ -197,16 +203,18 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
 
   addPart: () => set((state) => {
     if (state.parts.length >= MAX_PARTS_PER_ORDER) {
-      alert(
-        `عذراً، لا يمكنك إضافة أكثر من ${MAX_PARTS_PER_ORDER} قطع في الطلب الواحد.\nSorry, you cannot add more than ${MAX_PARTS_PER_ORDER} parts per order.`,
-      );
-      return state;
+      return {
+        ...state,
+        ruleAlertMessage:
+          `عذراً، لا يمكنك إضافة أكثر من ${MAX_PARTS_PER_ORDER} قطع في الطلب الواحد.\nSorry, you cannot add more than ${MAX_PARTS_PER_ORDER} parts per order.`,
+      };
     }
     return {
       parts: [
         ...state.parts,
         getInitialPart()
-      ]
+      ],
+      ruleAlertMessage: null,
     };
   }),
 
@@ -221,9 +229,10 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       const idx = state.parts.findIndex((p) => p.id === id);
       const otherNames = state.parts.map((p) => p.name);
       if (isDuplicatePartNameAmong(value, otherNames, idx >= 0 ? idx : undefined)) {
-        alert(
-          'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.\n\nYou cannot add the same part more than once in this request.\nPlease add a different part.',
-        );
+        set({
+          ruleAlertMessage:
+            'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.\n\nYou cannot add the same part more than once in this request.\nPlease add a different part.',
+        });
         return;
       }
     }
@@ -235,7 +244,8 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           next.uploadedVideoUrl = null;
         }
         return next;
-      })
+      }),
+      ...(field === 'name' ? { ruleAlertMessage: null } : {}),
     }));
     // Start video upload immediately when a file is attached
     if (field === 'video' && value instanceof File) {
@@ -364,7 +374,8 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       preferences: { condition: null },
       isSubmitting: false,
       isUploadingParts: false,
-      showErrors: false
+      showErrors: false,
+      ruleAlertMessage: null,
     });
   },
 
@@ -390,6 +401,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       isSubmitting: false,
       isUploadingParts: false,
       showErrors: false,
+      ruleAlertMessage: null,
     });
   },
 
