@@ -12,6 +12,7 @@ import { WarrantySchedulerService } from './warranty-scheduler.service';
 import { WaybillsModule } from '../waybills/waybills.module';
 import { VerificationTasksModule } from '../verification-tasks/verification-tasks.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { ViolationsModule } from '../violations/violations.module';
 
 import { ExcelService } from './excel.service';
 
@@ -20,7 +21,18 @@ import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OrderSlaService } from './order-sla.service';
 
 @Module({
-    imports: [PrismaModule, NotificationsModule, ChatModule, ShipmentsModule, LoyaltyModule, UsersModule, WaybillsModule, forwardRef(() => VerificationTasksModule), forwardRef(() => PaymentsModule)],
+    imports: [
+        PrismaModule,
+        NotificationsModule,
+        ChatModule,
+        ShipmentsModule,
+        LoyaltyModule,
+        UsersModule,
+        WaybillsModule,
+        forwardRef(() => VerificationTasksModule),
+        forwardRef(() => PaymentsModule),
+        forwardRef(() => ViolationsModule),
+    ],
     controllers: [OrdersController],
     providers: [OrdersService, OrderStateMachine, WarrantySchedulerService, ExcelService, ShippingAutomationService, OfferFulfillmentService, OrderSlaService],
     exports: [OrderStateMachine, OrdersService, ExcelService, OfferFulfillmentService, OrderSlaService],

@@ -4,6 +4,7 @@
  */
 
 import { isVisibleMarketplaceOffer } from './offerStatusHelpers';
+import { getServerNowMs } from './serverClock';
 
 export type OrderExpiryScenario = 'no_offers' | 'selection_expired';
 
@@ -53,13 +54,13 @@ export function isOfferCollectionClosed(order: OrderExpiryContext): boolean {
   if (POST_COLLECTION_STATUSES.has(order.status)) return true;
 
   if (order.status === 'COLLECTING_OFFERS' && order.revealOffersAt) {
-    return Date.now() > new Date(order.revealOffersAt).getTime();
+    return getServerNowMs() > new Date(order.revealOffersAt).getTime();
   }
 
   if (order.status === 'AWAITING_OFFERS') {
-    const base = new Date(order.createdAt || order.date || Date.now());
+    const base = new Date(order.createdAt || order.date || getServerNowMs());
     base.setHours(base.getHours() + 24);
-    return Date.now() > base.getTime();
+    return getServerNowMs() > base.getTime();
   }
 
   return false;
@@ -97,11 +98,11 @@ export function getExpiredPartsWithoutOffers(
 function isAwaitingSelectionPastDeadline(order: OrderExpiryContext): boolean {
   if (order.status !== 'AWAITING_SELECTION') return false;
   if (order.selectionDeadlineAt) {
-    return Date.now() > new Date(order.selectionDeadlineAt).getTime();
+    return getServerNowMs() > new Date(order.selectionDeadlineAt).getTime();
   }
-  const base = new Date(order.createdAt || order.date || Date.now());
+  const base = new Date(order.createdAt || order.date || getServerNowMs());
   base.setHours(base.getHours() + 48);
-  return Date.now() > base.getTime();
+  return getServerNowMs() > base.getTime();
 }
 
 function isAwaitingPaymentPastDeadline(order: {
@@ -113,11 +114,11 @@ function isAwaitingPaymentPastDeadline(order: {
   const status = String(order.status || '');
   if (status !== 'AWAITING_PAYMENT' && status !== 'PARTIALLY_PAID') return false;
   if (order.paymentDeadlineAt) {
-    return Date.now() > new Date(order.paymentDeadlineAt).getTime();
+    return getServerNowMs() > new Date(order.paymentDeadlineAt).getTime();
   }
-  const base = new Date(order.updatedAt || order.createdAt || Date.now());
+  const base = new Date(order.updatedAt || order.createdAt || getServerNowMs());
   base.setHours(base.getHours() + 24);
-  return Date.now() > base.getTime();
+  return getServerNowMs() > base.getTime();
 }
 
 /**
@@ -176,19 +177,19 @@ export function shouldEnforceExpiredSla(order: {
 
 function isAwaitingOffersPastDeadline(order: OrderExpiryContext): boolean {
   if (order.status !== 'AWAITING_OFFERS') return false;
-  const base = new Date(order.createdAt || order.date || Date.now());
+  const base = new Date(order.createdAt || order.date || getServerNowMs());
   base.setHours(base.getHours() + 24);
-  return Date.now() > base.getTime();
+  return getServerNowMs() > base.getTime();
 }
 
 function isCollectingOffersPastReveal(order: OrderExpiryContext): boolean {
   if (order.status !== 'COLLECTING_OFFERS') return false;
   if (order.revealOffersAt) {
-    return Date.now() > new Date(order.revealOffersAt).getTime();
+    return getServerNowMs() > new Date(order.revealOffersAt).getTime();
   }
-  const base = new Date(order.createdAt || order.date || Date.now());
+  const base = new Date(order.createdAt || order.date || getServerNowMs());
   base.setHours(base.getHours() + 24);
-  return Date.now() > base.getTime();
+  return getServerNowMs() > base.getTime();
 }
 
 function allPartsHaveNoOffers(

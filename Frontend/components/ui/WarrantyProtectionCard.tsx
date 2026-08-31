@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Clock, Package, AlertCircle, ExternalLink, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Order, OrderOffer } from '../../stores/useOrderStore';
+import { getServerNowMs } from '../../utils/serverClock';
 
 interface WarrantyProtectionCardProps {
     order: Order;
@@ -51,7 +52,7 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
         const tickMs = variant === 'compact' ? 30_000 : 1_000;
 
         const calculate = () => {
-            const now = Date.now();
+            const now = getServerNowMs();
             const diff = target - now;
 
             if (diff <= 0) {

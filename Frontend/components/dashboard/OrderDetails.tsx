@@ -75,6 +75,7 @@ import { PendingStoreReviewBanner } from './shared/PendingStoreReviewBanner';
 import { MultiItemCompletionBadge } from './shared/MultiItemCompletionBadge';
 import { MultiItemResolutionProgress } from './shared/MultiItemResolutionProgress';
 import { readDashboardDeepLink } from '../../utils/widersDeepLink';
+import { getServerNowMs } from '../../utils/serverClock';
 
 interface OrderDetailsProps {
     orderId: string | null;
@@ -91,7 +92,7 @@ export const CountdownTimer = ({ targetDate, label, compact = false, hideExpired
 
     useEffect(() => {
         const tick = () => {
-            const now = new Date().getTime();
+            const now = getServerNowMs();
             const target = new Date(targetDate).getTime();
             const diff = target - now;
 
@@ -132,7 +133,7 @@ export const WarrantyBadge = ({ endDate, status, onReplace }: { endDate: string,
 
     useEffect(() => {
         const calculate = () => {
-            const now = new Date().getTime();
+            const now = getServerNowMs();
             const target = new Date(endDate).getTime();
             const diff = target - now;
 
@@ -741,23 +742,24 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     const isOrderExpired = () => {
         if (order.status === 'CANCELLED') return true;
-        
+        const nowMs = getServerNowMs();
+
         // 1. Awaiting Offers Expiry (Legacy/Single-Part)
         if (order.status === 'AWAITING_OFFERS') {
             const d = new Date(order.createdAt || order.date);
             d.setHours(d.getHours() + 24);
-            return new Date().getTime() > d.getTime();
+            return nowMs > d.getTime();
         }
 
         // 2. Awaiting Selection Expiry (2026/Multi-Part Reveal Logic)
         if (order.status === 'AWAITING_SELECTION') {
             if (order.selectionDeadlineAt) {
-                return new Date().getTime() > new Date(order.selectionDeadlineAt).getTime();
+                return nowMs > new Date(order.selectionDeadlineAt).getTime();
             }
             // Fallback: 48h from creation (24h collecting + 24h selection)
             const d = new Date(order.createdAt || order.date);
             d.setHours(d.getHours() + 48);
-            return new Date().getTime() > d.getTime();
+            return nowMs > d.getTime();
         }
 
         return false;

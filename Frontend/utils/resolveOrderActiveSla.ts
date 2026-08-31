@@ -1,6 +1,7 @@
 import type { OrderActiveSla, OrderActiveSlaUrgency, OrderDurationSettings } from '../types/orderSla';
 import { DEFAULT_ORDER_DURATIONS } from '../types/orderSla';
 import { getOrderDurationSettings } from './orderSla';
+import { getServerNowMs } from './serverClock';
 
 type OrderLike = {
   status?: string | null;
@@ -15,6 +16,7 @@ type OrderLike = {
   shippedAt?: string | Date | null;
   deliveredAt?: string | Date | null;
   offerAcceptedAt?: string | Date | null;
+  warranty_end_at?: string | Date | null;
   payments?: Array<{ createdAt?: string | Date | null; status?: string | null }> | null;
 };
 
@@ -51,7 +53,7 @@ const buildSlaUntil = (
   }
 
   const totalMs = endsAtMs - startedAtMs;
-  const now = Date.now();
+  const now = getServerNowMs();
   const remainingMs = endsAtMs - now;
   const progressPercent = Math.min(
     100,
@@ -147,13 +149,20 @@ export function resolveOrderActiveSla(
       return buildSla(status, 'sla.payment', payStartedMs, H(config.paymentTimeoutHours));
     }
 
-    case 'PARTIALLY_PAID':
+    case 'PARTIALLY_PAID': {
+      const partialPayDeadlineMs = toMs(order.paymentDeadlineAt);
+      const partialPayStartedMs =
+        toMs(order.offerAcceptedAt) ?? toMs(order.updatedAt) ?? toMs(order.createdAt);
+      if (partialPayDeadlineMs != null && partialPayStartedMs != null) {
+        return buildSlaUntil(status, 'sla.payment', partialPayStartedMs, partialPayDeadlineMs);
+      }
       return buildSla(
         status,
         'sla.payment',
-        toMs(order.updatedAt) ?? toMs(order.createdAt),
+        partialPayStartedMs,
         H(config.paymentTimeoutHours),
       );
+    }
 
     case 'PREPARATION':
       return buildSla(
@@ -211,6 +220,18 @@ export function resolveOrderActiveSla(
         toMs(order.deliveredAt) ?? toMs(order.updatedAt),
         H(returnHours),
       );
+    }
+
+    case 'WARRANTY_ACTIVE': {
+      const endMs = toMs(order.warranty_end_at);
+      const startMs = toMs(order.updatedAt) ?? toMs(order.deliveredAt);
+      if (endMs != null && startMs != null && endMs > startMs) {
+        return buildSlaUntil(status, 'sla.return', startMs, endMs);
+      }
+      if (endMs != null) {
+        return buildSlaUntil(status, 'sla.return', endMs - 1000, endMs);
+      }
+      return null;
     }
 
     default:

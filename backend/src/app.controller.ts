@@ -30,6 +30,13 @@ export class AppController {
         };
     }
 
+    /** Public server clock for client countdown skew correction (display only). */
+    @Get('meta/server-time')
+    @Header('Cache-Control', 'no-store')
+    getServerTime() {
+        return { serverNow: new Date().toISOString() };
+    }
+
     @Get('system/status')
     @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
     async getSystemStatus() {
