@@ -215,7 +215,27 @@ export const customer = {
       successAlert: 'طلب جديد في السوق',
       next: 'التالي',
       uploading: 'جاري رفع الملفات…',
-      back: 'السابق'
+      back: 'السابق',
+      rules: {
+        singleVehicleDuplicate:
+          'لا يمكنك تقديم أكثر من طلب مفرد واحد خلال 24 ساعة لنفس السيارة.\nإذا كنت تحتاج إلى عدة قطع لنفس السيارة، يرجى استخدام الطلب المجمع، حيث يمكنك إضافة عدة قطع في طلب واحد، مع إمكانية اختيار طريقة الشحن لكل قطعة بشكل منفصل أو شحن جميع القطع معاً.',
+        singleLimit:
+          'لقد وصلت إلى الحد الأقصى (10) طلبات مفردة خلال 24 ساعة. يمكنك المحاولة مرة أخرى بعد انتهاء المدة.',
+        multipleCooldown:
+          'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة على طلبك المجمع السابق (غير الملغى).',
+        duplicatePartName:
+          'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.\nيرجى إضافة قطعة مختلفة.',
+        partsLimit:
+          'الطلب المجمع يسمح من قطعتين إلى 10 قطع كحد أقصى.',
+        singleCounterLabel: 'الطلبات المفردة خلال 24 ساعة',
+        singleLimitReached: 'وصلت للحد الأقصى',
+        singleRemaining: 'متبقي {n}',
+        multipleLabel: 'الطلب المجمع',
+        multipleAvailable: 'متاح الآن',
+        multipleBlockedHint: 'متاح بعد انتهاء مدة الطلب المجمع السابق',
+        unlockIn: 'يفتح بعد',
+        createFailed: 'فشل إنشاء الطلب. حاول مرة أخرى.',
+      },
     },
     orders: {
       manageTitle: 'إدارة ومتابعة طلباتك السابقة والحالية',
@@ -1253,7 +1273,27 @@ export const customer = {
       successAlert: 'New Market Request',
       next: 'Next',
       uploading: 'Uploading files…',
-      back: 'Back'
+      back: 'Back',
+      rules: {
+        singleVehicleDuplicate:
+          'You cannot submit more than one single request within 24 hours for the same vehicle.\nIf you need multiple parts for the same vehicle, please use a multiple request where you can add several parts in one order and choose shipping per part or combined.',
+        singleLimit:
+          'You have reached the maximum of 10 single requests within 24 hours. Try again after the window resets.',
+        multipleCooldown:
+          'You cannot submit another multiple request until 24 hours have passed since your previous active multiple request.',
+        duplicatePartName:
+          'You cannot add the same part more than once in this request.\nPlease add a different part.',
+        partsLimit:
+          'A multiple request allows between 2 and 10 parts.',
+        singleCounterLabel: 'Single requests (24h)',
+        singleLimitReached: 'Limit reached',
+        singleRemaining: '{n} remaining',
+        multipleLabel: 'Multiple request',
+        multipleAvailable: 'Available now',
+        multipleBlockedHint: 'Available after your previous multiple request window ends',
+        unlockIn: 'Unlocks in',
+        createFailed: 'Failed to create order. Please try again.',
+      },
     },
     orders: {
       manageTitle: 'Manage and track your current and past orders',

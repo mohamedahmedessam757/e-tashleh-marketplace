@@ -606,6 +606,7 @@ model Order {
   @@index([customerId])
   @@index([storeId])
   @@index([status])
+  @@index([customerId, requestType, createdAt], map: "orders_customer_request_created_idx")
   @@map("orders")
 }
 

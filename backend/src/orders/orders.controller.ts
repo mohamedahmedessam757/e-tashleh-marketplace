@@ -13,6 +13,7 @@ import { ResourceAccessService } from '../common/authorization/resource-access.s
 
 import { ExcelService } from './excel.service';
 import { Response } from 'express';
+import { OrderCreateQuotaService } from './order-create-quota.service';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -21,6 +22,7 @@ export class OrdersController {
         private readonly ordersService: OrdersService,
         private readonly excelService: ExcelService,
         private readonly resourceAccess: ResourceAccessService,
+        private readonly orderCreateQuota: OrderCreateQuotaService,
     ) { }
 
     private actorFrom(req: any) {
@@ -43,6 +45,12 @@ export class OrdersController {
             return { ...result, requestingStoreId: req.user.storeId };
         }
         return result;
+    }
+
+    /** Rolling 24h single/multiple create eligibility (must be before :id routes). */
+    @Get('create-quota')
+    getCreateQuota(@Request() req) {
+        return this.orderCreateQuota.getQuota(req.user.id);
     }
 
     @Get('delivered')

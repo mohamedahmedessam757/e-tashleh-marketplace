@@ -31,6 +31,8 @@ import {
 } from '../common/search/admin-entity-search.util';
 import { resolveCompletionWarranty } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
+import { OrderCreateQuotaService } from './order-create-quota.service';
+import { ORDER_CREATE_RULES } from './order-create-rules.util';
 
 @Injectable()
 export class OrdersService {
@@ -58,6 +60,7 @@ export class OrdersService {
         private orderSla: OrderSlaService,
         @Inject(forwardRef(() => ViolationsService))
         private violationsService: ViolationsService,
+        private orderCreateQuota: OrderCreateQuotaService,
     ) { }
 
     /** Side-effects when an order reaches a chat-lock terminal status. */
@@ -104,6 +107,9 @@ export class OrdersService {
         }
         // ------------------------------------------------
 
+        // Early create-rules check (fast fail before order number / tx)
+        await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto);
+
         // 1. Generate Order Number
         const orderNumber = await this.generateOrderNumber();
         const durationCfg = await this.orderDurationConfig.getConfig();
@@ -113,6 +119,12 @@ export class OrdersService {
         try {
             // 2. Transaction: Create Order + Parts + Audit Log + Update Count
             result = await this.prisma.$transaction(async (tx) => {
+                // Serialize concurrent creates for this customer
+                await tx.$executeRaw`SELECT id FROM users WHERE id = ${customerId}::uuid FOR UPDATE`;
+
+                // Re-check rules under lock (race-safe)
+                await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto, tx);
+
                 // Increment daily count
                 await tx.user.update({
                     where: { id: customerId },
@@ -211,7 +223,48 @@ export class OrdersService {
         void this.dispatchOrderCreatedNotifications(customerId, result.id, orderNumber, createOrderDto)
             .catch((e) => this.logger.error('Failed to send order-created notifications', e));
 
+        // Single-request quota warning (after successful create)
+        if (String(createOrderDto.requestType).toLowerCase() === 'single') {
+            void this.dispatchSingleQuotaWarning(customerId).catch((e) =>
+                this.logger.error('Failed to send single-quota warning', e),
+            );
+        }
+
         return result;
+    }
+
+    /** Notify customer when approaching / hitting the 24h single-order cap. */
+    private async dispatchSingleQuotaWarning(customerId: string): Promise<void> {
+        const quota = await this.orderCreateQuota.getQuota(customerId);
+        const used = quota.single.used;
+        const max = quota.single.max;
+        if (used < ORDER_CREATE_RULES.singleWarnThreshold) return;
+
+        const atLimit = used >= max;
+        const dedupKey = atLimit
+            ? `single_quota_limit_${quota.single.nextUnlockAt || 'now'}`
+            : `single_quota_warn_${quota.single.nextUnlockAt || 'now'}`;
+
+        await this.notifications.notifyWithDedup(customerId, dedupKey, 24 * 60, {
+            recipientId: customerId,
+            recipientRole: 'CUSTOMER',
+            titleAr: atLimit ? 'وصلت لحد الطلبات المفردة' : 'تنبيه حد الطلبات المفردة',
+            titleEn: atLimit ? 'Single request limit reached' : 'Single request limit warning',
+            messageAr: atLimit
+                ? `استخدمت ${used}/${max} طلبات مفردة خلال 24 ساعة. لا يمكنك تقديم طلب مفرد جديد حتى انتهاء المدة.`
+                : `استخدمت ${used}/${max} طلبات مفردة خلال 24 ساعة. تبقّى لك ${quota.single.remaining} طلبات.`,
+            messageEn: atLimit
+                ? `You used ${used}/${max} single requests within 24 hours. You cannot submit another single request until the window resets.`
+                : `You used ${used}/${max} single requests within 24 hours. ${quota.single.remaining} remaining.`,
+            type: 'ORDER',
+            link: `/dashboard/create-order`,
+            metadata: {
+                waEvent: 'ORDER_SINGLE_QUOTA',
+                used,
+                max,
+                nextUnlockAt: quota.single.nextUnlockAt,
+            },
+        });
     }
 
     /** Background fan-out after order commit — never awaited on the create HTTP path */

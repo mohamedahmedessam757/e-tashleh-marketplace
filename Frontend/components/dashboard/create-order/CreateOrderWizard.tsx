@@ -11,6 +11,19 @@ import { PartDetailsStep } from './steps/PartDetailsStep';
 import { PreferencesStep } from './steps/PreferencesStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { OrderSuccessModal } from './OrderSuccessModal';
+import { OrderCreateQuotaBanner } from './OrderCreateQuotaBanner';
+import { hasDuplicatePartNames } from '../../../utils/normalizePartName';
+import { ordersApi } from '../../../services/api/orders';
+
+function extractApiErrorMessage(error: unknown, fallback: string, preferAr: boolean): string {
+  const data = (error as { response?: { data?: any } })?.response?.data;
+  if (!data) return fallback;
+  if (preferAr && typeof data.messageAr === 'string' && data.messageAr.trim()) return data.messageAr;
+  if (!preferAr && typeof data.messageEn === 'string' && data.messageEn.trim()) return data.messageEn;
+  if (typeof data.message === 'string' && data.message.trim()) return data.message;
+  if (Array.isArray(data.message) && data.message[0]) return String(data.message[0]);
+  return fallback;
+}
 
 interface CreateOrderWizardProps {
   onComplete: () => void;
@@ -49,6 +62,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
   const [isReady, setIsReady] = React.useState(false);
   const [shake, setShake] = React.useState(false);
   const [createdOrderId, setCreatedOrderId] = React.useState<string | null>(null);
+  const [quotaRefreshKey, setQuotaRefreshKey] = React.useState(0);
 
   useEffect(() => {
     const prefill = consumeCreateOrderPrefill();
@@ -106,6 +120,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     // Validation Setup
     setShowErrors(true);
     let hasError = false;
+    const rules = t.dashboard.createOrder.rules;
 
     if (step === 1) {
       if (!vehicle.make || !vehicle.model || !vehicle.year) {
@@ -118,12 +133,84 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       if (requestType === 'multiple' && parts.length < 2) {
         addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'لقد اخترت (عدة قطع)، يجب إضافة قطعتين على الأقل للمتابعة' : 'You selected (Multiple Parts), please add at least 2 parts to continue', priority: 'urgent' });
         hasError = true;
+      } else if (requestType === 'multiple' && hasDuplicatePartNames(parts.map((p) => p.name))) {
+        addNotification({
+          type: 'system',
+          titleKey: 'alert',
+          message:
+            rules?.duplicatePartName ||
+            (language === 'ar'
+              ? 'لا يمكنك إضافة القطعة نفسها أكثر من مرة داخل هذا الطلب.'
+              : 'You cannot add the same part more than once in this request.'),
+          priority: 'urgent',
+        });
+        hasError = true;
       } else {
         // Validate ALL parts
         const isValid = parts.every(p => p.name && p.description && p.images.length > 0);
         if (!isValid) {
           addNotification({ type: 'system', titleKey: 'alert', message: language === 'ar' ? 'يرجى تعبئة جميع البيانات الإلزامية وإرفاق صورة واحدة على الأقل لكل قطعة' : 'Please fill all mandatory details and attach at least one image for all parts', priority: 'urgent' });
           hasError = true;
+        }
+      }
+
+      // Soft pre-check against server quota (authoritative enforcement remains on POST)
+      if (!hasError) {
+        try {
+          const quota = await ordersApi.getCreateQuota();
+          if (requestType === 'multiple' && !quota.multiple.canCreate) {
+            addNotification({
+              type: 'system',
+              titleKey: 'alert',
+              message:
+                rules?.multipleCooldown ||
+                (language === 'ar'
+                  ? 'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة.'
+                  : 'You cannot submit another multiple request until 24 hours have passed.'),
+              priority: 'urgent',
+            });
+            hasError = true;
+            setQuotaRefreshKey((k) => k + 1);
+          } else if (requestType === 'single') {
+            const yearNum = parseInt(vehicle.year, 10);
+            const norm = (s: string) =>
+              s.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('ar');
+            const blockedLoose = quota.single.blockedVehicles.some(
+              (v) =>
+                norm(v.make) === norm(vehicle.make) &&
+                norm(v.model) === norm(vehicle.model) &&
+                Number(v.year) === yearNum,
+            );
+            if (blockedLoose) {
+              addNotification({
+                type: 'system',
+                titleKey: 'alert',
+                message:
+                  rules?.singleVehicleDuplicate ||
+                  (language === 'ar'
+                    ? 'لا يمكنك تقديم أكثر من طلب مفرد واحد خلال 24 ساعة لنفس السيارة.'
+                    : 'You cannot submit more than one single request within 24 hours for the same vehicle.'),
+                priority: 'urgent',
+              });
+              hasError = true;
+              setQuotaRefreshKey((k) => k + 1);
+            } else if (quota.single.remaining <= 0) {
+              addNotification({
+                type: 'system',
+                titleKey: 'alert',
+                message:
+                  rules?.singleLimit ||
+                  (language === 'ar'
+                    ? 'لقد وصلت إلى الحد الأقصى لطلبات المفرد خلال 24 ساعة.'
+                    : 'You have reached the single-request limit for 24 hours.'),
+                priority: 'urgent',
+              });
+              hasError = true;
+              setQuotaRefreshKey((k) => k + 1);
+            }
+          }
+        } catch {
+          // Soft-fail: backend will still enforce on submit
         }
       }
     }
@@ -180,16 +267,20 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         message: language === 'ar' ? 'تم استلام طلبك بنجاح' : 'Order received successfully',
         priority: 'urgent'
       });
-
+      setQuotaRefreshKey((k) => k + 1);
       setCreatedOrderId(newOrderId); // Trigger Modal instead of immediate redirect
     } catch (error) {
       console.error("Order Creation Failed:", error);
+      const fallback =
+        t.dashboard.createOrder.rules?.createFailed ||
+        (language === 'ar' ? 'فشل إنشاء الطلب. حاول مرة أخرى.' : 'Failed to create order. Please try again.');
       addNotification({
         type: 'system',
         titleKey: 'adminAlert',
-        message: language === 'ar' ? "فشل إنشاء الطلب. حاول مرة أخرى." : "Failed to create order. Please try again.",
+        message: extractApiErrorMessage(error, fallback, language === 'ar'),
         priority: 'urgent'
       });
+      setQuotaRefreshKey((k) => k + 1);
     }
   };
 
@@ -206,6 +297,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
             : 'Order original used auto parts from scrapyards in the GCC via E-Tashleh platform'}
         </p>
       </div>
+
+      <OrderCreateQuotaBanner refreshKey={quotaRefreshKey} />
 
       {/* Progress Stepper */}
       <div className="relative flex justify-between items-center px-4 md:px-12 mb-12">

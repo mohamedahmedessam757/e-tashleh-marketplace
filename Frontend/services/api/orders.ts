@@ -62,6 +62,31 @@ export const ordersApi = {
         }
     },
 
+    /** Rolling 24h single/multiple create eligibility */
+    getCreateQuota: async () => {
+        const response = await client.get('/orders/create-quota');
+        return response.data as {
+            serverNow: string;
+            single: {
+                used: number;
+                max: number;
+                remaining: number;
+                blockedVehicles: Array<{
+                    make: string;
+                    model: string;
+                    year: number;
+                    unlockAt: string;
+                }>;
+                nextUnlockAt: string | null;
+            };
+            multiple: {
+                canCreate: boolean;
+                unlockAt: string | null;
+                blockingOrderId: string | null;
+            };
+        };
+    },
+
     // Transition order state
     transition: async (id: string, newStatus: string, reason?: string, metadata?: any) => {
         const response = await client.patch(`/orders/${id}/transition`, {

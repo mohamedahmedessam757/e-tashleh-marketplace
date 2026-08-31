@@ -19,6 +19,7 @@ import { ExcelService } from './excel.service';
 import { ShippingAutomationService } from './shipping-automation.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OrderSlaService } from './order-sla.service';
+import { OrderCreateQuotaService } from './order-create-quota.service';
 
 @Module({
     imports: [
@@ -34,7 +35,16 @@ import { OrderSlaService } from './order-sla.service';
         forwardRef(() => ViolationsModule),
     ],
     controllers: [OrdersController],
-    providers: [OrdersService, OrderStateMachine, WarrantySchedulerService, ExcelService, ShippingAutomationService, OfferFulfillmentService, OrderSlaService],
-    exports: [OrderStateMachine, OrdersService, ExcelService, OfferFulfillmentService, OrderSlaService],
+    providers: [
+        OrdersService,
+        OrderStateMachine,
+        WarrantySchedulerService,
+        ExcelService,
+        ShippingAutomationService,
+        OfferFulfillmentService,
+        OrderSlaService,
+        OrderCreateQuotaService,
+    ],
+    exports: [OrderStateMachine, OrdersService, ExcelService, OfferFulfillmentService, OrderSlaService, OrderCreateQuotaService],
 })
 export class OrdersModule { }
