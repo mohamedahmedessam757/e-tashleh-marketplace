@@ -368,7 +368,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen w-full transition-all duration-300">
+      <main className="flex-1 flex flex-col min-h-screen w-full min-w-0 transition-all duration-300">
 
         {/* Top Header */}
         <header className="sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
@@ -467,7 +467,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <RestrictionAlertBanner onNavigate={onNavigate} />
 
         {/* Page Content */}
-        <div className="flex-1 p-4 md:p-8 mt-2 md:mt-4 pb-24 md:pb-8">
+        <div className="flex-1 p-4 md:p-8 mt-2 md:mt-4 pb-24 md:pb-8 min-w-0 overflow-x-clip">
           {/* Global Maintenance Awareness (2026 UX) */}
           {role === 'admin' && (
             <AnimatePresence>

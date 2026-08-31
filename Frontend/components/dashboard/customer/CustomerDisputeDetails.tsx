@@ -132,7 +132,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
       </div>
 
       {/* Status Timeline */}
-      <GlassCard className="p-8 border-white/5 overflow-hidden relative">
+      <GlassCard className="p-4 md:p-8 border-white/5 overflow-hidden relative">
          <div className="absolute inset-0 bg-gold-500/[0.01] pointer-events-none" />
          <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
             {steps.map((step, idx) => (
@@ -161,7 +161,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
 
       <div className="grid lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
-           <GlassCard className="p-8 space-y-8 border-white/5 relative group">
+           <GlassCard className="p-4 md:p-8 space-y-6 md:space-y-8 border-white/5 relative group">
               <div className="flex items-center gap-6">
                  <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform duration-500 shrink-0">
                     <Package size={40} className="text-white/20 group-hover:text-gold-500 transition-colors" />
@@ -233,7 +233,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
             {/* Merchant Response Section (2026 Phase 4 Transparency) */}
             {dispute.merchantResponse && (
                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                  <GlassCard className="p-8 space-y-8 border-cyan-500/10 bg-cyan-500/[0.02] relative overflow-hidden">
+                  <GlassCard className="p-4 md:p-8 space-y-6 md:space-y-8 border-cyan-500/10 bg-cyan-500/[0.02] relative overflow-hidden">
                      <div className="absolute top-0 right-0 p-4 bg-cyan-500/10 rounded-bl-3xl border-l border-b border-cyan-500/10 flex items-center gap-2">
                         <Store size={14} className="text-cyan-400" />
                         <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">{isAr ? 'رد المتجر الرسمي' : 'OFFICIAL STORE RESPONSE'}</span>
@@ -304,7 +304,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
            {/* Final Decision Panel: Elevated 2026 Admin Transparency */}
            {(dispute.adminApproval) && (
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <GlassCard className={`p-8 border-none relative overflow-hidden shadow-3xl
+                <GlassCard className={`p-4 md:p-8 border-none relative overflow-hidden shadow-3xl
                    ${dispute.adminApproval === 'APPROVED' ? 'bg-green-500/[0.04]' : 'bg-red-500/[0.04]'}`}>
                    
                    {/* Background Decorative Element */}
@@ -328,7 +328,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                    </div>
 
                    <div className="space-y-8 relative z-10">
-                      <div className="p-8 bg-black/40 rounded-[32px] border border-white/5 space-y-4">
+                      <div className="p-4 md:p-8 bg-black/40 rounded-[32px] border border-white/5 space-y-4">
                          <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black text-gold-500 uppercase tracking-[0.2em]">{t.dashboard.resolution.details.conclusion}</span>
                             <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/10">
@@ -410,7 +410,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                 {dispute.adminEvidence && dispute.adminEvidence.length > 0 && (
                   <div className="space-y-4">
                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest block">{isAr ? 'مرفقات الإقرار الإداري' : 'ADMINISTRATIVE EVIDENCE'}</span>
-                     <div className="grid grid-cols-4 gap-3">
+                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {dispute.adminEvidence.map((img, i) => (
                            <motion.div 
                               key={i} 
@@ -442,7 +442,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
            </GlassCard>
 
            {/* Case Activity Log */}
-           <GlassCard className="p-8 border-white/5">
+           <GlassCard className="p-4 md:p-8 border-white/5">
               <div className="flex items-center gap-3 mb-6">
                  <History size={18} className="text-gold-400" />
                  <h3 className="text-[10px] font-black text-white uppercase">{t.dashboard.resolution.details.activity}</h3>

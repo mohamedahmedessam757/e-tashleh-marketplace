@@ -194,7 +194,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
     <div className="space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* 2026 Luxury Hero Section */}
-      <div className="relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#141210] to-[#0A0908] border border-white/5 shadow-2xl p-8 md:p-12">
+      <div className="relative overflow-hidden rounded-[24px] md:rounded-[40px] bg-gradient-to-br from-[#141210] to-[#0A0908] border border-white/5 shadow-2xl p-4 md:p-8 lg:p-12 min-w-0">
         {/* Cinematic Orbs - Precision Placed */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gold-500/10 blur-[150px] rounded-full -mr-64 -mt-64 pointer-events-none opacity-60" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full -ml-32 -mb-32 pointer-events-none opacity-40" />
@@ -208,7 +208,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
               </div>
 
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-6xl font-black text-white uppercase leading-tight mb-2">
+                <h1 className="text-2xl sm:text-4xl md:text-6xl font-black text-white uppercase leading-tight mb-2">
                   {t.dashboard.resolution.subtitle}
                 </h1>
                 <div className="h-1 w-16 bg-gradient-to-r from-gold-500 to-transparent rounded-full" />
@@ -256,7 +256,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
         <div className="flex items-center gap-4 p-2 bg-white/[0.03] border border-white/5 rounded-[24px] w-full md:w-auto backdrop-blur-xl">
           <button
             onClick={() => setActiveTab('returns')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-12 py-5 rounded-[20px] text-[12px] font-black uppercase transition-all duration-500
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 md:px-12 py-4 md:py-5 rounded-[20px] text-[11px] sm:text-[12px] font-black uppercase transition-all duration-500
               ${activeTab === 'returns' ? 'bg-gold-500 text-[#0F0E0D] shadow-lg shadow-gold-500/20' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
           >
             <RotateCcw size={18} strokeWidth={2.5} />
@@ -264,7 +264,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
           </button>
           <button
             onClick={() => setActiveTab('disputes')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-12 py-5 rounded-[20px] text-[12px] font-black uppercase transition-all duration-500
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 md:px-12 py-4 md:py-5 rounded-[20px] text-[11px] sm:text-[12px] font-black uppercase transition-all duration-500
               ${activeTab === 'disputes' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
           >
             <Scale size={18} strokeWidth={2.5} />
@@ -286,7 +286,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col gap-8 mb-12 p-8 bg-gradient-to-r from-gold-500/10 via-transparent to-transparent rounded-[32px] border border-gold-500/10 relative overflow-hidden">
+            <div className="flex flex-col gap-6 md:gap-8 mb-8 md:mb-12 p-4 md:p-8 bg-gradient-to-r from-gold-500/10 via-transparent to-transparent rounded-[24px] md:rounded-[32px] border border-gold-500/10 relative overflow-hidden">
                {/* Decorative Background Pulsing Glow */}
                <div className="absolute left-0 top-0 w-1/3 h-full bg-gold-500/5 blur-[80px] rounded-full animate-pulse" />
                

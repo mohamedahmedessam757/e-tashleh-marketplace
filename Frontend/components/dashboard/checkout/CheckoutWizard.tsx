@@ -255,14 +255,14 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
 
     return (
         <>
-            <div className="max-w-3xl mx-auto space-y-8">
+            <div className="max-w-3xl mx-auto space-y-6 md:space-y-8 min-w-0 px-0">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-white mb-2">{t.dashboard.checkout.title}</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{t.dashboard.checkout.title}</h1>
                 </div>
 
                 {/* Stepper */}
-                <div className="flex justify-between items-center px-4 relative mb-12">
-                    <div className="absolute top-5 left-0 w-full h-1 bg-white/10 -z-10 rounded-full">
+                <div className="flex justify-between items-start gap-1 sm:gap-2 px-1 sm:px-4 relative mb-8 md:mb-12">
+                    <div className="absolute top-5 start-0 end-0 h-1 bg-white/10 -z-10 rounded-full mx-4">
                         <motion.div
                             className="h-full bg-gold-500"
                             initial={{ width: 0 }}
@@ -272,11 +272,11 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                     {steps.map((s, index) => {
                         const isActive = step >= s.id;
                         return (
-                            <div key={s.id} className="flex flex-col items-center gap-2 z-10">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${isActive ? 'bg-[#1A1814] border-gold-500 text-gold-500' : 'bg-[#1A1814] border-white/20 text-white/20'}`}>
-                                    {isActive ? <CheckCircle2 size={20} /> : (index + 1)}
+                            <div key={s.id} className="flex flex-col items-center gap-1 sm:gap-2 z-10 min-w-0 flex-1">
+                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-colors shrink-0 ${isActive ? 'bg-[#1A1814] border-gold-500 text-gold-500' : 'bg-[#1A1814] border-white/20 text-white/20'}`}>
+                                    {isActive ? <CheckCircle2 size={18} /> : (index + 1)}
                                 </div>
-                                <span className={`text-xs font-bold ${isActive ? 'text-gold-500' : 'text-white/20'}`}>{s.title}</span>
+                                <span className={`text-[10px] sm:text-xs font-bold text-center leading-tight ${isActive ? 'text-gold-500' : 'text-white/20'}`}>{s.title}</span>
                             </div>
                         );
                     })}
@@ -284,7 +284,7 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
 
                 <GlassCard
                     enableBlur={false}
-                    className={`flex flex-col p-8 border-gold-500/20 ${
+                    className={`flex flex-col p-4 md:p-8 border-gold-500/20 min-w-0 ${
                         step === 1 ? 'min-h-0' : 'min-h-[400px] justify-between'
                     }`}
                 >
@@ -302,7 +302,7 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                     </div>
 
                     {step === 2 ? (
-                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-white/5">
+                        <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4 mt-8 pt-6 border-t border-white/5">
                             <button
                                 onClick={handleNext}
                                 disabled={isProcessing}
@@ -327,10 +327,10 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ onComplete, onNa
                             </button>
                         </div>
                     ) : (
-                        <div className="flex justify-between items-center mt-12 pt-8 border-t border-white/5">
+                        <div className="flex flex-wrap justify-between items-center gap-3 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-white/5">
                             <button
                                 onClick={handlePrev}
-                                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors"
+                                className="flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors text-sm sm:text-base"
                             >
                                 <PrevIcon size={18} />
                                 <span>{isFirstStep ? (language === 'ar' ? 'رجوع للطلب' : 'Back to Order') : t.dashboard.checkout.common.back}</span>

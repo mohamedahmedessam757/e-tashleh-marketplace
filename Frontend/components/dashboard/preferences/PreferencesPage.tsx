@@ -48,7 +48,7 @@ export const PreferencesPage: React.FC<{ onNavigate?: (path: string, id?: any) =
             </div>
 
             {/* Content */}
-            <GlassCard className="p-6 md:p-10">
+            <GlassCard className="p-4 md:p-10 min-w-0">
                 <AnimatePresence mode="wait">
                     {activeTab === 'settings' ? (
                         <SettingsTab key="settings" />

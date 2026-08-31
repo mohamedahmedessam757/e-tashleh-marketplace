@@ -104,8 +104,8 @@ export const TrackingView: React.FC<TrackingViewProps> = ({ trackingNumber }) =>
         </GlassCard>
       </div>
 
-      <div className="relative pl-4 md:pl-8 py-4">
-          <div className="absolute top-0 bottom-0 left-[27px] md:left-[43px] w-0.5 bg-white/10" />
+      <div className="relative ps-4 md:ps-8 py-4">
+          <div className="absolute top-0 bottom-0 start-[27px] md:start-[43px] w-0.5 bg-white/10" />
           
           <div className="space-y-8">
               {steps.map((step, idx) => {

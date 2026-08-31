@@ -64,10 +64,10 @@ export const OffersReviewStep: React.FC<{
                     </h3>
                 </div>
 
-                {/* Column Headers */}
-                <div className="grid grid-cols-4 gap-4 p-4 text-center text-sm font-bold text-white/50 border-b border-white/5 bg-black/20">
+                {/* Column Headers — stack on mobile, 4-col from md */}
+                <div className="hidden md:grid md:grid-cols-4 gap-4 p-4 text-center text-sm font-bold text-white/50 border-b border-white/5 bg-black/20">
                     <div>{language === 'ar' ? 'الصورة' : 'Image'}</div>
-                    <div className="text-start rtl:text-right">{language === 'ar' ? 'اسم القطعة' : 'Part Name'}</div>
+                    <div className="text-start">{language === 'ar' ? 'اسم القطعة' : 'Part Name'}</div>
                     <div>{language === 'ar' ? 'الحالة' : 'Status'}</div>
                     <div>{language === 'ar' ? 'الإجراء' : 'Action'}</div>
                 </div>
@@ -83,10 +83,10 @@ export const OffersReviewStep: React.FC<{
                         const isError = showValidationErrors && needsAction;
 
                         return (
-                            <div key={part.id} className={`grid grid-cols-4 gap-4 p-4 items-center transition-all duration-300 ${isError ? 'bg-red-500/10 border border-red-500 shadow-[inset_0_0_20px_rgba(239,68,68,0.2)]' : 'hover:bg-white/[0.02]'}`}>
+                            <div key={part.id} className={`grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 p-4 items-center transition-all duration-300 ${isError ? 'bg-red-500/10 border border-red-500 shadow-[inset_0_0_20px_rgba(239,68,68,0.2)]' : 'hover:bg-white/[0.02]'}`}>
                                 {/* 1. Image */}
-                                <div className="flex justify-center">
-                                    <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center">
+                                <div className="flex justify-center md:justify-center">
+                                    <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
                                         {partImgSrc ? (
                                             <img src={partImgSrc} alt={part.name} className="w-full h-full object-cover" />
                                         ) : (
@@ -96,8 +96,8 @@ export const OffersReviewStep: React.FC<{
                                 </div>
 
                                 {/* 2. Part Name & Details */}
-                                <div className="text-start rtl:text-right">
-                                    <div className="font-bold text-white mb-1">{part.name}</div>
+                                <div className="text-start min-w-0">
+                                    <div className="font-bold text-white mb-1 break-words">{part.name}</div>
                                     <div className="text-xs text-white/40 line-clamp-1">{part.description || part.name}</div>
                                     <div className="text-[10px] text-gold-500/60 font-mono tracking-wider mt-1 uppercase">
                                         {language === 'ar' ? `قطعة ${idx + 1}` : `PART ${idx + 1}`}
@@ -105,19 +105,19 @@ export const OffersReviewStep: React.FC<{
                                 </div>
 
                                 {/* 3. Status Badge */}
-                                <div className="flex justify-center flex-col items-center">
+                                <div className="flex justify-start md:justify-center flex-col items-start md:items-center min-w-0">
                                     {acceptedOffer ? (
-                                        <div className="flex items-center gap-1.5 text-green-400 font-bold bg-green-500/10 px-4 py-1.5 rounded-full border border-green-500/20 text-sm whitespace-nowrap">
-                                            <CheckCircle2 size={16} />
+                                        <div className="flex items-center gap-1.5 text-green-400 font-bold bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20 text-xs sm:text-sm">
+                                            <CheckCircle2 size={16} className="shrink-0" />
                                             <span>{language === 'ar' ? 'تم قبول عرض' : 'Offer Accepted'}</span>
                                         </div>
                                     ) : hasOffers ? (
-                                        <div className="flex items-center gap-1.5 text-red-400 font-bold bg-red-500/10 px-4 py-1.5 rounded-full border border-red-500/20 text-sm whitespace-nowrap">
-                                            <AlertCircle size={16} />
+                                        <div className="flex items-center gap-1.5 text-red-400 font-bold bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20 text-xs sm:text-sm">
+                                            <AlertCircle size={16} className="shrink-0" />
                                             <span>{language === 'ar' ? 'لم يتم قبول عرض' : 'No Offer Accepted'}</span>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-1.5 text-white/40 font-bold bg-white/5 px-4 py-1.5 rounded-full border border-white/5 text-sm whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5 text-white/40 font-bold bg-white/5 px-3 py-1.5 rounded-full border border-white/5 text-xs sm:text-sm">
                                             <AlertCircle size={16} />
                                             <span>{language === 'ar' ? 'لا توجد عروض نشطة' : 'No Active Offers'}</span>
                                         </div>
@@ -125,11 +125,11 @@ export const OffersReviewStep: React.FC<{
                                 </div>
 
                                 {/* 4. Action Button */}
-                                <div className="flex justify-center">
+                                <div className="flex justify-start md:justify-center">
                                     <button
                                         onClick={() => onBackToOffers(part.id)}
                                         disabled={!hasOffers}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${isError
+                                        className={`w-full md:w-auto px-4 py-2 rounded-xl text-sm font-bold border transition-all ${isError
                                             ? 'text-red-400 border-red-500/50 hover:bg-red-500/20 hover:border-red-500'
                                             : hasOffers
                                                 ? 'text-gold-400 border-gold-500/30 hover:bg-gold-500/10 hover:border-gold-500/50'

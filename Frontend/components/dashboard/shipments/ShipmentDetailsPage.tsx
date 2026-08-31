@@ -62,7 +62,7 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
 
             {/* Main Stage: Status Banner */}
             <GlassCard className="p-0 overflow-hidden border-white/5 bg-gradient-to-br from-[#1A1814] to-[#0F0E0C]">
-                <div className="p-8 pb-4">
+                <div className="p-4 md:p-8 pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                         <div className="flex items-start gap-5">
                             <div className="w-16 h-16 bg-gold-500/10 rounded-2xl flex items-center justify-center border border-gold-500/20 shrink-0">
@@ -351,7 +351,7 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
 
                              {[shipment.status, 'PACKAGED_FOR_SHIPPING', 'QUALITY_CHECK_PASSED'].map((st, i) => (
                                  <div key={i} className="relative pl-6 rtl:pr-6 rtl:pl-0">
-                                     <div className={`absolute left-[-4.5px] rtl:right-[-4.5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#151310] ${i === 0 ? 'bg-gold-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'bg-white/20'}`} />
+                                     <div className={`absolute start-[-4.5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#151310] ${i === 0 ? 'bg-gold-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'bg-white/20'}`} />
                                      <div className="space-y-1">
                                          <p className={`text-sm font-bold ${i === 0 ? 'text-white' : 'text-white/40'}`}>
                                              {statusTranslations[st]?.[isAr ? 'ar' : 'en'] || st}

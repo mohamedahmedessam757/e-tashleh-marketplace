@@ -87,7 +87,7 @@ export const LoyaltyPage: React.FC = () => {
             {/* Dashboard and Reviews Tabs */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1 space-y-6">
-                    <GlassCard className="p-8 border-gold-500/20 bg-gradient-to-br from-gold-600/10 via-transparent to-transparent group h-full">
+                    <GlassCard className="p-4 md:p-8 border-gold-500/20 bg-gradient-to-br from-gold-600/10 via-transparent to-transparent group h-full">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-gold-500/10 rounded-lg border border-gold-400/20 text-gold-500">
                                 <TrendingUp size={20} />

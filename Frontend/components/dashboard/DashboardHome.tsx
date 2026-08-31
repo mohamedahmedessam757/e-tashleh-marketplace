@@ -123,7 +123,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/20 rounded-full blur-3xl group-hover:bg-white/30 transition-all duration-700"></div>
 
-                <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="relative z-10 p-4 md:p-8 lg:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-white/90 text-xs font-medium mb-3 border border-white/10 backdrop-blur-md">
                             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
@@ -263,7 +263,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                             </div>
                         </GlassCard>
                     ) : (
-                        <GlassCard className="p-8 flex flex-col items-center justify-center text-center bg-[#1A1814] border-white/5">
+                        <GlassCard className="p-4 md:p-8 flex flex-col items-center justify-center text-center bg-[#1A1814] border-white/5">
                             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-white/20">
                                 <CheckCircle2 size={32} />
                             </div>

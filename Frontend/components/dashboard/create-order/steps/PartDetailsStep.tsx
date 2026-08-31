@@ -136,14 +136,14 @@ export const PartDetailsStep: React.FC = () => {
                 <div className="flex flex-wrap justify-center gap-3 w-full">
                   <button
                     onClick={() => setShippingType('combined')}
-                    className={`flex-1 min-w-[200px] px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${shippingType === 'combined' ? 'border-gold-500 bg-gold-500/10 text-white shadow-lg shadow-gold-500/10' : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'}`}
+                    className={`flex-1 min-w-0 sm:min-w-[160px] px-4 sm:px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${shippingType === 'combined' ? 'border-gold-500 bg-gold-500/10 text-white shadow-lg shadow-gold-500/10' : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'}`}
                   >
                     <Package size={18} />
                     {isRTL ? "تجميع الطلبات (شحنة واحدة)" : "Combined Shipping"}
                   </button>
                   <button
                     onClick={() => setShippingType('separate')}
-                    className={`flex-1 min-w-[200px] px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${shippingType === 'separate' ? 'border-gold-500 bg-gold-500/10 text-white shadow-lg shadow-gold-500/10' : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'}`}
+                    className={`flex-1 min-w-0 sm:min-w-[160px] px-4 sm:px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${shippingType === 'separate' ? 'border-gold-500 bg-gold-500/10 text-white shadow-lg shadow-gold-500/10' : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'}`}
                   >
                     <Truck size={18} />
                     {isRTL ? "كل طلب فى شحنه لوحده" : "Ship Separately"}

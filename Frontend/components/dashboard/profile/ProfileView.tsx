@@ -49,7 +49,7 @@ export const ProfileView: React.FC = () => {
 
             {/* Content Area */}
             <div className="lg:col-span-3">
-                <GlassCard className="min-h-[500px] p-6 md:p-10">
+                <GlassCard className="min-h-0 md:min-h-[500px] p-4 md:p-10 min-w-0">
                     <AnimatePresence mode="wait">
                         {activeTab === 'info' && <InfoTab />}
                         {activeTab === 'security' && <SecurityTab />}

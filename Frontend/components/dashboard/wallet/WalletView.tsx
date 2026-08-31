@@ -546,22 +546,22 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <div className="relative group flex-1 md:flex-initial">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-gold-500 transition-colors" size={14} />
+                            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-gold-500 transition-colors" size={14} />
                             <input 
                                 type="text" 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={wd.searchPlaceholder}
-                                className="bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-xs outline-none focus:border-gold-500/50 transition-all w-full md:w-56"
+                                className="bg-white/5 border border-white/10 rounded-lg ps-9 pe-4 py-2 text-xs outline-none focus:border-gold-500/50 transition-all w-full md:w-56"
                             />
                         </div>
                         <div className="relative group">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={14} />
+                            <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 text-white/30" size={14} />
                             <input 
                                 type="date" 
                                 value={dateRange.start}
                                 onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                className="bg-white/5 border border-white/10 rounded-lg pl-9 pr-2 py-2 text-[10px] outline-none focus:border-gold-500/50 transition-all w-40 text-white/70"
+                                className="bg-white/5 border border-white/10 rounded-lg ps-9 pe-2 py-2 text-[10px] outline-none focus:border-gold-500/50 transition-all w-40 text-white/70"
                             />
                         </div>
                     </div>
@@ -747,7 +747,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                             {/* Mobile Scroll Indicator */}
                             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/40 to-transparent pointer-events-none sm:hidden" />
                             
-                            <table className="w-full text-sm text-center border-collapse min-w-[800px]">
+                            <table className="w-full text-sm text-center border-collapse min-w-[640px] md:min-w-[800px]">
                                 <thead>
                                     <tr className="sticky top-0 z-20 border-b border-white/5 bg-[#151310] text-[10px] text-white/30 uppercase tracking-widest font-black">
                                         <th className="px-4 py-5 font-black">{isAr ? 'رقم الطلب / التفاصيل' : 'Order / Details'}</th>

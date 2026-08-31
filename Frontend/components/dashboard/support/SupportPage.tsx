@@ -161,7 +161,7 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                     </GlassCard>
 
                     {/* Support Content (List or Form) */}
-                    <GlassCard className="p-6 md:p-10 min-h-[550px] relative overflow-hidden" ref={formRef}>
+                    <GlassCard className="p-4 md:p-10 min-h-0 md:min-h-[550px] relative overflow-hidden min-w-0" ref={formRef}>
                          {/* Background Decor */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 blur-[100px] pointer-events-none" />
                         
