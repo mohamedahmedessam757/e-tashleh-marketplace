@@ -416,10 +416,10 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     );
 
     const InfoRow: React.FC<{ icon: any; label: string; value: string }> = ({ icon: Icon, label, value }) => (
-        <div className="flex items-start gap-2 text-xs sm:text-sm">
+        <div className="flex flex-wrap sm:flex-nowrap items-start gap-2 text-xs sm:text-sm min-w-0">
             <Icon className="w-4 h-4 text-gold-500 mt-0.5 shrink-0 inv-icon" />
             <span className="text-gray-400 shrink-0 inv-label">{label}:</span>
-            <span className="text-white font-semibold break-all inv-value">{value || '--'}</span>
+            <span className="text-white font-semibold break-all inv-value min-w-0">{value || '--'}</span>
         </div>
     );
 
@@ -550,39 +550,39 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                 </div>
 
                 {/* ═══ SECTION 1: HEADER ═══ */}
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 pb-6 border-b border-white/10 inv-section">
-                    <div>
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-5 sm:pb-6 border-b border-white/10 inv-section">
+                    <div className="min-w-0 w-full sm:w-auto">
                         <div className="flex items-center gap-3 mb-1">
-                            <img src="/logo.png" alt="E-Tashleh" className="w-10 h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
-                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
+                            <img src="/logo.png" alt="E-Tashleh" className="w-9 h-9 sm:w-10 sm:h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
+                            <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
                         </div>
                         <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider inv-label">{isAr ? 'سوق قطع غيار السيارات' : 'Automotive Marketplace'}</p>
-                        <div className="mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
-                            <div className="flex items-center gap-2">
-                                <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-                                <span className="inv-label">{isAr ? 'رقم الفاتورة' : 'Invoice #'}:</span>
-                                <span className="font-mono font-bold text-white inv-value">{invoiceNumber}</span>
+                        <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+                                <span className="inv-label shrink-0">{isAr ? 'رقم الفاتورة' : 'Invoice #'}:</span>
+                                <span className="font-mono font-bold text-white inv-value break-all">{invoiceNumber}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-                                <span className="inv-label">{isAr ? 'رقم الطلب' : 'Order #'}:</span>
-                                <span className="font-mono font-bold text-white inv-value">{orderNumber}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+                                <span className="inv-label shrink-0">{isAr ? 'رقم الطلب' : 'Order #'}:</span>
+                                <span className="font-mono font-bold text-white inv-value break-all">{orderNumber}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Hash className="w-4 h-4 text-gold-500 inv-icon" />
-                                <span className="inv-label">{isAr ? 'رقم العرض' : 'Offer #'}:</span>
-                                <span className="font-mono font-bold text-white inv-value">{offerNumber}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                <Hash className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+                                <span className="inv-label shrink-0">{isAr ? 'رقم العرض' : 'Offer #'}:</span>
+                                <span className="font-mono font-bold text-white inv-value break-all">{offerNumber}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-gold-500 inv-icon" />
-                                <span className="inv-label">{isAr ? 'تاريخ الإصدار' : 'Issue Date'}:</span>
-                                <span className="font-medium text-white inv-value">{invoiceDate}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                <Calendar className="w-4 h-4 text-gold-500 inv-icon shrink-0" />
+                                <span className="inv-label shrink-0">{isAr ? 'تاريخ الإصدار' : 'Issue Date'}:</span>
+                                <span className="font-medium text-white inv-value break-words">{invoiceDate}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/10 shrink-0">
+                    <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10 shrink-0 self-center sm:self-start">
                         <div className="bg-white p-2 rounded-lg shadow-sm">
-                            <QRCodeSVG value={qrValue} size={100} level="M" includeMargin={false} />
+                            <QRCodeSVG value={qrValue} size={88} level="M" includeMargin={false} className="sm:w-[100px] sm:h-[100px]" />
                         </div>
                         <p className="text-[11px] font-medium text-gray-400 mt-2 text-center max-w-[120px] inv-label">
                             {isAr ? 'امسح للتحقق من الفاتورة الرقمية' : 'Scan to view digital invoice'}
@@ -591,8 +591,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                 </div>
 
                 {/* ═══ SECTION 2: SENDER / RECEIVER ═══ */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6">
-                    <div className="bg-white/5 rounded-xl p-5 border border-white/5 inv-section">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 mt-4 sm:mt-6">
+                    <div className="bg-white/5 rounded-xl p-4 sm:p-5 border border-white/5 inv-section min-w-0">
                         <SectionHeader icon={Store} titleAr="بيانات المصدر (التاجر)" titleEn="Issuer (Merchant)" />
                         <div className="flex items-start gap-4 mt-4">
                             {storeLogo ? (
@@ -872,11 +872,11 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
     return (
         <>
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 min-w-0">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2">
-                            <ShieldAlert size={18} />
-                            <span>{error}</span>
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 sm:p-4 rounded-xl flex items-start sm:items-center gap-2">
+                            <ShieldAlert size={18} className="shrink-0 mt-0.5 sm:mt-0" />
+                            <span className="text-sm break-words">{error}</span>
                         </div>
                     )}
 
@@ -890,7 +890,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                         key={tab}
                                         type="button"
                                         onClick={() => setActiveDocTab(tab)}
-                                        className={`px-3 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wide border transition-all ${
+                                        className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wide border transition-all ${
                                             active
                                                 ? 'bg-gold-500 text-black border-gold-500'
                                                 : 'bg-white/5 text-white/60 border-white/10 hover:text-white hover:border-gold-500/40'
@@ -912,26 +912,26 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                             hint={typedLabels.emptyHint}
                         />
                     ) : (
-                    <div className="grid gap-8">
+                    <div className="grid gap-5 sm:gap-8">
                         {visibleInvoices.map((inv) => (
                             <GlassCard
                                 key={inv.id}
                                 ref={(el) => { invoiceRefs.current[inv.id] = el; }}
-                                className={`p-0 overflow-hidden relative border-white/10 group transition-all duration-500 ${
+                                className={`p-0 overflow-hidden relative border-white/10 group transition-all duration-500 min-w-0 ${
                                     highlightedInvoiceId === inv.id
                                         ? 'ring-2 ring-gold-500/80 shadow-[0_0_24px_rgba(212,175,55,0.25)]'
                                         : ''
                                 }`}
                             >
                                 {/* Action Header */}
-                                <div className="p-4 border-b border-white/10 bg-[#111] flex justify-between items-center">
-                                    <div className="flex items-center gap-3">
+                                <div className="p-3 sm:p-4 border-b border-white/10 bg-[#111] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
                                         <div className="p-2 bg-amber-500/10 rounded-lg shrink-0">
                                             <Receipt className="text-amber-500 w-5 h-5" />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="text-sm font-bold text-white tracking-tight">
+                                                <h3 className="text-sm font-bold text-white tracking-tight break-all">
                                                     {isAr ? `فاتورة رقم ${inv.invoiceNumber}` : `Invoice #${inv.invoiceNumber}`}
                                                 </h3>
                                                 {String(inv.status || '').toUpperCase() === 'REFUNDED' && (
@@ -943,30 +943,31 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                             <p className="text-[10px] text-white/30 font-mono">ID: {String(inv.id).slice(0, 8)}...</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                                         {(activeDocTab === 'MASTER') && (
                                         <button
                                             onClick={() => handleExportExcel(inv)}
                                             disabled={isExporting === inv.id}
-                                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-all border border-white/10 disabled:opacity-50 text-xs"
+                                            className="flex items-center justify-center gap-1.5 min-h-[40px] flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-all border border-white/10 disabled:opacity-50 text-xs"
                                         >
                                             {isExporting === inv.id ? (
                                                 <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                                             ) : <Download size={14} />}
-                                            <span>{isAr ? 'تصدير Excel' : 'Excel'}</span>
+                                            <span>{isAr ? 'Excel' : 'Excel'}</span>
                                         </button>
                                         )}
                                         <button
                                             onClick={() => handlePrint(inv)}
                                             disabled={isPrinting}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs disabled:opacity-50"
+                                            className="flex items-center justify-center gap-1.5 min-h-[40px] flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black font-bold rounded-lg transition-all shadow-lg text-xs disabled:opacity-50"
                                         >
                                             <Printer size={14} />
-                                            <span>{isAr ? 'طباعة / PDF' : 'Print / PDF'}</span>
+                                            <span>{isAr ? 'طباعة' : 'Print'}</span>
                                         </button>
                                         <button
                                             onClick={() => toggleCollapse(inv.id)}
-                                            className="p-2 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg transition-all border border-white/10"
+                                            className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg transition-all border border-white/10"
+                                            aria-label={collapsedIds.has(inv.id) ? 'Expand' : 'Collapse'}
                                         >
                                             {collapsedIds.has(inv.id) ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                                         </button>
@@ -975,7 +976,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
                                 {/* Invoice Visual Content */}
                                 {!collapsedIds.has(inv.id) && (
-                                    <div className="p-6 md:p-10 bg-[#0d0d0d] relative overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-4 sm:p-6 md:p-10 bg-[#0d0d0d] relative overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-top-2 min-w-0 overflow-x-clip">
                                         {/* Watermark Background */}
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none w-full flex justify-center">
                                             <img src="/logo.png" alt="" className="w-1/2 h-auto max-w-sm" />
