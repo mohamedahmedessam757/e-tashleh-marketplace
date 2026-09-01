@@ -6,15 +6,62 @@
 import { isVisibleMarketplaceOffer } from './offerStatusHelpers';
 import { getServerNowMs } from './serverClock';
 
-export type OrderExpiryScenario = 'no_offers' | 'selection_expired';
+export type OrderExpiryScenario = 'no_offers' | 'selection_expired' | 'customer_cancelled';
 
 export interface OrderExpiryContext {
   status: string;
   createdAt?: string;
   date?: string;
+  updatedAt?: string;
   requestType?: string | null;
   selectionDeadlineAt?: string | null;
   revealOffersAt?: string | null;
+}
+
+const CUSTOMER_CANCEL_FLAG_PREFIX = 'order_cancelled_by_customer_';
+
+export function markOrderCancelledByCustomer(orderId: string): void {
+  try {
+    localStorage.setItem(`${CUSTOMER_CANCEL_FLAG_PREFIX}${orderId}`, '1');
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+export function wasOrderCancelledByCustomer(orderId: string): boolean {
+  try {
+    return localStorage.getItem(`${CUSTOMER_CANCEL_FLAG_PREFIX}${orderId}`) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** True when the customer cancelled before SLA/system expiry. */
+export function isCustomerInitiatedCancellation(
+  order: OrderExpiryContext,
+  orderId?: string,
+): boolean {
+  if (order.status !== 'CANCELLED') return false;
+  if (orderId && wasOrderCancelledByCustomer(orderId)) return true;
+
+  if (!order.updatedAt) return false;
+  const updatedMs = new Date(order.updatedAt).getTime();
+  const createdMs = new Date(order.createdAt || order.date || getServerNowMs()).getTime();
+  const deadline24h = createdMs + 24 * 60 * 60 * 1000;
+
+  if (order.revealOffersAt) {
+    return updatedMs < new Date(order.revealOffersAt).getTime();
+  }
+  return updatedMs < deadline24h;
+}
+
+function resolveCancelledScenario(
+  order: OrderExpiryContext,
+  visibleCount: number,
+  orderId?: string,
+): OrderExpiryScenario {
+  if (isCustomerInitiatedCancellation(order, orderId)) return 'customer_cancelled';
+  return visibleCount > 0 ? 'selection_expired' : 'no_offers';
 }
 
 export interface OrderPartRef {
@@ -202,6 +249,7 @@ function allPartsHaveNoOffers(
 
 export interface OrderExpiryInput {
   order: OrderExpiryContext;
+  orderId?: string;
   offers?: OfferPartRef[];
   parts?: OrderPartRef[];
   visibleOffersCount: number;
@@ -232,8 +280,14 @@ export function getOrderExpiryScenario(
         }
       : (inputOrOrder as OrderExpiryInput);
 
-  const { order, offers, parts = [], visibleOffersCount: visibleCount, acceptedOffersCount: acceptedCount } =
-    input;
+  const {
+    order,
+    orderId,
+    offers,
+    parts = [],
+    visibleOffersCount: visibleCount,
+    acceptedOffersCount: acceptedCount,
+  } = input;
 
   if (acceptedCount > 0) return null;
 
@@ -258,7 +312,7 @@ export function getOrderExpiryScenario(
     }
 
     if (order.status === 'CANCELLED') {
-      return visibleCount > 0 ? 'selection_expired' : 'no_offers';
+      return resolveCancelledScenario(order, visibleCount, orderId);
     }
 
     if (isAwaitingSelectionPastDeadline(order)) {
@@ -273,7 +327,7 @@ export function getOrderExpiryScenario(
   }
 
   if (order.status === 'CANCELLED') {
-    return visibleCount > 0 ? 'selection_expired' : 'no_offers';
+    return resolveCancelledScenario(order, visibleCount, orderId);
   }
 
   if (isAwaitingSelectionPastDeadline(order)) {

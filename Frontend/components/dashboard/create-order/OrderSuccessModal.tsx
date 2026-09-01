@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Bell, MessageCircle, Mail, ArrowLeft, ArrowRight } from 'lucide-react';
-import { useAdminStore } from '../../../stores/useAdminStore';
+import { useProfileStore } from '../../../stores/useProfileStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface OrderSuccessModalProps {
@@ -10,13 +10,25 @@ interface OrderSuccessModalProps {
     onConfirm: () => void;
 }
 
+function formatWhatsAppDisplay(phone?: string | null): string {
+    if (!phone?.trim()) return '';
+    const trimmed = phone.trim();
+    return trimmed.startsWith('+') ? trimmed : `+${trimmed}`;
+}
+
 export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
     isOpen,
     onConfirm,
 }) => {
-    const { systemConfig } = useAdminStore();
-    const { language } = useLanguage();
+    const { user } = useProfileStore();
+    const { t, language } = useLanguage();
     const isRTL = language === 'ar';
+    const contactMissing =
+        (t.dashboard.createOrder as { success?: { contactMissing?: string } })?.success?.contactMissing ||
+        (isRTL ? 'غير متوفر في حسابك' : 'Not available on your account');
+
+    const displayPhone = formatWhatsAppDisplay(user?.phone);
+    const displayEmail = user?.email?.trim() || '';
 
     // Countdown State for 24 hours
     const [timeLeft, setTimeLeft] = useState(24 * 60 * 60);
@@ -152,7 +164,7 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
                                     </div>
                                     <div className="flex items-center gap-1.5 text-white/90 font-bold" dir="ltr">
                                         <MessageCircle size={16} className="text-green-400" />
-                                        <span dir="ltr">+{systemConfig.general.supportPhone}</span>
+                                        <span dir="ltr">{displayPhone || contactMissing}</span>
                                     </div>
                                 </div>
 
@@ -160,9 +172,9 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
                                     <div className="flex items-center gap-2 text-white/70 font-medium">
                                         {isRTL ? 'البريد الإلكتروني:' : 'Email:'}
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-white/90 font-bold">
-                                        <Mail size={16} className="text-gold-400" />
-                                        <span>{systemConfig.general.contactEmail}</span>
+                                    <div className="flex items-center gap-1.5 text-white/90 font-bold min-w-0">
+                                        <Mail size={16} className="text-gold-400 shrink-0" />
+                                        <span className="truncate">{displayEmail || contactMissing}</span>
                                     </div>
                                 </div>
                             </div>

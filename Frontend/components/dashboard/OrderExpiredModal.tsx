@@ -26,9 +26,11 @@ export const OrderExpiredModal: React.FC<OrderExpiredModalProps> = ({
     const [dontShowAgain, setDontShowAgain] = useState(false);
 
     const copy =
-        variant === 'selection_expired'
-            ? (t.dashboard.orders as any)?.selectionExpiredModal
-            : t.dashboard.orders?.expiredModal;
+        variant === 'customer_cancelled'
+            ? (t.dashboard.orders as any)?.customerCancelledModal
+            : variant === 'selection_expired'
+              ? (t.dashboard.orders as any)?.selectionExpiredModal
+              : t.dashboard.orders?.expiredModal;
 
     const containerVariants = {
         hidden: { opacity: 0, scale: 0.95, y: 20 },
@@ -77,7 +79,11 @@ export const OrderExpiredModal: React.FC<OrderExpiredModalProps> = ({
                     <motion.div variants={childVariants} className="pt-8 pb-4 text-center">
                         <h2 className="text-xl font-bold text-white">
                             {copy?.title ||
-                                (variant === 'selection_expired' ? 'Selection Expired' : 'Order Expired')}
+                                (variant === 'customer_cancelled'
+                                    ? 'Order Cancelled'
+                                    : variant === 'selection_expired'
+                                      ? 'Selection Expired'
+                                      : 'Order Expired')}
                         </h2>
                     </motion.div>
 

@@ -235,6 +235,11 @@ export const customer = {
         multipleBlockedHint: 'متاح بعد انتهاء مدة الطلب المجمع السابق',
         unlockIn: 'يفتح بعد',
         createFailed: 'فشل إنشاء الطلب. حاول مرة أخرى.',
+        singleTypeDescription: 'طلب واحد لنفس السيارة خلال 24 ساعة، وحتى 10 طلبات يومياً للسيارات المختلفة.',
+        multipleTypeDescription: 'حتى 10 قطع مختلفة لنفس السيارة، مع خيار الشحن منفرداً أو مجمعاً',
+      },
+      success: {
+        contactMissing: 'غير متوفر في حسابك',
       },
     },
     orders: {
@@ -271,9 +276,16 @@ export const customer = {
       hideTracking: 'إخفاء التفاصيل',
       viewTracking: 'تتبع الشحنة بالتفصيل',
       searchPlaceholder: 'بحث...',
+      cancelConfirm: 'هل أنت متأكد من إلغاء هذا الطلب؟',
       expiredModal: {
         title: 'انتهت صلاحية الطلب',
         desc: 'نعتذر منك لعدم توفر عروض حالياً على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.',
+        dontShow: 'لا تظهر هذه الرسالة مرة أخرى',
+        understood: 'موافق'
+      },
+      customerCancelledModal: {
+        title: 'تم إلغاء الطلب',
+        desc: 'تم الغاء الطلب من قبلكم على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.',
         dontShow: 'لا تظهر هذه الرسالة مرة أخرى',
         understood: 'موافق'
       },
@@ -1293,6 +1305,11 @@ export const customer = {
         multipleBlockedHint: 'Available after your previous multiple request window ends',
         unlockIn: 'Unlocks in',
         createFailed: 'Failed to create order. Please try again.',
+        singleTypeDescription: 'One request per vehicle within 24 hours, up to 10 single requests per day for different vehicles.',
+        multipleTypeDescription: 'Up to 10 different parts for the same vehicle, with separate or combined shipping.',
+      },
+      success: {
+        contactMissing: 'Not available on your account',
       },
     },
     orders: {
@@ -1329,9 +1346,16 @@ export const customer = {
       hideTracking: 'Hide Tracking Details',
       viewTracking: 'View Full Tracking',
       searchPlaceholder: 'Search...',
+      cancelConfirm: 'Are you sure you want to cancel this order?',
       expiredModal: {
         title: 'Order Expired',
         desc: 'We apologize for the unavailability of offers at the moment for order number (#{orderNumber}) for the part ({partName}). You can resubmit the request during business days from Monday to Thursday.',
+        dontShow: 'Do not show this message again',
+        understood: 'OK'
+      },
+      customerCancelledModal: {
+        title: 'Order Cancelled',
+        desc: 'Your order (#{orderNumber}) for part ({partName}) was cancelled by you. You may resubmit during business days (Monday–Thursday).',
         dontShow: 'Do not show this message again',
         understood: 'OK'
       },

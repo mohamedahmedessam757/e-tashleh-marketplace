@@ -13,7 +13,7 @@ import {
 import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 import { OfferCard } from './OfferCard';
 import { PartOffersDrawer } from './PartOffersDrawer';
-import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, X, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, X, XCircle, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCheckoutStore } from '../../stores/useCheckoutStore';
 import { useChatStore } from '../../stores/useChatStore';
@@ -76,6 +76,7 @@ import { MultiItemCompletionBadge } from './shared/MultiItemCompletionBadge';
 import { MultiItemResolutionProgress } from './shared/MultiItemResolutionProgress';
 import { readDashboardDeepLink } from '../../utils/widersDeepLink';
 import { getServerNowMs } from '../../utils/serverClock';
+import { isOrderExpired as isOrderPastDeadline } from '../../utils/dateUtils';
 
 interface OrderDetailsProps {
     orderId: string | null;
@@ -195,7 +196,7 @@ export const WarrantyBadge = ({ endDate, status, onReplace }: { endDate: string,
 
 export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onNavigate }) => {
     const { t, language } = useLanguage();
-    const { checkSLA, updateOrderStatus } = useOrderStore();
+    const { checkSLA, updateOrderStatus, cancelOrder, canCancelOrder } = useOrderStore();
     const { setSelectedOffer: setSelectedOfferAction } = useCheckoutStore();
     const { fetchChat } = useOrderChatStore();
     const { addNotification } = useNotificationStore();
@@ -307,10 +308,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 const visible = order.offers?.filter((o: any) => isVisibleMarketplaceOffer(o)) || [];
         const accepted = order.offers?.filter((o: any) => isAcceptedOfferStatus(o.status)) || [];
         const scenario = getOrderExpiryScenario({
+            orderId: order.id,
             order: {
                 status: order.status,
                 createdAt: order.createdAt,
                 date: order.date,
+                updatedAt: order.updatedAt,
                 requestType: order.requestType,
                 selectionDeadlineAt: order.selectionDeadlineAt,
                 revealOffersAt: order.revealOffersAt,
@@ -412,11 +415,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         status: order.status,
         createdAt: order.createdAt,
         date: order.date,
+        updatedAt: order.updatedAt,
         requestType: order.requestType,
         selectionDeadlineAt: order.selectionDeadlineAt,
         revealOffersAt: order.revealOffersAt,
     };
     const expiryScenario = getOrderExpiryScenario({
+        orderId: order.id,
         order: orderExpiryContext,
         offers: order.offers,
         parts: order.parts?.map((p) => ({ id: p.id, name: p.name })) ?? [],
@@ -767,6 +772,61 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     const isExpired = isOrderExpired();
 
+    const handleCancelOrder = async () => {
+        if (!order?.id) return;
+        const msg =
+            (t.dashboard.orders as { cancelConfirm?: string }).cancelConfirm ||
+            (language === 'ar' ? 'هل أنت متأكد من إلغاء هذا الطلب؟' : 'Are you sure you want to cancel this order?');
+        if (window.confirm(msg)) {
+            await cancelOrder(order.id);
+        }
+    };
+
+    const showCancelButton = canCancelOrder(order.id) && !isOrderPastDeadline(order);
+
+    const getExpiryBannerCopy = () => {
+        if (expiryScenario === 'customer_cancelled') {
+            const modal = (t.dashboard.orders as any)?.customerCancelledModal;
+            return {
+                title: modal?.title || (language === 'ar' ? 'تم إلغاء الطلب' : 'Order Cancelled'),
+                desc:
+                    modal?.desc
+                        ?.replace('#{orderNumber}', order.orderNumber || order.id)
+                        ?.replace('({partName})', order.part ? `(${order.part})` : '')
+                        ?.replace(' ( )', '') ||
+                    (language === 'ar'
+                        ? 'تم الغاء الطلب من قبلكم. يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.'
+                        : 'Your order was cancelled by you. You may resubmit during business days (Monday–Thursday).'),
+            };
+        }
+        if (expiryScenario === 'selection_expired') {
+            const modal = (t.dashboard.orders as any)?.selectionExpiredModal;
+            return {
+                title:
+                    modal?.title ||
+                    (language === 'ar' ? 'انتهت مهلة اختيار العرض' : 'Selection Period Expired'),
+                desc:
+                    modal?.desc
+                        ?.replace('#{orderNumber}', order.orderNumber || order.id)
+                        ?.replace('({partName})', order.part ? `(${order.part})` : '')
+                        ?.replace(' ( )', '') ||
+                    (language === 'ar'
+                        ? 'انتهت المهلة المتاحة لاختيار عرض وتم إغلاق الطلب تلقائياً.'
+                        : 'The deadline to select an offer has passed and the request was closed.'),
+            };
+        }
+        return {
+            title:
+                language === 'ar' ? 'نعتذر منك لعدم توفر عروض حالياً' : 'We apologize for the lack of offers',
+            desc:
+                language === 'ar'
+                    ? 'يمكنك اعادة أرسال الطلب خلال أيام العمل من الاثنين الى الخميس'
+                    : 'You can resubmit the order during working days from Monday to Thursday',
+        };
+    };
+
+    const expiryBannerCopy = getExpiryBannerCopy();
+
     const getPaymentDeadline = () => {
         if (order.paymentDeadlineAt) return order.paymentDeadlineAt;
         const baseDate = order.offerAcceptedAt || order.updatedAt;
@@ -1052,6 +1112,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+
+                            {showCancelButton && (
+                                <button
+                                    type="button"
+                                    onClick={handleCancelOrder}
+                                    className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border border-red-500/40 bg-red-500/15 text-red-300 hover:bg-red-500/25 hover:text-red-200 transition-colors text-sm font-bold shrink-0"
+                                >
+                                    <XCircle size={18} />
+                                    {language === 'ar' ? 'إلغاء الطلب' : 'Cancel Order'}
+                                </button>
+                            )}
 
                             {/* Simulation buttons removed for production/customer view */}
 
@@ -1453,23 +1524,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 <AlertTriangle size={32} className="text-red-400 relative z-10" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">
-                                {expiryScenario === 'selection_expired'
-                                    ? ((t.dashboard.orders as any)?.selectionExpiredModal?.title ||
-                                        (language === 'ar' ? 'انتهت مهلة اختيار العرض' : 'Selection Period Expired'))
-                                    : (language === 'ar' ? 'نعتذر منك لعدم توفر عروض حالياً' : 'We apologize for the lack of offers')}
+                                {expiryBannerCopy.title}
                             </h3>
                             <p className="text-white/60 max-w-md mx-auto mb-4 text-sm">
-                                {expiryScenario === 'selection_expired'
-                                    ? ((t.dashboard.orders as any)?.selectionExpiredModal?.desc
-                                        ?.replace('#{orderNumber}', order.orderNumber || order.id)
-                                        ?.replace('({partName})', order.part ? `(${order.part})` : '')
-                                        ?.replace(' ( )', '') ||
-                                        (language === 'ar'
-                                            ? 'انتهت المهلة المتاحة لاختيار عرض وتم إغلاق الطلب تلقائياً.'
-                                            : 'The deadline to select an offer has passed and the request was closed.'))
-                                    : (language === 'ar'
-                                        ? 'يمكنك اعادة أرسال الطلب خلال أيام العمل من الاثنين الى الخميس'
-                                        : 'You can resubmit the order during working days from Monday to Thursday')}
+                                {expiryBannerCopy.desc}
                             </p>
                             {!isMultiPartOrder && expiryScenario === 'no_offers' && (
                                 <div className="flex flex-col items-center gap-2">

@@ -93,6 +93,12 @@ export const OrderCreateQuotaBanner: React.FC<{
               {rules?.singleCounterLabel ||
                 (isRTL ? 'الطلبات المفردة خلال 24 ساعة' : 'Single requests (24h)')}
             </p>
+            <p className="text-xs text-white/50 mt-1 leading-relaxed">
+              {rules?.singleTypeDescription ||
+                (isRTL
+                  ? 'طلب واحد لنفس السيارة خلال 24 ساعة، وحتى 10 طلبات يومياً للسيارات المختلفة.'
+                  : 'One request per vehicle within 24 hours, up to 10 single requests per day for different vehicles.')}
+            </p>
             <p className="text-sm text-white/70 mt-0.5">
               {quota.single.used}/{quota.single.max}
               {atSingleLimit
@@ -125,6 +131,12 @@ export const OrderCreateQuotaBanner: React.FC<{
             <p className="text-sm font-semibold text-white">
               {rules?.multipleLabel ||
                 (isRTL ? 'الطلب المجمع' : 'Multiple request')}
+            </p>
+            <p className="text-xs text-white/50 mt-1 leading-relaxed">
+              {rules?.multipleTypeDescription ||
+                (isRTL
+                  ? 'حتى 10 قطع مختلفة لنفس السيارة، مع خيار الشحن منفرداً أو مجمعاً'
+                  : 'Up to 10 different parts for the same vehicle, with separate or combined shipping.')}
             </p>
             <p className="text-sm text-white/70 mt-0.5">
               {multiBlocked
