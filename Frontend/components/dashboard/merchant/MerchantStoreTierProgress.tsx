@@ -222,7 +222,7 @@ export const MerchantStoreTierProgress: React.FC<MerchantStoreTierProgressProps>
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 text-[9px]">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[9px]">
                             <div className="bg-white/5 rounded-lg p-2 border border-white/5 text-center">
                                 <p className="text-white/30 uppercase font-black">{labels.completedOrders}</p>
                                 <p className="text-white font-bold mt-1">

@@ -169,7 +169,7 @@ export const MerchantSettlementPaymentCard: React.FC<MerchantSettlementPaymentCa
 
   return (
     <GlassCard
-      className={`relative overflow-hidden p-8 border-2 transition-all duration-700 ${
+      className={`relative overflow-hidden p-4 sm:p-6 md:p-8 border-2 transition-all duration-700 ${
         isPaid
           ? 'border-emerald-500/40 bg-emerald-500/[0.03]'
           : 'border-gold-500/30 bg-black/40 shadow-2xl shadow-gold-500/5'

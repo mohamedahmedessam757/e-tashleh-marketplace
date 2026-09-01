@@ -110,14 +110,14 @@ export const ContractAmendmentModal: React.FC<ContractAmendmentModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-xl p-0 sm:p-4 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-[#1A1814] border border-gold-500/20 rounded-[2.5rem] w-full max-w-2xl shadow-[0_0_50px_rgba(212,175,55,0.1)] overflow-hidden relative"
+        className="bg-[#1A1814] border border-gold-500/20 rounded-t-3xl sm:rounded-[2.5rem] w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-[0_0_50px_rgba(212,175,55,0.1)] relative"
       >
-        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-gold-500/5 to-transparent">
-          <div className="flex items-center gap-4">
+        <div className="p-4 sm:p-6 md:p-8 border-b border-white/5 flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-gradient-to-r from-gold-500/5 to-transparent">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="w-12 h-12 bg-gold-500 rounded-2xl flex items-center justify-center shadow-lg shadow-gold-500/20">
               <FileText className="text-black" size={24} />
             </div>
@@ -140,14 +140,14 @@ export const ContractAmendmentModal: React.FC<ContractAmendmentModalProps> = ({
           </button>
         </div>
 
-        <div className="mx-8 mt-6 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-[11px] text-amber-200/90 leading-relaxed">
+        <div className="mx-4 sm:mx-6 md:mx-8 mt-4 sm:mt-6 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-[11px] text-amber-200/90 leading-relaxed">
           {c?.notice ||
             (language === 'ar'
               ? 'سيتم مراجعة التعديلات من قبل الإدارة. يمكنك تقديم طلب واحد كل 24 ساعة.'
               : 'Changes will be reviewed by admin. You may submit one request every 24 hours.')}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map(({ key, label, type }) => (
               <div key={key} className="space-y-1">
@@ -168,19 +168,19 @@ export const ContractAmendmentModal: React.FC<ContractAmendmentModalProps> = ({
             <p className="text-red-400 text-sm font-medium px-1">{error}</p>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-wrap gap-2 sm:gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 py-4 rounded-2xl border border-white/10 text-white/60 font-bold uppercase text-xs tracking-widest hover:bg-white/5 transition-all disabled:opacity-50"
+              className="flex-1 py-4 min-h-[44px] rounded-2xl border border-white/10 text-white/60 font-bold uppercase text-xs tracking-widest hover:bg-white/5 transition-all disabled:opacity-50"
             >
               {c?.cancel || (language === 'ar' ? 'إلغاء' : 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-4 rounded-2xl bg-gold-500 text-black font-black uppercase text-xs tracking-widest hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-4 min-h-[44px] rounded-2xl bg-gold-500 text-black font-black uppercase text-xs tracking-widest hover:bg-gold-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" />}
               {c?.submit || (language === 'ar' ? 'إرسال للمراجعة' : 'Submit for Review')}

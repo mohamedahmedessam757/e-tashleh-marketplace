@@ -107,7 +107,7 @@ export const MerchantSessionsTab: React.FC = () => {
             {/* Terminate All Confirmation Modal */}
             <AnimatePresence>
                 {isWarningOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -50,10 +50,10 @@ export const MerchantReviews: React.FC = () => {
     const showExcellentBadge = hasReviews && averageRating >= 4;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 min-w-0 overflow-x-clip">
             {/* Header / Summary Card */}
             <div className="grid lg:grid-cols-3 gap-6">
-                <GlassCard className="lg:col-span-1 p-8 bg-gradient-to-br from-gold-500/10 to-transparent border-gold-500/20 flex flex-col items-center justify-center text-center">
+                <GlassCard className="lg:col-span-1 p-4 sm:p-6 md:p-8 bg-gradient-to-br from-gold-500/10 to-transparent border-gold-500/20 flex flex-col items-center justify-center text-center">
                     <div className="relative mb-4">
                         <div className="text-6xl font-black text-white">{averageRating.toFixed(1)}</div>
                         {showExcellentBadge && (
@@ -79,7 +79,7 @@ export const MerchantReviews: React.FC = () => {
                     </p>
                 </GlassCard>
 
-                <GlassCard className="lg:col-span-2 p-8 grid md:grid-cols-3 gap-8">
+                <GlassCard className="lg:col-span-2 p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
                      <div className="space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">

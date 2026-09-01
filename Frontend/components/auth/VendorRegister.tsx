@@ -532,9 +532,9 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0 overflow-x-clip">
       {store.step < 6 && (
-        <div className="text-center mb-8 relative">
+        <div className="text-center mb-6 sm:mb-8 relative px-2">
           {/* Back Button for Step 1 */}
           {store.step === 1 && onBack && (
             <button
@@ -545,7 +545,7 @@ export const VendorRegister: React.FC<VendorRegisterProps> = ({ onComplete, onBa
             </button>
           )}
 
-          <h2 className="text-3xl font-bold text-white mb-2">{t.merchants.cta}</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">{t.merchants.cta}</h2>
           <p className="text-white/50 text-sm mb-4">{t.merchants.desc}</p>
 
           {store.step === 1 && onBack && (

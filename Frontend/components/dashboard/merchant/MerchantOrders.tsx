@@ -377,17 +377,17 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 min-w-0 overflow-x-clip">
             {/* Real-time Header */}
-            <div className="relative p-8 rounded-[2.5rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 overflow-hidden group">
+            <div className="relative p-4 sm:p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-gold-500/5 rounded-full blur-[120px] -mr-20 -mt-20 group-hover:bg-gold-500/10 transition-colors duration-1000" />
-                <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center">
+                <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 min-w-0">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center shrink-0">
                                 <PieChart className="text-gold-400" size={20} />
                             </div>
-                            <h1 className="text-3xl font-black text-white tracking-tight uppercase italic underline-offset-8 decoration-gold-500/20 underline">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic underline-offset-8 decoration-gold-500/20 underline">
                                 {t.dashboard.merchant.headers.activeOrders || (isAr ? 'الطلبات النشطة' : 'Active Orders')}
                             </h1>
                         </div>
@@ -411,13 +411,13 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
             </div>
 
             {/* Premium Tabs Navigation */}
-            <div className="flex gap-4 p-1.5 bg-white/5 rounded-full w-fit border border-white/5 backdrop-blur-xl">
+            <div className="flex gap-2 sm:gap-3 p-1.5 bg-white/5 rounded-full w-full sm:w-fit border border-white/5 backdrop-blur-xl overflow-x-auto shrink-0 min-h-[44px]">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`
-                            relative px-8 py-3 text-xs font-black transition-all duration-300 rounded-full flex items-center gap-3 tracking-widest uppercase
+                            relative px-4 sm:px-8 py-3 min-h-[44px] text-xs font-black transition-all duration-300 rounded-full flex items-center gap-2 sm:gap-3 tracking-widest uppercase whitespace-nowrap shrink-0
                             ${activeTab === tab.id ? 'text-white' : 'text-white/30 hover:text-white/60'}
                         `}
                     >

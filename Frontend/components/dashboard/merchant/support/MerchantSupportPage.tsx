@@ -55,13 +55,13 @@ export const MerchantSupportPage: React.FC<MerchantSupportPageProps> = ({ onNavi
     ];
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-5 sm:space-y-8 pb-12 min-w-0 overflow-x-clip">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gold-500/10 text-gold-500 border border-gold-500/20">
-                            <LifeBuoy size={32} />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white flex flex-wrap items-center gap-2 sm:gap-3">
+                        <div className="p-2 rounded-xl bg-gold-500/10 text-gold-500 border border-gold-500/20 shrink-0">
+                            <LifeBuoy size={24} />
                         </div>
                         {t.dashboard.merchant.support.title}
                     </h1>
@@ -74,7 +74,7 @@ export const MerchantSupportPage: React.FC<MerchantSupportPageProps> = ({ onNavi
                     {view === 'list' ? (
                         <button
                             onClick={() => setView('new')}
-                            className="px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-gold-500/20"
+                            className="px-6 py-3 min-h-[44px] bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-gold-500/20"
                         >
                             <Plus size={20} />
                             {t.dashboard.merchant.support.createTicket}

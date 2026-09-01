@@ -138,8 +138,8 @@ export const MerchantDocumentUploadModal: React.FC<MerchantDocumentUploadModalPr
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/85" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="w-full max-w-md bg-[#1A1814] border border-white/10 rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="w-full max-w-md bg-[#1A1814] border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-white/5 sticky top-0 bg-[#1A1814] z-10">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-500 flex items-center justify-center shrink-0">
@@ -218,7 +218,7 @@ export const MerchantDocumentUploadModal: React.FC<MerchantDocumentUploadModalPr
               <Calendar size={12} />
               {isAr ? 'تاريخ انتهاء المستند / الترخيص' : 'Document / license expiry'}
             </span>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <select
                 value={day}
                 onChange={(e) => setDay(e.target.value)}

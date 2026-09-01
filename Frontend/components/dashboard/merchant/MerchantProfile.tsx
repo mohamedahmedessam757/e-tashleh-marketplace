@@ -136,8 +136,8 @@ export const MerchantProfile: React.FC = () => {
     );
 
     const ProfileSkeleton = () => (
-        <div className="space-y-8 animate-pulse">
-            <div className="grid lg:grid-cols-3 gap-8">
+        <div className="space-y-5 sm:space-y-8 animate-pulse min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 <div className="lg:col-span-1 space-y-6">
                     <GlassCard className="p-6 h-64 bg-white/5"><div /></GlassCard>
                     <GlassCard className="p-6 h-48 bg-white/5"><div /></GlassCard>
@@ -152,7 +152,7 @@ export const MerchantProfile: React.FC = () => {
     if (isLoadingProfile) return <ProfileSkeleton />;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-clip">
             <LicenseExpiryBanner
                 onNavigate={() => {
                     setActiveProfileTab('info');
@@ -164,13 +164,13 @@ export const MerchantProfile: React.FC = () => {
                     }, 120);
                 }}
             />
-            <div className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20">
-                        <Store className="text-gold-500" size={28} />
+            <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20 shrink-0">
+                        <Store className="text-gold-500" size={24} />
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white leading-none mb-1">
+                    <div className="min-w-0">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-none mb-1">
                             {t.dashboard.merchant.storeProfile.title}
                         </h1>
                         <p className="text-xs text-white/40">{t.dashboard.merchant.profile.verified}</p>
@@ -842,7 +842,7 @@ export const MerchantProfile: React.FC = () => {
                         className="space-y-6"
                     >
                         {!contractAcceptance && contractAcceptances.length === 0 ? (
-                            <div className="bg-black/20 p-12 rounded-3xl border border-white/5 backdrop-blur-xl text-center flex flex-col items-center justify-center space-y-4">
+                            <div className="bg-black/20 p-6 sm:p-12 rounded-3xl border border-white/5 backdrop-blur-xl text-center flex flex-col items-center justify-center space-y-4">
                                 <div className="p-6 bg-white/5 rounded-full">
                                     <Archive className="text-white/20" size={64} />
                                 </div>

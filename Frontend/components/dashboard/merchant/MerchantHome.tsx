@@ -167,7 +167,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
         .find(Boolean) || myOrders.find(o => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any));
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 min-w-0 overflow-x-clip">
 
             <PolicyChangeBanner audience="VENDOR" />
             <LicenseExpiryBanner onNavigate={onNavigate} />
@@ -198,15 +198,15 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             )}
 
             {/* Header / Welcome */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1814] via-[#24211B] to-[#151310] border border-white/5 shadow-2xl p-8 transition-all hover:shadow-gold-500/5 group">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1814] via-[#24211B] to-[#151310] border border-white/5 shadow-2xl p-4 sm:p-6 md:p-8 transition-all hover:shadow-gold-500/5 group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-gold-500/10 transition-all duration-700" />
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div>
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-3">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
                             <span className="text-xs font-bold text-green-400/80 uppercase tracking-widest">{t.dashboard.merchant.home.online}</span>
                         </div>
-                        <h1 className="text-3xl font-bold text-white mb-2">{t.dashboard.merchant.home.welcome}</h1>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">{t.dashboard.merchant.home.welcome}</h1>
                         <p className="text-white/40 text-sm max-w-md leading-relaxed">{t.dashboard.merchant.home.welcomeSub}</p>
                         
                         {/* NEW: Administrative Restriction Highlights (2026 UX) */}
@@ -280,7 +280,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             })()}
 
             {/* Reputation & Performance Overview [NEW 2026] */}
-            <div className="grid lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 min-w-0">
                 <GlassCard 
                     onClick={() => onNavigate('reviews')}
                     className="lg:col-span-1 p-6 bg-gradient-to-br from-gold-500/10 to-transparent border-gold-500/20 flex flex-col items-center justify-center text-center cursor-pointer group hover:border-gold-500/40 transition-all"
@@ -289,7 +289,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                         {isAr ? 'سمعة المتجر' : 'STORE REPUTATION'}
                     </div>
                     <div className="flex items-end gap-1 mb-2">
-                        <span className="text-4xl font-black text-white leading-none">{(performance?.rating || 0).toFixed(1)}</span>
+                        <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none">{(performance?.rating || 0).toFixed(1)}</span>
                         <span className="text-white/20 font-bold mb-1">/ 5.0</span>
                     </div>
                     <div className="flex gap-0.5 mb-4">
@@ -434,7 +434,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                             </button>
                         </GlassCard>
                     ) : (
-                        <GlassCard className="p-12 flex flex-col items-center justify-center text-center opacity-50 grayscale">
+                        <GlassCard className="p-6 sm:p-12 flex flex-col items-center justify-center text-center opacity-50 grayscale">
                             <ListChecks size={48} className="text-white/10 mb-4" />
                             <p className="text-white/60 font-medium">{t.dashboard.merchant.marketplace.noActiveOffers}</p>
                         </GlassCard>

@@ -60,7 +60,7 @@ export const MerchantCartItem: React.FC<MerchantCartItemProps> = ({ item }) => {
             }`}
         >
             {/* Header Strip */}
-            <div className={`px-5 py-3 border-b flex items-center justify-between ${
+            <div className={`px-4 sm:px-5 py-3 border-b flex flex-wrap items-center justify-between gap-2 sm:gap-3 min-w-0 ${
                 item.isMyOffer ? 'bg-gold-500/10 border-gold-500/20' : 'bg-white/5 border-white/5'
             }`}>
                 <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export const MerchantCartItem: React.FC<MerchantCartItemProps> = ({ item }) => {
             </div>
 
             {/* Content Body */}
-            <div className="p-5 flex flex-col md:flex-row gap-6">
+            <div className="p-4 sm:p-5 flex flex-col md:flex-row gap-4 sm:gap-6 min-w-0">
 
                 {/* 1. Image */}
                 <div className="w-full md:w-32 h-32 shrink-0 rounded-xl bg-[#0a0f1a] border border-white/10 overflow-hidden relative">
@@ -106,8 +106,8 @@ export const MerchantCartItem: React.FC<MerchantCartItemProps> = ({ item }) => {
                 </div>
 
                 {/* 2. Order Details Grid */}
-                <div className="flex-1 flex flex-col gap-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex-1 flex flex-col gap-4 min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
                         {/* Column 1: Parts Details */}
                         <div className="space-y-2">

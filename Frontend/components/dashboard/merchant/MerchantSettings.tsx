@@ -24,9 +24,9 @@ export const MerchantSettings: React.FC = () => {
     ];
 
     return (
-        <div className="grid lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 min-w-0 overflow-x-clip animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Sidebar Navigation */}
-            <div className="lg:col-span-1 space-y-2">
+            <div className="lg:col-span-1 flex lg:flex-col gap-2 overflow-x-auto pb-1 lg:pb-0 -mx-1 px-1 scrollbar-thin shrink-0 min-h-[44px]">
                 <div className="mb-4 px-2">
                     <h1 className="text-xl font-bold text-white tracking-tight">
                         {language === 'ar' ? 'الإعدادات' : 'Settings'}
@@ -40,7 +40,7 @@ export const MerchantSettings: React.FC = () => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`
-                            w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+                            w-full flex items-center gap-3 px-4 py-3.5 min-h-[44px] rounded-2xl transition-all duration-300 group whitespace-nowrap lg:whitespace-normal shrink-0 lg:shrink lg:w-full
                             ${activeTab === tab.id 
                                 ? 'bg-gold-500 text-black shadow-[0_8px_20px_rgba(212,175,55,0.25)] font-bold scale-[1.02]' 
                                 : 'text-white/40 hover:bg-white/5 hover:text-white'}
@@ -49,16 +49,16 @@ export const MerchantSettings: React.FC = () => {
                         <tab.icon size={18} className={activeTab === tab.id ? 'text-black' : 'group-hover:text-gold-500 transition-colors'} />
                         <span className="text-sm">{tab.label}</span>
                         {activeTab === tab.id && (
-                            <div className="ml-auto w-1 h-4 bg-black/20 rounded-full" />
+                            <div className="ms-auto w-1 h-4 bg-black/20 rounded-full" />
                         )}
                     </button>
                 ))}
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-3">
-                <GlassCard className="min-h-[500px] border-white/5 overflow-hidden">
-                    <div className="p-6 md:p-10">
+            <div className="lg:col-span-3 min-w-0">
+                <GlassCard className="min-h-0 md:min-h-[500px] border-white/5 overflow-hidden min-w-0">
+                    <div className="p-4 sm:p-6 md:p-10">
                         {activeTab === 'account' && <MerchantAccountTab />}
                         {activeTab === 'sessions' && <MerchantSessionsTab />}
                     </div>

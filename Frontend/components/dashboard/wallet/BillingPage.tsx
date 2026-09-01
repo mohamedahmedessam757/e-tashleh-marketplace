@@ -60,7 +60,7 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip">
             {/* 1. Header Area with Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <GlassCard className={`p-6 flex items-center gap-4 border-white/10 ${isMerchant
@@ -105,7 +105,7 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* 2. Tabs */}
-            <div className="flex flex-wrap gap-4 border-b border-white/10 pb-1">
+            <div className="flex flex-wrap gap-2 sm:gap-3 border-b border-white/10 pb-1 overflow-x-auto shrink-0 min-h-[44px]">
                 <button
                     onClick={() => setActiveTab('pending')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'pending' ? (isMerchant ? 'text-blue-400' : 'text-gold-500') : 'text-gray-400 hover:text-white'

@@ -70,7 +70,7 @@ export const MerchantPreferencesTab: React.FC = () => {
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, y: -10 }} 
-            className="space-y-8"
+            className="space-y-5 sm:space-y-8"
         >
             {/* Success Toast (Inline) */}
             <AnimatePresence>

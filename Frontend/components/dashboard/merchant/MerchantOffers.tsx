@@ -83,23 +83,23 @@ export const MerchantOffers: React.FC<MerchantOffersProps> = ({ onNavigate }) =>
     ];
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 min-w-0 overflow-x-clip">
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-1">{isAr ? 'سجل المبيعات والعروض' : 'Sales & Offers History'}</h1>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">{isAr ? 'سجل المبيعات والعروض' : 'Sales & Offers History'}</h1>
                     <p className="text-white/50 text-sm">{isAr ? 'تتبع حالة العروض التي قدمتها للعملاء' : 'Track the status of offers submitted to customers'}</p>
                 </div>
             </div>
 
             {/* Tabs with Counts */}
-            <div className="flex gap-2 border-b border-white/5 pb-1 overflow-x-auto">
+            <div className="flex gap-2 sm:gap-3 border-b border-white/5 pb-1 overflow-x-auto shrink-0 min-h-[44px]">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`
-                    relative px-6 py-3 text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-2
+                    relative px-4 sm:px-6 py-3 min-h-[44px] text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-2 shrink-0
                     ${activeTab === tab.id ? 'text-gold-400' : 'text-white/40 hover:text-white'}
                 `}
                     >
@@ -138,9 +138,9 @@ export const MerchantOffers: React.FC<MerchantOffersProps> = ({ onNavigate }) =>
                                     exit={{ opacity: 0, scale: 0.95 }}
                                 >
                                     <GlassCard className={`p-0 overflow-hidden bg-[#151310] border-white/5 hover:border-gold-500/20 transition-all group ${isExpired ? 'opacity-60' : ''}`}>
-                                        <div className="p-5 flex flex-col md:flex-row justify-between items-center gap-6">
+                                        <div className="p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 min-w-0">
 
-                                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                            <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto min-w-0">
                                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${effectiveStatus === 'ACCEPTED'
                                                         ? 'bg-green-500/10 border-green-500/20 text-green-400'
                                                         : effectiveStatus === 'PENDING'

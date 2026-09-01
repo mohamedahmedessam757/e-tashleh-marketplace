@@ -99,7 +99,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
 
   if (!dispute) {
     return (
-      <div className="p-12 flex flex-col items-center justify-center gap-4 text-center">
+      <div className="p-6 sm:p-12 flex flex-col items-center justify-center gap-4 text-center min-w-0">
         <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
         <p className="text-white/50 text-sm font-bold">
           {isAr ? 'جاري تحميل بيانات القضية...' : 'Loading case details...'}
@@ -206,10 +206,10 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-8">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-8 min-w-0 overflow-x-clip">
       
       {/* Top Navigation & Status */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row flex-wrap justify-between items-start md:items-center gap-2 sm:gap-4 min-w-0">
         <button onClick={onBack} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group">
           <ArrowIcon size={18} className={`transition-transform ${isAr ? 'group-hover:translate-x-1' : 'group-hover:-translate-x-1'}`} />
           <span>{isAr ? 'العودة للمركز' : 'Back to Center'}</span>
@@ -485,7 +485,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                  </div>
               </GlassCard>
            ) : dispute.status !== 'OPEN' && dispute.status !== 'AWAITING_MERCHANT' ? (
-              <GlassCard className="flex flex-col items-center justify-center text-center p-12 bg-gold-500/5 border-gold-500/20">
+              <GlassCard className="flex flex-col items-center justify-center text-center p-6 sm:p-12 bg-gold-500/5 border-gold-500/20">
                  <div className="w-20 h-20 bg-gold-500/10 rounded-full flex items-center justify-center text-gold-500 mb-6">
                     <Clock size={40} className="animate-pulse" />
                  </div>
@@ -716,7 +716,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
       {/* Manual Escalation Warning Modal */}
       <AnimatePresence>
          {showEscalateModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
                <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -775,7 +775,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                animate={{ opacity: 1 }}
                exit={{ opacity: 0 }}
                onClick={() => setPreviewEvidence(null)}
-               className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl"
+               className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/95 backdrop-blur-xl"
             >
                <motion.button
                   type="button"
@@ -792,7 +792,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
                   exit={{ scale: 0.9, opacity: 0 }}
                   src={previewEvidence.url}
                   alt={isAr ? 'دليل مكبر' : 'Evidence fullscreen'}
-                  className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl border border-white/10 object-contain"
+                  className="max-w-full max-h-[92vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 object-contain"
                   onClick={(e) => e.stopPropagation()}
                />
             </motion.div>

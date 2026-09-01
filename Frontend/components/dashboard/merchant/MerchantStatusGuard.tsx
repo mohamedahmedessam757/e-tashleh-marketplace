@@ -59,7 +59,7 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
         {children}
       </div>
 
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto custom-scrollbar py-12">
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto custom-scrollbar py-6 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -183,7 +183,7 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
            transition={{ duration: 0.3 }}
            className="w-full max-w-lg"
         >
-          <GlassCard className={`p-8 md:p-12 text-center border-${variant === 'gold' ? 'gold' : 'red'}-500/20 shadow-2xl relative overflow-hidden`}>
+          <GlassCard className={`p-4 sm:p-6 md:p-12 text-center border-${variant === 'gold' ? 'gold' : 'red'}-500/20 shadow-2xl relative overflow-hidden rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto`}>
             {/* Background Glow */}
             <div className={`absolute -top-24 -left-24 w-48 h-48 bg-${variant === 'gold' ? 'gold' : 'red'}-500/10 blur-[80px] rounded-full`} />
             

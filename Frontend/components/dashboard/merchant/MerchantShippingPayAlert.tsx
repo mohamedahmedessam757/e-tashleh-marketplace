@@ -58,10 +58,10 @@ export const MerchantShippingPayAlert: React.FC<MerchantShippingPayAlertProps> =
         <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-[28px] border-2 border-gold-500/40 bg-gradient-to-r from-gold-500/15 via-amber-500/10 to-transparent shadow-2xl shadow-gold-500/10 ${compact ? 'p-4' : 'p-6'}`}
+            className={`rounded-[28px] border-2 border-gold-500/40 bg-gradient-to-r from-gold-500/15 via-amber-500/10 to-transparent shadow-2xl shadow-gold-500/10 min-w-0 ${compact ? 'p-4' : 'p-4 sm:p-6'}`}
         >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                     <div className="w-12 h-12 rounded-2xl bg-gold-500 text-black flex items-center justify-center flex-shrink-0">
                         <AlertTriangle size={24} strokeWidth={2.5} />
                     </div>
@@ -83,7 +83,7 @@ export const MerchantShippingPayAlert: React.FC<MerchantShippingPayAlertProps> =
                 </div>
                 <Button
                     onClick={() => onNavigate('explore-offer', first.orderId)}
-                    className="h-14 px-8 bg-gold-500 hover:bg-gold-400 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl whitespace-nowrap"
+                    className="h-12 sm:h-14 w-full sm:w-auto px-6 sm:px-8 bg-gold-500 hover:bg-gold-400 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl min-h-[44px]"
                 >
                     <div className="flex items-center gap-2">
                         <CreditCard size={16} />

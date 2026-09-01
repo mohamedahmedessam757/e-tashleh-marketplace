@@ -90,8 +90,7 @@ export const LicenseExpiryBanner: React.FC<LicenseExpiryBannerProps> = ({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative overflow-hidden rounded-[28px] border-2 p-5 md:p-6 shadow-2xl ${
-        urgent
+            className={`relative overflow-hidden rounded-[28px] border-2 p-4 sm:p-5 md:p-6 shadow-2xl min-w-0 ${urgent
           ? 'border-red-500/70 bg-gradient-to-r from-red-600/30 via-red-500/15 to-transparent shadow-[0_0_40px_rgba(239,68,68,0.45)] animate-pulse'
           : 'border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-transparent shadow-[0_0_28px_rgba(245,158,11,0.25)]'
       } ${className}`}
@@ -223,7 +222,7 @@ export const LicenseExpiryBanner: React.FC<LicenseExpiryBannerProps> = ({
           <Button
             onClick={() => onNavigate('profile')}
             type="button"
-            className={`h-12 shrink-0 rounded-2xl px-7 text-[11px] font-black uppercase tracking-widest ${
+            className={`h-12 w-full sm:w-auto shrink-0 rounded-2xl px-7 text-[11px] font-black uppercase tracking-widest min-h-[44px] ${
               urgent
                 ? 'bg-red-500 text-white hover:bg-red-400 shadow-lg shadow-red-500/30'
                 : 'bg-gold-500 text-black hover:bg-gold-400'

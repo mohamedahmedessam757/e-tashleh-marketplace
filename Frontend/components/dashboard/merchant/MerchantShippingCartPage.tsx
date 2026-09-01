@@ -18,12 +18,12 @@ export const MerchantShippingCartPage: React.FC = () => {
     }, [fetchMerchantCartItems, subscribeToRealtime, unsubscribeFromRealtime]);
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto pb-56 md:pb-48">
+        <div className="space-y-5 sm:space-y-8 max-w-4xl mx-auto pb-56 md:pb-48 min-w-0 overflow-x-clip px-0">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <PackageCheck className="text-gold-500" size={32} />
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white flex flex-wrap items-center gap-2 sm:gap-3">
+                        <PackageCheck className="text-gold-500 shrink-0" size={28} />
                         {t.dashboard.menu.shippingCart}
                     </h1>
                     <p className="text-white/50 mt-2">{t.dashboard.merchant.shippingCart.subtitle}</p>

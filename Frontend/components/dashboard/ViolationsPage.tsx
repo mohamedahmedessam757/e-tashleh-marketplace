@@ -169,15 +169,15 @@ export const ViolationsPage: React.FC<ViolationsPageProps> = ({ role }) => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 min-w-0 overflow-x-clip">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${theme.bgGradient} to-transparent border ${theme.border} flex items-center justify-center ${theme.color} shadow-xl ${theme.glow}`}>
-                        <ShieldAlert size={28} />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${theme.bgGradient} to-transparent border ${theme.border} flex items-center justify-center ${theme.color} shadow-xl ${theme.glow} shrink-0`}>
+                        <ShieldAlert size={24} />
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight uppercase italic font-outfit">
+                    <div className="min-w-0">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight uppercase italic font-outfit">
                             {vt.title}
                         </h1>
                         <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">
