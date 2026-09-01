@@ -208,7 +208,7 @@ export function buildPendingRedirectFromLocation(): PendingRedirect | null {
     const pending: PendingRedirect = {
         path: segments[1],
         id: segments[2] || undefined,
-        search: window.location.search || undefined,
+        search: stripDlFromSearch(window.location.search || undefined),
         requiredRole: inferRequiredRoleFromDashboardPath(segments[1]),
     };
     return isSafePendingRedirect(pending) ? pending : null;

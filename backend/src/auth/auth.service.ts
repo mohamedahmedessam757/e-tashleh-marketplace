@@ -795,6 +795,11 @@ export class AuthService {
             throw new UnauthorizedException('Account unavailable');
         }
 
+        const expectedRole = payload.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
+        if (user.role !== expectedRole) {
+            throw new UnauthorizedException('Invalid or expired link');
+        }
+
         if (payload.role === 'CUSTOMER') {
             const order = await this.prisma.order.findFirst({
                 where: { id: payload.orderId, customerId: payload.sub },

@@ -6,6 +6,7 @@ import {
     normalizeDashboardRoute,
     resolvePendingFromLoginLocation,
     splitDashboardPath,
+    stripDlFromSearch,
     type PendingRedirect,
 } from './widersDeepLink';
 import { getCurrentUser, mapBackendRoleToFrontend } from './auth';
@@ -45,8 +46,9 @@ export function buildPendingRedirect(
         userRole,
     );
     const { embeddedSearch } = splitDashboardPath(dashboardPath);
-    const resolvedSearch =
-        search || embeddedSearch || (typeof window !== 'undefined' ? window.location.search : undefined);
+    const resolvedSearch = stripDlFromSearch(
+        search || embeddedSearch || (typeof window !== 'undefined' ? window.location.search : undefined),
+    );
     return {
         path: normalized.path,
         id: normalized.id,
