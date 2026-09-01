@@ -71,34 +71,23 @@ const RegistryPdfViewer = lazy(() =>
 // Navigation
 import { useNavigationHistory, parseUrlToState } from './utils/useNavigationHistory';
 import {
-  inferRequiredRoleFromDashboardPath,
-  splitDashboardPath,
   persistPendingRedirect,
-  loadPersistedPendingRedirect,
   clearPersistedPendingRedirect,
   loginSearchWithNext,
-  resolvePendingFromLoginLocation,
+  parseDlQueryParam,
+  stripDlFromSearch,
   type PendingRedirect,
 } from './utils/widersDeepLink';
-
-function buildPendingRedirect(
-  dashboardPath: string,
-  viewId: any,
-  search?: string,
-): PendingRedirect {
-  const { path, embeddedSearch } = splitDashboardPath(dashboardPath);
-  const resolvedSearch =
-    search || embeddedSearch || (typeof window !== 'undefined' ? window.location.search : undefined);
-  return {
-    path,
-    id: viewId,
-    search: resolvedSearch || undefined,
-    requiredRole: inferRequiredRoleFromDashboardPath(path),
-  };
-}
+import {
+  buildPendingRedirect,
+  resolveDashboardEntry,
+  restoreLoginPendingFromSearch,
+  type DashboardEntryResult,
+} from './utils/dashboardEntryResolver';
 
 // Auth Setup
 import { getCurrentUser, mapBackendRoleToFrontend } from './utils/auth';
+import { authApi } from './services/api/auth';
 
 // Auth Components
 const LoginPage = lazy(() => import('./components/auth/LoginPage').then(module => ({ default: module.LoginPage })));
@@ -195,111 +184,118 @@ function AppContent() {
 
   // Restore state from URL on initial load and setup pending redirect
   const [pendingRedirect, setPendingRedirectState] = useState<PendingRedirect | null>(null);
+  const [deepLinkBootstrapping, setDeepLinkBootstrapping] = useState(false);
 
   const setPendingRedirect = useCallback((pending: PendingRedirect | null) => {
     setPendingRedirectState(pending);
     persistPendingRedirect(pending);
   }, []);
 
-  // --- IMMEDIATE ROLE & URL SYNC ON MOUNT ---
-  // This prevents the "Flash of Black Screen" by ensuring role is set before loading finishes
-  useEffect(() => {
-    // 1. Sync Role From Storage
-    const user = getCurrentUser();
+  const applyDashboardEntry = useCallback(
+    (entry: DashboardEntryResult) => {
+      if (entry.kind === 'dashboard') {
+        setLoginRoleMismatch(false);
+        setCurrentView('dashboard');
+        setDashboardPath(entry.path);
+        setViewId(entry.id ?? null);
+        replaceView('dashboard', entry.path, entry.id, entry.search);
+        return;
+      }
+      if (entry.kind === 'login') {
+        setPendingRedirect(entry.pending);
+        setLoginRoleMismatch(entry.roleMismatch);
+        setLoginInitialTab(entry.pending.requiredRole === 'merchant' ? 'merchant' : 'customer');
+        setCurrentView(entry.loginView);
+        replaceView(entry.loginView, undefined, undefined, entry.nextSearch);
+        return;
+      }
+      if (entry.kind === 'stripe-return') {
+        setPendingRedirect(entry.pending);
+        setCurrentView('role-selection');
+        replaceView('role-selection');
+        return;
+      }
+      if (entry.pending) {
+        setPendingRedirect(entry.pending);
+        const nextSearch = loginSearchWithNext(entry.pending);
+        setCurrentView('role-selection');
+        replaceView('role-selection', undefined, undefined, nextSearch);
+      } else {
+        setCurrentView('role-selection');
+        replaceView('role-selection');
+      }
+    },
+    [replaceView, setPendingRedirect],
+  );
+
+  const syncUrlOnBoot = useCallback(async () => {
+    let user = getCurrentUser();
     if (user) {
-      const normalizedRole = mapBackendRoleToFrontend(user?.role);
-      setUserRole(normalizedRole as UserRole);
+      setUserRole(mapBackendRoleToFrontend(user.role) as UserRole);
     }
 
-    // 2. Sync URL State Immediately (Prevents delay in route calculation)
     const initialState = parseUrlToState();
     if (initialState.view === 'verify-link' && initialState.verifyToken) {
       setCurrentView('verify-link');
       setVerifyToken(initialState.verifyToken);
       return;
     }
-    if (initialState.view === 'dashboard') {
-      const isStripeReturn = window.location.search.includes('stripe_status=');
-      const pending = buildPendingRedirect(
-        initialState.dashboardPath || 'home',
-        initialState.viewId,
-        initialState.search,
-      );
-      if (user) {
-        const normalizedRole = mapBackendRoleToFrontend(user.role);
-        if (pending.requiredRole && pending.requiredRole !== normalizedRole) {
-          // Keep existing session until the correct-role login succeeds (do not wipe JWT early)
-          setPendingRedirect(pending);
-          setLoginRoleMismatch(true);
-          setLoginInitialTab(pending.requiredRole);
-          const loginView =
-            pending.requiredRole === 'merchant' ? 'merchant-login' : 'customer-login';
-          setCurrentView(loginView);
-          replaceView(loginView, undefined, undefined, loginSearchWithNext(pending));
-        } else {
-          setCurrentView('dashboard');
-          setDashboardPath(initialState.dashboardPath || 'home');
-          setViewId(initialState.viewId);
-          replaceView(
-            'dashboard',
-            initialState.dashboardPath || 'home',
-            initialState.viewId,
-            initialState.search,
-          );
-        }
-      } else if (isStripeReturn) {
-        setPendingRedirect(
-          buildPendingRedirect(
-            initialState.dashboardPath || 'home',
-            initialState.viewId,
-            window.location.search,
-          ),
-        );
-        setCurrentView('role-selection');
-        replaceView('role-selection');
-      } else {
-        const pending = buildPendingRedirect(
-          initialState.dashboardPath || 'home',
-          initialState.viewId,
-          initialState.search,
-        );
-        setPendingRedirect(pending);
-        const nextSearch = loginSearchWithNext(pending);
-        if (pending.requiredRole === 'merchant') {
-          setLoginInitialTab('merchant');
-          setCurrentView('merchant-login');
-          replaceView('merchant-login', undefined, undefined, nextSearch);
-        } else if (pending.requiredRole === 'customer') {
-          setLoginInitialTab('customer');
-          setCurrentView('customer-login');
-          replaceView('customer-login', undefined, undefined, nextSearch);
-        } else {
-          setCurrentView('role-selection');
-          replaceView('role-selection');
-        }
-      }
-    } else {
-      setCurrentView(initialState.view as ViewState);
-      // Login page refresh: restore WhatsApp deep-link intended destination
-      if (
-        initialState.view === 'customer-login' ||
-        initialState.view === 'merchant-login' ||
-        initialState.view === 'login' ||
-        initialState.view === 'role-selection'
-      ) {
-        const fromNext = resolvePendingFromLoginLocation(initialState.search);
-        const saved = fromNext || loadPersistedPendingRedirect();
-        if (saved) {
-          setPendingRedirect(saved);
-          if (saved.requiredRole === 'merchant') {
-            setLoginInitialTab('merchant');
-          } else if (saved.requiredRole === 'customer') {
-            setLoginInitialTab('customer');
+
+    if (initialState.view === 'dashboard' && !user) {
+      const dl = parseDlQueryParam(initialState.search);
+      if (dl) {
+        setDeepLinkBootstrapping(true);
+        try {
+          const response = await authApi.consumeDeepLink(dl);
+          localStorage.setItem('access_token', response.access_token);
+          if (response.user) {
+            localStorage.setItem('user', JSON.stringify(response.user));
           }
+          user = getCurrentUser();
+          if (user) {
+            setUserRole(mapBackendRoleToFrontend(user.role) as UserRole);
+          }
+        } catch {
+          /* fall through to login + ?next= */
+        } finally {
+          setDeepLinkBootstrapping(false);
         }
       }
     }
-  }, []);
+
+    if (initialState.view === 'dashboard') {
+      const isStripeReturn = window.location.search.includes('stripe_status=');
+      const cleanSearch = stripDlFromSearch(initialState.search);
+      const entry = resolveDashboardEntry(
+        { ...initialState, search: cleanSearch },
+        isStripeReturn,
+      );
+      if (entry) {
+        applyDashboardEntry(entry);
+        return;
+      }
+    }
+
+    setCurrentView(initialState.view as ViewState);
+    if (
+      initialState.view === 'customer-login' ||
+      initialState.view === 'merchant-login' ||
+      initialState.view === 'login' ||
+      initialState.view === 'role-selection'
+    ) {
+      const saved = restoreLoginPendingFromSearch(initialState.search);
+      if (saved) {
+        setPendingRedirect(saved);
+        if (saved.requiredRole === 'merchant') setLoginInitialTab('merchant');
+        else if (saved.requiredRole === 'customer') setLoginInitialTab('customer');
+      }
+    }
+  }, [applyDashboardEntry, setPendingRedirect]);
+
+  // --- IMMEDIATE ROLE & URL SYNC ON MOUNT ---
+  useEffect(() => {
+    void syncUrlOnBoot();
+  }, [syncUrlOnBoot]);
 
   useEffect(() => {
     if (currentView === 'dashboard') {
@@ -374,87 +370,7 @@ function AppContent() {
       sessionStorage.setItem(BOOT_SKIP_KEY, '1');
     }
     setLoading(false);
-
-    // Safety: ensure final state is synced
-    const initialState = parseUrlToState();
-    const user = getCurrentUser();
-    const isStripeReturn = window.location.search.includes('stripe_status=');
-
-    if (initialState.view === 'dashboard' && user) {
-      const normalizedRole = mapBackendRoleToFrontend(user?.role);
-      const pending = buildPendingRedirect(
-        initialState.dashboardPath || 'home',
-        initialState.viewId,
-        initialState.search,
-      );
-      if (pending.requiredRole && pending.requiredRole !== normalizedRole) {
-        // Keep existing session until the correct-role login succeeds
-        setPendingRedirect(pending);
-        setLoginRoleMismatch(true);
-        setLoginInitialTab(pending.requiredRole);
-        const loginView =
-          pending.requiredRole === 'merchant' ? 'merchant-login' : 'customer-login';
-        setCurrentView(loginView);
-        replaceView(loginView, undefined, undefined, loginSearchWithNext(pending));
-      } else {
-        setUserRole(normalizedRole as UserRole);
-        setDashboardPath(initialState.dashboardPath || 'home');
-        setViewId(initialState.viewId);
-        setCurrentView('dashboard');
-        replaceView(
-          'dashboard',
-          initialState.dashboardPath || 'home',
-          initialState.viewId,
-          initialState.search,
-        );
-      }
-    } else if (initialState.view === 'dashboard' && isStripeReturn) {
-      setPendingRedirect(
-        buildPendingRedirect(
-          initialState.dashboardPath || 'home',
-          initialState.viewId,
-          window.location.search,
-        ),
-      );
-      setCurrentView('role-selection');
-      replaceView('role-selection');
-    } else if (initialState.view === 'dashboard' && !user) {
-      const pending = buildPendingRedirect(
-        initialState.dashboardPath || 'home',
-        initialState.viewId,
-        initialState.search,
-      );
-      setPendingRedirect(pending);
-      const nextSearch = loginSearchWithNext(pending);
-      if (pending.requiredRole === 'merchant') {
-        setLoginInitialTab('merchant');
-        setCurrentView('merchant-login');
-        replaceView('merchant-login', undefined, undefined, nextSearch);
-      } else if (pending.requiredRole === 'customer') {
-        setLoginInitialTab('customer');
-        setCurrentView('customer-login');
-        replaceView('customer-login', undefined, undefined, nextSearch);
-      } else {
-        setCurrentView('role-selection');
-        replaceView('role-selection');
-      }
-    } else {
-      setCurrentView(initialState.view as ViewState);
-      if (
-        initialState.view === 'customer-login' ||
-        initialState.view === 'merchant-login' ||
-        initialState.view === 'login' ||
-        initialState.view === 'role-selection'
-      ) {
-        const fromNext = resolvePendingFromLoginLocation(initialState.search);
-        const saved = fromNext || loadPersistedPendingRedirect();
-        if (saved) {
-          setPendingRedirect(saved);
-          if (saved.requiredRole === 'merchant') setLoginInitialTab('merchant');
-          else if (saved.requiredRole === 'customer') setLoginInitialTab('customer');
-        }
-      }
-    }
+    void syncUrlOnBoot();
   };
 
   const handleBackToHome = () => {
@@ -536,8 +452,7 @@ function AppContent() {
 
     const resolvedPending =
       pendingRedirect ||
-      loadPersistedPendingRedirect() ||
-      resolvePendingFromLoginLocation();
+      restoreLoginPendingFromSearch();
 
     // Redirect Flow: Check if there's a pending URL the user wanted to visit
     if (resolvedPending) {
@@ -756,6 +671,14 @@ function AppContent() {
       <div className="relative z-10">
         {loading && (
           <LoadingScreen onComplete={handleLoadingComplete} />
+        )}
+        {deepLinkBootstrapping && (
+          <div className="fixed inset-0 z-[100] bg-[#0F0E0C]/90 flex flex-col items-center justify-center gap-4 px-6 text-center">
+            <div className="w-10 h-10 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gold-300/80 text-sm font-medium">
+              {language === 'ar' ? 'جاري التحقق من الرابط…' : 'Verifying your link…'}
+            </p>
+          </div>
         )}
 
         {isSupportOpen && (

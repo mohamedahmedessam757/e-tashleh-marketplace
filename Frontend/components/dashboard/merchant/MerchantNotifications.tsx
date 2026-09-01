@@ -11,7 +11,7 @@ import {
 } from '../../../utils/violationNavigation';
 
 interface MerchantNotificationsProps {
-    onNavigate?: (path: string, id?: string) => void;
+    onNavigate?: (path: string, id?: string, search?: string) => void;
 }
 
 export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ onNavigate }) => {
@@ -67,7 +67,7 @@ export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ on
             id = undefined;
         }
 
-        onNavigate(path, id);
+        onNavigate(path, id, nav.search);
     };
 
     return (

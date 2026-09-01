@@ -115,6 +115,11 @@ export const authApi = {
         return response.data;
     },
 
+    consumeDeepLink: async (dl: string) => {
+        const response = await client.post('/auth/deep-link/consume', { dl });
+        return response.data as { access_token: string; user?: Record<string, unknown> };
+    },
+
     updateProfile: async (data: any) => {
         const response = await client.post('/users/profile/update', data);
         return response.data;

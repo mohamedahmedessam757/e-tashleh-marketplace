@@ -9,6 +9,7 @@ import {
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteContacts } from '../../../config/site';
+import { buildAuthRecoveryRedirectUrl } from '../../../utils/widersDeepLink';
 
 interface MerchantStatusGuardProps {
   children: React.ReactNode;
@@ -309,8 +310,8 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
           }
         </p>
         <button
-          onClick={() => window.location.href = '/'}
-          className="px-6 py-3 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl font-bold transition-all"
+          onClick={() => { window.location.href = buildAuthRecoveryRedirectUrl(); }}
+          className="px-6 py-3 min-h-[44px] w-full sm:w-auto bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl font-bold transition-all"
         >
           {isAr ? 'العودة للرئيسية' : 'Return to Home'}
         </button>

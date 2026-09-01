@@ -20,6 +20,7 @@ import { VerificationCorrectionPopup } from './merchant/VerificationCorrectionPo
 import { RestrictionAlertBanner } from './shared/RestrictionAlertBanner';
 import { getCurrentUserId } from '../../utils/auth';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
+import { buildPendingRedirectFromLocation, persistPendingRedirect } from '../../utils/widersDeepLink';
 import { refreshOrderSlaFromApi } from '../../utils/orderSla';
 import { syncServerClock } from '../../utils/serverClock';
 
@@ -130,6 +131,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // SECURITY: AUTO-LOGOUT LOGIC
   const handleSystemLogout = () => {
+    const pending = buildPendingRedirectFromLocation();
+    if (pending) {
+      persistPendingRedirect(pending);
+    }
     clearAuthStorage();
     
     // 2. Reset Global Stores

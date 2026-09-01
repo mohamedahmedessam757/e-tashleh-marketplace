@@ -30,12 +30,20 @@ const ALLOWED_DASHBOARD_SEGMENTS = new Set([
     'profile',
     'settings',
     'shipments',
+    'shipment-details',
     'invoices',
     'store-profile',
     'notifications',
     'violations',
     'performance',
     'verification-tasks',
+    'billing',
+    'support',
+    'my-offers',
+    'active-orders',
+    'resolution',
+    'dispute-details',
+    'shipping-cart',
 ]);
 
 export function readDashboardDeepLink(search?: string): DashboardDeepLink {
@@ -58,6 +66,20 @@ export function inferRequiredRoleFromDashboardPath(
     return undefined;
 }
 
+/** Normalize legacy / ambiguous dashboard segments using known user role when available. */
+export function normalizeDashboardRoute(
+    dashboardPath: string,
+    viewId: string | null | undefined,
+    userRole?: string | null,
+): { path: string; id?: string } {
+    const id = viewId != null && String(viewId).trim() ? String(viewId).trim() : undefined;
+    if (dashboardPath === 'orders' && id) {
+        if (userRole === 'merchant') return { path: 'explore-offer', id };
+        if (userRole === 'customer') return { path: 'order-details', id };
+    }
+    return { path: dashboardPath, id };
+}
+
 export function splitDashboardPath(path: string): { path: string; embeddedSearch?: string } {
     if (!path.includes('?')) return { path };
     const [base, query] = path.split('?');
@@ -68,7 +90,6 @@ function isSafePendingRedirect(value: unknown): value is PendingRedirect {
     if (!value || typeof value !== 'object') return false;
     const v = value as PendingRedirect;
     if (typeof v.path !== 'string' || !v.path.trim()) return false;
-    // Reject absolute / external paths — only dashboard route keys
     if (v.path.includes('://') || v.path.startsWith('/') || v.path.includes('..')) {
         return false;
     }
@@ -175,9 +196,76 @@ export function clearPersistedPendingRedirect(): void {
     persistPendingRedirect(null);
 }
 
+/** Build pending redirect from current browser location (dashboard deep links). */
+export function buildPendingRedirectFromLocation(): PendingRedirect | null {
+    if (typeof window === 'undefined') return null;
+    const path = window.location.pathname;
+    if (!path.startsWith('/dashboard/')) return null;
+
+    const segments = path.split('/').filter(Boolean);
+    if (segments[0] !== 'dashboard' || !segments[1]) return null;
+
+    const pending: PendingRedirect = {
+        path: segments[1],
+        id: segments[2] || undefined,
+        search: window.location.search || undefined,
+        requiredRole: inferRequiredRoleFromDashboardPath(segments[1]),
+    };
+    return isSafePendingRedirect(pending) ? pending : null;
+}
+
+/** Redirect URL after session loss — login with ?next= when on dashboard, else home. */
+export function buildAuthRecoveryRedirectUrl(): string {
+    const pending = buildPendingRedirectFromLocation();
+    if (!pending) return '/';
+
+    persistPendingRedirect(pending);
+    const nextSearch = loginSearchWithNext(pending);
+    if (!nextSearch) return '/';
+
+    if (pending.requiredRole === 'merchant') {
+        return `/auth/merchant-login${nextSearch}`;
+    }
+    if (pending.requiredRole === 'customer') {
+        return `/auth/customer-login${nextSearch}`;
+    }
+    return `/${nextSearch}`;
+}
+
+export function parseDlQueryParam(search?: string): string | null {
+    const raw = search ?? (typeof window !== 'undefined' ? window.location.search : '');
+    const params = new URLSearchParams(raw.startsWith('?') ? raw.slice(1) : raw);
+    const dl = params.get('dl');
+    if (!dl || dl.length > 2048) return null;
+    return dl;
+}
+
+/** Remove `dl` from search string (keep other params). */
+export function stripDlFromSearch(search?: string): string | undefined {
+    const raw = search ?? (typeof window !== 'undefined' ? window.location.search : '');
+    if (!raw) return undefined;
+    const params = new URLSearchParams(raw.startsWith('?') ? raw.slice(1) : raw);
+    params.delete('dl');
+    const qs = params.toString();
+    return qs ? `?${qs}` : undefined;
+}
+
 /** Detect WhatsApp in-app browser for UX hint only */
 export function isLikelyWhatsAppInAppBrowser(): boolean {
     if (typeof navigator === 'undefined') return false;
     const ua = navigator.userAgent || '';
     return /WhatsApp/i.test(ua) || /WABusiness/i.test(ua);
+}
+
+/** Best-effort external browser open (WhatsApp WebView → Chrome/Safari). */
+export function openCurrentUrlInExternalBrowser(): void {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
 }

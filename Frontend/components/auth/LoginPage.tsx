@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Store, Phone, ArrowRight, AlertCircle, Lock } from 'lucide-react';
+import { User, Store, Phone, ArrowRight, AlertCircle, Lock, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { OTPVerification } from './OTPVerification';
 import { OTPMethodSelection } from './OTPMethodSelection';
 import { authApi } from '@/services/api/auth';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import type { PendingRedirect } from '../../utils/widersDeepLink';
-import { isLikelyWhatsAppInAppBrowser } from '../../utils/widersDeepLink';
+import { isLikelyWhatsAppInAppBrowser, openCurrentUrlInExternalBrowser } from '../../utils/widersDeepLink';
 import { saveRegisterPrefill, type RegisterPrefill } from '../../utils/registerPrefill';
+import { getCurrentUser, isAccessTokenValid, mapBackendRoleToFrontend } from '../../utils/auth';
 
 interface LoginPageProps {
   onRegisterClick: () => void;
@@ -52,6 +53,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Already signed in on this browser context — skip login when role matches pending deep-link
+  useEffect(() => {
+    if (!pendingRedirect || !isAccessTokenValid()) return;
+    const user = getCurrentUser();
+    if (!user) return;
+    const role = mapBackendRoleToFrontend(user.role) as 'customer' | 'merchant';
+    if (pendingRedirect.requiredRole && pendingRedirect.requiredRole !== role) return;
+    if (forcedRole && forcedRole !== role) return;
+    onLoginSuccess(role);
+  }, [pendingRedirect, forcedRole, onLoginSuccess]);
+
+  const handleOpenInBrowser = () => {
+    openCurrentUrlInExternalBrowser();
+  };
   const [fingerprint, setFingerprint] = useState<string | null>(null);
 
   // Load unique device identifier for session deduplication (2026 Best Practice)
@@ -319,10 +335,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
       )}
       {pendingRedirect && isLikelyWhatsAppInAppBrowser() && (
-        <div className="bg-white/5 border border-white/10 text-white/50 p-3 rounded-xl text-xs text-center leading-relaxed">
-          {language === 'ar'
-            ? 'إن كنت مسجّلاً مسبقاً في متصفح الهاتف (Chrome/Safari)، افتح هذا الرابط من هناك للدخول مباشرة دون إعادة تسجيل.'
-            : 'If you are already signed in in Chrome/Safari, open this link there to continue without signing in again.'}
+        <div className="space-y-3">
+          <div className="bg-white/5 border border-white/10 text-white/50 p-3 rounded-xl text-xs text-center leading-relaxed">
+            {language === 'ar'
+              ? 'إن كنت مسجّلاً مسبقاً في Chrome أو Safari، افتح الرابط هناك. على iPhone: ⋮ ثم «فتح في Safari». على Android: ⋮ ثم «فتح في Chrome».'
+              : 'If you are already signed in in Chrome or Safari, open this link there. On iPhone: ⋮ → Open in Safari. On Android: ⋮ → Open in Chrome.'}
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenInBrowser}
+            className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gold-500/40 bg-gold-500/10 text-gold-300 text-sm font-bold hover:bg-gold-500/20 transition-all"
+          >
+            <ExternalLink size={16} />
+            {language === 'ar' ? 'افتح في المتصفح الخارجي' : 'Open in external browser'}
+          </button>
         </div>
       )}
       {roleMismatch && (

@@ -776,7 +776,7 @@ export class ShipmentsService {
             messageAr: customerMessageAr,
             messageEn: customerMessageEn,
             type: 'SHIPMENT_UPDATE',
-            link: `/customer/orders/${order.id}`,
+            link: `/dashboard/order-details/${order.id}?tab=waybills`,
             metadata: shipmentMeta,
         });
 
@@ -807,7 +807,7 @@ export class ShipmentsService {
                 messageAr: bodies.merchant.ar,
                 messageEn: bodies.merchant.en,
                 type: 'SHIPMENT_UPDATE',
-                link: `/merchant/orders/${order.id}`,
+                link: `/dashboard/explore-offer/${order.id}?tab=waybills`,
                 metadata: shipmentMeta,
             });
         }

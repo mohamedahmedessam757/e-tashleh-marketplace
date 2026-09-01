@@ -3,6 +3,7 @@ import { API_URL } from './config';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
 import { getCorrelationId, setCorrelationIdFromResponse } from '../../utils/correlationId';
 import { reportPlatformError } from '../../utils/platformErrorReporter';
+import { buildAuthRecoveryRedirectUrl } from '../../utils/widersDeepLink';
 
 const AUTH_API_PATHS = [
     '/auth/login',
@@ -20,6 +21,7 @@ const AUTH_API_PATHS = [
     '/auth/reset-password',
     '/auth/recovery',
     '/auth/admin-otp',
+    '/auth/deep-link/consume',
 ];
 
 function isAuthApiRequest(url?: string): boolean {
@@ -45,7 +47,6 @@ client.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
     config.headers['X-Correlation-Id'] = getCorrelationId();
-    // Let the browser set multipart boundary — manual Content-Type breaks uploads
     if (config.data instanceof FormData) {
         delete config.headers['Content-Type'];
     }
@@ -78,7 +79,7 @@ client.interceptors.response.use(
             if (!skipRedirect) {
                 clearAuthStorage();
                 if (typeof window !== 'undefined') {
-                    window.location.href = '/';
+                    window.location.href = buildAuthRecoveryRedirectUrl();
                 }
             }
         }

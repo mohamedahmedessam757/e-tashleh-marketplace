@@ -13,6 +13,7 @@ module.exports = {
         '**/escrow-release-eligibility.util.spec.ts',
         '**/whatsapp-notification.mapper.spec.ts',
         '**/shipment-follow-url.util.spec.ts',
+        '**/deep-link-token.util.spec.ts',
         '**/template-registry.spec.ts',
         '**/fee-settlement-plan.util.spec.ts',
         '**/adjudication-financial.util.spec.ts',

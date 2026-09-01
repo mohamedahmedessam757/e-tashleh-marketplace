@@ -218,4 +218,15 @@ export class AuthController {
     async deleteAccount(@Request() req) {
         return this.authService.deleteAccount(req.user.id || req.user.userId);
     }
+
+    @Post('deep-link/consume')
+    @Throttle({ default: { limit: 10, ttl: 60_000 } })
+    async consumeDeepLink(@Body() body: { dl?: string }, @Request() req) {
+        if (!body?.dl || typeof body.dl !== 'string' || body.dl.length > 4096) {
+            throw new UnauthorizedException('Invalid link');
+        }
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+        return this.authService.consumeDeepLink(body.dl, ip, userAgent);
+    }
 }

@@ -170,6 +170,9 @@ export function resolveNotificationNavigation(
   }
 
   if (orderId) {
+    if (type === 'SHIPMENT_UPDATE' || type === 'SHIPMENT') {
+      return { path: 'order-details', id: orderId, search: '?tab=waybills' };
+    }
     // Role-agnostic: callers may remap merchant → explore-offer / orders
     return { path: 'order-details', id: orderId };
   }

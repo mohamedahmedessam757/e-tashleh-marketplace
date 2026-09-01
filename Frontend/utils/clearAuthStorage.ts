@@ -16,4 +16,5 @@ export function clearAuthStorage(): void {
   } catch {
     /* ignore */
   }
+  /* Preserve etashleh_pending_redirect_v1 for post-login deep-link restore */
 }

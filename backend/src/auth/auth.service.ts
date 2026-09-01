@@ -28,6 +28,7 @@ import { WidersContactSyncService } from '../widers/widers-contact-sync.service'
 import { WhatsAppChannelService } from '../widers/whatsapp-channel.service';
 import { normalizeGulfPhone } from '../common/phone/gulf-phone.util';
 import { resolveJwtExpiresIn } from './jwt-expiry.util';
+import { verifyDeepLinkToken } from './deep-link-token.util';
 
 @Injectable()
 export class AuthService {
@@ -774,5 +775,52 @@ export class AuthService {
         }
 
         return { success: true };
+    }
+
+    async consumeDeepLink(dl: string, ip?: string, userAgent?: string) {
+        const secret = process.env.AUTH_DEEP_LINK_SECRET?.trim();
+        if (!secret) {
+            throw new UnauthorizedException('Deep link authentication is not configured');
+        }
+
+        let payload;
+        try {
+            payload = verifyDeepLinkToken(secret, dl);
+        } catch {
+            throw new UnauthorizedException('Invalid or expired link');
+        }
+
+        const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+        if (!user || user.status === 'BLOCKED' || user.status === 'SUSPENDED') {
+            throw new UnauthorizedException('Account unavailable');
+        }
+
+        if (payload.role === 'CUSTOMER') {
+            const order = await this.prisma.order.findFirst({
+                where: { id: payload.orderId, customerId: payload.sub },
+            });
+            if (!order) {
+                throw new UnauthorizedException('Order access denied');
+            }
+        } else {
+            const store = await this.prisma.store.findFirst({
+                where: { ownerId: payload.sub },
+            });
+            if (!store) {
+                throw new UnauthorizedException('Store not found');
+            }
+            const offer = await this.prisma.offer.findFirst({
+                where: { orderId: payload.orderId, storeId: store.id },
+            });
+            if (!offer) {
+                throw new UnauthorizedException('Order access denied');
+            }
+        }
+
+        this.logger.log(
+            `[DeepLink] consumed user=${payload.sub} order=${payload.orderId} jti=${payload.jti}`,
+        );
+
+        return this.login(user, ip, userAgent, `deeplink:${payload.jti}`);
     }
 }

@@ -31,6 +31,7 @@ import {
 import { WhatsAppMessageLogService } from './whatsapp-message-log.service';
 import { resolveUserPhone } from '../common/phone/gulf-phone.util';
 import { buildOrderFollowUrl } from './shipment-follow-url.util';
+import { appendDeepLinkParam, signDeepLinkToken } from '../auth/deep-link-token.util';
 
 export interface WhatsAppDispatchContext {
     phone: string;
@@ -442,6 +443,7 @@ export class WhatsAppChannelService {
                     audienceRole,
                     orderId,
                     family.startsWith('txn_shipment_') ? 'waybills' : undefined,
+                    params.recipientId,
                 );
                 const followValue = followUrl ?? 'غير متوفر';
                 if (!followUrl) {
@@ -597,18 +599,40 @@ export class WhatsAppChannelService {
         role: WhatsAppAudienceRole,
         orderId: string | null,
         tab?: 'waybills',
+        recipientId?: string,
     ): string | null {
         if (!this.config.frontendUrl) {
             this.logger.warn(
                 'WhatsApp follow link: FRONTEND_URL missing — falling back to https://e-tashleh.net',
             );
         }
-        return buildOrderFollowUrl({
+        const baseUrl = buildOrderFollowUrl({
             role,
             orderId,
             frontendUrl: this.config.frontendUrl,
             tab,
         });
+        if (!baseUrl || !recipientId || !orderId) {
+            return baseUrl;
+        }
+
+        const secret = process.env.AUTH_DEEP_LINK_SECRET?.trim();
+        if (!secret) {
+            return baseUrl;
+        }
+
+        const dlRole = role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
+        const path = role === 'CUSTOMER' ? 'order-details' : 'explore-offer';
+        const search = tab === 'waybills' ? '?tab=waybills' : undefined;
+        const token = signDeepLinkToken(secret, {
+            userId: recipientId,
+            role: dlRole,
+            orderId,
+            path,
+            search,
+            ttlHours: Number(process.env.AUTH_DEEP_LINK_TTL_HOURS || 72),
+        });
+        return appendDeepLinkParam(baseUrl, token);
     }
 
     /** Absolute chat deep-link for WhatsApp follow_url */
