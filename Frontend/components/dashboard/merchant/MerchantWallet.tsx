@@ -630,7 +630,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     );
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 min-w-0 overflow-x-clip">
 
             {/* 0. Governance Alerts (2026 Admin Transparency) */}
 
@@ -814,7 +814,46 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar">
+                        {/* Mobile card layout */}
+                        <div className="md:hidden divide-y divide-white/5">
+                            {isLoading ? (
+                                <div className="p-6 sm:p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'جاري التحميل...' : 'LOADING...'}</div>
+                            ) : filteredTransactions.length === 0 ? (
+                                <div className="p-6 sm:p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'لا توجد بيانات' : 'NO DATA'}</div>
+                            ) : filteredTransactions.map((tx) => (
+                                <div key={tx.id} className="p-4 space-y-3 hover:bg-white/[0.02] transition-all">
+                                    <div className="flex flex-wrap items-start justify-between gap-2 min-w-0">
+                                        <code className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[11px] text-gold-500/80 shrink-0">
+                                            #{tx.order?.orderNumber || tx.payment?.order?.orderNumber || tx.orderNumber || tx.id.slice(0, 8).toUpperCase()}
+                                        </code>
+                                        <span className={`font-bold text-sm shrink-0 ${tx.type === 'CREDIT' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                            {tx.type === 'CREDIT' ? '+' : '-'}{Math.abs(Number(tx.amount)).toLocaleString()} AED
+                                        </span>
+                                    </div>
+                                    {(tx.displayDescriptionAr || tx.displayDescriptionEn || tx.description) && (
+                                        <p className="text-[10px] text-white/45 font-medium leading-snug min-w-0">
+                                            {isAr
+                                                ? (tx.displayDescriptionAr || tx.titleAr || tx.description)
+                                                : (tx.displayDescriptionEn || tx.titleEn || tx.description)}
+                                        </p>
+                                    )}
+                                    <div className="flex flex-wrap gap-2 text-[8px] font-black uppercase">
+                                        <span className={`px-2 py-0.5 rounded border ${getStatusStyle(tx.payment?.status || 'SUCCESS')}`}>
+                                            {getStatusLabel(tx.payment?.status || 'SUCCESS')}
+                                        </span>
+                                        <span className={`px-2 py-0.5 rounded border ${getStatusStyle(tx.payment?.order?.status || 'PREPARATION')}`}>
+                                            {getStatusLabel(tx.payment?.order?.status || tx.escrow?.order?.status || 'PREPARATION')}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <span className="font-mono text-white/40 text-[11px]">{new Date(tx.createdAt).toLocaleDateString(isAr ? 'ar-AE' : 'en-AE')}</span>
+                                        <button onClick={() => tx.payment?.order?.id && onNavigate?.('explore-offer', tx.payment.order.id)} className="p-2.5 min-h-[44px] min-w-[44px] rounded bg-white/5 hover:bg-gold-500 hover:text-black transition-all border border-white/10 flex items-center justify-center"><FileText size={14} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar">
                             <table className="w-full text-sm text-center border-collapse min-w-[900px]">
                                 <thead>
                                     <tr className="sticky top-0 z-20 border-b border-white/5 bg-[#151310] text-[10px] text-white/30 uppercase tracking-widest font-black">
@@ -829,9 +868,9 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                 </thead>
                                 <tbody>
                                     {isLoading ? (
-                                        <tr><td colSpan={7} className="p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'جاري التحميل...' : 'LOADING...'}</td></tr>
+                                        <tr><td colSpan={7} className="p-6 sm:p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'جاري التحميل...' : 'LOADING...'}</td></tr>
                                     ) : filteredTransactions.length === 0 ? (
-                                        <tr><td colSpan={7} className="p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'لا توجد بيانات' : 'NO DATA'}</td></tr>
+                                        <tr><td colSpan={7} className="p-6 sm:p-12 text-center text-white/20 font-black text-xs uppercase">{isAr ? 'لا توجد بيانات' : 'NO DATA'}</td></tr>
                                     ) : filteredTransactions.map((tx) => (
                                         <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-all group">
                                             <td className="px-4 py-4">
@@ -1374,7 +1413,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
             {/* Stripe Success Celebration Modal */}
             <AnimatePresence>
                 {stripeSuccess && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -1386,7 +1425,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                             initial={{ scale: 0.5, opacity: 0, y: 100 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.5, opacity: 0, y: 100 }}
-                            className="bg-[#1A1814] border border-gold-500/30 rounded-[3rem] p-12 max-w-md w-full text-center relative z-10 shadow-[0_0_100px_rgba(212,175,55,0.2)]"
+                            className="bg-[#1A1814] border border-gold-500/30 rounded-t-3xl sm:rounded-[3rem] p-6 sm:p-12 max-w-md w-full max-h-[92vh] overflow-y-auto text-center relative z-10 shadow-[0_0_100px_rgba(212,175,55,0.2)]"
                         >
                             <div className="w-24 h-24 bg-gold-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-gold-500/20">
                                 <motion.div

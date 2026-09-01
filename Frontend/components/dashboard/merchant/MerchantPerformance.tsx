@@ -331,12 +331,12 @@ export const MerchantPerformance: React.FC = () => {
     const progressPercent = hasNoActivity ? 0 : performance.progressToNext.percent;
 
     return (
-        <div className="space-y-8 min-h-screen pb-20">
+        <div className="space-y-5 sm:space-y-8 min-h-screen pb-20 min-w-0 overflow-x-clip">
             {/* --- PROMPT A: Page shell & Header --- */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter flex items-center gap-4">
-                        <Award className="text-gold-500" size={40} />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter flex flex-wrap items-center gap-2 sm:gap-4">
+                        <Award className="text-gold-500 shrink-0" size={32} />
                         {mp.title}
                     </h1>
                     <p className="text-white/50 mt-2 font-medium">{mp.subtitle}</p>

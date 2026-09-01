@@ -59,15 +59,15 @@ export const MerchantTicketForm: React.FC<MerchantTicketFormProps> = ({ onSucces
     };
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8 pb-10">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-5 sm:space-y-8 pb-10 min-w-0">
             {/* Form Header */}
-            <div className="flex items-center justify-between pb-6 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gold-500/10 text-gold-500">
-                        <ShieldCheck size={24} />
+            <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3 pb-6 border-b border-white/5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-gold-500/10 text-gold-500 shrink-0">
+                        <ShieldCheck size={20} />
                     </div>
-                    <div>
-                        <h3 className="text-2xl font-bold text-white">
+                    <div className="min-w-0">
+                        <h3 className="text-xl sm:text-2xl font-bold text-white">
                             {t.dashboard.merchant.support.newTicketTitle}
                         </h3>
                         <p className="text-white/40 text-sm mt-0.5">

@@ -47,7 +47,7 @@ export const MerchantHandoverPendingBanner: React.FC<MerchantHandoverPendingBann
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25 }}
-                className={`rounded-2xl border bg-gradient-to-r p-4 md:p-5 flex gap-4 items-start shadow-lg ${accent} ${className}`}
+                className={`rounded-2xl border bg-gradient-to-r p-4 md:p-5 flex flex-wrap gap-3 sm:gap-4 items-start shadow-lg min-w-0 ${accent} ${className}`}
                 role="status"
                 aria-live="polite"
             >

@@ -103,9 +103,9 @@ export const VerificationCorrectionPopup: React.FC<VerificationCorrectionPopupPr
     const deadlineLabel = formatDeadline(meta.correctionDeadlineAt, isAr);
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <div className="w-full max-w-lg" role="dialog" aria-modal="true">
-                <GlassCard className="relative overflow-hidden border-2 border-orange-500/40 p-6 md:p-8 shadow-[0_0_50px_-12px_rgba(249,115,22,0.35)]">
+        <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
+            <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto" role="dialog" aria-modal="true">
+                <GlassCard className="relative overflow-hidden border-2 border-orange-500/40 p-4 sm:p-6 md:p-8 rounded-t-3xl sm:rounded-3xl shadow-[0_0_50px_-12px_rgba(249,115,22,0.35)]">
                     <div className="absolute top-0 end-0 p-10 opacity-10 text-orange-500 pointer-events-none">
                         <AlertTriangle size={140} />
                     </div>

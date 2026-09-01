@@ -71,12 +71,12 @@ export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ on
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 min-w-0 overflow-x-clip">
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
                         {t.dashboard.merchant.menu.prefsAndNotifications}
                     </h1>
                     <p className="text-white/50 text-sm">
@@ -97,17 +97,17 @@ export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ on
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl w-fit border border-white/10">
+            <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl w-full sm:w-fit border border-white/10 overflow-x-auto shrink-0 min-h-[44px]">
                 <button
                     onClick={() => setActiveTab('notifications')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'notifications' ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' : 'text-white/50 hover:text-white'}`}
+                    className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 min-h-[44px] rounded-xl text-sm font-bold transition-all whitespace-nowrap shrink-0 ${activeTab === 'notifications' ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' : 'text-white/50 hover:text-white'}`}
                 >
                     <Bell size={18} />
                     {t.dashboard.merchant.notifications.title}
                 </button>
                 <button
                     onClick={() => setActiveTab('prefs')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'prefs' ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' : 'text-white/50 hover:text-white'}`}
+                    className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 min-h-[44px] rounded-xl text-sm font-bold transition-all whitespace-nowrap shrink-0 ${activeTab === 'prefs' ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' : 'text-white/50 hover:text-white'}`}
                 >
                     <Settings size={18} />
                     {isAr ? 'التفضيلات' : 'Preferences'}

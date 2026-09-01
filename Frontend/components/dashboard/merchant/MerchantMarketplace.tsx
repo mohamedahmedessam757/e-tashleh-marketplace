@@ -120,7 +120,7 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
     // Removed old filters array & CardTimer component
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 min-w-0 overflow-x-clip">
             {isBiddingRestricted && (
                 <GlassCard className="bg-red-500/10 border-red-500/30 p-4 flex items-start gap-3">
                     <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
@@ -146,13 +146,13 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
             )}
             {/* Visibility Restriction Transparency Banner [2026 Governance] */}
             {visibilityRestricted && visibilityRate < 100 && (
-                <GlassCard className="bg-blue-500/10 border-blue-500/20 p-5 flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
+                <GlassCard className="bg-blue-500/10 border-blue-500/20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                         <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
                             <Shield size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-white mb-1">
+                            <h3 className="text-base sm:text-lg font-bold text-white mb-1">
                                 {isAr ? 'تم تطبيق تحسين الرؤية' : 'Visibility Optimization Applied'}
                             </h3>
                             <p className="text-white/60 text-sm max-w-2xl">
@@ -185,7 +185,7 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
             {/* Header & Filter Bar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-1">{t.dashboard.merchant.marketplace.filterTitle}</h1>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">{t.dashboard.merchant.marketplace.filterTitle}</h1>
                     <p className="text-white/50 text-sm">
                         {isAr ? 'تصفح طلبات العملاء وقدم عروضك المنافسة' : 'Browse customer requests and submit competitive offers'}
                     </p>
@@ -206,12 +206,12 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
             </div>
 
             {/* Dynamic Filter Tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 -mx-1 px-1">
                 {dynamicFilters.map(f => (
                     <button
                         key={f.id}
                         onClick={() => setActiveFilter(f.id)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap border ${activeFilter === f.id ? 'bg-gold-500 text-white border-gold-400' : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/5'}`}
+                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-colors whitespace-nowrap border shrink-0 ${activeFilter === f.id ? 'bg-gold-500 text-white border-gold-400' : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/5'}`}
                     >
                         {f.label}
                     </button>

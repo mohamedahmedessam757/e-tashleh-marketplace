@@ -113,7 +113,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
     shippingLabel: string;
 }) {
     return (
-        <div className="bg-[#12110F] rounded-3xl border border-gold-500/20 p-6 relative overflow-hidden shadow-2xl">
+        <div className="bg-[#12110F] rounded-3xl border border-gold-500/20 p-4 sm:p-6 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-50" />
             <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500 shadow-lg shadow-gold-500/5">
@@ -159,7 +159,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
                     </div>
                     <div className="flex items-baseline gap-2">
                         <span
-                            className={`text-4xl font-black text-white font-mono tracking-tighter transition-opacity ${isPriceSyncing ? 'opacity-70' : 'opacity-100'}`}
+                            className={`text-2xl sm:text-3xl md:text-4xl font-black text-white font-mono tracking-tighter transition-opacity ${isPriceSyncing ? 'opacity-70' : 'opacity-100'}`}
                         >
                             {calculations.finalPrice.toLocaleString()}
                         </span>
@@ -689,14 +689,14 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85"
+                className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85"
             >
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="bg-[#1A1814] border border-gold-500/20 rounded-2xl w-full max-w-5xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[90vh] overflow-hidden"
+                    className="bg-[#1A1814] border border-gold-500/20 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[92vh] overflow-hidden"
                 >
                     {/* Offer Limit Warning Banner [2026 Governance] */}
                     {offerLimit !== -1 && dailyOfferCount >= offerLimit && (
@@ -835,7 +835,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
 
                             {/* LEFT SIDE: Order Details & Live Calc */}
-                            <div className="w-full lg:w-[45%] p-6 bg-white/5 border-b lg:border-b-0 lg:border-r border-white/10 overflow-y-auto overscroll-contain [contain:layout]">
+                            <div className="w-full lg:w-[45%] p-4 sm:p-6 md:p-8 bg-white/5 border-b lg:border-b-0 lg:border-e border-white/10 overflow-y-auto overscroll-contain [contain:layout] min-w-0">
 
                                 {/* Active Part Name Header */}
                                 <div className="mb-4 px-3 py-2.5 bg-gold-500/10 border border-gold-500/20 rounded-xl">
@@ -906,9 +906,9 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
 
                             {/* RIGHT SIDE: Offer Form */}
                             <div className="w-full lg:w-[55%] flex flex-col min-h-0 bg-[#1A1814] overflow-y-auto overscroll-contain [contain:layout]">
-                                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                                    <div>
-                                        <h3 className="text-xl font-black text-white uppercase tracking-tight">{t.dashboard.merchant.offerModal.yourOffer}</h3>
+                                <div className="p-4 sm:p-6 md:p-8 border-b border-white/5 flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-black/20 min-w-0">
+                                    <div className="min-w-0">
+                                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">{t.dashboard.merchant.offerModal.yourOffer}</h3>
                                         <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest mt-1">{isAr ? 'أدخل تفاصيل عرضك بدقة' : 'Enter your offer details with precision'}</p>
                                     </div>
                                     {!isMultiPart && (
@@ -921,7 +921,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                     )}
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+                                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 min-h-0">
 
                                     {/* SECTION 1: PRICE & LOGISTICS */}
                                     <div className="space-y-4">
@@ -937,7 +937,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                     {t.dashboard.merchant.offerModal.priceLabel} <span className="text-gold-500">*</span>
                                                 </label>
                                                 <div className="relative group">
-                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-transform group-focus-within:scale-110">
+                                                    <div className="absolute inset-y-0 start-0 ps-4 flex items-center pointer-events-none transition-transform group-focus-within:scale-110">
                                                         <span className="font-black text-xs text-gold-500/40 group-focus-within:text-gold-500">AED</span>
                                                     </div>
                                                     <input
@@ -946,7 +946,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                         min="1"
                                                         value={activeForm.basePrice}
                                                         onChange={(e) => updateField('basePrice', e.target.value)}
-                                                        className={`w-full bg-black/60 border rounded-2xl py-4 pl-14 pr-4 text-white font-black text-xl outline-none transition-all placeholder-white/5 ${error && !activeForm.basePrice ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/5 hover:border-white/10 focus:border-gold-500/50 focus:bg-gold-500/5 focus:shadow-[0_0_25px_rgba(212,175,55,0.05)]'}`}
+                                                        className={`w-full bg-black/60 border rounded-2xl py-4 ps-14 pe-4 text-white font-black text-xl outline-none transition-all placeholder-white/5 ${error && !activeForm.basePrice ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/5 hover:border-white/10 focus:border-gold-500/50 focus:bg-gold-500/5 focus:shadow-[0_0_25px_rgba(212,175,55,0.05)]'}`}
                                                         placeholder="0.00"
                                                     />
                                                 </div>
@@ -968,7 +968,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                             </option>
                                                         ))}
                                                     </select>
-                                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-white/20 group-hover:text-gold-500 transition-colors">
+                                                    <div className="absolute inset-y-0 end-4 flex items-center pointer-events-none text-white/20 group-hover:text-gold-500 transition-colors">
                                                         <ChevronDown size={16} />
                                                     </div>
                                                 </div>
@@ -982,7 +982,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                         if (!activeType?.hasCylinders) return null;
 
                                         return (
-                                            <div className="p-6 rounded-3xl bg-gold-500/5 border border-gold-500/20 shadow-inner">
+                                            <div className="p-4 sm:p-6 rounded-3xl bg-gold-500/5 border border-gold-500/20 shadow-inner">
                                                 <label className="block text-[10px] font-black text-gold-500 mb-4 uppercase tracking-[0.2em]">
                                                     {offersT?.cylinderCount || (isAr ? 'عدد السلندرات' : 'Cylinder Count')}
                                                 </label>
@@ -1030,7 +1030,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                             className={`w-full bg-black/40 border rounded-xl py-3 px-4 text-white font-mono outline-none transition-all placeholder-white/10 ${error && !activeForm.weight ? 'border-red-500 ring-2 ring-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.5)] focus:border-red-500' : 'border-white/10 focus:border-gold-500'}`}
                                                             placeholder="0.0"
                                                         />
-                                                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-white/30 text-xs">
+                                                        <div className="absolute inset-y-0 end-0 pe-4 flex items-center pointer-events-none text-white/30 text-xs">
                                                             {t.dashboard.merchant.offerModal.weightUnit}
                                                         </div>
                                                     </div>
@@ -1197,18 +1197,18 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                     )}
 
                                     {/* ENHANCED FOOTER ACTIONS */}
-                                    <div className="pt-8 mt-8 border-t border-white/5 flex flex-col sm:flex-row gap-4">
+                                    <div className="pt-8 mt-8 border-t border-white/5 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
                                         <button
                                             type="button"
                                             onClick={onClose}
-                                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl font-black transition-all border border-white/5 uppercase tracking-widest text-[10px]"
+                                            className="px-8 py-4 min-h-[44px] bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl font-black transition-all border border-white/5 uppercase tracking-widest text-[10px]"
                                         >
                                             {t.common.cancel || (isAr ? "إلغاء" : "Cancel")}
                                         </button>
                                         <button
                                             onClick={handleSubmit}
                                             disabled={isSubmitting || (offerLimit !== -1 && dailyOfferCount >= offerLimit)}
-                                            className={`flex-1 relative group overflow-hidden bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black font-black py-4 rounded-2xl transition-all shadow-xl shadow-gold-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
+                                            className={`flex-1 relative group overflow-hidden bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black font-black py-4 min-h-[44px] rounded-2xl transition-all shadow-xl shadow-gold-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                             {isSubmitting ? (
@@ -1245,10 +1245,10 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
             {/* Lightbox Overlay */}
             {activeMedia && (
                 <div
-                    className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90"
+                    className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/90"
                     onClick={() => setActiveMedia(null)}
                 >
-                    <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
+                    <div className="relative max-w-4xl w-full max-h-[92vh] flex flex-col items-center">
                         {activeMedia.type === 'video' ? (
                             <video
                                 src={activeMedia.url}

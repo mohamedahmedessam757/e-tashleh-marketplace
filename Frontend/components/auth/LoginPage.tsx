@@ -312,7 +312,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
       {redirectLabel && (
         <div className="bg-gold-500/10 border border-gold-500/30 text-gold-300 p-4 rounded-xl text-sm text-center">
           {redirectLabel}
@@ -335,17 +335,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       )}
       {/* Tabs - Only show if NO forced role */}
       {!forcedRole && (
-        <div className="flex p-1 bg-black/20 rounded-xl">
+        <div className="flex p-1 bg-black/20 rounded-xl overflow-x-auto shrink-0 min-h-[44px]">
           <button
             onClick={() => setActiveTab('customer')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'customer' ? 'bg-gold-500 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
+            className={`flex-1 py-2.5 min-h-[44px] rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'customer' ? 'bg-gold-500 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
           >
             <User size={16} />
             {t.auth.tabs.customer}
           </button>
           <button
             onClick={() => setActiveTab('merchant')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'merchant' ? 'bg-gold-500 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
+            className={`flex-1 py-2.5 min-h-[44px] rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'merchant' ? 'bg-gold-500 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
           >
             <Store size={16} />
             {t.auth.tabs.merchant}
@@ -354,7 +354,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       )}
 
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
           {forcedRole === 'merchant' ? t.auth.tabs.merchant :
             forcedRole === 'customer' ? t.auth.tabs.customer :
               t.auth.login.title}
@@ -518,7 +518,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <button
           type="submit"
           disabled={isLoading || (activationMethod === 'whatsapp' ? (phone.length !== 9 || !phone.startsWith('5')) : (!loginEmail || !loginEmail.includes('@')))}
-          className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold text-lg shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-4 min-h-[44px] bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold text-lg shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />

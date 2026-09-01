@@ -49,23 +49,23 @@ export const InfoCenter: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">{t.dashboard.infoCenter.title}</h1>
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-w-0 overflow-x-clip">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">{t.dashboard.infoCenter.title}</h1>
           <p className="text-white/50 text-sm">{t.dashboard.infoCenter.subtitle}</p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 min-w-0">
         {/* Sidebar Tabs */}
-        <div className="lg:col-span-1 space-y-2">
+        <div className="lg:col-span-1 flex lg:flex-col gap-2 overflow-x-auto pb-1 lg:pb-0 -mx-1 px-1 scrollbar-thin shrink-0 min-h-[44px]">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                w-full flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-xl transition-all whitespace-nowrap lg:whitespace-normal shrink-0 lg:shrink lg:w-full
                 ${activeTab === tab.id
                   ? 'bg-gold-500 text-white shadow-lg shadow-gold-500/20'
                   : 'text-white/50 hover:bg-white/5 hover:text-white'}
@@ -78,8 +78,8 @@ export const InfoCenter: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="lg:col-span-3">
-          <GlassCard className="min-h-0 md:min-h-[500px] p-4 md:p-10 bg-[#1A1814]/80 min-w-0">
+        <div className="lg:col-span-3 min-w-0">
+          <GlassCard className="min-h-0 md:min-h-[500px] p-4 sm:p-6 md:p-10 bg-[#1A1814]/80 min-w-0 overflow-hidden">
             <AnimatePresence mode="wait">
 
               {/* ABOUT */}

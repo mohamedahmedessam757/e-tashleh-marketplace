@@ -813,7 +813,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
     if (!order) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+            <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center h-full">
                 <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
                     <AlertTriangle size={32} className="text-red-500" />
                 </div>
@@ -891,7 +891,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const expired = isOrderSlaExpired(order);
 
     return (
-        <motion.div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 lg:pb-0">
+        <motion.div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-20 lg:pb-0 min-w-0 overflow-x-clip">
 
             {isBlockedFromOrder && (
                 <motion.div
@@ -945,17 +945,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             )}
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <button
                         onClick={onBack}
                         className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors"
                     >
                         <ArrowIcon size={20} />
                     </button>
-                    <div>
-                        <div className="flex flex-wrap items-center gap-3 mb-1">
-                            <h1 className="text-2xl md:text-3xl font-bold text-white">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
                                 {isAr ? 'تفاصيل طلب العميل' : 'Customer Request Details'}
                             </h1>
                             <Badge status={(displayStatus || order.status) as StatusType} />
@@ -982,7 +982,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 />
                             </div>
                         )}
-                        <p className="text-white/50 text-sm flex items-center gap-4">
+                        <p className="text-white/50 text-sm flex flex-wrap items-center gap-2 sm:gap-4 min-w-0">
                             <span className="flex items-center gap-1"><Calendar size={14} /> {order.date}</span>
                             <span className="text-white/20 px-2">•</span>
                             <span className="flex items-center gap-1 font-mono tracking-wide text-gold-400 text-xs bg-gold-400/5 px-2 py-0.5 rounded-md border border-gold-400/10">
@@ -994,7 +994,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 </div>
 
                 {/* Status Badge & Timer */}
-                <div className="flex flex-col md:flex-row items-stretch gap-4 bg-white/5 px-4 py-3 rounded-xl border border-white/10 w-full md:w-auto">
+                <div className="flex flex-col md:flex-row flex-wrap items-stretch gap-2 sm:gap-4 bg-white/5 px-4 py-3 rounded-xl border border-white/10 w-full md:w-auto min-w-0">
                     <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
                     {(() => {
                         if (order.status === 'NON_MATCHING') {
@@ -1216,7 +1216,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             )}
 
             {/* MAIN CONTENT GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 min-w-0">
 
                 {/* LEFT COLUMN: Request Intel */}
                 <div className="lg:col-span-2 space-y-6">
@@ -1243,10 +1243,10 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     )}
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-4 border-b border-white/10 pb-2 overflow-x-auto hide-scrollbar">
+                    <div className="flex gap-2 sm:gap-3 border-b border-white/10 pb-2 overflow-x-auto shrink-0 min-h-[44px] hide-scrollbar">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap ${
+                            className={`px-4 py-2 min-h-[44px] text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                                 activeTab === 'overview' ? 'bg-gold-500 text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'
                             }`}
                         >
@@ -3149,13 +3149,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#1A1814] border border-gold-500/30 rounded-3xl p-6 shadow-2xl relative"
+                            className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#1A1814] border border-gold-500/30 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl relative"
                         >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-[50px] rounded-full pointer-events-none" />
                             <div className="flex flex-col items-center text-center space-y-4 relative z-10">
@@ -3215,13 +3215,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#1A1814] border border-amber-500/30 rounded-3xl p-6 shadow-2xl relative"
+                            className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#1A1814] border border-amber-500/30 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl relative"
                         >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[50px] rounded-full pointer-events-none" />
                             <div className="flex flex-col items-center text-center space-y-4 relative z-10">
@@ -3295,7 +3295,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}
@@ -3352,7 +3352,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}

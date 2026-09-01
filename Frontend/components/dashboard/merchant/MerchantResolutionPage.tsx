@@ -130,7 +130,7 @@ export const MerchantResolutionPage: React.FC<MerchantResolutionPageProps> = ({ 
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-5 sm:space-y-8 pb-12 min-w-0 overflow-x-clip">
       <MerchantShippingPayAlert cases={cases} onNavigate={onNavigate!} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -138,7 +138,7 @@ export const MerchantResolutionPage: React.FC<MerchantResolutionPageProps> = ({ 
           initial={{ opacity: 0, x: isAr ? 20 : -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h1 className="text-3xl md:text-4xl font-black text-white mb-2 flex items-center gap-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-2 flex flex-wrap items-center gap-2 sm:gap-4 min-w-0">
             <div className="w-12 h-12 bg-gold-500/10 rounded-2xl flex items-center justify-center border border-gold-500/20">
               <Scale className="text-gold-400" size={28} />
             </div>
