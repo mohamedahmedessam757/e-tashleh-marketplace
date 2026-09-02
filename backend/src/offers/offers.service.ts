@@ -66,21 +66,8 @@ export class OffersService {
             );
         }
 
-        // Part-level lock: any cancel/withdraw by this store blocks re-bid on that part
-        const partLock = await this.prisma.offer.findFirst({
-            where: {
-                storeId: store.id,
-                isWithdrawn: true,
-                ...(createOfferDto.orderPartId
-                    ? { orderPartId: createOfferDto.orderPartId }
-                    : { orderId: orderInfo.id, orderPartId: null }),
-            },
-        });
-        if (partLock) {
-            throw new BadRequestException(
-                'You cancelled your offer on this part and cannot submit another offer on it.',
-            );
-        }
+        // Cancel/delete records a violation but does NOT lock the part — merchant may re-bid
+        // until offersStopAt (final hour before reveal).
 
         // 2. Validate max 10 offers per part (if part-level offer) — active only
         if (createOfferDto.orderPartId) {
@@ -232,14 +219,14 @@ export class OffersService {
                 metadata: { orderId: orderInfo.id, offerId: offer.id }
             }).catch(() => {});
 
-            // 8. Notify Merchant about free edit window (Governance Info)
+            // 8. Notify Merchant about edit/cancel window (Governance Info)
             this.notificationsService.create({
                 recipientId: userId,
                 recipientRole: 'VENDOR',
                 titleAr: 'تم إرسال عرضك بنجاح ✅',
                 titleEn: 'Offer Submitted Successfully ✅',
-                messageAr: 'لديك حتى 3 ساعات لتعديل عرضك مجاناً (أو حتى ساعة قبل كشف العروض أيهما أقرب)، أو حذفه (يعد ضمن الحد الشهري مع إمكانية إعادة التقديم على نفس القطعة). بعد المهلة يمكنك الانسحاب الطوعي حتى ساعة قبل الكشف — الانسحاب يمنع إعادة التقديم على نفس القطعة.',
-                messageEn: 'You have up to 3 hours to edit for free (or until 1 hour before reveal, whichever is sooner), or delete (counts toward the monthly limit; you may re-bid on the same part). After that, voluntary withdraw until 1 hour before reveal — withdraw blocks re-bidding on that part only.',
+                messageAr: 'يمكنك تعديل أو إلغاء عرضك حتى ساعة قبل كشف العروض للعميل. إلغاء العرض يسجّل مخالفة ويُحسب ضمن الحد الشهري، ويمكنك تقديم عرض جديد على نفس القطعة قبل الساعة الأخيرة.',
+                messageEn: 'You can edit or cancel your offer until 1 hour before offers are revealed. Cancelling records a violation and counts toward the monthly limit; you may submit a new offer on the same part before the final hour.',
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${orderInfo.id}`
             }).catch(() => {});
@@ -298,12 +285,9 @@ export class OffersService {
             }),
         ]);
 
-        // Any merchant cancel/withdraw locks that part from re-bidding
-        const blockedPartIds = allWithdrawn
-            .map((o) => o.orderPartId)
-            .filter((id): id is string => Boolean(id));
-        // Legacy whole-order block when a withdrawn offer had no part id
-        const legacyWholeOrderBlock = allWithdrawn.some((o) => !o.orderPartId);
+        // Cancel no longer locks parts for re-bidding (violation still recorded on cancel).
+        const blockedPartIds: string[] = [];
+        const legacyWholeOrderBlock = false;
 
         const partDeletionCounts: Record<string, number> = {};
         for (const w of allWithdrawn) {
@@ -580,8 +564,8 @@ export class OffersService {
 
     /**
      * Cancel & delete offer during collection window (until offersStopAt).
-     * Issues VOLUNTARY_OFFER_WITHDRAW violation, locks the part from re-bidding,
-     * and counts toward the monthly deletion quota.
+     * Issues VOLUNTARY_OFFER_WITHDRAW violation and counts toward monthly deletion quota.
+     * Does NOT lock the part — merchant may re-bid until offersStopAt.
      */
     async cancelByVendor(userId: string, offerId: string) {
         const store = await this.storesService.findMyStore(userId);
@@ -739,8 +723,8 @@ export class OffersService {
                 recipientRole: 'VENDOR',
                 titleAr: 'تم إلغاء وحذف العرض وتسجيل مخالفة',
                 titleEn: 'Offer Cancelled — Violation Recorded',
-                messageAr: `تم إلغاء وحذف عرضك على الطلب #${existing.order.orderNumber}. تم تسجيل مخالفة على المتجر ولن تتمكن من تقديم عرض على هذه القطعة مرة أخرى.`,
-                messageEn: `Your offer on request #${existing.order.orderNumber} was cancelled and deleted. A store violation was recorded and you cannot re-bid on that part.`,
+                messageAr: `تم إلغاء وحذف عرضك على الطلب #${existing.order.orderNumber}. تم تسجيل مخالفة على المتجر. يمكنك تقديم عرض جديد على نفس القطعة طالما لم تبدأ الساعة الأخيرة قبل كشف العروض.`,
+                messageEn: `Your offer on request #${existing.order.orderNumber} was cancelled and deleted. A store violation was recorded. You may submit a new offer on the same part until the final hour before reveal.`,
                 type: 'system_alert',
                 link: `/dashboard/merchant/orders/${existing.orderId}`,
             })

@@ -482,9 +482,9 @@ export const merchant = {
       cancelConfirmDialog: {
         title: 'هل أنت متأكد من رغبتك في إلغاء وحذف العرض؟',
         bullets: [
-          'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
           'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
-          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.'
+          'يمكنك تقديم عرض جديد على نفس القطعة طالما لم تبدأ الساعة الأخيرة قبل كشف العروض.',
+          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف أو تعديل العرض.'
         ],
         confirm: 'تأكيد إلغاء وحذف العرض',
         cancel: 'تراجع (الاحتفاظ بالعرض)'
@@ -494,18 +494,18 @@ export const merchant = {
       voluntaryWithdrawDialog: {
         title: 'هل أنت متأكد من رغبتك في إلغاء وحذف العرض؟',
         bullets: [
-          'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
           'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
-          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.'
+          'يمكنك تقديم عرض جديد على نفس القطعة طالما لم تبدأ الساعة الأخيرة قبل كشف العروض.',
+          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف أو تعديل العرض.'
         ],
         confirm: 'تأكيد إلغاء وحذف العرض',
         cancel: 'تراجع (الاحتفاظ بالعرض)'
       },
-      blockedFromOrder: 'لقد ألغيت عرضك على هذه القطعة ولا يمكنك تقديم عرض جديد عليها.',
+      blockedFromOrder: 'لا يمكنك التقديم على هذا الطلب حالياً.',
       biddingStopped: 'توقفت المزايدة — الساعة الأخيرة قبل كشف العروض',
       governance: {
         editWindow: 'يمكنك تعديل أو إلغاء عرضك حتى ساعة قبل كشف العروض للعميل.',
-        voluntaryWindow: 'إلغاء وحذف العرض يسجّل مخالفة ويمنعك من التقديم على نفس القطعة مرة أخرى.',
+        voluntaryWindow: 'إلغاء وحذف العرض يسجّل مخالفة، ويمكنك تقديم عرض جديد على نفس القطعة قبل الساعة الأخيرة.',
         cutoff: 'يتوقف النظام عن استقبال العروض والتعديل والحذف قبل ساعة من نهاية جمع العروض (عند الساعة 23 لطلب 24 ساعة).'
       }
     },
@@ -1353,9 +1353,9 @@ export const merchant = {
       cancelConfirmDialog: {
         title: 'Are you sure you want to cancel and delete this offer?',
         bullets: [
-          'You will not be able to submit a new offer on the same part.',
           'A violation will be recorded against the store for cancelling the offer.',
-          'In the final hour before reveal you will no longer be able to delete the offer.'
+          'You may submit a new offer on the same part until the final hour before reveal.',
+          'In the final hour before reveal you will no longer be able to edit or delete the offer.'
         ],
         confirm: 'Confirm Cancel & Delete',
         cancel: 'Keep Offer'
@@ -1365,18 +1365,18 @@ export const merchant = {
       voluntaryWithdrawDialog: {
         title: 'Are you sure you want to cancel and delete this offer?',
         bullets: [
-          'You will not be able to submit a new offer on the same part.',
           'A violation will be recorded against the store for cancelling the offer.',
-          'In the final hour before reveal you will no longer be able to delete the offer.'
+          'You may submit a new offer on the same part until the final hour before reveal.',
+          'In the final hour before reveal you will no longer be able to edit or delete the offer.'
         ],
         confirm: 'Confirm Cancel & Delete',
         cancel: 'Keep Offer'
       },
-      blockedFromOrder: 'You cancelled your offer on this part and cannot submit a new offer on it.',
+      blockedFromOrder: 'You cannot bid on this request right now.',
       biddingStopped: 'Bidding closed — final hour before offer reveal',
       governance: {
         editWindow: 'You can edit or cancel your offer until 1 hour before offers are revealed to the customer.',
-        voluntaryWindow: 'Cancelling and deleting an offer records a violation and blocks you from re-bidding on the same part.',
+        voluntaryWindow: 'Cancelling and deleting an offer records a violation; you may re-bid on the same part before the final hour.',
         cutoff: 'The system stops accepting offers, edits, and deletes 1 hour before collection ends (hour 23 for a 24-hour request).'
       }
     },

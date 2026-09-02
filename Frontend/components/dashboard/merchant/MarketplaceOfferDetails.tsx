@@ -1537,8 +1537,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                 {blockedPartIds.includes(part.id) && (
                                                     <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
                                                         {isAr
-                                                            ? 'انسحاب طوعي — لا إعادة تقديم على القطعة'
-                                                            : 'Voluntarily withdrawn — cannot re-bid on this part'}
+                                                            ? 'تم إلغاء عرض سابق على هذه القطعة'
+                                                            : 'A previous offer on this part was cancelled'}
                                                     </span>
                                                 )}
                                             </div>
@@ -3224,14 +3224,14 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                         exploreOfferT?.cancelConfirmDialog?.bullets ||
                                         (isAr
                                             ? [
-                                                  'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
                                                   'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
-                                                  'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.',
+                                                  'يمكنك تقديم عرض جديد على نفس القطعة طالما لم تبدأ الساعة الأخيرة قبل كشف العروض.',
+                                                  'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف أو تعديل العرض.',
                                               ]
                                             : [
-                                                  'You will not be able to submit a new offer on the same part.',
                                                   'A violation will be recorded against the store for cancelling the offer.',
-                                                  'In the final hour before reveal you will no longer be able to delete the offer.',
+                                                  'You may submit a new offer on the same part until the final hour before reveal.',
+                                                  'In the final hour before reveal you will no longer be able to edit or delete the offer.',
                                               ])
                                     ).map((line: string, idx: number) => (
                                         <li key={idx}>{line}</li>
