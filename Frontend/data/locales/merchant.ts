@@ -469,32 +469,44 @@ export const merchant = {
       }
     },
     exploreOffer: {
-      freeEditWindow: 'مهلة التعديل المجاني',
+      freeEditWindow: 'مهلة التعديل وإلغاء العرض',
+      actionWindowCountdown: 'المتبقي للتعديل أو إلغاء العرض',
       editOfferBtn: 'تعديل العرض',
       cancelDeleteOfferBtn: 'إلغاء وحذف العرض',
       editConfirmDialog: {
         title: 'متابعة تعديل العرض؟',
-        body: 'يمكنك تعديل عرضك خلال 3 ساعات من وقت تقديمه، أو حتى ساعة قبل كشف العروض للعميل (أيهما أقرب).\n\nبعد انتهاء مهلة التعديل لن يكون التعديل متاحًا، ويمكنك الانسحاب الطوعي إن بقي الوقت قبل إيقاف التقديم.\n\nهل ترغب في متابعة تعديل العرض؟',
+        body: 'يمكنك تعديل عرضك في أي وقت حتى ساعة قبل كشف العروض للعميل.\n\nفي الساعة الأخيرة يتوقف التعديل والإلغاء وتقديم العروض الجديدة.\n\nهل ترغب في متابعة تعديل العرض؟',
         confirm: 'نعم، متابعة التعديل',
         cancel: 'إلغاء'
       },
-      voluntaryWithdrawBtn: 'إلغاء والانسحاب من الطلب',
-      voluntaryWithdrawCountdown: 'المتبقي للانسحاب من الطلب',
-      voluntaryWithdrawDialog: {
-        title: 'هل أنت متأكد من رغبتك في حذف العرض؟',
+      cancelConfirmDialog: {
+        title: 'هل أنت متأكد من رغبتك في إلغاء وحذف العرض؟',
         bullets: [
-          'لن تتمكن من تقديم عرض جديد على نفس الطلب.',
+          'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
           'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
-          'بعد مرور 23 ساعة لن يكون بإمكانك حذف العرض.'
+          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.'
         ],
-        confirm: 'تأكيد حذف العرض',
+        confirm: 'تأكيد إلغاء وحذف العرض',
         cancel: 'تراجع (الاحتفاظ بالعرض)'
       },
-      blockedFromOrder: 'لقد انسحبت من هذا الطلب ولا يمكنك تقديم عرض جديد عليه.',
+      voluntaryWithdrawBtn: 'إلغاء وحذف العرض',
+      voluntaryWithdrawCountdown: 'المتبقي للتعديل أو إلغاء العرض',
+      voluntaryWithdrawDialog: {
+        title: 'هل أنت متأكد من رغبتك في إلغاء وحذف العرض؟',
+        bullets: [
+          'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
+          'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
+          'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.'
+        ],
+        confirm: 'تأكيد إلغاء وحذف العرض',
+        cancel: 'تراجع (الاحتفاظ بالعرض)'
+      },
+      blockedFromOrder: 'لقد ألغيت عرضك على هذه القطعة ولا يمكنك تقديم عرض جديد عليها.',
+      biddingStopped: 'توقفت المزايدة — الساعة الأخيرة قبل كشف العروض',
       governance: {
-        editWindow: 'لديك حتى 3 ساعات لتعديل أو حذف عرضك بعد الإرسال (أو حتى ساعة قبل كشف العروض أيهما أقرب).',
-        voluntaryWindow: 'بعد انتهاء مهلة التعديل الحر يمكنك الانسحاب الطوعي حتى ساعة قبل كشف العروض للعميل. الانسحاب يسجّل مخالفة ويمنعك من التقديم على هذه القطعة.',
-        cutoff: 'يتوقف النظام عن استقبال العروض والتعديل والحذف والانسحاب قبل ساعة من نهاية جمع العروض (عند الساعة 23 لطلب 24 ساعة).'
+        editWindow: 'يمكنك تعديل أو إلغاء عرضك حتى ساعة قبل كشف العروض للعميل.',
+        voluntaryWindow: 'إلغاء وحذف العرض يسجّل مخالفة ويمنعك من التقديم على نفس القطعة مرة أخرى.',
+        cutoff: 'يتوقف النظام عن استقبال العروض والتعديل والحذف قبل ساعة من نهاية جمع العروض (عند الساعة 23 لطلب 24 ساعة).'
       }
     },
     menu: {
@@ -1328,32 +1340,44 @@ export const merchant = {
       }
     },
     exploreOffer: {
-      freeEditWindow: 'Free Edit Window',
+      freeEditWindow: 'Edit & cancel window',
+      actionWindowCountdown: 'Time left to edit or cancel offer',
       editOfferBtn: 'Edit Offer',
       cancelDeleteOfferBtn: 'Cancel & Delete Offer',
       editConfirmDialog: {
         title: 'Continue editing this offer?',
-        body: 'You can edit your offer within 3 hours of submitting it, or until 1 hour before offers are revealed to the customer (whichever comes first).\n\nAfter the free edit window ends, editing is no longer available. You may voluntarily withdraw if time remains before bidding stops.\n\nDo you want to continue editing the offer?',
+        body: 'You can edit your offer anytime until 1 hour before offers are revealed to the customer.\n\nIn the final hour, editing, cancelling, and new submissions are closed.\n\nDo you want to continue editing the offer?',
         confirm: 'Yes, continue editing',
         cancel: 'Cancel'
       },
-      voluntaryWithdrawBtn: 'Cancel & Withdraw from Request',
-      voluntaryWithdrawCountdown: 'Time left to withdraw from request',
-      voluntaryWithdrawDialog: {
-        title: 'Are you sure you want to delete this offer?',
+      cancelConfirmDialog: {
+        title: 'Are you sure you want to cancel and delete this offer?',
         bullets: [
-          'You will not be able to submit a new offer on the same request.',
+          'You will not be able to submit a new offer on the same part.',
           'A violation will be recorded against the store for cancelling the offer.',
-          'After 23 hours you will no longer be able to delete the offer.'
+          'In the final hour before reveal you will no longer be able to delete the offer.'
         ],
-        confirm: 'Confirm Delete Offer',
+        confirm: 'Confirm Cancel & Delete',
         cancel: 'Keep Offer'
       },
-      blockedFromOrder: 'You have withdrawn from this request and cannot submit a new offer on it.',
+      voluntaryWithdrawBtn: 'Cancel & Delete Offer',
+      voluntaryWithdrawCountdown: 'Time left to edit or cancel offer',
+      voluntaryWithdrawDialog: {
+        title: 'Are you sure you want to cancel and delete this offer?',
+        bullets: [
+          'You will not be able to submit a new offer on the same part.',
+          'A violation will be recorded against the store for cancelling the offer.',
+          'In the final hour before reveal you will no longer be able to delete the offer.'
+        ],
+        confirm: 'Confirm Cancel & Delete',
+        cancel: 'Keep Offer'
+      },
+      blockedFromOrder: 'You cancelled your offer on this part and cannot submit a new offer on it.',
+      biddingStopped: 'Bidding closed — final hour before offer reveal',
       governance: {
-        editWindow: 'You have up to 3 hours to edit or delete your offer after submission (or until 1 hour before reveal, whichever is sooner).',
-        voluntaryWindow: 'After the free edit window you may voluntarily withdraw until 1 hour before offer reveal. Withdrawal records a violation and blocks you from this part.',
-        cutoff: 'The system stops accepting offers, edits, deletes, and withdrawals 1 hour before collection ends (hour 23 for a 24-hour request).'
+        editWindow: 'You can edit or cancel your offer until 1 hour before offers are revealed to the customer.',
+        voluntaryWindow: 'Cancelling and deleting an offer records a violation and blocks you from re-bidding on the same part.',
+        cutoff: 'The system stops accepting offers, edits, and deletes 1 hour before collection ends (hour 23 for a 24-hour request).'
       }
     },
     menu: {

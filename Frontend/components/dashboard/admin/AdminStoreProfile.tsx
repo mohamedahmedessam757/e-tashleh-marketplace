@@ -68,7 +68,8 @@ function getModificationKindLabel(kind: string, isAr: boolean) {
     const labels: Record<string, { ar: string; en: string; color: string }> = {
         EDIT: { ar: 'تعديل عرض', en: 'Offer edit', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
         CANCEL: { ar: 'إلغاء عرض (نافذة مجانية)', en: 'Offer cancelled (free window)', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-        VOLUNTARY_WITHDRAW: { ar: 'انسحاب طوعي', en: 'Voluntary withdrawal', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+        VOLUNTARY_WITHDRAW: { ar: 'إلغاء وحذف العرض', en: 'Offer cancellation & deletion', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+        CANCEL: { ar: 'إلغاء وحذف العرض', en: 'Offer cancellation & deletion', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
         VIOLATION_WITHDRAW: { ar: 'سحب عرض (حوكمة)', en: 'Governance withdrawal', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
     };
     const entry = labels[kind] || { ar: kind, en: kind, color: 'text-white/60 bg-white/5 border-white/10' };

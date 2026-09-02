@@ -1,5 +1,5 @@
 /**
- * Server-side offer governance timing (source of truth for free-edit / voluntary / bidding stop).
+ * Server-side offer governance timing (source of truth for edit/cancel / bidding stop).
  */
 
 export interface OrderTimingContext {
@@ -8,11 +8,14 @@ export interface OrderTimingContext {
   offersStopAt?: Date | null;
 }
 
-/** Free edit/delete window after a merchant submits an offer (capped by offersStopAt). */
-export const FREE_EDIT_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+/**
+ * @deprecated Unused — edit/cancel window is now until offersStopAt (no fixed 3h free window).
+ * Kept only so accidental imports do not break builds.
+ */
+export const FREE_EDIT_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 /**
- * Stop create/edit/delete/voluntary this long before revealOffersAt.
+ * Stop create/edit/delete this long before revealOffersAt.
  * For a 24h collection window this is hour 23.
  */
 export const BIDDING_STOP_BEFORE_REVEAL_MS = 60 * 60 * 1000; // 1 hour
@@ -34,22 +37,23 @@ export function computeOffersStopAt(revealOffersAt: Date): Date {
 }
 
 /**
- * Free-edit deadline: offerCreatedAt + 3h, never past offersStopAt when known.
- * If offersStopAt is already in the past relative to offerCreatedAt, clamp to offerCreatedAt
- * (caller should have blocked create already).
+ * Edit/cancel deadline for an offer = order offersStopAt (1h before reveal).
+ * Falls back to offerCreatedAt when offersStopAt is unknown (caller should block create).
  */
 export function computeCanEditUntil(
   offerCreatedAt: Date,
   offersStopAt: Date | null | undefined,
 ): Date {
-  const freeEnd = new Date(offerCreatedAt.getTime() + FREE_EDIT_WINDOW_MS);
-  if (!offersStopAt) return freeEnd;
-  const stop = new Date(offersStopAt);
-  return freeEnd.getTime() <= stop.getTime() ? freeEnd : stop;
+  if (offersStopAt) {
+    const stop = new Date(offersStopAt);
+    // Never set canEditUntil before the offer was created
+    return stop.getTime() >= offerCreatedAt.getTime() ? stop : new Date(offerCreatedAt);
+  }
+  return new Date(offerCreatedAt);
 }
 
+/** End of merchant action window (create/edit/cancel) for an order. */
 export function getVoluntaryWithdrawEnd(order: OrderTimingContext): Date {
-  // Prefer persisted offersStopAt when present (matches create/renew formula).
   if (order.offersStopAt) {
     return new Date(order.offersStopAt);
   }

@@ -66,20 +66,19 @@ export class OffersService {
             );
         }
 
-        // Part-level lock: only voluntary withdraw blocks re-bid on that part (not free-window delete)
-        const voluntaryPartLock = await this.prisma.offer.findFirst({
+        // Part-level lock: any cancel/withdraw by this store blocks re-bid on that part
+        const partLock = await this.prisma.offer.findFirst({
             where: {
                 storeId: store.id,
                 isWithdrawn: true,
-                withdrawalType: 'voluntary',
                 ...(createOfferDto.orderPartId
                     ? { orderPartId: createOfferDto.orderPartId }
                     : { orderId: orderInfo.id, orderPartId: null }),
             },
         });
-        if (voluntaryPartLock) {
+        if (partLock) {
             throw new BadRequestException(
-                'You have voluntarily withdrawn from this part and cannot submit another offer on it.',
+                'You cancelled your offer on this part and cannot submit another offer on it.',
             );
         }
 
@@ -277,7 +276,7 @@ export class OffersService {
             return { activeOffers: [], isBlockedFromOrder: false, blockedPartIds: [] as string[] };
         }
 
-        const [activeOffers, voluntaryWithdrawn, allWithdrawn] = await Promise.all([
+        const [activeOffers, allWithdrawn] = await Promise.all([
             this.prisma.offer.findMany({
                 where: {
                     orderId,
@@ -294,25 +293,17 @@ export class OffersService {
                     orderId,
                     storeId: store.id,
                     isWithdrawn: true,
-                    withdrawalType: 'voluntary',
-                },
-                select: { orderPartId: true },
-            }),
-            this.prisma.offer.findMany({
-                where: {
-                    orderId,
-                    storeId: store.id,
-                    isWithdrawn: true,
                 },
                 select: { orderPartId: true, withdrawalType: true },
             }),
         ]);
 
-        const blockedPartIds = voluntaryWithdrawn
+        // Any merchant cancel/withdraw locks that part from re-bidding
+        const blockedPartIds = allWithdrawn
             .map((o) => o.orderPartId)
             .filter((id): id is string => Boolean(id));
-        // Legacy whole-order block only when voluntary withdraw had no part id
-        const legacyWholeOrderBlock = voluntaryWithdrawn.some((o) => !o.orderPartId);
+        // Legacy whole-order block when a withdrawn offer had no part id
+        const legacyWholeOrderBlock = allWithdrawn.some((o) => !o.orderPartId);
 
         const partDeletionCounts: Record<string, number> = {};
         for (const w of allWithdrawn) {
@@ -379,12 +370,6 @@ export class OffersService {
         }
 
         const now = new Date();
-        if (existing.canEditUntil && now > existing.canEditUntil) {
-            throw new BadRequestException(
-                'The free edit window (up to 3 hours, or until bidding stops) has expired. Use voluntary withdrawal if still within the allowed period.',
-            );
-        }
-
         if (order.offersStopAt && now > order.offersStopAt) {
             throw new BadRequestException(
                 'Cannot edit offer — bidding closed 1 hour before offer reveal.',
@@ -475,172 +460,15 @@ export class OffersService {
     }
 
     /**
-     * Voluntary withdrawal — after free-edit window, before 1h pre-reveal (offersStopAt).
-     * Blocks re-bidding on this part; records a store Violation (VOLUNTARY_OFFER_WITHDRAW)
-     * and counts toward the monthly deletion quota.
+     * @deprecated Prefer cancelByVendor (DELETE). Kept as alias so old clients still work.
      */
     async voluntaryWithdraw(userId: string, offerId: string) {
-        const store = await this.storesService.findMyStore(userId);
-        if (!store) throw new NotFoundException('Store not found.');
-
-        const existing = await this.prisma.offer.findUnique({
-            where: { id: offerId },
-            select: {
-                id: true,
-                storeId: true,
-                orderId: true,
-                offerNumber: true,
-                orderPartId: true,
-                isWithdrawn: true,
-                canEditUntil: true,
-                order: {
-                    select: {
-                        status: true,
-                        orderNumber: true,
-                        revealOffersAt: true,
-                        createdAt: true,
-                        offersStopAt: true,
-                    },
-                },
-            },
-        });
-
-        if (!existing) throw new NotFoundException('Offer not found.');
-        if (existing.storeId !== store.id) throw new ForbiddenException('Not your offer.');
-        if (existing.isWithdrawn) throw new BadRequestException('Already withdrawn.');
-
-        const order = existing.order;
-        if (
-            !order ||
-            (order.status !== OrderStatus.COLLECTING_OFFERS &&
-                order.status !== OrderStatus.AWAITING_OFFERS)
-        ) {
-            throw new BadRequestException('Voluntary withdrawal is not available for this order status.');
-        }
-
-        const now = new Date();
-        const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
-        if (!canEditUntil || now <= canEditUntil) {
-            throw new BadRequestException(
-                'Use free cancel during the free edit window instead of voluntary withdrawal.',
-            );
-        }
-
-        if (order.offersStopAt && now > order.offersStopAt) {
-            throw new BadRequestException(
-                'The voluntary withdrawal window has closed (1 hour before offer reveal).',
-            );
-        }
-
-        const voluntaryEnd = getVoluntaryWithdrawEnd({
-            revealOffersAt: order.revealOffersAt,
-            createdAt: order.createdAt,
-            offersStopAt: order.offersStopAt,
-        });
-        if (now >= voluntaryEnd) {
-            throw new BadRequestException(
-                'The voluntary withdrawal window has closed (1 hour before offer reveal).',
-            );
-        }
-
-        const offerMeta = await this.prisma.offer.findUnique({
-            where: { id: offerId },
-            select: { offerNumber: true },
-        });
-
-        const result = await this.prisma.$transaction(async (tx) => {
-            await tx.store.update({
-                where: { id: store.id },
-                data: { withdrawalCount: { increment: 1 } },
-            });
-            return await tx.offer.update({
-                where: { id: offerId },
-                data: {
-                    status: 'withdrawn',
-                    isWithdrawn: true,
-                    withdrawalType: 'voluntary',
-                    updatedAt: new Date(),
-                },
-                include: { store: { select: { id: true, name: true, ownerId: true } } },
-            });
-        });
-
-        await this.biddingRestriction.recordDeletion(store.id, {
-            orderNumber: order.orderNumber,
-            kind: 'VOLUNTARY_WITHDRAW',
-        });
-
-        // Record governance Violation (idempotent per offer via dedupSuffix)
-        const issuedViolation = await this.violationsService.autoIssue({
-            code: 'VOLUNTARY_OFFER_WITHDRAW',
-            targetUserId: userId,
-            targetStoreId: store.id,
-            targetType: ViolationTargetType.MERCHANT,
-            orderId: existing.orderId,
-            reason: `Voluntary offer withdrawal after free edit window. Offer #${offerMeta?.offerNumber || offerId} on order #${order.orderNumber}.`,
-            metadata: {
-                offerId,
-                offerNumber: offerMeta?.offerNumber,
-                orderPartId: existing.orderPartId,
-                withdrawalType: 'voluntary',
-            },
-            dedupSuffix: `offer:${offerId}`,
-        });
-        if (!issuedViolation) {
-            this.logger.warn(
-                `VOLUNTARY_OFFER_WITHDRAW autoIssue returned null for offer=${offerId} store=${store.id} — ensure violation type exists.`,
-            );
-        }
-
-        await this.auditLogs.logAction({
-            orderId: existing.orderId,
-            action: 'VOLUNTARY_WITHDRAW_OFFER',
-            entity: 'Offer',
-            actorType: ActorType.VENDOR,
-            actorId: userId,
-            actorName: result.store?.name || 'Vendor',
-            newState: 'withdrawn',
-            metadata: {
-                offerId,
-                offerNumber: offerMeta?.offerNumber,
-                orderNumber: order.orderNumber,
-                storeId: store.id,
-                orderPartId: existing.orderPartId,
-                modificationKind: 'VOLUNTARY_WITHDRAW',
-                withdrawalType: 'voluntary',
-                violationId: issuedViolation?.id ?? null,
-                violationCode: 'VOLUNTARY_OFFER_WITHDRAW',
-            },
-        });
-
-        await this.notifyAdminsOfferModification({
-            storeId: store.id,
-            storeName: result.store?.name || store.name,
-            orderId: existing.orderId,
-            orderNumber: order.orderNumber,
-            offerId,
-            offerNumber: offerMeta?.offerNumber,
-            kind: 'VOLUNTARY_WITHDRAW',
-        });
-
-        this.notificationsService
-            .create({
-                recipientId: userId,
-                recipientRole: 'VENDOR',
-                titleAr: 'تم التراجع عن العرض وتسجيل مخالفة',
-                titleEn: 'Offer Withdrawn — Violation Recorded',
-                messageAr: `تم الانسحاب من القطعة على الطلب #${order.orderNumber}. تم تسجيل مخالفة على المتجر ولن تتمكن من تقديم عرض على هذه القطعة مرة أخرى.`,
-                messageEn: `You withdrew from a part on request #${order.orderNumber}. A store violation was recorded and you cannot re-bid on that part.`,
-                type: 'system_alert',
-                link: `/dashboard/merchant/orders/${existing.orderId}`,
-            })
-            .catch(() => {});
-
-        return result;
+        return this.cancelByVendor(userId, offerId);
     }
 
     /**
-     * Violation withdrawal (legacy/admin) — increments governance counters.
+     * Violation withdrawal (legacy) — increments governance counters.
+     * Merchants in the collection window must use cancelByVendor instead.
      */
     async withdraw(userId: string, offerId: string) {
         const store = await this.storesService.findMyStore(userId);
@@ -672,24 +500,21 @@ export class OffersService {
         const now = new Date();
         const order = existing.order;
         if (order) {
-            const voluntaryEnd = getVoluntaryWithdrawEnd({
+            const actionEnd = getVoluntaryWithdrawEnd({
                 revealOffersAt: order.revealOffersAt,
                 createdAt: order.createdAt,
                 offersStopAt: order.offersStopAt,
             });
-            const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
             if (
-                canEditUntil &&
-                now > canEditUntil &&
-                now < voluntaryEnd &&
+                now < actionEnd &&
                 (order.status === OrderStatus.COLLECTING_OFFERS ||
                     order.status === OrderStatus.AWAITING_OFFERS)
             ) {
                 throw new BadRequestException(
-                    'Use voluntary withdrawal during the allowed period. Violation withdrawal is disabled for merchants.',
+                    'Use cancel & delete (DELETE /offers/:id) during the collection window. Violation withdrawal is disabled for merchants.',
                 );
             }
-            if (now >= voluntaryEnd) {
+            if (now >= actionEnd) {
                 throw new BadRequestException('Withdrawal is no longer allowed for this offer.');
             }
         }
@@ -697,18 +522,18 @@ export class OffersService {
         const result = await this.prisma.$transaction(async (tx) => {
             await tx.store.update({
                 where: { id: store.id },
-                data: { withdrawalCount: { increment: 1 } }
+                data: { withdrawalCount: { increment: 1 } },
             });
 
             return await tx.offer.update({
                 where: { id: offerId },
-                data: { 
+                data: {
                     status: 'withdrawn',
                     isWithdrawn: true,
                     withdrawalType: 'violation',
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
                 },
-                include: { store: { select: { id: true, name: true, ownerId: true } } }
+                include: { store: { select: { id: true, name: true, ownerId: true } } },
             });
         });
 
@@ -754,7 +579,9 @@ export class OffersService {
     }
 
     /**
-     * Legacy cancel method (adapted to use withdraw if appropriate)
+     * Cancel & delete offer during collection window (until offersStopAt).
+     * Issues VOLUNTARY_OFFER_WITHDRAW violation, locks the part from re-bidding,
+     * and counts toward the monthly deletion quota.
      */
     async cancelByVendor(userId: string, offerId: string) {
         const store = await this.storesService.findMyStore(userId);
@@ -769,6 +596,8 @@ export class OffersService {
                 storeId: true,
                 orderId: true,
                 offerNumber: true,
+                orderPartId: true,
+                isWithdrawn: true,
                 canEditUntil: true,
                 order: {
                     select: {
@@ -777,6 +606,8 @@ export class OffersService {
                         customerId: true,
                         orderNumber: true,
                         offersStopAt: true,
+                        revealOffersAt: true,
+                        createdAt: true,
                     },
                 },
             },
@@ -790,8 +621,18 @@ export class OffersService {
             throw new BadRequestException('You can only cancel your own offers.');
         }
 
-        if (!existing.order || (existing.order.status !== OrderStatus.COLLECTING_OFFERS && existing.order.status !== OrderStatus.AWAITING_OFFERS)) {
-            throw new BadRequestException('Cannot cancel offer — bidding is closed or order has progressed.');
+        if (existing.isWithdrawn) {
+            throw new BadRequestException('This offer is already cancelled.');
+        }
+
+        if (
+            !existing.order ||
+            (existing.order.status !== OrderStatus.COLLECTING_OFFERS &&
+                existing.order.status !== OrderStatus.AWAITING_OFFERS)
+        ) {
+            throw new BadRequestException(
+                'Cannot cancel offer — bidding is closed or order has progressed.',
+            );
         }
 
         const now = new Date();
@@ -801,37 +642,59 @@ export class OffersService {
             );
         }
 
-        // Free cancel only within free-edit window (up to 3h, capped by offersStopAt)
-        const canEditUntil = existing.canEditUntil ? new Date(existing.canEditUntil) : null;
-        if (!canEditUntil || now > canEditUntil) {
+        const actionEnd = getVoluntaryWithdrawEnd({
+            revealOffersAt: existing.order.revealOffersAt,
+            createdAt: existing.order.createdAt,
+            offersStopAt: existing.order.offersStopAt,
+        });
+        if (now >= actionEnd) {
             throw new BadRequestException(
-                'Free edit window has expired. Use voluntary withdrawal if still within the allowed period.',
+                'Cannot cancel offer — bidding closed 1 hour before offer reveal.',
             );
         }
 
-        // Free-window cancel: soft-delete so monthly/part counters stay auditable.
-        // Does NOT lock the part — merchant may re-bid during collection.
-        const existingFull = await this.prisma.offer.findUnique({
-            where: { id: offerId },
-            select: { orderPartId: true },
-        });
-
-        await this.prisma.$transaction(async (tx) => {
-            await tx.offer.update({
+        const result = await this.prisma.$transaction(async (tx) => {
+            await tx.store.update({
+                where: { id: store.id },
+                data: { withdrawalCount: { increment: 1 } },
+            });
+            return await tx.offer.update({
                 where: { id: offerId },
                 data: {
                     status: 'withdrawn',
                     isWithdrawn: true,
-                    withdrawalType: 'free_window',
+                    withdrawalType: 'cancelled',
                     updatedAt: new Date(),
                 },
+                include: { store: { select: { id: true, name: true, ownerId: true } } },
             });
         });
 
         await this.biddingRestriction.recordDeletion(store.id, {
-            orderNumber: existing.order?.orderNumber,
+            orderNumber: existing.order.orderNumber,
             kind: 'CANCEL',
         });
+
+        const issuedViolation = await this.violationsService.autoIssue({
+            code: 'VOLUNTARY_OFFER_WITHDRAW',
+            targetUserId: userId,
+            targetStoreId: store.id,
+            targetType: ViolationTargetType.MERCHANT,
+            orderId: existing.orderId,
+            reason: `Offer cancelled and deleted by merchant. Offer #${existing.offerNumber || offerId} on order #${existing.order.orderNumber}.`,
+            metadata: {
+                offerId,
+                offerNumber: existing.offerNumber,
+                orderPartId: existing.orderPartId,
+                withdrawalType: 'cancelled',
+            },
+            dedupSuffix: `offer:${offerId}`,
+        });
+        if (!issuedViolation) {
+            this.logger.warn(
+                `VOLUNTARY_OFFER_WITHDRAW autoIssue returned null for offer=${offerId} store=${store.id} — ensure violation type exists.`,
+            );
+        }
 
         await this.auditLogs.logAction({
             orderId: existing.orderId,
@@ -839,47 +702,70 @@ export class OffersService {
             entity: 'Offer',
             actorType: ActorType.VENDOR,
             actorId: userId,
-            actorName: store.name,
-            previousState: JSON.stringify(existing),
-            newState: 'WITHDRAWN_FREE_WINDOW',
-            reason: 'Vendor retracted their offer during free edit window',
+            actorName: result.store?.name || store.name,
+            previousState: JSON.stringify({
+                id: existing.id,
+                offerNumber: existing.offerNumber,
+                storeId: existing.storeId,
+            }),
+            newState: 'WITHDRAWN_CANCELLED',
+            reason: 'Vendor cancelled and deleted their offer during the collection window',
             metadata: {
                 offerId,
                 offerNumber: existing.offerNumber,
-                orderNumber: existing.order?.orderNumber,
+                orderNumber: existing.order.orderNumber,
                 storeId: store.id,
-                orderPartId: existingFull?.orderPartId,
+                orderPartId: existing.orderPartId,
                 modificationKind: 'CANCEL',
-                withdrawalType: 'free_window',
+                withdrawalType: 'cancelled',
+                violationId: issuedViolation?.id ?? null,
+                violationCode: 'VOLUNTARY_OFFER_WITHDRAW',
             },
         });
 
         await this.notifyAdminsOfferModification({
             storeId: store.id,
-            storeName: store.name,
+            storeName: result.store?.name || store.name,
             orderId: existing.orderId,
-            orderNumber: existing.order?.orderNumber || existing.orderId,
+            orderNumber: existing.order.orderNumber,
             offerId,
             offerNumber: existing.offerNumber,
             kind: 'CANCEL',
         });
 
+        this.notificationsService
+            .create({
+                recipientId: userId,
+                recipientRole: 'VENDOR',
+                titleAr: 'تم إلغاء وحذف العرض وتسجيل مخالفة',
+                titleEn: 'Offer Cancelled — Violation Recorded',
+                messageAr: `تم إلغاء وحذف عرضك على الطلب #${existing.order.orderNumber}. تم تسجيل مخالفة على المتجر ولن تتمكن من تقديم عرض على هذه القطعة مرة أخرى.`,
+                messageEn: `Your offer on request #${existing.order.orderNumber} was cancelled and deleted. A store violation was recorded and you cannot re-bid on that part.`,
+                type: 'system_alert',
+                link: `/dashboard/merchant/orders/${existing.orderId}`,
+            })
+            .catch(() => {});
+
         // Notify Customer (Suppressed for 2026 Blind Auction)
-        const isBlindAuction = ['COLLECTING_OFFERS', 'AWAITING_OFFERS'].includes(existing.order?.status || '');
-        if (existing.order?.customerId && !isBlindAuction) {
-            this.notificationsService.create({
-                recipientId: existing.order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'تم سحب عرض سعر',
-                titleEn: 'Offer Retracted',
-                messageAr: `قام أحد المتاجر بسحب عرضه لطلبك رقم ${existing.order?.orderNumber}`,
-                messageEn: `A store has retracted their offer for your order #${existing.order?.orderNumber}`,
-                type: 'SYSTEM',
-                link: `/dashboard/orders/${existing.order?.id}`
-            }).catch(e => console.error('Failed to notify customer of offer retraction', e));
+        const isBlindAuction = ['COLLECTING_OFFERS', 'AWAITING_OFFERS'].includes(
+            existing.order.status || '',
+        );
+        if (existing.order.customerId && !isBlindAuction) {
+            this.notificationsService
+                .create({
+                    recipientId: existing.order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'تم سحب عرض سعر',
+                    titleEn: 'Offer Retracted',
+                    messageAr: `قام أحد المتاجر بسحب عرضه لطلبك رقم ${existing.order.orderNumber}`,
+                    messageEn: `A store has retracted their offer for your order #${existing.order.orderNumber}`,
+                    type: 'SYSTEM',
+                    link: `/dashboard/orders/${existing.order.id}`,
+                })
+                .catch((e) => console.error('Failed to notify customer of offer retraction', e));
         }
 
-        return { message: 'Offer cancelled successfully by vendor' };
+        return result;
     }
 
     /**
@@ -1022,14 +908,14 @@ export class OffersService {
             const stats = await this.biddingRestriction.ensureMonthBucket(params.storeId);
             const kindAr: Record<typeof params.kind, string> = {
                 EDIT: 'تعديل عرض',
-                CANCEL: 'إلغاء وحذف عرض (نافذة التعديل الحر)',
-                VOLUNTARY_WITHDRAW: 'تراجع / انسحاب طوعي من القطعة',
+                CANCEL: 'إلغاء وحذف عرض',
+                VOLUNTARY_WITHDRAW: 'إلغاء وحذف عرض',
                 VIOLATION_WITHDRAW: 'سحب عرض (حوكمة)',
             };
             const kindEn: Record<typeof params.kind, string> = {
                 EDIT: 'Offer edited',
-                CANCEL: 'Offer cancelled & deleted (free-edit window)',
-                VOLUNTARY_WITHDRAW: 'Voluntary withdraw from part',
+                CANCEL: 'Offer cancelled & deleted',
+                VOLUNTARY_WITHDRAW: 'Offer cancelled & deleted',
                 VIOLATION_WITHDRAW: 'Offer withdrawn (governance)',
             };
 

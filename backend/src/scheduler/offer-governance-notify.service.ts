@@ -29,67 +29,20 @@ export class OfferGovernanceNotifyService {
         }
     }
 
+    /**
+     * Reminds merchants when less than ~1 hour remains to edit/cancel (before offersStopAt).
+     * The old "voluntary window opened after 3h free edit" reminder was removed.
+     */
     @Cron(CronExpression.EVERY_5_MINUTES)
     async handleVoluntaryWithdrawReminders() {
         if (!(await this.prisma.ensureConnected())) return;
 
         const now = new Date();
-        const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
 
-        const offers = await this.prisma.offer.findMany({
+        const activeOffers = await this.prisma.offer.findMany({
             where: {
                 isWithdrawn: false,
                 status: 'pending',
-                canEditUntil: { lte: now, gte: twoMinutesAgo },
-                order: {
-                    status: { in: [OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_OFFERS] },
-                },
-            },
-            include: {
-                order: {
-                    select: {
-                        id: true,
-                        orderNumber: true,
-                        revealOffersAt: true,
-                        createdAt: true,
-                        offersStopAt: true,
-                    },
-                },
-                store: { select: { ownerId: true, name: true } },
-            },
-            take: 50,
-        });
-
-        for (const offer of offers) {
-            if (!offer.store?.ownerId || !offer.order) continue;
-
-            const voluntaryEnd = getVoluntaryWithdrawEnd({
-                revealOffersAt: offer.order.revealOffersAt,
-                createdAt: offer.order.createdAt,
-                offersStopAt: offer.order.offersStopAt,
-            });
-            if (now >= voluntaryEnd) continue;
-
-            await this.notifyOnce(offer.id, offer.orderId, 'VOLUNTARY_WINDOW_OPENED', async () => {
-                await this.notifications.create({
-                    recipientId: offer.store!.ownerId!,
-                    recipientRole: 'VENDOR',
-                    titleAr: 'يمكنك الآن الانسحاب من الطلب',
-                    titleEn: 'Voluntary Withdrawal Window Open',
-                    messageAr: `انتهت مهلة التعديل المجاني لعرضك على الطلب #${offer.order!.orderNumber}. يمكنك الانسحاب الطوعي حتى ${voluntaryEnd.toLocaleString('ar-EG')} (ساعة قبل كشف العروض).`,
-                    messageEn: `Your free edit window ended for order #${offer.order!.orderNumber}. You may voluntarily withdraw until ${voluntaryEnd.toISOString()} (1 hour before reveal).`,
-                    type: 'system_alert',
-                    link: `/dashboard/merchant/orders/${offer.orderId}`,
-                    metadata: { offerId: offer.id, notifyKey: 'VOLUNTARY_WINDOW_OPENED' },
-                });
-            });
-        }
-
-        const closingSoon = await this.prisma.offer.findMany({
-            where: {
-                isWithdrawn: false,
-                status: 'pending',
-                canEditUntil: { lt: now },
                 order: {
                     status: { in: [OrderStatus.COLLECTING_OFFERS, OrderStatus.AWAITING_OFFERS] },
                 },
@@ -106,31 +59,31 @@ export class OfferGovernanceNotifyService {
                 },
                 store: { select: { ownerId: true } },
             },
-            take: 50,
+            take: 80,
         });
 
-        for (const offer of closingSoon) {
+        for (const offer of activeOffers) {
             if (!offer.store?.ownerId || !offer.order) continue;
-            const voluntaryEnd = getVoluntaryWithdrawEnd({
+            const actionEnd = getVoluntaryWithdrawEnd({
                 revealOffersAt: offer.order.revealOffersAt,
                 createdAt: offer.order.createdAt,
                 offersStopAt: offer.order.offersStopAt,
             });
-            const msUntilEnd = voluntaryEnd.getTime() - now.getTime();
-            // Remind when ≤ 65 minutes remain until bidding/voluntary stop
+            const msUntilEnd = actionEnd.getTime() - now.getTime();
+            // Remind when ≤ 65 minutes remain until bidding stop
             if (msUntilEnd <= 0 || msUntilEnd > 65 * 60 * 1000) continue;
 
-            await this.notifyOnce(offer.id, offer.orderId, 'VOLUNTARY_WINDOW_CLOSING', async () => {
+            await this.notifyOnce(offer.id, offer.orderId, 'ACTION_WINDOW_CLOSING', async () => {
                 await this.notifications.create({
                     recipientId: offer.store!.ownerId!,
                     recipientRole: 'VENDOR',
-                    titleAr: 'تبقى أقل من ساعة للانسحاب من الطلب',
-                    titleEn: 'Less Than 1 Hour Left to Withdraw',
-                    messageAr: `تبقى وقت قصير لإمكانية الانسحاب الطوعي من الطلب #${offer.order!.orderNumber} قبل إغلاق باب التقديم (ساعة قبل كشف العروض).`,
-                    messageEn: `Little time remains to voluntarily withdraw from request #${offer.order!.orderNumber} before bidding closes (1 hour before reveal).`,
+                    titleAr: 'تبقى أقل من ساعة للتعديل أو إلغاء العرض',
+                    titleEn: 'Less Than 1 Hour Left to Edit or Cancel',
+                    messageAr: `تبقى وقت قصير لتعديل أو إلغاء عرضك على الطلب #${offer.order!.orderNumber} قبل إغلاق باب التقديم (ساعة قبل كشف العروض).`,
+                    messageEn: `Little time remains to edit or cancel your offer on request #${offer.order!.orderNumber} before bidding closes (1 hour before reveal).`,
                     type: 'system_alert',
                     link: `/dashboard/merchant/orders/${offer.orderId}`,
-                    metadata: { offerId: offer.id, notifyKey: 'VOLUNTARY_WINDOW_CLOSING' },
+                    metadata: { offerId: offer.id, notifyKey: 'ACTION_WINDOW_CLOSING' },
                 });
             });
         }

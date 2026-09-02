@@ -15,8 +15,8 @@ export interface OfferGovernanceOffer {
   canEditUntil?: string | Date | null;
 }
 
-/** Small skew buffer only — do not inflate free-edit window. */
-const FREE_CANCEL_BUFFER_MS = 2_000;
+/** Small skew buffer so UI does not flicker at the exact stop boundary. */
+const ACTION_WINDOW_BUFFER_MS = 2_000;
 const REVEAL_OFFSET_MS = 24 * 60 * 60 * 1000;
 const BIDDING_STOP_BEFORE_REVEAL_MS = 60 * 60 * 1000;
 
@@ -27,6 +27,7 @@ export function getRevealAt(order: OfferGovernanceOrder): number {
   return new Date(order.createdAt).getTime() + REVEAL_OFFSET_MS;
 }
 
+/** End of merchant action window (= offersStopAt = reveal − 1h). */
 export function getVoluntaryWithdrawEnd(order: OfferGovernanceOrder): Date {
   if (order.offersStopAt) {
     return new Date(order.offersStopAt);
@@ -36,19 +37,27 @@ export function getVoluntaryWithdrawEnd(order: OfferGovernanceOrder): Date {
 
 export function getOfferGovernanceWindow(
   order: OfferGovernanceOrder,
-  offer: OfferGovernanceOffer,
+  _offer?: OfferGovernanceOffer,
 ) {
   const now = getServerNowMs();
-  const canEditUntilMs = offer.canEditUntil
-    ? new Date(offer.canEditUntil).getTime()
-    : 0;
-  const voluntaryEndMs = getVoluntaryWithdrawEnd(order).getTime();
+  const stopMs = getVoluntaryWithdrawEnd(order).getTime();
+  const canAct = now < stopMs + ACTION_WINDOW_BUFFER_MS;
 
   return {
-    isFreeCancelWindow: canEditUntilMs > 0 && now <= canEditUntilMs + FREE_CANCEL_BUFFER_MS,
-    isVoluntaryWithdrawWindow:
-      canEditUntilMs > 0 && now > canEditUntilMs && now < voluntaryEndMs,
-    voluntaryEndDate: new Date(voluntaryEndMs).toISOString(),
-    canEditUntilDate: offer.canEditUntil ? new Date(offer.canEditUntil) : null,
+    /** Merchant may edit or cancel until offersStopAt (server time). */
+    isActionWindow: canAct,
+    /** @deprecated Alias of isActionWindow — edit/cancel share one window. */
+    isFreeCancelWindow: canAct,
+    /** Voluntary withdraw UI removed — always false. */
+    isVoluntaryWithdrawWindow: false,
+    actionEndDate: new Date(stopMs).toISOString(),
+    /** @deprecated Prefer actionEndDate / order.offersStopAt for countdown. */
+    voluntaryEndDate: new Date(stopMs).toISOString(),
+    canEditUntilDate: new Date(stopMs),
   };
+}
+
+/** True when bidding create/edit/cancel is closed (last hour before reveal). */
+export function isBiddingStopped(order: OfferGovernanceOrder): boolean {
+  return getServerNowMs() >= getVoluntaryWithdrawEnd(order).getTime();
 }

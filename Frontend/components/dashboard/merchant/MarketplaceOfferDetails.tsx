@@ -60,8 +60,8 @@ import {
     resolveOrderTimelineStatus,
     computeShipmentDeliverySummary,
 } from '../../../utils/offerFulfillmentHelpers';
-import { getOfferGovernanceWindow } from '../../../utils/offerGovernance';
-import { syncServerClock } from '../../../utils/serverClock';
+import { getOfferGovernanceWindow, isBiddingStopped } from '../../../utils/offerGovernance';
+import { getServerNowMs, syncServerClock } from '../../../utils/serverClock';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
@@ -123,7 +123,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const { t, language } = useLanguage();
     // Confirm Stripe settlement return (?settlementPayment=) and refresh cases
     useShippingPaymentReturn(true, 'merchant');
-    const { addOfferToOrder, patchOrderFromRealtime, fetchOrder, removeOfferFromOrder, markOfferWithdrawnInOrder } =
+    const { addOfferToOrder, patchOrderFromRealtime, fetchOrder, markOfferWithdrawnInOrder } =
         useOrderStore();
     const order = useOrderById(orderId);
     useEnforceExpiredOrderSla(order);
@@ -205,9 +205,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
     const [offerToCancel, setOfferToCancel] = useState<any | null>(null);
-    const [isVoluntaryWithdrawDialogOpen, setIsVoluntaryWithdrawDialogOpen] = useState(false);
-    const [isVoluntaryWithdrawing, setIsVoluntaryWithdrawing] = useState(false);
-    const [offerToVoluntaryWithdraw, setOfferToVoluntaryWithdraw] = useState<any | null>(null);
     const [isEditConfirmDialogOpen, setIsEditConfirmDialogOpen] = useState(false);
     const [offerPendingEdit, setOfferPendingEdit] = useState<any | null>(null);
     // Tab State
@@ -719,12 +716,12 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             return;
         }
 
-        const { isFreeCancelWindow } = getOfferGovernanceWindow(order, offerToCancel);
-        if (!isFreeCancelWindow) {
+        const { isActionWindow } = getOfferGovernanceWindow(order, offerToCancel);
+        if (!isActionWindow) {
             alert(
                 isAr
-                    ? 'انتهت مهلة التعديل المجاني. استخدم زر الانسحاب الطوعي إن كانت المهلة ما زالت متاحة.'
-                    : 'Free edit window has ended. Use voluntary withdrawal if still within the allowed period.',
+                    ? 'انتهت مهلة التعديل والإلغاء (الساعة الأخيرة قبل كشف العروض).'
+                    : 'The edit/cancel window has closed (final hour before offer reveal).',
             );
             setIsCancelDialogOpen(false);
             return;
@@ -733,7 +730,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         setIsCancelling(true);
         try {
             await offersApi.cancel(offerToCancel.id);
-            removeOfferFromOrder(offerToCancel.id);
+            markOfferWithdrawnInOrder(offerToCancel.id);
             await fetchDashboardStats();
             await fetchMyOffers();
             await fetchOrder(String(orderId));
@@ -745,27 +742,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             alert(isAr ? `فشل إلغاء العرض: ${msg}` : `Failed to cancel offer: ${msg}`);
         } finally {
             setIsCancelling(false);
-        }
-    };
-
-    const handleVoluntaryWithdraw = async () => {
-        if (!offerToVoluntaryWithdraw || !order) return;
-
-        setIsVoluntaryWithdrawing(true);
-        try {
-            await offersApi.voluntaryWithdraw(offerToVoluntaryWithdraw.id);
-            markOfferWithdrawnInOrder(offerToVoluntaryWithdraw.id);
-            await fetchDashboardStats();
-            await fetchMyOffers();
-            await fetchOrder(String(orderId));
-            setIsVoluntaryWithdrawDialogOpen(false);
-            setOfferToVoluntaryWithdraw(null);
-        } catch (err: any) {
-            console.error('Failed voluntary withdraw:', err);
-            const msg = err.response?.data?.message || err.message;
-            alert(isAr ? `فشل الانسحاب: ${msg}` : `Withdrawal failed: ${msg}`);
-        } finally {
-            setIsVoluntaryWithdrawing(false);
         }
     };
 
@@ -1938,84 +1914,74 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                             </div>
                                                         )}
 
-                                                        {/* 2026 Governance: Edit/Withdraw Logic */}
-                                                        {(order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') && (
+                                                        {/* 2026 Governance: Edit / Cancel until offersStopAt */}
+                                                        {(order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') &&
+                                                            !partOffer.isWithdrawn && (
                                                             <div className="mt-3 space-y-2">
                                                                 {(() => {
-                                                                    void govTick; // re-evaluate free/voluntary windows each second
+                                                                    void govTick;
+                                                                    void getServerNowMs();
                                                                     const gov = getOfferGovernanceWindow(order, partOffer);
+                                                                    if (!gov.isActionWindow) {
+                                                                        return (
+                                                                            <div className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                                                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-1">
+                                                                                    <Clock size={12} />
+                                                                                    {exploreOfferT?.biddingStopped ||
+                                                                                        (isAr
+                                                                                            ? 'توقفت المزايدة — الساعة الأخيرة قبل كشف العروض'
+                                                                                            : 'Bidding closed — final hour before reveal')}
+                                                                                </span>
+                                                                            </div>
+                                                                        );
+                                                                    }
                                                                     return (
                                                                         <>
-                                                                {/* Free edit timer (up to 3h, capped by order stop) */}
-                                                                {gov.isFreeCancelWindow && partOffer.canEditUntil && (
-                                                                    <div className="flex items-center justify-between bg-gold-500/10 px-3 py-2 rounded-xl border border-gold-500/20">
-                                                                        <span className="text-[10px] font-bold text-gold-400 uppercase tracking-widest flex items-center gap-1">
-                                                                            <Clock size={12} />
-                                                                            {exploreOfferT?.freeEditWindow || (isAr ? 'مهلة التعديل المجاني' : 'Free Edit Window')}
-                                                                        </span>
-                                                                        <CountdownTimer 
-                                                                            targetDate={partOffer.canEditUntil} 
-                                                                            compact={true} 
-                                                                            hideExpiredText={true}
-                                                                        />
-                                                                    </div>
-                                                                )}
-
-                                                                            {gov.isVoluntaryWithdrawWindow && (
-                                                                                <div className="flex items-center justify-between bg-amber-500/10 px-3 py-2 rounded-xl border border-amber-500/20 mb-2">
-                                                                                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
-                                                                                        <Clock size={12} />
-                                                                                        {exploreOfferT?.voluntaryWithdrawCountdown || (isAr ? 'المتبقي للانسحاب من الطلب' : 'Time left to withdraw')}
-                                                                                    </span>
-                                                                                    <CountdownTimer
-                                                                                        targetDate={gov.voluntaryEndDate}
-                                                                                        compact={true}
-                                                                                        hideExpiredText={true}
-                                                                                    />
-                                                                                </div>
-                                                                            )}
-                                                                            {gov.isFreeCancelWindow && (
-                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            setOfferPendingEdit(partOffer);
-                                                                                            setIsEditConfirmDialogOpen(true);
-                                                                                        }}
-                                                                                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/25"
-                                                                                    >
-                                                                                        <Edit3 size={14} />
-                                                                                        {exploreOfferT?.editOfferBtn || (isAr ? 'تعديل العرض' : 'Edit Offer')}
-                                                                                    </button>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            setOfferToCancel(partOffer);
-                                                                                            setIsCancelDialogOpen(true);
-                                                                                        }}
-                                                                                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-white/5 hover:bg-white/10 text-white/70 border border-white/10"
-                                                                                    >
-                                                                                        <XCircle size={14} />
-                                                                                        {exploreOfferT?.cancelDeleteOfferBtn || (isAr ? 'إلغاء وحذف العرض' : 'Cancel & Delete Offer')}
-                                                                                    </button>
-                                                                                </div>
-                                                                            )}
-                                                                            {gov.isVoluntaryWithdrawWindow && (
+                                                                            <div className="flex items-center justify-between bg-gold-500/10 px-3 py-2 rounded-xl border border-gold-500/20">
+                                                                                <span className="text-[10px] font-bold text-gold-400 uppercase tracking-widest flex items-center gap-1">
+                                                                                    <Clock size={12} />
+                                                                                    {exploreOfferT?.actionWindowCountdown ||
+                                                                                        exploreOfferT?.freeEditWindow ||
+                                                                                        (isAr
+                                                                                            ? 'المتبقي للتعديل أو إلغاء العرض'
+                                                                                            : 'Time left to edit or cancel offer')}
+                                                                                </span>
+                                                                                <CountdownTimer
+                                                                                    targetDate={gov.actionEndDate}
+                                                                                    compact={true}
+                                                                                    hideExpiredText={true}
+                                                                                />
+                                                                            </div>
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        setOfferToVoluntaryWithdraw(partOffer);
-                                                                                        setIsVoluntaryWithdrawDialogOpen(true);
+                                                                                        setOfferPendingEdit(partOffer);
+                                                                                        setIsEditConfirmDialogOpen(true);
                                                                                     }}
-                                                                                    className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20"
+                                                                                    className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/25"
                                                                                 >
-                                                                                    <AlertTriangle size={14} />
-                                                                                    {exploreOfferT?.voluntaryWithdrawBtn || (isAr ? 'تراجع' : 'Withdraw')}
+                                                                                    <Edit3 size={14} />
+                                                                                    {exploreOfferT?.editOfferBtn ||
+                                                                                        (isAr ? 'تعديل العرض' : 'Edit Offer')}
                                                                                 </button>
-                                                                            )}
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setOfferToCancel(partOffer);
+                                                                                        setIsCancelDialogOpen(true);
+                                                                                    }}
+                                                                                    className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20"
+                                                                                >
+                                                                                    <XCircle size={14} />
+                                                                                    {exploreOfferT?.cancelDeleteOfferBtn ||
+                                                                                        (isAr
+                                                                                            ? 'إلغاء وحذف العرض'
+                                                                                            : 'Cancel & Delete Offer')}
+                                                                                </button>
+                                                                            </div>
                                                                         </>
                                                                     );
                                                                 })()}
@@ -2878,6 +2844,24 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                         );
                                     }
 
+                                    // Final hour before reveal: no new offers (server time)
+                                    void govTick;
+                                    if (isBiddingStopped(order)) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full py-4 rounded-xl font-bold text-white/50 bg-white/5 cursor-not-allowed border border-white/10 flex flex-col items-center justify-center gap-1 leading-tight px-4"
+                                            >
+                                                <span>
+                                                    {exploreOfferT?.biddingStopped ||
+                                                        (isAr
+                                                            ? 'توقفت المزايدة — الساعة الأخيرة قبل كشف العروض'
+                                                            : 'Bidding closed — final hour before offer reveal')}
+                                                </span>
+                                            </button>
+                                        );
+                                    }
+
                                     if (isProgressive || (order.status !== 'AWAITING_OFFERS' && order.status !== 'COLLECTING_OFFERS' && order.status !== 'CANCELLED')) {
                                         return (
                                             <button
@@ -3208,86 +3192,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                 )}
             </AnimatePresence>
 
-            {/* VOLUNTARY WITHDRAW DIALOG */}
-            <AnimatePresence>
-                {isVoluntaryWithdrawDialogOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#1A1814] border border-amber-500/30 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl relative"
-                        >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[50px] rounded-full pointer-events-none" />
-                            <div className="flex flex-col items-center text-center space-y-4 relative z-10">
-                                <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                                    <AlertTriangle size={32} />
-                                </div>
-                                <h3 className="text-xl font-bold text-white">
-                                    {exploreOfferT?.voluntaryWithdrawDialog?.title ||
-                                        (isAr
-                                            ? 'هل أنت متأكد من رغبتك في حذف العرض؟'
-                                            : 'Are you sure you want to delete this offer?')}
-                                </h3>
-                                <ul className="w-full text-sm text-white/50 leading-relaxed px-2 space-y-2 text-start list-disc list-inside">
-                                    {(
-                                        exploreOfferT?.voluntaryWithdrawDialog?.bullets ||
-                                        (isAr
-                                            ? [
-                                                  'لن تتمكن من تقديم عرض جديد على نفس الطلب.',
-                                                  'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
-                                                  'بعد مرور 23 ساعة لن يكون بإمكانك حذف العرض.',
-                                              ]
-                                            : [
-                                                  'You will not be able to submit a new offer on the same request.',
-                                                  'A violation will be recorded against the store for cancelling the offer.',
-                                                  'After 23 hours you will no longer be able to delete the offer.',
-                                              ])
-                                    ).map((line: string, idx: number) => (
-                                        <li key={idx}>{line}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div className="flex flex-col gap-3 mt-8 relative z-10">
-                                <button
-                                    type="button"
-                                    onClick={handleVoluntaryWithdraw}
-                                    disabled={isVoluntaryWithdrawing}
-                                    className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition-all shadow-lg flex items-center justify-center gap-2"
-                                >
-                                    {isVoluntaryWithdrawing ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <AlertTriangle size={18} />
-                                    )}
-                                    <span>
-                                        {exploreOfferT?.voluntaryWithdrawDialog?.confirm ||
-                                            (isAr ? 'تأكيد حذف العرض' : 'Confirm Delete Offer')}
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsVoluntaryWithdrawDialogOpen(false);
-                                        setOfferToVoluntaryWithdraw(null);
-                                    }}
-                                    disabled={isVoluntaryWithdrawing}
-                                    className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-bold transition-colors border border-white/5"
-                                >
-                                    {exploreOfferT?.voluntaryWithdrawDialog?.cancel ||
-                                        (isAr ? 'تراجع (الاحتفاظ بالعرض)' : 'Keep Offer')}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
             {/* CANCEL OFFER WARNING DIALOG */}
             <AnimatePresence>
                 {isCancelDialogOpen && (
@@ -3301,26 +3205,43 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md bg-[#1A1814] border border-red-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+                            className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#1A1814] border border-red-500/30 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl relative"
                         >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-[50px] rounded-full pointer-events-none" />
-                            
-                            <div className="flex flex-col items-center text-center space-y-4">
+
+                            <div className="flex flex-col items-center text-center space-y-4 relative z-10">
                                 <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
-                                    <AlertTriangle size={32} className="animate-bounce" />
+                                    <AlertTriangle size={32} />
                                 </div>
                                 <h3 className="text-xl font-bold text-white">
-                                    {isAr ? 'تنبيه: إلغاء العرض ومسحه؟' : 'Warning: Cancel & Delete Offer?'}
+                                    {exploreOfferT?.cancelConfirmDialog?.title ||
+                                        (isAr
+                                            ? 'هل أنت متأكد من رغبتك في إلغاء وحذف العرض؟'
+                                            : 'Are you sure you want to cancel and delete this offer?')}
                                 </h3>
-                                <p className="text-sm text-white/50 leading-relaxed px-2">
-                                    {isAr 
-                                        ? 'سيتم حذف العرض ويُحسب ضمن الحد الشهري (50). يمكنك تقديم عرض جديد على نفس القطعة طالما مهلة التعديل الحر / باب الجمع ما زال مفتوحاً. للتعديل دون حذف استخدم زر «تعديل العرض».' 
-                                        : 'The offer will be deleted and count toward the monthly limit (50). You may re-submit on the same part while the free-edit / collection window remains open. To change price without deleting, use Edit Offer.'}
-                                </p>
+                                <ul className="w-full text-sm text-white/50 leading-relaxed px-2 space-y-2 text-start list-disc list-inside">
+                                    {(
+                                        exploreOfferT?.cancelConfirmDialog?.bullets ||
+                                        (isAr
+                                            ? [
+                                                  'لن تتمكن من تقديم عرض جديد على نفس القطعة.',
+                                                  'سيتم تسجيل مخالفة على المتجر بسبب إلغاء العرض.',
+                                                  'في الساعة الأخيرة قبل كشف العروض لن يكون بإمكانك حذف العرض.',
+                                              ]
+                                            : [
+                                                  'You will not be able to submit a new offer on the same part.',
+                                                  'A violation will be recorded against the store for cancelling the offer.',
+                                                  'In the final hour before reveal you will no longer be able to delete the offer.',
+                                              ])
+                                    ).map((line: string, idx: number) => (
+                                        <li key={idx}>{line}</li>
+                                    ))}
+                                </ul>
                             </div>
 
-                            <div className="flex flex-col gap-3 mt-8">
+                            <div className="flex flex-col gap-3 mt-8 relative z-10">
                                 <button
+                                    type="button"
                                     onClick={handleCancelOffer}
                                     disabled={isCancelling}
                                     className="w-full py-3.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold transition-all shadow-lg hover:shadow-red-500/20 active:scale-98 flex items-center justify-center gap-2"
@@ -3330,14 +3251,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     ) : (
                                         <AlertTriangle size={18} />
                                     )}
-                                    <span>{isAr ? 'تأكيد الإلغاء والحذف' : 'Confirm Cancellation'}</span>
+                                    <span>
+                                        {exploreOfferT?.cancelConfirmDialog?.confirm ||
+                                            (isAr ? 'تأكيد إلغاء وحذف العرض' : 'Confirm Cancel & Delete')}
+                                    </span>
                                 </button>
                                 <button
-                                    onClick={() => { setIsCancelDialogOpen(false); setOfferToCancel(null); }}
+                                    type="button"
+                                    onClick={() => {
+                                        setIsCancelDialogOpen(false);
+                                        setOfferToCancel(null);
+                                    }}
                                     disabled={isCancelling}
                                     className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-bold transition-colors border border-white/5"
                                 >
-                                    {isAr ? 'تراجع (الاحتفاظ بالعرض)' : 'Keep Offer'}
+                                    {exploreOfferT?.cancelConfirmDialog?.cancel ||
+                                        (isAr ? 'تراجع (الاحتفاظ بالعرض)' : 'Keep Offer')}
                                 </button>
                             </div>
                         </motion.div>
