@@ -2950,24 +2950,24 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.editWindow ||
                                             (isAr
-                                                ? 'خلال حتى 3 ساعات (أو حتى ساعة قبل كشف العروض): تعديل مجاني بدون عدّاد حذف، أو إلغاء وحذف (يعدّ في الـ 50 مع السماح بإعادة التقديم على نفس القطعة).'
-                                                : 'Within up to 3 hours (or until 1h before reveal): free edit (no deletion count), or cancel & delete (counts toward 50; re-bid on same part allowed).')}
+                                                ? 'يمكنك تعديل أو إلغاء عرضك حتى ساعة قبل كشف العروض للعميل.'
+                                                : 'You can edit or cancel your offer until 1 hour before offers are revealed.')}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Withdrawal Rule */}
+                            {/* Cancel = violation + re-bid allowed */}
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
                                     <AlertTriangle size={16} />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'انسحاب بعد مهلة التعديل' : 'Withdraw after free edit window'}</div>
+                                    <div className="text-xs font-bold text-white mb-0.5">{isAr ? 'إلغاء وحذف العرض' : 'Cancel & Delete Offer'}</div>
                                     <div className="text-[10px] text-white/40 leading-relaxed">
                                         {exploreOfferT?.governance?.voluntaryWindow ||
                                             (isAr
-                                                ? 'بعد انتهاء مهلة التعديل يمكنك التراجع حتى ساعة قبل كشف العروض. التراجع يعدّ في الـ 50 ويمنع إعادة التقديم على نفس القطعة فقط.'
-                                                : 'After the free edit window you may withdraw until 1h before reveal. Counts toward 50 and blocks re-bidding on that part only.')}
+                                                ? 'إلغاء وحذف العرض يسجّل مخالفة، ويمكنك تقديم عرض جديد على نفس القطعة قبل الساعة الأخيرة.'
+                                                : 'Cancelling and deleting an offer records a violation; you may re-bid on the same part before the final hour.')}
                                     </div>
                                 </div>
                             </div>
@@ -3023,13 +3023,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 <ul className="text-[10px] text-white/45 leading-relaxed space-y-1.5 list-disc pr-4 pl-4">
                                     <li>
                                         {isAr
-                                            ? 'خلال مهلة التعديل الحر (حتى 3 ساعات أو حتى ساعة قبل الكشف): «تعديل العرض» يحدّث السعر/المواصفات بدون عدّاد حذف. «إلغاء وحذف» يعدّ ضمن الـ 50 ويسمح بإعادة التقديم على نفس القطعة.'
-                                            : 'During the free edit window (up to 3h or until 1h before reveal): Edit updates the offer with no deletion count. Cancel & Delete counts toward 50 and allows re-bidding on the same part.'}
+                                            ? 'خلال نافذة التحكم (حتى ساعة قبل الكشف): «تعديل العرض» يحدّث السعر/المواصفات بدون مخالفة. «إلغاء وحذف» يسجّل مخالفة ويُحسب ضمن الحد الشهري، مع السماح بإعادة التقديم على نفس القطعة.'
+                                            : 'During the control window (until 1h before reveal): Edit updates the offer with no violation. Cancel & Delete records a violation, counts toward the monthly limit, and still allows re-bidding on the same part.'}
                                     </li>
                                     <li>
                                         {isAr
-                                            ? 'بعد مهلة التعديل: «تراجع» يعدّ ضمن الـ 50 ويمنع إعادة التقديم على نفس القطعة حتى نهاية جمع العروض (مفرد أو مجمع).'
-                                            : 'After the free edit window: Withdraw counts toward 50 and blocks re-bidding on that part until collection ends (single or multi-part).'}
+                                            ? 'بعد إلغاء العرض يمكنك تقديم عرض جديد على نفس القطعة طالما لم تبدأ الساعة الأخيرة قبل كشف العروض.'
+                                            : 'After cancelling an offer you may submit a new offer on the same part until the final hour before reveal.'}
                                     </li>
                                     <li>
                                         {isAr

@@ -96,7 +96,7 @@ export class OrdersService {
             });
             if (existing) return existing;
         }
-
+        
         // --- 2026 Governance Enforcement: Order Limit ---
         const customer = await this.prisma.user.findUnique({
             where: { id: customerId },
@@ -118,7 +118,7 @@ export class OrdersService {
 
         let result: Order;
         try {
-            // 2. Transaction: Create Order + Parts + Audit Log + Update Count
+        // 2. Transaction: Create Order + Parts + Audit Log + Update Count
             result = await this.prisma.$transaction(async (tx) => {
                 // Serialize concurrent creates for this customer
                 await tx.$executeRaw`SELECT id FROM users WHERE id = ${customerId}::uuid FOR UPDATE`;
@@ -126,84 +126,84 @@ export class OrdersService {
                 // Re-check rules under lock (race-safe)
                 await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto, tx);
 
-                // Increment daily count
-                await tx.user.update({
-                    where: { id: customerId },
-                    data: { dailyOrderCount: { increment: 1 } }
-                });
+            // Increment daily count
+            await tx.user.update({
+                where: { id: customerId },
+                data: { dailyOrderCount: { increment: 1 } }
+            });
 
-                // Helper: Get primary part for legacy fields compatibility
-                // Ensure parts exists and has at least one item, otherwise default to empty/null logic
-                const primaryPart = (createOrderDto.parts && createOrderDto.parts.length > 0) ? createOrderDto.parts[0] : null;
-                const primaryName = primaryPart ? primaryPart.name : (createOrderDto.partName || 'Multi-Part Order');
-                const primaryDesc = primaryPart ? primaryPart.description : (createOrderDto.partDescription || 'See parts list');
-                const primaryImages = primaryPart ? primaryPart.images : (createOrderDto.partImages || []);
+            // Helper: Get primary part for legacy fields compatibility
+            // Ensure parts exists and has at least one item, otherwise default to empty/null logic
+            const primaryPart = (createOrderDto.parts && createOrderDto.parts.length > 0) ? createOrderDto.parts[0] : null;
+            const primaryName = primaryPart ? primaryPart.name : (createOrderDto.partName || 'Multi-Part Order');
+            const primaryDesc = primaryPart ? primaryPart.description : (createOrderDto.partDescription || 'See parts list');
+            const primaryImages = primaryPart ? primaryPart.images : (createOrderDto.partImages || []);
 
-                const order = await tx.order.create({
-                    data: {
-                        vehicleMake: createOrderDto.vehicleMake,
-                        vehicleModel: createOrderDto.vehicleModel,
-                        vehicleYear: createOrderDto.vehicleYear,
-                        vin: createOrderDto.vin,
-                        vinImage: createOrderDto.vinImage,
-                        requestType: createOrderDto.requestType,
-                        shippingType: createOrderDto.shippingType,
+            const order = await tx.order.create({
+                data: {
+                    vehicleMake: createOrderDto.vehicleMake,
+                    vehicleModel: createOrderDto.vehicleModel,
+                    vehicleYear: createOrderDto.vehicleYear,
+                    vin: createOrderDto.vin,
+                    vinImage: createOrderDto.vinImage,
+                    requestType: createOrderDto.requestType,
+                    shippingType: createOrderDto.shippingType,
 
-                        // Legacy Support: Populate single-part fields from the first part
-                        partName: primaryName,
-                        partDescription: primaryDesc,
-                        partImages: primaryImages,
+                    // Legacy Support: Populate single-part fields from the first part
+                    partName: primaryName,
+                    partDescription: primaryDesc,
+                    partImages: primaryImages,
 
-                        conditionPref: createOrderDto.conditionPref,
-                        warrantyPreferred: createOrderDto.warrantyPreferred,
+                    conditionPref: createOrderDto.conditionPref,
+                    warrantyPreferred: createOrderDto.warrantyPreferred,
                         clientRequestId: clientRequestId ?? null,
 
-                        customerId,
-                        orderNumber,
-                        status: OrderStatus.COLLECTING_OFFERS,
-                        revealOffersAt: new Date(Date.now() + collectionMs),
+                    customerId,
+                    orderNumber,
+                    status: OrderStatus.COLLECTING_OFFERS,
+                    revealOffersAt: new Date(Date.now() + collectionMs),
                         offersStopAt: computeOffersStopAt(new Date(Date.now() + collectionMs)),
-                        selectionDeadlineAt: null, // Set dynamically upon reveal
+                    selectionDeadlineAt: null, // Set dynamically upon reveal
 
-                        // New Relation: Create all parts
-                        // @ts-ignore: IDE stale type definition
-                        parts: {
-                            create: createOrderDto.parts ? createOrderDto.parts.map(part => ({
-                                name: part.name,
-                                description: part.description,
-                                notes: part.notes,
-                                images: part.images || [],
-                                video: part.video,
-                            })) : []
-                        }
-                    },
-                    include: {
-                        // @ts-ignore: IDE stale type definition
-                        parts: true // Return parts in response
+                    // New Relation: Create all parts
+                    // @ts-ignore: IDE stale type definition
+                    parts: {
+                        create: createOrderDto.parts ? createOrderDto.parts.map(part => ({
+                            name: part.name,
+                            description: part.description,
+                            notes: part.notes,
+                            images: part.images || [],
+                            video: part.video,
+                        })) : []
                     }
-                });
-
-                // Update Audit Log to reflect new structure
-                await this.auditLogs.logAction({
-                    orderId: order.id,
-                    action: 'CREATE',
-                    entity: 'Order',
-                    actorType: ActorType.CUSTOMER,
-                    actorId: customerId,
-                    actorName: 'Customer', // In real app, fetch name
-                    newState: OrderStatus.COLLECTING_OFFERS,
-                    metadata: {
-                        car: `${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel} ${createOrderDto.vehicleYear}`,
-                        partsCount: createOrderDto.parts ? createOrderDto.parts.length : 0,
-                        vinImage: createOrderDto.vinImage,
-                        // Captured from frontend payload
-                        requestType: createOrderDto.requestType,
-                        shippingType: createOrderDto.shippingType
-                    },
-                }, tx);
-
-                return order;
+                },
+                include: {
+                    // @ts-ignore: IDE stale type definition
+                    parts: true // Return parts in response
+                }
             });
+
+            // Update Audit Log to reflect new structure
+            await this.auditLogs.logAction({
+                orderId: order.id,
+                action: 'CREATE',
+                entity: 'Order',
+                actorType: ActorType.CUSTOMER,
+                actorId: customerId,
+                actorName: 'Customer', // In real app, fetch name
+                newState: OrderStatus.COLLECTING_OFFERS,
+                metadata: {
+                    car: `${createOrderDto.vehicleMake} ${createOrderDto.vehicleModel} ${createOrderDto.vehicleYear}`,
+                    partsCount: createOrderDto.parts ? createOrderDto.parts.length : 0,
+                    vinImage: createOrderDto.vinImage,
+                    // Captured from frontend payload
+                    requestType: createOrderDto.requestType,
+                    shippingType: createOrderDto.shippingType
+                },
+            }, tx);
+
+            return order;
+        });
         } catch (error) {
             // Concurrent duplicate create with same clientRequestId → return winner
             if (
@@ -1399,10 +1399,10 @@ export class OrdersService {
                     titleAr: noOffers ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض',
                     titleEn: noOffers ? 'Collection Period Ended' : 'Selection Period Expired',
                     messageAr: noOffers
-                        ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
+                    ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
                         : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
                     messageEn: noOffers
-                        ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
+                    ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
                         : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
                     type: 'system_alert',
                     link: `/dashboard/orders/${order.id}`,
@@ -1420,9 +1420,9 @@ export class OrdersService {
         // --- Payment cancel ---
         if (status === OrderStatus.AWAITING_PAYMENT || status === OrderStatus.PARTIALLY_PAID) {
             if (!expired) return { changed: false, order, reason: 'not_expired' };
-            const updated = await this.transitionStatus(
-                orderId,
-                OrderStatus.CANCELLED,
+        const updated = await this.transitionStatus(
+            orderId,
+            OrderStatus.CANCELLED,
                 systemActor,
                 `System: Payment period expired after ${durationCfg.paymentTimeoutHours} hours`,
                 meta,
@@ -1441,20 +1441,20 @@ export class OrdersService {
                     `wa:ORDER_STATUS:${order.id}:CANCELLED:payment_ended`,
                     120,
                     {
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
+            recipientId: order.customerId,
+            recipientRole: 'CUSTOMER',
                         titleAr: 'انتهت مهلة الدفع',
                         titleEn: 'Payment Period Expired',
                         messageAr: `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`,
                         messageEn: `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`,
-                        type: 'system_alert',
-                        link: `/dashboard/orders/${order.id}`,
-                        metadata: {
-                            orderId: order.id,
-                            orderNumber: order.orderNumber,
-                            waEvent: 'ORDER_STATUS',
-                            status: 'CANCELLED',
-                        },
+            type: 'system_alert',
+            link: `/dashboard/orders/${order.id}`,
+            metadata: {
+                orderId: order.id,
+                orderNumber: order.orderNumber,
+                waEvent: 'ORDER_STATUS',
+                status: 'CANCELLED',
+            },
                     },
                 )
                 .catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
@@ -1584,17 +1584,29 @@ export class OrdersService {
                     }).catch((e) => this.logger.warn(`enforce late shipping violation failed: ${e?.message || e}`));
                 }
             }
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'إلغاء الطلب لعدم استجابة التاجر',
-                titleEn: 'Order Cancelled: Merchant Missed Prep Deadline',
-                messageAr: `تم إلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز.`,
-                messageEn: `Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline.`,
-                type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
-            }).catch(() => undefined);
+            await this.notifications
+                .notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:CANCELLED:delayed_prep`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'إلغاء الطلب لعدم استجابة التاجر',
+                        titleEn: 'Order Cancelled: Merchant Missed Prep Deadline',
+                        messageAr: `تم إلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز.`,
+                        messageEn: `Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline.`,
+                        type: 'ORDER',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
+                    },
+                )
+                .catch(() => undefined);
             return { changed: true, order: updated, reason: 'cancelled_delayed_prep' };
         }
 
@@ -1638,17 +1650,29 @@ export class OrdersService {
                     }).catch((e) => this.logger.warn(`enforce late correction violation failed: ${e?.message || e}`));
                 }
             }
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'إلغاء الطلب واسترجاع المبلغ',
-                titleEn: 'Order Cancelled & Refunded',
-                messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة.`,
-                messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part.`,
-                type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
-            }).catch(() => undefined);
+            await this.notifications
+                .notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:CANCELLED:correction`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'إلغاء الطلب واسترجاع المبلغ',
+                        titleEn: 'Order Cancelled & Refunded',
+                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة.`,
+                        messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part.`,
+                        type: 'ORDER',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
+                    },
+                )
+                .catch(() => undefined);
             return { changed: true, order: updated, reason: 'cancelled_correction' };
         }
 
@@ -1696,17 +1720,28 @@ export class OrdersService {
                 `System: Auto-completed after ${returnHours}-hour return/dispute window expired`,
                 meta,
             );
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'انتهاء فترة الاسترجاع للطلب',
-                titleEn: 'Return period expired for order',
-                messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع.`,
-                messageEn: `Order #${order.orderNumber} has been completed because the return/dispute window expired.`,
-                type: 'system_alert',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, waEvent: 'ORDER_STATUS', graceWindowExpired: true },
-            }).catch(() => undefined);
+            await this.notifications
+                .notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:COMPLETED:grace_window_expired`,
+                    180,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهاء فترة الاسترجاع للطلب',
+                        titleEn: 'Return period expired for order',
+                        messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع.`,
+                        messageEn: `Order #${order.orderNumber} has been completed because the return/dispute window expired.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            waEvent: 'ORDER_STATUS',
+                            graceWindowExpired: true,
+                        },
+                    },
+                )
+                .catch(() => undefined);
             return { changed: true, order: updated, reason: 'completed_return_window' };
         }
 
@@ -3654,20 +3689,20 @@ export class OrdersService {
                             `wa:ORDER_STATUS:${orderId}:delivered_grace_window`,
                             180,
                             {
-                                recipientId: order.customerId,
-                                recipientRole: 'CUSTOMER',
-                                titleAr: `وصلت قطعة: ${partName}`,
-                                titleEn: `Part delivered: ${partName}`,
-                                messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                                messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                                type: 'ORDER',
-                                link: `/dashboard/orders/${orderId}`,
-                                metadata: {
-                                    offerId: offer.id,
-                                    orderPartId: offer.orderPartId,
-                                    waEvent: 'ORDER_STATUS',
-                                    graceWindow: true,
-                                },
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: `وصلت قطعة: ${partName}`,
+                        titleEn: `Part delivered: ${partName}`,
+                        messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                        messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                        type: 'ORDER',
+                        link: `/dashboard/orders/${orderId}`,
+                        metadata: {
+                            offerId: offer.id,
+                            orderPartId: offer.orderPartId,
+                            waEvent: 'ORDER_STATUS',
+                            graceWindow: true,
+                        },
                             },
                         )
                         .catch(() => {});
@@ -3721,20 +3756,20 @@ export class OrdersService {
                                 `wa:ORDER_STATUS:${orderId}:delivered_grace_window_partial`,
                                 180,
                                 {
-                                    recipientId: order.customerId,
-                                    recipientRole: 'CUSTOMER',
-                                    titleAr: `وصلت قطعة: ${partName}`,
-                                    titleEn: `Part delivered: ${partName}`,
-                                    messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                                    messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                                    type: 'ORDER',
-                                    link: `/dashboard/orders/${orderId}`,
-                                    metadata: {
-                                        offerId: offer.id,
-                                        orderPartId: offer.orderPartId,
-                                        waEvent: 'ORDER_STATUS',
-                                        graceWindow: true,
-                                    },
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: `وصلت قطعة: ${partName}`,
+                            titleEn: `Part delivered: ${partName}`,
+                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${orderId}`,
+                            metadata: {
+                                offerId: offer.id,
+                                orderPartId: offer.orderPartId,
+                                waEvent: 'ORDER_STATUS',
+                                graceWindow: true,
+                            },
                                 },
                             )
                             .catch(() => {});

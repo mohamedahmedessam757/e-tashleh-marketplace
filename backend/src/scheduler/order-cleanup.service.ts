@@ -253,21 +253,28 @@ export class OrderCleanupService {
                 );
 
                 // Notify Customer
-                await this.notificationsService.create({
-                    recipientId: order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'انتهاء فترة الاسترجاع للطلب',
-                    titleEn: 'Return period expired for order',
-                    messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع (${hoursLabel} ساعة).`,
-                    messageEn: `Order #${order.orderNumber} has been completed because the ${hoursLabel}-hour return/dispute window has expired.`,
-                    type: 'system_alert',
-                    link: `/dashboard/orders`,
-                    metadata: {
-                        orderId: order.id,
-                        waEvent: 'ORDER_STATUS',
-                        graceWindowExpired: true,
-                    },
-                });
+                await this.notificationsService
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:COMPLETED:grace_window_expired`,
+                        180,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'انتهاء فترة الاسترجاع للطلب',
+                            titleEn: 'Return period expired for order',
+                            messageAr: `تم اكتمال الطلب رقم #${order.orderNumber} بنجاح نظراً لمرور مهلة الإرجاع أو النزاع (${hoursLabel} ساعة).`,
+                            messageEn: `Order #${order.orderNumber} has been completed because the ${hoursLabel}-hour return/dispute window has expired.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders`,
+                            metadata: {
+                                orderId: order.id,
+                                waEvent: 'ORDER_STATUS',
+                                graceWindowExpired: true,
+                            },
+                        },
+                    )
+                    .catch(() => undefined);
 
                 // Notify Vendor (if applicable)
                 if (order.storeId) {
@@ -899,22 +906,29 @@ export class OrderCleanupService {
                     });
                 }
 
-                await this.notificationsService.create({
-                    recipientId: order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'نأسف حقاً: إلغاء طلبك لعدم استجابة التاجر',
-                    titleEn: 'Apology: Order Cancelled & Merchant Penalized',
-                    messageAr: `نعتذر لك بشدة، قامت الإدارة بشكل تلقائي بإلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-                    messageEn: `We apologize. Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline. Refund is being processed per the 2% payment gateway fee policy.`,
-                    type: 'ORDER',
-                    link: `/dashboard/orders/${order.id}`,
-                    metadata: {
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        status: 'CANCELLED',
-                        waEvent: 'ORDER_STATUS',
-                    },
-                });
+                await this.notificationsService
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CANCELLED:delayed_prep`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'نأسف حقاً: إلغاء طلبك لعدم استجابة التاجر',
+                            titleEn: 'Apology: Order Cancelled & Merchant Penalized',
+                            messageAr: `نعتذر لك بشدة، قامت الإدارة بشكل تلقائي بإلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
+                            messageEn: `We apologize. Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline. Refund is being processed per the 2% payment gateway fee policy.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                status: 'CANCELLED',
+                                waEvent: 'ORDER_STATUS',
+                            },
+                        },
+                    )
+                    .catch(() => undefined);
             } catch (err) {
                 this.logger.error(`Failed executing handleCriticalPreparationFailures on ${order.id}: ${err.message}`);
             }
@@ -995,20 +1009,29 @@ export class OrderCleanupService {
                 }
                 
                 // Notify Customer
-                await this.notificationsService.create({
-                    recipientId: order.customerId, recipientRole: 'CUSTOMER',
-                    titleAr: 'إلغاء الطلب واسترجاع المبلغ', titleEn: 'Order Cancelled & Refunded',
-                    messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة للمواصفات. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-                    messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. Refund is being processed per the 2% payment gateway fee policy.`,
-                    type: 'ORDER',
-                    link: `/dashboard/orders/${order.id}`,
-                    metadata: {
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        status: 'CANCELLED',
-                        waEvent: 'ORDER_STATUS',
-                    },
-                });
+                await this.notificationsService
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CANCELLED:correction`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'إلغاء الطلب واسترجاع المبلغ',
+                            titleEn: 'Order Cancelled & Refunded',
+                            messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة للمواصفات. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
+                            messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. Refund is being processed per the 2% payment gateway fee policy.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                status: 'CANCELLED',
+                                waEvent: 'ORDER_STATUS',
+                            },
+                        },
+                    )
+                    .catch(() => undefined);
 
                 // Admin Notification
                 const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });

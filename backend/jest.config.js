@@ -26,6 +26,7 @@ module.exports = {
         '**/admin-financial-metrics.util.spec.ts',
         '**/gateway-fee.util.spec.ts',
         '**/otp-purpose.spec.ts',
+        '**/offer-action-policy.util.spec.ts',
     ],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',
