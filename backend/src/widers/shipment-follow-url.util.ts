@@ -5,7 +5,7 @@ const ORDER_UUID_RE =
 
 export const DEFAULT_SHIPMENT_FRONTEND_ORIGIN = 'https://e-tashleh.net';
 
-export type OrderFollowTab = 'waybills';
+export type OrderFollowTab = 'waybills' | 'invoices';
 
 /**
  * Absolute dashboard deep-link for WhatsApp body follow_url / shipment {{4}}.
@@ -17,10 +17,19 @@ export function buildOrderFollowUrl(params: {
     frontendUrl?: string | null;
     /** When set (shipments), appends ?tab=waybills */
     tab?: OrderFollowTab;
+    /** Required when tab=invoices */
+    offerId?: string | null;
 }): string | null {
     const orderId = params.orderId?.trim();
     if (!orderId || !ORDER_UUID_RE.test(orderId)) {
         return null;
+    }
+
+    const offerId = params.offerId?.trim();
+    if (params.tab === 'invoices') {
+        if (!offerId || !ORDER_UUID_RE.test(offerId)) {
+            return null;
+        }
     }
 
     const origin = (params.frontendUrl?.trim().replace(/\/$/, '') ||
@@ -32,7 +41,13 @@ export function buildOrderFollowUrl(params: {
             : `explore-offer/${orderId}`;
 
     const base = `${origin}/dashboard/${path}`;
-    return params.tab === 'waybills' ? `${base}?tab=waybills` : base;
+    if (params.tab === 'waybills') {
+        return `${base}?tab=waybills`;
+    }
+    if (params.tab === 'invoices') {
+        return `${base}?tab=invoices&offerId=${offerId}`;
+    }
+    return base;
 }
 
 /**

@@ -145,7 +145,9 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         'invoice_number',
         'amount',
         'summary',
+        'follow_url',
     ], {
+        version: 'v3',
         headerText: 'فاتورة جاهزة',
         buttonLabel: 'عرض الفاتورة',
         buttonSuffixPattern: suffix.invoiceCustomer,
@@ -157,7 +159,9 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         'invoice_number',
         'amount',
         'summary',
+        'follow_url',
     ], {
+        version: 'v3',
         headerText: 'فاتورة جديدة',
         buttonLabel: 'عرض الفاتورة',
         buttonSuffixPattern: suffix.invoiceMerchant,
@@ -275,6 +279,15 @@ export function isOrderShipmentTemplateFamily(familyBase: string): boolean {
     return ORDER_SHIPMENT_FAMILY_SET.has(familyBase);
 }
 
+const INVOICE_TEMPLATE_FAMILY_SET = new Set<string>([
+    'txn_invoice_customer',
+    'txn_invoice_merchant',
+]);
+
+function isInvoiceTemplateFamily(familyBase: string): boolean {
+    return INVOICE_TEMPLATE_FAMILY_SET.has(familyBase);
+}
+
 /**
  * Order/shipment templates are permanently on Meta `_ar_v3` (body follow_url, no button).
  * Env override kept only for emergency rollback probes — set
@@ -295,6 +308,9 @@ export function resolveTemplateName(
     if (isOrderShipmentTemplateFamily(familyBase)) {
         const version = getOrderShipmentTemplateVersion();
         return `${familyBase}_${language}_${version}`;
+    }
+    if (isInvoiceTemplateFamily(familyBase)) {
+        return `${familyBase}_${language}_v3`;
     }
     return `${familyBase}_${language}${TEMPLATE_NAME_VERSION_SUFFIX}`;
 }

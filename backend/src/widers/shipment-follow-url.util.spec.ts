@@ -37,6 +37,31 @@ describe('buildOrderFollowUrl', () => {
         );
     });
 
+    it('appends invoices tab with offerId', () => {
+        const offerId = 'b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e';
+        const url = buildOrderFollowUrl({
+            role: 'CUSTOMER',
+            orderId,
+            offerId,
+            frontendUrl: 'https://e-tashleh.net',
+            tab: 'invoices',
+        });
+        expect(url).toBe(
+            `https://e-tashleh.net/dashboard/order-details/${orderId}?tab=invoices&offerId=${offerId}`,
+        );
+    });
+
+    it('returns null for invalid offerId when tab=invoices', () => {
+        const url = buildOrderFollowUrl({
+            role: 'CUSTOMER',
+            orderId,
+            offerId: 'not-a-uuid',
+            frontendUrl: 'https://e-tashleh.net',
+            tab: 'invoices',
+        });
+        expect(url).toBeNull();
+    });
+
     it('returns null for invalid orderId', () => {
         expect(
             buildOrderFollowUrl({

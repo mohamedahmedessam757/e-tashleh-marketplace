@@ -759,6 +759,8 @@ export class OrdersService {
             : undefined;
 
         // 2. Transaction: Update Status + Audit Log
+        // Status-conditional updateMany: cron + enforceExpiredSla cannot both win the same transition.
+        let transitionApplied = true;
         const result = await this.prisma.$transaction(async (tx) => {
             // New 2026 Logic: Check all accepted offers for warranty (Multi-part support)
             const acceptedOffers = order.offers?.filter(o => ['accepted', 'ACCEPTED'].includes(o.status)) || [];
@@ -772,8 +774,8 @@ export class OrdersService {
                 effectiveStatus === OrderStatus.DELIVERED &&
                 !order.deliveredAt;
 
-            const updatedOrder = await tx.order.update({
-                where: { id: orderId },
+            const applied = await tx.order.updateMany({
+                where: { id: orderId, status: order.status },
                 data: {
                     status: effectiveStatus,
                     updatedAt: now,
@@ -783,6 +785,16 @@ export class OrdersService {
                     ...(correctionDeadlineAt ? { correctionDeadlineAt } : {}),
                     deliveredAt: isFirstDeliveredTransition ? now : undefined,
                 },
+            });
+
+            if (applied.count === 0) {
+                transitionApplied = false;
+                const current = await tx.order.findUnique({ where: { id: orderId } });
+                return current ?? order;
+            }
+
+            const updatedOrder = await tx.order.findUniqueOrThrow({
+                where: { id: orderId },
             });
 
             // --- 2026 Risk Management: Update Customer Return Stats ---
@@ -824,6 +836,13 @@ export class OrdersService {
 
             return updatedOrder;
         }, { timeout: 15000 });
+
+        if (!transitionApplied) {
+            this.logger.warn(
+                `transitionStatus skipped (lost race) order=${orderId} from=${order.status} to=${newStatus}`,
+            );
+            return result as Order;
+        }
 
         const notifyStatus = (result as Order).status;
 
@@ -1314,17 +1333,31 @@ export class OrdersService {
                     'System: No offers received after collection window.',
                     meta,
                 );
-                await this.notifications.create({
-                    recipientId: order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'انتهت مهلة جمع العروض',
-                    titleEn: 'Collection Period Ended',
-                    messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`,
-                    messageEn: `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`,
-                    type: 'system_alert',
-                    link: `/dashboard/orders/${order.id}`,
-                    metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
-                }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+                await this.notifications
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CANCELLED:collection_ended_no_offers`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'انتهت مهلة جمع العروض',
+                            titleEn: 'Collection Period Ended',
+                            messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`,
+                            messageEn: `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_STATUS',
+                                status: 'CANCELLED',
+                            },
+                        },
+                    )
+                    .catch((e) =>
+                        this.logger.warn(`enforce notify failed: ${e?.message || e}`),
+                    );
                 return { changed: true, order: updated, reason: 'cancelled_no_offers' };
             }
             if (status === OrderStatus.COLLECTING_OFFERS) {
@@ -1356,21 +1389,31 @@ export class OrdersService {
                     : `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`,
                 meta,
             );
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: noOffers ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض',
-                titleEn: noOffers ? 'Collection Period Ended' : 'Selection Period Expired',
-                messageAr: noOffers
-                    ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
-                    : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
-                messageEn: noOffers
-                    ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
-                    : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
-                type: 'system_alert',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
-            }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+            const dedupKey = noOffers
+                ? `wa:ORDER_STATUS:${order.id}:CANCELLED:selection_ended_no_offers`
+                : `wa:ORDER_STATUS:${order.id}:CANCELLED:selection_ended`;
+            await this.notifications
+                .notifyWithDedup(order.customerId, dedupKey, 120, {
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: noOffers ? 'انتهت مهلة جمع العروض' : 'انتهت مهلة اختيار العرض',
+                    titleEn: noOffers ? 'Collection Period Ended' : 'Selection Period Expired',
+                    messageAr: noOffers
+                        ? `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber}. تم إغلاق الطلب تلقائياً.`
+                        : `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
+                    messageEn: noOffers
+                        ? `We apologize, no offers were received for order #${order.orderNumber}. The order has been closed automatically.`
+                        : `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
+                    type: 'system_alert',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                        status: 'CANCELLED',
+                    },
+                })
+                .catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
             return { changed: true, order: updated, reason: 'cancelled_selection' };
         }
 
@@ -1392,17 +1435,29 @@ export class OrdersService {
                 reason: `Customer accepted offer for order #${order.orderNumber} but did not pay within deadline.`,
                 metadata: { orderNumber: order.orderNumber },
             }).catch((e) => this.logger.warn(`enforce payment violation failed: ${e?.message || e}`));
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'انتهت مهلة الدفع',
-                titleEn: 'Payment Period Expired',
-                messageAr: `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`,
-                messageEn: `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`,
-                type: 'system_alert',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: { orderId: order.id, orderNumber: order.orderNumber, waEvent: 'ORDER_STATUS', status: 'CANCELLED' },
-            }).catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
+            await this.notifications
+                .notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:CANCELLED:payment_ended`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهت مهلة الدفع',
+                        titleEn: 'Payment Period Expired',
+                        messageAr: `انتهت مهلة دفع الطلب #${order.orderNumber}. تم إلغاء الطلب تلقائياً.`,
+                        messageEn: `Payment deadline for order #${order.orderNumber} expired. The order was cancelled automatically.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
+                    },
+                )
+                .catch((e) => this.logger.warn(`enforce notify failed: ${e?.message || e}`));
             return { changed: true, order: updated, reason: 'cancelled_payment' };
         }
 
@@ -3593,22 +3648,29 @@ export class OrdersService {
                 });
                 for (const offer of deliveredOffers) {
                     const partName = offer.orderPart?.name || 'Part';
-                    await this.notifications.create({
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
-                        titleAr: `وصلت قطعة: ${partName}`,
-                        titleEn: `Part delivered: ${partName}`,
-                        messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                        messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                        type: 'ORDER',
-                        link: `/dashboard/orders/${orderId}`,
-                        metadata: {
-                            offerId: offer.id,
-                            orderPartId: offer.orderPartId,
-                            waEvent: 'ORDER_STATUS',
-                            graceWindow: true,
-                        },
-                    }).catch(() => {});
+                    await this.notifications
+                        .notifyWithDedup(
+                            order.customerId,
+                            `wa:ORDER_STATUS:${orderId}:delivered_grace_window`,
+                            180,
+                            {
+                                recipientId: order.customerId,
+                                recipientRole: 'CUSTOMER',
+                                titleAr: `وصلت قطعة: ${partName}`,
+                                titleEn: `Part delivered: ${partName}`,
+                                messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                                messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                                type: 'ORDER',
+                                link: `/dashboard/orders/${orderId}`,
+                                metadata: {
+                                    offerId: offer.id,
+                                    orderPartId: offer.orderPartId,
+                                    waEvent: 'ORDER_STATUS',
+                                    graceWindow: true,
+                                },
+                            },
+                        )
+                        .catch(() => {});
                 }
             }
             return;
@@ -3653,22 +3715,29 @@ export class OrdersService {
                 for (const offer of deliveredOffers) {
                     if (offer.deliveredAt && offer.deliveredAt.getTime() >= now.getTime() - 60000) {
                         const partName = offer.orderPart?.name || 'Part';
-                        await this.notifications.create({
-                            recipientId: order.customerId,
-                            recipientRole: 'CUSTOMER',
-                            titleAr: `وصلت قطعة: ${partName}`,
-                            titleEn: `Part delivered: ${partName}`,
-                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${orderId}`,
-                            metadata: {
-                                offerId: offer.id,
-                                orderPartId: offer.orderPartId,
-                                waEvent: 'ORDER_STATUS',
-                                graceWindow: true,
-                            },
-                        }).catch(() => {});
+                        await this.notifications
+                            .notifyWithDedup(
+                                order.customerId,
+                                `wa:ORDER_STATUS:${orderId}:delivered_grace_window_partial`,
+                                180,
+                                {
+                                    recipientId: order.customerId,
+                                    recipientRole: 'CUSTOMER',
+                                    titleAr: `وصلت قطعة: ${partName}`,
+                                    titleEn: `Part delivered: ${partName}`,
+                                    messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                                    messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                                    type: 'ORDER',
+                                    link: `/dashboard/orders/${orderId}`,
+                                    metadata: {
+                                        offerId: offer.id,
+                                        orderPartId: offer.orderPartId,
+                                        waEvent: 'ORDER_STATUS',
+                                        graceWindow: true,
+                                    },
+                                },
+                            )
+                            .catch(() => {});
                     }
                 }
             }

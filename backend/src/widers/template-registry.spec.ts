@@ -44,9 +44,9 @@ describe('order/shipment template version (v3 default)', () => {
         );
     });
 
-    it('keeps non-order families on _ar_v2', () => {
+    it('keeps non-order families on _ar_v2 except invoices v3', () => {
         expect(resolveTemplateName('txn_invoice_customer', 'ar')).toBe(
-            'txn_invoice_customer_ar_v2',
+            'txn_invoice_customer_ar_v3',
         );
         expect(resolveTemplateName('txn_violation_customer', 'ar')).toBe(
             'txn_violation_customer_ar_v2',

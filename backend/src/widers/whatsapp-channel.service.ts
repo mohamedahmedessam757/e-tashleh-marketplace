@@ -443,6 +443,7 @@ export class WhatsAppChannelService {
                     audienceRole,
                     orderId,
                     family.startsWith('txn_shipment_') ? 'waybills' : undefined,
+                    undefined,
                     params.recipientId,
                 );
                 const followValue = followUrl ?? 'غير متوفر';
@@ -458,6 +459,15 @@ export class WhatsAppChannelService {
                 fields.invoice_number = invoiceContext.invoiceNumber ?? '-';
                 fields.amount = invoiceContext.amount ?? this.formatAmount(params.metadata?.amount);
                 fields.summary = truncateWhatsAppParam(statusDetail, 200);
+
+                fields.follow_url =
+                    this.resolveOrderFollowUrl(
+                        audienceRole,
+                        orderId,
+                        'invoices',
+                        invoiceContext.offerId ?? null,
+                        params.recipientId,
+                    ) ?? 'غير متوفر';
             }
 
             if (family.startsWith('txn_document_')) {
@@ -598,7 +608,8 @@ export class WhatsAppChannelService {
     private resolveOrderFollowUrl(
         role: WhatsAppAudienceRole,
         orderId: string | null,
-        tab?: 'waybills',
+        tab?: 'waybills' | 'invoices',
+        offerId?: string | null,
         recipientId?: string,
     ): string | null {
         if (!this.config.frontendUrl) {
@@ -611,6 +622,7 @@ export class WhatsAppChannelService {
             orderId,
             frontendUrl: this.config.frontendUrl,
             tab,
+            offerId,
         });
         if (!baseUrl || !recipientId || !orderId) {
             return baseUrl;
@@ -623,7 +635,12 @@ export class WhatsAppChannelService {
 
         const dlRole = role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
         const path = role === 'CUSTOMER' ? 'order-details' : 'explore-offer';
-        const search = tab === 'waybills' ? '?tab=waybills' : undefined;
+        const search =
+            tab === 'waybills'
+                ? '?tab=waybills'
+                : tab === 'invoices'
+                  ? `?tab=invoices&offerId=${offerId ?? ''}`
+                  : undefined;
         const token = signDeepLinkToken(secret, {
             userId: recipientId,
             role: dlRole,

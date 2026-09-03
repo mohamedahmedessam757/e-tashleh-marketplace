@@ -116,22 +116,27 @@ export class OrderCleanupService {
             const remainingMs = windowEndsAt.getTime() - now;
             const remainingHours = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
             const partName = offer.orderPart?.name || 'Part';
-            await this.notificationsService.create({
-                recipientId: offer.order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: 'تذكير: مهلة الإرجاع/النزاع تنتهي قريباً',
-                titleEn: 'Reminder: return/dispute window ending soon',
-                messageAr: `تبقى حوالي ${remainingHours} ساعة على انتهاء مهلة الإرجاع/النزاع للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
-                messageEn: `About ${remainingHours} hour(s) left to request a return or dispute for "${partName}" in order #${offer.order.orderNumber}.`,
-                type: 'system_alert',
-                link: `/dashboard/orders/${offer.orderId}?${dedupeKey}=1`,
-                metadata: {
-                    offerId: offer.id,
-                    orderId: offer.orderId,
-                    waEvent: 'ORDER_STATUS',
-                    graceWindowReminder: true,
+            await this.notificationsService.notifyWithDedup(
+                offer.order.customerId,
+                `wa:ORDER_STATUS:${offer.orderId}:grace_window_reminder`,
+                120,
+                {
+                    recipientId: offer.order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'تذكير: مهلة الإرجاع/النزاع تنتهي قريباً',
+                    titleEn: 'Reminder: return/dispute window ending soon',
+                    messageAr: `تبقى حوالي ${remainingHours} ساعة على انتهاء مهلة الإرجاع/النزاع للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
+                    messageEn: `About ${remainingHours} hour(s) left to request a return or dispute for "${partName}" in order #${offer.order.orderNumber}.`,
+                    type: 'system_alert',
+                    link: `/dashboard/orders/${offer.orderId}?${dedupeKey}=1`,
+                    metadata: {
+                        offerId: offer.id,
+                        orderId: offer.orderId,
+                        waEvent: 'ORDER_STATUS',
+                        graceWindowReminder: true,
+                    },
                 },
-            });
+            );
         }
     }
 
@@ -178,22 +183,27 @@ export class OrderCleanupService {
                         );
                 }
 
-                await this.notificationsService.create({
-                    recipientId: offer.order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'انتهت مهلة الإرجاع للقطعة',
-                    titleEn: 'Item return window expired',
-                    messageAr: `انتهت مهلة الإرجاع/النزاع (${returnHours} ساعة) للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
-                    messageEn: `The ${returnHours}-hour return/dispute window for "${partName}" in order #${offer.order.orderNumber} has expired.`,
-                    type: 'system_alert',
-                    link: `/dashboard/orders/${offer.orderId}`,
-                    metadata: {
-                        offerId: offer.id,
-                        orderId: offer.orderId,
-                        waEvent: 'ORDER_STATUS',
-                        graceWindowExpired: true,
+                await this.notificationsService.notifyWithDedup(
+                    offer.order.customerId,
+                    `wa:ORDER_STATUS:${offer.orderId}:grace_window_expired_item`,
+                    120,
+                    {
+                        recipientId: offer.order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهت مهلة الإرجاع للقطعة',
+                        titleEn: 'Item return window expired',
+                        messageAr: `انتهت مهلة الإرجاع/النزاع (${returnHours} ساعة) للقطعة «${partName}» في الطلب #${offer.order.orderNumber}.`,
+                        messageEn: `The ${returnHours}-hour return/dispute window for "${partName}" in order #${offer.order.orderNumber} has expired.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders/${offer.orderId}`,
+                        metadata: {
+                            offerId: offer.id,
+                            orderId: offer.orderId,
+                            waEvent: 'ORDER_STATUS',
+                            graceWindowExpired: true,
+                        },
                     },
-                });
+                );
             } catch (err) {
                 this.logger.error(`Failed to auto-complete offer ${offer.id}:`, err);
             }
@@ -466,22 +476,27 @@ export class OrderCleanupService {
                         { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
                         'System: No offers received after collection window.',
                     );
-                    await this.notificationsService.create({
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
-                        titleAr: 'انتهت مهلة جمع العروض',
-                        titleEn: 'Collection Period Ended',
-                        messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
-                        messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
-                        type: 'system_alert',
-                        link: `/dashboard/orders/${order.id}`,
-                        metadata: {
-                            orderId: order.id,
-                            orderNumber: order.orderNumber,
-                            waEvent: 'ORDER_STATUS',
-                            status: 'CANCELLED',
+                    await this.notificationsService.notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CANCELLED:collection_ended_no_offers`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'انتهت مهلة جمع العروض',
+                            titleEn: 'Collection Period Ended',
+                            messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
+                            messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_STATUS',
+                                status: 'CANCELLED',
+                            },
                         },
-                    });
+                    );
                     continue;
                 }
 
@@ -527,7 +542,6 @@ export class OrderCleanupService {
                             metadata: {
                                 orderId: order.id,
                                 orderNumber: order.orderNumber,
-                                waEvent: 'ORDER_STATUS',
                             },
                         });
                     }
@@ -574,22 +588,27 @@ export class OrderCleanupService {
                         { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
                         'System: No offers received after collection window.',
                     );
-                    await this.notificationsService.create({
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
-                        titleAr: 'انتهت مهلة جمع العروض',
-                        titleEn: 'Collection Period Ended',
-                        messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
-                        messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
-                        type: 'system_alert',
-                        link: `/dashboard/orders/${order.id}`,
-                        metadata: {
-                            orderId: order.id,
-                            orderNumber: order.orderNumber,
-                            waEvent: 'ORDER_STATUS',
-                            status: 'CANCELLED',
+                    await this.notificationsService.notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CANCELLED:selection_ended_no_offers`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'انتهت مهلة جمع العروض',
+                            titleEn: 'Collection Period Ended',
+                            messageAr: `نعتذر منك، لم يتم استلام أي عروض للطلب رقم #${order.orderNumber} خلال الـ 24 ساعة الماضية. تم إغلاق الطلب تلقائياً.`,
+                            messageEn: `We apologize, no offers were received for order #${order.orderNumber} during the last 24 hours. The order has been closed automatically.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_STATUS',
+                                status: 'CANCELLED',
+                            },
                         },
-                    });
+                    );
                     continue;
                 }
 
@@ -604,21 +623,26 @@ export class OrderCleanupService {
                     `System: Selection period expired (${durationCfg.offerSelectionHours}h). Customer failed to choose an offer.`,
                 );
 
-                await this.notificationsService.create({
-                    recipientId: order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'انتهت مهلة اختيار العرض',
-                    titleEn: 'Selection Period Expired',
-                    messageAr: `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
-                    messageEn: `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
-                    type: 'system_alert',
-                    metadata: {
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        waEvent: 'ORDER_STATUS',
-                        status: 'CANCELLED',
+                await this.notificationsService.notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:CANCELLED:selection_ended`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهت مهلة اختيار العرض',
+                        titleEn: 'Selection Period Expired',
+                        messageAr: `انتهت المهلة المتاحة لاختيار عرض للطلب رقم (#${order.orderNumber}). تم إغلاق الطلب تلقائياً.`,
+                        messageEn: `The deadline to select an offer for order (#${order.orderNumber}) has expired. The order has been closed automatically.`,
+                        type: 'system_alert',
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                        },
                     },
-                });
+                );
             } catch (error) {
                 this.logger.error(`Failed to expire order selection ${order.id}: ${error.message}`);
             }
@@ -674,22 +698,27 @@ export class OrderCleanupService {
                 });
 
                 // Notify Customer
-                await this.notificationsService.create({
-                    recipientId: order.customerId,
-                    recipientRole: 'CUSTOMER',
-                    titleAr: 'انتهاء مهلة الدفع للطلب',
-                    titleEn: 'Payment Period Expired',
-                    messageAr: `تم إلغاء طلبك (#${order.orderNumber}) لعدم إتمام خطوة السداد خلال الـ 24 ساعة المحددة.`,
-                    messageEn: `Your order (#${order.orderNumber}) was cancelled as payment was not completed within the 24h limit.`,
-                    type: 'ORDER',
-                    link: `/dashboard/orders/${order.id}`,
-                    metadata: {
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        status: 'CANCELLED',
-                        waEvent: 'ORDER_STATUS',
+                await this.notificationsService.notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_STATUS:${order.id}:CANCELLED:payment_ended`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'انتهاء مهلة الدفع للطلب',
+                        titleEn: 'Payment Period Expired',
+                        messageAr: `تم إلغاء طلبك (#${order.orderNumber}) لعدم إتمام خطوة السداد خلال الـ 24 ساعة المحددة.`,
+                        messageEn: `Your order (#${order.orderNumber}) was cancelled as payment was not completed within the 24h limit.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            status: 'CANCELLED',
+                            waEvent: 'ORDER_STATUS',
+                        },
                     },
-                });
+                );
 
                 // Notify Merchants (transitionStatus already WA-notifies accepted merchant;
                 // keep in-app + WA with explicit waEvent for stores that only appear on offers)

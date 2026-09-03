@@ -1518,7 +1518,7 @@ export type $InvoicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     currency: string
     status: string
     /**
-     * MASTER | PART | SHIPPING | COMMISSION
+     * MASTER | PART | SHIPPING | COMMISSION | GATEWAY_FEE | REFUND
      */
     invoiceType: string
     invoiceGroupId: string | null

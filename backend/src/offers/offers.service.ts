@@ -6,6 +6,12 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType, OrderStatus, ViolationTargetType } from '@prisma/client';
 import { getVoluntaryWithdrawEnd, computeCanEditUntil } from './offer-governance.util';
+import {
+    blockedPartIdsAfterWithdrawals,
+    denyReasonForCancel,
+    denyReasonForCreate,
+    denyReasonForEdit,
+} from './offer-action-policy.util';
 import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { ViolationsService } from '../violations/violations.service';
@@ -48,7 +54,15 @@ export class OffersService {
         // 1.5 GUARD: Extreme Validation Check
         const orderInfo = await this.prisma.order.findUnique({
             where: { id: createOfferDto.orderId },
-            select: { id: true, status: true, createdAt: true, customerId: true, orderNumber: true, offersStopAt: true }
+            select: {
+                id: true,
+                status: true,
+                createdAt: true,
+                customerId: true,
+                orderNumber: true,
+                offersStopAt: true,
+                revealOffersAt: true,
+            },
         });
 
         if (!orderInfo) {
@@ -60,10 +74,22 @@ export class OffersService {
         }
         
         const now = new Date();
-        if (orderInfo.offersStopAt && now > orderInfo.offersStopAt) {
+        const createDeny = denyReasonForCreate({
+            now,
+            order: {
+                status: orderInfo.status,
+                createdAt: orderInfo.createdAt,
+                revealOffersAt: orderInfo.revealOffersAt,
+                offersStopAt: orderInfo.offersStopAt,
+            },
+        });
+        if (createDeny === 'BIDDING_STOPPED') {
             throw new BadRequestException(
                 'Bidding has closed for this order (1 hour before offer reveal). Submission is no longer allowed.',
             );
+        }
+        if (createDeny === 'ORDER_STATUS_CLOSED') {
+            throw new BadRequestException(`Bidding is closed. Order status is ${orderInfo.status}.`);
         }
 
         // Cancel/delete records a violation but does NOT lock the part — merchant may re-bid
@@ -286,7 +312,7 @@ export class OffersService {
         ]);
 
         // Cancel no longer locks parts for re-bidding (violation still recorded on cancel).
-        const blockedPartIds: string[] = [];
+        const blockedPartIds = blockedPartIdsAfterWithdrawals(allWithdrawn);
         const legacyWholeOrderBlock = false;
 
         const partDeletionCounts: Record<string, number> = {};
@@ -335,26 +361,36 @@ export class OffersService {
             throw new NotFoundException('Offer not found.');
         }
 
-        if (existing.storeId !== store.id) {
-            throw new BadRequestException('You can only edit your own offers.');
-        }
-
-        if (existing.isWithdrawn) {
-            throw new BadRequestException('This offer has been withdrawn and cannot be edited.');
-        }
-
         // Verify order is still open for bidding
         const order = await this.prisma.order.findUnique({
             where: { id: existing.orderId },
-            select: { status: true, createdAt: true, offersStopAt: true }
+            select: { status: true, createdAt: true, offersStopAt: true, revealOffersAt: true },
         });
 
-        if (!order || (order.status !== OrderStatus.COLLECTING_OFFERS && order.status !== OrderStatus.AWAITING_OFFERS)) {
+        const editDeny = denyReasonForEdit({
+            now: new Date(),
+            offerStoreId: existing.storeId,
+            actorStoreId: store.id,
+            isWithdrawn: Boolean(existing.isWithdrawn),
+            order: order
+                ? {
+                      status: order.status,
+                      createdAt: order.createdAt,
+                      revealOffersAt: order.revealOffersAt,
+                      offersStopAt: order.offersStopAt,
+                  }
+                : null,
+        });
+        if (editDeny === 'NOT_OWNER') {
+            throw new BadRequestException('You can only edit your own offers.');
+        }
+        if (editDeny === 'ALREADY_WITHDRAWN') {
+            throw new BadRequestException('This offer has been withdrawn and cannot be edited.');
+        }
+        if (editDeny === 'ORDER_STATUS_CLOSED') {
             throw new BadRequestException('Cannot edit offer — bidding is closed.');
         }
-
-        const now = new Date();
-        if (order.offersStopAt && now > order.offersStopAt) {
+        if (editDeny === 'BIDDING_STOPPED') {
             throw new BadRequestException(
                 'Cannot edit offer — bidding closed 1 hour before offer reveal.',
             );
@@ -601,37 +637,32 @@ export class OffersService {
             throw new NotFoundException('Offer not found.');
         }
 
-        if (existing.storeId !== store.id) {
+        const cancelDeny = denyReasonForCancel({
+            now: new Date(),
+            offerStoreId: existing.storeId,
+            actorStoreId: store.id,
+            isWithdrawn: Boolean(existing.isWithdrawn),
+            order: existing.order
+                ? {
+                      status: existing.order.status,
+                      createdAt: existing.order.createdAt,
+                      revealOffersAt: existing.order.revealOffersAt,
+                      offersStopAt: existing.order.offersStopAt,
+                  }
+                : null,
+        });
+        if (cancelDeny === 'NOT_OWNER') {
             throw new BadRequestException('You can only cancel your own offers.');
         }
-
-        if (existing.isWithdrawn) {
+        if (cancelDeny === 'ALREADY_WITHDRAWN') {
             throw new BadRequestException('This offer is already cancelled.');
         }
-
-        if (
-            !existing.order ||
-            (existing.order.status !== OrderStatus.COLLECTING_OFFERS &&
-                existing.order.status !== OrderStatus.AWAITING_OFFERS)
-        ) {
+        if (cancelDeny === 'ORDER_STATUS_CLOSED') {
             throw new BadRequestException(
                 'Cannot cancel offer — bidding is closed or order has progressed.',
             );
         }
-
-        const now = new Date();
-        if (existing.order.offersStopAt && now > existing.order.offersStopAt) {
-            throw new BadRequestException(
-                'Cannot cancel offer — bidding closed 1 hour before offer reveal.',
-            );
-        }
-
-        const actionEnd = getVoluntaryWithdrawEnd({
-            revealOffersAt: existing.order.revealOffersAt,
-            createdAt: existing.order.createdAt,
-            offersStopAt: existing.order.offersStopAt,
-        });
-        if (now >= actionEnd) {
+        if (cancelDeny === 'BIDDING_STOPPED') {
             throw new BadRequestException(
                 'Cannot cancel offer — bidding closed 1 hour before offer reveal.',
             );
