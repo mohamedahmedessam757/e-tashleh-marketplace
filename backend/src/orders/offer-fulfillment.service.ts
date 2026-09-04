@@ -26,6 +26,15 @@ import {
 } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
+import {
+    aggregateStatusBranch,
+    allPartsPrepared,
+    allReadyForShipping,
+    isMultiItemOrder as resolveIsMultiItemOrder,
+    partPrepared,
+    partReadyForShipping,
+    readyForShippingCustomerLink,
+} from './order-notification-copy.util';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     [OfferFulfillmentStatus.AWAITING_PAYMENT]: 0,
@@ -236,6 +245,10 @@ export class OfferFulfillmentService {
                 customerId: order.customerId,
                 newStatus: effectiveStatus,
                 paidOffers,
+                isMulti: resolveIsMultiItemOrder({
+                    requestType: order.requestType,
+                    parts: allAccepted.length > 1 ? allAccepted : allAccepted.slice(0, 1),
+                }),
             }).catch((err) => {
                 console.error(
                     `Failed aggregate status notify for order ${orderId}:`,
@@ -289,15 +302,19 @@ export class OfferFulfillmentService {
         customerId: string;
         newStatus: OrderStatus;
         paidOffers: OfferWithPayments[];
+        isMulti: boolean;
     }) {
         if (!OfferFulfillmentService.AGGREGATE_NOTIFY_STATUSES.has(params.newStatus)) {
             return;
         }
 
+        const copyCtx = { isMulti: params.isMulti, orderNumber: params.orderNumber };
+        const branched = aggregateStatusBranch(copyCtx, params.newStatus);
+
         const messagesAr: Partial<Record<OrderStatus, string>> = {
-            [OrderStatus.PREPARATION]: 'بدأ تجهيز قطع طلبك الآن.',
+            [OrderStatus.PREPARATION]: 'بدأ تجهيز طلبك الآن.',
             [OrderStatus.DELAYED_PREPARATION]: 'يوجد تأخير في التجهيز. نعمل على تسريع طلبك.',
-            [OrderStatus.PREPARED]: 'تم تجهيز القطع وهي جاهزة لمرحلة التوثيق/الشحن.',
+            [OrderStatus.PREPARED]: 'تم تجهيز القطعة وهي جاهزة لمرحلة التوثيق/الشحن.',
             [OrderStatus.VERIFICATION]: 'طلبك قيد فحص القطعة والتوثيق.',
             [OrderStatus.VERIFICATION_SUCCESS]: 'تم اعتماد التوثيق بنجاح.',
             [OrderStatus.NON_MATCHING]: 'نتيجة الفحص: غير مطابق. يرجى متابعة التعليمات.',
@@ -312,9 +329,9 @@ export class OfferFulfillmentService {
             [OrderStatus.CANCELLED]: 'تم إلغاء الطلب.',
         };
         const messagesEn: Partial<Record<OrderStatus, string>> = {
-            [OrderStatus.PREPARATION]: 'Your parts are now being prepared.',
+            [OrderStatus.PREPARATION]: 'Your order is now being prepared.',
             [OrderStatus.DELAYED_PREPARATION]: 'Preparation is delayed. We are speeding up your order.',
-            [OrderStatus.PREPARED]: 'Parts are prepared and ready for verification/shipping.',
+            [OrderStatus.PREPARED]: 'The part is prepared and ready for verification/shipping.',
             [OrderStatus.VERIFICATION]: 'Your order is under part verification.',
             [OrderStatus.VERIFICATION_SUCCESS]: 'Verification approved successfully.',
             [OrderStatus.NON_MATCHING]: 'Verification result: non-matching. Please follow instructions.',
@@ -328,6 +345,11 @@ export class OfferFulfillmentService {
             [OrderStatus.WARRANTY_ACTIVE]: 'Warranty is now active on your order. Track remaining protection from order details.',
             [OrderStatus.CANCELLED]: 'The order was cancelled.',
         };
+
+        if (branched) {
+            messagesAr[params.newStatus] = branched.messageAr;
+            messagesEn[params.newStatus] = branched.messageEn;
+        }
 
         const messageAr = messagesAr[params.newStatus];
         const messageEn = messagesEn[params.newStatus];
@@ -448,7 +470,10 @@ export class OfferFulfillmentService {
 
     async markOfferPrepared(orderId: string, offerId: string, storeId: string) {
         const offer = await this.assertMerchantOffer(orderId, offerId, storeId);
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { parts: { select: { id: true } } },
+        });
         if (!order) throw new NotFoundException('Order not found');
         this.assertOrderAllowsMerchantFulfillment(order);
 
@@ -480,6 +505,10 @@ export class OfferFulfillmentService {
         const partName = this.partLabel(offer, order);
         const prevOrderStatus = order.status;
         const newStatus = await this.recomputeOrderStatus(orderId);
+        const isMulti = resolveIsMultiItemOrder(order);
+        const copyCtx = { isMulti, orderNumber: order.orderNumber, partName };
+        const preparedCopy = partPrepared(copyCtx);
+        const allPreparedCopy = allPartsPrepared(copyCtx);
 
         await this.auditLogs.logAction({
             orderId,
@@ -499,11 +528,16 @@ export class OfferFulfillmentService {
             recipientRole: 'CUSTOMER',
             titleAr: `تم تجهيز قطعة: ${partName}`,
             titleEn: `Part prepared: ${partName}`,
-            messageAr: `أنهى التاجر تجهيز «${partName}» في الطلب #${order.orderNumber}. باقي القطع قيد المتابعة.`,
-            messageEn: `Merchant finished preparing "${partName}" for order #${order.orderNumber}. Other parts may still be in progress.`,
+            messageAr: preparedCopy.messageAr,
+            messageEn: preparedCopy.messageEn,
             type: 'ORDER',
             link: `/dashboard/orders/${order.id}`,
-            metadata: { offerId, orderId },
+            metadata: {
+                offerId,
+                orderId,
+                orderNumber: order.orderNumber,
+                waEvent: 'ORDER_STATUS',
+            },
         }).catch(() => {});
 
         await this.notifications.notifyAdmins({
@@ -520,12 +554,18 @@ export class OfferFulfillmentService {
             await this.notifications.create({
                 recipientId: order.customerId,
                 recipientRole: 'CUSTOMER',
-                titleAr: 'جميع القطع جاهزة للتوثيق',
-                titleEn: 'All parts prepared',
-                messageAr: `تم تجهيز جميع قطع الطلب #${order.orderNumber}. سيبدأ التوثيق قريباً.`,
-                messageEn: `All parts for order #${order.orderNumber} are prepared.`,
+                titleAr: allPreparedCopy.titleAr,
+                titleEn: allPreparedCopy.titleEn,
+                messageAr: allPreparedCopy.messageAr,
+                messageEn: allPreparedCopy.messageEn,
                 type: 'ORDER',
                 link: `/dashboard/orders/${order.id}`,
+                metadata: {
+                    offerId,
+                    orderId,
+                    orderNumber: order.orderNumber,
+                    waEvent: 'ORDER_STATUS',
+                },
             }).catch(() => {});
         }
 
@@ -705,7 +745,10 @@ export class OfferFulfillmentService {
             );
         }
 
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { parts: { select: { id: true } } },
+        });
         if (!order) throw new NotFoundException('Order not found');
         this.assertOrderAllowsMerchantFulfillment(order);
 
@@ -719,17 +762,28 @@ export class OfferFulfillmentService {
 
         const partName = this.partLabel(offer, order);
         const newStatus = await this.recomputeOrderStatus(orderId);
+        const isMulti = resolveIsMultiItemOrder(order);
+        const copyCtx = { isMulti, orderNumber: order.orderNumber, partName };
+        const partReadyCopy = partReadyForShipping(copyCtx);
+        const allReadyCopy = allReadyForShipping(copyCtx);
+        const customerLink = readyForShippingCustomerLink(isMulti, orderId);
+        const waMeta = {
+            offerId,
+            orderId,
+            orderNumber: order.orderNumber,
+            waEvent: 'ORDER_STATUS' as const,
+        };
 
         await this.notifications.create({
             recipientId: order.customerId,
             recipientRole: 'CUSTOMER',
             titleAr: `جاهزة للشحن: ${partName}`,
             titleEn: `Ready to ship: ${partName}`,
-            messageAr: `«${partName}» جاهزة — يمكنك اختيارها من سلة الشحن عند الجاهزية.`,
-            messageEn: `"${partName}" is ready — select it in the shipping cart when available.`,
+            messageAr: partReadyCopy.messageAr,
+            messageEn: partReadyCopy.messageEn,
             type: 'ORDER',
-            link: `/dashboard/shipping-cart`,
-            metadata: { offerId, orderId },
+            link: customerLink,
+            metadata: waMeta,
         }).catch(() => {});
 
         const paid = await this.getPaidAcceptedOffers(orderId);
@@ -742,12 +796,13 @@ export class OfferFulfillmentService {
             await this.notifications.create({
                 recipientId: order.customerId,
                 recipientRole: 'CUSTOMER',
-                titleAr: 'كل القطع جاهزة للشحن',
-                titleEn: 'All parts ready to ship',
-                messageAr: `جميع قطع الطلب #${order.orderNumber} جاهزة في سلة الشحن.`,
-                messageEn: `All parts for order #${order.orderNumber} are ready in your shipping cart.`,
+                titleAr: allReadyCopy.titleAr,
+                titleEn: allReadyCopy.titleEn,
+                messageAr: allReadyCopy.messageAr,
+                messageEn: allReadyCopy.messageEn,
                 type: 'ORDER',
-                link: `/dashboard/shipping-cart`,
+                link: customerLink,
+                metadata: waMeta,
             }).catch(() => {});
         }
 
@@ -910,10 +965,7 @@ export class OfferFulfillmentService {
     }
 
     isMultiItemOrder(order: { requestType?: string | null; parts?: unknown[] | null }) {
-        return (
-            String(order.requestType || '').toLowerCase() === 'multiple' ||
-            (order.parts?.length ?? 0) > 1
-        );
+        return resolveIsMultiItemOrder(order);
     }
 
     getOfferReturnWindowEndsAt(offer: { deliveredAt?: Date | null }) {

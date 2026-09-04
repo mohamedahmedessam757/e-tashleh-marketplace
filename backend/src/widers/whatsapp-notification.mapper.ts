@@ -279,6 +279,11 @@ export function resolveTemplateFamily(
         return orderFamily(role);
     }
 
+    // Return / dispute updates ride txn_order_* (status_detail carries case copy)
+    if (type === 'DISPUTE' || type === 'RETURN') {
+        return orderFamily(role);
+    }
+
     // SYSTEM_ALERT without explicit waEvent must NOT become txn_order_* (spam / wrong template).
     // Intentional WA uses metadata.waEvent (ORDER_STATUS, VERIFICATION, …) handled above.
     if (type === 'SYSTEM_ALERT' || type === 'system_alert') {

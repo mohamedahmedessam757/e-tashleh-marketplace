@@ -12,6 +12,10 @@ import { UnifiedFinancialEventDto, FinancialEventSource, FinancialDirection } fr
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import {
+    isMultiItemOrder,
+    paymentConfirmedPrepare,
+} from '../orders/order-notification-copy.util';
+import {
     computeCompletedOrdersCount,
     computeLedgerNetProfit,
     computeMerchantEscrowBalances,
@@ -1414,13 +1418,14 @@ export class PaymentsService {
                 customerId: payment.customerId,
                 orderId: payment.orderId,
                 unitPrice,
-                shippingCost
+                shippingCost,
+                requestType: (payment.order as { requestType?: string | null }).requestType ?? null,
             };
         }, { timeout: 60000 });
 
         // 3. Post-Transaction Notifications (Outside the DB lock for performance)
         if (result) {
-            const { payment, invoiceNumber, orderTransitioned, storeOwnerId, totalAmount, offerNumber, orderNumber, customerId, orderId, unitPrice, shippingCost } = result as any;
+            const { payment, invoiceNumber, orderTransitioned, storeOwnerId, totalAmount, offerNumber, orderNumber, customerId, orderId, unitPrice, shippingCost, requestType } = result as any;
 
             // Save card for future Quick Pay (non-blocking)
             this.cardsService.syncFromPaymentIntent(customerId, paymentIntentId).catch((err) =>
@@ -1433,13 +1438,17 @@ export class PaymentsService {
 
             // Notify Merchant
             if (orderTransitioned) {
+                const prepareCopy = paymentConfirmedPrepare({
+                    isMulti: isMultiItemOrder({ requestType }),
+                    orderNumber,
+                });
                 await this.notifications.create({
                     recipientId: storeOwnerId,
                     recipientRole: 'VENDOR',
                     titleAr: 'طلب جديد جاهز للتجهيز! 📦',
                     titleEn: 'New Order Ready for Preparation! 📦',
-                    messageAr: `تم دفع قيمة الطلب #${orderNumber}. يرجى البدء في تجهيز القطع للشحن.`,
-                    messageEn: `Payment for Order #${orderNumber} confirmed. Please start preparing parts for shipment.`,
+                    messageAr: prepareCopy.messageAr,
+                    messageEn: prepareCopy.messageEn,
                     type: 'payment',
                     link: `/merchant/orders/${orderId}`,
                     metadata: {

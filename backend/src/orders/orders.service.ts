@@ -34,6 +34,11 @@ import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { OrderCreateQuotaService } from './order-create-quota.service';
 import { ORDER_CREATE_RULES } from './order-create-rules.util';
 import { computeOffersStopAt } from '../offers/offer-governance.util';
+import {
+    isMultiItemOrder,
+    offerAcceptedPartial,
+    offersAcceptedForPayment,
+} from './order-notification-copy.util';
 
 @Injectable()
 export class OrdersService {
@@ -884,14 +889,18 @@ export class OrdersService {
         try {
             const statusMessagesAr: Record<string, string> = {
                 [OrderStatus.AWAITING_SELECTION]: 'حان وقت الاختيار! 🛒 راجع العروض المتاحة واختر الأنسب لك قبل انتهاء المهلة.',
-                [OrderStatus.PREPARATION]: 'بدأ الحماس! 🔥 القِطع الخاصة بك قيد التجهيز الآن بكل عناية.',
+                [OrderStatus.PREPARATION]: isMultiItemOrder(order)
+                    ? 'بدأ الحماس! 🔥 القِطع الخاصة بك قيد التجهيز الآن بكل عناية.'
+                    : 'بدأ الحماس! 🔥 طلبك قيد التجهيز الآن بكل عناية.',
                 [OrderStatus.DELAYED_PREPARATION]: 'تأخير في التجهيز ⏳ نعمل على تسريع تجهيز طلبك، شكراً لصبرك.',
                 [OrderStatus.VERIFICATION]: 'طلبك قيد فحص القطعة والتوثيق 🔬 سنُعلمك بالنتيجة قريباً.',
                 [OrderStatus.VERIFICATION_SUCCESS]: 'تم اعتماد التوثيق بنجاح ✅ طلبك يتقدم للمرحلة التالية.',
                 [OrderStatus.NON_MATCHING]: 'نتيجة الفحص: غير مطابق ⚠️ يرجى متابعة التعليمات لتصحيح الطلب.',
                 [OrderStatus.CORRECTION_PERIOD]: 'أنت في فترة التصحيح 🛠️ يرجى استكمال المطلوب قبل انتهاء المهلة.',
                 [OrderStatus.SHIPPED]: 'انطلقت إليك! 🚀 طلبك الآن في الطريق، استعد لاستلام الجودة.',
-                [OrderStatus.DELIVERED]: 'وصلت الأمانة! 🏠 نأمل أن تنال إعجابك، يومك سعيد بقطعك الجديدة.',
+                [OrderStatus.DELIVERED]: isMultiItemOrder(order)
+                    ? 'وصلت الأمانة! 🏠 نأمل أن تنال إعجابك، يومك سعيد بقطعك الجديدة.'
+                    : 'وصلت الأمانة! 🏠 نأمل أن تنال إعجابك.',
                 [OrderStatus.COMPLETED]: 'اكتمل طلبك بنجاح 🎉 شكراً لثقتك بمنصة إي-تشليح.',
                 [OrderStatus.WARRANTY_ACTIVE]: 'تم تفعيل الضمان على طلبك 🛡️ يمكنك متابعة مدة الحماية من تفاصيل الطلب.',
                 [OrderStatus.CLOSED]: 'تم إغلاق الطلب. يمكنك دائماً إنشاء طلب جديد عند الحاجة.',
@@ -901,14 +910,18 @@ export class OrdersService {
             };
             const statusMessagesEn: Record<string, string> = {
                 [OrderStatus.AWAITING_SELECTION]: 'Time to choose! 🛒 Review available offers and pick the best one before the deadline.',
-                [OrderStatus.PREPARATION]: 'The excitement begins! 🔥 Your items are being carefully prepared now.',
+                [OrderStatus.PREPARATION]: isMultiItemOrder(order)
+                    ? 'The excitement begins! 🔥 Your items are being carefully prepared now.'
+                    : 'The excitement begins! 🔥 Your order is being carefully prepared now.',
                 [OrderStatus.DELAYED_PREPARATION]: 'Preparation delay ⏳ We are speeding up your order — thank you for your patience.',
                 [OrderStatus.VERIFICATION]: 'Your order is under part verification 🔬 We will update you soon.',
                 [OrderStatus.VERIFICATION_SUCCESS]: 'Verification approved ✅ Your order is moving to the next step.',
                 [OrderStatus.NON_MATCHING]: 'Verification result: non-matching ⚠️ Please follow correction instructions.',
                 [OrderStatus.CORRECTION_PERIOD]: 'You are in the correction window 🛠️ Complete the required steps before the deadline.',
                 [OrderStatus.SHIPPED]: 'On its way! 🚀 Your order is now shipped and heading to you.',
-                [OrderStatus.DELIVERED]: 'Delivered! 🏠 We hope you love it. Have a great day with your new items!',
+                [OrderStatus.DELIVERED]: isMultiItemOrder(order)
+                    ? 'Delivered! 🏠 We hope you love it. Have a great day with your new items!'
+                    : 'Delivered! 🏠 We hope you love it.',
                 [OrderStatus.COMPLETED]: 'Your order is complete 🎉 Thank you for trusting E-TASHLEH.',
                 [OrderStatus.WARRANTY_ACTIVE]: 'Warranty is now active on your order 🛡️ Track remaining protection from order details.',
                 [OrderStatus.CLOSED]: 'This order has been closed. You can create a new request anytime.',
@@ -1819,7 +1832,10 @@ export class OrdersService {
     }
 
     async acceptOfferForPart(orderId: string, partId: string, offerId: string, customerId: string) {
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { parts: { select: { id: true } } },
+        });
         if (!order) {
             throw new NotFoundException('Order not found');
         }
@@ -1994,21 +2010,17 @@ export class OrdersService {
         }
 
         // Notify customer — part accepted (payment only when all selectable parts accepted)
+        const isMulti = isMultiItemOrder(order);
+        const acceptCopy = enteredPayment
+            ? offersAcceptedForPayment({ isMulti, orderNumber: order.orderNumber })
+            : offerAcceptedPartial({ isMulti, orderNumber: order.orderNumber });
         await this.notifications.create({
             recipientId: customerId,
             recipientRole: 'CUSTOMER',
-            titleAr: enteredPayment
-                ? 'تم قبول عرض — بانتظار الدفع'
-                : 'تم قبول عرض للقطعة — أكمل اختيار باقي القطع',
-            titleEn: enteredPayment
-                ? 'Offer accepted — awaiting payment'
-                : 'Part offer accepted — finish selecting remaining parts',
-            messageAr: enteredPayment
-                ? `تم قبول عروض جميع القطع في الطلب #${order.orderNumber}. يمكنك المتابعة للدفع.`
-                : `تم قبول عرض لقطعة في الطلب #${order.orderNumber}. أكمل اختيار عروض باقي القطع قبل المتابعة للدفع.`,
-            messageEn: enteredPayment
-                ? `All selectable parts for Order #${order.orderNumber} have accepted offers. You can proceed to payment.`
-                : `An offer was accepted for a part in Order #${order.orderNumber}. Finish selecting offers for the remaining parts before checkout.`,
+            titleAr: acceptCopy.titleAr,
+            titleEn: acceptCopy.titleEn,
+            messageAr: acceptCopy.messageAr,
+            messageEn: acceptCopy.messageEn,
             type: 'ORDER',
             link: `/dashboard/orders/${order.id}`,
             metadata: {

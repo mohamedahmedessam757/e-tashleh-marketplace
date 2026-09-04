@@ -823,7 +823,7 @@ export class ReturnsService {
             : `Your return request for order #${orderNumber} was received and is under review.`;
 
         const notifType = type === 'DISPUTE' ? 'DISPUTE' : 'RETURN';
-        const metadata = { orderId, caseId };
+        const metadata = { orderId, caseId, waEvent: 'ORDER_STATUS' as const };
 
         await Promise.all([
             this.notificationsService.create({
@@ -844,7 +844,7 @@ export class ReturnsService {
                 messageEn,
                 type: notifType,
                 link: type === 'DISPUTE' ? 'admin-dispute-details' : 'admin-order-details',
-                metadata,
+                metadata: { orderId, caseId },
             }),
             merchantOwnerId
                 ? this.notificationsService.create({
@@ -1131,7 +1131,11 @@ export class ReturnsService {
             messageEn: `The store responded to your return request for Order #${returnRequest.order.orderNumber}. The case is now awaiting administrative review.`,
             type: 'RETURN',
             link: 'order-details',
-            metadata: { orderId: returnRequest.orderId }
+            metadata: {
+                orderId: returnRequest.orderId,
+                caseId: returnRequest.id,
+                waEvent: 'ORDER_STATUS',
+            },
         });
 
         // Notify Admins
@@ -1242,7 +1246,11 @@ export class ReturnsService {
             messageEn: `The store has responded to Dispute #${dispute.order.orderNumber}. Administrative final verdict is now pending.`,
             type: 'DISPUTE',
             link: 'dispute-details',
-            metadata: { caseId: disputeId }
+            metadata: {
+                orderId: dispute.orderId,
+                caseId: disputeId,
+                waEvent: 'ORDER_STATUS',
+            },
         });
 
         return result;
@@ -2802,7 +2810,11 @@ export class ReturnsService {
                 messageEn: `The case for Order #${record.order.orderNumber} has been officially escalated for admin review.`,
                 type: 'system_alert',
                 link: 'dispute-details',
-                metadata: { caseId: caseId }
+                metadata: {
+                    orderId: record.orderId,
+                    caseId: caseId,
+                    waEvent: 'ORDER_STATUS',
+                },
             });
         }
 
@@ -2876,7 +2888,12 @@ export class ReturnsService {
                 messageAr: `تم تصعيد طلب الإرجاع الخاص بك للطلب #${ret.order.orderNumber} تلقائياً لمراجعة الإدارة لعدم رد التاجر.`,
                 messageEn: `Your return request for Order #${ret.order.orderNumber} has been auto-escalated to admin review.`,
                 type: 'RETURN',
-                link: `/dashboard/orders/${ret.orderId}`
+                link: `/dashboard/orders/${ret.orderId}`,
+                metadata: {
+                    orderId: ret.orderId,
+                    caseId: ret.id,
+                    waEvent: 'ORDER_STATUS',
+                },
             });
 
             // Notify Merchant about Escalation (Warning)
@@ -2930,7 +2947,12 @@ export class ReturnsService {
                 messageAr: `تم تصعيد النزاع الخاص بالطلب #${dispute.order.orderNumber} تلقائياً لمراجعة الإدارة لعدم رد التاجر.`,
                 messageEn: `Your dispute for Order #${dispute.order.orderNumber} has been auto-escalated to admin review.`,
                 type: 'DISPUTE',
-                link: `/dashboard/orders/${dispute.orderId}`
+                link: `/dashboard/orders/${dispute.orderId}`,
+                metadata: {
+                    orderId: dispute.orderId,
+                    caseId: dispute.id,
+                    waEvent: 'ORDER_STATUS',
+                },
             });
 
             // Notify Merchant about Escalation (Warning)
