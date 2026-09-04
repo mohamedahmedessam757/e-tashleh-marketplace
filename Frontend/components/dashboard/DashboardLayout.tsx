@@ -352,7 +352,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
 
   return (
-    <div className="min-h-screen bg-[#0F0E0C] text-white font-sans selection:bg-gold-500 selection:text-white flex flex-col">
+    <div className={`${currentPath === 'chats' ? 'h-dvh max-h-dvh overflow-hidden' : 'min-h-screen'} bg-[#0F0E0C] text-white font-sans selection:bg-gold-500 selection:text-white flex flex-col`}>
 
       <NavigationDrawer
         isOpen={isMenuOpen}
@@ -375,12 +375,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content Area */}
       <main
         className={`flex-1 flex flex-col w-full min-w-0 transition-all duration-300 ${
-          currentPath === 'chats' ? 'h-dvh max-h-dvh min-h-0 overflow-hidden' : 'min-h-screen'
+          currentPath === 'chats' ? 'min-h-0 overflow-hidden' : 'min-h-screen'
         }`}
       >
 
         {/* Top Header */}
-        <header className="sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
+        <header className="shrink-0 sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
 
           {/* Hamburger Menu & Brand */}
           <div className="flex items-center gap-4">
@@ -475,13 +475,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         <RestrictionAlertBanner onNavigate={onNavigate} />
 
-        {/* Page Content — chats uses flex fill so the composer stays on-screen */}
+        {/* Page Content — chats fills remaining viewport (WhatsApp-style, no dead space) */}
         <div
-          className={`flex-1 p-4 md:p-8 mt-2 md:mt-4 min-w-0 overflow-x-clip ${
+          className={
             currentPath === 'chats'
-              ? 'pb-3 md:pb-8 flex flex-col min-h-0'
-              : 'pb-24 md:pb-8'
-          }`}
+              ? 'flex-1 min-h-0 flex flex-col overflow-hidden p-0 md:p-6 md:pt-4'
+              : 'flex-1 p-4 md:p-8 mt-2 md:mt-4 pb-24 md:pb-8 min-w-0 overflow-x-clip'
+          }
         >
           {/* Global Maintenance Awareness (2026 UX) */}
           {role === 'admin' && (
@@ -491,7 +491,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   initial={{ height: 0, opacity: 0, marginBottom: 0 }}
                   animate={{ height: 'auto', opacity: 1, marginBottom: 24 }}
                   exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                  className="overflow-hidden"
+                  className="overflow-hidden shrink-0"
                 >
                   <div className="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-5 flex items-center justify-between shadow-2xl shadow-red-500/5">
                     <div className="flex items-center gap-5">
@@ -519,10 +519,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           <motion.div
             key={currentPath}
-            initial={{ opacity: 0, y: 10 }}
+            initial={currentPath === 'chats' ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className={currentPath === 'chats' ? 'flex-1 min-h-0 flex flex-col' : undefined}
+            transition={{ duration: currentPath === 'chats' ? 0 : 0.4 }}
+            className={
+              currentPath === 'chats'
+                ? 'flex-1 min-h-0 h-full flex flex-col overflow-hidden'
+                : undefined
+            }
           >
             {children}
           </motion.div>
