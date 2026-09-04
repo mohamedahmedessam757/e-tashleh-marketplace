@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,13 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
+import {
+  evaluateReferralSignupRisk,
+  isValidReferralCodeFormat,
+  normalizeClientIp,
+  normalizeReferralCode,
+  REFERRAL_SAME_IP_DAILY_CAP,
+} from '../loyalty/referral-fraud.util';
 
 @Injectable()
 export class UsersService {
@@ -39,21 +46,90 @@ export class UsersService {
           if (!existing) isUniqueCode = true;
         }
 
-        // Resolve Referrer (normalize case — invite links are uppercased in FE)
+        // Resolve Referrer — invalid codes fail loudly; fraud heuristics may skip the link
         let referredById: string | null = null;
-        const incomingReferralCode = createUserDto.referralCode
-          ? String(createUserDto.referralCode).trim().toUpperCase()
-          : '';
+        const signupIp = normalizeClientIp(createUserDto.registrationIp);
+        const incomingReferralCode = normalizeReferralCode(createUserDto.referralCode);
+
         if (incomingReferralCode) {
+          if (!isValidReferralCodeFormat(incomingReferralCode)) {
+            throw new BadRequestException({
+              statusCode: 400,
+              error: 'INVALID_REFERRAL_CODE',
+              message: 'The referral code is invalid.',
+              messageAr: 'كود الإحالة غير صالح.',
+            });
+          }
+
           console.log(`[UsersService] Referral code received: '${incomingReferralCode}' for new user: ${createUserDto.email}`);
           const referrer = await tx.user.findUnique({
-            where: { referralCode: incomingReferralCode }
+            where: { referralCode: incomingReferralCode },
+            select: {
+              id: true,
+              email: true,
+              lastLoginIp: true,
+              Session: {
+                take: 8,
+                orderBy: { lastActive: 'desc' },
+                select: { ip: true },
+              },
+            },
           });
-          if (referrer) {
+
+          if (!referrer) {
+            throw new BadRequestException({
+              statusCode: 400,
+              error: 'INVALID_REFERRAL_CODE',
+              message: 'The referral code is invalid or expired.',
+              messageAr: 'كود الإحالة غير صالح أو منتهي.',
+            });
+          }
+
+          const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          let recentSameIpLinksForReferrer = 0;
+          if (signupIp) {
+            recentSameIpLinksForReferrer = await tx.user.count({
+              where: {
+                referredById: referrer.id,
+                createdAt: { gte: windowStart },
+                lastLoginIp: signupIp,
+              },
+            });
+          }
+
+          const risk = evaluateReferralSignupRisk({
+            signupIp,
+            referrerLastLoginIp: referrer.lastLoginIp,
+            referrerRecentIps: referrer.Session.map((s) => s.ip),
+            recentSameIpLinksForReferrer,
+            sameIpDailyCap: REFERRAL_SAME_IP_DAILY_CAP,
+          });
+
+          if (!risk.allowLink) {
+            await this.auditLogs.logAction(
+              {
+                action: 'REFERRAL_LINK_BLOCKED',
+                entity: 'USER_REFERRAL',
+                actorType: 'SYSTEM',
+                actorName: 'ReferralFraudGuard',
+                reason: risk.reason,
+                metadata: {
+                  referralCode: incomingReferralCode,
+                  referrerId: referrer.id,
+                  signupIp,
+                  recentSameIpLinksForReferrer,
+                  reason: risk.reason,
+                  email: createUserDto.email,
+                },
+              },
+              tx,
+            );
+            console.warn(
+              `[UsersService] Referral link blocked (${risk.reason}) for code '${incomingReferralCode}' signupIp=${signupIp}`,
+            );
+          } else {
             referredById = referrer.id;
             console.log(`[UsersService] Referral LINKED. New user will be linked to referrer: ${referrer.id} (${referrer.email})`);
-          } else {
-            console.warn(`[UsersService] Referral code '${incomingReferralCode}' NOT FOUND in database. Skipping referral link.`);
           }
         }
 
@@ -69,6 +145,7 @@ export class UsersService {
             referralCode,
             referredById,
             referralStartsAt: referredById ? new Date() : null,
+            ...(signupIp ? { lastLoginIp: signupIp } : {}),
           },
         });
 

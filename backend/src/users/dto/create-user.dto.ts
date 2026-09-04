@@ -136,6 +136,11 @@ export class CreateUserDto {
     @IsString()
     referralCode?: string;
 
+    /** Set server-side only from request IP — never trust client body for this */
+    @IsOptional()
+    @IsString()
+    registrationIp?: string;
+
     /** Channel used during register-init OTP (email | whatsapp) */
     @IsOptional()
     @IsIn(['email', 'whatsapp'])

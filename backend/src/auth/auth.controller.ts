@@ -159,18 +159,23 @@ export class AuthController {
     }
 
     @Post('register/customer')
-    async registerCustomer(@Body() createUserDto: CreateUserDto) {
-        // Force role to CUSTOMER
+    @Throttle({ default: { limit: 8, ttl: 60_000 } })
+    async registerCustomer(@Body() createUserDto: CreateUserDto, @Request() req) {
         createUserDto.role = UserRole.CUSTOMER;
+        // Never trust client-supplied registrationIp
+        const forwarded = req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
+        createUserDto.registrationIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
         return this.authService.register(createUserDto);
     }
 
     @Post('register/vendor')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
     async registerVendor(@Body() createUserDto: CreateUserDto, @Request() req) {
-        // Force role to VENDOR (or pending logic later)
         createUserDto.role = UserRole.VENDOR;
+        const forwarded = req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
+        createUserDto.registrationIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
         if (createUserDto.contractData) {
-            createUserDto.contractData.ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            createUserDto.contractData.ipAddress = createUserDto.registrationIp;
             createUserDto.contractData.userAgent = req.headers['user-agent'];
         }
         return this.authService.register(createUserDto);

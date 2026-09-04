@@ -194,13 +194,11 @@ export const CustomerRegister: React.FC<CustomerRegisterProps> = ({ onLoginClick
       code,
     });
 
-    try {
+    const buildPayload = (referralCode?: string) => {
       const generatedPassword = generateSecurePassword();
       const selectedCountry = countries.find(c => c.code === countryCode);
       const countryName = selectedCountry ? selectedCountry.name : 'Unknown';
-      const pendingReferralCode = sessionStorage.getItem('pending_referral_code') || undefined;
-
-      await authApi.registerCustomer({
+      return {
         email: formData.email,
         password: generatedPassword,
         name: formData.name,
@@ -208,12 +206,47 @@ export const CustomerRegister: React.FC<CustomerRegisterProps> = ({ onLoginClick
         countryCode: countryCode,
         country: countryName,
         otpChannel: otpMethod,
-        ...(pendingReferralCode && { referralCode: pendingReferralCode }),
-      });
+        ...(referralCode ? { referralCode } : {}),
+        __generatedPassword: generatedPassword,
+      };
+    };
+
+    const isInvalidReferralError = (err: unknown): boolean => {
+      const data = (err as { response?: { data?: any } })?.response?.data;
+      if (!data) return false;
+      if (data.error === 'INVALID_REFERRAL_CODE') return true;
+      const msg = String(data.message || '');
+      return msg.includes('INVALID_REFERRAL_CODE') || msg.toLowerCase().includes('referral code');
+    };
+
+    try {
+      const pendingReferralCode = sessionStorage.getItem('pending_referral_code') || undefined;
+      let payload = buildPayload(pendingReferralCode);
+      let loginPassword = payload.__generatedPassword;
+
+      try {
+        const { __generatedPassword: _p, ...body } = payload;
+        await authApi.registerCustomer(body);
+      } catch (regErr) {
+        if (pendingReferralCode && isInvalidReferralError(regErr)) {
+          sessionStorage.removeItem('pending_referral_code');
+          alert(
+            language === 'ar'
+              ? 'كود الإحالة غير صالح. سيتم إكمال التسجيل بدون إحالة.'
+              : 'Invalid referral code. Continuing registration without a referral.',
+          );
+          payload = buildPayload(undefined);
+          loginPassword = payload.__generatedPassword;
+          const { __generatedPassword: _p2, ...body2 } = payload;
+          await authApi.registerCustomer(body2);
+        } else {
+          throw regErr;
+        }
+      }
 
       sessionStorage.removeItem('pending_referral_code');
 
-      const loginResponse = await authApi.login(formData.email, generatedPassword);
+      const loginResponse = await authApi.login(formData.email, loginPassword);
       localStorage.setItem('access_token', loginResponse.access_token);
       if (loginResponse.user) {
         localStorage.setItem('user', JSON.stringify(loginResponse.user));

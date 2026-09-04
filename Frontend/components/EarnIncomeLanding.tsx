@@ -41,9 +41,9 @@ export const EarnIncomeLanding: React.FC<EarnIncomeLandingProps> = ({ onBack, on
   const cms = mergeEarnIncome(earnIncomeApi, t.common.loyaltySystem, isAr);
 
   const [stats, setStats] = useState<PlatformStats>({
-    totalUsers: 1250,
-    totalReferrals: 850,
-    totalDistributed: 45000,
+    totalUsers: 0,
+    totalReferrals: 0,
+    totalDistributed: 0,
     currency: 'AED',
   });
 
