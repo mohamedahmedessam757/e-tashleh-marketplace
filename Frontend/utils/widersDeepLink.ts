@@ -276,6 +276,15 @@ export type DocumentScanPending = { kind: DocumentScanKind; id: string };
 
 const DOC_SCAN_KEY = 'etashleh_doc_scan_v1';
 
+export function isSafeDocumentScanId(id: unknown): id is string {
+    return (
+        typeof id === 'string' &&
+        id.length >= 8 &&
+        id.length <= 64 &&
+        /^[a-zA-Z0-9_-]+$/.test(id)
+    );
+}
+
 export function persistDocumentScanPending(pending: DocumentScanPending | null): void {
     if (typeof window === 'undefined') return;
     try {
@@ -285,8 +294,7 @@ export function persistDocumentScanPending(pending: DocumentScanPending | null):
         }
         if (
             (pending.kind !== 'invoice' && pending.kind !== 'waybill') ||
-            typeof pending.id !== 'string' ||
-            !/^[a-zA-Z0-9_-]+$/.test(pending.id)
+            !isSafeDocumentScanId(pending.id)
         ) {
             return;
         }
@@ -304,8 +312,7 @@ export function loadDocumentScanPending(): DocumentScanPending | null {
         const parsed = JSON.parse(raw) as DocumentScanPending;
         if (
             (parsed.kind !== 'invoice' && parsed.kind !== 'waybill') ||
-            typeof parsed.id !== 'string' ||
-            !/^[a-zA-Z0-9_-]+$/.test(parsed.id)
+            !isSafeDocumentScanId(parsed.id)
         ) {
             return null;
         }

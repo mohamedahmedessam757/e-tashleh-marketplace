@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import {
   clearDocumentScanPending,
   persistDocumentScanPending,
+  isSafeDocumentScanId,
   type DocumentScanKind,
 } from '../utils/widersDeepLink';
 
@@ -35,7 +36,7 @@ export const DocumentScanRedirect: React.FC<DocumentScanRedirectProps> = ({
     let cancelled = false;
 
     const run = async () => {
-      if (!documentId || !/^[a-zA-Z0-9_-]+$/.test(documentId)) {
+      if (!isSafeDocumentScanId(documentId)) {
         setError(isAr ? 'رابط غير صالح' : 'Invalid link');
         return;
       }
@@ -46,16 +47,15 @@ export const DocumentScanRedirect: React.FC<DocumentScanRedirectProps> = ({
         return;
       }
 
-      clearDocumentScanPending();
-
       try {
         if (kind === 'invoice') {
           const invoice = await invoicesApi.getById(documentId);
           const orderId = invoice?.orderId || invoice?.order?.id;
-          if (!orderId) {
+          if (!orderId || typeof orderId !== 'string') {
             throw new Error('missing_order');
           }
           if (cancelled) return;
+          clearDocumentScanPending();
           const role = getCurrentUser()?.role;
           onResolved({
             orderId: String(orderId),
@@ -68,10 +68,11 @@ export const DocumentScanRedirect: React.FC<DocumentScanRedirectProps> = ({
         const res = await waybillsApi.getById(documentId);
         const waybill = res?.waybill || res;
         const orderId = waybill?.orderId || waybill?.order?.id;
-        if (!orderId) {
+        if (!orderId || typeof orderId !== 'string') {
           throw new Error('missing_order');
         }
         if (cancelled) return;
+        clearDocumentScanPending();
         const role = getCurrentUser()?.role;
         onResolved({
           orderId: String(orderId),

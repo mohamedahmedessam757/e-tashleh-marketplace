@@ -11,7 +11,7 @@ import type { OrderActiveSla } from '../types/orderSla';
 import { formatApiErrorMessage } from '../utils/formatApiErrorMessage';
 import { computeOfferFinalPrice } from '../utils/offerPricing';
 import { canCustomerCancelOrder } from '../utils/orderCancelPolicy';
-import { markOrderCancelledByCustomer } from '../utils/orderExpiryHelpers';
+import { markOrderCancelledByCustomer, clearOrderCancelledByCustomer } from '../utils/orderExpiryHelpers';
 import { useAdminStore } from './useAdminStore';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
@@ -1367,6 +1367,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 return true;
             } catch (err) {
                 console.error('Failed to cancel order', err);
+                clearOrderCancelledByCustomer(id);
                 set({ orders: previousOrders }); // Rollback
                 return false;
             }

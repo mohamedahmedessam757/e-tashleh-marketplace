@@ -139,12 +139,18 @@ export function parseUrlToState(): NavigationState {
 
     if (path.startsWith('/invoice/')) {
         const invoiceId = path.split('/').filter(Boolean)[1];
-        if (invoiceId) return { view: 'invoice-scan', viewId: invoiceId };
+        if (invoiceId && /^[a-zA-Z0-9_-]{8,64}$/.test(invoiceId)) {
+            return { view: 'invoice-scan', viewId: invoiceId };
+        }
+        return { view: 'role-selection' };
     }
 
     if (path.startsWith('/waybill/')) {
         const waybillId = path.split('/').filter(Boolean)[1];
-        if (waybillId) return { view: 'waybill-scan', viewId: waybillId };
+        if (waybillId && /^[a-zA-Z0-9_-]{8,64}$/.test(waybillId)) {
+            return { view: 'waybill-scan', viewId: waybillId };
+        }
+        return { view: 'role-selection' };
     }
 
     if (path.startsWith('/dashboard/')) {

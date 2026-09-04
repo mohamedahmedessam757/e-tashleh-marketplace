@@ -135,7 +135,9 @@ export const customer = {
       },
       filters: {
         all: 'الكل',
-        byStatus: 'حسب الحالة'
+        byStatus: 'حسب الحالة',
+        emptyStatus: 'لا طلبات في هذه الحالة',
+        emptyStatusDesc: 'جرّب حالة أخرى أو اختر الكل'
       },
       reliability: {
         title: 'مؤشر الموثوقية',
@@ -289,7 +291,7 @@ export const customer = {
       },
       customerCancelledModal: {
         title: 'تم إلغاء الطلب',
-        desc: 'تم الغاء الطلب من قبلكم على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.',
+        desc: 'تم إلغاء الطلب من قبلكم على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.',
         dontShow: 'لا تظهر هذه الرسالة مرة أخرى',
         understood: 'موافق'
       },
@@ -1213,7 +1215,9 @@ export const customer = {
       },
       filters: {
         all: 'All',
-        byStatus: 'By status'
+        byStatus: 'By status',
+        emptyStatus: 'No orders in this status',
+        emptyStatusDesc: 'Try another status or select All'
       },
       reliability: {
         title: 'Reliability Index',

@@ -28,6 +28,14 @@ export function markOrderCancelledByCustomer(orderId: string): void {
   }
 }
 
+export function clearOrderCancelledByCustomer(orderId: string): void {
+  try {
+    localStorage.removeItem(`${CUSTOMER_CANCEL_FLAG_PREFIX}${orderId}`);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
 export function wasOrderCancelledByCustomer(orderId: string): boolean {
   try {
     return localStorage.getItem(`${CUSTOMER_CANCEL_FLAG_PREFIX}${orderId}`) === '1';

@@ -102,7 +102,8 @@ export const auth = {
         backToLogin: 'العودة لتسجيل الدخول',
         successTitle: 'تم الإرسال',
         successMsg: 'راجع بريدك الإلكتروني.',
-        otpNote: 'قد يصلك الرمز في مجلد المهملات.'
+        otpNote:
+          '📩 لم تصلك الرسالة؟ يرجى التحقق من مجلد البريد العشوائي (Spam / Junk)، فقد تصل رسائلنا إليه أحياناً.',
       },
       reset: {
         title: 'تعيين كلمة المرور',
@@ -263,7 +264,8 @@ export const auth = {
         backToLogin: 'Back to Login',
         successTitle: 'Sent',
         successMsg: 'Check your email.',
-        otpNote: 'Code might be in junk folder.'
+        otpNote:
+          "📩 Didn't get the email? Please check your Spam / Junk folder — our messages sometimes land there.",
       },
       reset: {
         title: 'Reset Password',

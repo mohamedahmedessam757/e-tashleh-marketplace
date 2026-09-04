@@ -53,6 +53,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
         return orders.filter((o) => o.status === homeStatusFilter);
     }, [orders, homeStatusFilter]);
 
+    // Realtime: if selected status disappears from the customer's orders, reset to ALL
+    React.useEffect(() => {
+        if (homeStatusFilter === 'ALL') return;
+        if (!statusCounts.some((s) => s.status === homeStatusFilter)) {
+            setHomeStatusFilter('ALL');
+        }
+    }, [statusCounts, homeStatusFilter]);
+
     const activeOrder = useMemo(() => {
         if (homeStatusFilter === 'ALL') {
             return pickFeaturedOrder(orders.filter((o) => activeStatuses.includes(o.status)))
@@ -313,11 +321,25 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-white/20">
                                 <CheckCircle2 size={32} />
                             </div>
-                            <h3 className="text-lg font-bold text-white mb-2">{dh?.empty.noActive}</h3>
-                            <p className="text-white/40 text-sm mb-6">{dh?.empty.noActiveDesc}</p>
-                            <Button variant="secondary" onClick={() => onNavigate('create-order')} size="sm">
-                                {t.dashboard.menu.create}
-                            </Button>
+                            <h3 className="text-lg font-bold text-white mb-2">
+                                {homeStatusFilter !== 'ALL'
+                                    ? (dh?.filters?.emptyStatus || (isAr ? 'لا طلبات في هذه الحالة' : 'No orders in this status'))
+                                    : dh?.empty.noActive}
+                            </h3>
+                            <p className="text-white/40 text-sm mb-6">
+                                {homeStatusFilter !== 'ALL'
+                                    ? (dh?.filters?.emptyStatusDesc || (isAr ? 'جرّب حالة أخرى أو اختر الكل' : 'Try another status or select All'))
+                                    : dh?.empty.noActiveDesc}
+                            </p>
+                            {homeStatusFilter === 'ALL' ? (
+                                <Button variant="secondary" onClick={() => onNavigate('create-order')} size="sm">
+                                    {t.dashboard.menu.create}
+                                </Button>
+                            ) : (
+                                <Button variant="secondary" onClick={() => setHomeStatusFilter('ALL')} size="sm">
+                                    {dh?.filters?.all || (isAr ? 'الكل' : 'All')}
+                                </Button>
+                            )}
                         </GlassCard>
                     )}
                 </motion.div>
