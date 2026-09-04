@@ -109,8 +109,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
         onBack={onBack}
       >
         {dashboardPath === 'home' && <DashboardHome onNavigate={onNavigate} />}
-        {dashboardPath === 'orders' && <MyOrders onNavigate={onNavigate} />}
-        {dashboardPath === 'order-details' && (
+        {dashboardPath === 'orders' && !viewId && <MyOrders onNavigate={onNavigate} />}
+        {(dashboardPath === 'order-details' || (dashboardPath === 'orders' && viewId)) && (
           <OrderDetails
             orderId={viewId}
             onBack={() => onNavigate('orders')}
@@ -129,6 +129,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
           <ChatLayout
             viewId={viewId}
             onNavigateToCheckout={() => onNavigate('checkout')}
+            onNavigateToOrder={(orderId) => onNavigate('order-details', orderId)}
           />
         )}
         {dashboardPath === 'profile' && <ProfileView />}
@@ -198,7 +199,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
           {dashboardPath === 'support' && <MerchantSupportPage onNavigate={onNavigate} />}
           {dashboardPath === 'notifications' && <MerchantNotifications onNavigate={onNavigate} />}
           {dashboardPath === 'chats' && (
-            <ChatLayout viewId={viewId} onNavigateToCheckout={() => {}} />
+            <ChatLayout
+              viewId={viewId}
+              onNavigateToCheckout={() => {}}
+              onNavigateToOrder={(orderId) => onNavigate('explore-offer', orderId)}
+            />
           )}
           {dashboardPath === 'shipping-cart' && <MerchantShippingCartPage />}
           {dashboardPath === 'billing' && <BillingPage />}

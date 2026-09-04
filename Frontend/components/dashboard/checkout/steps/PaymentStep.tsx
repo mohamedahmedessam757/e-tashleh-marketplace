@@ -517,10 +517,10 @@ export const PaymentStep: React.FC = () => {
           return (
             <div
               key={offer.id}
-              className={`rounded-2xl border overflow-hidden transition-colors duration-200 relative ${isPaid
+              className={`rounded-2xl border transition-colors duration-200 relative ${isPaid
                 ? 'bg-green-500/5 border-green-500/30 shadow-none'
                 : isReadyToPay
-                  ? 'bg-[#1a1508] border-gold-500/50 shadow-[0_20px_50px_rgba(212,175,55,0.15)]'
+                  ? 'bg-[#1a1508] border-gold-500/50 shadow-[0_12px_40px_rgba(212,175,55,0.12)]'
                   : 'bg-[#121212] border-[#2b271d] hover:border-gold-500/30'
                 }`}
             >
@@ -577,8 +577,8 @@ export const PaymentStep: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                  <div className={`px-5 py-2 rounded-xl text-center min-w-[130px] ${isPaid ? 'bg-green-500/10 border border-green-500/20' : 'bg-[#241d0f] border border-[#4a3e20]'}`}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+                  <div className={`px-4 py-2 rounded-xl text-center min-w-[120px] ${isPaid ? 'bg-green-500/10 border border-green-500/20' : 'bg-[#241d0f] border border-[#4a3e20]'}`}>
                     <p className="text-[11px] text-gold-300/80 mb-0.5">{tFR.price}</p>
                     <p className={`font-bold font-mono text-lg ${isPaid ? 'text-green-400' : 'text-gold-500'}`}>
                       AED {price.toLocaleString()}
@@ -586,11 +586,11 @@ export const PaymentStep: React.FC = () => {
                   </div>
 
                   {isPaid ? (
-                    <CheckCircle size={22} className="text-green-400 shrink-0" />
+                    <CheckCircle size={22} className="text-green-400 shrink-0 self-center" />
                   ) : (
                     <button
                       type="button"
-                      className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black bg-gold-500 text-black border border-gold-400 shadow-[0_0_18px_rgba(196,169,92,0.45)] hover:bg-gold-400 hover:shadow-[0_0_24px_rgba(196,169,92,0.55)] transition-all"
+                      className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black bg-gold-500/15 text-gold-300 border border-gold-500/40 hover:bg-gold-500 hover:text-black hover:shadow-[0_0_18px_rgba(196,169,92,0.4)] transition-all w-full sm:w-auto"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!isPaid && !isReadyToPay) {
@@ -654,8 +654,8 @@ export const PaymentStep: React.FC = () => {
 
               {/* ── Expanded Section ── */}
               {isExpanded && !isPaid && (
-                  <div className="bg-black/20">
-                    <div className="px-5 pb-6 pt-2 space-y-4">
+                  <div className="rounded-b-2xl border-t border-white/10 bg-black/25">
+                    <div className="px-4 sm:px-5 pb-5 pt-4 space-y-4">
                       {/* ── Saved Cards Quick Select ── */}
                       {savedCards.length > 0 && !isPaid && (
                         <div className="space-y-3 p-3 rounded-2xl bg-white/[0.02] border border-white/5">
@@ -735,13 +735,16 @@ export const PaymentStep: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handlePreparePayment(offer.id)}
-                          className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 bg-[length:200%_auto] hover:bg-right transition-all text-black font-extrabold text-sm shadow-[0_10px_20px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2 active:scale-[0.98]"
+                          className="relative z-10 w-full mt-1 py-3.5 sm:py-4 rounded-xl bg-gold-500 hover:bg-gold-400 transition-all text-black font-extrabold text-sm shadow-[0_0_22px_rgba(196,169,92,0.4)] flex items-center justify-center gap-2 active:scale-[0.98]"
                         >
                           <Lock size={16} />
-                          {useNewCard || !activeSavedPaymentMethodId
-                            ? (isAr ? 'متابعة الدفع' : 'Continue to Payment')
-                            : (isAr ? 'تأكيد الدفع بالبطاقة المختارة' : 'Confirm & Pay with Selected Card')
-                          } — AED {price.toLocaleString()}
+                          <span className="truncate">
+                            {useNewCard || !activeSavedPaymentMethodId
+                              ? (isAr ? 'متابعة الدفع' : 'Continue to Payment')
+                              : (isAr ? 'تأكيد الدفع بالبطاقة المختارة' : 'Confirm & Pay with Selected Card')
+                            }
+                            {' — '}AED {price.toLocaleString()}
+                          </span>
                         </button>
                       ) : effectiveActivePaymentOfferId === offer.id ? (
                         <div>

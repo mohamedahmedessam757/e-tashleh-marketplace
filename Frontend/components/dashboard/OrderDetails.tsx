@@ -248,6 +248,39 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [showConfirmDeliveryModal, setShowConfirmDeliveryModal] = useState(false);
 
     const order = useOrderById(orderId || undefined);
+    const [detailFetchState, setDetailFetchState] = useState<'idle' | 'loading' | 'missing'>(
+        orderId && !order ? 'loading' : 'idle',
+    );
+
+    useEffect(() => {
+        if (!orderId) {
+            setDetailFetchState('idle');
+            return;
+        }
+        if (order) {
+            setDetailFetchState('idle');
+            return;
+        }
+        let cancelled = false;
+        setDetailFetchState('loading');
+        void useOrderStore
+            .getState()
+            .fetchOrder(String(orderId))
+            .then(() => {
+                if (cancelled) return;
+                const found = useOrderStore
+                    .getState()
+                    .orders.find((o) => String(o.id) === String(orderId));
+                setDetailFetchState(found ? 'idle' : 'missing');
+            })
+            .catch(() => {
+                if (!cancelled) setDetailFetchState('missing');
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [orderId, order]);
+
     useOrderRealtimeSync(orderId, { includeReviews: true });
     useEnforceExpiredOrderSla(order);
     const displayStatus = order ? getDisplayOrderStatus(order) : '';
@@ -407,7 +440,50 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         }
     }, [order]);
 
-    if (!order) return <div className="text-white text-center py-10">{t.dashboard.common?.notFound || 'Order not found'}</div>;
+    const partResolutionByOfferId = useMemo(() => {
+        const map = new Map<string, FulfillmentSummaryPartHint>();
+        fulfillmentSummary?.parts?.forEach((p) => {
+            if (p.offerId) map.set(p.offerId, p);
+        });
+        return map;
+    }, [fulfillmentSummary]);
+
+    const eligibleResolutionParts = useMemo((): EligibleResolutionPart[] => {
+        if (!order || !fulfillmentSummary?.parts?.length) return [];
+        return fulfillmentSummary.parts
+            .filter((p) => p.isReturnEligible && p.orderPartId && !p.hasOpenCase)
+            .map((p) => {
+                const offer = order.offers?.find((o) => String(o.id) === String(p.offerId));
+                return {
+                    offerId: p.offerId,
+                    orderId: order.id,
+                    orderPartId: p.orderPartId!,
+                    partName: p.partName,
+                    merchantName: offer?.merchantName ?? order.merchantName ?? 'Store',
+                    orderNumber: order.orderNumber,
+                    returnWindowEndsAt: p.returnWindowEndsAt,
+                    isReturnEligible: p.isReturnEligible,
+                };
+            });
+    }, [fulfillmentSummary, order]);
+
+    if (!order) {
+        if (detailFetchState === 'loading' || (orderId && detailFetchState !== 'missing')) {
+            return (
+                <div className="text-white text-center py-16 flex flex-col items-center gap-3">
+                    <Loader2 className="animate-spin text-gold-500" size={28} />
+                    <p className="text-white/50 text-sm">
+                        {language === 'ar' ? 'جاري تحميل الطلب...' : 'Loading order...'}
+                    </p>
+                </div>
+            );
+        }
+        return (
+            <div className="text-white text-center py-10">
+                {t.dashboard.common?.notFound || 'Order not found'}
+            </div>
+        );
+    }
 
     const visibleOffers = order.offers?.filter((o: any) => isVisibleMarketplaceOffer(o)) || [];
     const acceptedOffers = order.offers?.filter((o: any) => isAcceptedOfferStatus(o.status)) || [];
@@ -435,33 +511,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     );
 
     const BackIcon = language === 'ar' ? ChevronRight : ChevronLeft;
-
-    const partResolutionByOfferId = useMemo(() => {
-        const map = new Map<string, FulfillmentSummaryPartHint>();
-        fulfillmentSummary?.parts?.forEach((p) => {
-            if (p.offerId) map.set(p.offerId, p);
-        });
-        return map;
-    }, [fulfillmentSummary]);
-
-    const eligibleResolutionParts = useMemo((): EligibleResolutionPart[] => {
-        if (!order || !fulfillmentSummary?.parts?.length) return [];
-        return fulfillmentSummary.parts
-            .filter((p) => p.isReturnEligible && p.orderPartId && !p.hasOpenCase)
-            .map((p) => {
-                const offer = order.offers?.find((o) => String(o.id) === String(p.offerId));
-                return {
-                    offerId: p.offerId,
-                    orderId: order.id,
-                    orderPartId: p.orderPartId!,
-                    partName: p.partName,
-                    merchantName: offer?.merchantName ?? order.merchantName ?? 'Store',
-                    orderNumber: order.orderNumber,
-                    returnWindowEndsAt: p.returnWindowEndsAt,
-                    isReturnEligible: p.isReturnEligible,
-                };
-            });
-    }, [fulfillmentSummary, order]);
 
     const openReturnForPart = (offer: PartReturnWindowOffer) => {
         setResolutionPart({

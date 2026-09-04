@@ -16,9 +16,13 @@ import { isOrderChatClosedStatus } from '../../../utils/orderChatLock';
 
 interface ChatWindowProps {
   onNavigateToCheckout: () => void;
+  onNavigateToOrder?: (orderId: string) => void;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  onNavigateToCheckout,
+  onNavigateToOrder,
+}) => {
   const { chats, activeChatId, sendMessage: sendLegacyMessage, getChatStatus, acceptOffer } = useChatStore();
   const { activeChat: orderChat, sendMessage: sendOrderMessage, toggleTranslation, fetchChat, markAsRead } = useOrderChatStore(); // NEW
   
@@ -338,37 +342,45 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
       </AnimatePresence>
 
       {/* Header */}
-      <div className="p-4 border-b border-white/10 bg-[#151310] flex justify-between items-center z-10 w-full">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleBackToChats}
-            className="md:hidden p-2.5 text-white hover:text-gold-400 transition-colors bg-white/5 hover:bg-white/10 rounded-xl border border-white/10"
-            aria-label={language === 'ar' ? 'رجوع للمحادثات' : 'Back to chats'}
-          >
-            <X size={20} className="scale-x-[-1]" />
-          </button>
-          <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 font-bold shrink-0">
-            {displayChat.merchantName?.[0] || '?'}
-          </div>
-          <div>
-            <h3 className="text-white font-bold flex items-center gap-2">
-              {displayChat.merchantName}
-              {(legacyChat?.type === 'support' || displayChat.partName?.includes('Support')) && (
-                <span className="bg-blue-500/10 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-500/20">
-                  Support SLA
-                </span>
+      <div className="p-3 sm:p-4 border-b border-white/10 bg-[#151310] flex flex-col gap-3 z-10 w-full shrink-0">
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              onClick={handleBackToChats}
+              className="md:hidden p-2.5 text-white hover:text-gold-400 transition-colors bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 shrink-0"
+              aria-label={language === 'ar' ? 'رجوع للمحادثات' : 'Back to chats'}
+            >
+              <X size={18} className="scale-x-[-1]" />
+            </button>
+            <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 font-bold shrink-0 border border-gold-500/20">
+              {displayChat.merchantName?.[0] || '?'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-white font-bold flex items-center gap-2 truncate text-sm sm:text-base">
+                <span className="truncate">{displayChat.merchantName}</span>
+                {(legacyChat?.type === 'support' || displayChat.partName?.includes('Support')) && (
+                  <span className="bg-blue-500/10 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-500/20 shrink-0">
+                    Support SLA
+                  </span>
+                )}
+              </h3>
+              {displayChat.partName && (
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-white/50 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chatStatus === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="truncate">
+                    {orderChat?.orderNumber
+                      ? `#${orderChat.orderNumber}`
+                      : displayChat.orderId
+                        ? `#${String(displayChat.orderId).slice(0, 8)}`
+                        : ''}
+                    {displayChat.partName ? ` • ${displayChat.partName}` : ''}
+                  </span>
+                </div>
               )}
-            </h3>
-            {displayChat.partName && (
-              <div className="flex items-center gap-2 text-xs text-white/50">
-                <span className={`w-2 h-2 rounded-full ${chatStatus === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                {displayChat.orderId ? `#${displayChat.orderId} • ` : ''}{displayChat.partName}
-              </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Status Badge or SLA Timer */}
           {chatStatus === 'active' && orderChat?.type !== 'support' && (
             <div className="hidden md:block">
@@ -407,7 +419,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           {isOrderChat && (
             <button
               onClick={handleToggleTranslation}
-              className={`px-2.5 py-2 rounded-xl transition-all flex items-center gap-1.5 min-w-0 ${
+              className={`px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl transition-all flex items-center gap-1.5 min-w-0 ${
                 isTranslationEnabled
                   ? 'bg-gold-500 text-black shadow-[0_0_14px_rgba(196,169,92,0.5)] border border-gold-400'
                   : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/10'
@@ -418,8 +430,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
                   : (t.dashboard.chat?.enableTranslation || (language === 'ar' ? 'تفعيل الترجمة' : 'Enable translation'))
               }
             >
-              <Languages size={18} className="shrink-0" />
-              <span className="text-[10px] sm:text-xs font-bold truncate max-w-[7.5rem] sm:max-w-none">
+              <Languages size={16} className="shrink-0 sm:w-[18px] sm:h-[18px]" />
+              <span className="text-[10px] sm:text-xs font-bold truncate max-w-[4.5rem] sm:max-w-[7.5rem]">
                 {isTranslationEnabled
                   ? (language === 'ar'
                       ? (t.dashboard.chat?.translationTargetAr || 'ترجمة: العربية')
@@ -451,7 +463,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
               <button
                 onClick={async () => {
                   if (!orderChat?.id) return;
-                  const targetId = orderChat.customerId; // Block the customer by default
+                  const targetId = orderChat.customerId;
                   if (!window.confirm(language === 'ar' ? 'هل أنت متأكد من حظر هذا المستخدم؟' : 'Are you sure you want to block this user?')) return;
                   try {
                     await api.post(`/chats/${orderChat.id}/admin-action`, { action: 'block', targetUserId: targetId });
@@ -467,6 +479,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -477,17 +490,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-2xl bg-gold-500/10 border border-gold-500/20 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-sm sticky top-0 z-20"
+            className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gold-500/10 border border-gold-500/25 flex flex-col gap-3 backdrop-blur-sm sticky top-0 z-20 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500">
-                <Clock size={20} />
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 shrink-0 border border-gold-500/20">
+                <Clock size={18} />
               </div>
-              <div>
+              <div className="min-w-0 flex-1 text-start">
                 <h4 className="text-white font-bold text-sm">
                   {language === 'ar' ? 'مرحلة اختيار العروض' : 'Offer Selection Phase'}
                 </h4>
-                <p className="text-xs text-white/50">
+                <p className="text-xs text-white/50 leading-relaxed mt-0.5">
                   {language === 'ar' 
                     ? 'تم كشف العروض! يمكنك الدردشة مع التاجر قبل اتخاذ قرارك النهائي.' 
                     : 'Offers are revealed! You can chat with the merchant before making your final decision.'}
@@ -496,8 +509,25 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
             </div>
             {user?.role === 'CUSTOMER' && (
               <button 
-                onClick={() => window.location.href = `/dashboard/orders/${orderChat?.orderId}`}
-                className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-gold-500/20"
+                type="button"
+                onClick={() => {
+                  const id = orderChat?.orderId;
+                  if (!id) return;
+                  if (onNavigateToOrder) {
+                    onNavigateToOrder(String(id));
+                    return;
+                  }
+                  // SPA-safe fallback — never use /dashboard/orders/:id (MyOrders ignores id)
+                  window.history.pushState(
+                    { view: 'dashboard', dashboardPath: 'order-details', viewId: String(id) },
+                    '',
+                    `/dashboard/order-details/${id}`,
+                  );
+                  window.dispatchEvent(new PopStateEvent('popstate', {
+                    state: { view: 'dashboard', dashboardPath: 'order-details', viewId: String(id) },
+                  }));
+                }}
+                className="w-full sm:w-auto self-stretch sm:self-end px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-xs font-black rounded-xl transition-all shadow-[0_0_18px_rgba(196,169,92,0.35)]"
               >
                 {language === 'ar' ? 'عرض كافة العروض' : 'View All Offers'}
               </button>

@@ -8,10 +8,15 @@ import { useOrderChatStore } from '../../../stores/useOrderChatStore';
 
 interface ChatLayoutProps {
   onNavigateToCheckout: () => void;
+  onNavigateToOrder?: (orderId: string) => void;
   viewId?: string;
 }
 
-export const ChatLayout: React.FC<ChatLayoutProps> = ({ onNavigateToCheckout, viewId }) => {
+export const ChatLayout: React.FC<ChatLayoutProps> = ({
+  onNavigateToCheckout,
+  onNavigateToOrder,
+  viewId,
+}) => {
   const { setActiveChat: setSupportChat, chats: supportChats, activeChatId } = useChatStore();
   const { setActiveChat: setOrderChat, chats: orderChats, activeChat, loadChat } = useOrderChatStore();
   const processedViewIdRef = useRef<string | null>(null);
@@ -68,7 +73,10 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onNavigateToCheckout, vi
           <ChatList />
         </div>
         <div className={`flex-1 h-full min-h-0 min-w-0 flex flex-col overflow-hidden ${!hasActiveChat ? 'hidden md:flex' : 'flex'}`}>
-          <ChatWindow onNavigateToCheckout={onNavigateToCheckout} />
+          <ChatWindow
+            onNavigateToCheckout={onNavigateToCheckout}
+            onNavigateToOrder={onNavigateToOrder}
+          />
         </div>
       </GlassCard>
     </div>
