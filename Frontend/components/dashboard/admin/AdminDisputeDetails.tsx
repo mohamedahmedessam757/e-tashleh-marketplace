@@ -234,6 +234,13 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setFinalRefundDecision('REFUND_CUSTOMER');
             if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
         }
+        // Customer claim / customer at fault → no refund, no merchant fine: zero the calculator
+        if (faultParty === 'CUSTOMER') {
+            setFinalRefundDecision('NO_CUSTOMER_REFUND');
+            setGatewayFeePct(0);
+            setRefundFeePct(0);
+            setShippingRoundtrip(0);
+        }
     }, [faultParty, adminApproval]);
 
     useEffect(() => {
@@ -1043,6 +1050,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                             (isCloseCompleteRefund &&
                                                                 opt.id === 'NO_CUSTOMER_REFUND') ||
                                                             (adminApproval === 'REJECTED' &&
+                                                                opt.id === 'REFUND_CUSTOMER') ||
+                                                            (faultParty === 'CUSTOMER' &&
                                                                 opt.id === 'REFUND_CUSTOMER');
                                                         return (
                                                             <button
@@ -1085,14 +1094,21 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                  </div>
 
                                                  <div className="space-y-4">
+                                                     {faultParty === 'CUSTOMER' && (
+                                                         <div className="p-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 text-[11px] text-cyan-200/90 font-bold leading-relaxed">
+                                                             {isAr
+                                                                 ? 'طرف الإدعاء: العميل — تم تصفير الحاسبة تلقائياً (لا استرداد للعميل ولا غرامة على التاجر).'
+                                                                 : 'Customer claim: calculator auto-zeroed (no customer refund, no merchant fine).'}
+                                                         </div>
+                                                     )}
                                                      {/* Fee Percentage Controls */}
-                                                     <div className="grid grid-cols-2 gap-4">
+                                                     <div className={`grid grid-cols-2 gap-4 ${faultParty === 'CUSTOMER' ? 'opacity-50 pointer-events-none' : ''}`}>
                                                          <div className="space-y-2">
                                                              <label className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{isAr ? 'رسوم البوابة (%)' : 'GATEWAY FEE (%)'}</label>
                                                              <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10">
-                                                                 <button onClick={() => setGatewayFeePct(Math.max(0, gatewayFeePct - 0.5))} className="p-1 hover:bg-white/10 rounded-md text-white/40"><MinusCircle size={14} /></button>
+                                                                 <button type="button" onClick={() => setGatewayFeePct(Math.max(0, gatewayFeePct - 0.5))} className="p-1 hover:bg-white/10 rounded-md text-white/40"><MinusCircle size={14} /></button>
                                                                  <span className="flex-1 text-center font-mono text-xs text-white">{gatewayFeePct.toFixed(1)}%</span>
-                                                                 <button onClick={() => setGatewayFeePct(gatewayFeePct + 0.5)} className="p-1 hover:bg-white/10 rounded-md text-white/40"><PlusCircle size={14} /></button>
+                                                                 <button type="button" onClick={() => setGatewayFeePct(gatewayFeePct + 0.5)} className="p-1 hover:bg-white/10 rounded-md text-white/40"><PlusCircle size={14} /></button>
                                                              </div>
                                                          </div>
                                                          <div className="space-y-2">
@@ -1106,7 +1122,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      </div>
 
                                                      {/* Round-trip Shipping Control */}
-                                                     <div className="space-y-2">
+                                                     <div className={`space-y-2 ${faultParty === 'CUSTOMER' ? 'opacity-50 pointer-events-none' : ''}`}>
                                                          <label className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{isAr ? 'تكاليف الشحن ذهاباً وإياباً' : 'ROUND-TRIP SHIPPING COST'}</label>
                                                          <div className="relative group">
                                                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20"><Truck size={14} /></div>
@@ -1114,7 +1130,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                  type="number"
                                                                  value={shippingRoundtrip}
                                                                  onChange={(e) => setShippingRoundtrip(Number(e.target.value))}
-                                                                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-sm font-mono text-white focus:border-gold-500/50 outline-none transition-all"
+                                                                 disabled={faultParty === 'CUSTOMER'}
+                                                                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-sm font-mono text-white focus:border-gold-500/50 outline-none transition-all disabled:cursor-not-allowed"
                                                                  placeholder="0.00"
                                                              />
                                                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">AED</div>

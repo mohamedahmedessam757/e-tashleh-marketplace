@@ -113,7 +113,7 @@ describe('buildFeeSettlementPlan — mapping + invariants', () => {
         expect(gateway?.fundingPath).toBe('WITHHELD_FROM_STRIPE_REFUND');
     });
 
-    it('customer fault + refund no => commission+shipping paid by customer wallet debit', () => {
+    it('customer fault + refund no => zero settlement (no wallet debits)', () => {
         const fin = computeAdjudicationFinancials({
             ...BASE,
             faultParty: 'CUSTOMER',
@@ -126,14 +126,12 @@ describe('buildFeeSettlementPlan — mapping + invariants', () => {
             fin,
         });
 
-        const gateway = getLine('GATEWAY_FEE', plan.lineItems);
-        const shipping = getLine('ROUNDTRIP_SHIPPING', plan.lineItems);
-
-        expect(plan.feeBearer).toBe('CUSTOMER');
-        expect(plan.shippingBearer).toBe('CUSTOMER');
-        expect(gateway?.fundingPath).toBe('WALLET_DEBIT');
-        expect(shipping?.fundingPath).toBe('WALLET_DEBIT');
-        expect(plan.invariants.expectedWalletShippingDebitAmount).toBe(BASE.shippingRoundtrip);
+        expect(fin.customerStripeRefund).toBe(0);
+        expect(fin.merchantWalletDebits.platformFees).toBe(0);
+        expect(fin.merchantWalletDebits.shipping).toBe(0);
+        expect(fin.shippingBearer).toBe('NONE');
+        expect(plan.shippingBearer).toBe('NONE');
+        expect(plan.invariants.expectedWalletShippingDebitAmount).toBe(0);
     });
 
     it('uses a stable idempotency key for the same case + kind + status', () => {

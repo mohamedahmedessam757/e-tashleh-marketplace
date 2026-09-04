@@ -52,7 +52,7 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(r.merchantWalletDebits.shipping).toBe(0);
     });
 
-    it('customer fault + refund no: zero refund, customer still bears shipping', () => {
+    it('customer fault + refund no: zero refund and zero charges', () => {
         const r = computeAdjudicationFinancials({
             ...BASE,
             faultParty: 'CUSTOMER',
@@ -60,8 +60,10 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         });
         expect(r.finalCustomerRefundAmount).toBe(0);
         expect(r.feeBearer).toBe('CUSTOMER');
-        expect(r.shippingBearer).toBe('CUSTOMER');
+        expect(r.shippingBearer).toBe('NONE');
+        expect(r.platformRetainedAmount).toBe(0);
         expect(r.merchantWalletDebits.shipping).toBe(0);
+        expect(r.merchantWalletDebits.platformFees).toBe(0);
         expect(r.refundExecutionStatusSeed).toBe('NOT_REQUIRED');
     });
 

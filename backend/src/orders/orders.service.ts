@@ -1941,6 +1941,7 @@ export class OrdersService {
                         status: OrderStatus.AWAITING_PAYMENT,
                         paymentDeadlineAt: partPaymentDeadline,
                     },
+                    include: { parts: { select: { id: true } } },
                 });
             }
 

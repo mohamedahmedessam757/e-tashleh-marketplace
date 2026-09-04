@@ -5,7 +5,7 @@
  * - MERCHANT/STORE/VENDOR + REFUND_CUSTOMER → full paid (capped); merchant pays fees + shipping
  * - MERCHANT/STORE/VENDOR + NO_CUSTOMER_REFUND → 0 customer refund; merchant still owes fees + shipping
  * - CUSTOMER + REFUND_CUSTOMER → paid − fees − shipping; customer bears fees/shipping
- * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; customer still bears shipping
+ * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; 0 fees/shipping charges (claim dismissed)
  * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform fees; shipping-company liability
  * - CLOSE_COMPLETE_REFUND → forced REFUND_CUSTOMER; paid − fees; no shipping
  * - Stripe call only when REFUND_CUSTOMER and amount > 0
@@ -121,28 +121,39 @@ export function computeAdjudicationFinancials(
     let shippingCompanyLiability = 0;
 
     if (!refundRequired) {
-        feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
-        shippingBearer =
-            fault === 'SHIPPING_COMPANY'
-                ? shippingRoundtrip > 0
-                    ? 'SHIPPING_COMPANY'
-                    : 'NONE'
-                : isMerchantFault(fault)
-                  ? shippingRoundtrip > 0
-                      ? 'MERCHANT'
-                      : 'NONE'
-                  : shippingRoundtrip > 0
-                    ? 'CUSTOMER'
-                    : 'NONE';
-        merchantShippingDebit =
-            shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0;
-        merchantPlatformFeesDebit =
-            feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
-        shippingCompanyLiability =
-            shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
-        platformRetainedAmount =
-            feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
-        customerStripeRefund = 0;
+        if (fault === 'CUSTOMER') {
+            // Claim dismissed / customer at fault without refund: zero all money movement
+            feeBearer = 'CUSTOMER';
+            shippingBearer = 'NONE';
+            customerStripeRefund = 0;
+            platformRetainedAmount = 0;
+            merchantShippingDebit = 0;
+            merchantPlatformFeesDebit = 0;
+            shippingCompanyLiability = 0;
+        } else {
+            feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
+            shippingBearer =
+                fault === 'SHIPPING_COMPANY'
+                    ? shippingRoundtrip > 0
+                        ? 'SHIPPING_COMPANY'
+                        : 'NONE'
+                    : isMerchantFault(fault)
+                      ? shippingRoundtrip > 0
+                          ? 'MERCHANT'
+                          : 'NONE'
+                      : shippingRoundtrip > 0
+                        ? 'CUSTOMER'
+                        : 'NONE';
+            merchantShippingDebit =
+                shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0;
+            merchantPlatformFeesDebit =
+                feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
+            shippingCompanyLiability =
+                shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
+            platformRetainedAmount =
+                feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFeesTotal : 0;
+            customerStripeRefund = 0;
+        }
     } else if (isCloseComplete) {
         feeBearer = 'MIXED_CLOSE';
         shippingBearer = 'NONE';

@@ -774,7 +774,22 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         try {
             await ordersApi.markOfferReadyForShipping(String(orderId), targetOfferId);
             await fetchOrder(String(orderId));
-            alert(isAr ? 'تم تأكيد جاهزية القطعة للشحن! يمكن للعميل شحنها من السلة.' : 'Part marked ready for shipping! Customer can ship from cart.');
+            const isMulti =
+                order?.requestType === 'multiple' ||
+                (Array.isArray(order?.parts) && order.parts.length > 1);
+            if (isMulti) {
+                alert(
+                    isAr
+                        ? 'تم تأكيد جاهزية القطعة للشحن! يمكن للعميل اختيارها من سلة الشحن.'
+                        : 'Part marked ready for shipping! Customer can select it from the shipping cart.',
+                );
+            } else {
+                alert(
+                    isAr
+                        ? 'تم تأكيد جاهزية القطعة للشحن.'
+                        : 'Part marked ready for shipping.',
+                );
+            }
         } catch (err) {
             console.error('Failed to request shipping:', err);
             alert(isAr ? 'فشل طلب الشحن، يرجى المحاولة لاحقاً.' : 'Failed to request shipping.');
@@ -3321,7 +3336,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     ) : (
                                         <CheckCircle2 size={18} />
                                     )}
-                                    <span>{isAr ? 'نعم، الشحنة جاهزة للتسليم' : 'Yes, Ready for Pickup'}</span>
+                                    <span>{isAr ? 'نعم، القطعة جاهزة للتوثيق' : 'Yes, ready for verification'}</span>
                                 </button>
                                 <button
                                     onClick={() => setIsPrepareDialogOpen(false)}

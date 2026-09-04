@@ -86,29 +86,40 @@ export function computeAdjudicationPreview(
     let showShippingOnCustomerNet = false;
 
     if (!refundRequired) {
-        feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
-        shippingBearer =
-            fault === 'SHIPPING_COMPANY'
-                ? shippingRoundtrip > 0
-                    ? 'SHIPPING_COMPANY'
-                    : 'NONE'
-                : isMerchantFault(fault)
-                  ? shippingRoundtrip > 0
-                      ? 'MERCHANT'
-                      : 'NONE'
-                  : shippingRoundtrip > 0
-                    ? 'CUSTOMER'
-                    : 'NONE';
-        retained = feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFees : 0;
-        merchantDebits = {
-            shipping: shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0,
-            platformFees: feeBearer === 'MERCHANT' ? platformFees : 0,
-        };
-        shippingCompanyLiability =
-            shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
-        net = 0;
-        showFeesOnCustomerNet = false;
-        showShippingOnCustomerNet = false;
+        if (fault === 'CUSTOMER') {
+            feeBearer = 'CUSTOMER';
+            shippingBearer = 'NONE';
+            retained = 0;
+            net = 0;
+            merchantDebits = { shipping: 0, platformFees: 0 };
+            shippingCompanyLiability = 0;
+            showFeesOnCustomerNet = false;
+            showShippingOnCustomerNet = false;
+        } else {
+            feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
+            shippingBearer =
+                fault === 'SHIPPING_COMPANY'
+                    ? shippingRoundtrip > 0
+                        ? 'SHIPPING_COMPANY'
+                        : 'NONE'
+                    : isMerchantFault(fault)
+                      ? shippingRoundtrip > 0
+                          ? 'MERCHANT'
+                          : 'NONE'
+                      : shippingRoundtrip > 0
+                        ? 'CUSTOMER'
+                        : 'NONE';
+            retained = feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFees : 0;
+            merchantDebits = {
+                shipping: shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0,
+                platformFees: feeBearer === 'MERCHANT' ? platformFees : 0,
+            };
+            shippingCompanyLiability =
+                shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
+            net = 0;
+            showFeesOnCustomerNet = false;
+            showShippingOnCustomerNet = false;
+        }
     } else if (isCloseComplete) {
         feeBearer = 'MIXED_CLOSE';
         retained = platformFees;

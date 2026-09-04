@@ -243,6 +243,11 @@ export const MerchantOrders: React.FC<MerchantOrdersProps> = ({ onNavigate }) =>
     };
 
     const InCartBadge = ({ order, isAr }: { order: any, isAr: boolean }) => {
+        const isMulti =
+            order?.requestType === 'multiple' ||
+            (Array.isArray(order?.parts) && order.parts.length > 1);
+        if (!isMulti) return null;
+
         const myStoreId = localStorage.getItem('merchant_store_id') || '';
         const inCart = order.offers?.some((off: any) =>
             off.storeId === myStoreId &&
