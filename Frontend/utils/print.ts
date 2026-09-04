@@ -199,8 +199,18 @@ a[href]::before {
 
 /* Policies stay on screen only — print body would add empty pages */
 .inv-policy-body,
-.inv-policy-chevron,
-.inv-screen-img { display: none !important; }
+.inv-policy-chevron { display: none !important; }
+.inv-screen-img {
+  display: block !important;
+}
+.inv-screen-img img {
+  max-height: 100px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: cover !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+}
 .no-print,
 .print\\:hidden { display: none !important; }
 /* Print-only brand header with E-Tashleh logo */
@@ -320,8 +330,13 @@ function preparePrintHtml(html: string, rootClass: 'inv-print-root' | 'ctr-print
             a.removeAttribute('rel');
         });
 
-        root.querySelectorAll('[class*="print:hidden"], .no-print, .inv-policy-body, .inv-screen-img').forEach((el) => {
+        root.querySelectorAll('[class*="print:hidden"], .no-print, .inv-policy-body').forEach((el) => {
             el.remove();
+        });
+        // Prefer printed photos over image-link QR duplicates
+        root.querySelectorAll('.inv-screen-img').forEach((photo) => {
+            const sibling = photo.parentElement?.querySelector('.inv-print-qr');
+            if (sibling) sibling.remove();
         });
 
         // Keep print-only blocks (logo header / policy hint); drop other hidden chrome

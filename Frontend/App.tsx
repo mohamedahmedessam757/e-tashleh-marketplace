@@ -76,8 +76,12 @@ import {
   loginSearchWithNext,
   parseDlQueryParam,
   stripDlFromSearch,
+  loadDocumentScanPending,
+  clearDocumentScanPending,
   type PendingRedirect,
+  type DocumentScanKind,
 } from './utils/widersDeepLink';
+import { DocumentScanRedirect } from './components/DocumentScanRedirect';
 import {
   buildPendingRedirect,
   resolveDashboardEntry,
@@ -127,7 +131,9 @@ type ViewState =
   | 'earn-income'
   | 'verify-link'
   | 'business-license'
-  | 'business-license-verify';
+  | 'business-license-verify'
+  | 'invoice-scan'
+  | 'waybill-scan';
 type UserRole = 'customer' | 'merchant' | 'admin' | null;
 
 function AppContent() {
@@ -238,6 +244,12 @@ function AppContent() {
     if (initialState.view === 'verify-link' && initialState.verifyToken) {
       setCurrentView('verify-link');
       setVerifyToken(initialState.verifyToken);
+      return;
+    }
+
+    if (initialState.view === 'invoice-scan' || initialState.view === 'waybill-scan') {
+      setCurrentView(initialState.view as ViewState);
+      setViewId(initialState.viewId ?? null);
       return;
     }
 
@@ -481,7 +493,18 @@ function AppContent() {
       );
       setPendingRedirect(null);
       clearPersistedPendingRedirect();
-    } else {
+      return;
+    }
+
+    const docScan = loadDocumentScanPending();
+    if (docScan) {
+      setCurrentView(docScan.kind === 'invoice' ? 'invoice-scan' : 'waybill-scan');
+      setViewId(docScan.id);
+      replaceView(docScan.kind === 'invoice' ? 'invoice-scan' : 'waybill-scan', undefined, docScan.id);
+      return;
+    }
+
+    {
       const backendRole = getCurrentUser()?.role;
       const defaultPath =
         backendRole === 'VERIFICATION_OFFICER' ? 'verification-tasks' : 'home';
@@ -506,6 +529,32 @@ function AppContent() {
   const handleDashboardBack = () => {
     window.history.back();
   };
+
+  const handleDocumentScanNeedLogin = useCallback((_kind: DocumentScanKind, _id: string) => {
+    setCurrentView('role-selection');
+    replaceView('role-selection');
+  }, [replaceView]);
+
+  const handleDocumentScanResolved = useCallback(
+    (payload: { orderId: string; tab: 'invoices' | 'waybills'; roleHint?: 'customer' | 'merchant' }) => {
+      clearDocumentScanPending();
+      const user = getCurrentUser();
+      const mappedRole = user ? (mapBackendRoleToFrontend(user.role) as UserRole) : null;
+      if (mappedRole) {
+        setUserRole(mappedRole);
+      }
+      const path =
+        payload.roleHint === 'merchant' || mappedRole === 'merchant'
+          ? 'explore-offer'
+          : 'order-details';
+      const search = `?tab=${payload.tab}`;
+      setDashboardPath(path);
+      setViewId(payload.orderId);
+      setCurrentView('dashboard');
+      replaceView('dashboard', path, payload.orderId, search);
+    },
+    [replaceView],
+  );
 
   const getTitle = () => {
     switch (currentView) {
@@ -707,6 +756,15 @@ function AppContent() {
                     onNavigateLogin={() => handleNavigate('admin-login')}
                   />
                 </Suspense>
+              </div>
+            ) : currentView === 'invoice-scan' || currentView === 'waybill-scan' ? (
+              <div className="view-fade-in min-h-screen bg-[#0B0A09]">
+                <DocumentScanRedirect
+                  kind={currentView === 'invoice-scan' ? 'invoice' : 'waybill'}
+                  documentId={String(viewId || '')}
+                  onNeedLogin={handleDocumentScanNeedLogin}
+                  onResolved={handleDocumentScanResolved}
+                />
               </div>
             ) : currentView === 'dashboard' ? (
               <div className="view-fade-in h-full">

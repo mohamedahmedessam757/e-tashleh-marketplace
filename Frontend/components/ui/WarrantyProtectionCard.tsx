@@ -268,7 +268,7 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                                                                 e.stopPropagation(); 
                                                                 onClaim?.(o.id); // Pass the specific part/offer ID
                                                             }}
-                                                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/20 will-change-transform"
+                                                            className="px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-[0_0_18px_rgba(196,169,92,0.45)] will-change-transform border border-gold-400/60"
                                                         >
                                                             {isAr ? 'طلب استبدال' : 'REPLACE PART'}
                                                         </button>

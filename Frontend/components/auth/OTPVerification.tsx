@@ -147,6 +147,14 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
           <div className="text-gold-400 font-mono mt-1 text-lg" dir="ltr">
             {destination}
           </div>
+          {!isWhatsapp && (
+            <p className="mt-3 text-white/50 text-xs leading-relaxed max-w-sm mx-auto">
+              {t.auth.otp?.emailSpamNote ||
+                (language === 'ar'
+                  ? '📩 لم تصلك الرسالة؟ يرجى التحقق من مجلد البريد العشوائي (Spam / Junk)، فقد تصل رسائلنا إليه أحياناً.'
+                  : "📩 Didn't get the email? Please check your Spam / Junk folder — our messages sometimes land there.")}
+            </p>
+          )}
         </div>
       </div>
 

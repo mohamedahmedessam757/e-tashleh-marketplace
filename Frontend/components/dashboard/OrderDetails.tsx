@@ -778,7 +778,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             (t.dashboard.orders as { cancelConfirm?: string }).cancelConfirm ||
             (language === 'ar' ? 'هل أنت متأكد من إلغاء هذا الطلب؟' : 'Are you sure you want to cancel this order?');
         if (window.confirm(msg)) {
-            await cancelOrder(order.id);
+            const ok = await cancelOrder(order.id);
+            if (ok) {
+                const storageKey = `expired_modal_seen_${order.id}`;
+                if (!localStorage.getItem(storageKey)) {
+                    setExpiredModalVariant('customer_cancelled');
+                    setShowExpiredModal(true);
+                }
+            }
         }
     };
 
@@ -1203,16 +1210,16 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                             {/* Return / Dispute — single-item orders only (multi-part uses PartReturnWindowCard) */}
                             {!isMultiPartOrder && isDeliveredLike && (
-                                <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full sm:w-auto">
                                     <button
                                         onClick={() => {
                                             setResolutionPart(null);
                                             setReturnInitialReason(undefined);
                                             setShowReturnModal(true);
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 rounded-lg transition-all font-bold text-sm"
+                                        className="flex items-center justify-center gap-2 px-5 py-3 bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(34,211,238,0.35)] w-full sm:w-auto"
                                     >
-                                        <RefreshCcw size={16} />
+                                        <RefreshCcw size={18} />
                                         {t.dashboard.resolution.newReturn}
                                     </button>
                                     <button
@@ -1220,9 +1227,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                             setResolutionPart(null);
                                             setShowDisputeModal(true);
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded-lg transition-all font-bold text-sm"
+                                        className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500/15 hover:bg-red-600 text-red-300 hover:text-white border border-red-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(239,68,68,0.4)] w-full sm:w-auto"
                                     >
-                                        <AlertTriangle size={16} />
+                                        <AlertTriangle size={18} />
                                         {t.dashboard.resolution.newDispute}
                                     </button>
                                 </div>
@@ -1235,9 +1242,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         setReturnInitialReason(undefined);
                                         setShowReturnModal(true);
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 rounded-lg transition-all font-bold text-sm"
+                                    className="flex items-center justify-center gap-2 px-5 py-3 bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(34,211,238,0.35)] w-full sm:w-auto"
                                 >
-                                    <RefreshCcw size={16} />
+                                    <RefreshCcw size={18} />
                                     {language === 'ar' ? 'طلب إرجاع (اختر قطعة)' : 'Request Return (select part)'}
                                 </button>
                             )}
@@ -1248,9 +1255,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         setResolutionPart(null);
                                         setShowDisputeModal(true);
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded-lg transition-all font-bold text-sm"
+                                    className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500/15 hover:bg-red-600 text-red-300 hover:text-white border border-red-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(239,68,68,0.4)] w-full sm:w-auto"
                                 >
-                                    <AlertTriangle size={16} />
+                                    <AlertTriangle size={18} />
                                     {language === 'ar' ? 'فتح نزاع (اختر قطعة)' : 'Open Dispute (select part)'}
                                 </button>
                             )}
@@ -1682,8 +1689,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     <button
                                                         onClick={() => setDrawerPart({ id: p.id, name: p.name, description: p.description, image: partImgSrc, index: idx })}
                                                         disabled={!hasOffers}
-                                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${hasOffers
-                                                            ? 'bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border border-gold-500/20 hover:border-gold-500/40 hover:shadow-[0_0_12px_rgba(212,175,55,0.15)]'
+                                                        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${hasOffers
+                                                            ? 'bg-gold-500 text-black border border-gold-400 shadow-[0_0_18px_rgba(196,169,92,0.45)] hover:bg-gold-400 hover:shadow-[0_0_24px_rgba(196,169,92,0.55)]'
                                                             : 'bg-white/3 text-white/15 border border-white/5 cursor-not-allowed'
                                                             }`}
                                                     >

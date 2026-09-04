@@ -36,6 +36,8 @@ export function useNavigationHistory(
         else if (view === 'wholesale') url = '/wholesale';
         else if (view === 'how-we-work') url = '/how-it-works';
         else if (view === 'how-we-work-tutorial') url = '/tutorial';
+        else if (view === 'invoice-scan' && viewId) url = `/invoice/${viewId}`;
+        else if (view === 'waybill-scan' && viewId) url = `/waybill/${viewId}`;
         else if (view === 'dashboard') {
             url = `/dashboard/${dashboardPath || 'home'}`;
             if (viewId) {
@@ -133,6 +135,16 @@ export function parseUrlToState(): NavigationState {
     if (path.startsWith('/verify/')) {
         const token = path.split('/').filter(Boolean)[1];
         if (token) return { view: 'verify-link', verifyToken: token };
+    }
+
+    if (path.startsWith('/invoice/')) {
+        const invoiceId = path.split('/').filter(Boolean)[1];
+        if (invoiceId) return { view: 'invoice-scan', viewId: invoiceId };
+    }
+
+    if (path.startsWith('/waybill/')) {
+        const waybillId = path.split('/').filter(Boolean)[1];
+        if (waybillId) return { view: 'waybill-scan', viewId: waybillId };
     }
 
     if (path.startsWith('/dashboard/')) {

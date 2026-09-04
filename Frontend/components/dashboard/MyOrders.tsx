@@ -14,6 +14,12 @@ import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { isOrderExpired } from '../../utils/dateUtils';
 import { useProfileStore } from '../../stores/useProfileStore';
 import { ShieldAlert, AlertTriangle, Info } from 'lucide-react';
+import {
+    ACTIVE_ORDER_BUCKET,
+    COMPLETED_ORDER_BUCKET,
+    ORDER_STATUS_FILTER_VALUES,
+    PENDING_ORDER_BUCKET,
+} from '../../utils/orderStatusFilter.util';
 
 
 
@@ -71,19 +77,16 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
 
             if (statusFilter === 'ACTIVE') {
                 if (expired) return false;
-                if (![
-                    'AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID',
-                    'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 
-                    'VERIFICATION_SUCCESS', 'NON_MATCHING', 'CORRECTION_PERIOD', 
-                    'CORRECTION_SUBMITTED', 'READY_FOR_SHIPPING', 'SHIPPED', 'DISPUTED'
-                ].includes(order.status)) return false;
+                if (!(ACTIVE_ORDER_BUCKET as readonly string[]).includes(order.status)) return false;
             } else if (statusFilter === 'COMPLETED') {
-                if (!['COMPLETED', 'DELIVERED'].includes(order.status)) return false;
+                if (!(COMPLETED_ORDER_BUCKET as readonly string[]).includes(order.status)) return false;
             } else if (statusFilter === 'CANCELLED') {
                 if (order.status !== 'CANCELLED') return false;
             } else if (statusFilter === 'PENDING') {
                 if (expired) return false;
-                if (order.status !== 'AWAITING_OFFERS') return false;
+                if (!(PENDING_ORDER_BUCKET as readonly string[]).includes(order.status)) return false;
+            } else if ((ORDER_STATUS_FILTER_VALUES as readonly string[]).includes(statusFilter)) {
+                if (order.status !== statusFilter) return false;
             }
         }
 
@@ -214,6 +217,13 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                     <option value="ACTIVE" className="text-black bg-white">{t.dashboard.orders.tabs.active}</option>
                                     <option value="COMPLETED" className="text-black bg-white">{t.dashboard.orders.tabs.completed}</option>
                                     <option value="CANCELLED" className="text-black bg-white">{language === 'ar' ? 'ملغى' : 'Cancelled'}</option>
+                                    <optgroup label={language === 'ar' ? 'حسب الحالة' : 'By status'}>
+                                        {ORDER_STATUS_FILTER_VALUES.map((st) => (
+                                            <option key={st} value={st} className="text-black bg-white">
+                                                {(t.common as any).status?.[st] || st}
+                                            </option>
+                                        ))}
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>

@@ -38,7 +38,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onAcceptO
       transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
       className={`flex ${alignmentClass} mb-6`}
     >
-      <div className={`max-w-[85%] flex flex-col ${itemsClass}`}>
+      <div className={`max-w-[92%] sm:max-w-[85%] flex flex-col ${itemsClass}`}>
         <div
           className={`
             relative overflow-hidden transition-all duration-300

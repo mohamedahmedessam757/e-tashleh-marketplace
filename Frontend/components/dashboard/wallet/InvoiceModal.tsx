@@ -156,13 +156,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     /* ── helper: image card ── */
     const ImageCard: React.FC<{ src: string; label: string; printQr?: boolean }> = ({ src, label, printQr }) => (
         <div className="relative group">
-            <div className="inv-screen-img">
+            <div className="inv-screen-img print:!block">
                 <img
                     src={src} alt={label} loading="lazy"
-                    className="w-full h-32 sm:h-40 object-cover rounded-lg border border-white/10"
+                    className="w-full h-32 sm:h-40 object-cover rounded-lg border border-white/10 print:h-24 print:border print:border-gray-300"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <p className="text-[10px] text-gray-500 mt-1 text-center truncate">{label}</p>
+                <p className="text-[10px] text-gray-500 mt-1 text-center truncate print:text-gray-700">{label}</p>
             </div>
             {printQr && (
                 <div className="inv-print-qr" style={{ display: 'none', padding: '8px' }}>

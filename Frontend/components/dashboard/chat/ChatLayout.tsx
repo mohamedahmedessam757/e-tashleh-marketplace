@@ -62,12 +62,12 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ onNavigateToCheckout, vi
   }, [viewId]);
 
   return (
-    <div className="h-[calc(100dvh-140px)] min-h-[400px] min-w-0 overflow-x-clip">
+    <div className="h-[calc(100dvh-108px)] sm:h-[calc(100dvh-140px)] min-h-[420px] min-w-0 overflow-x-clip">
       <GlassCard className="h-full p-0 flex flex-col md:flex-row overflow-hidden border-gold-500/10">
-        <div className={`w-full md:w-1/3 md:min-w-[280px] h-full min-h-0 ${hasActiveChat ? 'hidden md:block' : 'block'}`}>
+        <div className={`w-full md:w-1/3 md:min-w-[280px] h-full min-h-0 border-b md:border-b-0 md:border-e border-white/5 ${hasActiveChat ? 'hidden md:block' : 'block'}`}>
           <ChatList />
         </div>
-        <div className={`flex-1 h-full min-h-0 min-w-0 ${!hasActiveChat ? 'hidden md:block' : 'block'}`}>
+        <div className={`flex-1 h-full min-h-0 min-w-0 flex flex-col overflow-hidden ${!hasActiveChat ? 'hidden md:flex' : 'flex'}`}>
           <ChatWindow onNavigateToCheckout={onNavigateToCheckout} />
         </div>
       </GlassCard>

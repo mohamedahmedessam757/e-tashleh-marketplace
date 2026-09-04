@@ -588,8 +588,35 @@ export const PaymentStep: React.FC = () => {
                   {isPaid ? (
                     <CheckCircle size={22} className="text-green-400 shrink-0" />
                   ) : (
-                    <button className="text-white/30 hover:text-white/60 transition-colors shrink-0">
-                      {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    <button
+                      type="button"
+                      className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black bg-gold-500 text-black border border-gold-400 shadow-[0_0_18px_rgba(196,169,92,0.45)] hover:bg-gold-400 hover:shadow-[0_0_24px_rgba(196,169,92,0.55)] transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isPaid && !isReadyToPay) {
+                          const nextExpanded = expandedOfferId === offer.id ? null : offer.id;
+                          setExpandedOfferId(nextExpanded);
+                          if (nextExpanded) {
+                            if (
+                              activePaymentOfferId &&
+                              activePaymentOfferId !== offer.id
+                            ) {
+                              setActivePaymentOfferId(null);
+                              setActiveClientSecret(null);
+                              clearPaymentError();
+                            }
+                            handlePreFetchIntent(offer.id);
+                          }
+                        }
+                      }}
+                    >
+                      <CreditCard size={16} />
+                      <span>
+                        {isExpanded
+                          ? (isAr ? 'إخفاء الدفع' : 'Hide payment')
+                          : (isAr ? 'إتمام الدفع' : 'Pay now')}
+                      </span>
+                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                   )}
                 </div>

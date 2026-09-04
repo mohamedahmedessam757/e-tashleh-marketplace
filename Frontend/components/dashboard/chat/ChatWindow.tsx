@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, X, Video, Clock, CheckCircle2, Paperclip, Globe, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle } from 'lucide-react';
+import { Send, X, Video, Clock, CheckCircle2, Paperclip, Languages, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle } from 'lucide-react';
 import { useChatStore } from '../../../stores/useChatStore';
 import { useOrderChatStore } from '../../../stores/useOrderChatStore'; // NEW
 import { useProfileStore } from '../../../stores/useProfileStore';
@@ -342,7 +342,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
         <div className="flex items-center gap-3">
           <button
             onClick={handleBackToChats}
-            className="md:hidden p-2 text-white/50 hover:text-white transition-colors hover:bg-white/5 rounded-lg"
+            className="md:hidden p-2.5 text-white hover:text-gold-400 transition-colors bg-white/5 hover:bg-white/10 rounded-xl border border-white/10"
+            aria-label={language === 'ar' ? 'رجوع للمحادثات' : 'Back to chats'}
           >
             <X size={20} className="scale-x-[-1]" />
           </button>
@@ -406,12 +407,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
           {isOrderChat && (
             <button
               onClick={handleToggleTranslation}
-              className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${isTranslationEnabled ? 'bg-gold-500 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
-              title="Toggle Auto-Translation"
+              className={`px-2.5 py-2 rounded-xl transition-all flex items-center gap-1.5 min-w-0 ${
+                isTranslationEnabled
+                  ? 'bg-gold-500 text-black shadow-[0_0_14px_rgba(196,169,92,0.5)] border border-gold-400'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/10'
+              }`}
+              title={
+                isTranslationEnabled
+                  ? (t.dashboard.chat?.translationOn || (language === 'ar' ? 'الترجمة مفعلة' : 'Translation on'))
+                  : (t.dashboard.chat?.enableTranslation || (language === 'ar' ? 'تفعيل الترجمة' : 'Enable translation'))
+              }
             >
-              <Globe size={18} />
-              <span className="text-xs font-medium hidden md:inline">
-                {isTranslationEnabled ? (t.dashboard.chat?.translationOn || 'Translation ON') : (t.dashboard.chat?.translate || 'Translate')}
+              <Languages size={18} className="shrink-0" />
+              <span className="text-[10px] sm:text-xs font-bold truncate max-w-[7.5rem] sm:max-w-none">
+                {isTranslationEnabled
+                  ? (language === 'ar'
+                      ? (t.dashboard.chat?.translationTargetAr || 'ترجمة: العربية')
+                      : (t.dashboard.chat?.translationTargetEn || 'Translation: English'))
+                  : (t.dashboard.chat?.translationOff || (language === 'ar' ? 'الأصل' : 'Original'))}
               </span>
             </button>
           )}
@@ -458,7 +471,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 relative">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 sm:space-y-6 relative pb-3">
         {/* Selection Phase Banner */}
         {orderStatus === 'AWAITING_SELECTION' && (
           <motion.div 
@@ -573,7 +586,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onNavigateToCheckout }) 
       </div>
 
       {/* Footer / Status Banner */}
-      <div className="p-4 bg-[#151310] border-t border-white/10">
+      <div className="shrink-0 sticky bottom-0 p-3 sm:p-4 bg-[#151310] border-t border-white/10 z-10">
 
         {isChatActive ? (
           <>

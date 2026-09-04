@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { waybillsApi } from './../../../services/api/waybills';
 import { useLanguage } from './../../../contexts/LanguageContext';
 import { Printer, ChevronDown, ChevronUp, Truck, ShieldAlert, Download, Plus, X, Loader2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { excelApi } from './../../../services/api/excel';
 import { GlassCard } from './../../ui/GlassCard';
 import { supabase } from '../../../services/supabase';
@@ -576,6 +577,16 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                                                         </p>
                                                     )}
                                                 </div>
+                                                {wb.id && (
+                                                    <div className="ms-auto sm:ms-2 p-1.5 bg-white rounded-lg shrink-0" title={isAr ? 'امسح لفتح البوليصة' : 'Scan to open waybill'}>
+                                                        <QRCodeSVG
+                                                            value={`https://e-tashleh.net/waybill/${wb.id}`}
+                                                            size={56}
+                                                            level="M"
+                                                            includeMargin={false}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                                                 {wb.shipments?.[0] && (

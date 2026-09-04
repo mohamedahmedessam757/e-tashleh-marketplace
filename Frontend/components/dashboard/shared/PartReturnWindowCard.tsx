@@ -96,21 +96,21 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                                 variant="full"
                             />
                         )}
-                        <div className="flex flex-wrap gap-2 mt-3">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-3 w-full">
                             <button
                                 type="button"
                                 onClick={() => onReturn(offer)}
-                                className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 rounded-lg transition-all font-bold text-xs"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(34,211,238,0.35)]"
                             >
-                                <RefreshCcw size={14} />
+                                <RefreshCcw size={16} />
                                 {isAr ? 'طلب إرجاع' : 'Return'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => onDispute(offer)}
-                                className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded-lg transition-all font-bold text-xs"
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-red-500/15 hover:bg-red-600 text-red-300 hover:text-white border border-red-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(239,68,68,0.4)]"
                             >
-                                <AlertTriangle size={14} />
+                                <AlertTriangle size={16} />
                                 {isAr ? 'فتح نزاع' : 'Dispute'}
                             </button>
                         </div>

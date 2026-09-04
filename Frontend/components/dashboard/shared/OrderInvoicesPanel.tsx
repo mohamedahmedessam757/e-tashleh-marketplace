@@ -398,13 +398,13 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     /* ── helper components ── */
     const ImageCard: React.FC<{ src: string; label: string; printQr?: boolean }> = ({ src, label, printQr }) => (
         <div className="relative group">
-            <div className="inv-screen-img">
+            <div className="inv-screen-img print:!block">
                 <img
                     src={src} alt={label} loading="lazy"
-                    className="w-full h-32 sm:h-40 object-cover rounded-lg border border-white/10"
+                    className="w-full h-32 sm:h-40 object-cover rounded-lg border border-white/10 print:h-24 print:border print:border-gray-300"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <p className="text-[10px] text-gray-500 mt-1 text-center truncate">{label}</p>
+                <p className="text-[10px] text-gray-500 mt-1 text-center truncate print:text-gray-700">{label}</p>
             </div>
             {printQr && (
                 <div className="inv-print-qr" style={{ display: 'none', padding: '8px' }}>
@@ -697,6 +697,26 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                     <div className="bg-gold-500/10 rounded-lg p-4 border border-gold-500/20">
                                         <p className="text-xs font-bold text-gold-500 mb-2 uppercase tracking-wider inv-label">{isAr ? 'ملاحظات التاجر' : 'Merchant Notes'}</p>
                                         <p className="text-sm font-medium text-white leading-relaxed inv-value">{offerNotes}</p>
+                                    </div>
+                                )}
+
+                                {(offerImage || (Array.isArray((acceptedOffer as any)?.images) && (acceptedOffer as any).images.length > 0)) && (
+                                    <div className="pt-2 border-t border-gold-500/10">
+                                        <p className="text-xs text-gold-400/80 mb-3 uppercase tracking-wider font-bold inv-label">
+                                            {isAr ? 'صور العرض (من التاجر)' : 'Offer Photos (Merchant)'}
+                                        </p>
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                            {offerImage && (
+                                                <ImageCard src={offerImage} label={isAr ? 'صورة العرض' : 'Offer photo'} printQr />
+                                            )}
+                                            {Array.isArray((acceptedOffer as any)?.images) &&
+                                                (acceptedOffer as any).images
+                                                    .filter((img: string) => img && img !== offerImage)
+                                                    .slice(0, 3)
+                                                    .map((img: string, i: number) => (
+                                                        <ImageCard key={`offer-${i}`} src={img} label={`${isAr ? 'عرض' : 'Offer'} 0${i + 2}`} printQr />
+                                                    ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

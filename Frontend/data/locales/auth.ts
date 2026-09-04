@@ -44,6 +44,8 @@ export const auth = {
         whatsapp: 'عبر واتساب',
         emailAlt: 'عبر البريد',
         invalidCode: 'الرمز غير صحيح',
+        emailSpamNote:
+          '📩 لم تصلك الرسالة؟ يرجى التحقق من مجلد البريد العشوائي (Spam / Junk)، فقد تصل رسائلنا إليه أحياناً.',
         selectMethod: {
           title: 'طريقة التحقق',
           subtitle: 'كيف تود استلام رمز التحقق؟'
@@ -203,6 +205,8 @@ export const auth = {
         whatsapp: 'Via WhatsApp',
         emailAlt: 'Via Email',
         invalidCode: 'Invalid Code',
+        emailSpamNote:
+          "📩 Didn't get the email? Please check your Spam / Junk folder — our messages sometimes land there.",
         selectMethod: {
           title: 'Verification Method',
           subtitle: 'How would you like to receive the code?'

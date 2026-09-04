@@ -2313,6 +2313,13 @@ export class OrdersService {
             );
         }
 
+        // Security: phone/email always from account — never trust client body
+        const customer = await this.prisma.user.findUnique({
+            where: { id: customerId },
+            select: { phone: true, email: true, name: true },
+        });
+        if (!customer) throw new NotFoundException('Customer not found');
+
         // 2. Prepare the shipping addresses
         // Data format received from frontend:
         // { addresses: [{ fullName, phone, email, country, city, details, orderPartId? }] }
@@ -2330,9 +2337,9 @@ export class OrdersService {
                     data: addresses.map(addr => ({
                         orderId,
                         orderPartId: addr.orderPartId || null,
-                        fullName: addr.fullName,
-                        phone: addr.phone,
-                        email: addr.email,
+                        fullName: addr.fullName || customer.name || '',
+                        phone: customer.phone || '',
+                        email: customer.email || '',
                         country: addr.country,
                         city: addr.city,
                         details: addr.details

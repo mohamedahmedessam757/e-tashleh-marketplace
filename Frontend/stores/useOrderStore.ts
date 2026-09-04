@@ -1353,20 +1353,25 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         const order = get().orders.find(o => String(o.id) === String(id));
         if (!order || !canCustomerCancelOrder(order.status)) return false;
 
-        // Optimistic UI
-        const previousOrders = get().orders;
-        set(state => ({
-            orders: state.orders.map(o => String(o.id) === String(id) ? { ...o, status: 'CANCELLED' as StatusType } : o)
-        }));
-
         try {
-            await ordersApi.cancel(id, reason);
             markOrderCancelledByCustomer(id);
-            get().silentFetch();
-            return true;
-        } catch (err) {
-            console.error('Failed to cancel order', err);
-            set({ orders: previousOrders }); // Rollback
+            // Optimistic UI
+            const previousOrders = get().orders;
+            set(state => ({
+                orders: state.orders.map(o => String(o.id) === String(id) ? { ...o, status: 'CANCELLED' as StatusType } : o)
+            }));
+
+            try {
+                await ordersApi.cancel(id, reason);
+                get().silentFetch();
+                return true;
+            } catch (err) {
+                console.error('Failed to cancel order', err);
+                set({ orders: previousOrders }); // Rollback
+                return false;
+            }
+        } catch (outerErr) {
+            console.error('Failed to cancel order', outerErr);
             return false;
         }
     },

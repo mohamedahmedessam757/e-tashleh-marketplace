@@ -269,3 +269,52 @@ export function openCurrentUrlInExternalBrowser(): void {
     anchor.click();
     document.body.removeChild(anchor);
 }
+
+/** QR deep-links for /invoice/:id and /waybill/:id (auth-gated). */
+export type DocumentScanKind = 'invoice' | 'waybill';
+export type DocumentScanPending = { kind: DocumentScanKind; id: string };
+
+const DOC_SCAN_KEY = 'etashleh_doc_scan_v1';
+
+export function persistDocumentScanPending(pending: DocumentScanPending | null): void {
+    if (typeof window === 'undefined') return;
+    try {
+        if (!pending) {
+            sessionStorage.removeItem(DOC_SCAN_KEY);
+            return;
+        }
+        if (
+            (pending.kind !== 'invoice' && pending.kind !== 'waybill') ||
+            typeof pending.id !== 'string' ||
+            !/^[a-zA-Z0-9_-]+$/.test(pending.id)
+        ) {
+            return;
+        }
+        sessionStorage.setItem(DOC_SCAN_KEY, JSON.stringify(pending));
+    } catch {
+        /* ignore */
+    }
+}
+
+export function loadDocumentScanPending(): DocumentScanPending | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const raw = sessionStorage.getItem(DOC_SCAN_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as DocumentScanPending;
+        if (
+            (parsed.kind !== 'invoice' && parsed.kind !== 'waybill') ||
+            typeof parsed.id !== 'string' ||
+            !/^[a-zA-Z0-9_-]+$/.test(parsed.id)
+        ) {
+            return null;
+        }
+        return parsed;
+    } catch {
+        return null;
+    }
+}
+
+export function clearDocumentScanPending(): void {
+    persistDocumentScanPending(null);
+}

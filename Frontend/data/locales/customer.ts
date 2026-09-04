@@ -133,6 +133,10 @@ export const customer = {
         viewDetails: 'عرض التفاصيل الكاملة',
         viewHistory: 'عرض كل السجل'
       },
+      filters: {
+        all: 'الكل',
+        byStatus: 'حسب الحالة'
+      },
       reliability: {
         title: 'مؤشر الموثوقية',
         score: 'درجة النزاهة',
@@ -385,6 +389,10 @@ export const customer = {
       acceptOffer: 'قبول العرض والانتقال للدفع',
       orderContext: 'سياق الطلب',
       translationOn: 'الترجمة مفعلة',
+      translationOff: 'الأصل',
+      translationTargetAr: 'ترجمة: العربية',
+      translationTargetEn: 'ترجمة: الإنجليزية',
+      enableTranslation: 'تفعيل الترجمة',
       translate: 'ترجمة النص',
       someoneTyping: 'شخص ما يكتب الآن...',
       closedCancelled: 'تم إغلاق هذه المحادثة لأن الطلب ملغى. لا يمكن إرسال رسائل جديدة.',
@@ -1203,6 +1211,10 @@ export const customer = {
         viewDetails: 'View Full Details',
         viewHistory: 'View full history'
       },
+      filters: {
+        all: 'All',
+        byStatus: 'By status'
+      },
       reliability: {
         title: 'Reliability Index',
         score: 'Integrity Score',
@@ -1458,6 +1470,10 @@ export const customer = {
       acceptOffer: 'Accept Offer & Pay',
       orderContext: 'Order Context',
       translationOn: 'Translation ON',
+      translationOff: 'Original',
+      translationTargetAr: 'Translation: Arabic',
+      translationTargetEn: 'Translation: English',
+      enableTranslation: 'Enable translation',
       translate: 'Translate',
       someoneTyping: 'Someone is typing...',
       closedCancelled: 'This chat is closed because the order was cancelled. New messages are not allowed.',
