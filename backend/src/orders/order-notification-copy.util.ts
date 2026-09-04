@@ -30,18 +30,6 @@ export function isMultiItemOrder(order: {
     );
 }
 
-const MULTI_ONLY_PHRASES_AR = [
-    'جميع القطع',
-    'باقي القطع',
-    'سلة الشحن',
-    'قطع طلبك',
-] as const;
-
-/** Test / guard helper: single-order customer copy must not use multi phrasing. */
-export function containsMultiOnlyArabic(text: string): boolean {
-    return MULTI_ONLY_PHRASES_AR.some((p) => text.includes(p));
-}
-
 export function offersAcceptedForPayment(ctx: OrderCopyContext): BilingualTitleMessage {
     const { isMulti, orderNumber } = ctx;
     if (isMulti) {

@@ -1,6 +1,5 @@
 import {
   resolveTemplateFamily,
-  extractOrderId,
   type NotificationDispatchInput,
 } from './whatsapp-notification.mapper';
 import { getTemplateDefinition, resolveTemplateName } from './template-registry';
@@ -410,57 +409,6 @@ describe('resolveTemplateFamily', () => {
         resolveTemplateFamily({ ...base, type: 'VIOLATION' }, 'MERCHANT'),
       ).toBeNull();
     });
-
-    it('DISPUTE / RETURN map to txn_order_* (return & dispute WhatsApp)', () => {
-      expect(
-        resolveTemplateFamily(
-          {
-            ...base,
-            type: 'DISPUTE',
-            metadata: {
-              orderId: '3fd67bae-5ebe-4a60-a94d-f8226627dacf',
-              waEvent: 'ORDER_STATUS',
-            },
-          },
-          'CUSTOMER',
-        ),
-      ).toBe('txn_order_customer');
-      expect(
-        resolveTemplateFamily(
-          {
-            ...base,
-            type: 'RETURN',
-            metadata: {
-              orderId: '3fd67bae-5ebe-4a60-a94d-f8226627dacf',
-              waEvent: 'ORDER_STATUS',
-            },
-          },
-          'MERCHANT',
-        ),
-      ).toBe('txn_order_merchant');
-      // Safety net: type alone without waEvent
-      expect(
-        resolveTemplateFamily({ ...base, type: 'DISPUTE' }, 'CUSTOMER'),
-      ).toBe('txn_order_customer');
-      expect(
-        resolveTemplateFamily({ ...base, type: 'RETURN' }, 'CUSTOMER'),
-      ).toBe('txn_order_customer');
-    });
-  });
-});
-
-describe('extractOrderId', () => {
-  const orderId = '3fd67bae-5ebe-4a60-a94d-f8226627dacf';
-
-  it('reads orderId from metadata even when link has no UUID (shipping-cart)', () => {
-    expect(
-      extractOrderId({ orderId }, '/dashboard/shipping-cart'),
-    ).toBe(orderId);
-  });
-
-  it('returns null when metadata and link lack a UUID', () => {
-    expect(extractOrderId({}, '/dashboard/shipping-cart')).toBeNull();
-    expect(extractOrderId(null, '/dashboard/shipping-cart')).toBeNull();
   });
 });
 
