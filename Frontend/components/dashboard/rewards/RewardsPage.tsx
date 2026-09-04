@@ -98,8 +98,8 @@ export const RewardsPage: React.FC = () => {
                     </h1>
                     <p className="text-white/50 mt-2 max-w-2xl text-sm sm:text-base leading-relaxed">
                         {isAr
-                            ? 'شارك رابطك الخاص مع أصدقائك واحصل على عمولة 1% من ثمن كل منتج يشتريه صديقك خلال 6 شهور من تاريخ تسجيله.'
-                            : 'Share your personal link with friends and earn 1% commission on every item they buy for 6 months from their signup.'}
+                            ? 'شارك رابطك الخاص مع أصدقائك واحصل على عمولة 1% من عمولة المنصة على كل طلب مكتمل لصديقك خلال 6 شهور من تاريخ تسجيله.'
+                            : 'Share your personal link with friends and earn 1% of the platform commission on every completed order they place for 6 months from their signup.'}
                     </p>
                 </div>
             </div>

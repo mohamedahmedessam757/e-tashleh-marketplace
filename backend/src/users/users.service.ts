@@ -39,13 +39,15 @@ export class UsersService {
           if (!existing) isUniqueCode = true;
         }
 
-        // Resolve Referrer
+        // Resolve Referrer (normalize case — invite links are uppercased in FE)
         let referredById: string | null = null;
-        const incomingReferralCode = createUserDto.referralCode;
+        const incomingReferralCode = createUserDto.referralCode
+          ? String(createUserDto.referralCode).trim().toUpperCase()
+          : '';
         if (incomingReferralCode) {
           console.log(`[UsersService] Referral code received: '${incomingReferralCode}' for new user: ${createUserDto.email}`);
-          const referrer = await tx.user.findUnique({ 
-            where: { referralCode: incomingReferralCode } 
+          const referrer = await tx.user.findUnique({
+            where: { referralCode: incomingReferralCode }
           });
           if (referrer) {
             referredById = referrer.id;

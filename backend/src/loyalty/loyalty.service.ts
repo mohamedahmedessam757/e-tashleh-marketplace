@@ -428,6 +428,14 @@ export class LoyaltyService {
 
     if (!order || !order.customer || !order.customer.referredById) return;
 
+    // Hard block: corrupted / self-referral link must never pay the buyer
+    if (order.customer.referredById === order.customer.id) {
+      this.logger.warn(
+        `[Referral] Self-referral blocked for user ${order.customer.id} on order ${orderId}`,
+      );
+      return;
+    }
+
     if (
       !TERMINAL_REWARD_STATUSES.has(order.status) ||
       order.disputes.length > 0 ||
@@ -871,13 +879,19 @@ export class LoyaltyService {
         commission?: number;
         earnedPoints?: number;
       };
+      // ORDER_PROFIT points = floor(commission); REFERRAL_PROFIT points = floor(reward amount)
       const pointsToRemove =
         credit.transactionType === 'ORDER_PROFIT'
           ? Math.min(
               Number(user.loyaltyPoints || 0),
               Math.max(0, Math.floor(Number(creditMeta.commission || creditMeta.earnedPoints || 0))),
             )
-          : 0;
+          : credit.transactionType === 'REFERRAL_PROFIT'
+            ? Math.min(
+                Number(user.loyaltyPoints || 0),
+                Math.max(0, Math.floor(amount)),
+              )
+            : 0;
 
       if (debitAmount <= 0 && pointsToRemove <= 0) {
         if (amount > 0) {

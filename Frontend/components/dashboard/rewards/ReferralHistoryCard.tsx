@@ -154,8 +154,8 @@ const EmptyState: React.FC<{ isAr: boolean }> = ({ isAr }) => (
         </h4>
         <p className="text-white/40 text-xs sm:text-sm mt-2 max-w-xs leading-relaxed">
             {isAr
-                ? 'كن أول من يشارك رابطك! ابدأ الآن واحصل على عمولة 1% من كل منتج يشتريه أصدقاؤك خلال 6 شهور.'
-                : 'Be the first to share your link! Start now and earn 1% from every item your friends buy for 6 months.'}
+                ? 'كن أول من يشارك رابطك! ابدأ الآن واحصل على عمولة 1% من عمولة المنصة على طلبات أصدقائك المكتملة خلال 6 شهور.'
+                : 'Be the first to share your link! Start now and earn 1% of platform commission on your friends’ completed orders for 6 months.'}
         </p>
         <div className="mt-5 inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
             <TrendingUp size={12} className="text-emerald-400" />
