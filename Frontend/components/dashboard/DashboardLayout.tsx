@@ -373,7 +373,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen w-full min-w-0 transition-all duration-300">
+      <main
+        className={`flex-1 flex flex-col w-full min-w-0 transition-all duration-300 ${
+          currentPath === 'chats' ? 'h-dvh max-h-dvh min-h-0 overflow-hidden' : 'min-h-screen'
+        }`}
+      >
 
         {/* Top Header */}
         <header className="sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
@@ -471,8 +475,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         <RestrictionAlertBanner onNavigate={onNavigate} />
 
-        {/* Page Content */}
-        <div className="flex-1 p-4 md:p-8 mt-2 md:mt-4 pb-24 md:pb-8 min-w-0 overflow-x-clip">
+        {/* Page Content — chats uses flex fill so the composer stays on-screen */}
+        <div
+          className={`flex-1 p-4 md:p-8 mt-2 md:mt-4 min-w-0 overflow-x-clip ${
+            currentPath === 'chats'
+              ? 'pb-3 md:pb-8 flex flex-col min-h-0'
+              : 'pb-24 md:pb-8'
+          }`}
+        >
           {/* Global Maintenance Awareness (2026 UX) */}
           {role === 'admin' && (
             <AnimatePresence>
@@ -512,6 +522,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            className={currentPath === 'chats' ? 'flex-1 min-h-0 flex flex-col' : undefined}
           >
             {children}
           </motion.div>

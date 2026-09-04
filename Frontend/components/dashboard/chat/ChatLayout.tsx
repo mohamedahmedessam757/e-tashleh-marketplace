@@ -67,8 +67,11 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
   }, [viewId]);
 
   return (
-    <div className="h-[calc(100dvh-108px)] sm:h-[calc(100dvh-140px)] min-h-[420px] min-w-0 overflow-x-clip">
-      <GlassCard className="h-full p-0 flex flex-col md:flex-row overflow-hidden border-gold-500/10">
+    <div className="flex-1 min-h-0 flex flex-col h-[calc(100dvh-9.25rem)] sm:h-[calc(100dvh-10rem)] md:h-[calc(100dvh-8.5rem)] max-h-[calc(100dvh-9.25rem)] sm:max-h-[calc(100dvh-10rem)] md:max-h-[calc(100dvh-8.5rem)] min-w-0 overflow-hidden">
+      <GlassCard
+        enableHover={false}
+        className="h-full min-h-0 p-0 flex flex-col md:flex-row overflow-hidden border-gold-500/10 no-entrance-anim"
+      >
         <div className={`w-full md:w-1/3 md:min-w-[280px] h-full min-h-0 border-b md:border-b-0 md:border-e border-white/5 ${hasActiveChat ? 'hidden md:block' : 'block'}`}>
           <ChatList />
         </div>

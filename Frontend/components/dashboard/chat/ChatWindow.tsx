@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, X, Video, Clock, CheckCircle2, Paperclip, Languages, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle } from 'lucide-react';
+import { Send, X, Video, Clock, CheckCircle2, Paperclip, Languages, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useChatStore } from '../../../stores/useChatStore';
 import { useOrderChatStore } from '../../../stores/useOrderChatStore'; // NEW
 import { useProfileStore } from '../../../stores/useProfileStore';
@@ -196,6 +196,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     'COLLECTING_OFFERS',
     'AWAITING_SELECTION',
     'AWAITING_PAYMENT',
+    'PARTIALLY_PAID',
+    'CORRECTION_PERIOD',
     'PREPARATION',
     'DELAYED_PREPARATION',
     'SHIPPED',
@@ -216,6 +218,31 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     isOrderChat &&
     !isSupportChat &&
     isOrderChatClosedStatus(orderStatus);
+
+  const linkedOrderId =
+    isOrderChat && orderChat?.type !== 'support' && orderChat?.orderId
+      ? String(orderChat.orderId)
+      : '';
+
+  const navigateToLinkedOrder = () => {
+    if (!linkedOrderId) return;
+    if (onNavigateToOrder) {
+      onNavigateToOrder(linkedOrderId);
+      return;
+    }
+    const path =
+      user?.role === 'VENDOR' ? 'explore-offer' : 'order-details';
+    window.history.pushState(
+      { view: 'dashboard', dashboardPath: path, viewId: linkedOrderId },
+      '',
+      `/dashboard/${path}/${linkedOrderId}`,
+    );
+    window.dispatchEvent(
+      new PopStateEvent('popstate', {
+        state: { view: 'dashboard', dashboardPath: path, viewId: linkedOrderId },
+      }),
+    );
+  };
 
   const handleSend = async () => {
     if ((!text.trim() && !pendingAttachment) || !isChatActive || isUploading) return;
@@ -315,7 +342,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#1A1814] relative">
+    <div className="h-full min-h-0 flex flex-col bg-[#1A1814] relative overflow-hidden">
       {/* Lightbox Overlay */}
       <AnimatePresence>
         {lightboxMedia && (
@@ -415,6 +442,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
           )}
 
+          {/* Jump to linked order (customer / merchant) */}
+          {!!linkedOrderId && (
+            <button
+              type="button"
+              onClick={navigateToLinkedOrder}
+              className="p-2.5 rounded-xl bg-gold-500/15 text-gold-400 hover:bg-gold-500 hover:text-black border border-gold-500/30 transition-all shadow-[0_0_12px_rgba(196,169,92,0.25)] shrink-0"
+              title={language === 'ar' ? 'الانتقال إلى الطلب' : 'Go to order'}
+              aria-label={language === 'ar' ? 'الانتقال إلى الطلب' : 'Go to order'}
+            >
+              <ExternalLink size={18} />
+            </button>
+          )}
+
           {/* Translation Toggle */}
           {isOrderChat && (
             <button
@@ -490,7 +530,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gold-500/10 border border-gold-500/25 flex flex-col gap-3 backdrop-blur-sm sticky top-0 z-20 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gold-500/10 border border-gold-500/25 flex flex-col gap-3 backdrop-blur-sm z-20 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
           >
             <div className="flex items-start gap-3 min-w-0">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 shrink-0 border border-gold-500/20">
@@ -507,26 +547,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </p>
               </div>
             </div>
-            {user?.role === 'CUSTOMER' && (
+            {user?.role === 'CUSTOMER' && linkedOrderId && (
               <button 
                 type="button"
-                onClick={() => {
-                  const id = orderChat?.orderId;
-                  if (!id) return;
-                  if (onNavigateToOrder) {
-                    onNavigateToOrder(String(id));
-                    return;
-                  }
-                  // SPA-safe fallback — never use /dashboard/orders/:id (MyOrders ignores id)
-                  window.history.pushState(
-                    { view: 'dashboard', dashboardPath: 'order-details', viewId: String(id) },
-                    '',
-                    `/dashboard/order-details/${id}`,
-                  );
-                  window.dispatchEvent(new PopStateEvent('popstate', {
-                    state: { view: 'dashboard', dashboardPath: 'order-details', viewId: String(id) },
-                  }));
-                }}
+                onClick={navigateToLinkedOrder}
                 className="w-full sm:w-auto self-stretch sm:self-end px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-xs font-black rounded-xl transition-all shadow-[0_0_18px_rgba(196,169,92,0.35)]"
               >
                 {language === 'ar' ? 'عرض كافة العروض' : 'View All Offers'}
@@ -535,7 +559,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </motion.div>
         )}
         {isOrderChat && isChatContentLoading ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#1A1814]/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#1A1814]/80 backdrop-blur-sm pointer-events-none">
             <div className="w-8 h-8 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin mb-3"></div>
             <p className="text-white/50 text-sm">{language === 'ar' ? 'جاري تحميل المحادثة...' : 'Loading chat...'}</p>
           </div>
@@ -615,14 +639,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Footer / Status Banner */}
-      <div className="shrink-0 sticky bottom-0 p-3 sm:p-4 bg-[#151310] border-t border-white/10 z-10">
+      {/* Footer / Status Banner — always pinned; never clipped by message scroll */}
+      <div className="shrink-0 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#151310] border-t border-white/10 z-30 relative">
 
         {isChatActive ? (
           <>
             {/* Pending Attachment Preview */}
             {pendingAttachment && (
-              <div className="mb-4 p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between animate-in slide-in-from-bottom-2">
+              <div className="mb-3 p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between animate-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-black/40 rounded-lg overflow-hidden flex items-center justify-center">
                     {pendingAttachment.type === 'video' ? <Video size={20} className="text-white/50" /> : pendingAttachment.type === 'document' ? <FileText size={20} className="text-white/50" /> : <img src={pendingAttachment.url} className="w-full h-full object-cover" />}
@@ -640,7 +664,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
             {/* Chat Guard Warning */}
             {warning && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-in slide-in-from-bottom-2">
+              <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-in slide-in-from-bottom-2">
                 <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
                 <p className="text-sm text-red-200">{warning}</p>
                 <button onClick={() => setWarning(null)} className="text-red-400 hover:text-white ml-auto">
@@ -650,7 +674,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
 
             {/* Input Area */}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -660,9 +684,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               />
               {isAttachmentsEnabled && (
                 <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`p-3 rounded-xl transition-colors ${pendingAttachment ? 'bg-gold-500/20 text-gold-500' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                  className={`p-3 rounded-xl transition-colors shrink-0 ${pendingAttachment ? 'bg-gold-500/20 text-gold-500' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                   title="Attach Media"
+                  aria-label={language === 'ar' ? 'إرفاق ملف' : 'Attach file'}
                 >
                   <Paperclip size={20} />
                 </button>
@@ -678,16 +704,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   }
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder={isOrderChat && isTranslationEnabled ? "Type... (Auto-translating to Arabic/English)" : "Type your message..."}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-gold-500 outline-none placeholder:text-white/20"
+                placeholder={
+                  isOrderChat && isTranslationEnabled
+                    ? (language === 'ar' ? 'اكتب... (ترجمة تلقائية)' : 'Type... (Auto-translating)')
+                    : (language === 'ar' ? 'اكتب رسالتك...' : 'Type your message...')
+                }
+                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-gold-500 outline-none placeholder:text-white/30"
                 disabled={!isChatActive || isUploading}
+                aria-label={language === 'ar' ? 'رسالة' : 'Message'}
               />
               <button
+                type="button"
                 onClick={handleSend}
                 disabled={(!text.trim() && !pendingAttachment) || !isChatActive || isUploading}
-                className="p-3 bg-gold-500 hover:bg-gold-600 disabled:bg-white/10 disabled:text-white/20 text-white rounded-xl transition-colors relative flex items-center justify-center min-w-[42px]"
+                className="p-3 bg-gold-500 hover:bg-gold-600 disabled:bg-white/10 disabled:text-white/20 text-black disabled:text-white/20 rounded-xl transition-colors relative flex items-center justify-center min-w-[48px] min-h-[48px] shrink-0 shadow-[0_0_14px_rgba(196,169,92,0.35)]"
+                aria-label={language === 'ar' ? 'إرسال' : 'Send'}
               >
-                {isUploading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={18} />}
+                {isUploading ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Send size={18} />}
               </button>
             </div>
           </>
