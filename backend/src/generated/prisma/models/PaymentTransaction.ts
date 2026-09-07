@@ -65,6 +65,8 @@ export type PaymentTransactionMinAggregateOutputType = {
   status: string | null
   failureReason: string | null
   stripePaymentId: string | null
+  stripeChargeId: string | null
+  stripeBalanceTxnId: string | null
   stripeTransferId: string | null
   gatewayFee: runtime.Decimal | null
   refundedAmount: runtime.Decimal | null
@@ -94,6 +96,8 @@ export type PaymentTransactionMaxAggregateOutputType = {
   status: string | null
   failureReason: string | null
   stripePaymentId: string | null
+  stripeChargeId: string | null
+  stripeBalanceTxnId: string | null
   stripeTransferId: string | null
   gatewayFee: runtime.Decimal | null
   refundedAmount: runtime.Decimal | null
@@ -123,6 +127,8 @@ export type PaymentTransactionCountAggregateOutputType = {
   status: number
   failureReason: number
   stripePaymentId: number
+  stripeChargeId: number
+  stripeBalanceTxnId: number
   stripeTransferId: number
   gatewayFee: number
   refundedAmount: number
@@ -174,6 +180,8 @@ export type PaymentTransactionMinAggregateInputType = {
   status?: true
   failureReason?: true
   stripePaymentId?: true
+  stripeChargeId?: true
+  stripeBalanceTxnId?: true
   stripeTransferId?: true
   gatewayFee?: true
   refundedAmount?: true
@@ -203,6 +211,8 @@ export type PaymentTransactionMaxAggregateInputType = {
   status?: true
   failureReason?: true
   stripePaymentId?: true
+  stripeChargeId?: true
+  stripeBalanceTxnId?: true
   stripeTransferId?: true
   gatewayFee?: true
   refundedAmount?: true
@@ -232,6 +242,8 @@ export type PaymentTransactionCountAggregateInputType = {
   status?: true
   failureReason?: true
   stripePaymentId?: true
+  stripeChargeId?: true
+  stripeBalanceTxnId?: true
   stripeTransferId?: true
   gatewayFee?: true
   refundedAmount?: true
@@ -348,6 +360,8 @@ export type PaymentTransactionGroupByOutputType = {
   status: string
   failureReason: string | null
   stripePaymentId: string | null
+  stripeChargeId: string | null
+  stripeBalanceTxnId: string | null
   stripeTransferId: string | null
   gatewayFee: runtime.Decimal
   refundedAmount: runtime.Decimal
@@ -400,6 +414,8 @@ export type PaymentTransactionWhereInput = {
   status?: Prisma.StringFilter<"PaymentTransaction"> | string
   failureReason?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripePaymentId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeChargeId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeBalanceTxnId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripeTransferId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   gatewayFee?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -435,6 +451,8 @@ export type PaymentTransactionOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   failureReason?: Prisma.SortOrderInput | Prisma.SortOrder
   stripePaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeChargeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeBalanceTxnId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
@@ -473,6 +491,8 @@ export type PaymentTransactionWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"PaymentTransaction"> | string
   failureReason?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripePaymentId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeChargeId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeBalanceTxnId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripeTransferId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   gatewayFee?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -508,6 +528,8 @@ export type PaymentTransactionOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   failureReason?: Prisma.SortOrderInput | Prisma.SortOrder
   stripePaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeChargeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeBalanceTxnId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrderInput | Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
@@ -545,6 +567,8 @@ export type PaymentTransactionScalarWhereWithAggregatesInput = {
   status?: Prisma.StringWithAggregatesFilter<"PaymentTransaction"> | string
   failureReason?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   stripePaymentId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
+  stripeChargeId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
+  stripeBalanceTxnId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   stripeTransferId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   gatewayFee?: Prisma.DecimalWithAggregatesFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalWithAggregatesFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -571,6 +595,8 @@ export type PaymentTransactionCreateInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -606,6 +632,8 @@ export type PaymentTransactionUncheckedCreateInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -635,6 +663,8 @@ export type PaymentTransactionUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -670,6 +700,8 @@ export type PaymentTransactionUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -702,6 +734,8 @@ export type PaymentTransactionCreateManyInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -728,6 +762,8 @@ export type PaymentTransactionUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -757,6 +793,8 @@ export type PaymentTransactionUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -796,6 +834,8 @@ export type PaymentTransactionCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   stripePaymentId?: Prisma.SortOrder
+  stripeChargeId?: Prisma.SortOrder
+  stripeBalanceTxnId?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
@@ -835,6 +875,8 @@ export type PaymentTransactionMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   stripePaymentId?: Prisma.SortOrder
+  stripeChargeId?: Prisma.SortOrder
+  stripeBalanceTxnId?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
@@ -864,6 +906,8 @@ export type PaymentTransactionMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   stripePaymentId?: Prisma.SortOrder
+  stripeChargeId?: Prisma.SortOrder
+  stripeBalanceTxnId?: Prisma.SortOrder
   stripeTransferId?: Prisma.SortOrder
   gatewayFee?: Prisma.SortOrder
   refundedAmount?: Prisma.SortOrder
@@ -1080,6 +1124,8 @@ export type PaymentTransactionCreateWithoutCustomerInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1113,6 +1159,8 @@ export type PaymentTransactionUncheckedCreateWithoutCustomerInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1174,6 +1222,8 @@ export type PaymentTransactionScalarWhereInput = {
   status?: Prisma.StringFilter<"PaymentTransaction"> | string
   failureReason?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripePaymentId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeChargeId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  stripeBalanceTxnId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   stripeTransferId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   gatewayFee?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFilter<"PaymentTransaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1200,6 +1250,8 @@ export type PaymentTransactionCreateWithoutOrderInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1233,6 +1285,8 @@ export type PaymentTransactionUncheckedCreateWithoutOrderInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1288,6 +1342,8 @@ export type PaymentTransactionCreateWithoutOfferInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1321,6 +1377,8 @@ export type PaymentTransactionUncheckedCreateWithoutOfferInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1376,6 +1434,8 @@ export type PaymentTransactionCreateWithoutWalletTransactionsInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1410,6 +1470,8 @@ export type PaymentTransactionUncheckedCreateWithoutWalletTransactionsInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1454,6 +1516,8 @@ export type PaymentTransactionUpdateWithoutWalletTransactionsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1488,6 +1552,8 @@ export type PaymentTransactionUncheckedUpdateWithoutWalletTransactionsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1516,6 +1582,8 @@ export type PaymentTransactionCreateWithoutEscrowInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1550,6 +1618,8 @@ export type PaymentTransactionUncheckedCreateWithoutEscrowInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1594,6 +1664,8 @@ export type PaymentTransactionUpdateWithoutEscrowInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1628,6 +1700,8 @@ export type PaymentTransactionUncheckedUpdateWithoutEscrowInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1656,6 +1730,8 @@ export type PaymentTransactionCreateWithoutInvoicesInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1690,6 +1766,8 @@ export type PaymentTransactionUncheckedCreateWithoutInvoicesInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1734,6 +1812,8 @@ export type PaymentTransactionUpdateWithoutInvoicesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1768,6 +1848,8 @@ export type PaymentTransactionUncheckedUpdateWithoutInvoicesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1798,6 +1880,8 @@ export type PaymentTransactionCreateManyCustomerInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1824,6 +1908,8 @@ export type PaymentTransactionUpdateWithoutCustomerInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1857,6 +1943,8 @@ export type PaymentTransactionUncheckedUpdateWithoutCustomerInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1888,6 +1976,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutCustomerInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1916,6 +2006,8 @@ export type PaymentTransactionCreateManyOrderInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1942,6 +2034,8 @@ export type PaymentTransactionUpdateWithoutOrderInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1975,6 +2069,8 @@ export type PaymentTransactionUncheckedUpdateWithoutOrderInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2006,6 +2102,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutOrderInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2034,6 +2132,8 @@ export type PaymentTransactionCreateManyOfferInput = {
   status?: string
   failureReason?: string | null
   stripePaymentId?: string | null
+  stripeChargeId?: string | null
+  stripeBalanceTxnId?: string | null
   stripeTransferId?: string | null
   gatewayFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2060,6 +2160,8 @@ export type PaymentTransactionUpdateWithoutOfferInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2093,6 +2195,8 @@ export type PaymentTransactionUncheckedUpdateWithoutOfferInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2124,6 +2228,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutOfferInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeChargeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeBalanceTxnId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeTransferId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gatewayFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundedAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -2193,6 +2299,8 @@ export type PaymentTransactionSelect<ExtArgs extends runtime.Types.Extensions.In
   status?: boolean
   failureReason?: boolean
   stripePaymentId?: boolean
+  stripeChargeId?: boolean
+  stripeBalanceTxnId?: boolean
   stripeTransferId?: boolean
   gatewayFee?: boolean
   refundedAmount?: boolean
@@ -2229,6 +2337,8 @@ export type PaymentTransactionSelectCreateManyAndReturn<ExtArgs extends runtime.
   status?: boolean
   failureReason?: boolean
   stripePaymentId?: boolean
+  stripeChargeId?: boolean
+  stripeBalanceTxnId?: boolean
   stripeTransferId?: boolean
   gatewayFee?: boolean
   refundedAmount?: boolean
@@ -2261,6 +2371,8 @@ export type PaymentTransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   status?: boolean
   failureReason?: boolean
   stripePaymentId?: boolean
+  stripeChargeId?: boolean
+  stripeBalanceTxnId?: boolean
   stripeTransferId?: boolean
   gatewayFee?: boolean
   refundedAmount?: boolean
@@ -2293,6 +2405,8 @@ export type PaymentTransactionSelectScalar = {
   status?: boolean
   failureReason?: boolean
   stripePaymentId?: boolean
+  stripeChargeId?: boolean
+  stripeBalanceTxnId?: boolean
   stripeTransferId?: boolean
   gatewayFee?: boolean
   refundedAmount?: boolean
@@ -2303,7 +2417,7 @@ export type PaymentTransactionSelectScalar = {
   createdAt?: boolean
 }
 
-export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "transactionNumber" | "orderId" | "offerId" | "customerId" | "unitPrice" | "shippingCost" | "commission" | "totalAmount" | "currency" | "displayCurrency" | "fxRate" | "cardLast4" | "cardBrand" | "cardHolder" | "status" | "failureReason" | "stripePaymentId" | "stripeTransferId" | "gatewayFee" | "refundedAmount" | "refundedAt" | "refundReason" | "escrowStatus" | "paidAt" | "createdAt", ExtArgs["result"]["paymentTransaction"]>
+export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "transactionNumber" | "orderId" | "offerId" | "customerId" | "unitPrice" | "shippingCost" | "commission" | "totalAmount" | "currency" | "displayCurrency" | "fxRate" | "cardLast4" | "cardBrand" | "cardHolder" | "status" | "failureReason" | "stripePaymentId" | "stripeChargeId" | "stripeBalanceTxnId" | "stripeTransferId" | "gatewayFee" | "refundedAmount" | "refundedAt" | "refundReason" | "escrowStatus" | "paidAt" | "createdAt", ExtArgs["result"]["paymentTransaction"]>
 export type PaymentTransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   offer?: boolean | Prisma.OfferDefaultArgs<ExtArgs>
@@ -2353,6 +2467,8 @@ export type $PaymentTransactionPayload<ExtArgs extends runtime.Types.Extensions.
     status: string
     failureReason: string | null
     stripePaymentId: string | null
+    stripeChargeId: string | null
+    stripeBalanceTxnId: string | null
     stripeTransferId: string | null
     gatewayFee: runtime.Decimal
     refundedAmount: runtime.Decimal
@@ -2808,6 +2924,8 @@ export interface PaymentTransactionFieldRefs {
   readonly status: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly failureReason: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly stripePaymentId: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly stripeChargeId: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly stripeBalanceTxnId: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly stripeTransferId: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly gatewayFee: Prisma.FieldRef<"PaymentTransaction", 'Decimal'>
   readonly refundedAmount: Prisma.FieldRef<"PaymentTransaction", 'Decimal'>

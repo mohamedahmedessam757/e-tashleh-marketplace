@@ -866,6 +866,8 @@ export const PaymentTransactionScalarFieldEnum = {
   status: 'status',
   failureReason: 'failureReason',
   stripePaymentId: 'stripePaymentId',
+  stripeChargeId: 'stripeChargeId',
+  stripeBalanceTxnId: 'stripeBalanceTxnId',
   stripeTransferId: 'stripeTransferId',
   gatewayFee: 'gatewayFee',
   refundedAmount: 'refundedAmount',
