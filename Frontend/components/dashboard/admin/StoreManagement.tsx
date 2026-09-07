@@ -14,7 +14,7 @@ interface StoreManagementProps {
 export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { stores, subscribeToStores, unsubscribeFromStores, isLoadingStores, fetchAllStores } = useAdminStore();
-    const [filter, setFilter] = useState<'all' | 'pending' | 'license'>('all');
+    const [filter, setFilter] = useState<'all' | 'pending' | 'license' | 'stripe'>('all');
     const [search, setSearch] = useState('');
 
     const isAr = language === 'ar';
@@ -34,6 +34,9 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
         if (filter === 'pending') {
             return store.status === 'PENDING_REVIEW' || store.status === 'PENDING_DOCUMENTS';
         }
+        if (filter === 'stripe') {
+            return store.status === 'PENDING_STRIPE' || store.status === 'STRIPE_RESTRICTED';
+        }
         if (filter === 'license') {
             if (store.status === 'LICENSE_EXPIRED') return true;
             const expiry = store.licenseExpiry ? new Date(store.licenseExpiry).getTime() : NaN;
@@ -51,6 +54,8 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
             case 'ACTIVE': return <span className="bg-green-500/10 text-green-400 px-2 py-1 rounded text-[10px] border border-green-500/20 font-bold whitespace-nowrap">{isAr ? 'نشط' : 'Active'}</span>;
             case 'PENDING_REVIEW': return <span className="bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded text-[10px] border border-yellow-500/20 font-bold animate-pulse whitespace-nowrap">{isAr ? 'قيد المراجعة' : 'Pending Review'}</span>;
             case 'PENDING_DOCUMENTS': return <span className="bg-orange-500/10 text-orange-400 px-2 py-1 rounded text-[10px] border border-orange-500/20 font-bold whitespace-nowrap">{isAr ? 'تحت المراجعة' : 'Under Review'}</span>;
+            case 'PENDING_STRIPE': return <span className="bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-[10px] border border-amber-500/20 font-bold animate-pulse whitespace-nowrap">{isAr ? 'بانتظار Stripe' : 'Pending Stripe'}</span>;
+            case 'STRIPE_RESTRICTED': return <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-[10px] border border-red-500/20 font-bold whitespace-nowrap">{isAr ? 'تقييد Stripe' : 'Stripe Restricted'}</span>;
             case 'LICENSE_EXPIRED': return <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-[10px] border border-red-500/20 font-bold whitespace-nowrap">{isAr ? 'رخصة منتهية' : 'License Expired'}</span>;
             case 'BLOCKED': return <span className="bg-black text-white/50 px-2 py-1 rounded text-[10px] border border-white/10 font-bold whitespace-nowrap">{isAr ? 'محظور' : 'Blocked'}</span>;
             default: return <span className="bg-white/10 text-white/50 px-2 py-1 rounded text-[10px] whitespace-nowrap">{isAr ? 'غير نشط' : 'Inactive'}</span>;
@@ -102,6 +107,12 @@ export const StoreManagement: React.FC<StoreManagementProps> = ({ onNavigate }) 
                             className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all duration-300 ${filter === 'license' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                         >
                             {isAr ? 'رخص/مستندات' : 'Licenses'}
+                        </button>
+                        <button 
+                            onClick={() => setFilter('stripe')} 
+                            className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all duration-300 ${filter === 'stripe' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                        >
+                            {isAr ? 'Stripe' : 'Stripe'}
                         </button>
                     </div>
                 </GlassCard>

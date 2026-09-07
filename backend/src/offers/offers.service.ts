@@ -15,6 +15,7 @@ import {
 import { OfferBiddingRestrictionService } from './offer-bidding-restriction.service';
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { ViolationsService } from '../violations/violations.service';
+import { canSubmitOffers, denyReasonForOfferGate } from '../stores/store-activation.policy';
 
 @Injectable()
 export class OffersService {
@@ -35,6 +36,11 @@ export class OffersService {
         const store = await this.storesService.findMyStore(userId);
         if (!store) {
             throw new NotFoundException('You need a Store to submit offers.');
+        }
+
+        // Activation / Stripe readiness gate (server-side source of truth)
+        if (!canSubmitOffers(store)) {
+            throw new ForbiddenException(denyReasonForOfferGate(store));
         }
 
         // --- 2026 Governance Enforcement: Offer Limit + bidding restriction ---

@@ -83,6 +83,13 @@ export type StoreMinAggregateOutputType = {
   stripeAccountId: string | null
   stripeOnboarded: boolean | null
   payoutSchedule: string | null
+  adminApprovedAt: Date | null
+  stripeActivationRequired: boolean | null
+  stripeChargesEnabled: boolean | null
+  stripePayoutsEnabled: boolean | null
+  stripeDetailsSubmitted: boolean | null
+  stripeDisabledReason: string | null
+  stripeStatusUpdatedAt: Date | null
   bankName: string | null
   bankAccountHolder: string | null
   bankIban: string | null
@@ -142,6 +149,13 @@ export type StoreMaxAggregateOutputType = {
   stripeAccountId: string | null
   stripeOnboarded: boolean | null
   payoutSchedule: string | null
+  adminApprovedAt: Date | null
+  stripeActivationRequired: boolean | null
+  stripeChargesEnabled: boolean | null
+  stripePayoutsEnabled: boolean | null
+  stripeDetailsSubmitted: boolean | null
+  stripeDisabledReason: string | null
+  stripeStatusUpdatedAt: Date | null
   bankName: string | null
   bankAccountHolder: string | null
   bankIban: string | null
@@ -201,6 +215,15 @@ export type StoreCountAggregateOutputType = {
   stripeAccountId: number
   stripeOnboarded: number
   payoutSchedule: number
+  adminApprovedAt: number
+  stripeActivationRequired: number
+  stripeChargesEnabled: number
+  stripePayoutsEnabled: number
+  stripeDetailsSubmitted: number
+  stripeDisabledReason: number
+  stripeRequirementsDue: number
+  stripeRequirementsPending: number
+  stripeStatusUpdatedAt: number
   bankName: number
   bankAccountHolder: number
   bankIban: number
@@ -304,6 +327,13 @@ export type StoreMinAggregateInputType = {
   stripeAccountId?: true
   stripeOnboarded?: true
   payoutSchedule?: true
+  adminApprovedAt?: true
+  stripeActivationRequired?: true
+  stripeChargesEnabled?: true
+  stripePayoutsEnabled?: true
+  stripeDetailsSubmitted?: true
+  stripeDisabledReason?: true
+  stripeStatusUpdatedAt?: true
   bankName?: true
   bankAccountHolder?: true
   bankIban?: true
@@ -363,6 +393,13 @@ export type StoreMaxAggregateInputType = {
   stripeAccountId?: true
   stripeOnboarded?: true
   payoutSchedule?: true
+  adminApprovedAt?: true
+  stripeActivationRequired?: true
+  stripeChargesEnabled?: true
+  stripePayoutsEnabled?: true
+  stripeDetailsSubmitted?: true
+  stripeDisabledReason?: true
+  stripeStatusUpdatedAt?: true
   bankName?: true
   bankAccountHolder?: true
   bankIban?: true
@@ -422,6 +459,15 @@ export type StoreCountAggregateInputType = {
   stripeAccountId?: true
   stripeOnboarded?: true
   payoutSchedule?: true
+  adminApprovedAt?: true
+  stripeActivationRequired?: true
+  stripeChargesEnabled?: true
+  stripePayoutsEnabled?: true
+  stripeDetailsSubmitted?: true
+  stripeDisabledReason?: true
+  stripeRequirementsDue?: true
+  stripeRequirementsPending?: true
+  stripeStatusUpdatedAt?: true
   bankName?: true
   bankAccountHolder?: true
   bankIban?: true
@@ -570,6 +616,15 @@ export type StoreGroupByOutputType = {
   stripeAccountId: string | null
   stripeOnboarded: boolean
   payoutSchedule: string
+  adminApprovedAt: Date | null
+  stripeActivationRequired: boolean
+  stripeChargesEnabled: boolean
+  stripePayoutsEnabled: boolean
+  stripeDetailsSubmitted: boolean
+  stripeDisabledReason: string | null
+  stripeRequirementsDue: runtime.JsonValue | null
+  stripeRequirementsPending: runtime.JsonValue | null
+  stripeStatusUpdatedAt: Date | null
   bankName: string | null
   bankAccountHolder: string | null
   bankIban: string | null
@@ -654,6 +709,15 @@ export type StoreWhereInput = {
   stripeAccountId?: Prisma.StringNullableFilter<"Store"> | string | null
   stripeOnboarded?: Prisma.BoolFilter<"Store"> | boolean
   payoutSchedule?: Prisma.StringFilter<"Store"> | string
+  adminApprovedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFilter<"Store"> | boolean
+  stripeChargesEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripePayoutsEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDisabledReason?: Prisma.StringNullableFilter<"Store"> | string | null
+  stripeRequirementsDue?: Prisma.JsonNullableFilter<"Store">
+  stripeRequirementsPending?: Prisma.JsonNullableFilter<"Store">
+  stripeStatusUpdatedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
   bankName?: Prisma.StringNullableFilter<"Store"> | string | null
   bankAccountHolder?: Prisma.StringNullableFilter<"Store"> | string | null
   bankIban?: Prisma.StringNullableFilter<"Store"> | string | null
@@ -731,6 +795,15 @@ export type StoreOrderByWithRelationInput = {
   stripeAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeOnboarded?: Prisma.SortOrder
   payoutSchedule?: Prisma.SortOrder
+  adminApprovedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeActivationRequired?: Prisma.SortOrder
+  stripeChargesEnabled?: Prisma.SortOrder
+  stripePayoutsEnabled?: Prisma.SortOrder
+  stripeDetailsSubmitted?: Prisma.SortOrder
+  stripeDisabledReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeRequirementsDue?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeRequirementsPending?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeStatusUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   bankName?: Prisma.SortOrderInput | Prisma.SortOrder
   bankAccountHolder?: Prisma.SortOrderInput | Prisma.SortOrder
   bankIban?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -811,6 +884,15 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   stripeAccountId?: Prisma.StringNullableFilter<"Store"> | string | null
   stripeOnboarded?: Prisma.BoolFilter<"Store"> | boolean
   payoutSchedule?: Prisma.StringFilter<"Store"> | string
+  adminApprovedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFilter<"Store"> | boolean
+  stripeChargesEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripePayoutsEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDisabledReason?: Prisma.StringNullableFilter<"Store"> | string | null
+  stripeRequirementsDue?: Prisma.JsonNullableFilter<"Store">
+  stripeRequirementsPending?: Prisma.JsonNullableFilter<"Store">
+  stripeStatusUpdatedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
   bankName?: Prisma.StringNullableFilter<"Store"> | string | null
   bankAccountHolder?: Prisma.StringNullableFilter<"Store"> | string | null
   bankIban?: Prisma.StringNullableFilter<"Store"> | string | null
@@ -888,6 +970,15 @@ export type StoreOrderByWithAggregationInput = {
   stripeAccountId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripeOnboarded?: Prisma.SortOrder
   payoutSchedule?: Prisma.SortOrder
+  adminApprovedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeActivationRequired?: Prisma.SortOrder
+  stripeChargesEnabled?: Prisma.SortOrder
+  stripePayoutsEnabled?: Prisma.SortOrder
+  stripeDetailsSubmitted?: Prisma.SortOrder
+  stripeDisabledReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeRequirementsDue?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeRequirementsPending?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeStatusUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   bankName?: Prisma.SortOrderInput | Prisma.SortOrder
   bankAccountHolder?: Prisma.SortOrderInput | Prisma.SortOrder
   bankIban?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -957,6 +1048,15 @@ export type StoreScalarWhereWithAggregatesInput = {
   stripeAccountId?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   stripeOnboarded?: Prisma.BoolWithAggregatesFilter<"Store"> | boolean
   payoutSchedule?: Prisma.StringWithAggregatesFilter<"Store"> | string
+  adminApprovedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Store"> | Date | string | null
+  stripeActivationRequired?: Prisma.BoolWithAggregatesFilter<"Store"> | boolean
+  stripeChargesEnabled?: Prisma.BoolWithAggregatesFilter<"Store"> | boolean
+  stripePayoutsEnabled?: Prisma.BoolWithAggregatesFilter<"Store"> | boolean
+  stripeDetailsSubmitted?: Prisma.BoolWithAggregatesFilter<"Store"> | boolean
+  stripeDisabledReason?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  stripeRequirementsDue?: Prisma.JsonNullableWithAggregatesFilter<"Store">
+  stripeRequirementsPending?: Prisma.JsonNullableWithAggregatesFilter<"Store">
+  stripeStatusUpdatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Store"> | Date | string | null
   bankName?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   bankAccountHolder?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   bankIban?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
@@ -1017,6 +1117,15 @@ export type StoreCreateInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -1093,6 +1202,15 @@ export type StoreUncheckedCreateInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -1167,6 +1285,15 @@ export type StoreUpdateInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1243,6 +1370,15 @@ export type StoreUncheckedUpdateInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1318,6 +1454,15 @@ export type StoreCreateManyInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -1378,6 +1523,15 @@ export type StoreUpdateManyMutationInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1438,6 +1592,15 @@ export type StoreUncheckedUpdateManyInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1512,6 +1675,15 @@ export type StoreCountOrderByAggregateInput = {
   stripeAccountId?: Prisma.SortOrder
   stripeOnboarded?: Prisma.SortOrder
   payoutSchedule?: Prisma.SortOrder
+  adminApprovedAt?: Prisma.SortOrder
+  stripeActivationRequired?: Prisma.SortOrder
+  stripeChargesEnabled?: Prisma.SortOrder
+  stripePayoutsEnabled?: Prisma.SortOrder
+  stripeDetailsSubmitted?: Prisma.SortOrder
+  stripeDisabledReason?: Prisma.SortOrder
+  stripeRequirementsDue?: Prisma.SortOrder
+  stripeRequirementsPending?: Prisma.SortOrder
+  stripeStatusUpdatedAt?: Prisma.SortOrder
   bankName?: Prisma.SortOrder
   bankAccountHolder?: Prisma.SortOrder
   bankIban?: Prisma.SortOrder
@@ -1593,6 +1765,13 @@ export type StoreMaxOrderByAggregateInput = {
   stripeAccountId?: Prisma.SortOrder
   stripeOnboarded?: Prisma.SortOrder
   payoutSchedule?: Prisma.SortOrder
+  adminApprovedAt?: Prisma.SortOrder
+  stripeActivationRequired?: Prisma.SortOrder
+  stripeChargesEnabled?: Prisma.SortOrder
+  stripePayoutsEnabled?: Prisma.SortOrder
+  stripeDetailsSubmitted?: Prisma.SortOrder
+  stripeDisabledReason?: Prisma.SortOrder
+  stripeStatusUpdatedAt?: Prisma.SortOrder
   bankName?: Prisma.SortOrder
   bankAccountHolder?: Prisma.SortOrder
   bankIban?: Prisma.SortOrder
@@ -1652,6 +1831,13 @@ export type StoreMinOrderByAggregateInput = {
   stripeAccountId?: Prisma.SortOrder
   stripeOnboarded?: Prisma.SortOrder
   payoutSchedule?: Prisma.SortOrder
+  adminApprovedAt?: Prisma.SortOrder
+  stripeActivationRequired?: Prisma.SortOrder
+  stripeChargesEnabled?: Prisma.SortOrder
+  stripePayoutsEnabled?: Prisma.SortOrder
+  stripeDetailsSubmitted?: Prisma.SortOrder
+  stripeDisabledReason?: Prisma.SortOrder
+  stripeStatusUpdatedAt?: Prisma.SortOrder
   bankName?: Prisma.SortOrder
   bankAccountHolder?: Prisma.SortOrder
   bankIban?: Prisma.SortOrder
@@ -2067,6 +2253,15 @@ export type StoreCreateWithoutOwnerInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2141,6 +2336,15 @@ export type StoreUncheckedCreateWithoutOwnerInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2231,6 +2435,15 @@ export type StoreUpdateWithoutOwnerInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2305,6 +2518,15 @@ export type StoreUncheckedUpdateWithoutOwnerInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2379,6 +2601,15 @@ export type StoreCreateWithoutDocumentsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2454,6 +2685,15 @@ export type StoreUncheckedCreateWithoutDocumentsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2543,6 +2783,15 @@ export type StoreUpdateWithoutDocumentsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2618,6 +2867,15 @@ export type StoreUncheckedUpdateWithoutDocumentsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2691,6 +2949,15 @@ export type StoreCreateWithoutOrdersInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2766,6 +3033,15 @@ export type StoreUncheckedCreateWithoutOrdersInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -2855,6 +3131,15 @@ export type StoreUpdateWithoutOrdersInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2930,6 +3215,15 @@ export type StoreUncheckedUpdateWithoutOrdersInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3003,6 +3297,15 @@ export type StoreCreateWithoutVerificationDocumentsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3078,6 +3381,15 @@ export type StoreUncheckedCreateWithoutVerificationDocumentsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3167,6 +3479,15 @@ export type StoreUpdateWithoutVerificationDocumentsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3242,6 +3563,15 @@ export type StoreUncheckedUpdateWithoutVerificationDocumentsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3315,6 +3645,15 @@ export type StoreCreateWithoutOffersInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3390,6 +3729,15 @@ export type StoreUncheckedCreateWithoutOffersInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3479,6 +3827,15 @@ export type StoreUpdateWithoutOffersInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3554,6 +3911,15 @@ export type StoreUncheckedUpdateWithoutOffersInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3627,6 +3993,15 @@ export type StoreCreateWithoutReturnsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3702,6 +4077,15 @@ export type StoreUncheckedCreateWithoutReturnsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -3791,6 +4175,15 @@ export type StoreUpdateWithoutReturnsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3866,6 +4259,15 @@ export type StoreUncheckedUpdateWithoutReturnsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3939,6 +4341,15 @@ export type StoreCreateWithoutDisputesInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4014,6 +4425,15 @@ export type StoreUncheckedCreateWithoutDisputesInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4103,6 +4523,15 @@ export type StoreUpdateWithoutDisputesInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4178,6 +4607,15 @@ export type StoreUncheckedUpdateWithoutDisputesInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4251,6 +4689,15 @@ export type StoreCreateWithoutOrderChatsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4326,6 +4773,15 @@ export type StoreUncheckedCreateWithoutOrderChatsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4415,6 +4871,15 @@ export type StoreUpdateWithoutOrderChatsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4490,6 +4955,15 @@ export type StoreUncheckedUpdateWithoutOrderChatsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4563,6 +5037,15 @@ export type StoreCreateWithoutContractInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4638,6 +5121,15 @@ export type StoreUncheckedCreateWithoutContractInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4741,6 +5233,15 @@ export type StoreScalarWhereInput = {
   stripeAccountId?: Prisma.StringNullableFilter<"Store"> | string | null
   stripeOnboarded?: Prisma.BoolFilter<"Store"> | boolean
   payoutSchedule?: Prisma.StringFilter<"Store"> | string
+  adminApprovedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFilter<"Store"> | boolean
+  stripeChargesEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripePayoutsEnabled?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFilter<"Store"> | boolean
+  stripeDisabledReason?: Prisma.StringNullableFilter<"Store"> | string | null
+  stripeRequirementsDue?: Prisma.JsonNullableFilter<"Store">
+  stripeRequirementsPending?: Prisma.JsonNullableFilter<"Store">
+  stripeStatusUpdatedAt?: Prisma.DateTimeNullableFilter<"Store"> | Date | string | null
   bankName?: Prisma.StringNullableFilter<"Store"> | string | null
   bankAccountHolder?: Prisma.StringNullableFilter<"Store"> | string | null
   bankIban?: Prisma.StringNullableFilter<"Store"> | string | null
@@ -4801,6 +5302,15 @@ export type StoreCreateWithoutContractAcceptancesInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4876,6 +5386,15 @@ export type StoreUncheckedCreateWithoutContractAcceptancesInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -4965,6 +5484,15 @@ export type StoreUpdateWithoutContractAcceptancesInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5040,6 +5568,15 @@ export type StoreUncheckedUpdateWithoutContractAcceptancesInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5113,6 +5650,15 @@ export type StoreCreateWithoutContractChangeRequestsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5188,6 +5734,15 @@ export type StoreUncheckedCreateWithoutContractChangeRequestsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5277,6 +5832,15 @@ export type StoreUpdateWithoutContractChangeRequestsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5352,6 +5916,15 @@ export type StoreUncheckedUpdateWithoutContractChangeRequestsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5425,6 +5998,15 @@ export type StoreCreateWithoutShippingWaybillsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5500,6 +6082,15 @@ export type StoreUncheckedCreateWithoutShippingWaybillsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5589,6 +6180,15 @@ export type StoreUpdateWithoutShippingWaybillsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5664,6 +6264,15 @@ export type StoreUncheckedUpdateWithoutShippingWaybillsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5737,6 +6346,15 @@ export type StoreCreateWithoutReviewsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5812,6 +6430,15 @@ export type StoreUncheckedCreateWithoutReviewsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -5901,6 +6528,15 @@ export type StoreUpdateWithoutReviewsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5976,6 +6612,15 @@ export type StoreUncheckedUpdateWithoutReviewsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6049,6 +6694,15 @@ export type StoreCreateWithoutWithdrawalRequestsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6124,6 +6778,15 @@ export type StoreUncheckedCreateWithoutWithdrawalRequestsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6213,6 +6876,15 @@ export type StoreUpdateWithoutWithdrawalRequestsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6288,6 +6960,15 @@ export type StoreUncheckedUpdateWithoutWithdrawalRequestsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6361,6 +7042,15 @@ export type StoreCreateWithoutViolationsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6436,6 +7126,15 @@ export type StoreUncheckedCreateWithoutViolationsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6525,6 +7224,15 @@ export type StoreUpdateWithoutViolationsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6600,6 +7308,15 @@ export type StoreUncheckedUpdateWithoutViolationsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6673,6 +7390,15 @@ export type StoreCreateWithoutPenaltyActionsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6748,6 +7474,15 @@ export type StoreUncheckedCreateWithoutPenaltyActionsInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -6837,6 +7572,15 @@ export type StoreUpdateWithoutPenaltyActionsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6912,6 +7656,15 @@ export type StoreUncheckedUpdateWithoutPenaltyActionsInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6986,6 +7739,15 @@ export type StoreCreateManyContractInput = {
   stripeAccountId?: string | null
   stripeOnboarded?: boolean
   payoutSchedule?: string
+  adminApprovedAt?: Date | string | null
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Date | string | null
   bankName?: string | null
   bankAccountHolder?: string | null
   bankIban?: string | null
@@ -7045,6 +7807,15 @@ export type StoreUpdateWithoutContractInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7120,6 +7891,15 @@ export type StoreUncheckedUpdateWithoutContractInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7194,6 +7974,15 @@ export type StoreUncheckedUpdateManyWithoutContractInput = {
   stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
   payoutSchedule?: Prisma.StringFieldUpdateOperationsInput | string
+  adminApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  stripeActivationRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeChargesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripePayoutsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDetailsSubmitted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeDisabledReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeRequirementsDue?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeRequirementsPending?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeStatusUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7402,6 +8191,15 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   stripeAccountId?: boolean
   stripeOnboarded?: boolean
   payoutSchedule?: boolean
+  adminApprovedAt?: boolean
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: boolean
+  stripeRequirementsDue?: boolean
+  stripeRequirementsPending?: boolean
+  stripeStatusUpdatedAt?: boolean
   bankName?: boolean
   bankAccountHolder?: boolean
   bankIban?: boolean
@@ -7480,6 +8278,15 @@ export type StoreSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   stripeAccountId?: boolean
   stripeOnboarded?: boolean
   payoutSchedule?: boolean
+  adminApprovedAt?: boolean
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: boolean
+  stripeRequirementsDue?: boolean
+  stripeRequirementsPending?: boolean
+  stripeStatusUpdatedAt?: boolean
   bankName?: boolean
   bankAccountHolder?: boolean
   bankIban?: boolean
@@ -7543,6 +8350,15 @@ export type StoreSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   stripeAccountId?: boolean
   stripeOnboarded?: boolean
   payoutSchedule?: boolean
+  adminApprovedAt?: boolean
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: boolean
+  stripeRequirementsDue?: boolean
+  stripeRequirementsPending?: boolean
+  stripeStatusUpdatedAt?: boolean
   bankName?: boolean
   bankAccountHolder?: boolean
   bankIban?: boolean
@@ -7606,6 +8422,15 @@ export type StoreSelectScalar = {
   stripeAccountId?: boolean
   stripeOnboarded?: boolean
   payoutSchedule?: boolean
+  adminApprovedAt?: boolean
+  stripeActivationRequired?: boolean
+  stripeChargesEnabled?: boolean
+  stripePayoutsEnabled?: boolean
+  stripeDetailsSubmitted?: boolean
+  stripeDisabledReason?: boolean
+  stripeRequirementsDue?: boolean
+  stripeRequirementsPending?: boolean
+  stripeStatusUpdatedAt?: boolean
   bankName?: boolean
   bankAccountHolder?: boolean
   bankIban?: boolean
@@ -7650,7 +8475,7 @@ export type StoreSelectScalar = {
   offerBiddingRestrictionReason?: boolean
 }
 
-export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "name" | "storeCode" | "slug" | "description" | "category" | "logo" | "status" | "licenseExpiry" | "balance" | "pendingBalance" | "frozenBalance" | "stripeAccountId" | "stripeOnboarded" | "payoutSchedule" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "rating" | "rejectionReason" | "loyaltyTier" | "performanceScore" | "lifetimeEarnings" | "subscriptionTier" | "subscriptionActive" | "subscriptionExpiresAt" | "completedOrdersCount" | "avgResponseScore" | "selectedMakes" | "selectedModels" | "customMake" | "customModel" | "contractId" | "contractAcceptedAt" | "contractSignature" | "address" | "lat" | "lng" | "adminNotes" | "suspendedUntil" | "createdAt" | "updatedAt" | "offerLimit" | "dailyOfferCount" | "visibilityRestricted" | "visibilityNote" | "visibilitySignature" | "visibilityRate" | "totalOffersSent" | "editCount" | "withdrawalCount" | "monthlyOfferDeletionCount" | "monthlyOfferDeletionMonth" | "offerBiddingRestrictedUntil" | "offerBiddingRestrictionReason", ExtArgs["result"]["store"]>
+export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "name" | "storeCode" | "slug" | "description" | "category" | "logo" | "status" | "licenseExpiry" | "balance" | "pendingBalance" | "frozenBalance" | "stripeAccountId" | "stripeOnboarded" | "payoutSchedule" | "adminApprovedAt" | "stripeActivationRequired" | "stripeChargesEnabled" | "stripePayoutsEnabled" | "stripeDetailsSubmitted" | "stripeDisabledReason" | "stripeRequirementsDue" | "stripeRequirementsPending" | "stripeStatusUpdatedAt" | "bankName" | "bankAccountHolder" | "bankIban" | "bankSwift" | "bankDetailsVerified" | "rating" | "rejectionReason" | "loyaltyTier" | "performanceScore" | "lifetimeEarnings" | "subscriptionTier" | "subscriptionActive" | "subscriptionExpiresAt" | "completedOrdersCount" | "avgResponseScore" | "selectedMakes" | "selectedModels" | "customMake" | "customModel" | "contractId" | "contractAcceptedAt" | "contractSignature" | "address" | "lat" | "lng" | "adminNotes" | "suspendedUntil" | "createdAt" | "updatedAt" | "offerLimit" | "dailyOfferCount" | "visibilityRestricted" | "visibilityNote" | "visibilitySignature" | "visibilityRate" | "totalOffersSent" | "editCount" | "withdrawalCount" | "monthlyOfferDeletionCount" | "monthlyOfferDeletionMonth" | "offerBiddingRestrictedUntil" | "offerBiddingRestrictionReason", ExtArgs["result"]["store"]>
 export type StoreInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   contract?: boolean | Prisma.Store$contractArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -7716,6 +8541,15 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     stripeAccountId: string | null
     stripeOnboarded: boolean
     payoutSchedule: string
+    adminApprovedAt: Date | null
+    stripeActivationRequired: boolean
+    stripeChargesEnabled: boolean
+    stripePayoutsEnabled: boolean
+    stripeDetailsSubmitted: boolean
+    stripeDisabledReason: string | null
+    stripeRequirementsDue: runtime.JsonValue | null
+    stripeRequirementsPending: runtime.JsonValue | null
+    stripeStatusUpdatedAt: Date | null
     bankName: string | null
     bankAccountHolder: string | null
     bankIban: string | null
@@ -8213,6 +9047,15 @@ export interface StoreFieldRefs {
   readonly stripeAccountId: Prisma.FieldRef<"Store", 'String'>
   readonly stripeOnboarded: Prisma.FieldRef<"Store", 'Boolean'>
   readonly payoutSchedule: Prisma.FieldRef<"Store", 'String'>
+  readonly adminApprovedAt: Prisma.FieldRef<"Store", 'DateTime'>
+  readonly stripeActivationRequired: Prisma.FieldRef<"Store", 'Boolean'>
+  readonly stripeChargesEnabled: Prisma.FieldRef<"Store", 'Boolean'>
+  readonly stripePayoutsEnabled: Prisma.FieldRef<"Store", 'Boolean'>
+  readonly stripeDetailsSubmitted: Prisma.FieldRef<"Store", 'Boolean'>
+  readonly stripeDisabledReason: Prisma.FieldRef<"Store", 'String'>
+  readonly stripeRequirementsDue: Prisma.FieldRef<"Store", 'Json'>
+  readonly stripeRequirementsPending: Prisma.FieldRef<"Store", 'Json'>
+  readonly stripeStatusUpdatedAt: Prisma.FieldRef<"Store", 'DateTime'>
   readonly bankName: Prisma.FieldRef<"Store", 'String'>
   readonly bankAccountHolder: Prisma.FieldRef<"Store", 'String'>
   readonly bankIban: Prisma.FieldRef<"Store", 'String'>

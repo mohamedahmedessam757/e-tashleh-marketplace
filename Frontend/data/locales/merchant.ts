@@ -261,7 +261,14 @@ export const merchant = {
       accountRestricted: 'الحساب مقيد',
       attention: 'يرجى الانتباه',
       urgent: 'تنبيهات عاجلة',
-      none: 'لا توجد تنبيهات عاجلة'
+      none: 'لا توجد تنبيهات عاجلة',
+      stripePendingTitle: 'بانتظار تفعيل الحساب المالي',
+      stripePendingDesc: 'وافقت الإدارة على متجرك مبدئيًا. أكمل ربط Stripe Connect لتفعيل تقديم العروض.',
+      stripeRestrictedTitle: 'مطلوب إعادة التحقق المالي',
+      stripeRestrictedDesc: 'حساب Stripe غير جاهز حاليًا. تم إيقاف تقديم العروض الجديدة فقط — الطلبات الجارية تستمر.',
+      stripeCompleteCta: 'أكمل التحقق المالي',
+      stripeWalletCta: 'المحفظة',
+      stripeOffersBlocked: 'تقديم العروض متوقف حتى اكتمال التحقق المالي عبر Stripe.',
     },
     merchantSettings: {
       title: 'إعدادات الحساب',
@@ -1103,7 +1110,14 @@ export const merchant = {
       accountRestricted: 'Account Restricted',
       attention: 'Attention Required',
       urgent: 'Urgent Alerts',
-      none: 'No urgent alerts'
+      none: 'No urgent alerts',
+      stripePendingTitle: 'Awaiting financial account activation',
+      stripePendingDesc: 'Admin approved your store preliminarily. Complete Stripe Connect to unlock offers.',
+      stripeRestrictedTitle: 'Financial re-verification required',
+      stripeRestrictedDesc: 'Your Stripe account is not ready. New offers are paused — in-progress orders continue.',
+      stripeCompleteCta: 'Complete financial verification',
+      stripeWalletCta: 'Wallet',
+      stripeOffersBlocked: 'Offer submission is paused until Stripe financial verification is complete.',
     },
     merchantSettings: {
       title: 'Account Settings',

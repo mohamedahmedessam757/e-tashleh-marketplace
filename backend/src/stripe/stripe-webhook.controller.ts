@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { StripeService } from './stripe.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import { StoreStripeActivationService } from '../stores/store-stripe-activation.service';
 
 @SkipThrottle()
 @Controller('stripe/webhook')
@@ -15,6 +16,8 @@ export class StripeWebhookController {
         private readonly prisma: PrismaService,
         @Inject(forwardRef(() => PaymentsService))
         private readonly paymentsService: PaymentsService,
+        @Inject(forwardRef(() => StoreStripeActivationService))
+        private readonly storeStripeActivation: StoreStripeActivationService,
     ) {}
 
     @Post()
@@ -72,27 +75,47 @@ export class StripeWebhookController {
                     break;
                 case 'account.updated':
                     const account = event.data.object;
-                    if (account.details_submitted) {
-                        try {
-                            const meta = account.metadata || {};
-                            const entityId = meta.storeId || meta.id;
-                            if (entityId && meta.type === 'store') {
-                                await this.prisma.store.update({
-                                    where: { id: entityId },
-                                    data: { stripeOnboarded: account.details_submitted }
-                                });
-                                this.logger.log(`Store ${entityId} stripe onboarding completed.`);
-                            } else if (entityId && meta.type === 'customer') {
+                    try {
+                        const meta = account.metadata || {};
+                        const entityId = meta.storeId || meta.id;
+                        if (entityId && meta.type === 'store') {
+                            // Always sync capabilities; activation uses charges/payouts/requirements — not return_url.
+                            const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                                entityId,
+                                account,
+                            );
+                            this.logger.log(
+                                `Store ${entityId} Stripe sync: ready=${result.ready} status=${result.status}`,
+                            );
+                        } else if (entityId && meta.type === 'customer') {
+                            // Customer Connect path unchanged: details_submitted still marks onboarded.
+                            if (account.details_submitted) {
                                 const uid = entityId.startsWith('cust_') ? entityId.slice(5) : entityId;
                                 await this.prisma.user.update({
                                     where: { id: uid },
-                                    data: { stripeOnboarded: account.details_submitted }
+                                    data: { stripeOnboarded: Boolean(account.details_submitted) },
                                 });
                                 this.logger.log(`Customer ${uid} stripe onboarding completed.`);
                             }
-                        } catch(e) {
-                             this.logger.error('Could not update onboarding status from Stripe account.updated', e);
+                        } else if (account.id) {
+                            // Fallback: resolve store by connected account id when metadata missing.
+                            const byAcct = await this.prisma.store.findFirst({
+                                where: { stripeAccountId: account.id },
+                                select: { id: true },
+                            });
+                            if (byAcct) {
+                                const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                                    byAcct.id,
+                                    account,
+                                );
+                                this.logger.log(
+                                    `Store ${byAcct.id} Stripe sync (by account id): ready=${result.ready} status=${result.status}`,
+                                );
+                            }
                         }
+                    } catch (e) {
+                        this.logger.error('Could not update onboarding status from Stripe account.updated', e);
+                        throw e;
                     }
                     break;
                 case 'charge.refunded':

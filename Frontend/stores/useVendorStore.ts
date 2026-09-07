@@ -25,8 +25,49 @@ function teardownVendorProfileChannel(getState: () => { vendorProfileSubscriptio
   }
 }
 
-export type MerchantStatus = 'IDLE' | 'PENDING_DOCUMENTS' | 'PENDING_REVIEW' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'BLOCKED' | 'LICENSE_EXPIRED';
+export type MerchantStatus =
+  | 'IDLE'
+  | 'PENDING_DOCUMENTS'
+  | 'PENDING_REVIEW'
+  | 'PENDING_STRIPE'
+  | 'ACTIVE'
+  | 'STRIPE_RESTRICTED'
+  | 'REJECTED'
+  | 'SUSPENDED'
+  | 'BLOCKED'
+  | 'LICENSE_EXPIRED';
 
+/** Client-side mirror of backend canSubmitOffers (UI gating only — API is source of truth). */
+export function merchantCanSubmitOffers(input: {
+  status: MerchantStatus | string;
+  stripeActivationRequired?: boolean;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
+  stripeDisabledReason?: string | null;
+  stripeRequirementsDue?: unknown;
+  stripeAccountId?: string | null;
+}): boolean {
+  const status = String(input.status || '');
+  const blocked = new Set([
+    'PENDING_DOCUMENTS',
+    'PENDING_REVIEW',
+    'PENDING_STRIPE',
+    'STRIPE_RESTRICTED',
+    'REJECTED',
+    'SUSPENDED',
+    'BLOCKED',
+    'LICENSE_EXPIRED',
+    'IDLE',
+  ]);
+  if (blocked.has(status)) return false;
+  if (status !== 'ACTIVE') return false;
+  if (!input.stripeActivationRequired) return true;
+  if (!input.stripeAccountId) return false;
+  if (!input.stripeChargesEnabled || !input.stripePayoutsEnabled) return false;
+  if (input.stripeDisabledReason) return false;
+  const due = Array.isArray(input.stripeRequirementsDue) ? input.stripeRequirementsDue : [];
+  return due.length === 0;
+}
 export interface DocState {
   file: File | null;
   status: 'empty' | 'uploading' | 'completed' | 'approved' | 'rejected' | 'expired' | 'pending' | 'reupload_requested';
@@ -50,6 +91,14 @@ export interface StoreProfileData {
   };
   stripeAccountId?: string | null;
   stripeOnboarded?: boolean;
+  stripeActivationRequired?: boolean;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
+  stripeDetailsSubmitted?: boolean;
+  stripeDisabledReason?: string | null;
+  stripeRequirementsDue?: string[] | null;
+  stripeRequirementsPending?: string[] | null;
+  adminApprovedAt?: string | null;
 }
 
 export interface BankDetails {
@@ -99,6 +148,14 @@ export interface VendorState {
   vendorStatus: MerchantStatus;
   storeId: string | null;
   storeRejectionReason: string | null;
+  stripeActivationRequired: boolean;
+  stripeChargesEnabled: boolean;
+  stripePayoutsEnabled: boolean;
+  stripeDetailsSubmitted: boolean;
+  stripeDisabledReason: string | null;
+  stripeRequirementsDue: string[];
+  stripeRequirementsPending: string[];
+  adminApprovedAt: string | null;
   
   // Restrictions (2026 Governance)
   withdrawalsFrozen: boolean;
@@ -221,6 +278,14 @@ export const useVendorStore = create<VendorState>()(
   vendorStatus: 'IDLE',
   storeId: null,
   storeRejectionReason: null,
+  stripeActivationRequired: false,
+  stripeChargesEnabled: false,
+  stripePayoutsEnabled: false,
+  stripeDetailsSubmitted: false,
+  stripeDisabledReason: null,
+  stripeRequirementsDue: [],
+  stripeRequirementsPending: [],
+  adminApprovedAt: null,
   withdrawalsFrozen: false,
   withdrawalFreezeNote: '',
   offerLimit: -1,
@@ -538,8 +603,24 @@ export const useVendorStore = create<VendorState>()(
             categories: data.categories || ['Spare Parts'],
             workingHours: data.workingHours || { start: '09:00', end: '21:00' },
             stripeAccountId: data.stripeAccountId,
-            stripeOnboarded: data.stripeOnboarded
+            stripeOnboarded: data.stripeOnboarded,
+            stripeActivationRequired: Boolean(data.stripeActivationRequired),
+            stripeChargesEnabled: Boolean(data.stripeChargesEnabled),
+            stripePayoutsEnabled: Boolean(data.stripePayoutsEnabled),
+            stripeDetailsSubmitted: Boolean(data.stripeDetailsSubmitted),
+            stripeDisabledReason: data.stripeDisabledReason || null,
+            stripeRequirementsDue: Array.isArray(data.stripeRequirementsDue) ? data.stripeRequirementsDue : [],
+            stripeRequirementsPending: Array.isArray(data.stripeRequirementsPending) ? data.stripeRequirementsPending : [],
+            adminApprovedAt: data.adminApprovedAt || null,
           },
+          stripeActivationRequired: Boolean(data.stripeActivationRequired),
+          stripeChargesEnabled: Boolean(data.stripeChargesEnabled),
+          stripePayoutsEnabled: Boolean(data.stripePayoutsEnabled),
+          stripeDetailsSubmitted: Boolean(data.stripeDetailsSubmitted),
+          stripeDisabledReason: data.stripeDisabledReason || null,
+          stripeRequirementsDue: Array.isArray(data.stripeRequirementsDue) ? data.stripeRequirementsDue : [],
+          stripeRequirementsPending: Array.isArray(data.stripeRequirementsPending) ? data.stripeRequirementsPending : [],
+          adminApprovedAt: data.adminApprovedAt || null,
           account: {
             name: data.owner?.name || '',
             email: data.owner?.email || '',
@@ -813,6 +894,18 @@ export const useVendorStore = create<VendorState>()(
             visibilityRestricted: payload.new.visibility_restricted,
             visibilityRate: payload.new.visibility_rate,
             restrictionAlertMessage: payload.new.restriction_alert_message,
+            stripeActivationRequired: Boolean(payload.new.stripe_activation_required),
+            stripeChargesEnabled: Boolean(payload.new.stripe_charges_enabled),
+            stripePayoutsEnabled: Boolean(payload.new.stripe_payouts_enabled),
+            stripeDetailsSubmitted: Boolean(payload.new.stripe_details_submitted),
+            stripeDisabledReason: payload.new.stripe_disabled_reason || null,
+            stripeRequirementsDue: Array.isArray(payload.new.stripe_requirements_due)
+              ? payload.new.stripe_requirements_due
+              : [],
+            stripeRequirementsPending: Array.isArray(payload.new.stripe_requirements_pending)
+              ? payload.new.stripe_requirements_pending
+              : [],
+            adminApprovedAt: payload.new.admin_approved_at || null,
           });
           fetchVendorProfile();
         },
@@ -856,6 +949,14 @@ export const useVendorStore = create<VendorState>()(
       vendorStatus: 'IDLE', // Default to IDLE instead of PENDING_DOCUMENTS for clean state
       storeId: null,
       storeRejectionReason: null,
+      stripeActivationRequired: false,
+      stripeChargesEnabled: false,
+      stripePayoutsEnabled: false,
+      stripeDetailsSubmitted: false,
+      stripeDisabledReason: null,
+      stripeRequirementsDue: [],
+      stripeRequirementsPending: [],
+      adminApprovedAt: null,
       account: { name: '', email: '', phone: '', countryCode: '+966', password: '' },
       otpVerified: false,
       storeInfo: { storeName: '', selectedMakes: [], selectedModels: [], customMake: '', customModel: '', bio: '', address: '', lat: null, lng: null },

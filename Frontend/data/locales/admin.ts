@@ -153,7 +153,9 @@ export const admin = {
         license_expired: 'رخصة منتهية',
         dispute: 'نزاع جديد',
         unpaid: 'طلب غير مدفوع',
-        contract_changes: 'طلبات تعديل العقد'
+        contract_changes: 'طلبات تعديل العقد',
+        stripe_pending: 'متجر بانتظار Stripe',
+        stripe_restricted: 'تقييد حساب Stripe لمتجر'
       },
       legend: {
         completed: 'مكتمل',
@@ -1825,7 +1827,9 @@ export const admin = {
         license_expired: 'License Expired',
         dispute: 'New Dispute',
         unpaid: 'Unpaid Order',
-        contract_changes: 'Contract Amendments'
+        contract_changes: 'Contract Amendments',
+        stripe_pending: 'Store awaiting Stripe',
+        stripe_restricted: 'Store Stripe restricted'
       },
       legend: {
         completed: 'Completed',

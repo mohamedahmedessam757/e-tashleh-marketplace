@@ -6,11 +6,16 @@ import {
     UseGuards,
     BadRequestException,
     Logger,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { StoreStatus } from '@prisma/client';
+import { StoreStripeActivationService } from '../stores/store-stripe-activation.service';
+import { mapStripeAccountToStoreFields } from '../stores/store-activation.policy';
 
 @Controller('stripe')
 @UseGuards(JwtAuthGuard)
@@ -21,6 +26,8 @@ export class StripeController {
         private readonly stripeService: StripeService,
         private readonly prisma: PrismaService,
         private readonly configService: ConfigService,
+        @Inject(forwardRef(() => StoreStripeActivationService))
+        private readonly storeStripeActivation: StoreStripeActivationService,
     ) {}
 
     private resolveFrontendBaseUrl(): string {
@@ -59,7 +66,12 @@ export class StripeController {
             );
             await this.prisma.store.update({
                 where: { id: store.id },
-                data: { stripeAccountId: null, stripeOnboarded: false },
+                data: {
+                    stripeAccountId: null,
+                    stripeOnboarded: false,
+                    stripeChargesEnabled: false,
+                    stripePayoutsEnabled: false,
+                },
             });
         }
 
@@ -124,6 +136,21 @@ export class StripeController {
                 return { url: link };
             }
 
+            // Merchants on the new activation path need onboarding while pending/restricted,
+            // or when ACTIVE but Stripe needs repair.
+            const allowedStatuses: string[] = [
+                StoreStatus.PENDING_STRIPE,
+                StoreStatus.STRIPE_RESTRICTED,
+                StoreStatus.ACTIVE,
+                StoreStatus.PENDING_REVIEW,
+                StoreStatus.PENDING_DOCUMENTS,
+            ];
+            if (!allowedStatuses.includes(store.status)) {
+                throw new BadRequestException(
+                    `Stripe onboarding is not available for store status ${store.status}.`,
+                );
+            }
+
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             const email = user?.email?.trim() || store.name;
             if (!email) {
@@ -180,14 +207,23 @@ export class StripeController {
             where: { ownerId: userId },
             select: {
                 id: true,
+                status: true,
                 stripeAccountId: true,
                 stripeOnboarded: true,
                 payoutSchedule: true,
+                stripeActivationRequired: true,
+                stripeChargesEnabled: true,
+                stripePayoutsEnabled: true,
+                stripeDetailsSubmitted: true,
+                stripeDisabledReason: true,
+                stripeRequirementsDue: true,
+                stripeRequirementsPending: true,
             },
         });
 
         if (store) {
             let stripeDisplay = null;
+            let syncResult: { ready: boolean; status: string } | null = null;
             if (store.stripeAccountId) {
                 try {
                     const account = await this.stripeService.retrieveAccountOrNull(
@@ -195,18 +231,27 @@ export class StripeController {
                     );
                     if (account) {
                         stripeDisplay = this.stripeService.buildConnectAccountDisplay(account);
-                        if (account?.details_submitted && !store.stripeOnboarded) {
-                            await this.prisma.store.update({
-                                where: { id: store.id },
-                                data: { stripeOnboarded: true },
-                            });
-                            return {
-                                stripeAccountId: store.stripeAccountId,
-                                stripeOnboarded: true,
-                                payoutSchedule: store.payoutSchedule,
-                                stripeDisplay,
-                            };
-                        }
+                        // Fallback sync (does NOT trust return_url alone — uses live account fields).
+                        syncResult = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                            store.id,
+                            account,
+                        );
+                        const mapped = mapStripeAccountToStoreFields(account);
+                        return {
+                            stripeAccountId: store.stripeAccountId,
+                            stripeOnboarded: mapped.ready,
+                            payoutSchedule: store.payoutSchedule,
+                            stripeDisplay,
+                            storeStatus: syncResult.status,
+                            stripeActivationRequired: store.stripeActivationRequired,
+                            stripeChargesEnabled: mapped.stripeChargesEnabled,
+                            stripePayoutsEnabled: mapped.stripePayoutsEnabled,
+                            stripeDetailsSubmitted: mapped.stripeDetailsSubmitted,
+                            stripeDisabledReason: mapped.stripeDisabledReason,
+                            stripeRequirementsDue: mapped.stripeRequirementsDue,
+                            stripeRequirementsPending: mapped.stripeRequirementsPending,
+                            stripeReady: mapped.ready,
+                        };
                     }
                 } catch (error) {
                     this.logger.warn(`Stripe status check failed for store ${store.id}: ${error}`);
@@ -217,6 +262,15 @@ export class StripeController {
                 stripeOnboarded: store.stripeOnboarded,
                 payoutSchedule: store.payoutSchedule,
                 stripeDisplay,
+                storeStatus: store.status,
+                stripeActivationRequired: store.stripeActivationRequired,
+                stripeChargesEnabled: store.stripeChargesEnabled,
+                stripePayoutsEnabled: store.stripePayoutsEnabled,
+                stripeDetailsSubmitted: store.stripeDetailsSubmitted,
+                stripeDisabledReason: store.stripeDisabledReason,
+                stripeRequirementsDue: store.stripeRequirementsDue,
+                stripeRequirementsPending: store.stripeRequirementsPending,
+                stripeReady: false,
             };
         }
 

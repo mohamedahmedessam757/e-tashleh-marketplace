@@ -253,6 +253,16 @@ export interface Vendor {
   visibilityNote?: string;
   visibilitySignature?: string;
   visibilityRate?: number;
+  stripeAccountId?: string | null;
+  stripeOnboarded?: boolean;
+  stripeActivationRequired?: boolean;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
+  stripeDetailsSubmitted?: boolean;
+  stripeDisabledReason?: string | null;
+  stripeRequirementsDue?: string[] | null;
+  stripeRequirementsPending?: string[] | null;
+  adminApprovedAt?: string | null;
 }
 export interface WithdrawalRequest {
   id: string;

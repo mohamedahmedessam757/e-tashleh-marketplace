@@ -41,7 +41,7 @@ export function consumeViolationNavContext(): ViolationNavContext | null {
   }
 }
 
-export function setAdminStoreListFilter(filter: 'all' | 'pending' | 'license'): void {
+export function setAdminStoreListFilter(filter: 'all' | 'pending' | 'license' | 'stripe'): void {
   try {
     sessionStorage.setItem(STORE_LIST_FILTER_KEY, filter);
   } catch {
@@ -49,7 +49,7 @@ export function setAdminStoreListFilter(filter: 'all' | 'pending' | 'license'): 
   }
 }
 
-export function consumeAdminStoreListFilter(): 'all' | 'pending' | 'license' | null {
+export function consumeAdminStoreListFilter(): 'all' | 'pending' | 'license' | 'stripe' | null {
   try {
     const raw = sessionStorage.getItem(STORE_LIST_FILTER_KEY);
     if (!raw) return null;

@@ -31,7 +31,9 @@ enum UserStatus {
 enum StoreStatus {
   PENDING_DOCUMENTS
   PENDING_REVIEW
+  PENDING_STRIPE
   ACTIVE
+  STRIPE_RESTRICTED
   REJECTED
   SUSPENDED
   BLOCKED
@@ -403,6 +405,17 @@ model Store {
   stripeAccountId String?     @map("stripe_account_id")
   stripeOnboarded Boolean     @default(false) @map("stripe_onboarded")
   payoutSchedule  String      @default("MANUAL") @map("payout_schedule")
+
+  // Admin preliminary approval + Stripe Connect readiness (new stores only)
+  adminApprovedAt            DateTime? @map("admin_approved_at") @db.Timestamptz
+  stripeActivationRequired   Boolean   @default(false) @map("stripe_activation_required")
+  stripeChargesEnabled       Boolean   @default(false) @map("stripe_charges_enabled")
+  stripePayoutsEnabled       Boolean   @default(false) @map("stripe_payouts_enabled")
+  stripeDetailsSubmitted     Boolean   @default(false) @map("stripe_details_submitted")
+  stripeDisabledReason       String?   @map("stripe_disabled_reason")
+  stripeRequirementsDue      Json?     @map("stripe_requirements_due")
+  stripeRequirementsPending  Json?     @map("stripe_requirements_pending")
+  stripeStatusUpdatedAt      DateTime? @map("stripe_status_updated_at") @db.Timestamptz
 
   // Bank Transfer Details
   bankName            String? @map("bank_name")

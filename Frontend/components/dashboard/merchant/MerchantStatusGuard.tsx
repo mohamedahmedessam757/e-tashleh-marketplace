@@ -231,6 +231,11 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
     return renderPendingReview();
   }
 
+  // 1b. PENDING_STRIPE / STRIPE_RESTRICTED — dashboard open; offers gated by banner + API
+  if (vendorStatus === 'PENDING_STRIPE' || vendorStatus === 'STRIPE_RESTRICTED') {
+    return <>{children}</>;
+  }
+
   // 2. REJECTED
   if (vendorStatus === 'REJECTED') {
     return renderOverlay(

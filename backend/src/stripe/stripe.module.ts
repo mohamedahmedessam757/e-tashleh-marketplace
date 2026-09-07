@@ -5,9 +5,15 @@ import { StripeWebhookController } from './stripe-webhook.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentsModule } from '../payments/payments.module';
+import { StoresModule } from '../stores/stores.module';
 
 @Module({
-    imports: [PrismaModule, ConfigModule, forwardRef(() => PaymentsModule)],
+    imports: [
+        PrismaModule,
+        ConfigModule,
+        forwardRef(() => PaymentsModule),
+        forwardRef(() => StoresModule),
+    ],
     providers: [StripeService],
     controllers: [StripeController, StripeWebhookController],
     exports: [StripeService],

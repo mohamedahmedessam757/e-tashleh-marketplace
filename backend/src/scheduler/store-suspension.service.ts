@@ -38,7 +38,13 @@ export class StoreSuspensionService {
                     id: true,
                     name: true,
                     ownerId: true,
-                    status: true
+                    status: true,
+                    stripeActivationRequired: true,
+                    stripeChargesEnabled: true,
+                    stripePayoutsEnabled: true,
+                    stripeAccountId: true,
+                    stripeDisabledReason: true,
+                    stripeRequirementsDue: true,
                 }
             });
 
@@ -49,12 +55,24 @@ export class StoreSuspensionService {
             this.logger.log(`Found ${expiredStores.length} stores to re-activate.`);
 
             for (const store of expiredStores) {
+                const stripeReady =
+                    Boolean(store.stripeAccountId) &&
+                    Boolean(store.stripeChargesEnabled) &&
+                    Boolean(store.stripePayoutsEnabled) &&
+                    !store.stripeDisabledReason &&
+                    !(Array.isArray(store.stripeRequirementsDue) && store.stripeRequirementsDue.length > 0);
+
+                let restoreStatus: 'ACTIVE' | 'PENDING_STRIPE' | 'STRIPE_RESTRICTED' = 'ACTIVE';
+                if (store.stripeActivationRequired) {
+                    restoreStatus = stripeReady ? 'ACTIVE' : 'PENDING_STRIPE';
+                }
+
                 await this.prisma.$transaction(async (tx) => {
                     // 1. Update store status
                     await tx.store.update({
                         where: { id: store.id },
                         data: {
-                            status: 'ACTIVE',
+                            status: restoreStatus,
                             suspendedUntil: null
                         }
                     });
@@ -69,33 +87,41 @@ export class StoreSuspensionService {
                         metadata: {
                             storeId: store.id,
                             storeName: store.name,
-                            previousStatus: 'SUSPENDED'
+                            previousStatus: 'SUSPENDED',
+                            restoreStatus,
                         }
                     }, tx);
 
                     // 3. Task 10.5: Bilingual Notifications
                     // Notify Store Owner
                     await this.notifications.notifyUser(store.ownerId, 'VENDOR', {
-                        titleAr: 'متجرك الآن نشط',
-                        titleEn: 'Your store is now ACTIVE',
-                        messageAr: `انتهت فترة الإيقاف المؤقت لمتجر [${store.name}]. يمكنك الآن استئناف نشاطك التجاري.`,
-                        messageEn: `The temporary suspension for store [${store.name}] has ended. You can now resume your operations.`,
-                        type: 'system',
-                        metadata: { storeId: store.id }
+                        titleAr: restoreStatus === 'ACTIVE' ? 'متجرك الآن نشط' : 'انتهى الإيقاف — أكمل التحقق المالي',
+                        titleEn: restoreStatus === 'ACTIVE' ? 'Your store is now ACTIVE' : 'Suspension ended — complete financial verification',
+                        messageAr:
+                            restoreStatus === 'ACTIVE'
+                                ? `تمت إعادة تفعيل متجر (${store.name}) تلقائياً بعد انتهاء مدة الإيقاف.`
+                                : `انتهى إيقاف متجر (${store.name}). أكمل تفعيل Stripe قبل تقديم العروض.`,
+                        messageEn:
+                            restoreStatus === 'ACTIVE'
+                                ? `Store (${store.name}) was automatically reactivated after the suspension period ended.`
+                                : `Suspension ended for (${store.name}). Complete Stripe activation before submitting offers.`,
+                        type: 'SUCCESS',
+                        link: '/dashboard',
+                        metadata: { storeId: store.id, event: 'STORE_AUTO_UNSUSPEND', restoreStatus },
                     });
 
                     // Notify Admins
                     await this.notifications.notifyAdmins({
                         titleAr: 'تنبيه النظام: إعادة تفعيل متجر',
                         titleEn: 'System Alert: Store Reactivated',
-                        messageAr: `تمت إعادة تفعيل متجر [${store.name}] تلقائياً بعد انتهاء فترة الإيقاف.`,
-                        messageEn: `Store [${store.name}] has been automatically reactivated after the suspension period expired.`,
+                        messageAr: `تمت إعادة تفعيل متجر [${store.name}] تلقائياً بعد انتهاء فترة الإيقاف (الحالة: ${restoreStatus}).`,
+                        messageEn: `Store [${store.name}] has been automatically reactivated after the suspension period expired (status: ${restoreStatus}).`,
                         type: 'alert',
-                        metadata: { storeId: store.id }
+                        metadata: { storeId: store.id, restoreStatus },
                     });
                 });
 
-                this.logger.log(`Store [${store.name}] reactivated and parties notified.`);
+                this.logger.log(`Store [${store.name}] restored to ${restoreStatus} and parties notified.`);
             }
         } catch (error) {
             this.logger.error('Failed to process expired suspensions:', error.stack);

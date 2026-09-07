@@ -111,6 +111,34 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
         );
     }
 
+    // Stripe activation gate (new stores / restricted Connect)
+    if (vendorStatus === 'PENDING_STRIPE' || vendorStatus === 'STRIPE_RESTRICTED') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[500px] text-center space-y-6 px-4">
+                <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/30">
+                    <AlertTriangle size={48} className="text-amber-500" />
+                </div>
+                <div className="max-w-md">
+                    <h2 className="text-2xl font-bold text-white mb-3">
+                        {vendorStatus === 'STRIPE_RESTRICTED'
+                            ? t.dashboard.merchant.alerts.stripeRestrictedTitle
+                            : t.dashboard.merchant.alerts.stripePendingTitle}
+                    </h2>
+                    <p className="text-white/60 leading-relaxed">
+                        {t.dashboard.merchant.alerts.stripeOffersBlocked}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => onNavigate?.('wallet')}
+                    className="px-8 py-3 bg-gold-500 hover:bg-gold-400 text-black rounded-xl font-bold transition-colors"
+                >
+                    {t.dashboard.merchant.alerts.stripeCompleteCta}
+                </button>
+            </div>
+        );
+    }
+
     const handleOpenExplore = (request: any) => {
         if (onNavigate) {
             onNavigate('explore-offer', request.id);

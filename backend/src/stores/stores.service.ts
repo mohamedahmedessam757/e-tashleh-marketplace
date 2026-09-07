@@ -7,6 +7,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
+import { StripeService } from '../stripe/stripe.service';
+import { isStripeFullyReady } from './store-activation.policy';
 
 @Injectable()
 export class StoresService {
@@ -16,6 +18,8 @@ export class StoresService {
         private auditLogs: AuditLogsService,
         @Inject(forwardRef(() => MerchantPerformanceService))
         private readonly merchantPerformance: MerchantPerformanceService,
+        @Inject(forwardRef(() => StripeService))
+        private readonly stripeService: StripeService,
     ) { }
 
     async findMyStore(userId: string) {
@@ -172,6 +176,8 @@ export class StoresService {
             Boolean(existingDoc?.fileUrl) ||
             store.status === StoreStatus.ACTIVE ||
             store.status === StoreStatus.PENDING_REVIEW ||
+            store.status === StoreStatus.PENDING_STRIPE ||
+            store.status === StoreStatus.STRIPE_RESTRICTED ||
             store.status === StoreStatus.LICENSE_EXPIRED;
         if (isReupload && !parsedExpiry) {
             throw new BadRequestException(
@@ -616,20 +622,82 @@ export class StoresService {
         return enrichedStore;
     }
     async updateStatus(adminId: string, id: string, status: StoreStatus, reason?: string, suspendedUntil?: Date) {
+        const existing = await this.prisma.store.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+                status: true,
+                ownerId: true,
+                stripeAccountId: true,
+                stripeActivationRequired: true,
+                stripeChargesEnabled: true,
+                stripePayoutsEnabled: true,
+                stripeDisabledReason: true,
+                stripeRequirementsDue: true,
+                adminApprovedAt: true,
+                owner: { select: { email: true } },
+            },
+        });
+        if (!existing) {
+            throw new NotFoundException('Store not found');
+        }
+
+        /**
+         * Admin "ACTIVE" from review = preliminary approval → PENDING_STRIPE (new path).
+         * Full ACTIVE is granted by Stripe webhook when Connect is ready.
+         * Do not force ACTIVE over STRIPE_RESTRICTED without Stripe readiness.
+         */
+        let effectiveStatus = status;
+        let preliminaryStripeApproval = false;
+
+        if (status === StoreStatus.ACTIVE) {
+            const fromReview =
+                existing.status === StoreStatus.PENDING_REVIEW ||
+                existing.status === StoreStatus.PENDING_DOCUMENTS ||
+                existing.status === StoreStatus.PENDING_STRIPE;
+
+            if (existing.status === StoreStatus.STRIPE_RESTRICTED) {
+                throw new BadRequestException(
+                    'Store is Stripe-restricted. Full activation requires Stripe Connect readiness (charges + payouts), not a manual ACTIVE override.',
+                );
+            }
+
+            if (fromReview) {
+                effectiveStatus = StoreStatus.PENDING_STRIPE;
+                preliminaryStripeApproval = true;
+            } else if (
+                existing.stripeActivationRequired &&
+                existing.status !== StoreStatus.ACTIVE &&
+                !isStripeFullyReady(existing)
+            ) {
+                // e.g. unsuspend a Stripe-required store that is not ready yet
+                effectiveStatus = StoreStatus.PENDING_STRIPE;
+                preliminaryStripeApproval = true;
+            }
+        }
+
         const shouldPersistReason =
-            status === StoreStatus.REJECTED ||
-            status === StoreStatus.BLOCKED ||
-            status === StoreStatus.SUSPENDED;
+            effectiveStatus === StoreStatus.REJECTED ||
+            effectiveStatus === StoreStatus.BLOCKED ||
+            effectiveStatus === StoreStatus.SUSPENDED;
+
+        const updateData: Prisma.StoreUpdateInput = {
+            status: effectiveStatus,
+            rejectionReason: shouldPersistReason ? (reason ?? null) : null,
+            suspendedUntil: effectiveStatus === StoreStatus.SUSPENDED ? suspendedUntil : null,
+            updatedAt: new Date(),
+        };
+
+        if (preliminaryStripeApproval) {
+            updateData.adminApprovedAt = existing.adminApprovedAt || new Date();
+            updateData.stripeActivationRequired = true;
+        }
 
         // 1) Persist status first — this is the source of truth for the HTTP response.
         const result = await this.prisma.store.update({
             where: { id },
-            data: {
-                status,
-                rejectionReason: shouldPersistReason ? (reason ?? null) : null,
-                suspendedUntil: status === StoreStatus.SUSPENDED ? suspendedUntil : null,
-                updatedAt: new Date(),
-            },
+            data: updateData,
             select: {
                 id: true,
                 name: true,
@@ -637,13 +705,16 @@ export class StoresService {
                 ownerId: true,
                 suspendedUntil: true,
                 rejectionReason: true,
+                stripeAccountId: true,
+                stripeActivationRequired: true,
+                adminApprovedAt: true,
             },
         });
 
         // 2) Side-effects must never turn a successful activation into a client "Failed to update status".
         //    WhatsApp / sockets / audit failures are logged and continue.
         try {
-            if (status === StoreStatus.ACTIVE) {
+            if (preliminaryStripeApproval || effectiveStatus === StoreStatus.ACTIVE) {
                 const pendingDocs = await this.prisma.storeDocument.findMany({
                     where: { storeId: id, status: 'pending' },
                     select: { id: true, docType: true, expiresAt: true },
@@ -677,26 +748,75 @@ export class StoresService {
                         },
                     });
                 }
+            }
 
-                // Fire-and-forget: do not await WhatsApp on the admin HTTP path
+            if (preliminaryStripeApproval) {
+                // Create Connect Express account if missing (best-effort; onboarding link can retry).
+                if (!result.stripeAccountId && this.stripeService.isConfigured()) {
+                    try {
+                        const email = existing.owner?.email?.trim() || result.name;
+                        const account = await this.stripeService.createConnectedAccount(result.id, email);
+                        await this.prisma.store.update({
+                            where: { id: result.id },
+                            data: { stripeAccountId: account.id },
+                        });
+                    } catch (e) {
+                        console.error('Failed to create Stripe Connect account on preliminary approval', e);
+                    }
+                }
+
                 if (result.ownerId) {
                     void this.notificationsService
                         .create({
                             recipientId: result.ownerId,
                             recipientRole: 'MERCHANT',
-                            titleAr: 'تم تفعيل متجرك المشترك!',
-                            titleEn: 'Your store has been activated!',
-                            messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
-                            messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
+                            titleAr: 'موافقة مبدئية — أكمل التحقق المالي',
+                            titleEn: 'Preliminary approval — complete financial verification',
+                            messageAr:
+                                'تمت موافقة الإدارة على متجرك. أكمل ربط Stripe Connect لتفعيل تقديم العروض. لا يمكنك تقديم عروض حتى يكتمل التحقق المالي.',
+                            messageEn:
+                                'Admin approved your store preliminarily. Complete Stripe Connect to unlock offers. You cannot submit offers until financial verification is complete.',
                             type: 'SUCCESS',
-                            link: '/dashboard/merchant/profile',
-                            metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
+                            link: '/dashboard/wallet',
+                            metadata: {
+                                docType: 'store_pending_stripe',
+                                storeId: id,
+                                event: 'STORE_PENDING_STRIPE',
+                                waEvent: 'STORE_ACTIVATION',
+                            },
                         })
-                        .catch((e) => console.error('Failed to send store activation notification', e));
+                        .catch((e) => console.error('Failed to send pending-stripe notification', e));
                 }
+
+                void this.notificationsService
+                    .notifyAdmins({
+                        titleAr: `موافقة مبدئية لمتجر (${result.name})`,
+                        titleEn: `Preliminary approval for store (${result.name})`,
+                        messageAr: 'المتجر بانتظار تفعيل Stripe Connect قبل التفعيل الكامل.',
+                        messageEn: 'Store is awaiting Stripe Connect before full activation.',
+                        type: 'SUCCESS',
+                        link: `/dashboard/admin/stores/${id}`,
+                        metadata: { storeId: id, event: 'STORE_PENDING_STRIPE' },
+                    })
+                    .catch((e) => console.error('Failed to notify admins of preliminary approval', e));
+            } else if (effectiveStatus === StoreStatus.ACTIVE && result.ownerId) {
+                // Direct ACTIVE only for paths that do not require the new Stripe gate (e.g. grandfather unsuspend).
+                void this.notificationsService
+                    .create({
+                        recipientId: result.ownerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: 'تم تفعيل متجرك المشترك!',
+                        titleEn: 'Your store has been activated!',
+                        messageAr: `مبروك! لقد تم مراجعة بيانات الاعتماد واعتمادها بنجاح. يمكنك الآن البدء في تقديم عروض على الطلبات وتلقي الأرباح.`,
+                        messageEn: `Congratulations! Your credentials have been successfully reviewed and approved. You can now start placing offers and receiving profits.`,
+                        type: 'SUCCESS',
+                        link: '/dashboard/merchant/profile',
+                        metadata: { docType: 'store_activation', storeId: id, waEvent: 'STORE_ACTIVATION' },
+                    })
+                    .catch((e) => console.error('Failed to send store activation notification', e));
             }
 
-            if (status === StoreStatus.REJECTED && result.ownerId) {
+            if (effectiveStatus === StoreStatus.REJECTED && result.ownerId) {
                 void this.notificationsService
                     .create({
                         recipientId: result.ownerId,
@@ -712,7 +832,7 @@ export class StoresService {
                     .catch((e) => console.error('Failed to send store rejection notification', e));
             }
 
-            if (status === StoreStatus.SUSPENDED && result.ownerId) {
+            if (effectiveStatus === StoreStatus.SUSPENDED && result.ownerId) {
                 const untilLabel = suspendedUntil
                     ? new Date(suspendedUntil).toLocaleString('ar-EG', {
                           year: 'numeric',
@@ -736,7 +856,7 @@ export class StoresService {
                     .catch((e) => console.error('Failed to send store suspension notification', e));
             }
 
-            if (status === StoreStatus.BLOCKED && result.ownerId) {
+            if (effectiveStatus === StoreStatus.BLOCKED && result.ownerId) {
                 void this.notificationsService
                     .create({
                         recipientId: result.ownerId,
@@ -756,11 +876,13 @@ export class StoresService {
                 entity: 'STORE',
                 actorType: ActorType.ADMIN,
                 actorId: adminId,
-                reason: reason || 'Manual Admin Update',
+                reason: reason || (preliminaryStripeApproval ? 'Preliminary admin approval → PENDING_STRIPE' : 'Manual Admin Update'),
                 metadata: {
                     storeId: id,
                     storeName: result.name,
-                    newStatus: status,
+                    requestedStatus: status,
+                    newStatus: effectiveStatus,
+                    preliminaryStripeApproval,
                     suspendedUntil: suspendedUntil,
                 },
             });

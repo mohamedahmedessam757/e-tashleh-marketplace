@@ -12,6 +12,7 @@ import { isFeaturedMerchantByRules } from '../../../utils/ratingImpactPolicy';
 import { useResolutionStore } from '../../../stores/useResolutionStore';
 import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
+import { StripeActivationBanner } from './StripeActivationBanner';
 import { PolicyChangeBanner } from '../../ui/PolicyChangeBanner';
 import {
     belongsToMerchantStore,
@@ -170,6 +171,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
         <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 min-w-0 overflow-x-clip">
 
             <PolicyChangeBanner audience="VENDOR" />
+            <StripeActivationBanner onNavigate={onNavigate} />
             <LicenseExpiryBanner onNavigate={onNavigate} />
 
             {isBiddingRestricted && (
