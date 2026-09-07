@@ -25,6 +25,7 @@ export class StoreStripeActivationService {
   async syncStoreFromStripeAccount(
     storeId: string,
     account: Record<string, unknown> | null | undefined,
+    options?: { allowMissingAccountRestrict?: boolean },
   ): Promise<{ ready: boolean; status: string }> {
     const mapped = mapStripeAccountToStoreFields(account);
     const store = await this.prisma.store.findUnique({
@@ -45,6 +46,20 @@ export class StoreStripeActivationService {
       return { ready: false, status: 'MISSING' };
     }
 
+    // Security: refuse to apply an account that does not belong to this store
+    // (except when store has no account yet and we're binding the first one).
+    if (
+      account &&
+      mapped.readiness.stripeAccountId &&
+      store.stripeAccountId &&
+      store.stripeAccountId !== mapped.readiness.stripeAccountId
+    ) {
+      this.logger.warn(
+        `Refusing Stripe sync for store ${storeId}: account ${mapped.readiness.stripeAccountId} != bound ${store.stripeAccountId}`,
+      );
+      return { ready: false, status: store.status };
+    }
+
     const data: Prisma.StoreUpdateInput = {
       stripeChargesEnabled: mapped.stripeChargesEnabled,
       stripePayoutsEnabled: mapped.stripePayoutsEnabled,
@@ -63,18 +78,20 @@ export class StoreStripeActivationService {
     let nextStatus: StoreStatus | null = null;
     const requiresStripe = Boolean(store.stripeActivationRequired);
     const ready = mapped.ready;
+    const adminApproved = Boolean(store.adminApprovedAt);
 
     if (requiresStripe) {
       if (
         ready &&
-        store.adminApprovedAt &&
-        (store.status === StoreStatus.PENDING_STRIPE || store.status === StoreStatus.STRIPE_RESTRICTED)
+        adminApproved &&
+        (store.status === StoreStatus.PENDING_STRIPE ||
+          store.status === StoreStatus.STRIPE_RESTRICTED)
       ) {
         nextStatus = StoreStatus.ACTIVE;
       } else if (
         !ready &&
         store.status === StoreStatus.ACTIVE &&
-        store.stripeAccountId
+        (store.stripeAccountId || options?.allowMissingAccountRestrict)
       ) {
         nextStatus = StoreStatus.STRIPE_RESTRICTED;
       }
@@ -95,6 +112,58 @@ export class StoreStripeActivationService {
     }
 
     return { ready, status: updated.status };
+  }
+
+  /**
+   * Mark a Stripe-required store as restricted when Connect account was wiped/lost.
+   */
+  async markRestrictedMissingAccount(storeId: string): Promise<void> {
+    const store = await this.prisma.store.findUnique({
+      where: { id: storeId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        ownerId: true,
+        stripeActivationRequired: true,
+      },
+    });
+    if (!store?.stripeActivationRequired) return;
+    if (store.status !== StoreStatus.ACTIVE && store.status !== StoreStatus.PENDING_STRIPE) {
+      return;
+    }
+
+    const nextStatus =
+      store.status === StoreStatus.ACTIVE
+        ? StoreStatus.STRIPE_RESTRICTED
+        : StoreStatus.PENDING_STRIPE;
+
+    await this.prisma.store.update({
+      where: { id: storeId },
+      data: {
+        status: nextStatus,
+        stripeAccountId: null,
+        stripeOnboarded: false,
+        stripeChargesEnabled: false,
+        stripePayoutsEnabled: false,
+        stripeDetailsSubmitted: false,
+        stripeDisabledReason: 'account_missing',
+        stripeRequirementsDue: ['account'],
+        stripeStatusUpdatedAt: new Date(),
+      },
+    });
+
+    if (nextStatus !== store.status) {
+      await this.notifyStatusTransition(store, nextStatus, {
+        stripeAccountId: null,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+        detailsSubmitted: false,
+        disabledReason: 'account_missing',
+        currentlyDue: ['account'],
+        pendingVerification: [],
+      });
+    }
   }
 
   async syncStoreFromReadiness(
@@ -159,7 +228,8 @@ export class StoreStripeActivationService {
       }
 
       if (nextStatus === StoreStatus.STRIPE_RESTRICTED) {
-        const due = readiness.currentlyDue?.slice(0, 5).join(', ') || readiness.disabledReason || 'requirements';
+        const due =
+          readiness.currentlyDue?.slice(0, 5).join(', ') || readiness.disabledReason || 'requirements';
         if (store.ownerId) {
           void this.notifications
             .create({
@@ -193,7 +263,6 @@ export class StoreStripeActivationService {
     }
   }
 
-  /** Convenience for callers that already have a readiness decision. */
   isReady(account: Record<string, unknown> | null | undefined): boolean {
     return mapStripeAccountToStoreFields(account).ready;
   }

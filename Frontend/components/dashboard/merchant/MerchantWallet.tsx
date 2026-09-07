@@ -225,18 +225,18 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
 
         if (stripeStatus === 'return') {
             const handleReturn = async () => {
-                // Show modal immediately for instant feedback
-                setStripeSuccess(true);
+                // Never trust return_url alone — verify live Stripe readiness first.
                 setIsOnboarding(true);
                 try {
                     const { success, onboarded } = await useMerchantWalletStore.getState().refreshStripeStatus();
-                    if (!success || !onboarded) {
-                        // If verification fails, hide modal and show error
+                    if (success && onboarded) {
+                        setStripeSuccess(true);
+                    } else {
                         setStripeSuccess(false);
                         alert(
                             isAr
-                                ? '⚠️ يبدو أن عملية الربط لم تكتمل في Stripe. يرجى التأكد من إدخال كافة البيانات.'
-                                : '⚠️ Onboarding seems incomplete. Please ensure all data is entered in Stripe.'
+                                ? '⚠️ لم يكتمل تفعيل الحساب المالي بعد. أكمل متطلبات Stripe ثم عد للمنصة — التفعيل يتم تلقائيًا عند الجاهزية.'
+                                : '⚠️ Financial account is not fully ready yet. Finish Stripe requirements — activation happens automatically when ready.'
                         );
                     }
                 } catch (error) {

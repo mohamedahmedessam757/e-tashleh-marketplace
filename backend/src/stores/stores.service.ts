@@ -9,6 +9,7 @@ import { MerchantPerformanceService } from '../merchant-performance/merchant-per
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 import { StripeService } from '../stripe/stripe.service';
 import { isStripeFullyReady } from './store-activation.policy';
+import { StoreStripeActivationService } from './store-stripe-activation.service';
 
 @Injectable()
 export class StoresService {
@@ -20,6 +21,7 @@ export class StoresService {
         private readonly merchantPerformance: MerchantPerformanceService,
         @Inject(forwardRef(() => StripeService))
         private readonly stripeService: StripeService,
+        private readonly storeStripeActivation: StoreStripeActivationService,
     ) { }
 
     async findMyStore(userId: string) {
@@ -751,21 +753,37 @@ export class StoresService {
             }
 
             if (preliminaryStripeApproval) {
-                // Create Connect Express account if missing (best-effort; onboarding link can retry).
-                if (!result.stripeAccountId && this.stripeService.isConfigured()) {
+                // Create Connect Express account if missing, or sync existing (may already be ready).
+                let promotedToActive = false;
+                if (this.stripeService.isConfigured()) {
                     try {
-                        const email = existing.owner?.email?.trim() || result.name;
-                        const account = await this.stripeService.createConnectedAccount(result.id, email);
-                        await this.prisma.store.update({
-                            where: { id: result.id },
-                            data: { stripeAccountId: account.id },
-                        });
+                        let accountId = result.stripeAccountId;
+                        if (!accountId) {
+                            const email = existing.owner?.email?.trim() || result.name;
+                            const account = await this.stripeService.createConnectedAccount(result.id, email);
+                            accountId = account.id;
+                            await this.prisma.store.update({
+                                where: { id: result.id },
+                                data: { stripeAccountId: account.id },
+                            });
+                            // New accounts are never fully ready immediately.
+                        } else {
+                            const live = await this.stripeService.retrieveAccountOrNull(accountId);
+                            if (live) {
+                                const sync = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                                    result.id,
+                                    live,
+                                );
+                                promotedToActive = sync.status === StoreStatus.ACTIVE;
+                                result.status = sync.status as StoreStatus;
+                            }
+                        }
                     } catch (e) {
-                        console.error('Failed to create Stripe Connect account on preliminary approval', e);
+                        console.error('Failed to create/sync Stripe Connect account on preliminary approval', e);
                     }
                 }
 
-                if (result.ownerId) {
+                if (!promotedToActive && result.ownerId) {
                     void this.notificationsService
                         .create({
                             recipientId: result.ownerId,
@@ -788,17 +806,19 @@ export class StoresService {
                         .catch((e) => console.error('Failed to send pending-stripe notification', e));
                 }
 
-                void this.notificationsService
-                    .notifyAdmins({
-                        titleAr: `موافقة مبدئية لمتجر (${result.name})`,
-                        titleEn: `Preliminary approval for store (${result.name})`,
-                        messageAr: 'المتجر بانتظار تفعيل Stripe Connect قبل التفعيل الكامل.',
-                        messageEn: 'Store is awaiting Stripe Connect before full activation.',
-                        type: 'SUCCESS',
-                        link: `/dashboard/admin/stores/${id}`,
-                        metadata: { storeId: id, event: 'STORE_PENDING_STRIPE' },
-                    })
-                    .catch((e) => console.error('Failed to notify admins of preliminary approval', e));
+                if (!promotedToActive) {
+                    void this.notificationsService
+                        .notifyAdmins({
+                            titleAr: `موافقة مبدئية لمتجر (${result.name})`,
+                            titleEn: `Preliminary approval for store (${result.name})`,
+                            messageAr: 'المتجر بانتظار تفعيل Stripe Connect قبل التفعيل الكامل.',
+                            messageEn: 'Store is awaiting Stripe Connect before full activation.',
+                            type: 'SUCCESS',
+                            link: `/dashboard/admin/stores/${id}`,
+                            metadata: { storeId: id, event: 'STORE_PENDING_STRIPE' },
+                        })
+                        .catch((e) => console.error('Failed to notify admins of preliminary approval', e));
+                }
             } else if (effectiveStatus === StoreStatus.ACTIVE && result.ownerId) {
                 // Direct ACTIVE only for paths that do not require the new Stripe gate (e.g. grandfather unsuspend).
                 void this.notificationsService
@@ -888,16 +908,16 @@ export class StoresService {
             });
 
             await this.notificationsService.notifyAdmins({
-                titleAr: `تحديث حالة متجر: ${status} 🏪`,
-                titleEn: `Store Status Updated: ${status} 🏪`,
-                messageAr: `تم تغيير حالة متجر (${result.name}) إلى ${status}. السبب: ${reason || 'تحديث إداري'}`,
-                messageEn: `Store (${result.name}) status changed to ${status}. Reason: ${reason || 'Admin update'}`,
+                titleAr: `تحديث حالة متجر: ${result.status} 🏪`,
+                titleEn: `Store Status Updated: ${result.status} 🏪`,
+                messageAr: `تم تغيير حالة متجر (${result.name}) إلى ${result.status}. السبب: ${reason || (preliminaryStripeApproval ? 'موافقة مبدئية' : 'تحديث إداري')}`,
+                messageEn: `Store (${result.name}) status changed to ${result.status}. Reason: ${reason || (preliminaryStripeApproval ? 'Preliminary approval' : 'Admin update')}`,
                 type: 'SYSTEM',
-                metadata: { storeId: id, status },
+                metadata: { storeId: id, status: result.status, requestedStatus: status },
             });
         } catch (sideEffectError) {
             console.error(
-                `Store status updated to ${status} but post-update side effects failed (storeId=${id}):`,
+                `Store status updated to ${result.status} but post-update side effects failed (storeId=${id}):`,
                 sideEffectError,
             );
         }

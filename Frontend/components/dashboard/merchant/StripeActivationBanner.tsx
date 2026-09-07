@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { CreditCard, ShieldAlert, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { useVendorStore } from '../../../stores/useVendorStore';
+import { useVendorStore, merchantCanSubmitOffers } from '../../../stores/useVendorStore';
 import { client } from '../../../services/api/client';
 
 interface StripeActivationBannerProps {
@@ -18,13 +18,29 @@ export const StripeActivationBanner: React.FC<StripeActivationBannerProps> = ({
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
   const vendorStatus = useVendorStore((s) => s.vendorStatus);
+  const stripeActivationRequired = useVendorStore((s) => s.stripeActivationRequired);
+  const stripeChargesEnabled = useVendorStore((s) => s.stripeChargesEnabled);
+  const stripePayoutsEnabled = useVendorStore((s) => s.stripePayoutsEnabled);
   const stripeDisabledReason = useVendorStore((s) => s.stripeDisabledReason);
   const stripeRequirementsDue = useVendorStore((s) => s.stripeRequirementsDue);
+  const profile = useVendorStore((s) => s.profile);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const canOffer = merchantCanSubmitOffers({
+    status: vendorStatus,
+    stripeActivationRequired,
+    stripeChargesEnabled,
+    stripePayoutsEnabled,
+    stripeDisabledReason,
+    stripeRequirementsDue,
+    stripeAccountId: profile?.stripeAccountId,
+  });
+
   const showPending = vendorStatus === 'PENDING_STRIPE';
-  const showRestricted = vendorStatus === 'STRIPE_RESTRICTED';
+  const showRestricted =
+    vendorStatus === 'STRIPE_RESTRICTED' ||
+    (vendorStatus === 'ACTIVE' && stripeActivationRequired && !canOffer);
   if (!showPending && !showRestricted) return null;
 
   const alerts = (t as any)?.dashboard?.merchant?.alerts || {};

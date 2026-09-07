@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Search, Box, Calendar, MapPin, ChevronRight, ChevronLeft, Car, AlertTriangle, FileText, Clock, Info, Shield, Truck, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
-import { useVendorStore } from '../../../stores/useVendorStore';
+import { useVendorStore, merchantCanSubmitOffers } from '../../../stores/useVendorStore';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
 import { SubmitOfferModal } from './SubmitOfferModal';
@@ -21,7 +21,16 @@ interface MerchantMarketplaceProps {
 export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { orders, addOfferToOrder, fetchOrders } = useOrderStore();
-    const { vendorStatus, storeInfo, storeId, visibilityRestricted, visibilityRate, visibilityNote, performance } = useVendorStore();
+    const { vendorStatus, storeInfo, storeId, visibilityRestricted, visibilityRate, visibilityNote, performance, stripeActivationRequired, stripeChargesEnabled, stripePayoutsEnabled, stripeDisabledReason, stripeRequirementsDue, profile } = useVendorStore();
+    const canOffer = merchantCanSubmitOffers({
+        status: vendorStatus,
+        stripeActivationRequired,
+        stripeChargesEnabled,
+        stripePayoutsEnabled,
+        stripeDisabledReason,
+        stripeRequirementsDue,
+        stripeAccountId: profile?.stripeAccountId,
+    });
     const monthlyDeletions = performance?.monthlyOfferDeletionCount ?? 0;
     const biddingUntil = performance?.offerBiddingRestrictedUntil
         ? new Date(performance.offerBiddingRestrictedUntil)
@@ -86,57 +95,52 @@ export const MerchantMarketplace: React.FC<MerchantMarketplaceProps> = ({ onNavi
     const isAr = language === 'ar';
     const ArrowIcon = isAr ? ChevronLeft : ChevronRight;
 
-    // LICENSE CHECK
-    if (vendorStatus === 'LICENSE_EXPIRED') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[500px] text-center space-y-6">
-                <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/30">
-                    <AlertTriangle size={48} className="text-red-500" />
+    // Stripe / status gate for NEW offers (API is still the source of truth)
+    if (!canOffer) {
+        const stripeBlocked =
+            vendorStatus === 'PENDING_STRIPE' ||
+            vendorStatus === 'STRIPE_RESTRICTED' ||
+            (vendorStatus === 'ACTIVE' && stripeActivationRequired);
+        if (stripeBlocked || vendorStatus === 'LICENSE_EXPIRED') {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[500px] text-center space-y-6 px-4">
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center border ${
+                        vendorStatus === 'LICENSE_EXPIRED'
+                            ? 'bg-red-500/10 border-red-500/30'
+                            : 'bg-amber-500/10 border-amber-500/30'
+                    }`}>
+                        <AlertTriangle size={48} className={vendorStatus === 'LICENSE_EXPIRED' ? 'text-red-500' : 'text-amber-500'} />
+                    </div>
+                    <div className="max-w-md">
+                        <h2 className="text-2xl font-bold text-white mb-3">
+                            {vendorStatus === 'LICENSE_EXPIRED'
+                                ? t.dashboard.merchant.alerts.restricted
+                                : vendorStatus === 'STRIPE_RESTRICTED'
+                                    ? t.dashboard.merchant.alerts.stripeRestrictedTitle
+                                    : t.dashboard.merchant.alerts.stripePendingTitle}
+                        </h2>
+                        <p className="text-white/60 leading-relaxed">
+                            {vendorStatus === 'LICENSE_EXPIRED'
+                                ? t.dashboard.merchant.alerts.restrictedDesc
+                                : t.dashboard.merchant.alerts.stripeOffersBlocked}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate?.(vendorStatus === 'LICENSE_EXPIRED' ? 'profile' : 'wallet')}
+                        className={`px-8 py-3 rounded-xl font-bold transition-colors ${
+                            vendorStatus === 'LICENSE_EXPIRED'
+                                ? 'bg-red-600 hover:bg-red-500 text-white'
+                                : 'bg-gold-500 hover:bg-gold-400 text-black'
+                        }`}
+                    >
+                        {vendorStatus === 'LICENSE_EXPIRED'
+                            ? t.dashboard.merchant.alerts.updateLicense
+                            : t.dashboard.merchant.alerts.stripeCompleteCta}
+                    </button>
                 </div>
-                <div className="max-w-md">
-                    <h2 className="text-2xl font-bold text-white mb-3">{t.dashboard.merchant.alerts.restricted}</h2>
-                    <p className="text-white/60 leading-relaxed">
-                        {t.dashboard.merchant.alerts.restrictedDesc}
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => onNavigate?.('profile')}
-                    className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold flex items-center gap-2 transition-colors"
-                >
-                    <FileText size={18} />
-                    {t.dashboard.merchant.alerts.updateLicense}
-                </button>
-            </div>
-        );
-    }
-
-    // Stripe activation gate (new stores / restricted Connect)
-    if (vendorStatus === 'PENDING_STRIPE' || vendorStatus === 'STRIPE_RESTRICTED') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[500px] text-center space-y-6 px-4">
-                <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/30">
-                    <AlertTriangle size={48} className="text-amber-500" />
-                </div>
-                <div className="max-w-md">
-                    <h2 className="text-2xl font-bold text-white mb-3">
-                        {vendorStatus === 'STRIPE_RESTRICTED'
-                            ? t.dashboard.merchant.alerts.stripeRestrictedTitle
-                            : t.dashboard.merchant.alerts.stripePendingTitle}
-                    </h2>
-                    <p className="text-white/60 leading-relaxed">
-                        {t.dashboard.merchant.alerts.stripeOffersBlocked}
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => onNavigate?.('wallet')}
-                    className="px-8 py-3 bg-gold-500 hover:bg-gold-400 text-black rounded-xl font-bold transition-colors"
-                >
-                    {t.dashboard.merchant.alerts.stripeCompleteCta}
-                </button>
-            </div>
-        );
+            );
+        }
     }
 
     const handleOpenExplore = (request: any) => {

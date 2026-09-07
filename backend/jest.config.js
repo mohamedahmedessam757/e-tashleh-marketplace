@@ -28,7 +28,6 @@ module.exports = {
         '**/otp-purpose.spec.ts',
         '**/offer-action-policy.util.spec.ts',
         '**/referral-fraud.util.spec.ts',
-        '**/store-activation.policy.spec.ts',
     ],
     moduleNameMapper: {
         '^@prisma/client$': '<rootDir>/src/prisma/client',

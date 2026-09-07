@@ -54,7 +54,12 @@ export class StripeController {
     }
 
     private async resolveMerchantAccountId(
-        store: { id: string; stripeAccountId: string | null },
+        store: {
+            id: string;
+            stripeAccountId: string | null;
+            stripeActivationRequired?: boolean;
+            status?: string;
+        },
         email: string,
     ): Promise<string> {
         if (store.stripeAccountId) {
@@ -71,8 +76,14 @@ export class StripeController {
                     stripeOnboarded: false,
                     stripeChargesEnabled: false,
                     stripePayoutsEnabled: false,
+                    stripeDetailsSubmitted: false,
+                    stripeDisabledReason: 'account_missing',
+                    stripeRequirementsDue: ['account'],
+                    stripeStatusUpdatedAt: new Date(),
                 },
             });
+            // Never leave a Stripe-required ACTIVE store without a restricted status.
+            await this.storeStripeActivation.markRestrictedMissingAccount(store.id);
         }
 
         const account = await this.stripeService.createConnectedAccount(store.id, email);

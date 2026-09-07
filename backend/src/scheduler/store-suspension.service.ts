@@ -45,6 +45,7 @@ export class StoreSuspensionService {
                     stripeAccountId: true,
                     stripeDisabledReason: true,
                     stripeRequirementsDue: true,
+                    stripeDetailsSubmitted: true,
                 }
             });
 
@@ -64,7 +65,14 @@ export class StoreSuspensionService {
 
                 let restoreStatus: 'ACTIVE' | 'PENDING_STRIPE' | 'STRIPE_RESTRICTED' = 'ACTIVE';
                 if (store.stripeActivationRequired) {
-                    restoreStatus = stripeReady ? 'ACTIVE' : 'PENDING_STRIPE';
+                    if (stripeReady) {
+                        restoreStatus = 'ACTIVE';
+                    } else if (store.stripeAccountId || store.stripeDetailsSubmitted) {
+                        // Previously connected / in progress → keep restricted semantics
+                        restoreStatus = 'STRIPE_RESTRICTED';
+                    } else {
+                        restoreStatus = 'PENDING_STRIPE';
+                    }
                 }
 
                 await this.prisma.$transaction(async (tx) => {

@@ -79,14 +79,41 @@ export class StripeWebhookController {
                         const meta = account.metadata || {};
                         const entityId = meta.storeId || meta.id;
                         if (entityId && meta.type === 'store') {
-                            // Always sync capabilities; activation uses charges/payouts/requirements — not return_url.
-                            const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
-                                entityId,
-                                account,
-                            );
-                            this.logger.log(
-                                `Store ${entityId} Stripe sync: ready=${result.ready} status=${result.status}`,
-                            );
+                            // Bind by account id when possible to prevent metadata spoofing.
+                            const bound = await this.prisma.store.findUnique({
+                                where: { id: entityId },
+                                select: { id: true, stripeAccountId: true },
+                            });
+                            if (
+                                bound &&
+                                (!bound.stripeAccountId || bound.stripeAccountId === account.id)
+                            ) {
+                                const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                                    entityId,
+                                    account,
+                                );
+                                this.logger.log(
+                                    `Store ${entityId} Stripe sync: ready=${result.ready} status=${result.status}`,
+                                );
+                            } else if (account.id) {
+                                const byAcct = await this.prisma.store.findFirst({
+                                    where: { stripeAccountId: account.id },
+                                    select: { id: true },
+                                });
+                                if (byAcct) {
+                                    const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                                        byAcct.id,
+                                        account,
+                                    );
+                                    this.logger.log(
+                                        `Store ${byAcct.id} Stripe sync (rebound by account id): ready=${result.ready} status=${result.status}`,
+                                    );
+                                } else {
+                                    this.logger.warn(
+                                        `Ignored account.updated for store metadata ${entityId}: account ${account.id} not bound`,
+                                    );
+                                }
+                            }
                         } else if (entityId && meta.type === 'customer') {
                             // Customer Connect path unchanged: details_submitted still marks onboarded.
                             if (account.details_submitted) {

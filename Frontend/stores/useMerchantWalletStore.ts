@@ -88,7 +88,7 @@ interface MerchantWalletState {
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
   cancelWithdrawal: (requestId: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
-  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null }>;
+  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null; storeStatus?: string }>;
 }
 
 export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => ({
@@ -249,9 +249,10 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
     try {
         const { client } = await import('../services/api/client');
         const response = await client.get('/stripe/status');
-        const onboarded = response.data.stripeOnboarded;
+        const onboarded = Boolean(response.data.stripeReady ?? response.data.stripeOnboarded);
         const stripeDisplay = response.data.stripeDisplay ?? null;
-        
+        const storeStatus = response.data.storeStatus as string | undefined;
+
         if (onboarded) {
           const currentStats = get().stats;
           set({
@@ -275,13 +276,24 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         } else {
           set({ stripeConnectInfo: stripeDisplay });
         }
+
+        // Keep vendor store status in sync after Connect readiness changes (do not trust return_url alone).
+        try {
+          const { useVendorStore } = await import('./useVendorStore');
+          if (storeStatus) {
+            useVendorStore.getState().setVendorStatus(storeStatus as any);
+          }
+          await useVendorStore.getState().fetchVendorProfile();
+        } catch (profileErr) {
+          console.warn('Failed to refresh vendor profile after Stripe status', profileErr);
+        }
         
-        return { success: true, onboarded, stripeDisplay };
+        return { success: true, onboarded, stripeDisplay, storeStatus };
     } catch (error) {
         console.error('Failed to refresh stripe status', error);
         return { success: false, onboarded: false, stripeDisplay: null };
     }
-  }
+  },
 }));
 
 
