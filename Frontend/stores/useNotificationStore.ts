@@ -345,6 +345,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           }
         });
       }
+
+      // Store activation / Stripe gate: refresh merchant status without reload
+      const eventName = String(meta.event || meta.docType || '').toUpperCase();
+      if (
+        eventName.includes('STORE_PENDING_STRIPE') ||
+        eventName.includes('STORE_ACTIVATION') ||
+        eventName.includes('STORE_ACTIVE') ||
+        meta.docType === 'store_pending_stripe'
+      ) {
+        void import('./useVendorStore').then(({ useVendorStore }) => {
+          void useVendorStore.getState().fetchVendorProfile();
+        });
+      }
     };
 
     // Listen for standard notifications

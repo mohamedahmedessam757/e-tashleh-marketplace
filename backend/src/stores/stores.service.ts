@@ -795,7 +795,7 @@ export class StoresService {
                             messageEn:
                                 'Admin approved your store preliminarily. Complete Stripe Connect to unlock offers. You cannot submit offers until financial verification is complete.',
                             type: 'SUCCESS',
-                            link: '/dashboard/wallet',
+                            link: 'wallet',
                             metadata: {
                                 docType: 'store_pending_stripe',
                                 storeId: id,

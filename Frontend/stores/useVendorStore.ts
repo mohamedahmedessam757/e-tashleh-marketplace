@@ -267,6 +267,8 @@ export interface VendorState {
   vendorProfileSubscription: any;
   subscribeToVendorProfile: () => void;
   unsubscribeFromVendorProfile: () => void;
+  /** Idempotent: attach stores realtime once storeId is known (no refcount bump if already live). */
+  ensureVendorProfileRealtime: () => void;
 }
 
 const initialDocState: DocState = { file: null, status: 'empty', progress: 0 };
@@ -653,6 +655,11 @@ export const useVendorStore = create<VendorState>()(
           contractAcceptance: (data.contractAcceptances || []).find((a: any) => a.isActive !== false) ?? null,
           isLoadingProfile: false
         });
+
+        // Start/refresh realtime after storeId is known (fixes race where subscribe ran too early).
+        queueMicrotask(() => {
+          get().ensureVendorProfileRealtime();
+        });
       }
     } catch (error) {
       console.error('Failed to fetch vendor profile:', error);
@@ -853,9 +860,35 @@ export const useVendorStore = create<VendorState>()(
   },
 
   vendorProfileSubscription: null,
-  subscribeToVendorProfile: () => {
-    const { fetchVendorProfile, storeId } = get();
+  ensureVendorProfileRealtime: () => {
+    const storeId =
+      get().storeId ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('merchant_store_id') : null);
     if (!storeId) return;
+
+    if (get().storeId !== storeId) {
+      set({ storeId });
+    }
+
+    if (
+      vendorProfileRealtimeStoreId === storeId &&
+      get().vendorProfileSubscription
+    ) {
+      return;
+    }
+
+    get().subscribeToVendorProfile();
+  },
+
+  subscribeToVendorProfile: () => {
+    const storeId =
+      get().storeId ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('merchant_store_id') : null);
+    if (!storeId) return;
+
+    if (get().storeId !== storeId) {
+      set({ storeId });
+    }
 
     if (
       vendorProfileRealtimeRefCount > 0 &&
@@ -885,29 +918,32 @@ export const useVendorStore = create<VendorState>()(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'stores', filter: `id=eq.${storeId}` },
         (payload) => {
+          const row = payload.new as Record<string, any>;
+          if (!row) return;
           set({
-            vendorStatus: payload.new.status,
-            withdrawalsFrozen: payload.new.withdrawals_frozen,
-            withdrawalFreezeNote: payload.new.withdrawal_freeze_note,
-            offerLimit: payload.new.offer_limit,
-            dailyOfferCount: payload.new.daily_offer_count,
-            visibilityRestricted: payload.new.visibility_restricted,
-            visibilityRate: payload.new.visibility_rate,
-            restrictionAlertMessage: payload.new.restriction_alert_message,
-            stripeActivationRequired: Boolean(payload.new.stripe_activation_required),
-            stripeChargesEnabled: Boolean(payload.new.stripe_charges_enabled),
-            stripePayoutsEnabled: Boolean(payload.new.stripe_payouts_enabled),
-            stripeDetailsSubmitted: Boolean(payload.new.stripe_details_submitted),
-            stripeDisabledReason: payload.new.stripe_disabled_reason || null,
-            stripeRequirementsDue: Array.isArray(payload.new.stripe_requirements_due)
-              ? payload.new.stripe_requirements_due
+            vendorStatus: row.status,
+            withdrawalsFrozen: row.withdrawals_frozen,
+            withdrawalFreezeNote: row.withdrawal_freeze_note,
+            offerLimit: row.offer_limit,
+            dailyOfferCount: row.daily_offer_count,
+            visibilityRestricted: row.visibility_restricted,
+            visibilityRate: row.visibility_rate,
+            restrictionAlertMessage: row.restriction_alert_message,
+            stripeActivationRequired: Boolean(row.stripe_activation_required),
+            stripeChargesEnabled: Boolean(row.stripe_charges_enabled),
+            stripePayoutsEnabled: Boolean(row.stripe_payouts_enabled),
+            stripeDetailsSubmitted: Boolean(row.stripe_details_submitted),
+            stripeDisabledReason: row.stripe_disabled_reason || null,
+            stripeRequirementsDue: Array.isArray(row.stripe_requirements_due)
+              ? row.stripe_requirements_due
               : [],
-            stripeRequirementsPending: Array.isArray(payload.new.stripe_requirements_pending)
-              ? payload.new.stripe_requirements_pending
+            stripeRequirementsPending: Array.isArray(row.stripe_requirements_pending)
+              ? row.stripe_requirements_pending
               : [],
-            adminApprovedAt: payload.new.admin_approved_at || null,
+            adminApprovedAt: row.admin_approved_at || null,
           });
-          fetchVendorProfile();
+          // Full refresh so docs/owner fields stay consistent after admin activation.
+          void get().fetchVendorProfile();
         },
       )
       .on(
@@ -919,7 +955,7 @@ export const useVendorStore = create<VendorState>()(
           filter: `store_id=eq.${storeId}`,
         },
         () => {
-          fetchVendorProfile();
+          void get().fetchVendorProfile();
         },
       )
       .subscribe();

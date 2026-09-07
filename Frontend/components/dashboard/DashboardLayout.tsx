@@ -50,6 +50,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     vendorStatus, 
     fetchVendorProfile, 
     profile: vendorProfile,
+    storeId: vendorStoreId,
     withdrawalsFrozen: vWithdrawalsFrozen,
     visibilityRestricted: vVisibilityRestricted,
     offerLimit: vOfferLimit 
@@ -74,7 +75,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       profileUnsub = subscribeToProfile();
       
       if (role === 'merchant') {
-        useVendorStore.getState().subscribeToVendorProfile();
+        useVendorStore.getState().ensureVendorProfileRealtime();
       }
       
       // SAFETY: SILENCE ALL BACKGROUND FETCHES IF MAINTENANCE IS ACTIVE
@@ -126,6 +127,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       }
     };
   }, [role, publicSystemStatus?.maintenanceMode]);
+
+  // Merchant store realtime must wait until storeId exists (persist rehydrate / /stores/me).
+  useEffect(() => {
+    if (role !== 'merchant' || !vendorStoreId) return;
+    useVendorStore.getState().ensureVendorProfileRealtime();
+  }, [role, vendorStoreId]);
 
   const isAr = language === 'ar';
 

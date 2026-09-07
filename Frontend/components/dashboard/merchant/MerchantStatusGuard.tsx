@@ -41,6 +41,24 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
       });
   }, [fetchVendorProfile]);
 
+  // While awaiting admin/Stripe activation, poll + ensure realtime so UI unlocks without manual reload.
+  useEffect(() => {
+    const pendingStatuses = new Set([
+      'PENDING_REVIEW',
+      'PENDING_DOCUMENTS',
+      'PENDING_STRIPE',
+      'IDLE',
+    ]);
+    if (!pendingStatuses.has(vendorStatus)) return;
+
+    useVendorStore.getState().ensureVendorProfileRealtime();
+    const timer = window.setInterval(() => {
+      void useVendorStore.getState().fetchVendorProfile();
+    }, 8000);
+
+    return () => window.clearInterval(timer);
+  }, [vendorStatus]);
+
   // Show spinner ONLY during the truly initial load (status === 'IDLE')
   if (initialLoadRunning && vendorStatus === 'IDLE') {
     return (
