@@ -192,7 +192,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }, [role]);
 
   // CUSTOMER & MERCHANT & ADMIN DATA WATCHER
-  const vendorStoreId = useVendorStore((s) => s.storeId);
 
   // Align countdown clocks with server (display only; transitions stay server-authoritative)
   useEffect(() => {
