@@ -647,6 +647,11 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                         <p className="text-white/40 text-[10px] sm:text-xs mt-1 font-medium">
                             {w.walletSubtitle}
                         </p>
+                        {w.settlementNote && (
+                            <p className="text-white/30 text-[10px] mt-1 max-w-xl leading-relaxed">
+                                {w.settlementNote}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -692,7 +697,20 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                     colorClass="text-emerald-400"
                     bgClass="bg-emerald-500/10"
                     borderClass="border-emerald-500/10"
+                    subtitle={w.availableBalanceHint}
                 />
+                {(Number((stats as { pendingLiabilities?: number }).pendingLiabilities) || 0) > 0 && (
+                    <StatCard
+                        label={w.pendingLiabilities}
+                        value={Number((stats as { pendingLiabilities?: number }).pendingLiabilities)}
+                        unit="AED"
+                        icon={AlertOctagon}
+                        colorClass="text-rose-400"
+                        bgClass="bg-rose-500/10"
+                        borderClass="border-rose-500/10"
+                        subtitle={w.pendingLiabilitiesHint}
+                    />
+                )}
                 <StatCard
                     label={w.pendingBalance}
                     value={stats.pending}

@@ -64,16 +64,45 @@ export function buildPayoutBankDetailsResponse(input: {
 export interface PayoutReadiness {
     hasBank: boolean;
     hasStripe: boolean;
+    /** Stripe account exists and is onboarded (may still lack charges/payouts). */
+    hasStripeAccount: boolean;
+    stripeReadyForTransfer: boolean;
     hasAny: boolean;
+}
+
+export function isStripeConnectReadyForTransfer(input: {
+    stripeAccountId?: string | null;
+    stripeOnboarded?: boolean;
+    stripeChargesEnabled?: boolean;
+    stripePayoutsEnabled?: boolean;
+}): boolean {
+    return Boolean(
+        input.stripeAccountId?.trim() &&
+            input.stripeOnboarded &&
+            input.stripeChargesEnabled &&
+            input.stripePayoutsEnabled,
+    );
 }
 
 export function getPayoutReadiness(input: {
     bankIban?: string | null;
     stripeOnboarded?: boolean;
+    stripeAccountId?: string | null;
+    stripeChargesEnabled?: boolean;
+    stripePayoutsEnabled?: boolean;
 }): PayoutReadiness {
     const hasBank = Boolean(input.bankIban?.trim());
-    const hasStripe = Boolean(input.stripeOnboarded);
-    return { hasBank, hasStripe, hasAny: hasBank || hasStripe };
+    const hasStripeAccount = Boolean(input.stripeAccountId?.trim() && input.stripeOnboarded);
+    const stripeReadyForTransfer = isStripeConnectReadyForTransfer(input);
+    // Prefer fully ready Connect; fall back to onboarded for accounts still syncing capabilities.
+    const hasStripe = stripeReadyForTransfer || hasStripeAccount;
+    return {
+        hasBank,
+        hasStripe,
+        hasStripeAccount,
+        stripeReadyForTransfer,
+        hasAny: hasBank || hasStripe,
+    };
 }
 
 export function assertWithdrawalPayoutMethodReady(
@@ -88,7 +117,13 @@ export function assertWithdrawalPayoutMethodReady(
 
     if (payoutMethod === 'STRIPE' && !readiness.hasStripe) {
         throw new BadRequestException(
-            'Complete Stripe Connect onboarding first, or switch to bank transfer.',
+            'Complete Stripe Connect onboarding first (charges and payouts must be enabled), or switch to bank transfer.',
+        );
+    }
+
+    if (payoutMethod === 'STRIPE' && readiness.hasStripeAccount && !readiness.stripeReadyForTransfer) {
+        throw new BadRequestException(
+            'Stripe Connect account is not ready for transfers yet. Finish verification in Stripe, or use bank transfer.',
         );
     }
 

@@ -426,25 +426,77 @@ export class StripeService {
     }
 
     /**
-     * Creates a destination transfer, releasing funds from Platform to Merchant.
+     * Creates a destination transfer (SCT settlement): platform balance → connected account.
+     * Optional source_transaction links to the original charge when settling a single order.
      */
-    async createTransfer(amountStr: string, currency: string, connectedAccountId: string, transferGroup: string, metadata: any, idempotencyKey?: string): Promise<any> {
+    async createTransfer(
+        amountStr: string,
+        currency: string,
+        connectedAccountId: string,
+        transferGroup: string,
+        metadata: any,
+        idempotencyKey?: string,
+        options?: { sourceTransaction?: string },
+    ): Promise<any> {
         const amountCents = Math.round(parseFloat(amountStr) * 100);
+        if (amountCents <= 0) {
+            throw new BadRequestException('Transfer amount must be greater than zero');
+        }
+
+        const params: Record<string, unknown> = {
+            amount: amountCents,
+            currency,
+            destination: connectedAccountId,
+            transfer_group: transferGroup,
+            metadata: metadata,
+        };
+        if (options?.sourceTransaction?.startsWith('ch_') || options?.sourceTransaction?.startsWith('py_')) {
+            params.source_transaction = options.sourceTransaction;
+        }
 
         try {
             return await this.stripe.transfers.create(
-                {
-                    amount: amountCents,
-                    currency,
-                    destination: connectedAccountId,
-                    transfer_group: transferGroup,
-                    metadata: metadata,
-                },
+                params,
                 idempotencyKey ? { idempotencyKey } : undefined,
             );
         } catch (error: any) {
-            this.logger.error(`Failed to transfer funds to ${connectedAccountId}`, error.message);
+            this.logger.error(`Failed to transfer funds to connected account`, error.message);
             throw new BadRequestException(`Transfer failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Reverse a prior Transfer (pull funds back from connected account to platform).
+     */
+    async createTransferReversal(
+        transferId: string,
+        amountStr?: string,
+        idempotencyKey?: string,
+        metadata?: Record<string, string>,
+    ): Promise<any> {
+        this.assertConfigured();
+        if (!transferId?.startsWith('tr_')) {
+            throw new BadRequestException('Invalid transfer id for reversal');
+        }
+
+        const params: Record<string, unknown> = {};
+        if (amountStr) {
+            const cents = Math.round(parseFloat(amountStr) * 100);
+            if (cents > 0) params.amount = cents;
+        }
+        if (metadata && Object.keys(metadata).length > 0) {
+            params.metadata = metadata;
+        }
+
+        try {
+            return await this.stripe.transfers.createReversal(
+                transferId,
+                params,
+                idempotencyKey ? { idempotencyKey } : undefined,
+            );
+        } catch (error: any) {
+            this.logger.error(`Failed to reverse transfer ${transferId}`, error.message);
+            throw new BadRequestException(`Transfer reversal failed: ${error.message}`);
         }
     }
 

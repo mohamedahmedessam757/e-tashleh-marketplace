@@ -33,6 +33,8 @@ export interface StripeRefundContext {
     paymentTotalAmount: number;
     priorRefunded: number;
     orderNumber?: string;
+    transferReversalId?: string | null;
+    transferReversalFailed?: boolean;
     adjudicationLedger?: {
         caseId: string;
         caseType: 'return' | 'dispute';
@@ -157,38 +159,21 @@ export class EscrowService {
             data: { status: 'RELEASING' },
         });
 
-        const useStripeConnect = Boolean(
-            store.stripeAccountId?.trim() && store.stripeOnboarded,
-        );
+        // SCT: keep funds on the platform ledger through the protection window.
+        // Stripe Transfer happens only at withdrawal/settlement — never on escrow release.
+        // Preserve a pre-existing real transfer id (legacy) without creating a new one.
         let transferReferenceId: string;
-
-        if (useStripeConnect) {
-            const transferAmount = Number(escrow.merchantAmount) + Number(escrow.shippingAmount);
-            try {
-                if (payment.stripeTransferId) {
-                    transferReferenceId = payment.stripeTransferId;
-                } else {
-                    const transferResponse = await this.stripeService.createTransfer(
-                        transferAmount.toString(),
-                        'AED',
-                        store.stripeAccountId!,
-                        orderId,
-                        { orderId, paymentId: payment.id, type: releaseCondition },
-                        `escrow_release_${payment.id}`,
-                    );
-                    transferReferenceId = transferResponse.id;
-                }
-            } catch (err) {
-                await this.prisma.escrowTransaction.update({
-                    where: { id: escrow.id },
-                    data: { status: 'HELD' },
-                });
-                throw err;
-            }
-        } else {
-            transferReferenceId = payment.stripeTransferId ?? `internal_release_${payment.id}`;
+        if (payment.stripeTransferId?.startsWith('tr_')) {
+            transferReferenceId = payment.stripeTransferId;
             this.logger.log(
-                `Internal escrow release (no Stripe Connect) for payment ${payment.id}, store ${store.id}`,
+                `Escrow release ledger-only for payment ${payment.id} (legacy transfer ${payment.stripeTransferId} already exists)`,
+            );
+        } else {
+            transferReferenceId = payment.stripeTransferId?.startsWith('internal_release_')
+                ? payment.stripeTransferId
+                : `internal_release_${payment.id}`;
+            this.logger.log(
+                `Escrow release ledger-only (no Stripe Transfer) for payment ${payment.id}, store ${store.id}`,
             );
         }
 
@@ -264,7 +249,8 @@ export class EscrowService {
                     amount: escrow.merchantAmount,
                     stripeTransferId: transferReferenceId,
                     paymentId: payment.id,
-                    releaseMode: useStripeConnect ? 'stripe_connect' : 'internal_bank',
+                    releaseMode: 'platform_ledger',
+                    stripeTransferDeferred: !transferReferenceId.startsWith('tr_'),
                 },
             }, tx);
             return true;
@@ -278,8 +264,8 @@ export class EscrowService {
             type: 'payment',
             titleAr: 'تم تحرير الدفعة! 💸',
             titleEn: 'Funds Released! 💸',
-            messageAr: `تم تحرير مبلغ ${escrow.merchantAmount} درهم للطلب #${order.orderNumber} وإضافته إلى رصيدك المتاح.`,
-            messageEn: `Amount of AED ${escrow.merchantAmount} for Order #${order.orderNumber} has been released to your available balance.`,
+            messageAr: `تم تحرير مبلغ ${escrow.merchantAmount} درهم للطلب #${order.orderNumber} وإضافته إلى رصيدك المتاح في دفتر المنصة. التحويل إلى Stripe يتم عند السحب.`,
+            messageEn: `Amount of AED ${escrow.merchantAmount} for Order #${order.orderNumber} has been released to your available platform ledger balance. Stripe Transfer happens when you withdraw.`,
             link: 'wallet',
             metadata: { orderId, amount: escrow.merchantAmount },
         }).catch((err) => {
@@ -514,6 +500,7 @@ export class EscrowService {
         payment: {
             id: string;
             stripePaymentId: string | null;
+            stripeTransferId: string | null;
             totalAmount: number;
             refundedAmount: number;
             customerId: string;
@@ -540,6 +527,7 @@ export class EscrowService {
                     ? {
                           id: payment.id,
                           stripePaymentId: payment.stripePaymentId,
+                          stripeTransferId: payment.stripeTransferId,
                           totalAmount: Number(payment.totalAmount),
                           refundedAmount: Number(payment.refundedAmount || 0),
                           customerId: payment.customerId,
@@ -601,6 +589,7 @@ export class EscrowService {
                 ? {
                       id: payment.id,
                       stripePaymentId: payment.stripePaymentId,
+                      stripeTransferId: payment.stripeTransferId,
                       totalAmount: Number(payment.totalAmount),
                       refundedAmount: Number(payment.refundedAmount || 0),
                       customerId: payment.customerId,
@@ -833,12 +822,84 @@ export class EscrowService {
             }
 
             try {
+                // SCT: if funds were already transferred to the connected account (legacy escrow
+                // transfer or any payment still carrying a real tr_), reverse before customer refund.
+                let transferReversalId: string | null = null;
+                let transferReversalFailed = false;
+                const existingTransferId = payment.stripeTransferId;
+                if (existingTransferId?.startsWith('tr_')) {
+                    const reverseAmount = Math.min(
+                        amountToRefund,
+                        Number(escrow.merchantAmount) || amountToRefund,
+                    );
+                    try {
+                        const reversal = await this.stripeService.createTransferReversal(
+                            existingTransferId,
+                            reverseAmount.toFixed(2),
+                            `tr_rev_${payment.id}_${reverseAmount.toFixed(2)}`,
+                            {
+                                paymentId: payment.id,
+                                orderId,
+                                type: 'refund_clawback',
+                            },
+                        );
+                        transferReversalId = reversal?.id || null;
+                        this.logger.log(
+                            `Transfer reversal ${transferReversalId} for payment ${payment.id} amount ${reverseAmount}`,
+                        );
+                    } catch (revErr: any) {
+                        transferReversalFailed = true;
+                        this.logger.warn(
+                            `Transfer reversal failed for ${existingTransferId} (payment ${payment.id}): ${revErr?.message}. Continuing with customer refund; merchant debt remains on ledger.`,
+                        );
+                        await this.notifications
+                            .notifyAdmins({
+                                titleAr: 'فشل عكس تحويل Stripe عند الاسترداد',
+                                titleEn: 'Transfer reversal failed on refund',
+                                messageAr: `تعذر عكس التحويل ${existingTransferId} للطلب. سيتم الاسترداد للعميل ويبقى دين على المتجر في الدفتر.`,
+                                messageEn: `Could not reverse transfer ${existingTransferId}. Customer refund proceeds; store debt remains on the platform ledger.`,
+                                type: 'PAYMENT',
+                                link: `/admin/orders/${orderId}`,
+                                metadata: {
+                                    orderId,
+                                    paymentId: payment.id,
+                                    stripeTransferId: existingTransferId,
+                                },
+                            })
+                            .catch(() => undefined);
+                    }
+                }
+
                 const refundIdempotencyKey = `refund_${payment.id}_${amountToRefund.toFixed(2)}`;
                 refundResponse = await this.stripeService.createRefund(
                     payment.stripePaymentId!,
                     amountToRefund.toFixed(2),
                     refundIdempotencyKey,
                 );
+
+                const order = await this.prisma.order.findUnique({
+                    where: { id: orderId },
+                    select: { orderNumber: true },
+                });
+
+                return {
+                    orderId,
+                    refundAmount: amountToRefund,
+                    cappedFrom: requested > amountToRefund ? requested : undefined,
+                    stripeRefundId: refundResponse.id,
+                    escrowId: escrow.id,
+                    paymentId: payment.id,
+                    escrowHeldStatus: escrow.status,
+                    merchantAmount: escrow.merchantAmount,
+                    customerId: payment.customerId,
+                    reason,
+                    faultParty,
+                    paymentTotalAmount: payment.totalAmount,
+                    priorRefunded: payment.refundedAmount,
+                    orderNumber: order?.orderNumber,
+                    transferReversalId,
+                    transferReversalFailed,
+                };
             } catch (err: any) {
                 throw new BadRequestException(
                     `تعذر تنفيذ الاسترداد عبر بوابة الدفع: ${err?.message || 'فشل استرداد Stripe'}`,
@@ -989,6 +1050,9 @@ export class EscrowService {
                                 clawback: isReleasedClawback,
                                 ledgerOnly: !isReleasedClawback,
                                 escrowStatus: ctx.escrowHeldStatus,
+                                transferReversalId: ctx.transferReversalId || null,
+                                transferReversalFailed: Boolean(ctx.transferReversalFailed),
+                                futureStoreDebt: Boolean(ctx.transferReversalFailed),
                                 ...invoiceMeta,
                             },
                         } as Prisma.WalletTransactionUncheckedCreateInput,

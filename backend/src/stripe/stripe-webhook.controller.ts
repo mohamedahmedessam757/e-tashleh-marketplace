@@ -153,9 +153,17 @@ export class StripeWebhookController {
                 case 'transfer.paid':
                 case 'transfer.failed':
                 case 'transfer.reversed':
+                case 'transfer.updated':
                     await this.paymentsService.handleStripeTransferEvent(
                         event.data.object,
                         event.type,
+                    );
+                    break;
+                case 'payout.paid':
+                case 'payout.failed':
+                    // Express bank payout lifecycle — informational for SCT; settlement uses transfers.
+                    this.logger.log(
+                        `Stripe ${event.type} for payout ${(event.data.object as { id?: string })?.id || 'unknown'} (no ledger action)`,
                     );
                     break;
                 default:

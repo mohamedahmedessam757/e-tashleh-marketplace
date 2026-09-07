@@ -13,6 +13,13 @@ import { StripeService } from '../stripe/stripe.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FinancialConfigService } from '../common/financial-config.service';
 import { WITHDRAWAL_ACTIVE_STATUSES, WITHDRAWAL_STATUS } from './withdrawal-workflow.constants';
+import { isStripeConnectReadyForTransfer } from './payout-account.util';
+import {
+  allocateLiabilitySettlement,
+  formatLiabilitiesBlockMessage,
+  loadStorePendingLiabilities,
+  markSettledLiabilityLinesPaid,
+} from './store-settlement-liabilities.util';
 
 export interface WithdrawalActionContext {
   adminId: string;
@@ -265,100 +272,220 @@ export class WithdrawalWorkflowService {
 
     const amount = Number(request.amount);
     const methodToUse = request.payoutMethod;
-    const stripeKey = request.stripeIdempotencyKey || `transfer_${requestId}`;
+    const stripeKey = request.stripeIdempotencyKey || `withdrawal_${requestId}`;
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const balanceAfter = await this.burnFrozenBalance(tx, request, amount);
+    let settlementAmount = 0;
+    let transferAmount = amount;
+    let settledLines: Awaited<ReturnType<typeof loadStorePendingLiabilities>>['lines'] = [];
 
-      await tx.walletTransaction.create({
-        data: {
-          userId: request.role === 'CUSTOMER' ? request.userId : request.store!.ownerId,
-          role: request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR',
-          type: 'DEBIT',
-          transactionType: 'withdrawal',
-          amount: request.amount,
-          description: `Withdrawal via ${methodToUse}: ${request.id}`,
-          balanceAfter,
-          metadata: { requestId: request.id, payoutMethod: methodToUse },
-        },
-      });
+    if (request.role === 'VENDOR' && request.storeId) {
+      const liabilities = await loadStorePendingLiabilities(this.prisma, request.storeId);
+      const allocation = allocateLiabilitySettlement(liabilities.lines, amount);
+      settlementAmount = allocation.settlementAmount;
+      transferAmount = allocation.transferAmount;
+      settledLines = allocation.settled;
 
-      let transferId: string | null = null;
-      if (methodToUse === 'STRIPE') {
-        const config = await this.financialConfig.getConfig();
-        if (!config.stripeConnectEnabled) {
-          throw new ForbiddenException('Stripe Connect is disabled');
-        }
-        const stripeId =
-          request.role === 'CUSTOMER'
-            ? request.user?.stripeAccountId
-            : request.store?.stripeAccountId;
-        if (!stripeId) throw new BadRequestException('Stripe Connect account not linked');
+      if (liabilities.total > 0 && allocation.remainingLiability > 0 && transferAmount <= 0) {
+        throw new BadRequestException(formatLiabilitiesBlockMessage(liabilities.total, 'en'));
+      }
+    }
 
-        const transfer = await this.stripeService.createTransfer(
-          request.amount.toString(),
-          request.currency,
-          stripeId,
-          `WITHDRAWAL_${request.id}`,
-          { requestId: request.id, role: request.role },
-          stripeKey,
-        );
-        transferId = transfer.id;
-      } else {
-        const hasBank =
-          request.role === 'CUSTOMER'
-            ? Boolean(request.user?.bankIban && request.user?.bankName)
-            : Boolean(request.store?.bankIban && request.store?.bankName);
-        if (!hasBank) {
-          throw new BadRequestException('Bank details are missing. Cannot complete bank transfer.');
-        }
+    if (methodToUse === 'STRIPE') {
+      const config = await this.financialConfig.getConfig();
+      if (!config.stripeConnectEnabled) {
+        throw new ForbiddenException('Stripe Connect is disabled');
       }
 
-      await this.auditLogs.logAction(
+      if (request.role === 'VENDOR') {
+        const store = request.store;
+        if (
+          !isStripeConnectReadyForTransfer({
+            stripeAccountId: store?.stripeAccountId,
+            stripeOnboarded: store?.stripeOnboarded,
+            stripeChargesEnabled: store?.stripeChargesEnabled,
+            stripePayoutsEnabled: store?.stripePayoutsEnabled,
+          })
+        ) {
+          throw new BadRequestException(
+            'Stripe Connect account is not ready for transfers (charges/payouts). Complete verification first.',
+          );
+        }
+      } else {
+        const stripeId = request.user?.stripeAccountId;
+        if (!stripeId || !request.user?.stripeOnboarded) {
+          throw new BadRequestException('Stripe Connect account not linked or not onboarded');
+        }
+      }
+    }
+
+    // Stripe Transfer outside the DB transaction (idempotent); ledger commit follows.
+    let transferId: string | null = null;
+    if (methodToUse === 'STRIPE' && transferAmount > 0) {
+      const stripeId =
+        request.role === 'CUSTOMER'
+          ? request.user?.stripeAccountId
+          : request.store?.stripeAccountId;
+      if (!stripeId) throw new BadRequestException('Stripe Connect account not linked');
+
+      const transfer = await this.stripeService.createTransfer(
+        transferAmount.toFixed(2),
+        request.currency,
+        stripeId,
+        `WITHDRAWAL_${request.id}`,
         {
-          entity: 'FINANCIAL',
-          action: 'WITHDRAWAL_COMPLETED',
-          actorType: ActorType.ADMIN,
-          actorId: ctx.adminId,
-          actorName: ctx.adminName,
-          metadata: {
-            requestId,
-            amount,
-            method: methodToUse,
-            note: reason,
-            adminEmail: ctx.adminEmail,
-            adminSignature: ctx.adminSignature || null,
-            stripeTransferId: transferId,
-            ip: ctx.ip ?? null,
-          },
+          type: 'withdrawal',
+          requestId: request.id,
+          withdrawalId: request.id,
+          role: request.role,
+          storeId: request.storeId || '',
+          settlementAmount: settlementAmount.toFixed(2),
+          requestedAmount: amount.toFixed(2),
         },
-        tx,
+        stripeKey,
       );
+      transferId = transfer.id;
+    }
 
-      return tx.withdrawalRequest.update({
-        where: { id: requestId },
-        data: {
-          status: WITHDRAWAL_STATUS.COMPLETED,
-          completedAt: new Date(),
-          transferCompletedAt: new Date(),
-          stripeTransferId: transferId,
-          stripeIdempotencyKey: stripeKey,
-          adminNotes: reason,
-          processedBy: ctx.adminId,
-          adminSignature: ctx.adminSignature || null,
-        },
+    try {
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const balanceAfter = await this.burnFrozenBalance(tx, request, amount);
+
+        const walletUserId =
+          request.role === 'CUSTOMER' ? request.userId! : request.store!.ownerId;
+        const walletRole = request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
+
+        if (settlementAmount > 0 && request.role === 'VENDOR') {
+          await markSettledLiabilityLinesPaid(tx, settledLines);
+          for (const line of settledLines) {
+            await tx.walletTransaction.create({
+              data: {
+                userId: walletUserId,
+                role: 'VENDOR',
+                type: 'DEBIT',
+                transactionType: line.kind,
+                amount: line.amount,
+                description: `Settled from withdrawal ${request.id} (${line.source}:${line.sourceId})`,
+                balanceAfter,
+                metadata: {
+                  requestId: request.id,
+                  liabilitySource: line.source,
+                  liabilitySourceId: line.sourceId,
+                  settledFromWithdrawal: true,
+                },
+              },
+            });
+          }
+        }
+
+        const payoutLedgerAmount = methodToUse === 'STRIPE' ? transferAmount : transferAmount;
+        if (payoutLedgerAmount > 0) {
+          await tx.walletTransaction.create({
+            data: {
+              userId: walletUserId,
+              role: walletRole,
+              type: 'DEBIT',
+              transactionType: 'withdrawal',
+              amount: payoutLedgerAmount,
+              description:
+                settlementAmount > 0
+                  ? `Withdrawal via ${methodToUse} (net ${payoutLedgerAmount.toFixed(2)} after liabilities ${settlementAmount.toFixed(2)}): ${request.id}`
+                  : `Withdrawal via ${methodToUse}: ${request.id}`,
+              balanceAfter,
+              metadata: {
+                requestId: request.id,
+                payoutMethod: methodToUse,
+                stripeTransferId: transferId,
+                settlementAmount,
+                transferAmount: payoutLedgerAmount,
+              },
+            },
+          });
+        }
+
+        if (methodToUse !== 'STRIPE') {
+          const hasBank =
+            request.role === 'CUSTOMER'
+              ? Boolean(request.user?.bankIban && request.user?.bankName)
+              : Boolean(request.store?.bankIban && request.store?.bankName);
+          if (!hasBank) {
+            throw new BadRequestException('Bank details are missing. Cannot complete bank transfer.');
+          }
+        }
+
+        await this.auditLogs.logAction(
+          {
+            entity: 'FINANCIAL',
+            action: 'WITHDRAWAL_COMPLETED',
+            actorType: ActorType.ADMIN,
+            actorId: ctx.adminId,
+            actorName: ctx.adminName,
+            metadata: {
+              requestId,
+              amount,
+              transferAmount,
+              settlementAmount,
+              method: methodToUse,
+              note: reason,
+              adminEmail: ctx.adminEmail,
+              adminSignature: ctx.adminSignature || null,
+              stripeTransferId: transferId,
+              ip: ctx.ip ?? null,
+            },
+          },
+          tx,
+        );
+
+        return tx.withdrawalRequest.update({
+          where: { id: requestId },
+          data: {
+            status: WITHDRAWAL_STATUS.COMPLETED,
+            completedAt: new Date(),
+            transferCompletedAt: new Date(),
+            stripeTransferId: transferId,
+            stripeIdempotencyKey: stripeKey,
+            adminNotes: reason,
+            processedBy: ctx.adminId,
+            adminSignature: ctx.adminSignature || null,
+          },
+        });
       });
-    });
 
-    await this.notifyRecipient(request, {
-      titleAr: 'تم إتمام السحب',
-      titleEn: 'Withdrawal Completed',
-      messageAr: `تم تحويل مبلغ ${amount} درهم بنجاح.`,
-      messageEn: `Your withdrawal of AED ${amount} has been completed.`,
-      metadataType: 'WITHDRAWAL_COMPLETED',
-    });
+      await this.notifyRecipient(request, {
+        titleAr: 'تم إتمام السحب',
+        titleEn: 'Withdrawal Completed',
+        messageAr:
+          settlementAmount > 0
+            ? `تم تحويل صافي ${transferAmount.toFixed(2)} درهم بعد خصم التزامات ${settlementAmount.toFixed(2)} درهم.`
+            : `تم تحويل مبلغ ${amount} درهم بنجاح.`,
+        messageEn:
+          settlementAmount > 0
+            ? `Net AED ${transferAmount.toFixed(2)} transferred after settling AED ${settlementAmount.toFixed(2)} in liabilities.`
+            : `Your withdrawal of AED ${amount} has been completed.`,
+        metadataType: 'WITHDRAWAL_COMPLETED',
+        extra: { transferAmount, settlementAmount, stripeTransferId: transferId },
+      });
 
-    return updated;
+      return updated;
+    } catch (err) {
+      this.completeIdempotency.delete(idempotencyKey);
+      if (transferId) {
+        this.logger.error(
+          `CRITICAL: Stripe transfer ${transferId} succeeded but withdrawal ${requestId} ledger commit failed. Manual reconcile required.`,
+        );
+        await this.notifications
+          .notifyAdmins({
+            titleAr: 'فشل قيد سحب بعد تحويل Stripe',
+            titleEn: 'Withdrawal ledger failed after Stripe Transfer',
+            messageAr: `تم إنشاء التحويل ${transferId} لطلب السحب ${requestId} لكن فشل تحديث الدفتر. يلزم مطابقة يدوية.`,
+            messageEn: `Transfer ${transferId} created for withdrawal ${requestId} but ledger commit failed. Manual reconcile required.`,
+            type: 'PAYMENT',
+            link: `/admin/billing/withdrawals`,
+            metadata: { requestId, stripeTransferId: transferId },
+          })
+          .catch(() => undefined);
+      }
+      throw err;
+    }
   }
 
   async releaseWithdrawalFunds(requestId: string, ctx: WithdrawalActionContext) {

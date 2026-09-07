@@ -21,6 +21,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { paymentsApi } from '../../../services/api/payments';
+import { useFinancialTableRealtime } from '../../../hooks/useFinancialTableRealtime';
 
 const STATUS_FILTERS = ['PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED', 'CANCELLED', 'ALL'] as const;
 
@@ -68,6 +69,14 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
   const statusFilter = (financialFilters.withdrawalStatus || 'PENDING') as StatusFilter;
+
+  const fetchWithdrawals = useAdminStore((s) => s.fetchWithdrawals);
+  useFinancialTableRealtime(
+    () => {
+      void fetchWithdrawals(true);
+    },
+    ['withdrawal_requests', 'wallet_transactions', 'stores'],
+  );
 
   const statusLabel = (status: string) => {
     const key = status as keyof typeof t.admin.billing.withdrawals.statusLabels;
@@ -195,6 +204,14 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                           {req.payoutMethod === 'STRIPE' ? <RefreshCw size={12} /> : <CreditCard size={12} />}
                           {req.payoutMethod}
                         </span>
+                        {req.stripeTransferId ? (
+                          <div className="mt-1.5 font-mono text-[9px] text-white/35 break-all" title={t.admin.billing.withdrawals.modals.transferRef}>
+                            {String(req.stripeTransferId).startsWith('tr_')
+                              ? t.admin.billing.withdrawals.modals.transferStripe
+                              : t.admin.billing.withdrawals.modals.transferLedgerOnly}
+                            : {req.stripeTransferId}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-6 py-5 font-mono text-xs text-white/40">
                         {new Date(req.createdAt).toLocaleDateString()}

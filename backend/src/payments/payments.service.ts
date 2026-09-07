@@ -26,7 +26,13 @@ import {
     buildWithdrawalGovernance,
     countOpenMerchantCases,
 } from './merchant-withdrawal-governance.util';
-import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPayoutMethodReady, maskIban } from './payout-account.util';
+import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPayoutMethodReady, maskIban, isStripeConnectReadyForTransfer } from './payout-account.util';
+import {
+    formatLiabilitiesBlockMessage,
+    loadStorePendingLiabilities,
+    allocateLiabilitySettlement,
+    markSettledLiabilityLinesPaid,
+} from './store-settlement-liabilities.util';
 import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
@@ -3093,7 +3099,9 @@ export class PaymentsService {
         });
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
-        const withdrawalGovernance = buildWithdrawalGovernance(stats.available, openCases);
+        const pendingLiabilities = await loadStorePendingLiabilities(this.prisma, store.id);
+        const netAvailable = Math.max(0, Number(stats.available) - pendingLiabilities.total);
+        const withdrawalGovernance = buildWithdrawalGovernance(netAvailable, openCases);
         const withdrawalLimits = await this.financialConfig.getWithdrawalLimitsForStore(store.id);
 
         return {
@@ -3102,6 +3110,8 @@ export class PaymentsService {
                 available: Number(stats.available.toFixed(2)),
                 pending: Number(stats.pending.toFixed(2)),
                 frozen: Number(stats.frozen.toFixed(2)),
+                pendingLiabilities: Number(pendingLiabilities.total.toFixed(2)),
+                maxWithdrawableNet: Number(netAvailable.toFixed(2)),
                 totalSales: Number(stats.totalSales.toFixed(2)),
                 netEarnings: Number(stats.netEarnings.toFixed(2)),
                 totalWalletBalance: Number((stats as any).totalWalletBalance),
@@ -3531,6 +3541,9 @@ export class PaymentsService {
         const payoutReadiness = getPayoutReadiness({
             bankIban: store.bankIban,
             stripeOnboarded: store.stripeOnboarded,
+            stripeAccountId: store.stripeAccountId,
+            stripeChargesEnabled: store.stripeChargesEnabled,
+            stripePayoutsEnabled: store.stripePayoutsEnabled,
         });
         assertWithdrawalPayoutMethodReady(payoutMethod, payoutReadiness);
 
@@ -3540,9 +3553,15 @@ export class PaymentsService {
         if (amount < limits.min) throw new BadRequestException(`Minimum withdrawal is ${limits.min} AED`);
         if (amount > limits.max) throw new BadRequestException(`Maximum withdrawal is ${limits.max} AED`);
 
-        // Check balance
+        const pendingLiabilities = await loadStorePendingLiabilities(this.prisma, store.id);
+        const netAvailable = Math.max(0, Number(store.balance) - pendingLiabilities.total);
+
+        // Check balance (gross) and net after pending adjudication/shipping liabilities
         if (Number(store.balance) < amount) {
             throw new BadRequestException('Insufficient balance');
+        }
+        if (amount > netAvailable) {
+            throw new BadRequestException(formatLiabilitiesBlockMessage(pendingLiabilities.total, 'en'));
         }
 
         const finConfig = await this.financialConfig.getConfig();
@@ -3565,7 +3584,7 @@ export class PaymentsService {
         }
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
-        const governance = buildWithdrawalGovernance(Number(store.balance), openCases);
+        const governance = buildWithdrawalGovernance(netAvailable, openCases);
         if (amount > governance.maxWithdrawableAmount) {
             throw new BadRequestException(
                 governance.withdrawalRestrictionMessageEn ||
@@ -3584,6 +3603,13 @@ export class PaymentsService {
             });
             if (!locked || Number(locked.balance) < amount) {
                 throw new BadRequestException('Insufficient balance');
+            }
+            const lockedLiabilities = await loadStorePendingLiabilities(tx, store.id);
+            const lockedNet = Math.max(0, Number(locked.balance) - lockedLiabilities.total);
+            if (amount > lockedNet) {
+                throw new BadRequestException(
+                    formatLiabilitiesBlockMessage(lockedLiabilities.total, 'en'),
+                );
             }
             const activeWithdrawal = await tx.withdrawalRequest.findFirst({
                 where: { storeId: store.id, status: { in: ['PENDING', 'PROCESSING'] } },
@@ -4393,8 +4419,38 @@ export class PaymentsService {
             throw new BadRequestException('Insufficient balance for manual payout');
         }
 
-        if (method === PayoutMethod.STRIPE_CONNECT && !stripeId) {
-            throw new BadRequestException('User does not have a Stripe Connect account');
+        let settlementAmount = 0;
+        let transferAmount = amount;
+        let settledLines: Awaited<ReturnType<typeof loadStorePendingLiabilities>>['lines'] = [];
+
+        if (role === 'VENDOR' && user.store) {
+            const liabilities = await loadStorePendingLiabilities(this.prisma, user.store.id);
+            const allocation = allocateLiabilitySettlement(liabilities.lines, amount);
+            settlementAmount = allocation.settlementAmount;
+            transferAmount = allocation.transferAmount;
+            settledLines = allocation.settled;
+            if (amount > Math.max(0, balance - liabilities.total)) {
+                throw new BadRequestException(formatLiabilitiesBlockMessage(liabilities.total, 'en'));
+            }
+        }
+
+        if (method === PayoutMethod.STRIPE_CONNECT) {
+            if (role === 'VENDOR' && user.store) {
+                if (
+                    !isStripeConnectReadyForTransfer({
+                        stripeAccountId: user.store.stripeAccountId,
+                        stripeOnboarded: user.store.stripeOnboarded,
+                        stripeChargesEnabled: user.store.stripeChargesEnabled,
+                        stripePayoutsEnabled: user.store.stripePayoutsEnabled,
+                    })
+                ) {
+                    throw new BadRequestException(
+                        'Store Stripe Connect is not ready for transfers (charges/payouts required)',
+                    );
+                }
+            } else if (!stripeId || !user.stripeOnboarded) {
+                throw new BadRequestException('User does not have a ready Stripe Connect account');
+            }
         }
 
         // Phase A (committed tx): lock, revalidate and debit the ledger. No network calls here,
@@ -4426,6 +4482,28 @@ export class PaymentsService {
                     data: { balance: { decrement: amount } }
                 });
                 balanceAfter = current - amount;
+
+                if (settlementAmount > 0) {
+                    await markSettledLiabilityLinesPaid(tx, settledLines);
+                    for (const line of settledLines) {
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId,
+                                role: 'VENDOR',
+                                type: 'DEBIT',
+                                transactionType: line.kind,
+                                amount: line.amount,
+                                description: `Settled from manual payout (${line.source}:${line.sourceId})`,
+                                balanceAfter,
+                                metadata: {
+                                    liabilitySource: line.source,
+                                    liabilitySourceId: line.sourceId,
+                                    settledFromManualPayout: true,
+                                },
+                            },
+                        });
+                    }
+                }
             }
 
             const created = await tx.walletTransaction.create({
@@ -4434,9 +4512,16 @@ export class PaymentsService {
                     role: role,
                     type: 'DEBIT',
                     transactionType: 'MANUAL_PAYOUT',
-                    amount,
-                    description: `Admin Payout: ${note || 'No notes'}`,
-                    balanceAfter
+                    amount: method === PayoutMethod.STRIPE_CONNECT ? transferAmount : amount,
+                    description:
+                        settlementAmount > 0
+                            ? `Admin Payout net ${transferAmount.toFixed(2)} after liabilities ${settlementAmount.toFixed(2)}: ${note || 'No notes'}`
+                            : `Admin Payout: ${note || 'No notes'}`,
+                    balanceAfter,
+                    metadata: {
+                        settlementAmount,
+                        transferAmount: method === PayoutMethod.STRIPE_CONNECT ? transferAmount : amount,
+                    },
                 }
             });
 
@@ -4446,7 +4531,7 @@ export class PaymentsService {
                 actorType: ActorType.ADMIN,
                 actorId: adminId,
                 actorName: adminName,
-                metadata: { amount, method, note, adminEmail, adminSignature }
+                metadata: { amount, transferAmount, settlementAmount, method, note, adminEmail, adminSignature }
             }, tx);
 
             return created;
@@ -4455,20 +4540,26 @@ export class PaymentsService {
         // Phase B (after commit): run the Stripe transfer OUTSIDE the DB transaction, keyed by the
         // persisted walletTx id so retries never double-transfer. Compensate on failure.
         let transferId: string | null = null;
-        if (method === PayoutMethod.STRIPE_CONNECT) {
+        if (method === PayoutMethod.STRIPE_CONNECT && transferAmount > 0) {
             try {
                 const transfer = await this.stripeService.createTransfer(
-                    amount.toString(),
+                    transferAmount.toFixed(2),
                     'AED',
                     stripeId!,
                     `MANUAL_PAYOUT_${walletTx.id}`,
-                    { adminId, note },
+                    {
+                        type: 'manual_payout',
+                        adminId,
+                        note: note || '',
+                        storeId: user.store?.id || '',
+                        settlementAmount: settlementAmount.toFixed(2),
+                    },
                     `manual_payout_${walletTx.id}`,
                 );
                 transferId = transfer.id;
                 await this.prisma.walletTransaction.update({
                     where: { id: walletTx.id },
-                    data: { metadata: { stripeTransferId: transferId } },
+                    data: { metadata: { stripeTransferId: transferId, settlementAmount, transferAmount } },
                 });
             } catch (err: any) {
                 this.logger.error(`Stripe Transfer failed for manual payout: ${err.message}`);
@@ -4489,10 +4580,10 @@ export class PaymentsService {
 
             this.notifications.create({
                 recipientId: userId,
-                titleAr: 'ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø¯ÙØ¹Ø© Ù…Ø§Ù„ÙŠØ©',
+                titleAr: 'تم إرسال دفعة مالية',
                 titleEn: 'Payout Processed',
-                messageAr: `ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø¯ÙØ¹Ø© Ø¨Ù…Ø¨Ù„Øº ${amount} Ø¯Ø±Ù‡Ù… Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨Ùƒ.`,
-                messageEn: `A payout of ${amount} AED has been processed to your account.`,
+                messageAr: `تم إرسال دفعة بمبلغ ${transferAmount} درهم إلى حسابك.`,
+                messageEn: `A payout of ${transferAmount} AED has been processed to your account.`,
                 type: 'financial',
                 link: '/dashboard/wallet'
             });
@@ -4502,6 +4593,8 @@ export class PaymentsService {
             message: 'Manual payout executed successfully',
             walletTransactionId: walletTx.id,
             stripeTransferId: transferId,
+            transferAmount,
+            settlementAmount,
         };
     }
 

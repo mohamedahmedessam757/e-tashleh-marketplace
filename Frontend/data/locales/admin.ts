@@ -1391,7 +1391,10 @@ export const admin = {
         },
         modals: {
           completeTitle: 'تم التحويل',
-          completeSubtitle: 'تأكيد إتمام السحب وخصم الرصيد المحجوز',
+          completeSubtitle: 'تأكيد إتمام السحب: تحويل Stripe بالصافي بعد خصم الالتزامات (إن وُجدت)',
+          transferRef: 'مرجع التحويل',
+          transferLedgerOnly: 'تحرير دفتري (بدون Transfer)',
+          transferStripe: 'تحويل Stripe',
           releaseTitle: 'إفراج عن المبلغ',
           releaseSubtitle: 'إعادة المبلغ المحجوز إلى محفظة المستخدم',
           beneficiary: 'المستفيد',
@@ -2992,7 +2995,10 @@ export const admin = {
         },
         modals: {
           completeTitle: 'Mark Transfer Complete',
-          completeSubtitle: 'Confirm withdrawal completion and burn held balance',
+          completeSubtitle: 'Confirm completion: Stripe Transfer of net amount after liabilities (if any)',
+          transferRef: 'Transfer reference',
+          transferLedgerOnly: 'Ledger release (no Transfer)',
+          transferStripe: 'Stripe Transfer',
           releaseTitle: 'Release Funds',
           releaseSubtitle: 'Return held amount to user wallet',
           beneficiary: 'Beneficiary',
