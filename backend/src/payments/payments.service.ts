@@ -3121,8 +3121,18 @@ export class PaymentsService {
         });
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
-        const pendingLiabilities = await loadStorePendingLiabilities(this.prisma, store.id);
-        const netAvailable = Math.max(0, Number(stats.available) - pendingLiabilities.total);
+        let pendingLiabilitiesTotal = 0;
+        try {
+            const pendingLiabilities = await loadStorePendingLiabilities(this.prisma, store.id);
+            pendingLiabilitiesTotal = pendingLiabilities.total;
+        } catch (err) {
+            this.logger.warn(
+                `Merchant wallet liabilities lookup failed for store ${store.id}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+        }
+        const netAvailable = Math.max(0, Number(stats.available) - pendingLiabilitiesTotal);
         const withdrawalGovernance = buildWithdrawalGovernance(netAvailable, openCases);
         const withdrawalLimits = await this.financialConfig.getWithdrawalLimitsForStore(store.id);
 
@@ -3132,7 +3142,7 @@ export class PaymentsService {
                 available: Number(stats.available.toFixed(2)),
                 pending: Number(stats.pending.toFixed(2)),
                 frozen: Number(stats.frozen.toFixed(2)),
-                pendingLiabilities: Number(pendingLiabilities.total.toFixed(2)),
+                pendingLiabilities: Number(pendingLiabilitiesTotal.toFixed(2)),
                 maxWithdrawableNet: Number(netAvailable.toFixed(2)),
                 totalSales: Number(stats.totalSales.toFixed(2)),
                 netEarnings: Number(stats.netEarnings.toFixed(2)),

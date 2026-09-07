@@ -134,7 +134,7 @@ export const StripeActivationBanner: React.FC<StripeActivationBannerProps> = ({
           {onNavigate && (
             <Button
               variant="ghost"
-              onClick={() => onNavigate('/dashboard/wallet')}
+              onClick={() => onNavigate('wallet')}
               className="min-h-[44px] px-4 text-white/70 hover:text-white border border-white/10 rounded-xl"
             >
               {alerts.stripeWalletCta || (isAr ? 'المحفظة' : 'Wallet')}

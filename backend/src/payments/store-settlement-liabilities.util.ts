@@ -94,7 +94,7 @@ export function aggregateStorePendingLiabilities(input: {
 }
 
 export type LiabilitySettleDb = {
-  return: {
+  returnRequest: {
     findMany: (args: any) => Promise<FeeCaseRow[]>;
     update: (args: any) => Promise<unknown>;
   };
@@ -120,8 +120,13 @@ export async function loadStorePendingLiabilities(
     shippingPayee: true,
   };
 
+  const returnDelegate = db.returnRequest ?? db.return;
+  if (!returnDelegate?.findMany || !db.dispute?.findMany) {
+    return { total: 0, lines: [] };
+  }
+
   const [returns, disputes] = await Promise.all([
-    db.return.findMany({
+    returnDelegate.findMany({
       where: {
         storeId,
         OR: [
@@ -189,7 +194,11 @@ export async function markSettledLiabilityLinesPaid(
   settled: StoreLiabilityLine[],
 ): Promise<void> {
   for (const line of settled) {
-    const model = line.source === 'return' ? db.return : db.dispute;
+    const model =
+      line.source === 'return'
+        ? (db.returnRequest ?? db.return)
+        : db.dispute;
+    if (!model?.update) continue;
     if (line.kind === 'ADJUDICATION_FEE') {
       await model.update({
         where: { id: line.sourceId },

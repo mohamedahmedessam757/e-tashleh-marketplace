@@ -473,7 +473,7 @@ export const MerchantProfile: React.FC = () => {
                                         {[1, 2, 3, 4, 5].map(s => (
                                             <div key={s} className={`w-1.5 h-1.5 rounded-full ${s <= Math.round(performance?.rating || 0) ? 'bg-gold-500' : 'bg-white/10'}`} />
                                         ))}
-                                        <span className="text-xs text-white/40 ml-2">{performance?.rating?.toFixed(1)} {t.dashboard.merchant.profile.rating}</span>
+                                        <span className="text-xs text-white/40 ml-2">{Number.isFinite(Number(performance?.rating)) ? Number(performance.rating).toFixed(1) : '0.0'} {t.dashboard.merchant.profile.rating}</span>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 mt-8 pt-6 border-t border-white/5">
@@ -671,10 +671,16 @@ export const MerchantProfile: React.FC = () => {
                                                 </div>
                                                 <div className="mt-4 flex gap-2">
                                                     <div className="text-[10px] bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 font-mono text-gold-500/80">
-                                                        LAT: {storeInfo.lat?.toFixed(6) || '---'}
+                                                        LAT: {(() => {
+                                                            const lat = Number(storeInfo.lat);
+                                                            return Number.isFinite(lat) ? lat.toFixed(6) : '---';
+                                                        })()}
                                                     </div>
                                                     <div className="text-[10px] bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 font-mono text-gold-500/80">
-                                                        LNG: {storeInfo.lng?.toFixed(6) || '---'}
+                                                        LNG: {(() => {
+                                                            const lng = Number(storeInfo.lng);
+                                                            return Number.isFinite(lng) ? lng.toFixed(6) : '---';
+                                                        })()}
                                                     </div>
                                                 </div>
                                             </>
