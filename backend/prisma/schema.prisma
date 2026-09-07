@@ -1274,6 +1274,8 @@ model PaymentTransaction {
 
   // Future Stripe integration
   stripePaymentId  String?   @map("stripe_payment_id")
+  stripeChargeId   String?   @map("stripe_charge_id")
+  stripeBalanceTxnId String? @map("stripe_balance_txn_id")
   stripeTransferId String?   @map("stripe_transfer_id")
   gatewayFee       Decimal   @default(0) @map("gateway_fee") @db.Decimal(14, 2)
   refundedAmount   Decimal   @default(0) @map("refunded_amount") @db.Decimal(14, 2)

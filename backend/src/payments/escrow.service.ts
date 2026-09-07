@@ -868,6 +868,13 @@ export class EscrowService {
                             })
                             .catch(() => undefined);
                     }
+                } else if (escrow.status === 'RELEASED') {
+                    // SCT after ledger release: money may already have left via a pooled withdrawal Transfer.
+                    // No per-order tr_ to reverse — clawback is applied on the platform store ledger.
+                    transferReversalFailed = true;
+                    this.logger.log(
+                        `Refund after ledger release for payment ${payment.id}: no per-order Stripe transfer to reverse; store ledger clawback applies`,
+                    );
                 }
 
                 const refundIdempotencyKey = `refund_${payment.id}_${amountToRefund.toFixed(2)}`;

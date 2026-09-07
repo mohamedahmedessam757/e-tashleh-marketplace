@@ -16,6 +16,7 @@ import { WITHDRAWAL_ACTIVE_STATUSES, WITHDRAWAL_STATUS } from './withdrawal-work
 import { isStripeConnectReadyForTransfer } from './payout-account.util';
 import {
   allocateLiabilitySettlement,
+  assertWithdrawalSettlesLiabilitiesOrThrow,
   formatLiabilitiesBlockMessage,
   loadStorePendingLiabilities,
   markSettledLiabilityLinesPaid,
@@ -285,9 +286,22 @@ export class WithdrawalWorkflowService {
       transferAmount = allocation.transferAmount;
       settledLines = allocation.settled;
 
+      assertWithdrawalSettlesLiabilitiesOrThrow(
+        liabilities.total,
+        allocation,
+        liabilities.lines[0]?.amount,
+      );
+
       if (liabilities.total > 0 && allocation.remainingLiability > 0 && transferAmount <= 0) {
         throw new BadRequestException(formatLiabilitiesBlockMessage(liabilities.total, 'en'));
       }
+    }
+
+    // Idempotent resume: if a prior attempt already created the Stripe transfer, reuse it.
+    if (request.stripeTransferId?.startsWith('tr_') && methodToUse === 'STRIPE') {
+      this.logger.warn(
+        `Withdrawal ${requestId} already has Stripe transfer ${request.stripeTransferId}; completing ledger only`,
+      );
     }
 
     if (methodToUse === 'STRIPE') {
@@ -319,31 +333,74 @@ export class WithdrawalWorkflowService {
     }
 
     // Stripe Transfer outside the DB transaction (idempotent); ledger commit follows.
-    let transferId: string | null = null;
-    if (methodToUse === 'STRIPE' && transferAmount > 0) {
+    let transferId: string | null = request.stripeTransferId?.startsWith('tr_')
+      ? request.stripeTransferId
+      : null;
+    if (methodToUse === 'STRIPE' && transferAmount > 0 && !transferId) {
       const stripeId =
         request.role === 'CUSTOMER'
           ? request.user?.stripeAccountId
           : request.store?.stripeAccountId;
       if (!stripeId) throw new BadRequestException('Stripe Connect account not linked');
 
-      const transfer = await this.stripeService.createTransfer(
-        transferAmount.toFixed(2),
-        request.currency,
-        stripeId,
-        `WITHDRAWAL_${request.id}`,
-        {
-          type: 'withdrawal',
-          requestId: request.id,
-          withdrawalId: request.id,
-          role: request.role,
-          storeId: request.storeId || '',
-          settlementAmount: settlementAmount.toFixed(2),
-          requestedAmount: amount.toFixed(2),
+      // Claim completion so concurrent admins cannot start two Stripe transfers.
+      const pendingMarker = `pending_${requestId}`;
+      const claim = await this.prisma.withdrawalRequest.updateMany({
+        where: {
+          id: requestId,
+          status: WITHDRAWAL_STATUS.PROCESSING,
+          stripeTransferId: null,
         },
-        stripeKey,
-      );
-      transferId = transfer.id;
+        data: {
+          stripeIdempotencyKey: stripeKey,
+          stripeTransferId: pendingMarker,
+        },
+      });
+      if (claim.count === 0) {
+        const latest = await this.loadRequest(requestId);
+        if (latest.status === WITHDRAWAL_STATUS.COMPLETED) {
+          return latest;
+        }
+        if (latest.stripeTransferId?.startsWith('tr_')) {
+          transferId = latest.stripeTransferId;
+        } else if (latest.stripeTransferId === pendingMarker) {
+          // Another worker claimed; reuse same idempotency key for Stripe.
+        } else if (latest.stripeTransferId?.startsWith('pending_')) {
+          throw new ConflictException('Withdrawal is already being completed by another process');
+        } else {
+          throw new ConflictException('Withdrawal is already being completed by another process');
+        }
+      }
+
+      if (!transferId) {
+        try {
+          const transfer = await this.stripeService.createTransfer(
+            transferAmount.toFixed(2),
+            request.currency,
+            stripeId,
+            `WITHDRAWAL_${request.id}`,
+            {
+              type: 'withdrawal',
+              requestId: request.id,
+              withdrawalId: request.id,
+              role: request.role,
+              storeId: request.storeId || '',
+              settlementAmount: settlementAmount.toFixed(2),
+              requestedAmount: amount.toFixed(2),
+            },
+            stripeKey,
+          );
+          transferId = transfer.id;
+        } catch (err) {
+          await this.prisma.withdrawalRequest
+            .updateMany({
+              where: { id: requestId, stripeTransferId: pendingMarker },
+              data: { stripeTransferId: null },
+            })
+            .catch(() => undefined);
+          throw err;
+        }
+      }
     }
 
     try {

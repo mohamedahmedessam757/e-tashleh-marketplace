@@ -32,6 +32,7 @@ import {
     loadStorePendingLiabilities,
     allocateLiabilitySettlement,
     markSettledLiabilityLinesPaid,
+    assertWithdrawalSettlesLiabilitiesOrThrow,
 } from './store-settlement-liabilities.util';
 import {
     buildActiveReferralWindowFilter,
@@ -558,6 +559,7 @@ export class PaymentsService {
             orderId,
             offerId,
             customerId,
+            storeId: offer.storeId,
             orderNumber: order.orderNumber,
             offerNumber: offer.offerNumber,
         };
@@ -1171,7 +1173,9 @@ export class PaymentsService {
         }
 
         const stripeClient = this.stripeService.getStripeClient();
-        const intentSnapshot = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+        const intentSnapshot = await stripeClient.paymentIntents.retrieve(paymentIntentId, {
+            expand: ['latest_charge'],
+        });
         const expectedMinor = Math.round(Number(payment.totalAmount) * 100);
         if (
             intentSnapshot.status === 'succeeded' &&
@@ -1183,6 +1187,22 @@ export class PaymentsService {
             );
             throw new Error('Stripe payment amount does not match recorded transaction');
         }
+
+        const latestCharge = (intentSnapshot as any).latest_charge;
+        const stripeChargeId =
+            typeof latestCharge === 'string'
+                ? latestCharge
+                : latestCharge?.id
+                  ? String(latestCharge.id)
+                  : null;
+        const stripeBalanceTxnId =
+            latestCharge && typeof latestCharge !== 'string'
+                ? typeof latestCharge.balance_transaction === 'string'
+                    ? latestCharge.balance_transaction
+                    : latestCharge.balance_transaction?.id
+                      ? String(latestCharge.balance_transaction.id)
+                      : null
+                : null;
 
         const existingGatewayFee = Number(payment.gatewayFee || 0);
         const gatewayFee =
@@ -1198,6 +1218,8 @@ export class PaymentsService {
                     status: 'SUCCESS',
                     paidAt: new Date(),
                     gatewayFee,
+                    ...(stripeChargeId ? { stripeChargeId } : {}),
+                    ...(stripeBalanceTxnId ? { stripeBalanceTxnId } : {}),
                 },
             });
 
@@ -3563,6 +3585,14 @@ export class PaymentsService {
         if (amount > netAvailable) {
             throw new BadRequestException(formatLiabilitiesBlockMessage(pendingLiabilities.total, 'en'));
         }
+        if (pendingLiabilities.total > 0) {
+            const probe = allocateLiabilitySettlement(pendingLiabilities.lines, amount);
+            assertWithdrawalSettlesLiabilitiesOrThrow(
+                pendingLiabilities.total,
+                probe,
+                pendingLiabilities.lines[0]?.amount,
+            );
+        }
 
         const finConfig = await this.financialConfig.getConfig();
         if (finConfig.payoutDelayDaysMerchant > 0) {
@@ -4429,6 +4459,11 @@ export class PaymentsService {
             settlementAmount = allocation.settlementAmount;
             transferAmount = allocation.transferAmount;
             settledLines = allocation.settled;
+            assertWithdrawalSettlesLiabilitiesOrThrow(
+                liabilities.total,
+                allocation,
+                liabilities.lines[0]?.amount,
+            );
             if (amount > Math.max(0, balance - liabilities.total)) {
                 throw new BadRequestException(formatLiabilitiesBlockMessage(liabilities.total, 'en'));
             }

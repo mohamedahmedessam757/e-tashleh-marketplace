@@ -3,6 +3,8 @@
  * Reuses adjudication PENDING fee / shipping statuses — no new ledger table.
  */
 
+import { BadRequestException } from '@nestjs/common';
+
 export type StoreLiabilityLineKind = 'ADJUDICATION_FEE' | 'SHIPPING_FEE';
 
 export interface StoreLiabilityLine {
@@ -214,4 +216,29 @@ export function formatLiabilitiesBlockMessage(pendingTotal: number, lang: 'ar' |
     return `يوجد التزامات معلقة بقيمة ${amt} درهم يجب تسويتها قبل السحب (رسوم حكم / شحن). الرصيد القابل للسحب = المتاح − الالتزامات.`;
   }
   return `You have AED ${amt} in pending store liabilities (adjudication/shipping). Withdrawable amount = available − liabilities.`;
+}
+
+/**
+ * Block sending money to Connect while older debts remain untouched.
+ * Allows FIFO settlement of full lines, then net transfer of the remainder.
+ */
+export function assertWithdrawalSettlesLiabilitiesOrThrow(
+  liabilitiesTotal: number,
+  allocation: {
+    settlementAmount: number;
+    transferAmount: number;
+    remainingLiability: number;
+  },
+  oldestLineAmount?: number,
+): void {
+  const total = money2(liabilitiesTotal);
+  if (total <= 0) return;
+
+  // Withdrawal too small to cover the oldest full liability line — would pay out while debt stays open.
+  if (allocation.settlementAmount === 0 && allocation.transferAmount > 0) {
+    const need = money2(oldestLineAmount || total);
+    throw new BadRequestException(
+      `Cannot transfer while store liabilities remain unpaid. Withdraw at least AED ${need.toFixed(2)} so the oldest liability can be settled first, or pay the pending fees/shipping from the wallet.`,
+    );
+  }
 }
