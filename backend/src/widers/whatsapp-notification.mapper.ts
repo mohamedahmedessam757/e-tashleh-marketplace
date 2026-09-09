@@ -16,6 +16,8 @@ export type WhatsAppEvent =
     | 'DOCUMENT'
     | 'STORE_ACTIVATION'
     | 'STORE_UNDER_REVIEW'
+    | 'STORE_PENDING_STRIPE'
+    | 'STORE_STRIPE_RESULT'
     | 'CHAT_MESSAGE';
 
 export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
@@ -33,6 +35,8 @@ export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'DOCUMENT',
     'STORE_ACTIVATION',
     'STORE_UNDER_REVIEW',
+    'STORE_PENDING_STRIPE',
+    'STORE_STRIPE_RESULT',
     'CHAT_MESSAGE',
 ] as const;
 
@@ -176,6 +180,10 @@ function resolveByWaEvent(
             return role === 'MERCHANT' ? 'welcome_vendor' : null;
         case 'STORE_UNDER_REVIEW':
             return role === 'MERCHANT' ? 'txn_store_under_review' : null;
+        case 'STORE_PENDING_STRIPE':
+            return role === 'MERCHANT' ? 'txn_store_complete_stripe' : null;
+        case 'STORE_STRIPE_RESULT':
+            return role === 'MERCHANT' ? 'txn_store_stripe_result' : null;
         case 'CHAT_MESSAGE':
             return 'txn_chat_message';
         case 'DOCUMENT':

@@ -533,6 +533,43 @@ export class WhatsAppChannelService {
                 }
             }
 
+            // txn_store_stripe_result: {{1}} store_name · {{2}} decision_status · {{3}} status_detail
+            if (family === 'txn_store_stripe_result') {
+                const metaStore =
+                    typeof params.metadata?.store_name === 'string'
+                        ? params.metadata.store_name
+                        : typeof params.metadata?.storeName === 'string'
+                          ? params.metadata.storeName
+                          : '';
+                fields.store_name = truncateWhatsAppParam(
+                    metaStore.trim() || user.store?.name || user.name || 'متجر',
+                    60,
+                );
+                const decisionKey = lang === 'en' ? 'decision_status_en' : 'decision_status';
+                const decisionRaw =
+                    typeof params.metadata?.[decisionKey] === 'string'
+                        ? String(params.metadata[decisionKey]).trim()
+                        : typeof params.metadata?.decision_status === 'string'
+                          ? params.metadata.decision_status.trim()
+                          : typeof params.metadata?.decision === 'string' &&
+                              params.metadata.decision === 'approved'
+                            ? lang === 'en'
+                              ? 'Approved'
+                              : 'تمت الموافقة'
+                            : lang === 'en'
+                              ? 'Rejected or restricted'
+                              : 'مرفوض أو مقيد';
+                fields.decision_status = truncateWhatsAppParam(decisionRaw || '—', 120);
+                const metaDetailKey = lang === 'en' ? 'status_detail_en' : 'status_detail';
+                const metaDetailRaw =
+                    typeof params.metadata?.[metaDetailKey] === 'string'
+                        ? String(params.metadata[metaDetailKey]).trim()
+                        : typeof params.metadata?.status_detail === 'string'
+                          ? params.metadata.status_detail.trim()
+                          : statusDetail;
+                fields.status_detail = truncateWhatsAppParam(metaDetailRaw || statusDetail, 500);
+            }
+
             const result = await this.sendByFamily(family, {
                 phone: normalizedPhone,
                 language: lang,

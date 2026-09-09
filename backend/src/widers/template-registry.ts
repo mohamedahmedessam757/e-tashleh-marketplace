@@ -18,7 +18,8 @@ export type TemplateBodyField =
     | 'store_name'
     | 'doc_type'
     | 'sender_name'
-    | 'message_preview';
+    | 'message_preview'
+    | 'decision_status';
 
 export type TemplateNameVersion = 'v2' | 'v3';
 
@@ -245,6 +246,22 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     def('txn_store_under_review', 'ar', 'vendor', [], {
         category: 'UTILITY',
         headerText: 'حسابك قيد المراجعة',
+        buttonLabel: 'لوحة التاجر',
+        buttonUrlDynamic: false,
+        buttonSuffixPattern: suffix.storeHome,
+    }),
+    // After preliminary admin approval — ask merchant to complete Stripe Connect (static body)
+    def('txn_store_complete_stripe', 'ar', 'vendor', [], {
+        category: 'UTILITY',
+        headerText: 'إكمال التوثيق المالي',
+        buttonLabel: 'لوحة التاجر',
+        buttonUrlDynamic: false,
+        buttonSuffixPattern: suffix.storeHome,
+    }),
+    // Stripe Connect final result — {{1}} store_name · {{2}} decision_status · {{3}} status_detail
+    def('txn_store_stripe_result', 'ar', 'vendor', ['store_name', 'decision_status', 'status_detail'], {
+        category: 'UTILITY',
+        headerText: 'نتيجة التحقق المالي',
         buttonLabel: 'لوحة التاجر',
         buttonUrlDynamic: false,
         buttonSuffixPattern: suffix.storeHome,

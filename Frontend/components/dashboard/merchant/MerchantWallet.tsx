@@ -228,16 +228,28 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                 // Never trust return_url alone — verify live Stripe readiness first.
                 setIsOnboarding(true);
                 try {
-                    const { success, onboarded } = await useMerchantWalletStore.getState().refreshStripeStatus();
+                    const { success, onboarded, detailsSubmitted, stripePhase } =
+                        await useMerchantWalletStore.getState().refreshStripeStatus();
                     if (success && onboarded) {
                         setStripeSuccess(true);
                     } else {
                         setStripeSuccess(false);
-                        alert(
-                            isAr
-                                ? '⚠️ لم يكتمل تفعيل الحساب المالي بعد. أكمل متطلبات Stripe ثم عد للمنصة — التفعيل يتم تلقائيًا عند الجاهزية.'
-                                : '⚠️ Financial account is not fully ready yet. Finish Stripe requirements — activation happens automatically when ready.'
-                        );
+                        const pendingReview =
+                            stripePhase === 'pending_review' ||
+                            (Boolean(detailsSubmitted) && !onboarded);
+                        if (pendingReview) {
+                            alert(
+                                isAr
+                                    ? '✅ تم استلام بياناتك وهي قيد مراجعة Stripe. التفعيل يتم تلقائيًا عند الجاهزية — لا حاجة لإعادة التأكيد الآن.'
+                                    : '✅ Your details were received and are under Stripe review. Activation happens automatically when ready — no need to re-confirm now.',
+                            );
+                        } else {
+                            alert(
+                                isAr
+                                    ? '⚠️ لم يكتمل تفعيل الحساب المالي بعد. أكمل متطلبات Stripe ثم عد للمنصة — التفعيل يتم تلقائيًا عند الجاهزية.'
+                                    : '⚠️ Financial account is not fully ready yet. Finish Stripe requirements — activation happens automatically when ready.',
+                            );
+                        }
                     }
                 } catch (error) {
                     console.error('Error refreshing stripe status:', error);

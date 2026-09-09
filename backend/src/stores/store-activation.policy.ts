@@ -7,8 +7,10 @@ export type StoreActivationFields = {
   stripeActivationRequired?: boolean | null;
   stripeChargesEnabled?: boolean | null;
   stripePayoutsEnabled?: boolean | null;
+  stripeDetailsSubmitted?: boolean | null;
   stripeDisabledReason?: string | null;
   stripeRequirementsDue?: unknown;
+  stripeRequirementsPending?: unknown;
   stripeOnboarded?: boolean | null;
 };
 
@@ -64,6 +66,87 @@ export function isStripeFullyReady(
   if (store.stripeDisabledReason) return false;
   if (asStringArray(store.stripeRequirementsDue).length > 0) return false;
   return true;
+}
+
+export type StripeMerchantPhase =
+  | 'not_started'
+  | 'action_required'
+  | 'pending_review'
+  | 'ready'
+  | 'restricted';
+
+function toReadinessSnapshot(
+  input: StripeAccountReadinessSnapshot | StoreActivationFields,
+): StripeAccountReadinessSnapshot {
+  if ('chargesEnabled' in input && typeof (input as StripeAccountReadinessSnapshot).chargesEnabled === 'boolean') {
+    return input as StripeAccountReadinessSnapshot;
+  }
+  const store = input as StoreActivationFields;
+  return {
+    stripeAccountId: store.stripeAccountId ?? null,
+    chargesEnabled: Boolean(store.stripeChargesEnabled),
+    payoutsEnabled: Boolean(store.stripePayoutsEnabled),
+    detailsSubmitted: Boolean(store.stripeDetailsSubmitted),
+    disabledReason: store.stripeDisabledReason ?? null,
+    currentlyDue: asStringArray(store.stripeRequirementsDue),
+    pendingVerification: asStringArray(store.stripeRequirementsPending),
+  };
+}
+
+/** True when the merchant has submitted Connect onboarding details to Stripe. */
+export function isStripeDetailsSubmitted(
+  input: StripeAccountReadinessSnapshot | StoreActivationFields,
+): boolean {
+  return toReadinessSnapshot(input).detailsSubmitted === true;
+}
+
+/**
+ * Submitted to Stripe, no merchant action currently due, but not fully ready yet
+ * (typically requirements.pending_verification while charges/payouts are still off).
+ */
+export function isStripeAwaitingReview(
+  input: StripeAccountReadinessSnapshot | StoreActivationFields,
+): boolean {
+  const snap = toReadinessSnapshot(input);
+  if (!snap.detailsSubmitted) return false;
+  if (isStripeFullyReady(snap)) return false;
+  if (snap.currentlyDue.length > 0) return false;
+  // Disabled accounts are restricted, not "awaiting review".
+  if (snap.disabledReason) return false;
+  return true;
+}
+
+/**
+ * Merchant must open Account Link again (missing submit, currently_due items, or disabled).
+ */
+export function needsMoreStripeInput(
+  input: StripeAccountReadinessSnapshot | StoreActivationFields,
+): boolean {
+  const snap = toReadinessSnapshot(input);
+  if (isStripeFullyReady(snap)) return false;
+  if (!snap.detailsSubmitted) return true;
+  if (snap.currentlyDue.length > 0) return true;
+  if (snap.disabledReason) return true;
+  return false;
+}
+
+/**
+ * UI/workflow phase for merchant + admin Stripe Connect banners.
+ * Does not change readiness gate (charges + payouts).
+ */
+export function stripeMerchantPhase(
+  input: StripeAccountReadinessSnapshot | StoreActivationFields,
+): StripeMerchantPhase {
+  const snap = toReadinessSnapshot(input);
+  if (!snap.stripeAccountId?.trim() && !snap.detailsSubmitted) {
+    return 'not_started';
+  }
+  if (isStripeFullyReady(snap)) return 'ready';
+  // Any disabled_reason means restricted (even if currently_due is empty).
+  if (snap.disabledReason) return 'restricted';
+  if (isStripeAwaitingReview(snap)) return 'pending_review';
+  if (needsMoreStripeInput(snap)) return 'action_required';
+  return 'action_required';
 }
 
 /**

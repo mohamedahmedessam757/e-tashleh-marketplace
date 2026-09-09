@@ -210,6 +210,8 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const [financialSubTab, setFinancialSubTab] = useState<'ledger' | 'withdrawals'>('ledger');
     const [suspensionCountdown, setSuspensionCountdown] = useState<string | null>(null);
+    const [isSyncingStripe, setIsSyncingStripe] = useState(false);
+    const [stripeSyncMessage, setStripeSyncMessage] = useState<string | null>(null);
 
     const isBanActionLoading = pendingStatusUpdate === 'SUSPENDED' || pendingStatusUpdate === 'BLOCKED';
 
@@ -1158,13 +1160,44 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                         {isAr ? 'حالة Stripe Connect' : 'Stripe Connect Status'}
                                     </p>
                                     <p className="text-xs text-white/80 font-bold">
-                                        {vendor.status === 'PENDING_STRIPE'
-                                            ? (isAr ? 'بانتظار تفعيل الحساب المالي' : 'Awaiting financial activation')
-                                            : vendor.status === 'STRIPE_RESTRICTED'
-                                                ? (isAr ? 'مقيد — مطلوب إعادة تحقق' : 'Restricted — re-verification required')
-                                                : vendor.stripeOnboarded
-                                                    ? (isAr ? 'جاهز' : 'Ready')
-                                                    : (isAr ? 'غير مكتمل' : 'Incomplete')}
+                                        {(() => {
+                                            const due = Array.isArray(vendor.stripeRequirementsDue)
+                                                ? vendor.stripeRequirementsDue
+                                                : [];
+                                            const submitted = Boolean(vendor.stripeDetailsSubmitted);
+                                            const ready =
+                                                Boolean(vendor.stripeOnboarded) ||
+                                                (Boolean(vendor.stripeChargesEnabled) &&
+                                                    Boolean(vendor.stripePayoutsEnabled) &&
+                                                    !vendor.stripeDisabledReason &&
+                                                    due.length === 0);
+                                            if (vendor.status === 'STRIPE_RESTRICTED') {
+                                                return isAr
+                                                    ? 'مقيد — مطلوب إعادة تحقق'
+                                                    : 'Restricted — re-verification required';
+                                            }
+                                            if (ready && vendor.status === 'ACTIVE') {
+                                                return isAr ? 'جاهز ومفعّل' : 'Ready & active';
+                                            }
+                                            if (vendor.status === 'PENDING_STRIPE' && submitted && due.length === 0) {
+                                                return isAr
+                                                    ? 'أُرسلت البيانات — بانتظار مراجعة Stripe'
+                                                    : 'Submitted — awaiting Stripe review';
+                                            }
+                                            if (vendor.status === 'PENDING_STRIPE' && !submitted) {
+                                                return isAr
+                                                    ? 'لم يُرسل التاجر بيانات Stripe بعد'
+                                                    : 'Merchant has not submitted Stripe details yet';
+                                            }
+                                            if (vendor.status === 'PENDING_STRIPE') {
+                                                return isAr
+                                                    ? 'بانتظار تفعيل الحساب المالي'
+                                                    : 'Awaiting financial activation';
+                                            }
+                                            return ready
+                                                ? (isAr ? 'جاهز' : 'Ready')
+                                                : (isAr ? 'غير مكتمل' : 'Incomplete');
+                                        })()}
                                     </p>
                                     {vendor.stripeAccountId && (
                                         <p className="text-[10px] font-mono text-white/40 break-all">
@@ -1172,12 +1205,21 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                         </p>
                                     )}
                                     <div className="flex flex-wrap gap-2 text-[10px]">
+                                        <span className={`px-2 py-0.5 rounded border ${vendor.stripeDetailsSubmitted ? 'border-sky-500/30 text-sky-400' : 'border-white/10 text-white/40'}`}>
+                                          details: {vendor.stripeDetailsSubmitted ? 'yes' : 'no'}
+                                        </span>
                                         <span className={`px-2 py-0.5 rounded border ${vendor.stripeChargesEnabled ? 'border-green-500/30 text-green-400' : 'border-white/10 text-white/40'}`}>
                                           charges: {vendor.stripeChargesEnabled ? 'on' : 'off'}
                                         </span>
                                         <span className={`px-2 py-0.5 rounded border ${vendor.stripePayoutsEnabled ? 'border-green-500/30 text-green-400' : 'border-white/10 text-white/40'}`}>
                                           payouts: {vendor.stripePayoutsEnabled ? 'on' : 'off'}
                                         </span>
+                                        {Array.isArray(vendor.stripeRequirementsPending) &&
+                                          vendor.stripeRequirementsPending.length > 0 && (
+                                            <span className="px-2 py-0.5 rounded border border-amber-500/30 text-amber-300">
+                                              pending_verification: {vendor.stripeRequirementsPending.length}
+                                            </span>
+                                          )}
                                     </div>
                                     {vendor.stripeDisabledReason && (
                                         <p className="text-[10px] text-red-300 break-all">{vendor.stripeDisabledReason}</p>
@@ -1187,10 +1229,57 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                             due: {vendor.stripeRequirementsDue.slice(0, 4).join(', ')}
                                         </p>
                                     )}
+                                    {Array.isArray(vendor.stripeRequirementsPending) &&
+                                      vendor.stripeRequirementsPending.length > 0 && (
+                                        <p className="text-[10px] text-sky-300/70 break-all">
+                                            pending: {vendor.stripeRequirementsPending.slice(0, 4).join(', ')}
+                                        </p>
+                                      )}
                                     {vendor.stripeActivationRequired === false && vendor.status === 'ACTIVE' && (
                                         <p className="text-[10px] text-white/35">
                                             {isAr ? 'متجر قديم (بدون إجبار Stripe للعروض)' : 'Legacy store (Stripe not required for offers)'}
                                         </p>
+                                    )}
+                                    {vendor.stripeAccountId && (
+                                        <button
+                                            type="button"
+                                            disabled={isSyncingStripe}
+                                            onClick={async () => {
+                                                setIsSyncingStripe(true);
+                                                setStripeSyncMessage(null);
+                                                try {
+                                                    const { data } = await client.post(
+                                                        `/stores/${vendor.id}/sync-stripe`,
+                                                    );
+                                                    setStripeSyncMessage(
+                                                        isAr
+                                                            ? `تمت المزامنة — الحالة: ${data?.status || '—'} · phase: ${data?.phase || '—'}`
+                                                            : `Synced — status: ${data?.status || '—'} · phase: ${data?.phase || '—'}`,
+                                                    );
+                                                    await silentFetchStoreProfile(vendor.id);
+                                                } catch (e: any) {
+                                                    setStripeSyncMessage(
+                                                        e?.response?.data?.message ||
+                                                            (isAr
+                                                                ? 'فشل مزامنة Stripe'
+                                                                : 'Stripe sync failed'),
+                                                    );
+                                                } finally {
+                                                    setIsSyncingStripe(false);
+                                                }
+                                            }}
+                                            className="w-full mt-1 py-2.5 rounded-xl border border-white/15 bg-white/5 text-[10px] font-black uppercase tracking-wider text-white/80 hover:bg-white/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {isSyncingStripe ? (
+                                                <Loader2 size={14} className="animate-spin" />
+                                            ) : (
+                                                <RefreshCw size={14} />
+                                            )}
+                                            {isAr ? 'مزامنة Stripe الآن' : 'Sync Stripe now'}
+                                        </button>
+                                    )}
+                                    {stripeSyncMessage && (
+                                        <p className="text-[10px] text-white/50 break-all">{stripeSyncMessage}</p>
                                     )}
                                 </div>
                             )}
@@ -1227,8 +1316,8 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                 {vendor.status === 'PENDING_STRIPE' && (
                                     <div className="w-full py-2 px-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-[10px] text-amber-200/80 text-center">
                                         {isAr
-                                            ? 'المتجر بانتظار webhook جاهزية Stripe (charges + payouts)'
-                                            : 'Store awaits Stripe webhook readiness (charges + payouts)'}
+                                            ? 'بانتظار جاهزية Stripe (charges + payouts) — يمكن المزامنة يدويًا من الأعلى'
+                                            : 'Awaiting Stripe readiness (charges + payouts) — you can sync manually above'}
                                     </div>
                                 )}
 

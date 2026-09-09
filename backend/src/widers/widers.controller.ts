@@ -94,6 +94,45 @@ function notificationPayloadForFamily(
                     },
                 },
             };
+        case 'txn_store_complete_stripe':
+            return {
+                role: 'MERCHANT',
+                input: {
+                    ...base,
+                    recipientRole: 'MERCHANT',
+                    type: 'SUCCESS',
+                    titleAr: 'موافقة مبدئية — أكمل التحقق المالي',
+                    titleEn: 'Preliminary approval — complete financial verification',
+                    metadata: {
+                        docType: 'store_pending_stripe',
+                        storeId: orderId,
+                        waEvent: 'STORE_PENDING_STRIPE',
+                    },
+                },
+            };
+        case 'txn_store_stripe_result':
+            return {
+                role: 'MERCHANT',
+                input: {
+                    ...base,
+                    recipientRole: 'MERCHANT',
+                    type: 'SUCCESS',
+                    titleAr: 'تم تفعيل متجرك بالكامل',
+                    titleEn: 'Your store is fully activated',
+                    metadata: {
+                        storeId: orderId,
+                        store_name: 'متجر تجريبي',
+                        waEvent: 'STORE_STRIPE_RESULT',
+                        decision: 'approved',
+                        decision_status: 'تمت الموافقة',
+                        decision_status_en: 'Approved',
+                        status_detail:
+                            'يمكنك الآن تقديم العروض على الطلبات الجديدة واستقبال المستحقات وفق آلية الدفع المعتمدة.',
+                        status_detail_en:
+                            'You can now submit offers on new orders and receive payouts per the platform payment rules.',
+                    },
+                },
+            };
         case 'txn_chat_message':
             return {
                 role: 'CUSTOMER',
@@ -317,6 +356,8 @@ export class WidersController {
         const allFamilies = [
             'welcome_vendor',
             'txn_store_under_review',
+            'txn_store_complete_stripe',
+            'txn_store_stripe_result',
             'txn_chat_message',
             'txn_order_customer',
             'txn_order_merchant',

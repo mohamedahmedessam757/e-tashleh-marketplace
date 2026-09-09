@@ -121,4 +121,11 @@ export class StoresController {
     ) {
         return this.storesService.adminResetOperationalRestrictions(id, req.user.id, body);
     }
+
+    @Post(':id/sync-stripe')
+    @UseGuards(PermissionsGuard)
+    @Permissions('users', 'edit')
+    syncStripe(@Request() req, @Param('id') id: string) {
+        return this.storesService.adminSyncStripe(req.user.id, id);
+    }
 }

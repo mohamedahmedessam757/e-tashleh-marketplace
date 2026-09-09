@@ -8,7 +8,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 import { StripeService } from '../stripe/stripe.service';
-import { isStripeFullyReady } from './store-activation.policy';
+import { isStripeFullyReady, mapStripeAccountToStoreFields, stripeMerchantPhase } from './store-activation.policy';
 import { StoreStripeActivationService } from './store-stripe-activation.service';
 
 @Injectable()
@@ -800,7 +800,7 @@ export class StoresService {
                                 docType: 'store_pending_stripe',
                                 storeId: id,
                                 event: 'STORE_PENDING_STRIPE',
-                                waEvent: 'STORE_ACTIVATION',
+                                waEvent: 'STORE_PENDING_STRIPE',
                             },
                         })
                         .catch((e) => console.error('Failed to send pending-stripe notification', e));
@@ -1824,5 +1824,90 @@ export class StoresService {
         }
 
         return { scanned: stores.length, suspended, warned };
+    }
+
+    /**
+     * Admin live sync: retrieve Connect account from Stripe and apply store readiness transitions.
+     * Does not accept accountId from the client — uses the store's bound stripeAccountId only.
+     */
+    async adminSyncStripe(adminId: string, storeId: string) {
+        if (!this.stripeService.isConfigured()) {
+            throw new BadRequestException('Stripe is not configured');
+        }
+
+        const store = await this.prisma.store.findUnique({
+            where: { id: storeId },
+            select: {
+                id: true,
+                name: true,
+                status: true,
+                stripeAccountId: true,
+                stripeActivationRequired: true,
+                stripeOnboarded: true,
+                stripeChargesEnabled: true,
+                stripePayoutsEnabled: true,
+                stripeDetailsSubmitted: true,
+                stripeDisabledReason: true,
+                stripeRequirementsDue: true,
+                stripeRequirementsPending: true,
+            },
+        });
+        if (!store) {
+            throw new NotFoundException('Store not found');
+        }
+        if (!store.stripeAccountId?.trim()) {
+            throw new BadRequestException('Store has no bound Stripe Connect account');
+        }
+
+        const account = await this.stripeService.retrieveAccountOrNull(store.stripeAccountId);
+        if (!account) {
+            throw new BadRequestException('Could not retrieve Stripe account');
+        }
+
+        const sync = await this.storeStripeActivation.syncStoreFromStripeAccount(store.id, account);
+        const mapped = mapStripeAccountToStoreFields(account);
+        const phase = stripeMerchantPhase(mapped.readiness);
+
+        await this.auditLogs.logAction({
+            actorId: adminId,
+            actorType: ActorType.ADMIN,
+            action: 'STORE_STRIPE_SYNC',
+            entity: 'STORE',
+            reason: `Manual Stripe sync: ready=${sync.ready} status=${sync.status} phase=${phase}`,
+            metadata: {
+                storeId: store.id,
+                storeName: store.name,
+                ready: sync.ready,
+                status: sync.status,
+                phase,
+            },
+        }).catch(() => {});
+
+        const refreshed = await this.prisma.store.findUnique({
+            where: { id: storeId },
+            select: {
+                id: true,
+                status: true,
+                stripeAccountId: true,
+                stripeOnboarded: true,
+                stripeActivationRequired: true,
+                stripeChargesEnabled: true,
+                stripePayoutsEnabled: true,
+                stripeDetailsSubmitted: true,
+                stripeDisabledReason: true,
+                stripeRequirementsDue: true,
+                stripeRequirementsPending: true,
+                stripeStatusUpdatedAt: true,
+            },
+        });
+
+        return {
+            success: true,
+            ready: sync.ready,
+            status: sync.status,
+            phase,
+            store: refreshed,
+            readiness: mapped.readiness,
+        };
     }
 }

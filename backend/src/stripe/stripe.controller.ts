@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { StoreStatus } from '@prisma/client';
 import { StoreStripeActivationService } from '../stores/store-stripe-activation.service';
-import { mapStripeAccountToStoreFields } from '../stores/store-activation.policy';
+import { mapStripeAccountToStoreFields, stripeMerchantPhase } from '../stores/store-activation.policy';
 
 @Controller('stripe')
 @UseGuards(JwtAuthGuard)
@@ -262,6 +262,7 @@ export class StripeController {
                             stripeRequirementsDue: mapped.stripeRequirementsDue,
                             stripeRequirementsPending: mapped.stripeRequirementsPending,
                             stripeReady: mapped.ready,
+                            stripePhase: stripeMerchantPhase(mapped.readiness),
                         };
                     }
                 } catch (error) {
@@ -282,6 +283,19 @@ export class StripeController {
                 stripeRequirementsDue: store.stripeRequirementsDue,
                 stripeRequirementsPending: store.stripeRequirementsPending,
                 stripeReady: false,
+                stripePhase: stripeMerchantPhase({
+                    stripeAccountId: store.stripeAccountId,
+                    chargesEnabled: Boolean(store.stripeChargesEnabled),
+                    payoutsEnabled: Boolean(store.stripePayoutsEnabled),
+                    detailsSubmitted: Boolean(store.stripeDetailsSubmitted),
+                    disabledReason: store.stripeDisabledReason || null,
+                    currentlyDue: Array.isArray(store.stripeRequirementsDue)
+                        ? (store.stripeRequirementsDue as string[])
+                        : [],
+                    pendingVerification: Array.isArray(store.stripeRequirementsPending)
+                        ? (store.stripeRequirementsPending as string[])
+                        : [],
+                }),
             };
         }
 

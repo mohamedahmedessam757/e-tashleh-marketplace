@@ -294,6 +294,50 @@ describe('resolveTemplateFamily', () => {
       ).toBe('txn_store_under_review');
     });
 
+    it('STORE_PENDING_STRIPE → txn_store_complete_stripe', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'SUCCESS',
+            metadata: { waEvent: 'STORE_PENDING_STRIPE', docType: 'store_pending_stripe' },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_store_complete_stripe');
+    });
+
+    it('STORE_STRIPE_RESULT → txn_store_stripe_result', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'SUCCESS',
+            metadata: {
+              waEvent: 'STORE_STRIPE_RESULT',
+              decision: 'approved',
+              decision_status: 'تمت الموافقة',
+            },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_store_stripe_result');
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'WARNING',
+            metadata: {
+              waEvent: 'STORE_STRIPE_RESULT',
+              decision: 'rejected',
+              decision_status: 'مرفوض أو مقيد',
+            },
+          },
+          'MERCHANT',
+        ),
+      ).toBe('txn_store_stripe_result');
+    });
+
     it('CHAT_MESSAGE → txn_chat_message (even SYSTEM)', () => {
       expect(
         resolveTemplateFamily(

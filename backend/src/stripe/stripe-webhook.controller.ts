@@ -74,77 +74,27 @@ export class StripeWebhookController {
                     await this.paymentsService.handlePaymentFailure(failedIntent.id);
                     break;
                 case 'account.updated':
-                    const account = event.data.object;
-                    try {
-                        const meta = account.metadata || {};
-                        const entityId = meta.storeId || meta.id;
-                        if (entityId && meta.type === 'store') {
-                            // Bind by account id when possible to prevent metadata spoofing.
-                            const bound = await this.prisma.store.findUnique({
-                                where: { id: entityId },
-                                select: { id: true, stripeAccountId: true },
-                            });
-                            if (
-                                bound &&
-                                (!bound.stripeAccountId || bound.stripeAccountId === account.id)
-                            ) {
-                                const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
-                                    entityId,
-                                    account,
-                                );
-                                this.logger.log(
-                                    `Store ${entityId} Stripe sync: ready=${result.ready} status=${result.status}`,
-                                );
-                            } else if (account.id) {
-                                const byAcct = await this.prisma.store.findFirst({
-                                    where: { stripeAccountId: account.id },
-                                    select: { id: true },
-                                });
-                                if (byAcct) {
-                                    const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
-                                        byAcct.id,
-                                        account,
-                                    );
-                                    this.logger.log(
-                                        `Store ${byAcct.id} Stripe sync (rebound by account id): ready=${result.ready} status=${result.status}`,
-                                    );
-                                } else {
-                                    this.logger.warn(
-                                        `Ignored account.updated for store metadata ${entityId}: account ${account.id} not bound`,
-                                    );
-                                }
-                            }
-                        } else if (entityId && meta.type === 'customer') {
-                            // Customer Connect path unchanged: details_submitted still marks onboarded.
-                            if (account.details_submitted) {
-                                const uid = entityId.startsWith('cust_') ? entityId.slice(5) : entityId;
-                                await this.prisma.user.update({
-                                    where: { id: uid },
-                                    data: { stripeOnboarded: Boolean(account.details_submitted) },
-                                });
-                                this.logger.log(`Customer ${uid} stripe onboarding completed.`);
-                            }
-                        } else if (account.id) {
-                            // Fallback: resolve store by connected account id when metadata missing.
-                            const byAcct = await this.prisma.store.findFirst({
-                                where: { stripeAccountId: account.id },
-                                select: { id: true },
-                            });
-                            if (byAcct) {
-                                const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
-                                    byAcct.id,
-                                    account,
-                                );
-                                this.logger.log(
-                                    `Store ${byAcct.id} Stripe sync (by account id): ready=${result.ready} status=${result.status}`,
-                                );
-                            }
-                        }
-                    } catch (e) {
-                        this.logger.error('Could not update onboarding status from Stripe account.updated', e);
-                        throw e;
-                    }
+                    await this.syncConnectedAccountFromWebhook(event.data.object);
                     break;
+                case 'capability.updated': {
+                    // Capability flips often accompany readiness; re-retrieve full account and sync.
+                    const capability = event.data.object as { account?: string };
+                    const accountId =
+                        typeof capability?.account === 'string' ? capability.account : null;
+                    if (!accountId) {
+                        this.logger.warn('capability.updated missing account id');
+                        break;
+                    }
+                    const account = await this.stripeService.retrieveAccountOrNull(accountId);
+                    if (!account) {
+                        this.logger.warn(
+                            `capability.updated: could not retrieve account ${accountId}`,
+                        );
+                        break;
+                    }
+                    await this.syncConnectedAccountFromWebhook(account);
+                    break;
+                }
                 case 'charge.refunded':
                     const charge = event.data.object;
                     await this.paymentsService.handleStripeChargeRefunded(charge);
@@ -185,6 +135,82 @@ export class StripeWebhookController {
         }
 
         res.json({received: true});
+    }
+
+    /**
+     * Shared Connect sync for account.updated and capability.updated.
+     * Store path uses full readiness (charges+payouts); customer still uses details_submitted.
+     */
+    private async syncConnectedAccountFromWebhook(account: any): Promise<void> {
+        try {
+            const meta = account.metadata || {};
+            const entityId = meta.storeId || meta.id;
+            if (entityId && meta.type === 'store') {
+                // Bind by account id when possible to prevent metadata spoofing.
+                const bound = await this.prisma.store.findUnique({
+                    where: { id: entityId },
+                    select: { id: true, stripeAccountId: true },
+                });
+                if (
+                    bound &&
+                    (!bound.stripeAccountId || bound.stripeAccountId === account.id)
+                ) {
+                    const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                        entityId,
+                        account,
+                    );
+                    this.logger.log(
+                        `Store ${entityId} Stripe sync: ready=${result.ready} status=${result.status}`,
+                    );
+                } else if (account.id) {
+                    const byAcct = await this.prisma.store.findFirst({
+                        where: { stripeAccountId: account.id },
+                        select: { id: true },
+                    });
+                    if (byAcct) {
+                        const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                            byAcct.id,
+                            account,
+                        );
+                        this.logger.log(
+                            `Store ${byAcct.id} Stripe sync (rebound by account id): ready=${result.ready} status=${result.status}`,
+                        );
+                    } else {
+                        this.logger.warn(
+                            `Ignored Connect sync for store metadata ${entityId}: account ${account.id} not bound`,
+                        );
+                    }
+                }
+            } else if (entityId && meta.type === 'customer') {
+                // Customer Connect path unchanged: details_submitted still marks onboarded.
+                if (account.details_submitted) {
+                    const uid = entityId.startsWith('cust_') ? entityId.slice(5) : entityId;
+                    await this.prisma.user.update({
+                        where: { id: uid },
+                        data: { stripeOnboarded: Boolean(account.details_submitted) },
+                    });
+                    this.logger.log(`Customer ${uid} stripe onboarding completed.`);
+                }
+            } else if (account.id) {
+                // Fallback: resolve store by connected account id when metadata missing.
+                const byAcct = await this.prisma.store.findFirst({
+                    where: { stripeAccountId: account.id },
+                    select: { id: true },
+                });
+                if (byAcct) {
+                    const result = await this.storeStripeActivation.syncStoreFromStripeAccount(
+                        byAcct.id,
+                        account,
+                    );
+                    this.logger.log(
+                        `Store ${byAcct.id} Stripe sync (by account id): ready=${result.ready} status=${result.status}`,
+                    );
+                }
+            }
+        } catch (e) {
+            this.logger.error('Could not update onboarding status from Stripe Connect event', e);
+            throw e;
+        }
     }
 
     /** Stripe amounts are in minor units (AED fils): 57000 → 570.00 AED */

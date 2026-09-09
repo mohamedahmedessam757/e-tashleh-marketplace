@@ -38,6 +38,7 @@ export class StoreStripeActivationService {
         adminApprovedAt: true,
         stripeActivationRequired: true,
         stripeAccountId: true,
+        stripeDetailsSubmitted: true,
       },
     });
 
@@ -59,6 +60,9 @@ export class StoreStripeActivationService {
       );
       return { ready: false, status: store.status };
     }
+
+    const wasDetailsSubmitted = Boolean(store.stripeDetailsSubmitted);
+    const nowDetailsSubmitted = Boolean(mapped.stripeDetailsSubmitted);
 
     const data: Prisma.StoreUpdateInput = {
       stripeChargesEnabled: mapped.stripeChargesEnabled,
@@ -106,6 +110,11 @@ export class StoreStripeActivationService {
       data,
       select: { id: true, status: true, name: true, ownerId: true },
     });
+
+    // First time merchant finishes Stripe hosted form (still awaiting review / capabilities).
+    if (!wasDetailsSubmitted && nowDetailsSubmitted && !ready) {
+      await this.notifyDetailsSubmitted(store);
+    }
 
     if (nextStatus && nextStatus !== store.status) {
       await this.notifyStatusTransition(store, nextStatus, mapped.readiness);
@@ -184,6 +193,50 @@ export class StoreStripeActivationService {
     return this.syncStoreFromStripeAccount(storeId, fakeAccount);
   }
 
+  private async notifyDetailsSubmitted(store: {
+    id: string;
+    name: string;
+    ownerId: string;
+  }) {
+    try {
+      if (store.ownerId) {
+        void this.notifications
+          .create({
+            recipientId: store.ownerId,
+            recipientRole: 'MERCHANT',
+            titleAr: 'تم استلام بيانات Stripe — قيد المراجعة',
+            titleEn: 'Stripe details received — under review',
+            messageAr:
+              'استلمنا بيانات حسابك المالي. Stripe يراجع التوثيق الآن. التفعيل يتم تلقائيًا عند اكتمال الجاهزية (charges + payouts).',
+            messageEn:
+              'We received your financial account details. Stripe is reviewing verification. Activation happens automatically when ready (charges + payouts).',
+            type: 'INFO',
+            link: '/dashboard',
+            metadata: {
+              storeId: store.id,
+              event: 'STORE_STRIPE_DETAILS_SUBMITTED',
+              // In-app only — WhatsApp result template fires on final approve/restrict.
+            },
+          })
+          .catch((e) => this.logger.error('Failed merchant details-submitted notify', e));
+      }
+
+      void this.notifications
+        .notifyAdmins({
+          titleAr: `بيانات Stripe لمتجر (${store.name}) قيد المراجعة`,
+          titleEn: `Stripe details for (${store.name}) under review`,
+          messageAr: 'التاجر أرسل بيانات Connect. بانتظار جاهزية charges + payouts.',
+          messageEn: 'Merchant submitted Connect details. Awaiting charges + payouts readiness.',
+          type: 'INFO',
+          link: `/dashboard/admin/stores/${store.id}`,
+          metadata: { storeId: store.id, event: 'STORE_STRIPE_DETAILS_SUBMITTED' },
+        })
+        .catch((e) => this.logger.error('Failed admin details-submitted notify', e));
+    } catch (e) {
+      this.logger.error('notifyDetailsSubmitted failed', e);
+    }
+  }
+
   private async notifyStatusTransition(
     store: { id: string; name: string; ownerId: string; status: StoreStatus },
     nextStatus: StoreStatus,
@@ -191,6 +244,10 @@ export class StoreStripeActivationService {
   ) {
     try {
       if (nextStatus === StoreStatus.ACTIVE) {
+        const statusDetailAr =
+          'يمكنك الآن تقديم العروض على الطلبات الجديدة واستقبال المستحقات وفق آلية الدفع المعتمدة.';
+        const statusDetailEn =
+          'You can now submit offers on new orders and receive payouts per the platform payment rules.';
         if (store.ownerId) {
           void this.notifications
             .create({
@@ -206,8 +263,14 @@ export class StoreStripeActivationService {
               link: '/dashboard',
               metadata: {
                 storeId: store.id,
+                store_name: store.name,
                 event: 'STORE_STRIPE_ACTIVATED',
-                waEvent: 'STORE_ACTIVATION',
+                waEvent: 'STORE_STRIPE_RESULT',
+                decision: 'approved',
+                decision_status: 'تمت الموافقة',
+                decision_status_en: 'Approved',
+                status_detail: statusDetailAr,
+                status_detail_en: statusDetailEn,
               },
             })
             .catch((e) => this.logger.error('Failed merchant activation notify', e));
@@ -228,8 +291,17 @@ export class StoreStripeActivationService {
       }
 
       if (nextStatus === StoreStatus.STRIPE_RESTRICTED) {
-        const due =
-          readiness.currentlyDue?.slice(0, 5).join(', ') || readiness.disabledReason || 'requirements';
+        const dueRaw =
+          readiness.currentlyDue?.slice(0, 5).join(', ') ||
+          readiness.disabledReason ||
+          '';
+        const due = dueRaw || 'requirements';
+        const statusDetailAr = dueRaw
+          ? `سبب Stripe / المتطلبات: ${dueRaw}`
+          : 'لم يُذكر سبب تفصيلي — راجع لوحة Stripe وأكمل أي متطلبات ناقصة.';
+        const statusDetailEn = dueRaw
+          ? `Stripe reason / requirements: ${dueRaw}`
+          : 'No detailed reason provided — open Stripe Express and complete any outstanding requirements.';
         if (store.ownerId) {
           void this.notifications
             .create({
@@ -239,9 +311,20 @@ export class StoreStripeActivationService {
               titleEn: 'Financial re-verification required',
               messageAr: `حساب Stripe لم يعد جاهزًا. تم إيقاف تقديم العروض الجديدة. التفاصيل: ${due}`,
               messageEn: `Your Stripe account is no longer ready. New offers are paused. Details: ${due}`,
-              type: 'SECURITY',
+              // WARNING (not SECURITY) so WhatsApp channel can dispatch STORE_STRIPE_RESULT.
+              type: 'WARNING',
               link: '/dashboard/wallet',
-              metadata: { storeId: store.id, event: 'STORE_STRIPE_RESTRICTED' },
+              metadata: {
+                storeId: store.id,
+                store_name: store.name,
+                event: 'STORE_STRIPE_RESTRICTED',
+                waEvent: 'STORE_STRIPE_RESULT',
+                decision: 'rejected',
+                decision_status: 'مرفوض أو مقيد',
+                decision_status_en: 'Rejected or restricted',
+                status_detail: statusDetailAr,
+                status_detail_en: statusDetailEn,
+              },
             })
             .catch((e) => this.logger.error('Failed merchant restrict notify', e));
         }
@@ -252,7 +335,7 @@ export class StoreStripeActivationService {
             titleEn: `Stripe restriction for store (${store.name})`,
             messageAr: `تم تحويل المتجر إلى STRIPE_RESTRICTED. السبب/المتطلبات: ${due}`,
             messageEn: `Store moved to STRIPE_RESTRICTED. Reason/requirements: ${due}`,
-            type: 'SECURITY',
+            type: 'WARNING',
             link: `/dashboard/admin/stores/${store.id}`,
             metadata: { storeId: store.id, event: 'STORE_STRIPE_RESTRICTED' },
           })

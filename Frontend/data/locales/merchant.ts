@@ -269,6 +269,14 @@ export const merchant = {
       none: 'لا توجد تنبيهات عاجلة',
       stripePendingTitle: 'بانتظار تفعيل الحساب المالي',
       stripePendingDesc: 'وافقت الإدارة على متجرك مبدئيًا. أكمل ربط Stripe Connect لتفعيل تقديم العروض.',
+      stripeSubmittedTitle: 'تم إرسال البيانات — بانتظار مراجعة Stripe',
+      stripeSubmittedDesc:
+        'استلمنا بياناتك المالية. Stripe يراجع التوثيق الآن. التفعيل يتم تلقائيًا عند اكتمال الجاهزية — لا حاجة لإعادة التأكيد.',
+      stripeSubmittedCta: 'عرض حالة الحساب',
+      stripeReturnPendingReview:
+        'تم استلام بياناتك وهي قيد مراجعة Stripe. التفعيل يتم تلقائيًا عند الجاهزية.',
+      stripeReturnActionRequired:
+        'لم يكتمل تفعيل الحساب المالي بعد. أكمل متطلبات Stripe ثم عد للمنصة — التفعيل يتم تلقائيًا عند الجاهزية.',
       stripeRestrictedTitle: 'مطلوب إعادة التحقق المالي',
       stripeRestrictedDesc: 'حساب Stripe غير جاهز حاليًا. تم إيقاف تقديم العروض الجديدة فقط — الطلبات الجارية تستمر.',
       stripeCompleteCta: 'أكمل التحقق المالي',
@@ -1123,6 +1131,14 @@ export const merchant = {
       none: 'No urgent alerts',
       stripePendingTitle: 'Awaiting financial account activation',
       stripePendingDesc: 'Admin approved your store preliminarily. Complete Stripe Connect to unlock offers.',
+      stripeSubmittedTitle: 'Details submitted — awaiting Stripe review',
+      stripeSubmittedDesc:
+        'We received your financial details. Stripe is reviewing verification. Activation is automatic when ready — no need to re-confirm.',
+      stripeSubmittedCta: 'View account status',
+      stripeReturnPendingReview:
+        'Your details were received and are under Stripe review. Activation happens automatically when ready.',
+      stripeReturnActionRequired:
+        'Financial account is not fully ready yet. Finish Stripe requirements — activation happens automatically when ready.',
       stripeRestrictedTitle: 'Financial re-verification required',
       stripeRestrictedDesc: 'Your Stripe account is not ready. New offers are paused — in-progress orders continue.',
       stripeCompleteCta: 'Complete financial verification',

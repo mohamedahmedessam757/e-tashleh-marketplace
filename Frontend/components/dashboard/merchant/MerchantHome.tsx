@@ -65,6 +65,24 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
         ]).finally(() => fetchLock.current = false);
     }, [fetchDashboardStats, fetchVendorProfile, fetchImpactRules, fetchMerchantStats, fetchMerchantCases, fetchOrders]);
 
+    // Live Stripe sync when Connect gate is open (do not rely on wallet return alone).
+    useEffect(() => {
+        if (vendorStatus !== 'PENDING_STRIPE' && vendorStatus !== 'STRIPE_RESTRICTED') return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const { useMerchantWalletStore } = await import('../../../stores/useMerchantWalletStore');
+                if (cancelled) return;
+                await useMerchantWalletStore.getState().refreshStripeStatus();
+            } catch (e) {
+                console.warn('MerchantHome Stripe live sync failed', e);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [vendorStatus]);
+
     // --- LOGIC: Alerts ---
     // License expiry is shown via LicenseExpiryBanner (contract + document date).
     const activeAlerts = [];

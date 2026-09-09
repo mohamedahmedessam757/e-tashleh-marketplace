@@ -88,7 +88,14 @@ interface MerchantWalletState {
   requestWithdrawal: (amount: number, payoutMethod?: string) => Promise<{ success: boolean; message: string }>;
   cancelWithdrawal: (requestId: string) => Promise<{ success: boolean; message: string }>;
   getStripeOnboardingUrl: () => Promise<string>;
-  refreshStripeStatus: () => Promise<{ success: boolean; onboarded: boolean; stripeDisplay?: StripeConnectDisplay | null; storeStatus?: string }>;
+  refreshStripeStatus: () => Promise<{
+    success: boolean;
+    onboarded: boolean;
+    stripeDisplay?: StripeConnectDisplay | null;
+    storeStatus?: string;
+    detailsSubmitted?: boolean;
+    stripePhase?: string | null;
+  }>;
 }
 
 export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => ({
@@ -252,6 +259,8 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         const onboarded = Boolean(response.data.stripeReady ?? response.data.stripeOnboarded);
         const stripeDisplay = response.data.stripeDisplay ?? null;
         const storeStatus = response.data.storeStatus as string | undefined;
+        const detailsSubmitted = Boolean(response.data.stripeDetailsSubmitted);
+        const stripePhase = (response.data.stripePhase as string | undefined) || null;
 
         if (onboarded) {
           const currentStats = get().stats;
@@ -288,10 +297,10 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
           console.warn('Failed to refresh vendor profile after Stripe status', profileErr);
         }
         
-        return { success: true, onboarded, stripeDisplay, storeStatus };
+        return { success: true, onboarded, stripeDisplay, storeStatus, detailsSubmitted, stripePhase };
     } catch (error) {
         console.error('Failed to refresh stripe status', error);
-        return { success: false, onboarded: false, stripeDisplay: null };
+        return { success: false, onboarded: false, stripeDisplay: null, detailsSubmitted: false, stripePhase: null };
     }
   },
 }));

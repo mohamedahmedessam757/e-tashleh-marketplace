@@ -26,6 +26,9 @@ const REQUIRED_NAMES = [
     'txn_verification_vendor_ar_v2',
     'welcome_customer_ar_v2',
     'welcome_vendor_ar_v2',
+    'txn_store_under_review_ar_v2',
+    'txn_store_complete_stripe_ar_v2',
+    'txn_store_stripe_result_ar_v2',
 ];
 
 const RETIRED_V2_NAMES = [
