@@ -40,7 +40,7 @@ const nestBody = {
   txn_verification_vendor_ar_v2: 3,
   txn_store_under_review_ar_v2: 0,
   txn_store_complete_stripe_ar_v2: 0,
-  txn_store_stripe_result_ar_v2: 3,
+  txn_store_stripe_result_ar_v3: 3,
 };
 
 function countPlaceholders(text) {

@@ -29,7 +29,7 @@ Single source for which in-app events dispatch which Widers template families.
 | `welcome_customer` | `welcome_customer_ar_v2` | — (direct) | After register — `auth.service.ts` |
 | `txn_store_under_review` | `txn_store_under_review_ar_v2` | `STORE_UNDER_REVIEW` | Vendor register + doc re-upload → `PENDING_REVIEW`. **Body fully static (0 variables).** Header: حسابك قيد المراجعة |
 | `txn_store_complete_stripe` | `txn_store_complete_stripe_ar_v2` | `STORE_PENDING_STRIPE` | Preliminary admin approval → ask merchant to complete Stripe Connect. **Body fully static (0 variables).** |
-| `txn_store_stripe_result` | `txn_store_stripe_result_ar_v2` | `STORE_STRIPE_RESULT` | Stripe Connect final result — body `{{1}}` store_name · `{{2}}` decision_status · `{{3}}` status_detail (approved or rejected/restricted) |
+| `txn_store_stripe_result` | `txn_store_stripe_result_ar_v3` | `STORE_STRIPE_RESULT` | Stripe Connect final result — body `{{1}}` store_name · `{{2}}` decision_status · `{{3}}` status_detail (approved or rejected/restricted) |
 | `welcome_vendor` | `welcome_vendor_ar_v2` | `STORE_ACTIVATION` | Direct store `ACTIVE` only (`docType: store_activation`) — not used for preliminary Stripe gate |
 | `txn_chat_message` | `txn_chat_message_ar_v2` | `CHAT_MESSAGE` | New chat message — body `{{1}}` sender_name · `{{2}}` message_preview · `{{3}}` follow_url |
 

@@ -258,8 +258,10 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
         buttonSuffixPattern: suffix.storeHome,
     }),
-    // Stripe Connect final result — {{1}} store_name · {{2}} decision_status · {{3}} status_detail
+    // Stripe Connect final result — Meta name _ar_v3 (v2 abandoned in Widers)
+    // {{1}} store_name · {{2}} decision_status · {{3}} status_detail
     def('txn_store_stripe_result', 'ar', 'vendor', ['store_name', 'decision_status', 'status_detail'], {
+        version: 'v3',
         category: 'UTILITY',
         headerText: 'نتيجة التحقق المالي',
         buttonLabel: 'لوحة التاجر',
@@ -301,6 +303,9 @@ const INVOICE_TEMPLATE_FAMILY_SET = new Set<string>([
     'txn_invoice_merchant',
 ]);
 
+/** Families permanently on Meta `_ar_v3` (same body; v2 abandoned in Widers). */
+const FORCE_V3_TEMPLATE_FAMILY_SET = new Set<string>(['txn_store_stripe_result']);
+
 function isInvoiceTemplateFamily(familyBase: string): boolean {
     return INVOICE_TEMPLATE_FAMILY_SET.has(familyBase);
 }
@@ -326,7 +331,7 @@ export function resolveTemplateName(
         const version = getOrderShipmentTemplateVersion();
         return `${familyBase}_${language}_${version}`;
     }
-    if (isInvoiceTemplateFamily(familyBase)) {
+    if (isInvoiceTemplateFamily(familyBase) || FORCE_V3_TEMPLATE_FAMILY_SET.has(familyBase)) {
         return `${familyBase}_${language}_v3`;
     }
     return `${familyBase}_${language}${TEMPLATE_NAME_VERSION_SUFFIX}`;

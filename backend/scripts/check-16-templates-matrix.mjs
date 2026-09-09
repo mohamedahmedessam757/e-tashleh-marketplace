@@ -39,7 +39,7 @@ const REQUIRED = [
   'txn_violation_vendor_ar_v2',
   'txn_store_under_review_ar_v2',
   'txn_store_complete_stripe_ar_v2',
-  'txn_store_stripe_result_ar_v2',
+  'txn_store_stripe_result_ar_v3',
 ];
 
 /** Retired — safe to delete in Meta after Nest cutover to v3 */
