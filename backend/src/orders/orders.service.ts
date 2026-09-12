@@ -39,7 +39,11 @@ import {
     offerAcceptedPartial,
     offersAcceptedForPayment,
 } from './order-notification-copy.util';
-
+import {
+    isReorderEligibleSourceStatus,
+    isSafePublicMediaUrl,
+    validateReorderIdsShape,
+} from './order-reorder.util';
 @Injectable()
 export class OrdersService {
     private readonly logger = new Logger(OrdersService.name);
@@ -2212,7 +2216,12 @@ export class OrdersService {
 
         if (!hasOrderId && !hasPartIds) return null;
 
-        if (!hasOrderId || !hasPartIds) {
+        const shapeError = validateReorderIdsShape({
+            reorderFromOrderId: dto.reorderFromOrderId,
+            reorderPartIds: dto.reorderPartIds,
+            partsLength: dto.parts?.length ?? 0,
+        });
+        if (shapeError === 'REORDER_FIELDS_INCOMPLETE') {
             throw new BadRequestException({
                 statusCode: 400,
                 message: 'Reorder requires both reorderFromOrderId and reorderPartIds.',
@@ -2221,8 +2230,7 @@ export class OrdersService {
                 code: 'REORDER_FIELDS_INCOMPLETE',
             });
         }
-
-        if (partIds.length !== (dto.parts?.length ?? 0)) {
+        if (shapeError === 'REORDER_PARTS_MISMATCH') {
             throw new BadRequestException({
                 statusCode: 400,
                 message: 'reorderPartIds length must match parts length.',
@@ -2231,9 +2239,7 @@ export class OrdersService {
                 code: 'REORDER_PARTS_MISMATCH',
             });
         }
-
-        const unique = new Set(partIds);
-        if (unique.size !== partIds.length) {
+        if (shapeError === 'REORDER_PARTS_DUPLICATE') {
             throw new BadRequestException({
                 statusCode: 400,
                 message: 'reorderPartIds must be unique.',
@@ -2284,11 +2290,7 @@ export class OrdersService {
             });
         }
 
-        const allowedStatuses: OrderStatus[] = [
-            OrderStatus.AWAITING_SELECTION,
-            OrderStatus.CANCELLED,
-        ];
-        if (!allowedStatuses.includes(source.status)) {
+        if (!isReorderEligibleSourceStatus(source.status)) {
             throw new BadRequestException({
                 statusCode: 400,
                 message: 'Source order is not eligible for part reorder.',
@@ -2333,8 +2335,7 @@ export class OrdersService {
     private sanitizeCreateMediaUrls(dto: CreateOrderDto): void {
         const assertSafeUrl = (url: string | undefined | null, field: string) => {
             if (url == null || url === '') return;
-            const trimmed = String(url).trim();
-            if (!/^https:\/\//i.test(trimmed) && !/^http:\/\//i.test(trimmed)) {
+            if (!isSafePublicMediaUrl(url)) {
                 throw new BadRequestException({
                     statusCode: 400,
                     message: `Invalid media URL for ${field}`,

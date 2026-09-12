@@ -15,7 +15,7 @@ import {
   windowStart,
   type OrderCreateRuleCode,
 } from './order-create-rules.util';
-
+import { shouldExemptMultipleCooldown } from './order-reorder.util';
 export type CreateQuotaBlockedVehicle = {
   make: string;
   model: string;
@@ -225,8 +225,11 @@ export class OrderCreateQuotaService {
     if (requestType === 'multiple') {
       const blocking = multiples[0];
       if (blocking) {
-        const isSourceBlock =
-          reorderExempt && sourceOrderId && blocking.id === sourceOrderId;
+        const isSourceBlock = shouldExemptMultipleCooldown({
+          reorderExempt,
+          reorderSourceOrderId: sourceOrderId,
+          blockingOrderId: blocking.id,
+        });
         if (!isSourceBlock) {
           const unlockAt = unlockAtFromCreatedAt(blocking.createdAt, now).toISOString();
           this.ruleError(

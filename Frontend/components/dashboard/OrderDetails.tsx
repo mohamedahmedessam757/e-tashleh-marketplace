@@ -2043,32 +2043,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     ))
                                 }
                             </div>
-
-                            {expiredPartsWithoutOffers.length > 0 && (
-                                <div className="sticky bottom-3 z-20 rounded-2xl border border-gold-500/30 bg-[#1A1814]/95 backdrop-blur-md p-4 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col sm:flex-row sm:items-center gap-3">
-                                    <p className="text-sm text-gold-200/90 flex-1 leading-relaxed">
-                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelectedHint ||
-                                            (language === 'ar'
-                                                ? 'سيتم فتح نموذج طلب جديد ببيانات القطع المحددة للمراجعة والتأكيد'
-                                                : 'Opens a new order form prefilled with the selected parts for review and confirm')}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        disabled={selectedReorderPartIds.size === 0}
-                                        onClick={() => handleReorderSelectedParts()}
-                                        className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-gold-600 to-gold-400 text-black border border-gold-400/40 shadow-[0_0_18px_rgba(196,169,92,0.35)] hover:from-gold-500 hover:to-gold-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <RefreshCcw size={16} />
-                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelected ||
-                                            (language === 'ar'
-                                                ? 'اطلب عروضًا للقطع المحددة'
-                                                : 'Request offers for selected parts')}
-                                        {selectedReorderPartIds.size > 0
-                                            ? ` (${selectedReorderPartIds.size})`
-                                            : ''}
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     )}
                     </div>{/* end overview */}
