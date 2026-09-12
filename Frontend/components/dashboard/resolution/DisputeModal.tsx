@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  X, 
   AlertTriangle, 
   Loader2, 
   ShieldAlert,
@@ -12,8 +11,10 @@ import {
   Package,
   Zap,
   Info,
-  ArrowUpRight
+  ArrowUpRight,
+  X,
 } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useReturnsStore } from '../../../stores/useReturnsStore';
 import { FileUploader } from '../../ui/FileUploader';
@@ -216,12 +217,11 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
                                         {t.dashboard.resolution.newDispute}
                                     </h3>
                                 </div>
-                                <button 
+                                <CloseIconButton
                                     onClick={onClose}
-                                    className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all border border-white/10 active:scale-95"
-                                >
-                                    <X size={20} className="text-white/40" />
-                                </button>
+                                    size="lg"
+                                    aria-label="Close"
+                                />
                             </div>
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-red-500/5 blur-[80px] rounded-full pointer-events-none" />
                         </div>

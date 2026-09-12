@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
-    X, Printer, FileText, ChevronDown, ChevronUp,
+    Printer, FileText, ChevronDown, ChevronUp,
     Package, Store, Truck, ShieldCheck,
     Calendar, Hash, MapPin, Phone, Mail, User, Car, Info
 } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
@@ -12,6 +13,7 @@ import { getCurrentUser, mapBackendRoleToFrontend } from '../../../utils/auth';
 import { excelApi } from '../../../services/api/excel';
 import { Download } from 'lucide-react';
 import { printIsolatedHtml } from '../../../utils/print';
+import { siteContacts } from '../../../config/site';
 
 /* ─────────────── types ─────────────── */
 interface InvoiceModalProps {
@@ -63,7 +65,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     /* ── translation maps ── */
     const conditionMap: Record<string, string> = {
-        'used_clean': 'مستعمل (أصلي)', 'used': 'مستعمل', 'new': 'جديد', 'refurbished': 'مجدد'
+        'used_clean': language === 'ar' ? 'مستعمل (أصلي)' : 'Used (OEM)',
+        'used': language === 'ar' ? 'مستعمل' : 'Used',
+        'new': language === 'ar' ? 'جديد' : 'New',
+        'refurbished': language === 'ar' ? 'مجدد' : 'Refurbished',
     };
     const partTypeMap: Record<string, string> = {
         'normal': 'قطعة عادية', 'commercial': 'تجاري', 'original': 'أصلي', 'aftermarket': 'تجاري (ما بعد البيع)'
@@ -79,13 +84,17 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
         if (!val) return '--';
         return language === 'ar' ? (map[val] || val) : val;
     };
+    const getConditionLabel = (val?: string | null) => {
+        if (!val) return '';
+        return conditionMap[val] || val;
+    };
 
     // Merchant/Offer data
     const storeName = offerStore?.name || (language === 'ar' ? 'غير محدد' : 'Unknown');
     const storeCode = offerStore?.storeCode || offerStore?.store_code || '';
     const storeLogo = offerStore?.logo || null;
     const offerImage = acceptedOffer?.offerImage || acceptedOffer?.offer_image || null;
-    const offerCondition = getMappedValue(acceptedOffer?.condition, conditionMap) || (language === 'ar' ? 'غير محدد' : 'N/A');
+    const offerCondition = getConditionLabel(acceptedOffer?.condition) || (language === 'ar' ? 'غير محدد' : 'N/A');
     const offerPartType = getMappedValue(acceptedOffer?.partType || acceptedOffer?.part_type, partTypeMap);
     const offerWarranty = acceptedOffer?.hasWarranty || acceptedOffer?.has_warranty;
     const offerWarrantyDuration = getMappedValue(acceptedOffer?.warrantyDuration || acceptedOffer?.warranty_duration, warrantyDurationMap);
@@ -107,7 +116,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const vehicleModel = order.vehicleModel || order.vehicle_model || '';
     const vehicleYear = order.vehicleYear || order.vehicle_year || '';
     const vin = order.vin || '';
-    const conditionPref = order.conditionPref || order.condition_pref || '';
+    const conditionPref = getConditionLabel(order.conditionPref || order.condition_pref || '');
     const requestType = order.requestType || order.request_type || '';
 
     const qrValue = `https://e-tashleh.net/invoice/${order.invoiceId || 'view'}`;
@@ -282,7 +291,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                             <p className="font-bold text-white text-base truncate inv-value">{storeName}</p>
                             {storeCode && <p className="text-gray-400 font-mono text-xs inv-label">ID: #{storeCode}</p>}
                             <p className="text-gray-500 text-[11px] inv-label">E-Tashleh Verified Merchant</p>
-                            <p className="text-gray-500 text-[11px] inv-label mt-1">support@e-tashleh.net</p>
+                            <p className="text-gray-500 text-[11px] inv-label mt-1">{siteContacts.customer}</p>
                         </div>
                     </div>
                 </div>
@@ -334,8 +343,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                 <div className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <InfoRow icon={Package} label={language === 'ar' ? 'اسم القطعة المطلوبة' : 'Requested Part Name'} value={partName} />
-                        {partDesc && <InfoRow icon={Info} label={language === 'ar' ? 'وصف دقيق للمشكلة/القطعة' : 'Detailed Description'} value={partDesc} />}
-                        {conditionPref && <InfoRow icon={ShieldCheck} label={language === 'ar' ? 'شريطة الحالة' : 'Condition Preference'} value={conditionPref} />}
+                        {partDesc && <InfoRow icon={Info} label={language === 'ar' ? 'وصف للقطعة' : 'Part description'} value={partDesc} />}
+                        {conditionPref && <InfoRow icon={ShieldCheck} label={language === 'ar' ? 'حالة القطعة' : 'Part condition'} value={conditionPref} />}
                         {requestType && <InfoRow icon={Info} label={language === 'ar' ? 'نوع التسعير المطلوب' : 'Request Format'} value={requestType === 'multiple' ? (language === 'ar' ? 'طلب تجميعة قطع' : 'Multiple Parts Assembly') : (language === 'ar' ? 'قطعة مفردة' : 'Single Part')} />}
                     </div>
                     {partImages.length > 0 && (
@@ -508,9 +517,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                                     <Printer className="w-4 h-4" />
                                     <span className="hidden sm:inline">{language === 'ar' ? 'طباعة / PDF' : 'Print / PDF'}</span>
                                 </button>
-                                <button onClick={onClose} className="p-2.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-red-500/20">
-                                    <X className="w-5 h-5" />
-                                </button>
+                                <CloseIconButton onClick={onClose} size="md" aria-label="Close" />
                             </div>
                         </div>
 

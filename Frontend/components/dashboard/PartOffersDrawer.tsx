@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition, memo } from 'react';
-import { X, Package, Tag, ArrowUpDown, Shield, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Package, Tag, ArrowUpDown, Shield, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { CloseIconButton } from '../ui/CloseIconButton';
 import { OfferCard } from './OfferCard';
 import { OrderOffer } from '../../stores/useOrderStore';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -466,15 +467,12 @@ export const PartOffersDrawer: React.FC<PartOffersDrawerProps> = ({
                             </span>
                         </div>
 
-                        <button
+                        <CloseIconButton
                             ref={closeBtnRef}
-                            type="button"
                             onClick={onClose}
                             aria-label={isAr ? 'إغلاق' : 'Close'}
-                            className="w-11 h-11 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
-                        >
-                            <X size={18} />
-                        </button>
+                            size="md"
+                        />
                     </div>
                 </div>
 

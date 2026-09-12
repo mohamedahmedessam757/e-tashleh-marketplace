@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { TermsView } from '../auth/TermsView';
+import { CloseIconButton } from '../ui/CloseIconButton';
 
 interface LegalModalProps {
     isOpen: boolean;
@@ -33,12 +33,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, initial
                         >
                             {/* Header */}
                             <div className="flex justify-end p-4 absolute top-0 right-0 z-10">
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
+                                <CloseIconButton onClick={onClose} size="lg" aria-label="Close" />
                             </div>
 
                             {/* Content wrapper with custom scrollbar padding */}

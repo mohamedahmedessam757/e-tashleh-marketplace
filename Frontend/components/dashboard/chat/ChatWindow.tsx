@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, X, Video, Clock, CheckCircle2, Paperclip, Languages, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Send, X, Video, Clock, CheckCircle2, Paperclip, Languages, MessageSquareDashed, FileText, ShieldAlert, Ban, AlertTriangle } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useChatStore } from '../../../stores/useChatStore';
 import { useOrderChatStore } from '../../../stores/useOrderChatStore'; // NEW
 import { useProfileStore } from '../../../stores/useProfileStore';
@@ -352,12 +353,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
           >
-            <button
+            <CloseIconButton
               onClick={() => setLightboxMedia(null)}
-              className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
+              className="absolute top-4 right-4"
+              size="lg"
+              aria-label="Close"
+            />
 
             {lightboxMedia.type === 'video' ? (
               <video src={lightboxMedia.url} controls autoPlay className="max-w-full max-h-full rounded-lg" />
@@ -444,15 +445,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
           {/* Jump to linked order (customer / merchant) */}
           {!!linkedOrderId && (
-            <button
-              type="button"
+            <CloseIconButton
               onClick={navigateToLinkedOrder}
-              className="p-2.5 rounded-xl bg-gold-500/15 text-gold-400 hover:bg-gold-500 hover:text-black border border-gold-500/30 transition-all shadow-[0_0_12px_rgba(196,169,92,0.25)] shrink-0"
+              size="md"
               title={language === 'ar' ? 'الانتقال إلى الطلب' : 'Go to order'}
               aria-label={language === 'ar' ? 'الانتقال إلى الطلب' : 'Go to order'}
-            >
-              <ExternalLink size={18} />
-            </button>
+            />
           )}
 
           {/* Translation Toggle */}
@@ -656,9 +654,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     <p className="text-xs text-white/40">Ready to send</p>
                   </div>
                 </div>
-                <button onClick={clearAttachment} className="p-2 hover:bg-white/10 rounded-full text-white/50 hover:text-red-400 transition-colors">
-                  <X size={18} />
-                </button>
+                <CloseIconButton onClick={clearAttachment} size="sm" aria-label="Clear attachment" />
               </div>
             )}
 
@@ -667,9 +663,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-in slide-in-from-bottom-2">
                 <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
                 <p className="text-sm text-red-200">{warning}</p>
-                <button onClick={() => setWarning(null)} className="text-red-400 hover:text-white ml-auto">
-                  <X size={16} />
-                </button>
+                <CloseIconButton onClick={() => setWarning(null)} size="sm" aria-label="Dismiss" className="ml-auto" />
               </div>
             )}
 

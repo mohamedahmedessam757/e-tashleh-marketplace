@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useCheckoutStore } from '../../../../stores/useCheckoutStore';
 import { useOrderStore } from '../../../../stores/useOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { CheckCircle, AlertTriangle, Package, Loader2, ChevronDown, ChevronUp, Copy, CheckCircle2, X, Wifi, WifiOff, RefreshCw, Lock } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Loader2, ChevronDown, ChevronUp, Copy, CheckCircle2, Wifi, WifiOff, RefreshCw, Lock } from 'lucide-react';
+import { CloseIconButton } from '../../../ui/CloseIconButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StripePaymentForm } from '../StripePaymentForm';
 import { supabase } from '../../../../services/supabase';
@@ -353,12 +354,12 @@ export const PaymentStep: React.FC = () => {
             className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
             onClick={() => setSelectedImage(null)}
           >
-            <button
+            <CloseIconButton
               onClick={() => setSelectedImage(null)}
-              className="absolute top-6 right-6 text-white/60 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors z-10"
-            >
-              <X size={24} />
-            </button>
+              className="absolute top-6 right-6 z-10"
+              size="lg"
+              aria-label="Close"
+            />
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -590,7 +591,7 @@ export const PaymentStep: React.FC = () => {
                   ) : (
                     <button
                       type="button"
-                      className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black bg-gold-500/15 text-gold-300 border border-gold-500/40 hover:bg-gold-500 hover:text-black hover:shadow-[0_0_18px_rgba(196,169,92,0.4)] transition-all w-full sm:w-auto"
+                      className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black bg-red-500/20 text-red-300 border border-red-500/50 hover:bg-red-500 hover:text-white hover:shadow-[0_0_18px_rgba(239,68,68,0.45)] shadow-[0_0_14px_rgba(239,68,68,0.35)] transition-all w-full sm:w-auto"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!isPaid && !isReadyToPay) {

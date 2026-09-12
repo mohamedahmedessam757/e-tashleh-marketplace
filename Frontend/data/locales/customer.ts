@@ -305,6 +305,7 @@ export const customer = {
       },
       partNoOffers: {
         message: 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى',
+        rejectedByYou: 'تم رفض العروض من قبلكم يمكنك إعادة تقديم الطلب مرة أخرى',
         reorderBtn: 'إعادة الطلب',
         waiting: 'لا توجد عروض لهذه القطعة بعد',
         selectParts: 'حدد القطع بدون عروض لإعادة طلبها',
@@ -312,6 +313,7 @@ export const customer = {
         reorderSelectedHint: 'سيتم فتح نموذج طلب جديد ببيانات القطع المحددة للمراجعة والتأكيد',
         noneSelected: 'حدد قطعة واحدة على الأقل'
       },
+      paidShippingCartBanner: 'تم الدفع بنجاح والقطعة الآن في سلة الشحن',
       paymentStatusLabels: {
         unpaid: 'لم يتم الدفع',
         partial: 'دفع جزئي — باقي القطع معلّقة',
@@ -1391,6 +1393,7 @@ export const customer = {
       },
       partNoOffers: {
         message: 'We apologize — no offers were available. Please submit a new request.',
+        rejectedByYou: 'Offers were rejected by you. You can submit the request again.',
         reorderBtn: 'Reorder',
         waiting: 'No offers yet for this part',
         selectParts: 'Select parts without offers to request again',
@@ -1398,6 +1401,7 @@ export const customer = {
         reorderSelectedHint: 'Opens a new order form prefilled with the selected parts for review and confirm',
         noneSelected: 'Select at least one part'
       },
+      paidShippingCartBanner: 'Payment successful — this part is now in the shipping cart',
       paymentStatusLabels: {
         unpaid: 'Not Paid',
         partial: 'Partial payment — parts pending',

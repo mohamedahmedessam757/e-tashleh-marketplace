@@ -3,12 +3,18 @@ import { useCheckoutStore } from '../../../../stores/useCheckoutStore';
 import { useOrderStore } from '../../../../stores/useOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useProfileStore } from '../../../../stores/useProfileStore';
-import { MapPin, Info, AlertTriangle, Package, CheckCircle2, Copy, X } from 'lucide-react';
+import { MapPin, Info, AlertTriangle, Package, CheckCircle2, Copy } from 'lucide-react';
+import { CloseIconButton } from '../../../ui/CloseIconButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasMeaningfulAddress } from '../../../../utils/checkoutSessionStorage';
+import {
+    collectPaidOfferIdsFromOrder,
+    getAcceptedOffersFromList,
+    isOfferConsideredPaid,
+} from '../../../../utils/checkoutPaymentHelpers';
 
 export const OrderSummaryStep: React.FC = () => {
-    const { orderId, address, partAddresses, selectedOffer } = useCheckoutStore();
+    const { orderId, address, partAddresses, selectedOffer, paidOfferIds } = useCheckoutStore();
     const { orders } = useOrderStore();
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
@@ -16,7 +22,6 @@ export const OrderSummaryStep: React.FC = () => {
 
     const order = useMemo(() => orders.find(o => String(o.id) === String(orderId)), [orders, orderId]);
     const tFR = t.dashboard.checkout.finalReview;
-    const acceptedStatuses = useMemo(() => new Set(['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED', 'PREPARATION', 'PARTIALLY_PAID', 'accepted', 'completed', 'shipped', 'delivered', 'preparation', 'partially_paid']), []);
 
     if (!order) return <div className="p-8 text-center text-white/50">{t.common.loading}</div>;
 
@@ -25,8 +30,20 @@ export const OrderSummaryStep: React.FC = () => {
     const itemsCount = requiredPartsArray.length;
 
     const allOffers = order.offers || [];
-    const acceptedOffers = allOffers.filter((o: any) => acceptedStatuses.has(String(o.status || '').toUpperCase()) || acceptedStatuses.has(String(o.status || '')));
-    const offersToDisplay = acceptedOffers.length > 0 ? acceptedOffers : (selectedOffer ? [selectedOffer] : []);
+    const acceptedOffers = getAcceptedOffersFromList(allOffers as any);
+    const mergedPaidOfferIds = [
+        ...paidOfferIds.map(String),
+        ...collectPaidOfferIdsFromOrder(order),
+    ];
+    const unpaidAccepted = acceptedOffers.filter(
+        (o) => !isOfferConsideredPaid(o, mergedPaidOfferIds),
+    );
+    const offersToDisplay =
+        unpaidAccepted.length > 0
+            ? unpaidAccepted
+            : selectedOffer && !isOfferConsideredPaid(selectedOffer as any, mergedPaidOfferIds)
+              ? [selectedOffer]
+              : [];
 
     const isGrouped = itemsCount > 1; // Assuming multi-part implies grouped unless explicitly 'separate'
 
@@ -114,6 +131,12 @@ export const OrderSummaryStep: React.FC = () => {
             {/* Final Order Details (Table List) */}
             <div className="space-y-4">
                 <h3 className="text-lg font-bold text-white text-right mb-4">{tFR.orderDetails}</h3>
+
+                {offersToDisplay.length === 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-8 text-center text-sm text-white/50">
+                        {isAr ? 'لا توجد عروض متبقية للدفع في هذه المرحلة' : 'No unpaid offers left to confirm at this step'}
+                    </div>
+                )}
 
                 {offersToDisplay.map((offer, idx) => {
                     const part = requiredPartsArray.find(p => p.id === offer.orderPartId);
@@ -354,12 +377,12 @@ export const OrderSummaryStep: React.FC = () => {
                         onClick={() => setSelectedImage(null)}
                     >
                         {/* Close button */}
-                        <button
-                            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                        <CloseIconButton
+                            className="absolute top-6 right-6"
                             onClick={() => setSelectedImage(null)}
-                        >
-                            <X size={24} />
-                        </button>
+                            size="lg"
+                            aria-label="Close"
+                        />
 
                         {/* Image */}
                         <motion.img

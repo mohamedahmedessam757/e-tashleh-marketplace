@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, CheckCircle2, DollarSign, MessageSquare, AlertTriangle, Package, RotateCcw, Truck, ShieldAlert } from 'lucide-react';
+import { Bell, CheckCircle2, DollarSign, MessageSquare, AlertTriangle, Package, RotateCcw, Truck, ShieldAlert } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotificationStore, NotificationType, Notification } from '../../../stores/useNotificationStore';
 import { getCurrentUserId } from '../../../utils/auth';
@@ -211,13 +212,11 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                type="button"
+                            <CloseIconButton
                                 onClick={onClose}
-                                className="p-2 hover:bg-white/10 rounded-xl text-white/50 hover:text-white transition-colors duration-150 active:scale-95"
-                            >
-                                <X size={20} />
-                            </button>
+                                size="md"
+                                aria-label="Close"
+                            />
                         </div>
 
                         <div className="px-6 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">

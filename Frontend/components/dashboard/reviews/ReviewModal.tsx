@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, UploadCloud, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { Star, UploadCloud, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useReviewStore } from '../../../stores/useReviewStore';
 
@@ -143,7 +144,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                             </h3>
                             <p className="text-white/40 text-xs mt-1">{language === 'ar' ? 'شارك تجربتك مع الآخرين' : 'Share your experience with others'}</p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors"><X size={24} /></button>
+                        <CloseIconButton onClick={onClose} size="lg" aria-label="Close" />
                     </div>
 
                     <div className="space-y-8 relative z-10">

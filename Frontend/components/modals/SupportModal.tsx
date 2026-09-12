@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ChevronDown, CheckCircle, Loader2, Mail, User, HelpCircle, PhoneCall } from 'lucide-react';
+import { Send, ChevronDown, CheckCircle, Loader2, Mail, User, HelpCircle, PhoneCall } from 'lucide-react';
+import { CloseIconButton } from '../ui/CloseIconButton';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useProfileStore } from '../../stores/useProfileStore';
 
@@ -180,9 +181,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
                                 {isRTL ? 'نحن هنا لمساعدتك دائماً' : 'We are here to help you'}
                             </p>
                         </div>
-                        <button onClick={onClose} className="bg-white/5 hover:bg-gold-500/10 p-2.5 rounded-xl text-white/50 hover:text-gold-500 transition-colors">
-                          <X size={18} />
-                        </button>
+                        <CloseIconButton onClick={onClose} size="md" aria-label="Close" />
                       </motion.div>
 
                       {/* Main Form Fields (Scrollable) */}

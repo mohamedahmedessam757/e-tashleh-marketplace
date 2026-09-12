@@ -23,6 +23,7 @@ import {
     filterInvoicesByTab,
 } from './invoices/invoiceDocs.types';
 import { printIsolatedHtml } from './../../../utils/print';
+import { siteContacts } from './../../../config/site';
 
 const RETURNS_FEE_PREFIX = 'RETURNS_FEE:';
 
@@ -481,7 +482,10 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
         /* ── translation maps ── */
         const conditionMap: Record<string, string> = {
-            'used_clean': 'مستعمل (أصلي)', 'used': 'مستعمل', 'new': 'جديد', 'refurbished': 'مجدد'
+            'used_clean': isAr ? 'مستعمل (أصلي)' : 'Used (OEM)',
+            'used': isAr ? 'مستعمل' : 'Used',
+            'new': isAr ? 'جديد' : 'New',
+            'refurbished': isAr ? 'مجدد' : 'Refurbished',
         };
         const partTypeMap: Record<string, string> = {
             'normal': 'قطعة عادية', 'commercial': 'تجاري', 'original': 'أصلي', 'aftermarket': 'تجاري (ما بعد البيع)'
@@ -497,12 +501,16 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             if (!val) return '--';
             return isAr ? (map[val] || val) : val;
         };
+        const getConditionLabel = (val?: string | null) => {
+            if (!val) return '';
+            return conditionMap[val] || val;
+        };
 
         const storeName = offerStore?.name || (isAr ? 'غير محدد' : 'Unknown');
         const storeCode = offerStore?.storeCode || offerStore?.id?.slice(0, 8) || '';
         const storeLogo = offerStore?.logo || null;
         const offerImage = acceptedOffer?.offerImage || null;
-        const offerCondition = getMappedValue(acceptedOffer?.condition, conditionMap) || (isAr ? 'غير محدد' : 'N/A');
+        const offerCondition = getConditionLabel(acceptedOffer?.condition) || (isAr ? 'غير محدد' : 'N/A');
         const offerPartType = getMappedValue(acceptedOffer?.partType, partTypeMap);
         const offerWarranty = acceptedOffer?.hasWarranty;
         const offerWarrantyDuration = getMappedValue(acceptedOffer?.warrantyDuration, warrantyDurationMap);
@@ -523,7 +531,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         const vehicleModel = order.vehicleModel || order.vehicle?.model || '';
         const vehicleYear = order.vehicleYear || order.vehicle?.year || '';
         const vin = order.vin || order.vehicle?.vin || '';
-        const conditionPref = order.conditionPref || order.preferences?.condition || '';
+        const conditionPref = getConditionLabel(order.conditionPref || order.preferences?.condition || '');
         const requestType = order.requestType || (order.parts?.length > 1 ? 'multiple' : 'single') || '';
 
         const qrValue = `https://e-tashleh.net/invoice/${inv.invoiceId || inv.id}`;
@@ -606,7 +614,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                 <p className="font-bold text-white text-base truncate inv-value">{storeName}</p>
                                 {storeCode && <p className="text-gray-400 font-mono text-xs inv-label">ID: #{storeCode}</p>}
                                 <p className="text-gray-500 text-[11px] inv-label">E-Tashleh Verified Merchant</p>
-                                <p className="text-gray-500 text-[11px] inv-label mt-1">support@e-tashleh.net</p>
+                                <p className="text-gray-500 text-[11px] inv-label mt-1">{siteContacts.customer}</p>
                             </div>
                         </div>
                     </div>
@@ -658,8 +666,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     <div className="space-y-4 mt-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <InfoRow icon={Package} label={isAr ? 'اسم القطعة المطلوبة' : 'Requested Part Name'} value={partName} />
-                            {partDesc && <InfoRow icon={Info} label={isAr ? 'وصف دقيق للمشكلة/القطعة' : 'Detailed Description'} value={partDesc} />}
-                            {conditionPref && <InfoRow icon={ShieldCheck} label={isAr ? 'شريطة الحالة' : 'Condition Preference'} value={conditionPref} />}
+                            {partDesc && <InfoRow icon={Info} label={isAr ? 'وصف للقطعة' : 'Part description'} value={partDesc} />}
+                            {conditionPref && <InfoRow icon={ShieldCheck} label={isAr ? 'حالة القطعة' : 'Part condition'} value={conditionPref} />}
                             {requestType && <InfoRow icon={Info} label={isAr ? 'نوع التسعير المطلوب' : 'Request Format'} value={requestType === 'multiple' ? (isAr ? 'طلب تجميعة قطع' : 'Multiple Parts Assembly') : (isAr ? 'قطعة مفردة' : 'Single Part')} />}
                         </div>
                         {partImages.length > 0 && (

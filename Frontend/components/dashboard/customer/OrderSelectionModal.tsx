@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Clock, ShieldAlert, ChevronDown, CheckCircle2, AlertTriangle, Zap } from 'lucide-react';
+import { Package, Clock, ShieldAlert, ChevronDown, CheckCircle2, AlertTriangle, Zap } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { GlassCard } from '../../ui/GlassCard';
 import { Button } from '../../ui/Button';
 import { useOrderStore, Order } from '../../../stores/useOrderStore';
@@ -80,12 +81,11 @@ export const OrderSelectionModal: React.FC<OrderSelectionModalProps> = ({ isOpen
                                         {isAr ? 'اختيار الطلب المعني' : 'Select Target Order'}
                                     </h2>
                                 </div>
-                                <button 
+                                <CloseIconButton
                                     onClick={onClose}
-                                    className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:rotate-90 transition-all duration-500 border border-white/5"
-                                >
-                                    <X size={24} className="text-white/40" />
-                                </button>
+                                    size="lg"
+                                    aria-label="Close"
+                                />
                             </div>
 
                             {/* List Content */}

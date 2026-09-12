@@ -145,7 +145,6 @@ export function getExpiredPartsWithoutOffers(
 
   const withoutOffers = getPartsWithoutOffers(order, offers, parts);
   if (withoutOffers.length === 0) return [];
-  if (withoutOffers.length === parts.length) return [];
 
   return withoutOffers;
 }

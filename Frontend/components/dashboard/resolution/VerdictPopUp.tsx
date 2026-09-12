@@ -4,11 +4,11 @@ import {
     Gavel,
     AlertTriangle,
     CreditCard,
-    X,
     ExternalLink,
     Info,
     ShieldAlert,
 } from 'lucide-react';
+import { CloseIconButton } from '../../ui/CloseIconButton';
 import { Button } from '../../ui/Button';
 import { GlassCard } from '../../ui/GlassCard';
 import { useNotificationStore, Notification } from '../../../stores/useNotificationStore';
@@ -141,15 +141,12 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                                     {isPayee ? <ShieldAlert size={14} /> : <Info size={14} />}
                                     {isAr ? 'إشعار مهم' : 'Important notice'}
                                 </div>
-                                <button
-                                    type="button"
+                                <CloseIconButton
                                     onClick={() => void handleDismiss()}
                                     disabled={dismissing}
-                                    className="text-white/20 hover:text-white transition-colors disabled:opacity-40"
+                                    size="lg"
                                     aria-label={isAr ? 'إغلاق' : 'Close'}
-                                >
-                                    <X size={24} />
-                                </button>
+                                />
                             </div>
 
                             <div className="space-y-2">

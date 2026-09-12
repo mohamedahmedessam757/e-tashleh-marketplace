@@ -13,14 +13,15 @@ import {
 import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 import { OfferCard } from './OfferCard';
 import { PartOffersDrawer } from './PartOffersDrawer';
-import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, X, XCircle, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, XCircle, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
+import { CloseIconButton } from '../ui/CloseIconButton';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCheckoutStore } from '../../stores/useCheckoutStore';
 import { useChatStore } from '../../stores/useChatStore';
 import { useOrderStore, Order, OrderOffer } from '../../stores/useOrderStore';
 import { useOrderById } from '../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../hooks/useOrderRealtimeSync';
-import { isAcceptedOfferStatus, isVisibleMarketplaceOffer } from '../../utils/offerStatusHelpers';
+import { isAcceptedOfferStatus, isVisibleMarketplaceOffer, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
 import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
 import { getOrderPaymentDisplay, getOrderPaymentDisplayClasses } from '../../utils/orderPaymentDisplay';
 import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla';
@@ -1141,12 +1142,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         onClick={() => setLightboxImage(null)}
                         className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
                     >
-                        <button
+                        <CloseIconButton
                             onClick={() => setLightboxImage(null)}
-                            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
+                            className="absolute top-6 right-6"
+                            size="lg"
+                            aria-label="Close"
+                        />
                         <motion.img
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -1170,12 +1171,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         onClick={() => setLightboxImage(null)}
                         className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
                     >
-                        <button
+                        <CloseIconButton
                             onClick={() => setLightboxImage(null)}
-                            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
+                            className="absolute top-6 right-6"
+                            size="lg"
+                            aria-label="Close"
+                        />
                         <motion.img
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -1747,6 +1748,22 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         .filter((o: any) => (o.orderPartId === p.id || (!o.orderPartId && order.parts.length === 1)) && isVisibleMarketplaceOffer(o))
                                         .slice(0, 10); // Hard cap: max 10
 
+                                    const rejectedOffersForPart = (order.offers || []).filter(
+                                        (o: any) =>
+                                            (o.orderPartId === p.id || (!o.orderPartId && order.parts.length === 1)) &&
+                                            isRejectedOfferStatus(o.status),
+                                    );
+                                    const wasRejectedByCustomer = rejectedOffersForPart.length > 0;
+                                    const noOffersMessage = wasRejectedByCustomer
+                                        ? ((t.dashboard.orders as any)?.partNoOffers?.rejectedByYou ||
+                                            (language === 'ar'
+                                                ? 'تم رفض العروض من قبلكم يمكنك إعادة تقديم الطلب مرة أخرى'
+                                                : 'Offers were rejected by you. You can submit the request again.'))
+                                        : ((t.dashboard.orders as any)?.partNoOffers?.message ||
+                                            (language === 'ar'
+                                                ? 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى'
+                                                : 'We apologize — no offers were available. Please submit a new request.'));
+
                                     const hasOffers = partOffers.length > 0;
                                     const partHasAcceptedOffer = partOffers.some((o: any) =>
                                         isAcceptedOfferStatus(o.status),
@@ -1754,6 +1771,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     const acceptedPartOffer = partOffers.find((o: any) =>
                                         isAcceptedOfferStatus(o.status),
                                     );
+                                    const paidOfferIdsForBanner = collectPaidOfferIdsFromOrder(order);
+                                    const showPaidShippingCartBanner =
+                                        order.requestType === 'multiple' &&
+                                        !!acceptedPartOffer &&
+                                        order.status !== 'CANCELLED' &&
+                                        String(acceptedPartOffer.fulfillmentStatus || '').toUpperCase() !== 'CANCELLED' &&
+                                        isOfferConsideredPaid(acceptedPartOffer, paidOfferIdsForBanner);
                                     const partImgSrc = resolvePartPrimaryImage(p, order.partImages);
                                     const thumbImages = parseImageList(p.images).length
                                         ? parseImageList(p.images)
@@ -1846,6 +1870,18 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                 </div>
                                             </div>
 
+                                            {showPaidShippingCartBanner && (
+                                                <div className="mx-5 mb-4 px-4 py-3 rounded-xl border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-sm font-medium leading-relaxed flex items-start gap-2">
+                                                    <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+                                                    <span>
+                                                        {(t.dashboard.orders as any)?.paidShippingCartBanner ||
+                                                            (language === 'ar'
+                                                                ? 'تم الدفع بنجاح والقطعة الآن في سلة الشحن'
+                                                                : 'Payment successful — this part is now in the shipping cart')}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             {/* No offers hint / expired part reorder */}
                                             {!hasOffers && (
                                                 expiredPartIdsWithoutOffers.has(p.id) ? (
@@ -1858,10 +1894,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                 className="mt-1 h-5 w-5 shrink-0 rounded border-gold-500/50 bg-black/40 text-gold-500 focus:ring-gold-500/40 accent-[#C4A95C]"
                                                             />
                                                             <span className="text-sm text-red-300/90 font-medium leading-relaxed">
-                                                                {(t.dashboard.orders as any)?.partNoOffers?.message ||
-                                                                    (language === 'ar'
-                                                                        ? 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى'
-                                                                        : 'We apologize — no offers were available. Please submit a new request.')}
+                                                                {noOffersMessage}
                                                             </span>
                                                         </label>
                                                         <button
@@ -1873,6 +1906,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             {(t.dashboard.orders as any)?.partNoOffers?.reorderBtn ||
                                                                 (language === 'ar' ? 'إعادة الطلب' : 'Reorder')}
                                                         </button>
+                                                    </div>
+                                                ) : wasRejectedByCustomer ? (
+                                                    <div className="border-t border-red-500/20 px-5 py-3 bg-red-500/5 text-sm text-red-300/90 font-medium leading-relaxed">
+                                                        {noOffersMessage}
                                                     </div>
                                                 ) : (
                                                     <div className="border-t border-white/5 px-5 py-3 text-xs text-white/25 flex items-center gap-2">
