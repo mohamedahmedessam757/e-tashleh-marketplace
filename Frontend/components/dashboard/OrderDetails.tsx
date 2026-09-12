@@ -575,6 +575,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
           )
         : [];
     const expiredPartIdsWithoutOffers = new Set(expiredPartsWithoutOffers.map((p) => p.id));
+    const paidOfferIdsForBanner = collectPaidOfferIdsFromOrder(order);
 
     const handleReorderSelectedParts = (explicitPartIds?: string[]) => {
         const make = order.vehicle?.make;
@@ -1771,12 +1772,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     const acceptedPartOffer = partOffers.find((o: any) =>
                                         isAcceptedOfferStatus(o.status),
                                     );
-                                    const paidOfferIdsForBanner = collectPaidOfferIdsFromOrder(order);
+                                    const fulfillmentStatus = String(acceptedPartOffer?.fulfillmentStatus || '').toUpperCase();
+                                    const leftShippingCart =
+                                        Boolean(acceptedPartOffer?.shippedFromCart) ||
+                                        ['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED', 'RETURNED'].includes(fulfillmentStatus);
                                     const showPaidShippingCartBanner =
                                         order.requestType === 'multiple' &&
                                         !!acceptedPartOffer &&
                                         order.status !== 'CANCELLED' &&
-                                        String(acceptedPartOffer.fulfillmentStatus || '').toUpperCase() !== 'CANCELLED' &&
+                                        !leftShippingCart &&
                                         isOfferConsideredPaid(acceptedPartOffer, paidOfferIdsForBanner);
                                     const partImgSrc = resolvePartPrimaryImage(p, order.partImages);
                                     const thumbImages = parseImageList(p.images).length
@@ -2247,16 +2251,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 <h3 className="text-lg font-bold text-gray-800">
                                     {language === 'ar' ? 'سبب رفض العرض' : 'Reason for Rejection'}
                                 </h3>
-                                <button
+                                <CloseIconButton
                                     onClick={() => {
                                         setOfferToReject(null);
                                         setRejectReason('');
                                         setCustomRejectReason('');
                                     }}
-                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                >
-                                    <X className="w-5 h-5 text-gray-500" />
-                                </button>
+                                    size="md"
+                                    aria-label={language === 'ar' ? 'إغلاق' : 'Close'}
+                                />
                             </div>
 
                             {/* Body */}
@@ -2401,9 +2404,11 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         {language === 'ar' ? 'هل استلمت جميع القطع وبحالة سليمة؟' : 'Have you received all items in good condition?'}
                                     </p>
                                 </div>
-                                <button onClick={() => setShowConfirmDeliveryModal(false)} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors">
-                                    <X size={24} />
-                                </button>
+                                <CloseIconButton
+                                    onClick={() => setShowConfirmDeliveryModal(false)}
+                                    size="lg"
+                                    aria-label={language === 'ar' ? 'إغلاق' : 'Close'}
+                                />
                             </div>
 
                             <div className="space-y-6 relative z-10">
