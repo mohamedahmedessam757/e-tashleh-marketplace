@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
-import { useCreateOrderStore, consumeCreateOrderPrefill } from '../../../stores/useCreateOrderStore';
+import { useCreateOrderStore, consumeCreateOrderPrefill, partHasMedia } from '../../../stores/useCreateOrderStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
@@ -58,6 +58,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     submitOrder,
     reset,
     prefillVehicle,
+    applyReorderPrefill,
     vehicle,
     parts,
     preferences,
@@ -67,6 +68,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     isUploadingParts,
     ruleAlertMessage,
     setRuleAlertMessage,
+    isReorderPrefill,
+    reorderFromOrderId,
   } = useCreateOrderStore();
   const {
     isPreferencesStepEnabled,
@@ -87,7 +90,9 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
 
   useEffect(() => {
     const prefill = consumeCreateOrderPrefill();
-    if (prefill) {
+    if (prefill?.parts?.length) {
+      applyReorderPrefill(prefill);
+    } else if (prefill) {
       prefillVehicle({
         make: prefill.make,
         model: prefill.model,
@@ -102,7 +107,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     return () => {
       unsub();
     };
-  }, [fetchFeatureFlags, subscribeFeatureFlags, prefillVehicle, reset]);
+  }, [fetchFeatureFlags, subscribeFeatureFlags, prefillVehicle, applyReorderPrefill, reset]);
 
   // Wait for flags so we never flash the step when admin has it OFF
   const SHOW_PREFERENCES_STEP = !isFeatureFlagsLoading && isPreferencesStepEnabled === true;
@@ -174,7 +179,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         hasError = true;
       } else {
         // Validate ALL parts
-        const isValid = parts.every(p => p.name && p.description && p.images.length > 0);
+        const isValid = parts.every(p => p.name && p.description && partHasMedia(p));
         if (!isValid) {
           notify(
             language === 'ar'
@@ -186,7 +191,8 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       }
 
       // Soft pre-check against server quota (authoritative enforcement remains on POST)
-      if (!hasError) {
+      // Skip client-side multiple/single cooldown when this is a validated reorder prefill
+      if (!hasError && !isReorderPrefill) {
         try {
           const quota = await ordersApi.getCreateQuota();
           if (requestType === 'multiple' && !quota.multiple.canCreate) {
@@ -318,6 +324,20 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
             : 'Order original used auto parts from scrapyards in the GCC via E-Tashleh platform'}
         </p>
       </div>
+
+      {isReorderPrefill && (
+        <div className="rounded-2xl border border-gold-500/30 bg-gold-500/10 px-4 py-3 text-sm text-gold-200 leading-relaxed">
+          {(t.dashboard.createOrder as { reorderPrefillBanner?: string }).reorderPrefillBanner ||
+            (language === 'ar'
+              ? 'طلب مُعاد من قطع بدون عروض — راجع البيانات وعدّل إن لزم ثم أكّد لإنشاء طلب جديد.'
+              : 'Reorder from parts without offers — review/edit the details, then confirm to create a new order.')}
+          {reorderFromOrderId ? (
+            <span className="block mt-1 text-xs text-gold-300/70">
+              {language === 'ar' ? 'الطلب المصدر مرتبط داخليًا للتحقق.' : 'Source order is linked for server validation.'}
+            </span>
+          ) : null}
+        </div>
+      )}
 
       <OrderCreateQuotaBanner refreshKey={quotaRefreshKey} />
 

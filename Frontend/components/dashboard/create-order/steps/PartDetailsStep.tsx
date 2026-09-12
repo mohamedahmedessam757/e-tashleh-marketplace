@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, FileText, UploadCloud, X, Plus, Trash2, AlertTriangle, Info, Truck, Video, AlertCircle, Camera } from 'lucide-react';
-import { useCreateOrderStore, MAX_PARTS_PER_ORDER } from '../../../../stores/useCreateOrderStore';
+import { useCreateOrderStore, MAX_PARTS_PER_ORDER, partHasMedia } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
 import { useObjectUrl } from '../../../../utils/objectUrl';
@@ -19,6 +19,30 @@ const PartImagePreview: React.FC<{
         src={url}
         alt="preview"
         className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 p-1 bg-red-500/80 rounded-full text-white hover:bg-red-600 transition-colors opacity-0 group-hover/img:opacity-100"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+};
+
+const PartUrlImagePreview: React.FC<{
+  url: string;
+  onRemove: () => void;
+}> = ({ url, onRemove }) => {
+  if (!/^https?:\/\//i.test(url)) return null;
+  return (
+    <div className="w-24 h-24 rounded-xl bg-black/40 border border-white/10 relative group/img overflow-hidden">
+      <img
+        src={url}
+        alt="preview"
+        className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity"
+        loading="lazy"
       />
       <button
         type="button"
@@ -70,6 +94,7 @@ export const PartDetailsStep: React.FC = () => {
     updatePart,
     addPartImage,
     removePartImage,
+    removeUploadedImageUrl,
     showErrors
   } = useCreateOrderStore();
   const { t, language } = useLanguage();
@@ -265,7 +290,7 @@ export const PartDetailsStep: React.FC = () => {
                 </label>
                 <div className="flex flex-wrap gap-4">
                   {/* Add Image Button */}
-                  <label className={`w-24 h-24 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group/upload ${showErrors && part.images.length === 0 ? 'border-red-500 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400' : 'border-white/10 hover:border-gold-500/50 hover:bg-white/5'}`}>
+                  <label className={`w-24 h-24 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group/upload ${showErrors && !partHasMedia(part) ? 'border-red-500 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400' : 'border-white/10 hover:border-gold-500/50 hover:bg-white/5'}`}>
                     <input
                       type="file"
                       className="hidden"
@@ -277,7 +302,7 @@ export const PartDetailsStep: React.FC = () => {
                   </label>
 
                   {/* Camera Capture Button */}
-                  <label className={`w-24 h-24 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group/camera ${showErrors && part.images.length === 0 ? 'border-red-500 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400' : 'border-white/10 hover:border-gold-500/50 hover:bg-gold-500/5'}`}>
+                  <label className={`w-24 h-24 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group/camera ${showErrors && !partHasMedia(part) ? 'border-red-500 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400' : 'border-white/10 hover:border-gold-500/50 hover:bg-gold-500/5'}`}>
                     <input
                       type="file"
                       className="hidden"
@@ -289,7 +314,7 @@ export const PartDetailsStep: React.FC = () => {
                     <span className="text-[10px] text-white/40 text-center leading-tight px-1">{isRTL ? "تصوير مباشر" : "Take Photo"}</span>
                   </label>
 
-                  {/* Image Previews */}
+                  {/* File Image Previews */}
                   {part.images.map((file, imgIdx) => (
                     <PartImagePreview
                       key={`${part.id}-img-${imgIdx}-${file.name}-${file.size}`}
@@ -297,8 +322,20 @@ export const PartDetailsStep: React.FC = () => {
                       onRemove={() => removePartImage(part.id, imgIdx)}
                     />
                   ))}
+
+                  {/* Prefill URL Image Previews (no File) */}
+                  {part.images.length === 0 &&
+                    (part.uploadedImageUrls || []).map((url, urlIdx) =>
+                      url ? (
+                        <PartUrlImagePreview
+                          key={`${part.id}-url-${urlIdx}-${url}`}
+                          url={url}
+                          onRemove={() => removeUploadedImageUrl(part.id, urlIdx)}
+                        />
+                      ) : null,
+                    )}
                 </div>
-                {showErrors && part.images.length === 0 && (
+                {showErrors && !partHasMedia(part) && (
                   <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-red-500 text-xs flex items-center gap-1 mt-2 font-medium">
                     <AlertCircle size={14} />
                     {isRTL ? 'يرجى إرفاق صورة واحدة على الأقل لكل قطعة' : 'Please attach at least one image per part'}
@@ -318,6 +355,21 @@ export const PartDetailsStep: React.FC = () => {
                     file={part.video}
                     onRemove={() => updatePart(part.id, 'video', null)}
                   />
+                ) : part.uploadedVideoUrl && /^https?:\/\//i.test(part.uploadedVideoUrl) ? (
+                  <div className="relative w-full max-w-[200px] bg-black/40 rounded-lg overflow-hidden border border-white/10">
+                    <video
+                      src={part.uploadedVideoUrl}
+                      className="w-full h-32 object-cover"
+                      controls
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updatePart(part.id, 'uploadedVideoUrl', null)}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-lg z-10"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 ) : (
                   <label className="flex items-center justify-center w-full max-w-[200px] h-32 border-2 border-dashed border-white/10 rounded-lg cursor-pointer hover:border-gold-500/50 hover:bg-white/5 transition-all group">
                     <div className="text-center">

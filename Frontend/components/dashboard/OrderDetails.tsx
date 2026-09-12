@@ -217,6 +217,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [expiredModalVariant, setExpiredModalVariant] = useState<OrderExpiryScenario>('no_offers');
     const [expiryTick, setExpiryTick] = useState(0);
     const [isRenewing, setIsRenewing] = useState(false);
+    const [selectedReorderPartIds, setSelectedReorderPartIds] = useState<Set<string>>(() => new Set());
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
     const deepLink = useMemo(() => readDashboardDeepLink(), []);
     const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'waybills'>(
@@ -440,6 +441,36 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         }
     }, [order]);
 
+    const expiredReorderPartIdsKey = useMemo(() => {
+        if (!order || (order.parts?.length ?? 0) <= 1) return '';
+        const ctx = {
+            status: order.status,
+            createdAt: order.createdAt,
+            date: order.date,
+            updatedAt: order.updatedAt,
+            requestType: order.requestType,
+            selectionDeadlineAt: order.selectionDeadlineAt,
+            revealOffersAt: order.revealOffersAt,
+        };
+        const expired = getExpiredPartsWithoutOffers(
+            ctx,
+            order.offers,
+            order.parts?.map((p) => ({ id: p.id, name: p.name })) ?? [],
+        );
+        return expired
+            .map((p) => p.id)
+            .sort()
+            .join(',');
+    }, [order]);
+
+    useEffect(() => {
+        if (!expiredReorderPartIdsKey) {
+            setSelectedReorderPartIds(new Set());
+            return;
+        }
+        setSelectedReorderPartIds(new Set(expiredReorderPartIdsKey.split(',').filter(Boolean)));
+    }, [expiredReorderPartIdsKey]);
+
     const partResolutionByOfferId = useMemo(() => {
         const map = new Map<string, FulfillmentSummaryPartHint>();
         fulfillmentSummary?.parts?.forEach((p) => {
@@ -544,18 +575,84 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         : [];
     const expiredPartIdsWithoutOffers = new Set(expiredPartsWithoutOffers.map((p) => p.id));
 
-    const handleReorderPart = (sourcePartId?: string) => {
+    const handleReorderSelectedParts = (explicitPartIds?: string[]) => {
         const make = order.vehicle?.make;
         const model = order.vehicle?.model;
-        if (!make || !model) return;
+        if (!make || !model || !order.parts?.length) return;
+
+        const ids =
+            explicitPartIds?.length
+                ? explicitPartIds
+                : Array.from(selectedReorderPartIds);
+        if (!ids.length) {
+            useNotificationStore.getState().addNotification({
+                type: 'SYSTEM',
+                titleAr: 'تنبيه',
+                titleEn: 'Notice',
+                messageAr:
+                    (t.dashboard.orders as any)?.partNoOffers?.noneSelected ||
+                    'حدد قطعة واحدة على الأقل',
+                messageEn:
+                    (t.dashboard.orders as any)?.partNoOffers?.noneSelected ||
+                    'Select at least one part',
+                recipientRole: 'CUSTOMER',
+            });
+            return;
+        }
+
+        const selectedParts = order.parts.filter((p) => ids.includes(p.id));
+        if (!selectedParts.length) return;
+
+        const toHttpUrls = (images: unknown): string[] => {
+            const list = Array.isArray(images)
+                ? images
+                : typeof images === 'string'
+                  ? (() => {
+                        try {
+                            const parsed = JSON.parse(images);
+                            return Array.isArray(parsed) ? parsed : [images];
+                        } catch {
+                            return [images];
+                        }
+                    })()
+                  : [];
+            return list
+                .filter((u): u is string => typeof u === 'string' && /^https?:\/\//i.test(u.trim()))
+                .map((u) => u.trim());
+        };
+
         writeCreateOrderPrefill({
             make,
             model,
             year: order.vehicle?.year ? String(order.vehicle.year) : undefined,
             sourceOrderId: order.id,
-            sourcePartId: sourcePartId,
+            sourcePartIds: selectedParts.map((p) => p.id),
+            conditionPref:
+                order.conditionPref === 'new' || order.conditionPref === 'used'
+                    ? order.conditionPref
+                    : null,
+            shippingType:
+                order.shippingType === 'separate' || order.shippingType === 'combined'
+                    ? order.shippingType
+                    : 'combined',
+            parts: selectedParts.map((p) => ({
+                name: p.name,
+                description: p.description || '',
+                notes: p.notes || undefined,
+                images: toHttpUrls(p.images),
+                video: typeof p.video === 'string' && /^https?:\/\//i.test(p.video) ? p.video : null,
+            })),
         });
         onNavigate('create-order');
+    };
+
+    const toggleReorderPart = (partId: string) => {
+        setSelectedReorderPartIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(partId)) next.delete(partId);
+            else next.add(partId);
+            return next;
+        });
     };
 
     const openCheckout = (accOffer?: typeof firstAcceptedOffer, opts?: { freshSession?: boolean }) => {
@@ -1753,16 +1850,24 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                             {!hasOffers && (
                                                 expiredPartIdsWithoutOffers.has(p.id) ? (
                                                     <div className="border-t border-red-500/20 px-5 py-4 bg-red-500/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                                        <p className="text-sm text-red-300/90 font-medium leading-relaxed">
-                                                            {(t.dashboard.orders as any)?.partNoOffers?.message ||
-                                                                (language === 'ar'
-                                                                    ? 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى'
-                                                                    : 'We apologize — no offers were available. Please submit a new request.')}
-                                                        </p>
+                                                        <label className="flex items-start gap-3 cursor-pointer min-w-0 flex-1">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedReorderPartIds.has(p.id)}
+                                                                onChange={() => toggleReorderPart(p.id)}
+                                                                className="mt-1 h-5 w-5 shrink-0 rounded border-gold-500/50 bg-black/40 text-gold-500 focus:ring-gold-500/40 accent-[#C4A95C]"
+                                                            />
+                                                            <span className="text-sm text-red-300/90 font-medium leading-relaxed">
+                                                                {(t.dashboard.orders as any)?.partNoOffers?.message ||
+                                                                    (language === 'ar'
+                                                                        ? 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى'
+                                                                        : 'We apologize — no offers were available. Please submit a new request.')}
+                                                            </span>
+                                                        </label>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleReorderPart(p.id)}
-                                                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 border border-gold-500/30 transition-all whitespace-nowrap shrink-0"
+                                                            onClick={() => handleReorderSelectedParts([p.id])}
+                                                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 border border-gold-500/30 transition-all whitespace-nowrap shrink-0 min-h-[44px]"
                                                         >
                                                             <RefreshCcw size={15} />
                                                             {(t.dashboard.orders as any)?.partNoOffers?.reorderBtn ||
@@ -1844,6 +1949,32 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 })}
                             </div>
 
+                            {expiredPartsWithoutOffers.length > 0 && (
+                                <div className="sticky bottom-3 z-20 rounded-2xl border border-gold-500/30 bg-[#1A1814]/95 backdrop-blur-md p-4 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <p className="text-sm text-gold-200/90 flex-1 leading-relaxed">
+                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelectedHint ||
+                                            (language === 'ar'
+                                                ? 'سيتم فتح نموذج طلب جديد ببيانات القطع المحددة للمراجعة والتأكيد'
+                                                : 'Opens a new order form prefilled with the selected parts for review and confirm')}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        disabled={selectedReorderPartIds.size === 0}
+                                        onClick={() => handleReorderSelectedParts()}
+                                        className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-gold-600 to-gold-400 text-black border border-gold-400/40 shadow-[0_0_18px_rgba(196,169,92,0.35)] hover:from-gold-500 hover:to-gold-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <RefreshCcw size={16} />
+                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelected ||
+                                            (language === 'ar'
+                                                ? 'اطلب عروضًا للقطع المحددة'
+                                                : 'Request offers for selected parts')}
+                                        {selectedReorderPartIds.size > 0
+                                            ? ` (${selectedReorderPartIds.size})`
+                                            : ''}
+                                    </button>
+                                </div>
+                            )}
+
                             {/* ★ PartOffersDrawer — full-screen slide-over */}
                             {drawerPart && (
                                 <PartOffersDrawer
@@ -1912,6 +2043,32 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     ))
                                 }
                             </div>
+
+                            {expiredPartsWithoutOffers.length > 0 && (
+                                <div className="sticky bottom-3 z-20 rounded-2xl border border-gold-500/30 bg-[#1A1814]/95 backdrop-blur-md p-4 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <p className="text-sm text-gold-200/90 flex-1 leading-relaxed">
+                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelectedHint ||
+                                            (language === 'ar'
+                                                ? 'سيتم فتح نموذج طلب جديد ببيانات القطع المحددة للمراجعة والتأكيد'
+                                                : 'Opens a new order form prefilled with the selected parts for review and confirm')}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        disabled={selectedReorderPartIds.size === 0}
+                                        onClick={() => handleReorderSelectedParts()}
+                                        className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-gold-600 to-gold-400 text-black border border-gold-400/40 shadow-[0_0_18px_rgba(196,169,92,0.35)] hover:from-gold-500 hover:to-gold-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <RefreshCcw size={16} />
+                                        {(t.dashboard.orders as any)?.partNoOffers?.reorderSelected ||
+                                            (language === 'ar'
+                                                ? 'اطلب عروضًا للقطع المحددة'
+                                                : 'Request offers for selected parts')}
+                                        {selectedReorderPartIds.size > 0
+                                            ? ` (${selectedReorderPartIds.size})`
+                                            : ''}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                     </div>{/* end overview */}

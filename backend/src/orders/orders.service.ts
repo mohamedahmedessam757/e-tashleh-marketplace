@@ -101,6 +101,9 @@ export class OrdersService {
             });
             if (existing) return existing;
         }
+
+        const reorderMeta = await this.resolveReorderContext(customerId, createOrderDto);
+        this.sanitizeCreateMediaUrls(createOrderDto);
         
         // --- 2026 Governance Enforcement: Order Limit ---
         const customer = await this.prisma.user.findUnique({
@@ -113,8 +116,12 @@ export class OrdersService {
         }
         // ------------------------------------------------
 
+        const quotaOpts = reorderMeta
+            ? { reorderExempt: true as const, reorderSourceOrderId: reorderMeta.sourceOrderId }
+            : undefined;
+
         // Early create-rules check (fast fail before order number / tx)
-        await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto);
+        await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto, this.prisma, quotaOpts);
 
         // 1. Generate Order Number
         const orderNumber = await this.generateOrderNumber();
@@ -129,7 +136,7 @@ export class OrdersService {
                 await tx.$executeRaw`SELECT id FROM users WHERE id = ${customerId}::uuid FOR UPDATE`;
 
                 // Re-check rules under lock (race-safe)
-                await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto, tx);
+                await this.orderCreateQuota.assertCanCreate(customerId, createOrderDto, tx, quotaOpts);
 
             // Increment daily count
             await tx.user.update({
@@ -203,9 +210,34 @@ export class OrdersService {
                     vinImage: createOrderDto.vinImage,
                     // Captured from frontend payload
                     requestType: createOrderDto.requestType,
-                    shippingType: createOrderDto.shippingType
+                    shippingType: createOrderDto.shippingType,
+                    ...(reorderMeta
+                        ? {
+                              reorderFromOrderId: reorderMeta.sourceOrderId,
+                              reorderPartIds: reorderMeta.partIds,
+                          }
+                        : {}),
                 },
             }, tx);
+
+            if (reorderMeta) {
+                await this.auditLogs.logAction({
+                    orderId: order.id,
+                    action: 'ORDER_PARTS_REORDERED',
+                    entity: 'Order',
+                    actorType: ActorType.CUSTOMER,
+                    actorId: customerId,
+                    actorName: 'Customer',
+                    newState: OrderStatus.COLLECTING_OFFERS,
+                    reason: `Reordered ${reorderMeta.partIds.length} part(s) from multi order ${reorderMeta.sourceOrderId}`,
+                    metadata: {
+                        sourceOrderId: reorderMeta.sourceOrderId,
+                        sourcePartIds: reorderMeta.partIds,
+                        newOrderId: order.id,
+                        requestType: createOrderDto.requestType,
+                    },
+                }, tx);
+            }
 
             return order;
         });
@@ -2165,6 +2197,166 @@ export class OrdersService {
         }
 
         return { success: true, message: 'Offer rejected successfully', rejection: result[1] };
+    }
+
+    /**
+     * Validates reorder-from-multi fields on create. Returns null when not a reorder request.
+     */
+    private async resolveReorderContext(
+        customerId: string,
+        dto: CreateOrderDto,
+    ): Promise<{ sourceOrderId: string; partIds: string[] } | null> {
+        const hasOrderId = !!dto.reorderFromOrderId?.trim();
+        const partIds = (dto.reorderPartIds ?? []).map((id) => String(id).trim()).filter(Boolean);
+        const hasPartIds = partIds.length > 0;
+
+        if (!hasOrderId && !hasPartIds) return null;
+
+        if (!hasOrderId || !hasPartIds) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Reorder requires both reorderFromOrderId and reorderPartIds.',
+                messageAr: 'إعادة الطلب تتطلب معرف الطلب المصدر ومعرفات القطع معًا.',
+                messageEn: 'Reorder requires both reorderFromOrderId and reorderPartIds.',
+                code: 'REORDER_FIELDS_INCOMPLETE',
+            });
+        }
+
+        if (partIds.length !== (dto.parts?.length ?? 0)) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'reorderPartIds length must match parts length.',
+                messageAr: 'عدد معرفات القطع يجب أن يطابق عدد القطع في الطلب.',
+                messageEn: 'reorderPartIds length must match parts length.',
+                code: 'REORDER_PARTS_MISMATCH',
+            });
+        }
+
+        const unique = new Set(partIds);
+        if (unique.size !== partIds.length) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'reorderPartIds must be unique.',
+                messageAr: 'معرفات القطع المعاد طلبها يجب أن تكون فريدة.',
+                messageEn: 'reorderPartIds must be unique.',
+                code: 'REORDER_PARTS_DUPLICATE',
+            });
+        }
+
+        const sourceOrderId = dto.reorderFromOrderId!.trim();
+        const source = await this.prisma.order.findUnique({
+            where: { id: sourceOrderId },
+            include: {
+                parts: { select: { id: true } },
+                offers: {
+                    where: {
+                        status: { in: ['pending', 'accepted'] },
+                        isWithdrawn: false,
+                    },
+                    select: { orderPartId: true, status: true },
+                },
+            },
+        });
+
+        if (!source) {
+            throw new NotFoundException('Source order not found');
+        }
+        if (source.customerId !== customerId) {
+            throw new ForbiddenException({
+                statusCode: 403,
+                message: 'Only the order owner can reorder parts.',
+                messageAr: 'فقط صاحب الطلب يمكنه إعادة طلب القطع.',
+                messageEn: 'Only the order owner can reorder parts.',
+                code: 'REORDER_FORBIDDEN',
+            });
+        }
+
+        const isMulti =
+            String(source.requestType || '').toLowerCase() === 'multiple' ||
+            source.parts.length >= 2;
+        if (!isMulti) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Reorder is only allowed from multi-part orders.',
+                messageAr: 'إعادة الطلب متاحة فقط من الطلبات المجمّعة.',
+                messageEn: 'Reorder is only allowed from multi-part orders.',
+                code: 'REORDER_NOT_MULTI',
+            });
+        }
+
+        const allowedStatuses: OrderStatus[] = [
+            OrderStatus.AWAITING_SELECTION,
+            OrderStatus.CANCELLED,
+        ];
+        if (!allowedStatuses.includes(source.status)) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Source order is not eligible for part reorder.',
+                messageAr: 'حالة الطلب المصدر لا تسمح بإعادة طلب القطع.',
+                messageEn: 'Source order is not eligible for part reorder.',
+                code: 'REORDER_STATUS_INVALID',
+            });
+        }
+
+        const sourcePartIds = new Set(source.parts.map((p) => p.id));
+        const partsWithActiveOffers = new Set(
+            source.offers
+                .map((o) => o.orderPartId)
+                .filter((id): id is string => !!id),
+        );
+
+        for (const partId of partIds) {
+            if (!sourcePartIds.has(partId)) {
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: `Part ${partId} does not belong to the source order.`,
+                    messageAr: 'إحدى القطع المحددة لا تنتمي للطلب المصدر.',
+                    messageEn: 'One of the selected parts does not belong to the source order.',
+                    code: 'REORDER_PART_NOT_IN_ORDER',
+                });
+            }
+            if (partsWithActiveOffers.has(partId)) {
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: 'Cannot reorder a part that already has active offers.',
+                    messageAr: 'لا يمكن إعادة طلب قطعة عليها عروض نشطة.',
+                    messageEn: 'Cannot reorder a part that already has active offers.',
+                    code: 'REORDER_PART_HAS_OFFERS',
+                });
+            }
+        }
+
+        return { sourceOrderId, partIds };
+    }
+
+    /** Reject non-http(s) media URLs on create payload (XSS / javascript: prevention). */
+    private sanitizeCreateMediaUrls(dto: CreateOrderDto): void {
+        const assertSafeUrl = (url: string | undefined | null, field: string) => {
+            if (url == null || url === '') return;
+            const trimmed = String(url).trim();
+            if (!/^https:\/\//i.test(trimmed) && !/^http:\/\//i.test(trimmed)) {
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: `Invalid media URL for ${field}`,
+                    messageAr: 'رابط صورة/فيديو غير صالح.',
+                    messageEn: `Invalid media URL for ${field}`,
+                    code: 'INVALID_MEDIA_URL',
+                });
+            }
+        };
+
+        assertSafeUrl(dto.vinImage, 'vinImage');
+        for (const part of dto.parts ?? []) {
+            for (const img of part.images ?? []) {
+                assertSafeUrl(img, 'part.images');
+            }
+            assertSafeUrl(part.video, 'part.video');
+        }
+        if (Array.isArray(dto.partImages)) {
+            for (const img of dto.partImages) {
+                assertSafeUrl(img, 'partImages');
+            }
+        }
     }
 
     async renewOrder(orderId: string, userId: string) {

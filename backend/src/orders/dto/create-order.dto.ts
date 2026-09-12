@@ -1,4 +1,20 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateNested, IsArray, ArrayMinSize, ArrayMaxSize, IsIn } from 'class-validator';
+import {
+    IsBoolean,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    IsUUID,
+    MaxLength,
+    Min,
+    ValidateNested,
+    IsArray,
+    ArrayMinSize,
+    ArrayMaxSize,
+    IsIn,
+    ValidateIf,
+    ArrayUnique,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOrderPartDto {
@@ -90,4 +106,22 @@ export class CreateOrderDto {
     @IsUUID('4')
     @MaxLength(64)
     clientRequestId?: string;
+
+    /**
+     * Reorder path: recreate parts that received no offers from an existing multi order.
+     * Both fields must be provided together; part count must match `parts.length`.
+     */
+    @ValidateIf((o: CreateOrderDto) => o.reorderPartIds != null && o.reorderPartIds.length > 0)
+    @IsUUID('4')
+    @IsOptional()
+    reorderFromOrderId?: string;
+
+    @ValidateIf((o: CreateOrderDto) => !!o.reorderFromOrderId)
+    @IsArray()
+    @ArrayMinSize(1)
+    @ArrayMaxSize(10)
+    @ArrayUnique()
+    @IsUUID('4', { each: true })
+    @IsOptional()
+    reorderPartIds?: string[];
 }

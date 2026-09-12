@@ -165,11 +165,14 @@ export class OrderCreateQuotaService {
 
   /**
    * Enforces create-order rules. Pass the same Prisma tx client when called inside a transaction.
+   * @param opts.reorderExempt when true (validated reorder-from-multi), skip multiple cooldown
+   *   and same-vehicle single duplicate / soft single-limit blocks caused by the active source order.
    */
   async assertCanCreate(
     customerId: string,
     dto: CreateOrderDto,
     db: DbClient = this.prisma,
+    opts?: { reorderExempt?: boolean; reorderSourceOrderId?: string },
   ): Promise<CreateQuotaResponse> {
     const rawType = String(dto.requestType ?? '').trim().toLowerCase();
     if (rawType !== 'single' && rawType !== 'multiple') {
@@ -180,6 +183,8 @@ export class OrderCreateQuotaService {
       );
     }
     const requestType = rawType as 'single' | 'multiple';
+    const reorderExempt = opts?.reorderExempt === true;
+    const sourceOrderId = opts?.reorderSourceOrderId;
 
     const parts = dto.parts ?? [];
     const partNames = parts.map((p) => p.name ?? '');
@@ -220,13 +225,17 @@ export class OrderCreateQuotaService {
     if (requestType === 'multiple') {
       const blocking = multiples[0];
       if (blocking) {
-        const unlockAt = unlockAtFromCreatedAt(blocking.createdAt, now).toISOString();
-        this.ruleError(
-          'MULTIPLE_COOLDOWN',
-          'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة على طلبك المجمع السابق (غير الملغى).',
-          'You cannot submit another multiple request until 24 hours have passed since your previous active multiple request.',
-          { unlockAt, blockingOrderId: blocking.id },
-        );
+        const isSourceBlock =
+          reorderExempt && sourceOrderId && blocking.id === sourceOrderId;
+        if (!isSourceBlock) {
+          const unlockAt = unlockAtFromCreatedAt(blocking.createdAt, now).toISOString();
+          this.ruleError(
+            'MULTIPLE_COOLDOWN',
+            'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور 24 ساعة على طلبك المجمع السابق (غير الملغى).',
+            'You cannot submit another multiple request until 24 hours have passed since your previous active multiple request.',
+            { unlockAt, blockingOrderId: blocking.id },
+          );
+        }
       }
       return quota;
     }
@@ -243,7 +252,8 @@ export class OrderCreateQuotaService {
         normalizeVehicleKey(o.vehicleMake, o.vehicleModel, o.vehicleYear) ===
         incomingKey,
     );
-    if (duplicate) {
+    // Validated reorder from a multi order may recreate one part as single for the same vehicle.
+    if (duplicate && !reorderExempt) {
       const unlockAt = unlockAtFromCreatedAt(duplicate.createdAt, now).toISOString();
       this.ruleError(
         'SINGLE_VEHICLE_DUPLICATE',
@@ -253,7 +263,7 @@ export class OrderCreateQuotaService {
       );
     }
 
-    if (singles.length >= ORDER_CREATE_RULES.maxSinglePerWindow) {
+    if (singles.length >= ORDER_CREATE_RULES.maxSinglePerWindow && !reorderExempt) {
       const oldest = singles[0];
       const unlockAt = unlockAtFromCreatedAt(oldest.createdAt, now).toISOString();
       this.ruleError(

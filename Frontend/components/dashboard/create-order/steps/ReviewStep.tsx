@@ -196,7 +196,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                                         "{p.notes}"
                                     </div>
                                 )}
-                                {p.images.length > 0 && (
+                                {(p.images.length > 0 ||
+                                    (p.uploadedImageUrls || []).some(Boolean) ||
+                                    p.video ||
+                                    p.uploadedVideoUrl) && (
                                     <div className="flex gap-2 overflow-x-auto pb-2">
                                         {p.images.map((img, i) => (
                                             <ReviewThumb
@@ -206,6 +209,18 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                                                 onOpen={(url) => setSelectedMedia({ type: 'image', url })}
                                             />
                                         ))}
+                                        {p.images.length === 0 &&
+                                            (p.uploadedImageUrls || [])
+                                                .filter((u) => !!u && /^https?:\/\//i.test(u))
+                                                .map((url, i) => (
+                                                    <div
+                                                        key={`${p.id}-url-${i}`}
+                                                        className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold-500/50 transition-colors relative"
+                                                        onClick={() => setSelectedMedia({ type: 'image', url })}
+                                                    >
+                                                        <img src={url} alt="part" className="w-full h-full object-cover" loading="lazy" />
+                                                    </div>
+                                                ))}
                                         {p.video && (
                                             <ReviewThumb
                                                 key={`${p.id}-video-${p.video.name}-${p.video.size}`}
@@ -213,6 +228,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                                                 type="video"
                                                 onOpen={(url) => setSelectedMedia({ type: 'video', url })}
                                             />
+                                        )}
+                                        {!p.video && p.uploadedVideoUrl && /^https?:\/\//i.test(p.uploadedVideoUrl) && (
+                                            <div
+                                                className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold-500/50 transition-colors relative"
+                                                onClick={() => setSelectedMedia({ type: 'video', url: p.uploadedVideoUrl! })}
+                                            >
+                                                <video src={p.uploadedVideoUrl} className="w-full h-full object-cover opacity-60" />
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <Video size={20} className="text-white drop-shadow-md" />
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 )}

@@ -4,12 +4,28 @@ import { isDuplicatePartNameAmong } from '../utils/normalizePartName';
 export const CREATE_ORDER_PREFILL_KEY = 'create_order_prefill';
 export const MAX_PARTS_PER_ORDER = 10;
 
+export interface CreateOrderPrefillPart {
+  name: string;
+  description: string;
+  notes?: string;
+  images: string[];
+  video?: string | null;
+}
+
 export interface CreateOrderPrefillPayload {
   make: string;
   model: string;
   year?: string;
   sourceOrderId?: string;
   sourcePartId?: string;
+  sourcePartIds?: string[];
+  parts?: CreateOrderPrefillPart[];
+  conditionPref?: 'new' | 'used' | null;
+  shippingType?: 'separate' | 'combined';
+}
+
+function isHttpUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
 }
 
 export function writeCreateOrderPrefill(payload: CreateOrderPrefillPayload): void {
@@ -23,12 +39,55 @@ export function consumeCreateOrderPrefill(): CreateOrderPrefillPayload | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (typeof parsed.make !== 'string' || typeof parsed.model !== 'string') return null;
+
+    let parts: CreateOrderPrefillPart[] | undefined;
+    if (Array.isArray(parsed.parts)) {
+      parts = parsed.parts
+        .map((p) => {
+          if (!p || typeof p !== 'object') return null;
+          const row = p as Record<string, unknown>;
+          if (typeof row.name !== 'string' || typeof row.description !== 'string') return null;
+          const images = Array.isArray(row.images)
+            ? row.images.filter(isHttpUrl).map((u) => u.trim())
+            : [];
+          return {
+            name: row.name,
+            description: row.description,
+            notes: typeof row.notes === 'string' ? row.notes : undefined,
+            images,
+            video: isHttpUrl(row.video) ? String(row.video).trim() : null,
+          } satisfies CreateOrderPrefillPart;
+        })
+        .filter((p): p is CreateOrderPrefillPart => !!p);
+      if (!parts.length) parts = undefined;
+    }
+
+    const sourcePartIds = Array.isArray(parsed.sourcePartIds)
+      ? parsed.sourcePartIds.filter((id): id is string => typeof id === 'string' && !!id.trim())
+      : undefined;
+
+    const conditionPref =
+      parsed.conditionPref === 'new' || parsed.conditionPref === 'used'
+        ? parsed.conditionPref
+        : parsed.conditionPref === null
+          ? null
+          : undefined;
+
+    const shippingType =
+      parsed.shippingType === 'separate' || parsed.shippingType === 'combined'
+        ? parsed.shippingType
+        : undefined;
+
     return {
       make: parsed.make,
       model: parsed.model,
       year: typeof parsed.year === 'string' ? parsed.year : undefined,
       sourceOrderId: typeof parsed.sourceOrderId === 'string' ? parsed.sourceOrderId : undefined,
       sourcePartId: typeof parsed.sourcePartId === 'string' ? parsed.sourcePartId : undefined,
+      sourcePartIds,
+      parts,
+      conditionPref,
+      shippingType,
     };
   } catch {
     return null;
@@ -43,9 +102,13 @@ export interface PartItem {
   video: File | null;
   videoPreview: string | null;
   notes?: string;
-  /** Parallel to images[]; empty string = not uploaded yet */
+  /** Parallel to File images, or URL-only list when images=[] (reorder prefill) */
   uploadedImageUrls?: string[];
   uploadedVideoUrl?: string | null;
+}
+
+export function partHasMedia(part: PartItem): boolean {
+  return part.images.length > 0 || (part.uploadedImageUrls || []).some(Boolean);
 }
 
 export interface OrderState {
@@ -71,6 +134,11 @@ export interface OrderState {
     condition: 'new' | 'used' | null;
   };
 
+  /** Set when wizard opened from multi-order part reorder */
+  reorderFromOrderId: string | null;
+  reorderPartIds: string[] | null;
+  isReorderPrefill: boolean;
+
   isSubmitting: boolean;
   isUploadingParts: boolean;
   showErrors: boolean; // Controls visual validation display
@@ -89,12 +157,14 @@ export interface OrderState {
   updatePart: (id: string, field: keyof PartItem, value: any) => void;
   addPartImage: (id: string, file: File) => void;
   removePartImage: (id: string, imageIndex: number) => void;
+  removeUploadedImageUrl: (id: string, urlIndex: number) => void;
   uploadPartImageNow: (partId: string, imageIndex: number) => Promise<void>;
   uploadPartVideoNow: (partId: string) => Promise<void>;
 
   updatePreferences: (field: string, value: any) => void;
   reset: () => void;
   prefillVehicle: (data: { make: string; model: string; year?: string }) => void;
+  applyReorderPrefill: (payload: CreateOrderPrefillPayload) => void;
   ensurePartsUploaded: () => Promise<void>;
   submitOrder: () => Promise<string>;
   setShowErrors: (show: boolean) => void;
@@ -152,6 +222,10 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
   preferences: {
     condition: null
   },
+
+  reorderFromOrderId: null,
+  reorderPartIds: null,
+  isReorderPrefill: false,
 
   isSubmitting: false,
   isUploadingParts: false,
@@ -284,6 +358,19 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     })
   })),
 
+  removeUploadedImageUrl: (id, urlIndex) => set((state) => ({
+    parts: state.parts.map((p) => {
+      if (p.id !== id) return p;
+      // URL-only prefill: images=[] and uploadedImageUrls holds public URLs
+      if (p.images.length === 0) {
+        const urls = [...(p.uploadedImageUrls || [])];
+        urls.splice(urlIndex, 1);
+        return { ...p, uploadedImageUrls: urls };
+      }
+      return p;
+    }),
+  })),
+
   uploadPartImageNow: async (partId: string, imageIndex: number) => {
     const part = get().parts.find((p) => p.id === partId);
     const file = part?.images[imageIndex];
@@ -372,6 +459,9 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       shippingType: 'separate',
       parts: [getInitialPart()],
       preferences: { condition: null },
+      reorderFromOrderId: null,
+      reorderPartIds: null,
+      isReorderPrefill: false,
       isSubmitting: false,
       isUploadingParts: false,
       showErrors: false,
@@ -398,6 +488,70 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
       shippingType: 'separate',
       parts: [getInitialPart()],
       preferences: { condition: null },
+      reorderFromOrderId: null,
+      reorderPartIds: null,
+      isReorderPrefill: false,
+      isSubmitting: false,
+      isUploadingParts: false,
+      showErrors: false,
+      ruleAlertMessage: null,
+    });
+  },
+
+  applyReorderPrefill: (payload) => {
+    pendingClientRequestId = null;
+    submitInflight = null;
+    uploadInflight = null;
+    slotUploadInflight.clear();
+
+    const prefillParts = payload.parts?.length
+      ? payload.parts.slice(0, MAX_PARTS_PER_ORDER).map((p) => ({
+          id: generateId(),
+          name: p.name,
+          description: p.description,
+          notes: p.notes || '',
+          images: [] as File[],
+          video: null as File | null,
+          videoPreview: null as string | null,
+          uploadedImageUrls: (p.images || []).filter(isHttpUrl),
+          uploadedVideoUrl: p.video && isHttpUrl(p.video) ? p.video : null,
+        }))
+      : [getInitialPart()];
+
+    const requestType: 'single' | 'multiple' =
+      prefillParts.length >= 2 ? 'multiple' : 'single';
+
+    const sourcePartIds =
+      payload.sourcePartIds?.length
+        ? payload.sourcePartIds
+        : payload.sourcePartId
+          ? [payload.sourcePartId]
+          : null;
+
+    set({
+      step: 1,
+      vehicle: {
+        make: payload.make,
+        model: payload.model,
+        year: payload.year ?? '',
+        vin: '',
+        vinImage: null,
+      },
+      vinImageUploadedUrl: null,
+      requestType,
+      shippingType:
+        payload.shippingType ||
+        (requestType === 'multiple' ? 'combined' : 'separate'),
+      parts: prefillParts,
+      preferences: {
+        condition:
+          payload.conditionPref === 'new' || payload.conditionPref === 'used'
+            ? payload.conditionPref
+            : null,
+      },
+      reorderFromOrderId: payload.sourceOrderId || null,
+      reorderPartIds: sourcePartIds,
+      isReorderPrefill: true,
       isSubmitting: false,
       isUploadingParts: false,
       showErrors: false,
@@ -427,8 +581,8 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           while (part.uploadedImageUrls!.length < part.images.length) {
             part.uploadedImageUrls!.push('');
           }
-          // Drop stale URL slots if images were removed somehow
-          if (part.uploadedImageUrls!.length > part.images.length) {
+          // Only trim URL slots to File length when Files exist; URL-only prefill keeps urls
+          if (part.images.length > 0 && part.uploadedImageUrls!.length > part.images.length) {
             part.uploadedImageUrls = part.uploadedImageUrls!.slice(0, part.images.length);
           }
           part.images.forEach((file, index) => {
@@ -466,7 +620,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
               );
             }
           }
-          if (!part.video) {
+          if (!part.video && !part.uploadedVideoUrl) {
             part.uploadedVideoUrl = null;
           }
         }
@@ -516,9 +670,22 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
 
         const state = get();
         const processedParts = state.parts.map((part) => {
-          const urls = [...(part.uploadedImageUrls || [])];
-          while (urls.length < part.images.length) urls.push('');
-          if (urls.some((u) => !u) || (part.video && !part.uploadedVideoUrl)) {
+          const urls = (part.uploadedImageUrls || []).filter((u) => !!u && isHttpUrl(u));
+          if (part.images.length > 0) {
+            const paired = [...(part.uploadedImageUrls || [])];
+            while (paired.length < part.images.length) paired.push('');
+            if (paired.some((u) => !u) || (part.video && !part.uploadedVideoUrl)) {
+              throw new Error('Part media upload incomplete');
+            }
+            return {
+              name: part.name,
+              description: part.description,
+              notes: part.notes,
+              images: paired.filter(Boolean),
+              video: part.uploadedVideoUrl || undefined,
+            };
+          }
+          if (!urls.length || (part.video && !part.uploadedVideoUrl)) {
             throw new Error('Part media upload incomplete');
           }
           return {
@@ -536,7 +703,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
 
         const yearInt = parseInt(state.vehicle.year) || new Date().getFullYear();
 
-        const payload = {
+        const payload: Record<string, unknown> = {
           vehicleMake: state.vehicle.make,
           vehicleModel: state.vehicle.model,
           vehicleYear: yearInt,
@@ -555,6 +722,14 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           conditionPref: state.preferences.condition,
           clientRequestId,
         };
+
+        if (
+          state.reorderFromOrderId &&
+          state.reorderPartIds?.length === processedParts.length
+        ) {
+          payload.reorderFromOrderId = state.reorderFromOrderId;
+          payload.reorderPartIds = state.reorderPartIds;
+        }
 
         const { ordersApi } = await import('../services/api/orders');
         const newOrder = await ordersApi.create(payload);
