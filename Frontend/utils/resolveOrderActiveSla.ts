@@ -12,6 +12,7 @@ type OrderLike = {
   selectionDeadlineAt?: string | Date | null;
   paymentDeadlineAt?: string | Date | null;
   delayedPreparationDeadlineAt?: string | Date | null;
+  preparationDeadlineAt?: string | Date | null;
   correctionDeadlineAt?: string | Date | null;
   shippedAt?: string | Date | null;
   deliveredAt?: string | Date | null;
@@ -164,13 +165,19 @@ export function resolveOrderActiveSla(
       );
     }
 
-    case 'PREPARATION':
+    case 'PREPARATION': {
+      const prepDeadlineMs = toMs(order.preparationDeadlineAt);
+      const prepStartedMs = getFirstPaymentMs(order) ?? toMs(order.updatedAt);
+      if (prepDeadlineMs != null && prepStartedMs != null) {
+        return buildSlaUntil(status, 'sla.preparation', prepStartedMs, prepDeadlineMs);
+      }
       return buildSla(
         status,
         'sla.preparation',
-        getFirstPaymentMs(order) ?? toMs(order.updatedAt),
+        prepStartedMs,
         H(config.preparationHours),
       );
+    }
 
     case 'DELAYED_PREPARATION':
       return buildSla(

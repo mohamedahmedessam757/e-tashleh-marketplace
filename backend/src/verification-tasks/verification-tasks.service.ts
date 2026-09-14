@@ -5,13 +5,15 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { StartVerificationDto } from './dto/start-verification.dto';
 import { CompleteVerificationDto } from './dto/complete-verification.dto';
 import { AdminFieldReviewDto } from './dto/admin-field-review.dto';
-import { ActorType, OrderStatus, Prisma, UserRole, UserStatus } from '@prisma/client';
+import { ActorType, OrderStatus, Prisma, UserRole, UserStatus, ViolationTargetType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { assertVerificationTaskAccess } from './verification-task-access';
 import { UploadsService, VERIFICATION_FIELD_PHOTOS_BUCKET } from '../uploads/uploads.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import { EscrowService } from '../payments/escrow.service';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
+import { OrdersService } from '../orders/orders.service';
+import { ViolationsService } from '../violations/violations.service';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import * as crypto from 'crypto';
 import {
@@ -131,6 +133,10 @@ export class VerificationTasksService {
     private escrowService: EscrowService,
     @Inject(forwardRef(() => OfferFulfillmentService))
     private offerFulfillment: OfferFulfillmentService,
+    @Inject(forwardRef(() => OrdersService))
+    private ordersService: OrdersService,
+    @Inject(forwardRef(() => ViolationsService))
+    private violationsService: ViolationsService,
     private orderDurationConfig: OrderDurationConfigService,
   ) {}
 
@@ -1456,19 +1462,22 @@ export class VerificationTasksService {
     let newOrderStatus: OrderStatus = task.order.status;
     let correctionDeadline: Date | null = null;
     let newRejectionCount = task.order.rejectionCount;
-    const durationCfg = await this.orderDurationConfig.getConfig();
-    const correctionMs = this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours);
+    let cancelAfterReview = false;
+    let issueNotMatch = false;
 
     if (dto.approved) {
       // Admin agrees with the officer's field decision
       if (officerDecision === 'NON_MATCHING') {
         newRejectionCount += 1;
         if (newRejectionCount >= 2) {
-          newOrderStatus = OrderStatus.CANCELLED;
+          newOrderStatus = task.order.status;
           correctionDeadline = null;
+          cancelAfterReview = true;
         } else {
-          newOrderStatus = OrderStatus.CORRECTION_PERIOD;
-          correctionDeadline = new Date(Date.now() + correctionMs);
+          // Unify with document path: short NON_MATCHING grace, then CORRECTION_PERIOD via SLA.
+          newOrderStatus = OrderStatus.NON_MATCHING;
+          correctionDeadline = null;
+          issueNotMatch = true;
         }
       } else {
         newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
@@ -1484,11 +1493,13 @@ export class VerificationTasksService {
         // Officer said match but admin disagrees — merchant must correct
         newRejectionCount += 1;
         if (newRejectionCount >= 2) {
-          newOrderStatus = OrderStatus.CANCELLED;
+          newOrderStatus = task.order.status;
           correctionDeadline = null;
+          cancelAfterReview = true;
         } else {
-          newOrderStatus = OrderStatus.CORRECTION_PERIOD;
-          correctionDeadline = new Date(Date.now() + correctionMs);
+          newOrderStatus = OrderStatus.NON_MATCHING;
+          correctionDeadline = null;
+          issueNotMatch = true;
         }
       }
     }
@@ -1500,15 +1511,15 @@ export class VerificationTasksService {
       });
 
       const orderData: Prisma.OrderUpdateInput = {
-        status: newOrderStatus,
+        status: cancelAfterReview ? task.order.status : newOrderStatus,
         rejectionCount: newRejectionCount,
       };
 
-      if (newOrderStatus === OrderStatus.CORRECTION_PERIOD) {
-        orderData.correctionDeadlineAt = correctionDeadline;
+      if (newOrderStatus === OrderStatus.NON_MATCHING) {
+        orderData.correctionDeadlineAt = null;
       } else if (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS || newOrderStatus === OrderStatus.VERIFICATION) {
         orderData.correctionDeadlineAt = null;
-      } else if (!dto.approved && newOrderStatus === OrderStatus.CANCELLED) {
+      } else if (cancelAfterReview) {
         orderData.correctionDeadlineAt = null;
       }
 
@@ -1536,11 +1547,10 @@ export class VerificationTasksService {
       });
     });
 
-    if (!dto.approved && newOrderStatus !== OrderStatus.CANCELLED) {
+    if (!dto.approved && !cancelAfterReview) {
       // Rematch only when admin rejection means the field visit must be redone
-      // (officer MATCHING rejected → CORRECTION_PERIOD). Admin override of
-      // officer NON_MATCHING returns order to VERIFICATION without a new cycle.
-      if (newOrderStatus === OrderStatus.CORRECTION_PERIOD) {
+      // (officer MATCHING rejected → NON_MATCHING / correction cycle).
+      if (newOrderStatus === OrderStatus.NON_MATCHING && officerDecision === 'MATCHING') {
         await this.startNewCycle({
           orderId: task.orderId,
           offerId: task.offerId,
@@ -1582,6 +1592,50 @@ export class VerificationTasksService {
       }
     }
 
+    const storeIdForViolation = task.order.verificationDocuments?.[0]?.storeId ?? null;
+    if ((issueNotMatch || cancelAfterReview) && storeIdForViolation) {
+      const store = await this.prisma.store.findUnique({
+        where: { id: storeIdForViolation },
+        select: { id: true, ownerId: true },
+      });
+      if (store) {
+        const code = cancelAfterReview ? 'REPEAT_NOT_MATCH' : 'NOT_MATCH';
+        await this.violationsService
+          .autoIssue({
+            code,
+            targetUserId: store.ownerId,
+            targetStoreId: store.id,
+            targetType: ViolationTargetType.MERCHANT,
+            orderId: task.orderId,
+            reason: cancelAfterReview
+              ? `Repeated field non-match on order #${task.order.orderNumber}; order cancelled.`
+              : `Field verification non-match on order #${task.order.orderNumber}.`,
+            metadata: { orderNumber: task.order.orderNumber, rejectionCount: newRejectionCount, source: 'FIELD' },
+            dedupSuffix: `${store.id}:${code}:field`,
+          })
+          .catch((e) => this.logger.warn(`field mismatch violation failed: ${e?.message || e}`));
+      }
+    }
+
+    if (cancelAfterReview) {
+      try {
+        await this.ordersService.transitionStatus(
+          task.orderId,
+          OrderStatus.CANCELLED,
+          { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
+          'Cancelled after second field verification rejection (non-matching).',
+          { source: 'adminReviewFieldVerification', rejectionCount: newRejectionCount },
+        );
+        newOrderStatus = OrderStatus.CANCELLED;
+      } catch (cancelErr) {
+        this.logger.error(
+          `Field second-reject cancel via transitionStatus failed for ${task.orderId}: ${
+            cancelErr instanceof Error ? cancelErr.message : cancelErr
+          }`,
+        );
+      }
+    }
+
     await this.auditLogs
       .logAction({
         orderId: task.orderId,
@@ -1610,22 +1664,6 @@ export class VerificationTasksService {
       newOrderStatus,
       newRejectionCount,
     }).catch((e) => this.logger.warn(`field admin review notifications: ${e}`));
-
-    if (newOrderStatus === OrderStatus.CANCELLED) {
-      void this.escrowService
-        .refundPaidOrderOnCancel(
-          task.orderId,
-          'Cancelled after second field verification rejection',
-          { previousStatus: task.order.status },
-        )
-        .catch((err) =>
-          this.logger.warn(
-            `Cancel refund after field review failed for ${task.orderId}: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          ),
-        );
-    }
 
     return { success: true, orderStatus: newOrderStatus, taskStatus: dto.approved ? 'ADMIN_APPROVED' : 'ADMIN_REJECTED' };
   }
@@ -1917,12 +1955,12 @@ export class VerificationTasksService {
     const link = `/merchant/orders/${order.id}`;
 
     if (storeId) {
-      if (newOrderStatus === OrderStatus.CORRECTION_PERIOD) {
+      if (newOrderStatus === OrderStatus.NON_MATCHING || newOrderStatus === OrderStatus.CORRECTION_PERIOD) {
         await this.notifications.notifyMerchantByStoreId(storeId, {
           titleAr: '⚠️ رفض مطابقة القطعة - مطلوب تصحيح',
           titleEn: '⚠️ Verification Rejected - Correction Required',
-          messageAr: `تم اكتشاف عدم مطابقة في الطلب #${order.orderNumber}. أمامك 48 ساعة لتصحيح القطعة وإعادة التوثيق.`,
-          messageEn: `Non-matching part detected for #${order.orderNumber}. You have 48h to submit correction.`,
+          messageAr: `تم اكتشاف عدم مطابقة في الطلب #${order.orderNumber}. بعد مهلة السماح القصيرة ستبدأ فترة التصحيح (48 ساعة).`,
+          messageEn: `Non-matching part detected for #${order.orderNumber}. After a short grace, the 48h correction window starts.`,
           type: 'system_alert',
           link,
           metadata: {
@@ -1979,8 +2017,8 @@ export class VerificationTasksService {
         type: 'system_alert',
         titleAr: '❌ إلغاء الطلب لعدم المطابقة',
         titleEn: '❌ Order Cancelled due to Non-Matching',
-        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. Refund is being processed per the 2% payment gateway fee policy.`,
+        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
+        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
         link: `/customer/orders/${order.id}`,
         metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
       });

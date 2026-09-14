@@ -799,6 +799,14 @@ export class OrdersService {
               )
             : undefined;
 
+        const shouldSetPreparationDeadline = newStatus === OrderStatus.PREPARATION;
+        const preparationDeadlineAt = shouldSetPreparationDeadline
+            ? new Date(
+                  Date.now() +
+                      this.orderDurationConfig.hoursToMs(durationCfg.preparationHours),
+              )
+            : undefined;
+
         // 2. Transaction: Update Status + Audit Log
         // Status-conditional updateMany: cron + enforceExpiredSla cannot both win the same transition.
         let transitionApplied = true;
@@ -824,6 +832,9 @@ export class OrdersService {
                     warranty_end_at: isTransitioningToWarranty ? warranty.endAt : undefined,
                     selectionDeadlineAt,
                     ...(correctionDeadlineAt ? { correctionDeadlineAt } : {}),
+                    ...(preparationDeadlineAt && !order.preparationDeadlineAt
+                        ? { preparationDeadlineAt }
+                        : {}),
                     deliveredAt: isFirstDeliveredTransition ? now : undefined,
                 },
             });
@@ -906,11 +917,20 @@ export class OrdersService {
             notifyStatus === OrderStatus.CANCELLED &&
             order.status !== OrderStatus.CANCELLED
         ) {
+            const merchantFaultStatuses = new Set<string>([
+                OrderStatus.DELAYED_PREPARATION,
+                OrderStatus.CORRECTION_PERIOD,
+                OrderStatus.NON_MATCHING,
+                OrderStatus.CORRECTION_SUBMITTED,
+            ]);
             void this.escrowService
                 .refundPaidOrderOnCancel(
                     orderId,
                     reason || 'Order cancelled before shipping',
-                    { previousStatus: order.status },
+                    {
+                        previousStatus: order.status,
+                        merchantFault: merchantFaultStatuses.has(String(order.status)),
+                    },
                 )
                 .catch((err) => {
                     this.logger.warn(
@@ -1591,14 +1611,41 @@ export class OrdersService {
                 where: { id: orderId },
                 data: { delayedPreparationDeadlineAt: delayedDeadline },
             });
-            for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
+            for (const offer of order.offers.filter((o: any) => o.status === 'accepted' && o.storeId)) {
+                const store = await this.prisma.store.findUnique({
+                    where: { id: offer.storeId! },
+                    select: { id: true, ownerId: true },
+                });
+                if (store) {
+                    await this.violationsService.autoIssue({
+                        code: 'LATE_SHIPPING',
+                        targetUserId: store.ownerId,
+                        targetStoreId: store.id,
+                        targetType: ViolationTargetType.MERCHANT,
+                        orderId: order.id,
+                        reason: `Order #${order.orderNumber}: preparation 48h SLA exceeded. Extra 24h grace started before auto-cancel.`,
+                        metadata: {
+                            orderNumber: order.orderNumber,
+                            phase: 'DELAYED_PREPARATION',
+                            graceHours: durationCfg.delayedPreparationGraceHours,
+                        },
+                        dedupSuffix: `${store.id}:prep48`,
+                    }).catch((e) => this.logger.warn(`prep delay violation failed: ${e?.message || e}`));
+                }
                 await this.notifications.notifyMerchantByStoreId(offer.storeId!, {
-                    titleAr: 'تحذير عاجل: لقد تأخرت في التجهيز',
-                    titleEn: 'Urgent: Delayed Preparation SLA',
-                    messageAr: `تجاوز الطلب #${order.orderNumber} مهلة التجهيز. أمامك مهلة إضافية قبل الإلغاء التلقائي.`,
-                    messageEn: `Order #${order.orderNumber} exceeded prep SLA. Extra grace period started before auto-cancel.`,
-                    type: 'system_alert',
+                    titleAr: '⚠ تنبيه: تأخر تجهيز الطلب',
+                    titleEn: 'Warning: Late order preparation',
+                    messageAr: `تنبيه: تأخر تجهيز الطلب #${order.orderNumber}. لم يتم تجهيز الطلب ضمن المدة المحددة، وتم تسجيل مخالفة على حساب متجرك. لديك مهلة إضافية قدرها 24 ساعة لبدء تجهيز الطلب. وفي حال انتهاء المهلة دون إجراء، سيتم إلغاء الطلب وإعادة المبلغ للعميل، مع تطبيق الإجراءات والرسوم المقررة على المتجر.`,
+                    messageEn: `Warning: Order #${order.orderNumber} preparation is late. A violation was recorded. You have 24 extra hours to start preparation. If the grace ends without action, the order will be cancelled, the customer refunded, and merchant fees/procedures applied.`,
+                    type: 'VIOLATION',
                     link: `/merchant/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                        status: 'DELAYED_PREPARATION',
+                        status_detail: `تأخير تجهيز #${order.orderNumber} — مهلة إضافية 24 ساعة قبل الإلغاء`,
+                    },
                 }).catch(() => undefined);
             }
             const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
@@ -1615,23 +1662,22 @@ export class OrdersService {
                 'System: Exceeded extra grace period for preparation. Order abandoned by merchant.',
                 meta,
             );
-            for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
-                const store = await this.prisma.store.findUnique({
-                    where: { id: offer.storeId! },
-                    select: { id: true, ownerId: true },
-                });
-                if (store) {
-                    await this.violationsService.autoIssue({
-                        code: 'LATE_SHIPPING',
-                        targetUserId: store.ownerId,
-                        targetStoreId: store.id,
-                        targetType: ViolationTargetType.MERCHANT,
+            // Refund + merchant fee liability handled in transitionStatus via merchantFault cancel path
+            for (const offer of order.offers.filter((o: any) => o.status === 'accepted' && o.storeId)) {
+                await this.notifications.notifyMerchantByStoreId(offer.storeId!, {
+                    titleAr: 'تم إلغاء الطلب لتأخر التجهيز',
+                    titleEn: 'Order cancelled — late preparation',
+                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع المبلغ للعميل وتطبيق الرسوم المستحقة على المتجر.`,
+                    messageEn: `Order #${order.orderNumber} was cancelled after the extra preparation grace ended. Customer refund is processing and merchant fees apply.`,
+                    type: 'ORDER',
+                    link: `/merchant/orders/${order.id}`,
+                    metadata: {
                         orderId: order.id,
-                        reason: `Merchant exceeded preparation SLA on order #${order.orderNumber}.`,
-                        metadata: { orderNumber: order.orderNumber },
-                        dedupSuffix: store.id,
-                    }).catch((e) => this.logger.warn(`enforce late shipping violation failed: ${e?.message || e}`));
-                }
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                        status: 'CANCELLED',
+                    },
+                }).catch(() => undefined);
             }
             await this.notifications
                 .notifyWithDedup(
@@ -1699,6 +1745,23 @@ export class OrdersService {
                     }).catch((e) => this.logger.warn(`enforce late correction violation failed: ${e?.message || e}`));
                 }
             }
+            // Refund + merchant fee liability handled in transitionStatus via merchantFault cancel path
+            if (order.storeId) {
+                await this.notifications.notifyMerchantByStoreId(order.storeId, {
+                    titleAr: 'تم إلغاء الطلب لانتهاء مهلة التصحيح',
+                    titleEn: 'Order cancelled — correction deadline expired',
+                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. جاري استرجاع المبلغ للعميل وتطبيق الرسوم على المتجر.`,
+                    messageEn: `Order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. Customer refund is processing; merchant fees apply.`,
+                    type: 'ORDER',
+                    link: `/merchant/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                        status: 'CANCELLED',
+                    },
+                }).catch(() => undefined);
+            }
             await this.notifications
                 .notifyWithDedup(
                     order.customerId,
@@ -1709,8 +1772,8 @@ export class OrdersService {
                         recipientRole: 'CUSTOMER',
                         titleAr: 'إلغاء الطلب واسترجاع المبلغ',
                         titleEn: 'Order Cancelled & Refunded',
-                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة.`,
-                        messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part.`,
+                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة. جاري استرجاع المبلغ كاملاً.`,
+                        messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. A full refund is processing.`,
                         type: 'ORDER',
                         link: `/dashboard/orders/${order.id}`,
                         metadata: {
@@ -3388,17 +3451,20 @@ export class OrdersService {
         // not during the short NON_MATCHING grace window.
         let correctionDeadline: Date | null = null;
         let newRejectionCount = order.rejectionCount;
+        let cancelAfterReview = false;
 
         if (decision === 'REJECTED') {
             newRejectionCount += 1;
             if (newRejectionCount >= 2) {
-                newOrderStatus = OrderStatus.CANCELLED;
+                // Keep current status in DB update; cancel via transitionStatus after txn (chat + refund).
+                newOrderStatus = order.status as OrderStatus;
                 correctionDeadline = null;
+                cancelAfterReview = true;
             }
         }
 
         const docCorrectionDeadline =
-            decision === 'REJECTED' && newOrderStatus === OrderStatus.NON_MATCHING
+            decision === 'REJECTED' && !cancelAfterReview && newOrderStatus === OrderStatus.NON_MATCHING
                 ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours))
                 : correctionDeadline;
 
@@ -3454,7 +3520,7 @@ export class OrdersService {
                 approved: decision === 'APPROVED',
                 reason: data.rejectionReason ?? null,
                 adminId,
-                orderCancelled: newOrderStatus === OrderStatus.CANCELLED,
+                orderCancelled: cancelAfterReview,
                 source: 'DOCUMENT',
             });
         } catch (sideErr) {
@@ -3462,6 +3528,51 @@ export class OrdersService {
                 '[adminReviewVerification] Field-task side effects failed (non-blocking):',
                 sideErr instanceof Error ? sideErr.message : sideErr,
             );
+        }
+
+        if (decision === 'REJECTED' && latestDoc.storeId) {
+            const storeForViolation = await this.prisma.store.findUnique({
+                where: { id: latestDoc.storeId },
+                select: { id: true, ownerId: true },
+            });
+            if (storeForViolation) {
+                const code = cancelAfterReview ? 'REPEAT_NOT_MATCH' : 'NOT_MATCH';
+                await this.violationsService
+                    .autoIssue({
+                        code,
+                        targetUserId: storeForViolation.ownerId,
+                        targetStoreId: storeForViolation.id,
+                        targetType: ViolationTargetType.MERCHANT,
+                        orderId: order.id,
+                        reason: cancelAfterReview
+                            ? `Repeated non-match on order #${order.orderNumber}; order cancelled.`
+                            : `Product not matching on order #${order.orderNumber}.`,
+                        metadata: { orderNumber: order.orderNumber, rejectionCount: newRejectionCount },
+                        dedupSuffix: `${storeForViolation.id}:${code}`,
+                    })
+                    .catch((e) =>
+                        this.logger.warn(`mismatch violation ${code} failed: ${e?.message || e}`),
+                    );
+            }
+        }
+
+        if (cancelAfterReview) {
+            try {
+                await this.transitionStatus(
+                    orderId,
+                    OrderStatus.CANCELLED,
+                    { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
+                    'Cancelled after second verification rejection (non-matching).',
+                    { source: 'adminReviewVerification', rejectionCount: newRejectionCount },
+                );
+                newOrderStatus = OrderStatus.CANCELLED;
+            } catch (cancelErr) {
+                this.logger.error(
+                    `Second-reject cancel via transitionStatus failed for ${orderId}: ${
+                        cancelErr instanceof Error ? cancelErr.message : cancelErr
+                    }`,
+                );
+            }
         }
 
         let partName = order.partName || 'Part';
@@ -3629,8 +3740,8 @@ export class OrdersService {
                     await this.notifications.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER', type: 'system_alert',
                         titleAr: '❌ إلغاء الطلب لعدم المطابقة', titleEn: '❌ Order Cancelled due to Non-Matching',
-                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-                        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. Refund is being processed per the 2% payment gateway fee policy.`,
+                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
+                        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
                         link: `/customer/orders/${order.id}`,
                         metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
                     });

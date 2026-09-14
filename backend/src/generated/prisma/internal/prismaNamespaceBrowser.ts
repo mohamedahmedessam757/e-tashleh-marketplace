@@ -378,6 +378,7 @@ export const OrderScalarFieldEnum = {
   selectionDeadlineAt: 'selectionDeadlineAt',
   offersDeadlineAt: 'offersDeadlineAt',
   paymentDeadlineAt: 'paymentDeadlineAt',
+  preparationDeadlineAt: 'preparationDeadlineAt',
   delayedPreparationDeadlineAt: 'delayedPreparationDeadlineAt',
   correctionDeadlineAt: 'correctionDeadlineAt',
   verificationSubmittedAt: 'verificationSubmittedAt',

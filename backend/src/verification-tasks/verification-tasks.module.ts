@@ -8,6 +8,7 @@ import { UploadsModule } from '../uploads/uploads.module';
 import { WaybillsModule } from '../waybills/waybills.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { OrdersModule } from '../orders/orders.module';
+import { ViolationsModule } from '../violations/violations.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrdersModule } from '../orders/orders.module';
     WaybillsModule,
     forwardRef(() => PaymentsModule),
     forwardRef(() => OrdersModule),
+    forwardRef(() => ViolationsModule),
   ],
   providers: [VerificationTasksService],
   controllers: [VerificationTasksController, VerificationTasksPublicController],

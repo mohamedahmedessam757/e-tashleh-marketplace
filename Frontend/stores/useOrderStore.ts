@@ -216,6 +216,7 @@ export interface Order {
     updatedAt: string;
     paymentDeadlineAt?: string;
     delayedPreparationDeadlineAt?: string;
+    preparationDeadlineAt?: string;
     payments?: any[];
     offerAcceptedAt?: string;
     shippedAt?: string;
@@ -422,6 +423,11 @@ export const mapRealtimeOrderRow = (row: Record<string, unknown>): Partial<Order
     if (row.delayed_preparation_deadline_at != null || row.delayedPreparationDeadlineAt != null) {
         partial.delayedPreparationDeadlineAt = String(
             row.delayed_preparation_deadline_at ?? row.delayedPreparationDeadlineAt,
+        );
+    }
+    if (row.preparation_deadline_at != null || row.preparationDeadlineAt != null) {
+        partial.preparationDeadlineAt = String(
+            row.preparation_deadline_at ?? row.preparationDeadlineAt,
         );
     }
     if (row.shipped_at != null || row.shippedAt != null) {
@@ -981,6 +987,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 offersDeadlineAt: o.offersDeadlineAt ?? o.offers_deadline_at ?? undefined,
                 delayedPreparationDeadlineAt:
                     o.delayedPreparationDeadlineAt ?? o.delayed_prep_deadline_at ?? undefined,
+                preparationDeadlineAt:
+                    o.preparationDeadlineAt ?? o.preparation_deadline_at ?? undefined,
                 customer: o.customer ? {
                     ...o.customer,
                     customerCode: o.customer.id ? `CUS-${o.customer.id.substring(0, 6).toUpperCase()}` : undefined

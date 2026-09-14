@@ -11,6 +11,7 @@ type OrderLike = {
   selectionDeadlineAt?: string | Date | null;
   paymentDeadlineAt?: string | Date | null;
   delayedPreparationDeadlineAt?: string | Date | null;
+  preparationDeadlineAt?: string | Date | null;
   correctionDeadlineAt?: string | Date | null;
   shippedAt?: string | Date | null;
   deliveredAt?: string | Date | null;
@@ -30,6 +31,7 @@ export function useOrderActiveSla(order: OrderLike | null | undefined): OrderAct
     order?.selectionDeadlineAt,
     order?.paymentDeadlineAt,
     order?.delayedPreparationDeadlineAt,
+    order?.preparationDeadlineAt,
     order?.correctionDeadlineAt,
     order?.shippedAt,
     order?.deliveredAt,

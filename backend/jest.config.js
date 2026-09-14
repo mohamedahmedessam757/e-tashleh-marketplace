@@ -25,6 +25,8 @@ module.exports = {
         '**/merchant-wallet-metrics.util.spec.ts',
         '**/admin-financial-metrics.util.spec.ts',
         '**/gateway-fee.util.spec.ts',
+        '**/cancel-refund.util.spec.ts',
+        '**/order-sla.service.spec.ts',
         '**/otp-purpose.spec.ts',
         '**/offer-action-policy.util.spec.ts',
         '**/referral-fraud.util.spec.ts',

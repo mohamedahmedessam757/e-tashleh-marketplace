@@ -569,6 +569,7 @@ model Order {
   selectionDeadlineAt          DateTime? @map("selection_deadline_at") @db.Timestamptz
   offersDeadlineAt             DateTime? @map("offers_deadline_at") @db.Timestamptz
   paymentDeadlineAt            DateTime? @map("payment_deadline_at") @db.Timestamptz
+  preparationDeadlineAt        DateTime? @map("preparation_deadline_at") @db.Timestamptz
   delayedPreparationDeadlineAt DateTime? @map("delayed_prep_deadline_at") @db.Timestamptz
   correctionDeadlineAt         DateTime? @map("correction_deadline_at") @db.Timestamptz
   verificationSubmittedAt      DateTime? @map("verification_submitted_at") @db.Timestamptz

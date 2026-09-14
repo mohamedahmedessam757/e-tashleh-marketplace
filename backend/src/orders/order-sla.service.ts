@@ -18,6 +18,7 @@ type OrderLike = {
   selectionDeadlineAt?: Date | string | null;
   paymentDeadlineAt?: Date | string | null;
   delayedPreparationDeadlineAt?: Date | string | null;
+  preparationDeadlineAt?: Date | string | null;
   correctionDeadlineAt?: Date | string | null;
   shippedAt?: Date | string | null;
   deliveredAt?: Date | string | null;
@@ -134,13 +135,25 @@ export class OrderSlaService {
         );
       }
 
-      case OrderStatus.PREPARATION:
+      case OrderStatus.PREPARATION: {
+        const prepDeadlineMs = this.toMs(order.preparationDeadlineAt);
+        const prepStartedMs =
+          this.getFirstPaymentMs(order) ?? this.toMs(order.updatedAt);
+        if (prepDeadlineMs != null && prepStartedMs != null) {
+          return this.buildSlaUntil(
+            status,
+            'sla.preparation',
+            prepStartedMs,
+            prepDeadlineMs,
+          );
+        }
         return this.buildSla(
           status,
           'sla.preparation',
-          this.getFirstPaymentMs(order) ?? this.toMs(order.updatedAt),
+          prepStartedMs,
           this.durationConfig.hoursToMs(cfg.preparationHours),
         );
+      }
 
       case OrderStatus.DELAYED_PREPARATION:
         return this.buildSla(

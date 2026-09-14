@@ -1202,7 +1202,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         <span className="text-sm font-medium">{t.dashboard.orders.backToList}</span>
                     </button>
 
-                    {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID'].includes(order.status) &&
+                    {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID', 'PREPARATION', 'DELAYED_PREPARATION', 'NON_MATCHING', 'CORRECTION_PERIOD'].includes(order.status) &&
                         !expiryScenario &&
                         !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) && (
                         <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />

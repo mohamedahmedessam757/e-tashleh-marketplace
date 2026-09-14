@@ -90,6 +90,7 @@ export interface Order {
   shippedAt?: string;
   deliveredAt?: string;
   delayedPreparationDeadlineAt?: string;
+  preparationDeadlineAt?: string;
   warranty_active_at?: string;
   warranty_end_at?: string;
   createdAt: string;

@@ -12,6 +12,7 @@ type OrderLike = {
   paymentDeadlineAt?: string | null;
   revealOffersAt?: string | null;
   delayedPreparationDeadlineAt?: string | null;
+  preparationDeadlineAt?: string | null;
   correctionDeadlineAt?: string | null;
   deliveredAt?: string | null;
   warranty_end_at?: string | null;
@@ -81,6 +82,7 @@ export function useEnforceExpiredOrderSla(order: OrderLike) {
     order?.paymentDeadlineAt,
     order?.revealOffersAt,
     order?.delayedPreparationDeadlineAt,
+    order?.preparationDeadlineAt,
     order?.correctionDeadlineAt,
     order?.deliveredAt,
     order?.warranty_end_at,

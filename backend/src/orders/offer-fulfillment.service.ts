@@ -204,6 +204,14 @@ export class OfferFulfillmentService {
             return order.status;
         }
 
+        // Keep delayed-prep SLA until merchant advances fulfillment (PREPARED+) or cancel.
+        if (
+            order.status === OrderStatus.DELAYED_PREPARATION &&
+            nextStatus === OrderStatus.PREPARATION
+        ) {
+            return order.status;
+        }
+
         if (order.status !== nextStatus) {
             // Multi-part orders follow the slowest offer; backward steps are valid
             // (e.g. VERIFICATION → PREPARED when one part is approved but others are not verified yet).
@@ -212,11 +220,25 @@ export class OfferFulfillmentService {
             const warranty = resolveCompletionWarranty(allAccepted, now, nextStatus);
             const effectiveStatus = warranty.effectiveStatus;
 
+            const enteringPreparation =
+                effectiveStatus === OrderStatus.PREPARATION &&
+                order.status !== OrderStatus.PREPARATION &&
+                !(order as { preparationDeadlineAt?: Date | null }).preparationDeadlineAt;
+
+            let preparationDeadlineAt: Date | undefined;
+            if (enteringPreparation) {
+                const cfg = await this.orderDurationConfig.getConfig();
+                preparationDeadlineAt = new Date(
+                    now.getTime() + this.orderDurationConfig.hoursToMs(cfg.preparationHours),
+                );
+            }
+
             await this.prisma.order.update({
                 where: { id: orderId },
                 data: {
                     status: effectiveStatus,
                     updatedAt: now,
+                    ...(preparationDeadlineAt ? { preparationDeadlineAt } : {}),
                     ...(warranty.activate
                         ? {
                               warranty_active_at: now,

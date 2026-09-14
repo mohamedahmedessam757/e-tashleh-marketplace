@@ -754,210 +754,60 @@ export class OrderCleanupService {
     }
 
     async handlePreparationDelays() {
-        const durationCfg = await this.orderDurationConfig.getConfig();
-        const prepMs = this.orderDurationConfig.hoursToMs(durationCfg.preparationHours);
-        const graceMs = this.orderDurationConfig.hoursToMs(durationCfg.delayedPreparationGraceHours);
-
         const orders = await this.prisma.order.findMany({
             where: { status: OrderStatus.PREPARATION },
-            include: {
-                payments: {
-                    where: { status: 'COMPLETED' },
-                    orderBy: { createdAt: 'asc' },
-                    take: 1
-                },
-                offers: {
-                    where: { status: 'accepted' },
-                    select: { storeId: true }
-                }
-            }
+            select: { id: true, orderNumber: true },
         });
-
-        const now = Date.now();
 
         for (const order of orders) {
             try {
-                let prepStartTime = order.updatedAt.getTime();
-                if (order.payments.length > 0) {
-                    prepStartTime = order.payments[0].createdAt.getTime();
-                }
-
-                const deadline = prepStartTime + prepMs;
-
-                if (now > deadline) {
-                    this.logger.warn(`Order ${order.orderNumber} exceeded prep SLA. Shifting to DELAYED_PREPARATION.`);
-                    
-                    const delayedDeadline = new Date(now + graceMs);
-
-                    await this.ordersService.transitionStatus(
-                        order.id,
-                        OrderStatus.DELAYED_PREPARATION,
-                        { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System SLA' },
-                        'Merchant exceeded 48-hour preparation SLA timeframe'
-                    );
-
-                    await this.prisma.order.update({
-                        where: { id: order.id },
-                        data: {
-                            delayedPreparationDeadlineAt: delayedDeadline
-                        }
-                    });
-
-                    // Notifications to Merchants
-                    for (const offer of order.offers) {
-                        if (offer.storeId) {
-                            await this.notificationsService.notifyMerchantByStoreId(offer.storeId, {
-                                titleAr: 'تحذير عاجل: لقد تأخرت في التجهيز',
-                                titleEn: 'Urgent: Delayed Preparation SLA',
-                                messageAr: `تجاوز الطلب #${order.orderNumber} مهلة 48 ساعة للتجهيز. أمامك 24 ساعة فقط لتسليمه لشركة الشحن لتجنب تسجيل مخالفة للنظام وإلغاء الطلب!`,
-                                messageEn: `Order #${order.orderNumber} exceeded the 48h limit. You have exactly 24h to prepare it to avoid SLA violations and cancellation!`,
-                                type: 'system_alert',
-                                link: `/merchant/orders`
-                            });
-                        }
-                    }
-
-                    // Notification to Admins
-                    const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
-                    for (const admin of admins) {
-                        await this.notificationsService.create({
-                            recipientId: admin.id,
-                            recipientRole: 'ADMIN',
-                            titleAr: 'تأخير تاجر عن تجهيز طلب',
-                            titleEn: 'Store Preparation Delayed',
-                            messageAr: `الطلب המعتمد رقم #${order.orderNumber} متأخر في التجهيز لمرور 48 ساعة كاملة. وتم منح التاجر إشعار مهلة حمراء لـ 24 ساعة للإجراء المخالفة التلقائية.`,
-                            messageEn: `Order #${order.orderNumber} exceeded the 48h preparation barrier. Merchant was granted a 24h red grace period before auto penalty.`,
-                            type: 'system_alert',
-                            link: `/admin/orders`
-                        });
-                    }
-                }
-            } catch (err) {
-                this.logger.error(`Failed executing handlePreparationDelays on ${order.id}: ${err.message}`);
+                await this.ordersService.enforceExpiredSla(order.id, {
+                    type: ActorType.SYSTEM,
+                    id: 'system-scheduler',
+                    name: 'System SLA',
+                });
+            } catch (err: any) {
+                this.logger.error(
+                    `Failed executing handlePreparationDelays on ${order.id}: ${err?.message || err}`,
+                );
             }
         }
     }
 
     async handleCriticalPreparationFailures() {
         const criticalOrders = await this.prisma.order.findMany({
-            where: {
-                status: OrderStatus.DELAYED_PREPARATION,
-            },
-            include: {
-                payments: {
-                    select: { createdAt: true, status: true },
-                    orderBy: { createdAt: 'asc' },
-                    take: 1,
-                },
-                offers: {
-                    where: { status: 'accepted' },
-                    select: { storeId: true }
-                }
-            }
+            where: { status: OrderStatus.DELAYED_PREPARATION },
+            select: { id: true, orderNumber: true },
         });
 
-        const durationCfg = await this.orderDurationConfig.getConfig();
-
         for (const order of criticalOrders) {
-            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
-                this.logger.error(`Order ${order.orderNumber} exceeded 24h grace period. Issuing violation and cancellation.`);
-
-                await this.ordersService.transitionStatus(
-                    order.id,
-                    OrderStatus.CANCELLED,
-                    { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System SLA' },
-                    'System: Exceeded 24h extra grace period for preparation. Order abandoned by merchant.',
+                await this.ordersService.enforceExpiredSla(order.id, {
+                    type: ActorType.SYSTEM,
+                    id: 'system-scheduler',
+                    name: 'System SLA',
+                });
+            } catch (err: any) {
+                this.logger.error(
+                    `Failed executing handleCriticalPreparationFailures on ${order.id}: ${err?.message || err}`,
                 );
-
-                for (const offer of order.offers) {
-                    if (offer.storeId) {
-                        // 2026 Auto-Violation: 48h+24h SLA breach
-                        const store = await this.prisma.store.findUnique({
-                            where: { id: offer.storeId },
-                            select: { id: true, ownerId: true },
-                        });
-                        if (store) {
-                            await this.violationsService.autoIssue({
-                                code: 'LATE_SHIPPING',
-                                targetUserId: store.ownerId,
-                                targetStoreId: store.id,
-                                targetType: ViolationTargetType.MERCHANT,
-                                orderId: order.id,
-                                reason: `Merchant exceeded the 48h+24h preparation SLA on order #${order.orderNumber}.`,
-                                metadata: { orderNumber: order.orderNumber },
-                                dedupSuffix: store.id,
-                            });
-                        }
-                    }
-                }
-
-                const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
-                for (const admin of admins) {
-                    await this.notificationsService.create({
-                        recipientId: admin.id,
-                        recipientRole: 'ADMIN',
-                        titleAr: 'تطبيق مخالفة على متجر وتوقف طلب',
-                        titleEn: 'Violation Applied to Store & Order Stopped',
-                        messageAr: `تم إلغاء الطلب #${order.orderNumber} لعدم استجابة التاجر خلال مرحلة "التجهيز المتأخر". يجب التحقق واتخاذ اجراءات الخصم وارجاع المبلغ للعميل.`,
-                        messageEn: `Order #${order.orderNumber} auto-cancelled. Store failed entirely. Process refund routing and apply penalty.`,
-                        type: 'system_alert',
-                        link: `/admin/orders`
-                    });
-                }
-
-                await this.notificationsService
-                    .notifyWithDedup(
-                        order.customerId,
-                        `wa:ORDER_STATUS:${order.id}:CANCELLED:delayed_prep`,
-                        120,
-                        {
-                            recipientId: order.customerId,
-                            recipientRole: 'CUSTOMER',
-                            titleAr: 'نأسف حقاً: إلغاء طلبك لعدم استجابة التاجر',
-                            titleEn: 'Apology: Order Cancelled & Merchant Penalized',
-                            messageAr: `نعتذر لك بشدة، قامت الإدارة بشكل تلقائي بإلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-                            messageEn: `We apologize. Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline. Refund is being processed per the 2% payment gateway fee policy.`,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${order.id}`,
-                            metadata: {
-                                orderId: order.id,
-                                orderNumber: order.orderNumber,
-                                status: 'CANCELLED',
-                                waEvent: 'ORDER_STATUS',
-                            },
-                        },
-                    )
-                    .catch(() => undefined);
-            } catch (err) {
-                this.logger.error(`Failed executing handleCriticalPreparationFailures on ${order.id}: ${err.message}`);
             }
         }
     }
 
     private async handleNonMatchingToCorrection() {
-        const durationCfg = await this.orderDurationConfig.getConfig();
-        const graceMs = this.orderDurationConfig.minutesToMs(durationCfg.nonMatchingGraceMinutes);
-        const cutoff = new Date(Date.now() - graceMs);
-        
         const orders = await this.prisma.order.findMany({
-            where: {
-                status: OrderStatus.NON_MATCHING,
-                updatedAt: { lt: cutoff }
-            }
+            where: { status: OrderStatus.NON_MATCHING },
+            select: { id: true, orderNumber: true },
         });
 
         for (const order of orders) {
             try {
-                this.logger.log(`Transitioning ${order.orderNumber} from NON_MATCHING to CORRECTION_PERIOD`);
-                await this.ordersService.transitionStatus(
-                    order.id,
-                    OrderStatus.CORRECTION_PERIOD,
-                    { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                    'System: 2 minutes passed since NON_MATCHING, entering CORRECTION_PERIOD.'
-                );
-
-                // Notifications were already sent during adminReviewVerification, so we might just add an audit.
+                await this.ordersService.enforceExpiredSla(order.id, {
+                    type: ActorType.SYSTEM,
+                    id: 'system-scheduler',
+                    name: 'System Scheduler',
+                });
             } catch (err) {
                 this.logger.error(`Failed to start correction period for ${order.id}:`, err);
             }
@@ -966,84 +816,17 @@ export class OrderCleanupService {
 
     private async handleCorrectionPeriodExpiry() {
         const expiredOrders = await this.prisma.order.findMany({
-            where: {
-                status: OrderStatus.CORRECTION_PERIOD,
-            },
-            include: {
-                offers: true
-            }
+            where: { status: OrderStatus.CORRECTION_PERIOD },
+            select: { id: true, orderNumber: true },
         });
 
-        const durationCfg = await this.orderDurationConfig.getConfig();
-
         for (const order of expiredOrders) {
-            if (!this.orderSla.isSlaExpired(order, durationCfg)) continue;
             try {
-                this.logger.log(`Cancelling order ${order.orderNumber} due to CORRECTION_PERIOD timeout.`);
-                
-                await this.ordersService.transitionStatus(
-                    order.id,
-                    OrderStatus.CANCELLED,
-                    { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                    'System: Merchant failed to provide corrected verification within 48h limit.'
-                );
-
-                // Notify Merchant
-                if (order.storeId) {
-                    // 2026 Auto-Violation: missed 48h correction window
-                    const store = await this.prisma.store.findUnique({
-                        where: { id: order.storeId },
-                        select: { id: true, ownerId: true },
-                    });
-                    if (store) {
-                        await this.violationsService.autoIssue({
-                            code: 'LATE_CORRECTION',
-                            targetUserId: store.ownerId,
-                            targetStoreId: store.id,
-                            targetType: ViolationTargetType.MERCHANT,
-                            orderId: order.id,
-                            reason: `Merchant did not provide corrected verification within 48h on order #${order.orderNumber}.`,
-                            metadata: { orderNumber: order.orderNumber },
-                        });
-                    }
-                }
-                
-                // Notify Customer
-                await this.notificationsService
-                    .notifyWithDedup(
-                        order.customerId,
-                        `wa:ORDER_STATUS:${order.id}:CANCELLED:correction`,
-                        120,
-                        {
-                            recipientId: order.customerId,
-                            recipientRole: 'CUSTOMER',
-                            titleAr: 'إلغاء الطلب واسترجاع المبلغ',
-                            titleEn: 'Order Cancelled & Refunded',
-                            messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة للمواصفات. جاري معالجة الاسترجاع وفق سياسة رسوم بوابة الدفع (2%).`,
-                            messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. Refund is being processed per the 2% payment gateway fee policy.`,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${order.id}`,
-                            metadata: {
-                                orderId: order.id,
-                                orderNumber: order.orderNumber,
-                                status: 'CANCELLED',
-                                waEvent: 'ORDER_STATUS',
-                            },
-                        },
-                    )
-                    .catch(() => undefined);
-
-                // Admin Notification
-                const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
-                for (const admin of admins) {
-                    await this.notificationsService.create({
-                        recipientId: admin.id, recipientRole: 'ADMIN',
-                        titleAr: 'تطبيق مخالفة على متجر وتوقف طلب', titleEn: 'Store Violation & Order Cancelled',
-                        messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة). يرجى معالجة الاسترجاع للعميل وتطبيق المخالفة على المتجر.`,
-                        messageEn: `Order #${order.orderNumber} cancelled due to correction timeout. Please process refund and store penalty.`,
-                        type: 'system_alert', link: `/admin/orders`
-                    });
-                }
+                await this.ordersService.enforceExpiredSla(order.id, {
+                    type: ActorType.SYSTEM,
+                    id: 'system-scheduler',
+                    name: 'System Scheduler',
+                });
             } catch (err) {
                 this.logger.error(`Failed processing correction timeout for ${order.id}:`, err);
             }

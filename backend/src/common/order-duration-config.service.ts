@@ -34,6 +34,8 @@ const DEFAULTS: OrderDurationConfig = {
   nonMatchingGraceMinutes: 2,
 };
 
+export const DEFAULT_ORDER_DURATION_CONFIG: OrderDurationConfig = { ...DEFAULTS };
+
 @Injectable()
 export class OrderDurationConfigService implements OnModuleInit {
   private readonly logger = new Logger(OrderDurationConfigService.name);

@@ -6,8 +6,10 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
+    CANCEL_BEFORE_SHIPPING_FEE_PCT,
     computeCancelBeforeShippingRefund,
     isPostShipCancelRefundBlocked,
+    roundMoney2,
 } from './cancel-refund.util';
 
 export interface EscrowAmounts {
@@ -1259,7 +1261,7 @@ export class EscrowService {
     async refundPaidOrderOnCancel(
         orderId: string,
         reason: string,
-        opts?: { previousStatus?: string | null },
+        opts?: { previousStatus?: string | null; merchantFault?: boolean },
     ): Promise<{
         skipped: boolean;
         reason?: string;
@@ -1274,6 +1276,8 @@ export class EscrowService {
                 status: true,
                 orderNumber: true,
                 customerId: true,
+                storeId: true,
+                acceptedOffer: { select: { storeId: true } },
             },
         });
         if (!order) {
@@ -1321,17 +1325,28 @@ export class EscrowService {
             return { skipped: true, reason: 'NO_PAYMENT' };
         }
 
+        const merchantFault = Boolean(opts?.merchantFault);
         let totalRefundedNow = 0;
         let totalFee = 0;
-        let feePctUsed = 2;
+        let feePctUsed = merchantFault ? 0 : 2;
         let anyAttempted = false;
+        const storeIdForLiability =
+            order.storeId || order.acceptedOffer?.storeId || null;
 
         for (const payment of payments) {
             const paidTotal = Number(payment.totalAmount || 0);
             const alreadyRefunded = Number(payment.refundedAmount || 0);
-            const calc = computeCancelBeforeShippingRefund(paidTotal, 2, alreadyRefunded);
-            feePctUsed = calc.feePct;
-            totalFee += calc.feeAmount;
+            // Merchant-fault: full customer refund; unrecovered gateway fee becomes store liability.
+            const calc = computeCancelBeforeShippingRefund(
+                paidTotal,
+                merchantFault ? 0 : 2,
+                alreadyRefunded,
+            );
+            const gatewayFeeLiability = merchantFault
+                ? roundMoney2((paidTotal * CANCEL_BEFORE_SHIPPING_FEE_PCT) / 100)
+                : calc.feeAmount;
+            feePctUsed = merchantFault ? CANCEL_BEFORE_SHIPPING_FEE_PCT : calc.feePct;
+            totalFee += gatewayFeeLiability;
 
             if (calc.refundAmount <= 0) {
                 continue;
@@ -1360,11 +1375,26 @@ export class EscrowService {
                 );
                 totalRefundedNow += ctx.refundAmount;
 
+                if (merchantFault && gatewayFeeLiability > 0 && storeIdForLiability) {
+                    await this.recordMerchantGatewayFeeLiability({
+                        storeId: storeIdForLiability,
+                        orderId,
+                        paymentId: payment.id,
+                        feeAmount: gatewayFeeLiability,
+                        reason,
+                    }).catch((err) =>
+                        this.logger.warn(
+                            `Merchant gateway fee liability failed order=${orderId}: ${(err as Error)?.message}`,
+                        ),
+                    );
+                }
+
                 // Cancel-specific fee disclosure (AR/EN) for customer, merchant, admin
                 const orderLabel = order.orderNumber || orderId;
                 const paidLabel = calc.paidTotal.toFixed(2);
-                const feeLabel = calc.feeAmount.toFixed(2);
+                const feeLabel = (merchantFault ? gatewayFeeLiability : calc.feeAmount).toFixed(2);
                 const refundLabel = ctx.refundAmount.toFixed(2);
+                const feePctLabel = merchantFault ? CANCEL_BEFORE_SHIPPING_FEE_PCT : calc.feePct;
 
                 if (payment.customerId) {
                     await this.notifications.create({
@@ -1373,16 +1403,21 @@ export class EscrowService {
                         type: 'payment',
                         titleAr: 'تم استرداد المبلغ بعد الإلغاء 💰',
                         titleEn: 'Refund after cancellation 💰',
-                        messageAr: `تم إلغاء الطلب #${orderLabel}. المدفوع: ${paidLabel} درهم، رسوم بوابة الدفع ${calc.feePct}% = ${feeLabel} درهم، المبلغ المسترد: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`,
-                        messageEn: `Order #${orderLabel} was cancelled. Paid: AED ${paidLabel}, gateway fee ${calc.feePct}% = AED ${feeLabel}, refunded: AED ${refundLabel}. It may take a few business days to appear in your account.`,
+                        messageAr: merchantFault
+                            ? `تم إلغاء الطلب #${orderLabel} بسبب التاجر. المدفوع: ${paidLabel} درهم، المبلغ المسترد كاملاً: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`
+                            : `تم إلغاء الطلب #${orderLabel}. المدفوع: ${paidLabel} درهم، رسوم بوابة الدفع ${feePctLabel}% = ${feeLabel} درهم، المبلغ المسترد: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`,
+                        messageEn: merchantFault
+                            ? `Order #${orderLabel} was cancelled due to merchant fault. Paid: AED ${paidLabel}, full refund: AED ${refundLabel}. It may take a few business days to appear in your account.`
+                            : `Order #${orderLabel} was cancelled. Paid: AED ${paidLabel}, gateway fee ${feePctLabel}% = AED ${feeLabel}, refunded: AED ${refundLabel}. It may take a few business days to appear in your account.`,
                         link: 'orders',
                         metadata: {
                             orderId,
                             amount: ctx.refundAmount,
-                            feeAmount: calc.feeAmount,
-                            feePct: calc.feePct,
+                            feeAmount: merchantFault ? gatewayFeeLiability : calc.feeAmount,
+                            feePct: feePctLabel,
                             paidTotal: calc.paidTotal,
                             cancelRefund: true,
+                            merchantFault,
                         },
                     }).catch(() => {});
                 }
@@ -1408,14 +1443,19 @@ export class EscrowService {
                             type: 'payment',
                             titleAr: 'استرداد بسبب إلغاء الطلب ⚠️',
                             titleEn: 'Refund due to order cancellation ⚠️',
-                            messageAr: `تم استرداد ${refundLabel} درهم للعميل من الطلب #${orderLabel} (بعد خصم رسوم بوابة ${calc.feePct}%). السبب: ${reason}`,
-                            messageEn: `AED ${refundLabel} refunded to the customer for Order #${orderLabel} (after ${calc.feePct}% gateway fee). Reason: ${reason}`,
+                            messageAr: merchantFault
+                                ? `تم استرداد ${refundLabel} درهم كاملاً للعميل من الطلب #${orderLabel}. رسوم بوابة الدفع (${feePctLabel}% = ${feeLabel} درهم) محملة على المتجر. السبب: ${reason}`
+                                : `تم استرداد ${refundLabel} درهم للعميل من الطلب #${orderLabel} (بعد خصم رسوم بوابة ${feePctLabel}%). السبب: ${reason}`,
+                            messageEn: merchantFault
+                                ? `Full AED ${refundLabel} refunded to the customer for Order #${orderLabel}. Gateway fee (${feePctLabel}% = AED ${feeLabel}) is charged to the store. Reason: ${reason}`
+                                : `AED ${refundLabel} refunded to the customer for Order #${orderLabel} (after ${feePctLabel}% gateway fee). Reason: ${reason}`,
                             link: `marketplace/orders/${orderId}`,
                             metadata: {
                                 orderId,
                                 amount: ctx.refundAmount,
-                                feeAmount: calc.feeAmount,
+                                feeAmount: merchantFault ? gatewayFeeLiability : calc.feeAmount,
                                 cancelRefund: true,
+                                merchantFault,
                             },
                         }).catch(() => {});
                     }
@@ -1424,16 +1464,21 @@ export class EscrowService {
                 await this.notifications.notifyAdmins({
                     titleAr: 'استرداد إلغاء قبل الشحن 💰',
                     titleEn: 'Pre-ship cancel refund 💰',
-                    messageAr: `طلب #${orderLabel}: استرداد ${refundLabel} درهم للعميل بعد خصم رسوم ${calc.feePct}% (${feeLabel}). السبب: ${reason}`,
-                    messageEn: `Order #${orderLabel}: refunded AED ${refundLabel} after ${calc.feePct}% fee (AED ${feeLabel}). Reason: ${reason}`,
+                    messageAr: merchantFault
+                        ? `طلب #${orderLabel}: استرداد كامل ${refundLabel} درهم للعميل؛ رسوم ${feePctLabel}% (${feeLabel}) على المتجر. السبب: ${reason}`
+                        : `طلب #${orderLabel}: استرداد ${refundLabel} درهم للعميل بعد خصم رسوم ${feePctLabel}% (${feeLabel}). السبب: ${reason}`,
+                    messageEn: merchantFault
+                        ? `Order #${orderLabel}: full refund AED ${refundLabel}; ${feePctLabel}% fee (AED ${feeLabel}) on merchant. Reason: ${reason}`
+                        : `Order #${orderLabel}: refunded AED ${refundLabel} after ${feePctLabel}% fee (AED ${feeLabel}). Reason: ${reason}`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${orderId}`,
                     metadata: {
                         orderId,
                         amount: ctx.refundAmount,
-                        feeAmount: calc.feeAmount,
-                        feePct: calc.feePct,
+                        feeAmount: merchantFault ? gatewayFeeLiability : calc.feeAmount,
+                        feePct: feePctLabel,
                         cancelRefund: true,
+                        merchantFault,
                         reason,
                     },
                 }).catch(() => {});
@@ -1448,9 +1493,10 @@ export class EscrowService {
                     metadata: {
                         paymentId: payment.id,
                         refundAmount: ctx.refundAmount,
-                        feeAmount: calc.feeAmount,
-                        feePct: calc.feePct,
+                        feeAmount: merchantFault ? gatewayFeeLiability : calc.feeAmount,
+                        feePct: feePctLabel,
                         paidTotal: calc.paidTotal,
+                        merchantFault,
                         stripeRefundId: ctx.stripeRefundId,
                     },
                 }).catch(() => {});
@@ -1480,6 +1526,89 @@ export class EscrowService {
             feeAmount: totalFee,
             feePct: feePctUsed,
         };
+    }
+
+    /**
+     * Debit store wallet (or leave negative/pending debt) for unrecovered gateway fee
+     * when cancel refund is merchant-fault and customer receives a full refund.
+     */
+    private async recordMerchantGatewayFeeLiability(input: {
+        storeId: string;
+        orderId: string;
+        paymentId: string;
+        feeAmount: number;
+        reason: string;
+    }): Promise<void> {
+        const feeAmount = roundMoney2(input.feeAmount);
+        if (feeAmount <= 0) return;
+
+        const store = await this.prisma.store.findUnique({
+            where: { id: input.storeId },
+            select: { id: true, ownerId: true, balance: true },
+        });
+        if (!store?.ownerId) {
+            this.logger.warn(
+                `Merchant fee liability skipped — no owner for store=${input.storeId}`,
+            );
+            return;
+        }
+
+        const existing = await this.prisma.walletTransaction.findFirst({
+            where: {
+                paymentId: input.paymentId,
+                userId: store.ownerId,
+                role: 'VENDOR',
+                type: 'DEBIT',
+                transactionType: { in: ['PENALTY', 'penalty', 'ADJUDICATION_FEE'] },
+                metadata: {
+                    path: ['kind'],
+                    equals: 'CANCEL_MERCHANT_GATEWAY_FEE',
+                },
+            },
+            select: { id: true },
+        });
+        if (existing) return;
+
+        const balanceBefore = Number(store.balance || 0);
+        const balanceAfter = roundMoney2(balanceBefore - feeAmount);
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.store.update({
+                where: { id: store.id },
+                data: { balance: { decrement: feeAmount } },
+            });
+            await tx.walletTransaction.create({
+                data: {
+                    userId: store.ownerId,
+                    role: 'VENDOR',
+                    type: 'DEBIT',
+                    transactionType: 'PENALTY',
+                    amount: feeAmount,
+                    balanceAfter,
+                    paymentId: input.paymentId,
+                    description: `رسوم بوابة دفع — إلغاء بخطأ التاجر (طلب ${input.orderId})`,
+                    metadata: {
+                        kind: 'CANCEL_MERCHANT_GATEWAY_FEE',
+                        orderId: input.orderId,
+                        paymentId: input.paymentId,
+                        feePct: CANCEL_BEFORE_SHIPPING_FEE_PCT,
+                        reason: input.reason,
+                        futureStoreDebt: balanceAfter < 0,
+                    },
+                } as Prisma.WalletTransactionUncheckedCreateInput,
+            });
+
+            const platformWallet = await tx.platformWallet.findFirst();
+            if (platformWallet) {
+                await tx.platformWallet.update({
+                    where: { id: platformWallet.id },
+                    data: {
+                        feesBalance: { increment: feeAmount },
+                        totalRevenue: { increment: feeAmount },
+                    },
+                });
+            }
+        });
     }
 
     /**

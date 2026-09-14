@@ -62,6 +62,7 @@ export type OrderMinAggregateOutputType = {
   selectionDeadlineAt: Date | null
   offersDeadlineAt: Date | null
   paymentDeadlineAt: Date | null
+  preparationDeadlineAt: Date | null
   delayedPreparationDeadlineAt: Date | null
   correctionDeadlineAt: Date | null
   verificationSubmittedAt: Date | null
@@ -100,6 +101,7 @@ export type OrderMaxAggregateOutputType = {
   selectionDeadlineAt: Date | null
   offersDeadlineAt: Date | null
   paymentDeadlineAt: Date | null
+  preparationDeadlineAt: Date | null
   delayedPreparationDeadlineAt: Date | null
   correctionDeadlineAt: Date | null
   verificationSubmittedAt: Date | null
@@ -139,6 +141,7 @@ export type OrderCountAggregateOutputType = {
   selectionDeadlineAt: number
   offersDeadlineAt: number
   paymentDeadlineAt: number
+  preparationDeadlineAt: number
   delayedPreparationDeadlineAt: number
   correctionDeadlineAt: number
   verificationSubmittedAt: number
@@ -191,6 +194,7 @@ export type OrderMinAggregateInputType = {
   selectionDeadlineAt?: true
   offersDeadlineAt?: true
   paymentDeadlineAt?: true
+  preparationDeadlineAt?: true
   delayedPreparationDeadlineAt?: true
   correctionDeadlineAt?: true
   verificationSubmittedAt?: true
@@ -229,6 +233,7 @@ export type OrderMaxAggregateInputType = {
   selectionDeadlineAt?: true
   offersDeadlineAt?: true
   paymentDeadlineAt?: true
+  preparationDeadlineAt?: true
   delayedPreparationDeadlineAt?: true
   correctionDeadlineAt?: true
   verificationSubmittedAt?: true
@@ -268,6 +273,7 @@ export type OrderCountAggregateInputType = {
   selectionDeadlineAt?: true
   offersDeadlineAt?: true
   paymentDeadlineAt?: true
+  preparationDeadlineAt?: true
   delayedPreparationDeadlineAt?: true
   correctionDeadlineAt?: true
   verificationSubmittedAt?: true
@@ -394,6 +400,7 @@ export type OrderGroupByOutputType = {
   selectionDeadlineAt: Date | null
   offersDeadlineAt: Date | null
   paymentDeadlineAt: Date | null
+  preparationDeadlineAt: Date | null
   delayedPreparationDeadlineAt: Date | null
   correctionDeadlineAt: Date | null
   verificationSubmittedAt: Date | null
@@ -456,6 +463,7 @@ export type OrderWhereInput = {
   selectionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   paymentDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   correctionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -514,6 +522,7 @@ export type OrderOrderByWithRelationInput = {
   selectionDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   offersDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   delayedPreparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   correctionDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -577,6 +586,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   selectionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   paymentDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   correctionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -634,6 +644,7 @@ export type OrderOrderByWithAggregationInput = {
   selectionDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   offersDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   delayedPreparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   correctionDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -681,6 +692,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   selectionDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   offersDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   paymentDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  preparationDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   correctionDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
@@ -718,6 +730,7 @@ export type OrderCreateInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -775,6 +788,7 @@ export type OrderUncheckedCreateInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -828,6 +842,7 @@ export type OrderUpdateInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -885,6 +900,7 @@ export type OrderUncheckedUpdateInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -940,6 +956,7 @@ export type OrderCreateManyInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -977,6 +994,7 @@ export type OrderUpdateManyMutationInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1015,6 +1033,7 @@ export type OrderUncheckedUpdateManyInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1069,6 +1088,7 @@ export type OrderCountOrderByAggregateInput = {
   selectionDeadlineAt?: Prisma.SortOrder
   offersDeadlineAt?: Prisma.SortOrder
   paymentDeadlineAt?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
   delayedPreparationDeadlineAt?: Prisma.SortOrder
   correctionDeadlineAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
@@ -1113,6 +1133,7 @@ export type OrderMaxOrderByAggregateInput = {
   selectionDeadlineAt?: Prisma.SortOrder
   offersDeadlineAt?: Prisma.SortOrder
   paymentDeadlineAt?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
   delayedPreparationDeadlineAt?: Prisma.SortOrder
   correctionDeadlineAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
@@ -1151,6 +1172,7 @@ export type OrderMinOrderByAggregateInput = {
   selectionDeadlineAt?: Prisma.SortOrder
   offersDeadlineAt?: Prisma.SortOrder
   paymentDeadlineAt?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
   delayedPreparationDeadlineAt?: Prisma.SortOrder
   correctionDeadlineAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
@@ -1554,6 +1576,7 @@ export type OrderCreateWithoutCustomerInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1609,6 +1632,7 @@ export type OrderUncheckedCreateWithoutCustomerInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1693,6 +1717,7 @@ export type OrderScalarWhereInput = {
   selectionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   offersDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   paymentDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   correctionDeadlineAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -1730,6 +1755,7 @@ export type OrderCreateWithoutStoreInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1785,6 +1811,7 @@ export type OrderUncheckedCreateWithoutStoreInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1864,6 +1891,7 @@ export type OrderCreateWithoutVerificationDocumentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1920,6 +1948,7 @@ export type OrderUncheckedCreateWithoutVerificationDocumentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -1988,6 +2017,7 @@ export type OrderUpdateWithoutVerificationDocumentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2044,6 +2074,7 @@ export type OrderUncheckedUpdateWithoutVerificationDocumentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2096,6 +2127,7 @@ export type OrderCreateWithoutOffersInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2152,6 +2184,7 @@ export type OrderUncheckedCreateWithoutOffersInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2209,6 +2242,7 @@ export type OrderCreateWithoutAcceptedOfferInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2265,6 +2299,7 @@ export type OrderUncheckedCreateWithoutAcceptedOfferInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2333,6 +2368,7 @@ export type OrderUpdateWithoutOffersInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2389,6 +2425,7 @@ export type OrderUncheckedUpdateWithoutOffersInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2452,6 +2489,7 @@ export type OrderUpdateWithoutAcceptedOfferInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2508,6 +2546,7 @@ export type OrderUncheckedUpdateWithoutAcceptedOfferInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2560,6 +2599,7 @@ export type OrderCreateWithoutAuditLogsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2616,6 +2656,7 @@ export type OrderUncheckedCreateWithoutAuditLogsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2684,6 +2725,7 @@ export type OrderUpdateWithoutAuditLogsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2740,6 +2782,7 @@ export type OrderUncheckedUpdateWithoutAuditLogsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2792,6 +2835,7 @@ export type OrderCreateWithoutPartsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2848,6 +2892,7 @@ export type OrderUncheckedCreateWithoutPartsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -2916,6 +2961,7 @@ export type OrderUpdateWithoutPartsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2972,6 +3018,7 @@ export type OrderUncheckedUpdateWithoutPartsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3024,6 +3071,7 @@ export type OrderCreateWithoutReturnsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3080,6 +3128,7 @@ export type OrderUncheckedCreateWithoutReturnsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3148,6 +3197,7 @@ export type OrderUpdateWithoutReturnsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3204,6 +3254,7 @@ export type OrderUncheckedUpdateWithoutReturnsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3256,6 +3307,7 @@ export type OrderCreateWithoutDisputesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3312,6 +3364,7 @@ export type OrderUncheckedCreateWithoutDisputesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3380,6 +3433,7 @@ export type OrderUpdateWithoutDisputesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3436,6 +3490,7 @@ export type OrderUncheckedUpdateWithoutDisputesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3488,6 +3543,7 @@ export type OrderCreateWithoutOrderChatsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3544,6 +3600,7 @@ export type OrderUncheckedCreateWithoutOrderChatsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3612,6 +3669,7 @@ export type OrderUpdateWithoutOrderChatsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3668,6 +3726,7 @@ export type OrderUncheckedUpdateWithoutOrderChatsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3720,6 +3779,7 @@ export type OrderCreateWithoutShippingAddressesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3776,6 +3836,7 @@ export type OrderUncheckedCreateWithoutShippingAddressesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -3844,6 +3905,7 @@ export type OrderUpdateWithoutShippingAddressesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3900,6 +3962,7 @@ export type OrderUncheckedUpdateWithoutShippingAddressesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3952,6 +4015,7 @@ export type OrderCreateWithoutPaymentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4008,6 +4072,7 @@ export type OrderUncheckedCreateWithoutPaymentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4076,6 +4141,7 @@ export type OrderUpdateWithoutPaymentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4132,6 +4198,7 @@ export type OrderUncheckedUpdateWithoutPaymentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4184,6 +4251,7 @@ export type OrderCreateWithoutEscrowTransactionsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4240,6 +4308,7 @@ export type OrderUncheckedCreateWithoutEscrowTransactionsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4308,6 +4377,7 @@ export type OrderUpdateWithoutEscrowTransactionsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4364,6 +4434,7 @@ export type OrderUncheckedUpdateWithoutEscrowTransactionsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4416,6 +4487,7 @@ export type OrderCreateWithoutInvoicesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4472,6 +4544,7 @@ export type OrderUncheckedCreateWithoutInvoicesInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4540,6 +4613,7 @@ export type OrderUpdateWithoutInvoicesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4596,6 +4670,7 @@ export type OrderUncheckedUpdateWithoutInvoicesInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4648,6 +4723,7 @@ export type OrderCreateWithoutShippingWaybillsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4704,6 +4780,7 @@ export type OrderUncheckedCreateWithoutShippingWaybillsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4772,6 +4849,7 @@ export type OrderUpdateWithoutShippingWaybillsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4828,6 +4906,7 @@ export type OrderUncheckedUpdateWithoutShippingWaybillsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4880,6 +4959,7 @@ export type OrderCreateWithoutShipmentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -4936,6 +5016,7 @@ export type OrderUncheckedCreateWithoutShipmentsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5004,6 +5085,7 @@ export type OrderUpdateWithoutShipmentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5060,6 +5142,7 @@ export type OrderUncheckedUpdateWithoutShipmentsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5112,6 +5195,7 @@ export type OrderCreateWithoutReviewsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5168,6 +5252,7 @@ export type OrderUncheckedCreateWithoutReviewsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5236,6 +5321,7 @@ export type OrderUpdateWithoutReviewsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5292,6 +5378,7 @@ export type OrderUncheckedUpdateWithoutReviewsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5344,6 +5431,7 @@ export type OrderCreateWithoutViolationsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5400,6 +5488,7 @@ export type OrderUncheckedCreateWithoutViolationsInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5468,6 +5557,7 @@ export type OrderUpdateWithoutViolationsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5524,6 +5614,7 @@ export type OrderUncheckedUpdateWithoutViolationsInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5576,6 +5667,7 @@ export type OrderCreateWithoutVerificationTasksInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5632,6 +5724,7 @@ export type OrderUncheckedCreateWithoutVerificationTasksInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5700,6 +5793,7 @@ export type OrderUpdateWithoutVerificationTasksInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5756,6 +5850,7 @@ export type OrderUncheckedUpdateWithoutVerificationTasksInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5809,6 +5904,7 @@ export type OrderCreateManyCustomerInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -5846,6 +5942,7 @@ export type OrderUpdateWithoutCustomerInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5901,6 +5998,7 @@ export type OrderUncheckedUpdateWithoutCustomerInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5955,6 +6053,7 @@ export type OrderUncheckedUpdateManyWithoutCustomerInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5993,6 +6092,7 @@ export type OrderCreateManyStoreInput = {
   selectionDeadlineAt?: Date | string | null
   offersDeadlineAt?: Date | string | null
   paymentDeadlineAt?: Date | string | null
+  preparationDeadlineAt?: Date | string | null
   delayedPreparationDeadlineAt?: Date | string | null
   correctionDeadlineAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
@@ -6030,6 +6130,7 @@ export type OrderUpdateWithoutStoreInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6085,6 +6186,7 @@ export type OrderUncheckedUpdateWithoutStoreInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6139,6 +6241,7 @@ export type OrderUncheckedUpdateManyWithoutStoreInput = {
   selectionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   offersDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   paymentDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correctionDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -6344,6 +6447,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   selectionDeadlineAt?: boolean
   offersDeadlineAt?: boolean
   paymentDeadlineAt?: boolean
+  preparationDeadlineAt?: boolean
   delayedPreparationDeadlineAt?: boolean
   correctionDeadlineAt?: boolean
   verificationSubmittedAt?: boolean
@@ -6403,6 +6507,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   selectionDeadlineAt?: boolean
   offersDeadlineAt?: boolean
   paymentDeadlineAt?: boolean
+  preparationDeadlineAt?: boolean
   delayedPreparationDeadlineAt?: boolean
   correctionDeadlineAt?: boolean
   verificationSubmittedAt?: boolean
@@ -6445,6 +6550,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   selectionDeadlineAt?: boolean
   offersDeadlineAt?: boolean
   paymentDeadlineAt?: boolean
+  preparationDeadlineAt?: boolean
   delayedPreparationDeadlineAt?: boolean
   correctionDeadlineAt?: boolean
   verificationSubmittedAt?: boolean
@@ -6487,6 +6593,7 @@ export type OrderSelectScalar = {
   selectionDeadlineAt?: boolean
   offersDeadlineAt?: boolean
   paymentDeadlineAt?: boolean
+  preparationDeadlineAt?: boolean
   delayedPreparationDeadlineAt?: boolean
   correctionDeadlineAt?: boolean
   verificationSubmittedAt?: boolean
@@ -6501,7 +6608,7 @@ export type OrderSelectScalar = {
   rejectionCount?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "storeId" | "status" | "vehicleMake" | "vehicleModel" | "vehicleYear" | "vin" | "vinImage" | "partName" | "partDescription" | "partImages" | "conditionPref" | "warrantyPreferred" | "requestType" | "shippingType" | "clientRequestId" | "totalAmount" | "revealOffersAt" | "offersStopAt" | "selectionDeadlineAt" | "offersDeadlineAt" | "paymentDeadlineAt" | "delayedPreparationDeadlineAt" | "correctionDeadlineAt" | "verificationSubmittedAt" | "warranty_active_at" | "warranty_end_at" | "deliveredAt" | "createdAt" | "updatedAt" | "adminNotes" | "acceptedOfferId" | "verificationTaskId" | "rejectionCount", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "storeId" | "status" | "vehicleMake" | "vehicleModel" | "vehicleYear" | "vin" | "vinImage" | "partName" | "partDescription" | "partImages" | "conditionPref" | "warrantyPreferred" | "requestType" | "shippingType" | "clientRequestId" | "totalAmount" | "revealOffersAt" | "offersStopAt" | "selectionDeadlineAt" | "offersDeadlineAt" | "paymentDeadlineAt" | "preparationDeadlineAt" | "delayedPreparationDeadlineAt" | "correctionDeadlineAt" | "verificationSubmittedAt" | "warranty_active_at" | "warranty_end_at" | "deliveredAt" | "createdAt" | "updatedAt" | "adminNotes" | "acceptedOfferId" | "verificationTaskId" | "rejectionCount", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   store?: boolean | Prisma.Order$storeArgs<ExtArgs>
@@ -6586,6 +6693,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     selectionDeadlineAt: Date | null
     offersDeadlineAt: Date | null
     paymentDeadlineAt: Date | null
+    preparationDeadlineAt: Date | null
     delayedPreparationDeadlineAt: Date | null
     correctionDeadlineAt: Date | null
     verificationSubmittedAt: Date | null
@@ -7067,6 +7175,7 @@ export interface OrderFieldRefs {
   readonly selectionDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly offersDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly paymentDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly preparationDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly delayedPreparationDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly correctionDeadlineAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly verificationSubmittedAt: Prisma.FieldRef<"Order", 'DateTime'>
