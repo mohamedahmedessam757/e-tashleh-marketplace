@@ -82,7 +82,12 @@ const getFirstPaymentMs = (order: OrderLike): number | null => {
   const payments = order.payments ?? [];
   const completed = payments.filter((p) => p.status === 'SUCCESS' || p.status === 'COMPLETED');
   const list = completed.length ? completed : payments;
-  const times = list.map((p) => toMs(p.createdAt)).filter((t): t is number => t != null);
+  const times = list
+    .map((p) => {
+      const paidAt = toMs((p as { paidAt?: string | Date | null }).paidAt);
+      return paidAt ?? toMs(p.createdAt);
+    })
+    .filter((t): t is number => t != null);
   return times.length ? Math.min(...times) : null;
 };
 
@@ -98,11 +103,15 @@ export function resolveOrderActiveSla(
         ? toMs(order.paymentDeadlineAt)
         : order.status === 'CORRECTION_PERIOD'
           ? toMs(order.correctionDeadlineAt)
-          : order.status === 'AWAITING_SELECTION'
-            ? toMs(order.selectionDeadlineAt)
-            : order.status === 'COLLECTING_OFFERS' || order.status === 'AWAITING_OFFERS'
-              ? toMs(order.revealOffersAt)
-              : null;
+          : order.status === 'PREPARATION'
+            ? toMs(order.preparationDeadlineAt)
+            : order.status === 'DELAYED_PREPARATION'
+              ? toMs(order.delayedPreparationDeadlineAt)
+              : order.status === 'AWAITING_SELECTION'
+                ? toMs(order.selectionDeadlineAt)
+                : order.status === 'COLLECTING_OFFERS' || order.status === 'AWAITING_OFFERS'
+                  ? toMs(order.revealOffersAt)
+                  : null;
     if (liveEnd == null || stickyEnd === liveEnd) {
       return order.activeSla;
     }

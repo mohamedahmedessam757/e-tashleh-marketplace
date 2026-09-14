@@ -326,7 +326,10 @@ export class OrderSlaService {
     const list = completed.length ? completed : payments;
     if (!list.length) return null;
     const times = list
-      .map((p) => this.toMs(p.createdAt))
+      .map((p) => {
+        const paidAt = this.toMs((p as { paidAt?: Date | string | null }).paidAt);
+        return paidAt ?? this.toMs(p.createdAt);
+      })
       .filter((t): t is number => t != null);
     if (!times.length) return null;
     return Math.min(...times);

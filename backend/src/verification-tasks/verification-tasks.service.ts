@@ -1624,7 +1624,11 @@ export class VerificationTasksService {
           OrderStatus.CANCELLED,
           { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
           'Cancelled after second field verification rejection (non-matching).',
-          { source: 'adminReviewFieldVerification', rejectionCount: newRejectionCount },
+          {
+            source: 'adminReviewFieldVerification',
+            rejectionCount: newRejectionCount,
+            merchantFault: true,
+          },
         );
         newOrderStatus = OrderStatus.CANCELLED;
       } catch (cancelErr) {

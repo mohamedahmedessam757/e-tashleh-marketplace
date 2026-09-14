@@ -40,6 +40,35 @@ export function computeCancelBeforeShippingRefund(
     };
 }
 
+/**
+ * Merchant bears unrecovered gateway fee when cancel is caused by merchant SLA /
+ * non-match faults (prep delay, correction timeout, repeated non-match).
+ * Explicit metadata.merchantFault wins when set.
+ */
+export function isMerchantFaultPreShipCancel(input: {
+    previousStatus?: string | null;
+    reason?: string | null;
+    merchantFault?: boolean | null;
+}): boolean {
+    if (input.merchantFault === true) return true;
+    if (input.merchantFault === false) return false;
+
+    const status = String(input.previousStatus || '').toUpperCase();
+    if (
+        status === 'DELAYED_PREPARATION' ||
+        status === 'CORRECTION_PERIOD' ||
+        status === 'NON_MATCHING' ||
+        status === 'CORRECTION_SUBMITTED'
+    ) {
+        return true;
+    }
+
+    const reason = String(input.reason || '');
+    return /non-matching|verification rejection|correction (limit|window|deadline)|abandoned by merchant|without preparation|late preparation|preparation SLA|prep deadline|prep expiry|exceeded extra grace/i.test(
+        reason,
+    );
+}
+
 /** Order statuses where auto cancel-refund is forbidden (post first actual ship). */
 export const POST_SHIP_CANCEL_REFUND_BLOCKED = new Set([
     'SHIPPED',

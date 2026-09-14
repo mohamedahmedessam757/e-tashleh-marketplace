@@ -31,6 +31,7 @@ import {
 } from '../common/search/admin-entity-search.util';
 import { resolveCompletionWarranty } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
+import { isMerchantFaultPreShipCancel } from '../payments/cancel-refund.util';
 import { OrderCreateQuotaService } from './order-create-quota.service';
 import { ORDER_CREATE_RULES } from './order-create-rules.util';
 import { computeOffersStopAt } from '../offers/offer-governance.util';
@@ -917,21 +918,19 @@ export class OrdersService {
             notifyStatus === OrderStatus.CANCELLED &&
             order.status !== OrderStatus.CANCELLED
         ) {
-            const merchantFaultStatuses = new Set<string>([
-                OrderStatus.DELAYED_PREPARATION,
-                OrderStatus.CORRECTION_PERIOD,
-                OrderStatus.NON_MATCHING,
-                OrderStatus.CORRECTION_SUBMITTED,
-            ]);
+            const cancelReason = reason || 'Order cancelled before shipping';
             void this.escrowService
-                .refundPaidOrderOnCancel(
-                    orderId,
-                    reason || 'Order cancelled before shipping',
-                    {
+                .refundPaidOrderOnCancel(orderId, cancelReason, {
+                    previousStatus: order.status,
+                    merchantFault: isMerchantFaultPreShipCancel({
                         previousStatus: order.status,
-                        merchantFault: merchantFaultStatuses.has(String(order.status)),
-                    },
-                )
+                        reason: cancelReason,
+                        merchantFault:
+                            typeof metadata?.merchantFault === 'boolean'
+                                ? metadata.merchantFault
+                                : null,
+                    }),
+                })
                 .catch((err) => {
                     this.logger.warn(
                         `Cancel refund failed for ${orderId}: ${
@@ -1564,7 +1563,7 @@ export class OrdersService {
                     OrderStatus.CANCELLED,
                     systemActor,
                     `System: Auto-cancelled after ${assemblyDays} days without preparation`,
-                    meta,
+                    { ...meta, merchantFault: true },
                 );
                 for (const offer of order.offers.filter((o) => o.status === 'accepted' && o.storeId)) {
                     const store = await this.prisma.store.findUnique({
@@ -1660,7 +1659,7 @@ export class OrdersService {
                 OrderStatus.CANCELLED,
                 systemActor,
                 'System: Exceeded extra grace period for preparation. Order abandoned by merchant.',
-                meta,
+                { ...meta, merchantFault: true },
             );
             // Refund + merchant fee liability handled in transitionStatus via merchantFault cancel path
             for (const offer of order.offers.filter((o: any) => o.status === 'accepted' && o.storeId)) {
@@ -1726,7 +1725,7 @@ export class OrdersService {
                 OrderStatus.CANCELLED,
                 systemActor,
                 'System: Merchant failed to provide corrected verification within correction limit.',
-                meta,
+                { ...meta, merchantFault: true },
             );
             if (order.storeId) {
                 const store = await this.prisma.store.findUnique({
@@ -3563,7 +3562,11 @@ export class OrdersService {
                     OrderStatus.CANCELLED,
                     { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
                     'Cancelled after second verification rejection (non-matching).',
-                    { source: 'adminReviewVerification', rejectionCount: newRejectionCount },
+                    {
+                        source: 'adminReviewVerification',
+                        rejectionCount: newRejectionCount,
+                        merchantFault: true,
+                    },
                 );
                 newOrderStatus = OrderStatus.CANCELLED;
             } catch (cancelErr) {
@@ -3773,21 +3776,8 @@ export class OrdersService {
             console.error('[adminReviewVerification] Notification failed (non-blocking):', notifErr.message);
         }
 
-        if (newOrderStatus === OrderStatus.CANCELLED) {
-            void this.escrowService
-                .refundPaidOrderOnCancel(
-                    orderId,
-                    'Cancelled after second verification rejection',
-                    { previousStatus: order.status },
-                )
-                .catch((err) => {
-                    this.logger.warn(
-                        `Cancel refund after verification reject failed for ${orderId}: ${
-                            err instanceof Error ? err.message : String(err)
-                        }`,
-                    );
-                });
-        }
+        // Refund + chat lock for second-reject cancel are owned by transitionStatus above.
+        // Do not call refundPaidOrderOnCancel again (double Stripe refund race).
 
         return { success: true, status: newOrderStatus };
     }
