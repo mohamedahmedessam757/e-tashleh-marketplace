@@ -32,6 +32,10 @@ import {
 import { resolveCompletionWarranty } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { isMerchantFaultPreShipCancel } from '../payments/cancel-refund.util';
+import {
+    merchantFaultCancelReasonAr,
+    resolveCancelPartLabel,
+} from './merchant-fault-cancel-wa.util';
 import { OrderCreateQuotaService } from './order-create-quota.service';
 import { ORDER_CREATE_RULES } from './order-create-rules.util';
 import { computeOffersStopAt } from '../offers/offer-governance.util';
@@ -1685,13 +1689,13 @@ export class OrdersService {
             await this.notifications
                 .notifyWithDedup(
                     order.customerId,
-                    `wa:ORDER_STATUS:${order.id}:CANCELLED:delayed_prep`,
+                    `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:delayed_prep`,
                     120,
                     {
                         recipientId: order.customerId,
                         recipientRole: 'CUSTOMER',
-                        titleAr: 'إلغاء الطلب لعدم استجابة التاجر',
-                        titleEn: 'Order Cancelled: Merchant Missed Prep Deadline',
+                        titleAr: 'إشعار إلغاء الطلب',
+                        titleEn: 'Order cancellation notice',
                         messageAr: `تم إلغاء الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز.`,
                         messageEn: `Order #${order.orderNumber} was cancelled because the merchant missed the preparation deadline.`,
                         type: 'ORDER',
@@ -1699,8 +1703,17 @@ export class OrdersService {
                         metadata: {
                             orderId: order.id,
                             orderNumber: order.orderNumber,
-                            waEvent: 'ORDER_STATUS',
+                            waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
                             status: 'CANCELLED',
+                            cancelKind: 'LATE_PREP',
+                            partName: resolveCancelPartLabel({
+                                partNames: order.parts?.map((p: { name?: string | null }) => p.name),
+                            }),
+                            part_name: resolveCancelPartLabel({
+                                partNames: order.parts?.map((p: { name?: string | null }) => p.name),
+                            }),
+                            cancel_reason_ar: merchantFaultCancelReasonAr('LATE_PREP'),
+                            status_detail: merchantFaultCancelReasonAr('LATE_PREP'),
                         },
                     },
                 )
@@ -1768,13 +1781,13 @@ export class OrdersService {
             await this.notifications
                 .notifyWithDedup(
                     order.customerId,
-                    `wa:ORDER_STATUS:${order.id}:CANCELLED:correction`,
+                    `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:correction`,
                     120,
                     {
                         recipientId: order.customerId,
                         recipientRole: 'CUSTOMER',
-                        titleAr: 'إلغاء الطلب واسترجاع المبلغ',
-                        titleEn: 'Order Cancelled & Refunded',
+                        titleAr: 'إشعار إلغاء الطلب',
+                        titleEn: 'Order cancellation notice',
                         messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة. جاري استرجاع المبلغ كاملاً.`,
                         messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. A full refund is processing.`,
                         type: 'ORDER',
@@ -1782,8 +1795,17 @@ export class OrdersService {
                         metadata: {
                             orderId: order.id,
                             orderNumber: order.orderNumber,
-                            waEvent: 'ORDER_STATUS',
+                            waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
                             status: 'CANCELLED',
+                            cancelKind: 'NON_MATCH',
+                            partName: resolveCancelPartLabel({
+                                partNames: order.parts?.map((p: { name?: string | null }) => p.name),
+                            }),
+                            part_name: resolveCancelPartLabel({
+                                partNames: order.parts?.map((p: { name?: string | null }) => p.name),
+                            }),
+                            cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
+                            status_detail: merchantFaultCancelReasonAr('NON_MATCH'),
                         },
                     },
                 )
@@ -3746,11 +3768,21 @@ export class OrdersService {
                     });
                     await this.notifications.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER', type: 'system_alert',
-                        titleAr: '❌ إلغاء الطلب لعدم المطابقة', titleEn: '❌ Order Cancelled due to Non-Matching',
+                        titleAr: 'إشعار إلغاء الطلب', titleEn: 'Order cancellation notice',
                         messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
                         messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
                         link: `/customer/orders/${order.id}`,
-                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            verification: true,
+                            waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+                            cancelKind: 'NON_MATCH',
+                            partName: resolveCancelPartLabel({ partName }),
+                            part_name: resolveCancelPartLabel({ partName }),
+                            cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
+                            status_detail: merchantFaultCancelReasonAr('NON_MATCH'),
+                        },
                     });
                 } else {
                     const reasonSnippet = data.rejectionReason

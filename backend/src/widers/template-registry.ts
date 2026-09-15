@@ -19,7 +19,8 @@ export type TemplateBodyField =
     | 'doc_type'
     | 'sender_name'
     | 'message_preview'
-    | 'decision_status';
+    | 'decision_status'
+    | 'part_name';
 
 export type TemplateNameVersion = 'v2' | 'v3';
 
@@ -229,6 +230,21 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonSuffixPattern: suffix.orderMerchant,
         buttonUrlDynamic: false,
     }),
+
+    // Merchant-fault cancel (late prep / correction timeout / second non-match) — customer only
+    // Body: {{1}} part_name · {{2}} order_number · {{3}} status_detail (reason)
+    def(
+        'txn_cancel_merchant_fault_customer',
+        'ar',
+        'customer',
+        ['part_name', 'order_number', 'status_detail'],
+        {
+            headerText: '⚠️ إشعار إلغاء الطلب',
+            buttonLabel: 'عرض الطلب',
+            buttonSuffixPattern: suffix.orderCustomer,
+            buttonUrlDynamic: false,
+        },
+    ),
 
     // Marketing welcome — body {{1}} only; button URL is static in Widers (no API suffix)
     def('welcome_customer', 'ar', 'customer', ['name'], {

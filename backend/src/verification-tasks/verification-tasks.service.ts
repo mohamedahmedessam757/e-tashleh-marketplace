@@ -17,6 +17,10 @@ import { ViolationsService } from '../violations/violations.service';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import * as crypto from 'crypto';
 import {
+  merchantFaultCancelReasonAr,
+  resolveCancelPartLabel,
+} from '../orders/merchant-fault-cancel-wa.util';
+import {
   isUuid,
   mergeWhereWithSearch,
   normalizeSearchQuery,
@@ -2015,16 +2019,34 @@ export class VerificationTasksService {
     }
 
     if (newOrderStatus === OrderStatus.CANCELLED && newRejectionCount >= 2) {
+      const parts = await this.prisma.orderPart.findMany({
+        where: { orderId: order.id },
+        select: { name: true },
+        take: 5,
+      });
+      const partLabel = resolveCancelPartLabel({
+        partNames: parts.map((p) => p.name),
+      });
       await this.notifications.create({
         recipientId: order.customerId,
         recipientRole: 'CUSTOMER',
         type: 'system_alert',
-        titleAr: '❌ إلغاء الطلب لعدم المطابقة',
-        titleEn: '❌ Order Cancelled due to Non-Matching',
+        titleAr: 'إشعار إلغاء الطلب',
+        titleEn: 'Order cancellation notice',
         messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
         messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
         link: `/customer/orders/${order.id}`,
-        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+        metadata: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          verification: true,
+          waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+          cancelKind: 'NON_MATCH',
+          partName: partLabel,
+          part_name: partLabel,
+          cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
+          status_detail: merchantFaultCancelReasonAr('NON_MATCH'),
+        },
       });
     }
 

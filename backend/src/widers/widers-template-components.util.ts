@@ -17,6 +17,7 @@ const BODY_FIELD_DEFAULTS: Partial<Record<TemplateBodyField, string>> = {
     sender_name: 'مستخدم',
     message_preview: 'رسالة جديدة',
     decision_status: 'قيد المراجعة',
+    part_name: 'القطعة',
 };
 
 /** Widers dashboard variable keys (إعداد القالب → متغيرات النظام) */
@@ -35,6 +36,7 @@ const WIDERS_PARAMETER_NAMES: Partial<Record<TemplateBodyField, string>> = {
     sender_name: 'sender_name',
     message_preview: 'message_preview',
     decision_status: 'decision_status',
+    part_name: 'part_name',
 };
 
 /** Meta (#100) and Widers often reject empty template variables. */

@@ -423,6 +423,23 @@ export class WhatsAppChannelService {
                 status_detail: statusDetail,
             };
 
+            if (family === 'txn_cancel_merchant_fault_customer') {
+                const metaPart =
+                    typeof params.metadata?.part_name === 'string'
+                        ? params.metadata.part_name
+                        : typeof params.metadata?.partName === 'string'
+                          ? params.metadata.partName
+                          : '';
+                fields.part_name = truncateWhatsAppParam(metaPart.trim() || 'القطعة', 80);
+                const metaReason =
+                    typeof params.metadata?.cancel_reason_ar === 'string'
+                        ? params.metadata.cancel_reason_ar
+                        : typeof params.metadata?.status_detail === 'string'
+                          ? params.metadata.status_detail
+                          : statusDetail;
+                fields.status_detail = truncateWhatsAppParam(String(metaReason || statusDetail), 500);
+            }
+
             if (family.startsWith('txn_shipment_')) {
                 const tracking = await this.resolveTrackingNumber(
                     orderId,

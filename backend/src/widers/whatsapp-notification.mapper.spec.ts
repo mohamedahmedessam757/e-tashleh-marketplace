@@ -417,6 +417,29 @@ describe('resolveTemplateFamily', () => {
       ).toBe('txn_violation_customer');
     });
 
+    it('ORDER_CANCEL_MERCHANT_FAULT → txn_cancel_merchant_fault_customer (customer only)', () => {
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'ORDER',
+            metadata: { waEvent: 'ORDER_CANCEL_MERCHANT_FAULT' },
+          },
+          'CUSTOMER',
+        ),
+      ).toBe('txn_cancel_merchant_fault_customer');
+      expect(
+        resolveTemplateFamily(
+          {
+            ...base,
+            type: 'ORDER',
+            metadata: { waEvent: 'ORDER_CANCEL_MERCHANT_FAULT' },
+          },
+          'MERCHANT',
+        ),
+      ).toBeNull();
+    });
+
     it('ALERT without DOCUMENT waEvent stays null', () => {
       expect(
         resolveTemplateFamily({ ...base, type: 'ALERT' }, 'MERCHANT'),

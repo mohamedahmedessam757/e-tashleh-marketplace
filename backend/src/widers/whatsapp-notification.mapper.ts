@@ -18,7 +18,8 @@ export type WhatsAppEvent =
     | 'STORE_UNDER_REVIEW'
     | 'STORE_PENDING_STRIPE'
     | 'STORE_STRIPE_RESULT'
-    | 'CHAT_MESSAGE';
+    | 'CHAT_MESSAGE'
+    | 'ORDER_CANCEL_MERCHANT_FAULT';
 
 export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'ORDER_CREATED',
@@ -38,6 +39,7 @@ export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'STORE_PENDING_STRIPE',
     'STORE_STRIPE_RESULT',
     'CHAT_MESSAGE',
+    'ORDER_CANCEL_MERCHANT_FAULT',
 ] as const;
 
 export interface NotificationDispatchInput {
@@ -207,6 +209,8 @@ function resolveByWaEvent(
             return role === 'MERCHANT' ? 'txn_offer_restriction_vendor' : null;
         case 'VIOLATION_ISSUED':
             return role === 'MERCHANT' ? 'txn_violation_vendor' : 'txn_violation_customer';
+        case 'ORDER_CANCEL_MERCHANT_FAULT':
+            return role === 'CUSTOMER' ? 'txn_cancel_merchant_fault_customer' : null;
         default:
             return null;
     }
@@ -228,6 +232,10 @@ export function resolveTemplateFamily(
     if (waEvent) {
         const fromEvent = resolveByWaEvent(waEvent, role, opts);
         if (fromEvent) return fromEvent;
+        // Customer-only cancel template: never fall through to txn_order_merchant
+        if (waEvent === 'ORDER_CANCEL_MERCHANT_FAULT') {
+            return null;
+        }
         // STORE_ACTIVATION for customer etc. → fall through only if null intentionally
         if (ORDER_WA_EVENTS.has(waEvent) || waEvent === 'SHIPMENT_STATUS') {
             return fromEvent;
