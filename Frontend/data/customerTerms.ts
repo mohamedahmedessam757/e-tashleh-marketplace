@@ -34,7 +34,7 @@ export const customerTermsAr: TermsSection[] = [
     "content": [
       "جميع المدفوعات تتم عبر بوابات دفع معتمدة",
       "يوافق العميل على شروط بوابة الدفع",
-      "في حال الإلغاء قبل الشحن: يتحمل العميل رسوم بوابة الدفع 2%",
+      "في حال الإلغاء قبل الشحن: يتحمل العميل رسوم بوابة الدفع المعتمدة في إعدادات المنصة (نسبة Stripe + الرسوم الثابتة)",
       "وأي رسوم تكبدتها المنصة أو شركاؤها"
     ]
   },
@@ -237,7 +237,7 @@ export const customerTermsAr: TermsSection[] = [
   {
     "title": "الإلغاء قبل الشحن",
     "content": [
-      "يتحمل العميل: رسوم 2%",
+      "يتحمل العميل: رسوم بوابة الدفع حسب إعدادات المنصة (نسبة Stripe + الثابت)",
       "أي تكاليف إضافية"
     ]
   },
@@ -290,7 +290,7 @@ export const customerTermsEn: TermsSection[] = [
     "content": [
       "All payments are processed through approved payment gateways.",
       "The customer agrees to the gateway terms.",
-      "In case of cancellation before shipping:A 2% payment gateway fee applies",
+      "In case of cancellation before shipping: the customer pays the payment gateway fee per platform Stripe settings (percentage + fixed fee)",
       "Any additional costs incurred by the platform or its partners shall be charged"
     ]
   },
@@ -495,8 +495,7 @@ export const customerTermsEn: TermsSection[] = [
   {
     "title": "Cancellation Before Shipping",
     "content": [
-      "Customer pays:2%",
-      "fee",
+      "Customer pays: payment gateway fee per platform Stripe settings (percentage + fixed fee)",
       "Any additional costs"
     ]
   },

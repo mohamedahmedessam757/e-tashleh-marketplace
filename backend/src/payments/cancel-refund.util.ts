@@ -1,29 +1,34 @@
-/** Cancel-before-shipping fee SSOT (customer terms: 2% payment gateway fee). */
-export const CANCEL_BEFORE_SHIPPING_FEE_PCT = 2;
+/**
+ * Cancel-before-shipping gateway fee helpers.
+ * Fee amount MUST come from live Stripe settings:
+ * (paidTotal × gatewayFeePercent/100) + gatewayFeeFixedAed
+ * via FinancialConfigService / computeStripeGatewayFee — never a hardcoded %.
+ */
 
 export function roundMoney2(amount: number): number {
     return Math.round((Number(amount) + Number.EPSILON) * 100) / 100;
 }
 
 /**
- * Net refund after deducting cancel-before-shipping gateway fee.
- * Fee is computed on the original paid total; remaining to refund accounts for prior refunds.
+ * Net refund after deducting an absolute cancel-before-shipping gateway fee.
+ * Pass feeAmount=0 for merchant-fault full customer refund (fee charged to store separately).
  */
 export function computeCancelBeforeShippingRefund(
     paidTotal: number,
-    feePct: number = CANCEL_BEFORE_SHIPPING_FEE_PCT,
+    feeAmountInput: number = 0,
     alreadyRefunded: number = 0,
 ): {
     feeAmount: number;
     refundAmount: number;
-    feePct: number;
     paidTotal: number;
     alreadyRefunded: number;
     targetNetRefund: number;
 } {
     const paid = Math.max(0, roundMoney2(paidTotal));
     const prior = Math.max(0, roundMoney2(alreadyRefunded));
-    const feeAmount = roundMoney2((paid * feePct) / 100);
+    const feeAmount = roundMoney2(
+        Math.min(Math.max(0, Number(feeAmountInput) || 0), paid),
+    );
     const targetNetRefund = roundMoney2(Math.max(0, paid - feeAmount));
     const remainingCap = roundMoney2(Math.max(0, paid - prior));
     const refundAmount = roundMoney2(
@@ -33,7 +38,6 @@ export function computeCancelBeforeShippingRefund(
     return {
         feeAmount,
         refundAmount,
-        feePct,
         paidTotal: paid,
         alreadyRefunded: prior,
         targetNetRefund,
