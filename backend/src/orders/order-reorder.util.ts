@@ -50,7 +50,13 @@ export function validateReorderIdsShape(input: {
 
 /** Whether a source order status may seed a reorder create. */
 export function isReorderEligibleSourceStatus(status: string): boolean {
-  return status === 'AWAITING_SELECTION' || status === 'CANCELLED';
+  return (
+    status === 'AWAITING_SELECTION' ||
+    status === 'AWAITING_PAYMENT' ||
+    status === 'PARTIALLY_PAID' ||
+    status === 'PREPARATION' ||
+    status === 'CANCELLED'
+  );
 }
 
 /**

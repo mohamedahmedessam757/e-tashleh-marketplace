@@ -35,6 +35,10 @@ import {
     partReadyForShipping,
     readyForShippingCustomerLink,
 } from './order-notification-copy.util';
+import {
+    assertHandoverNotInPast,
+    HANDOVER_IN_PAST_EXCEPTION,
+} from './handover-datetime.util';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     [OfferFulfillmentStatus.AWAITING_PAYMENT]: 0,
@@ -653,6 +657,11 @@ export class OfferFulfillmentService {
         }
         if (!String(data.videoUrl).startsWith('http')) {
             throw new BadRequestException('Verification video must be uploaded before submitting.');
+        }
+
+        const handoverCheck = assertHandoverNotInPast(data.handoverDate, data.handoverTime);
+        if (!handoverCheck.ok) {
+            throw new BadRequestException(HANDOVER_IN_PAST_EXCEPTION);
         }
 
         const docPayload = {

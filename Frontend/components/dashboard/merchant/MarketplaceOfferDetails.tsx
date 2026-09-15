@@ -659,6 +659,90 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         return { label: isAr ? 'منخفض' : 'Low', color: 'text-green-400 bg-green-500/10 border-green-500/20', level: 'low' };
     };
 
+    /** Market Intelligence badge: cancelled → rejected → other merchant → competition */
+    const resolveMarketPartBadge = (part: any) => {
+        const marketT = (t.dashboard as any)?.merchant?.marketplace;
+        const partOffers = (order?.offers || []).filter(
+            (of: any) => of.orderPartId === part.id || of.order_part_id === part.id,
+        );
+        const myPartOffer =
+            myOffers.find(
+                (of: any) => of.orderPartId === part.id || of.order_part_id === part.id,
+            ) ||
+            partOffers.find((of: any) => String(of.storeId) === String(storeId));
+
+        const statusLower = String(myPartOffer?.status || '').toLowerCase();
+        const fulfillmentUpper = String(myPartOffer?.fulfillmentStatus || '').toUpperCase();
+        const isCancelled =
+            String(order?.status || '').toUpperCase() === 'CANCELLED' ||
+            statusLower === 'rejected' ||
+            statusLower === 'withdrawn' ||
+            !!myPartOffer?.isWithdrawn ||
+            fulfillmentUpper === 'CANCELLED';
+
+        if (isCancelled) {
+            return {
+                kind: 'cancelled' as const,
+                label: marketT?.marketCancelled || (isAr ? 'ملغاة' : 'Cancelled'),
+                badgeClass: 'text-red-400 bg-red-500/10 border-red-500/20',
+                barClass: 'bg-red-500',
+                barWidth: 100,
+                count: null as number | null,
+            };
+        }
+
+        if (myPartOffer && String(myPartOffer.status).toLowerCase() === 'accepted') {
+            const doc = getVerificationDocForOffer(
+                order?.verificationDocuments,
+                myPartOffer.id,
+            );
+            const rejected = merchantOfferAdminRejected(
+                myPartOffer.fulfillmentStatus,
+                doc,
+                order?.status,
+            );
+            if (rejected) {
+                return {
+                    kind: 'rejected' as const,
+                    label: marketT?.marketRejected || (isAr ? 'مرفوضة' : 'Rejected'),
+                    badgeClass: 'text-red-400 bg-red-500/10 border-red-500/20',
+                    barClass: 'bg-red-500',
+                    barWidth: 100,
+                    count: null as number | null,
+                };
+            }
+        }
+
+        if (awardedToOthers.get(part.id)) {
+            return {
+                kind: 'other' as const,
+                label: marketT?.marketOtherMerchant || (isAr ? 'لتاجر آخر' : 'Other merchant'),
+                badgeClass: 'text-slate-300 bg-slate-500/15 border-slate-400/30',
+                barClass: 'bg-slate-400',
+                barWidth: 100,
+                count: null as number | null,
+            };
+        }
+
+        const count = offersPerPart.get(part.id) || 0;
+        const comp = getCompetitionLevel(count);
+        return {
+            kind: 'competition' as const,
+            label: comp.label,
+            badgeClass: comp.color,
+            barClass:
+                count >= 10
+                    ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]'
+                    : count >= 8
+                      ? 'bg-red-500'
+                      : count >= 5
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]',
+            barWidth: Math.max((count / 10) * 100, 2),
+            count,
+        };
+    };
+
     const hasSubmittedAny = myOffers.some((o: any) => isActiveMerchantOffer(o));
 
     const modificationMetrics = useMemo(
@@ -2061,28 +2145,29 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                             {(order.parts && order.parts.length > 0) ? (
                                 order.parts.map((p: any, i: number) => {
-                                    const count = offersPerPart.get(p.id) || 0;
-                                    const comp = getCompetitionLevel(count);
+                                    const badge = resolveMarketPartBadge(p);
                                     return (
                                         <div key={p.id} className={`pb-3 space-y-2 ${i < order.parts.length - 1 ? 'border-b border-white/5' : ''}`}>
                                             <div className="flex items-center justify-between gap-3">
                                                 <span className="text-white font-medium text-sm truncate flex-1">{p.name}</span>
                                                 <div className="flex items-center gap-2" dir="ltr">
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap border border-current ${comp.color.split(' ').filter(c => !c.startsWith('border-')).join(' ')}`}>
-                                                        {comp.label}
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap border border-current ${badge.badgeClass.split(' ').filter(c => !c.startsWith('border-')).join(' ')}`}>
+                                                        {badge.label}
                                                     </span>
-                                                    <div className="flex items-center text-white font-bold text-sm">
-                                                        <span>{count}</span>
-                                                        <span className="text-[10px] text-white/40 mx-1">/</span>
-                                                        <span className="text-[10px] text-white/40">10</span>
-                                                    </div>
+                                                    {badge.kind === 'competition' && badge.count != null ? (
+                                                        <div className="flex items-center text-white font-bold text-sm">
+                                                            <span>{badge.count}</span>
+                                                            <span className="text-[10px] text-white/40 mx-1">/</span>
+                                                            <span className="text-[10px] text-white/40">10</span>
+                                                        </div>
+                                                    ) : null}
                                                 </div>
                                             </div>
                                             <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div 
                                                     initial={{ width: 0 }}
-                                                    animate={{ width: `${Math.max((count / 10) * 100, 2)}%` }} // Show at least a sliver if 0
-                                                    className={`h-full ${count >= 10 ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]' : count >= 8 ? 'bg-red-500' : count >= 5 ? 'bg-yellow-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]'}`}
+                                                    animate={{ width: `${badge.barWidth}%` }}
+                                                    className={`h-full ${badge.barClass}`}
                                                 />
                                             </div>
                                         </div>

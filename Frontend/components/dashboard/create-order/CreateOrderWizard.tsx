@@ -21,6 +21,15 @@ function extractApiErrorMessage(error: unknown, fallback: string, preferAr: bool
   if (!data) return fallback;
   if (preferAr && typeof data.messageAr === 'string' && data.messageAr.trim()) return data.messageAr;
   if (!preferAr && typeof data.messageEn === 'string' && data.messageEn.trim()) return data.messageEn;
+  // Nest sometimes nests bilingual fields inside message object
+  const nested = data.message && typeof data.message === 'object' && !Array.isArray(data.message)
+    ? data.message
+    : null;
+  if (nested) {
+    if (preferAr && typeof nested.messageAr === 'string' && nested.messageAr.trim()) return nested.messageAr;
+    if (!preferAr && typeof nested.messageEn === 'string' && nested.messageEn.trim()) return nested.messageEn;
+    if (typeof nested.message === 'string' && nested.message.trim()) return nested.message;
+  }
   if (typeof data.message === 'string' && data.message.trim()) return data.message;
   if (Array.isArray(data.message) && data.message[0]) return String(data.message[0]);
   return fallback;

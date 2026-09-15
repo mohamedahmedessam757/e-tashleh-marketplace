@@ -45,6 +45,10 @@ import {
     isSafePublicMediaUrl,
     validateReorderIdsShape,
 } from './order-reorder.util';
+import {
+    assertHandoverNotInPast,
+    HANDOVER_IN_PAST_EXCEPTION,
+} from './handover-datetime.util';
 @Injectable()
 export class OrdersService {
     private readonly logger = new Logger(OrdersService.name);
@@ -3798,6 +3802,11 @@ export class OrdersService {
         }
         if (order.status !== OrderStatus.CORRECTION_PERIOD && order.status !== OrderStatus.NON_MATCHING) {
             throw new BadRequestException('Order not in correction period.');
+        }
+
+        const handoverCheck = assertHandoverNotInPast(data.handoverDate, data.handoverTime);
+        if (!handoverCheck.ok) {
+            throw new BadRequestException(HANDOVER_IN_PAST_EXCEPTION);
         }
 
         const originalDoc = order.verificationDocuments[0];
