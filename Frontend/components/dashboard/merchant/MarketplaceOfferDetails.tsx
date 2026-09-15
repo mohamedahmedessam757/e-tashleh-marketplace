@@ -62,6 +62,7 @@ import {
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow, isBiddingStopped } from '../../../utils/offerGovernance';
 import { getServerNowMs, syncServerClock } from '../../../utils/serverClock';
+import { resolveMarketPartBadgeKind } from '../../../utils/marketPartBadge';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
@@ -671,16 +672,29 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             ) ||
             partOffers.find((of: any) => String(of.storeId) === String(storeId));
 
-        const statusLower = String(myPartOffer?.status || '').toLowerCase();
-        const fulfillmentUpper = String(myPartOffer?.fulfillmentStatus || '').toUpperCase();
-        const isCancelled =
-            String(order?.status || '').toUpperCase() === 'CANCELLED' ||
-            statusLower === 'rejected' ||
-            statusLower === 'withdrawn' ||
-            !!myPartOffer?.isWithdrawn ||
-            fulfillmentUpper === 'CANCELLED';
+        const doc =
+            myPartOffer && String(myPartOffer.status).toLowerCase() === 'accepted'
+                ? getVerificationDocForOffer(order?.verificationDocuments, myPartOffer.id)
+                : undefined;
+        const adminRejected = !!(
+            myPartOffer &&
+            merchantOfferAdminRejected(
+                myPartOffer.fulfillmentStatus,
+                doc,
+                order?.status,
+            )
+        );
 
-        if (isCancelled) {
+        const kind = resolveMarketPartBadgeKind({
+            orderStatus: order?.status,
+            myOfferStatus: myPartOffer?.status,
+            myOfferWithdrawn: !!myPartOffer?.isWithdrawn,
+            myFulfillmentStatus: myPartOffer?.fulfillmentStatus,
+            adminRejected,
+            awardedToOther: !!awardedToOthers.get(part.id),
+        });
+
+        if (kind === 'cancelled') {
             return {
                 kind: 'cancelled' as const,
                 label: marketT?.marketCancelled || (isAr ? 'ملغاة' : 'Cancelled'),
@@ -691,29 +705,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             };
         }
 
-        if (myPartOffer && String(myPartOffer.status).toLowerCase() === 'accepted') {
-            const doc = getVerificationDocForOffer(
-                order?.verificationDocuments,
-                myPartOffer.id,
-            );
-            const rejected = merchantOfferAdminRejected(
-                myPartOffer.fulfillmentStatus,
-                doc,
-                order?.status,
-            );
-            if (rejected) {
-                return {
-                    kind: 'rejected' as const,
-                    label: marketT?.marketRejected || (isAr ? 'مرفوضة' : 'Rejected'),
-                    badgeClass: 'text-red-400 bg-red-500/10 border-red-500/20',
-                    barClass: 'bg-red-500',
-                    barWidth: 100,
-                    count: null as number | null,
-                };
-            }
+        if (kind === 'rejected') {
+            return {
+                kind: 'rejected' as const,
+                label: marketT?.marketRejected || (isAr ? 'مرفوضة' : 'Rejected'),
+                badgeClass: 'text-red-400 bg-red-500/10 border-red-500/20',
+                barClass: 'bg-red-500',
+                barWidth: 100,
+                count: null as number | null,
+            };
         }
 
-        if (awardedToOthers.get(part.id)) {
+        if (kind === 'other_merchant') {
             return {
                 kind: 'other' as const,
                 label: marketT?.marketOtherMerchant || (isAr ? 'لتاجر آخر' : 'Other merchant'),

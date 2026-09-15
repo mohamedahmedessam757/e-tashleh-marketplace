@@ -39,6 +39,7 @@ import {
     assertHandoverNotInPast,
     HANDOVER_IN_PAST_EXCEPTION,
 } from './handover-datetime.util';
+import { isSafePublicMediaUrl } from './order-reorder.util';
 
 const FULFILLMENT_RANK: Record<OfferFulfillmentStatus, number> = {
     [OfferFulfillmentStatus.AWAITING_PAYMENT]: 0,
@@ -652,11 +653,42 @@ export class OfferFulfillmentService {
         if (!parsedImages.length) {
             throw new BadRequestException('At least one verification image is required.');
         }
+        for (const img of parsedImages) {
+            if (typeof img !== 'string' || !isSafePublicMediaUrl(img)) {
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: 'Invalid verification image URL.',
+                    messageAr: 'رابط صورة التوثيق غير صالح.',
+                    messageEn: 'Invalid verification image URL.',
+                    code: 'VERIFICATION_MEDIA_INVALID',
+                });
+            }
+        }
         if (!data.videoUrl || typeof data.videoUrl !== 'string') {
             throw new BadRequestException('Verification video URL is required.');
         }
-        if (!String(data.videoUrl).startsWith('http')) {
-            throw new BadRequestException('Verification video must be uploaded before submitting.');
+        if (!isSafePublicMediaUrl(data.videoUrl)) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Verification video must be uploaded before submitting.',
+                messageAr: 'يجب رفع فيديو التوثيق قبل الإرسال.',
+                messageEn: 'Verification video must be uploaded before submitting.',
+                code: 'VERIFICATION_MEDIA_INVALID',
+            });
+        }
+        if (
+            data.recipientSignature &&
+            typeof data.recipientSignature === 'string' &&
+            data.recipientSignature.startsWith('http') &&
+            !isSafePublicMediaUrl(data.recipientSignature)
+        ) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Invalid signature URL.',
+                messageAr: 'رابط التوقيع غير صالح.',
+                messageEn: 'Invalid signature URL.',
+                code: 'VERIFICATION_MEDIA_INVALID',
+            });
         }
 
         const handoverCheck = assertHandoverNotInPast(data.handoverDate, data.handoverTime);

@@ -3809,6 +3809,28 @@ export class OrdersService {
             throw new BadRequestException(HANDOVER_IN_PAST_EXCEPTION);
         }
 
+        const correctionImages = Array.isArray(data.images) ? data.images : [];
+        for (const img of correctionImages) {
+            if (typeof img !== 'string' || !isSafePublicMediaUrl(img)) {
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: 'Invalid verification image URL.',
+                    messageAr: 'رابط صورة التوثيق غير صالح.',
+                    messageEn: 'Invalid verification image URL.',
+                    code: 'VERIFICATION_MEDIA_INVALID',
+                });
+            }
+        }
+        if (data.videoUrl && !isSafePublicMediaUrl(data.videoUrl)) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'Invalid verification video URL.',
+                messageAr: 'رابط فيديو التوثيق غير صالح.',
+                messageEn: 'Invalid verification video URL.',
+                code: 'VERIFICATION_MEDIA_INVALID',
+            });
+        }
+
         const originalDoc = order.verificationDocuments[0];
 
         // Prefer latest closed/completed field task as previous cycle anchor.
