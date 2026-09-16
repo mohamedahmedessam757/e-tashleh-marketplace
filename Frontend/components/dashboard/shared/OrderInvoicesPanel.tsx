@@ -119,6 +119,8 @@ interface OrderInvoicesPanelProps {
     initialData?: any[];
     highlightOfferId?: string;
     initialDocTab?: InvoiceDocTab;
+    /** Officer/party mode: MASTER invoices only, no typed admin doc tabs. */
+    partyInvoicesOnly?: boolean;
 }
 
 export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
@@ -127,6 +129,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
     initialData,
     highlightOfferId,
     initialDocTab,
+    partyInvoicesOnly = false,
 }) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
@@ -326,10 +329,16 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
         return type !== 'MASTER';
     });
-    const showDocTabs = isSystemAdmin || hasTypedDocs;
-    const visibleInvoices = showDocTabs
-        ? filterInvoicesByTab(invoices, activeDocTab)
-        : masterInvoices;
+    const showDocTabs = !partyInvoicesOnly && (isSystemAdmin || hasTypedDocs);
+    const partyMasterInvoices = invoices.filter((inv) => {
+        const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
+        return type === 'MASTER';
+    });
+    const visibleInvoices = partyInvoicesOnly
+        ? partyMasterInvoices
+        : showDocTabs
+          ? filterInvoicesByTab(invoices, activeDocTab)
+          : masterInvoices;
 
     if (invoices.length === 0) {
         return (
@@ -610,7 +619,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                                 </div>
                             )}
                             <div className="space-y-1.5 text-xs sm:text-sm text-gray-300 min-w-0">
-                                <p className="font-bold text-white text-base truncate inv-value">{storeName}</p>
+                                <p className="font-bold text-white text-base break-words inv-value">{storeName}</p>
                                 {storeCode && <p className="text-gray-400 font-mono text-xs inv-label">ID: #{storeCode}</p>}
                                 <p className="text-gray-500 text-[11px] inv-label">E-Tashleh Verified Merchant</p>
                                 <p className="text-gray-500 text-[11px] inv-label mt-1">{siteContacts.customer}</p>
@@ -1003,7 +1012,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
                                 {/* Invoice Visual Content */}
                                 {!collapsedIds.has(inv.id) && (
-                                    <div className="p-4 sm:p-6 md:p-10 bg-[#0d0d0d] relative overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-top-2 min-w-0 overflow-x-clip">
+                                    <div className="p-4 sm:p-6 md:p-10 bg-[#0d0d0d] relative overflow-x-auto transition-all duration-500 animate-in fade-in slide-in-from-top-2 min-w-0">
                                         {/* Watermark Background */}
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none w-full flex justify-center">
                                             <img src="/logo.png" alt="" className="w-1/2 h-auto max-w-sm" />

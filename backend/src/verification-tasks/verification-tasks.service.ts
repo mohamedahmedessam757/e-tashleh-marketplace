@@ -66,8 +66,16 @@ function isReusableTask(task: {
 }
 
 const VERIFICATION_ORDER_INCLUDE = {
-  customer: { select: { id: true, name: true, email: true, phone: true } },
-  store: { select: { id: true, name: true, storeCode: true, logo: true } },
+  customer: { select: { id: true, name: true, email: true, phone: true, countryCode: true } },
+  store: {
+    select: {
+      id: true,
+      name: true,
+      storeCode: true,
+      logo: true,
+      owner: { select: { id: true, phone: true, email: true, countryCode: true } },
+    },
+  },
   parts: { orderBy: { createdAt: 'asc' as const } },
   offers: {
     select: {
@@ -90,6 +98,7 @@ const VERIFICATION_ORDER_INCLUDE = {
     select: {
       id: true,
       invoiceNumber: true,
+      invoiceType: true,
       total: true,
       subtotal: true,
       shipping: true,

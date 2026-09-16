@@ -9,6 +9,7 @@ import {
   Receipt,
   PenLine,
   LayoutGrid,
+  MessageCircle,
 } from 'lucide-react';
 import { Badge } from '../../../ui/Badge';
 import {
@@ -28,10 +29,26 @@ import { OrderInvoicesPanel } from '../../shared/OrderInvoicesPanel';
 type InvoicePanelRole = 'ADMIN' | 'SUPER_ADMIN' | 'MERCHANT' | 'CUSTOMER';
 type InvoiceAudience = 'customer' | 'merchant';
 
-function resolveAdminInvoicePanelRole(viewerRole: string | null | undefined): InvoicePanelRole {
-  const r = viewerRole || '';
-  if (r === 'ADMIN' || r === 'SUPER_ADMIN') return r;
-  return 'ADMIN';
+function normalizeRole(viewerRole: string | null | undefined): string {
+  return String(viewerRole || '').toUpperCase();
+}
+
+/** Digits-only WhatsApp deep link; prepend countryCode when local number starts with 0. */
+function toWhatsAppHref(phone?: string | null, countryCode?: string | null): string | null {
+  if (!phone) return null;
+  let digits = String(phone).replace(/\D/g, '');
+  if (!digits) return null;
+  const cc = String(countryCode || '').replace(/\D/g, '');
+  if (digits.startsWith('0') && cc) {
+    digits = `${cc}${digits.replace(/^0+/, '')}`;
+  } else if (cc && !digits.startsWith(cc) && digits.length <= 10) {
+    digits = `${cc}${digits}`;
+  }
+  return digits.length >= 8 ? `https://wa.me/${digits}` : null;
+}
+
+function isMasterInvoice(inv: any): boolean {
+  return String(inv?.invoiceType || 'MASTER').toUpperCase() === 'MASTER';
 }
 
 interface VerificationOrderSummaryProps {
@@ -47,11 +64,13 @@ function InfoTile({
   label,
   value,
   sub,
+  children,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   value: string;
   sub?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="p-4 rounded-xl bg-white/5 border border-white/5">
@@ -59,9 +78,31 @@ function InfoTile({
         <Icon size={12} />
         {label}
       </span>
-      <p className="text-sm font-bold text-white mt-1">{value || '—'}</p>
-      {sub && <p className="text-[11px] text-white/45 mt-0.5 line-clamp-2">{sub}</p>}
+      <p className="text-sm font-bold text-white mt-1 break-words">{value || '—'}</p>
+      {sub && <p className="text-[11px] text-white/45 mt-0.5 break-words">{sub}</p>}
+      {children}
     </div>
+  );
+}
+
+function WhatsAppLink({
+  href,
+  ariaLabel,
+}: {
+  href: string;
+  ariaLabel: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={ariaLabel}
+      className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold hover:bg-emerald-500/25 transition-colors"
+    >
+      <MessageCircle size={14} />
+      WhatsApp
+    </a>
   );
 }
 
@@ -76,7 +117,14 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
 
   if (!order) return null;
 
-  const isOfficer = viewerRole === 'VERIFICATION_OFFICER';
+  const role = normalizeRole(viewerRole);
+  const isOfficer = role === 'VERIFICATION_OFFICER';
+  const isRealAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  /** Officers and any non-admin on this page always get party invoices (never typed admin tabs). */
+  const usePartyInvoices = isOfficer || !isRealAdmin;
+  const adminInvoiceRole: InvoicePanelRole =
+    role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'ADMIN';
+
   const doc =
     task?.merchantVerificationDoc ??
     (task?.offerId
@@ -84,14 +132,26 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
       : null) ??
     order.verificationDocuments?.[0];
   const invoices = Array.isArray(order.invoices) ? order.invoices : [];
+  const masterInvoiceCount = invoices.filter(isMasterInvoice).length;
+  const invoiceBadgeCount = usePartyInvoices ? masterInvoiceCount : invoices.length;
   const merchantStore = resolveMerchantStore(order, doc);
+  const storeOwner = order.store?.owner ?? merchantStore?.owner;
   const multiPart = isMultiPartOrder(order);
   const activeParts = getActiveVerificationParts(order);
   const aggregatedCustomerImages = multiPart ? getCustomerReferenceImages(order) : [];
   const storeImages = doc ? asImageUrls(doc.images) : [];
   const locale = isAr ? 'ar-EG' : 'en-US';
   const statusLabel = CUSTOMER_ORDER_STATUS_LABEL[order.status];
-  const adminInvoiceRole = resolveAdminInvoicePanelRole(viewerRole);
+
+  const customerWa = toWhatsAppHref(order.customer?.phone, order.customer?.countryCode);
+  const storePhone = storeOwner?.phone ?? null;
+  const storeEmail = storeOwner?.email ?? null;
+  const storeWa = toWhatsAppHref(storePhone, storeOwner?.countryCode);
+  const storeSubParts = [
+    merchantStore?.storeCode ? `#${merchantStore.storeCode}` : null,
+    storePhone,
+    storeEmail,
+  ].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -154,8 +214,8 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
           >
             <Receipt size={14} />
             {isAr ? 'الفواتير' : 'Invoices'}
-            {invoices.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">{invoices.length}</span>
+            {invoiceBadgeCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">{invoiceBadgeCount}</span>
             )}
           </button>
         </div>
@@ -166,14 +226,36 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
               icon={Store}
               label={isAr ? 'المتجر' : 'Store'}
               value={merchantStore?.name ?? '—'}
-              sub={merchantStore?.storeCode ? `#${merchantStore.storeCode}` : undefined}
-            />
+              sub={storeSubParts.length ? storeSubParts.join(' · ') : undefined}
+            >
+              {storeWa && (
+                <WhatsAppLink
+                  href={storeWa}
+                  ariaLabel={isAr ? 'فتح واتساب المتجر' : 'Open store WhatsApp'}
+                />
+              )}
+              {storeEmail && (
+                <a
+                  href={`mailto:${storeEmail}`}
+                  className="block mt-1.5 text-[11px] text-sky-400/90 hover:text-sky-300 break-all"
+                >
+                  {storeEmail}
+                </a>
+              )}
+            </InfoTile>
             <InfoTile
               icon={User}
               label={isAr ? 'العميل' : 'Customer'}
               value={order.customer?.name ?? '—'}
               sub={[order.customer?.phone, order.customer?.email].filter(Boolean).join(' · ')}
-            />
+            >
+              {customerWa && (
+                <WhatsAppLink
+                  href={customerWa}
+                  ariaLabel={isAr ? 'فتح واتساب العميل' : 'Open customer WhatsApp'}
+                />
+              )}
+            </InfoTile>
             <InfoTile
               icon={Car}
               label={isAr ? 'المركبة' : 'Vehicle'}
@@ -208,7 +290,7 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
               />
             )}
           </div>
-        ) : isOfficer ? (
+        ) : usePartyInvoices ? (
           <div className="space-y-4 min-w-0">
             <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <button
@@ -234,11 +316,12 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
                 {isAr ? 'فاتورة التاجر' : 'Merchant invoice'}
               </button>
             </div>
-            {invoiceAudience === 'customer' ? (
-              <OrderInvoicesPanel orderId={order.id} role="CUSTOMER" initialData={invoices} />
-            ) : (
-              <OrderInvoicesPanel orderId={order.id} role="MERCHANT" initialData={invoices} />
-            )}
+            <OrderInvoicesPanel
+              orderId={order.id}
+              role={invoiceAudience === 'customer' ? 'CUSTOMER' : 'MERCHANT'}
+              initialData={invoices}
+              partyInvoicesOnly
+            />
           </div>
         ) : (
           <OrderInvoicesPanel orderId={order.id} role={adminInvoiceRole} initialData={invoices} />

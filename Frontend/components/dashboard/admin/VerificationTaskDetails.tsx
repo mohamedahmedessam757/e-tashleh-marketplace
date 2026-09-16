@@ -363,7 +363,12 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <VerificationOrderSummary isAr={isAr} order={order} task={task} viewerRole={currentRole} />
+          <VerificationOrderSummary
+            isAr={isAr}
+            order={order}
+            task={task}
+            viewerRole={String(currentRole || '').toUpperCase()}
+          />
 
           <VerificationComparisonGrid
             isAr={isAr}
