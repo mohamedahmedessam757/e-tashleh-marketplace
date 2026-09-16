@@ -9,7 +9,11 @@ import {
   normalizeSearchQuery,
   mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
-import { filterOrderInvoicesForViewer, isReturnsFeeInvoice } from './invoice-visibility.util';
+import {
+  filterOrderInvoicesForViewer,
+  filterInvoicesForVerificationOfficer,
+  isReturnsFeeInvoice,
+} from './invoice-visibility.util';
 import { ReturnsFeeInvoiceService } from './returns-fee-invoice.service';
 
 const invoiceInclude = {
@@ -522,12 +526,12 @@ export class InvoicesService {
 
     async getInvoicesByOrder(orderId: string, role?: string, viewerUserId?: string) {
         const r = String(role || '').toUpperCase();
+        const isVerificationOfficer = r === 'VERIFICATION_OFFICER';
         const isAdmin =
             r === 'ADMIN' ||
             r === 'SUPER_ADMIN' ||
             r === 'SUPPORT' ||
-            r === 'ACCOUNTANT' ||
-            r === 'VERIFICATION_OFFICER';
+            r === 'ACCOUNTANT';
 
         if (isAdmin) {
             await this.returnsFeeInvoices
@@ -625,6 +629,10 @@ export class InvoicesService {
                     inv.platformLegalNameAr || companyLive?.legalNameAr,
             };
         };
+
+        if (isVerificationOfficer) {
+            return filterInvoicesForVerificationOfficer(invoices).map(enrich);
+        }
 
         if (!isAdmin) {
             return filterOrderInvoicesForViewer(invoices, {

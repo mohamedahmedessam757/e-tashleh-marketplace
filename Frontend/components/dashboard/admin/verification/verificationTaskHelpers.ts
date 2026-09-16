@@ -50,20 +50,63 @@ export function resolveMerchantStore(
   return order.store ?? doc?.store ?? null;
 }
 
-/** صور العميل للمقارنة — بدون تكرار في الطلب الفردي. */
-export function getCustomerReferenceImages(order: {
-  partImages?: unknown;
-  parts?: { images?: unknown }[] | null;
-  requestType?: string | null;
-}): string[] {
+const INACTIVE_FULFILLMENT = new Set(['CANCELLED', 'AWAITING_PAYMENT']);
+
+export function isOfferActiveForVerification(offer: {
+  status?: string | null;
+  fulfillmentStatus?: string | null;
+}): boolean {
+  const status = String(offer?.status || '').toLowerCase();
+  if (status !== 'accepted') return false;
+  const fulfillment = String(offer?.fulfillmentStatus || '').toUpperCase();
+  return !INACTIVE_FULFILLMENT.has(fulfillment);
+}
+
+export function getActiveVerificationParts(order: {
+  parts?: { id?: string; images?: unknown; [key: string]: unknown }[] | null;
+  offers?: {
+    status?: string | null;
+    fulfillmentStatus?: string | null;
+    orderPartId?: string | null;
+  }[] | null;
+}): { id?: string; images?: unknown; [key: string]: unknown }[] {
+  const parts = order.parts ?? [];
+  const offers = order.offers ?? [];
+  // Without offers payload, keep prior behavior so single-part / legacy tasks still render.
+  if (!offers.length) return parts;
+  const activePartIds = new Set(
+    offers
+      .filter((o) => isOfferActiveForVerification(o) && o.orderPartId)
+      .map((o) => String(o.orderPartId)),
+  );
+  return parts.filter((p) => p.id && activePartIds.has(String(p.id)));
+}
+
+/** صور العميل للمقارنة — بدون تكرار في الطلب الفردي؛ مجمّع = قطع نشطة فقط. */
+export function getCustomerReferenceImages(
+  order: {
+    partImages?: unknown;
+    parts?: { id?: string; images?: unknown }[] | null;
+    offers?: {
+      status?: string | null;
+      fulfillmentStatus?: string | null;
+      orderPartId?: string | null;
+    }[] | null;
+    requestType?: string | null;
+  },
+  opts?: { activePartsOnly?: boolean },
+): string[] {
+  const activeOnly = opts?.activePartsOnly !== false;
   if (isMultiPartOrder(order)) {
-    const fromParts = (order.parts ?? []).flatMap((p) => asImageUrls(p.images));
+    const partsForImages = activeOnly ? getActiveVerificationParts(order) : (order.parts ?? []);
+    const fromParts = partsForImages.flatMap((p) => asImageUrls(p.images));
     const fromOrder = asImageUrls(order.partImages);
     return [...new Set([...fromOrder, ...fromParts])];
   }
   const fromOrder = asImageUrls(order.partImages);
   if (fromOrder.length > 0) return fromOrder;
-  const firstPart = order.parts?.[0];
+  const partsForImages = activeOnly ? getActiveVerificationParts(order) : (order.parts ?? []);
+  const firstPart = partsForImages[0] ?? order.parts?.[0];
   return firstPart ? asImageUrls(firstPart.images) : [];
 }
 

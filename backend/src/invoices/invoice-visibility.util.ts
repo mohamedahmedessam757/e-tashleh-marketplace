@@ -70,3 +70,30 @@ export function filterOrderInvoicesForViewer<T extends {
         (a, b) => a.issuedAt.getTime() - b.issuedAt.getTime(),
     );
 }
+
+/**
+ * Verification officers only need sale MASTER invoices for customer/merchant comparison.
+ * No RETURNS_FEE, REFUND proof, PART/COMMISSION/SHIPPING/GATEWAY typed docs.
+ */
+export function filterInvoicesForVerificationOfficer<T extends {
+    invoiceType?: string | null;
+    shippingBatchKey?: string | null;
+    paymentId: string;
+    issuedAt: Date;
+}>(invoices: T[]): T[] {
+    const masters = invoices.filter((inv) => {
+        if (isReturnsFeeInvoice(inv) || isRefundProofInvoice(inv)) return false;
+        const type = String(inv.invoiceType || 'MASTER').toUpperCase();
+        return type === 'MASTER';
+    });
+    const byPayment = new Map<string, T>();
+    for (const inv of masters) {
+        const existing = byPayment.get(inv.paymentId);
+        if (!existing || inv.issuedAt > existing.issuedAt) {
+            byPayment.set(inv.paymentId, inv);
+        }
+    }
+    return Array.from(byPayment.values()).sort(
+        (a, b) => a.issuedAt.getTime() - b.issuedAt.getTime(),
+    );
+}

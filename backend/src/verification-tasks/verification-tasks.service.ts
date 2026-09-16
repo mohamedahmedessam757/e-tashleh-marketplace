@@ -69,6 +69,15 @@ const VERIFICATION_ORDER_INCLUDE = {
   customer: { select: { id: true, name: true, email: true, phone: true } },
   store: { select: { id: true, name: true, storeCode: true, logo: true } },
   parts: { orderBy: { createdAt: 'asc' as const } },
+  offers: {
+    select: {
+      id: true,
+      status: true,
+      fulfillmentStatus: true,
+      orderPartId: true,
+      offerNumber: true,
+    },
+  },
   verificationDocuments: {
     orderBy: { createdAt: 'desc' as const },
     include: {
@@ -2211,16 +2220,50 @@ export class VerificationTasksService {
     return [];
   }
 
+  private isOfferActiveForVerification(offer: {
+    status?: string | null;
+    fulfillmentStatus?: string | null;
+  }): boolean {
+    const status = String(offer?.status || '').toLowerCase();
+    if (status !== 'accepted') return false;
+    const fulfillment = String(offer?.fulfillmentStatus || '').toUpperCase();
+    return fulfillment !== 'CANCELLED' && fulfillment !== 'AWAITING_PAYMENT';
+  }
+
+  private getActiveVerificationParts(order: {
+    parts?: { id?: string; images?: unknown }[] | null;
+    offers?: {
+      status?: string | null;
+      fulfillmentStatus?: string | null;
+      orderPartId?: string | null;
+    }[] | null;
+  }): { id?: string; images?: unknown }[] {
+    const parts = order.parts ?? [];
+    const offers = order.offers ?? [];
+    if (!offers.length) {
+      // Legacy payload without offers: keep prior behavior (show all parts).
+      return parts;
+    }
+    const activePartIds = new Set(
+      offers
+        .filter((o) => this.isOfferActiveForVerification(o) && o.orderPartId)
+        .map((o) => String(o.orderPartId)),
+    );
+    return parts.filter((p) => p.id && activePartIds.has(String(p.id)));
+  }
+
   private getCustomerReferenceImages(order: any): string[] {
     const isMulti = order.requestType === 'multiple' || (order.parts?.length ?? 0) > 1;
     if (isMulti) {
-      const fromParts = (order.parts ?? []).flatMap((p: any) => this.asImageUrls(p.images));
+      const activeParts = this.getActiveVerificationParts(order);
+      const fromParts = activeParts.flatMap((p: any) => this.asImageUrls(p.images));
       const fromOrder = this.asImageUrls(order.partImages);
       return [...new Set([...fromOrder, ...fromParts])];
     }
     const fromOrder = this.asImageUrls(order.partImages);
     if (fromOrder.length > 0) return fromOrder;
-    const firstPart = order.parts?.[0];
+    const activeParts = this.getActiveVerificationParts(order);
+    const firstPart = activeParts[0] ?? order.parts?.[0];
     return firstPart ? this.asImageUrls(firstPart.images) : [];
   }
 }

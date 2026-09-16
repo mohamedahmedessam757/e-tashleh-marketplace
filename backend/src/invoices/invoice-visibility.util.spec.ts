@@ -1,4 +1,11 @@
-import { filterOrderInvoicesForViewer, isReturnsFeeInvoice, isRefundProofInvoice, isSaleRefundStampableInvoice, FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES } from './invoice-visibility.util';
+import {
+    filterOrderInvoicesForViewer,
+    filterInvoicesForVerificationOfficer,
+    isReturnsFeeInvoice,
+    isRefundProofInvoice,
+    isSaleRefundStampableInvoice,
+    FEE_INVOICE_ATTACHABLE_PAYMENT_STATUSES,
+} from './invoice-visibility.util';
 
 const issued = new Date('2026-01-01T00:00:00Z');
 
@@ -82,6 +89,51 @@ describe('invoice visibility — payer-only fee docs', () => {
             viewerUserId: 'other',
         });
         expect(visible.map((i) => i.invoiceType)).toEqual(['MASTER', 'REFUND']);
+    });
+});
+
+describe('filterInvoicesForVerificationOfficer', () => {
+    it('keeps only sale MASTER and drops PART / RETURNS_FEE / REFUND', () => {
+        const invoices = [
+            {
+                paymentId: 'pay-1',
+                invoiceType: 'MASTER',
+                customerId: 'cust-1',
+                shippingBatchKey: null,
+                issuedAt: issued,
+            },
+            {
+                paymentId: 'pay-1',
+                invoiceType: 'PART',
+                customerId: 'cust-1',
+                shippingBatchKey: null,
+                issuedAt: issued,
+            },
+            {
+                paymentId: 'pay-1',
+                invoiceType: 'COMMISSION',
+                customerId: 'cust-1',
+                shippingBatchKey: 'RETURNS_FEE:case-1:COMMISSION',
+                issuedAt: issued,
+            },
+            {
+                paymentId: 'pay-1',
+                invoiceType: 'REFUND',
+                customerId: 'cust-1',
+                shippingBatchKey: 'REFUND:re_1',
+                issuedAt: issued,
+            },
+            {
+                paymentId: 'pay-2',
+                invoiceType: 'MASTER',
+                customerId: 'cust-1',
+                shippingBatchKey: null,
+                issuedAt: new Date('2026-01-02T00:00:00Z'),
+            },
+        ];
+        const visible = filterInvoicesForVerificationOfficer(invoices);
+        expect(visible.map((i) => i.paymentId)).toEqual(['pay-1', 'pay-2']);
+        expect(visible.every((i) => String(i.invoiceType) === 'MASTER')).toBe(true);
     });
 });
 

@@ -152,8 +152,7 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         role === 'ADMIN' ||
         role === 'SUPER_ADMIN' ||
         role === 'ACCOUNTANT' ||
-        role === 'SUPPORT' ||
-        role === 'VERIFICATION_OFFICER';
+        role === 'SUPPORT';
     const docs = ((t.admin as any)?.invoiceDocs || {}) as Record<string, string>;
     const [activeDocTab, setActiveDocTab] = useState<InvoiceDocTab>('MASTER');
 
