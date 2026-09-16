@@ -260,6 +260,8 @@ export interface MerchantObligationLine {
   orderId?: string | null;
   offerId?: string | null;
   source: 'return' | 'dispute' | 'wallet';
+  /** Underlying walletTransaction / return / dispute id (from StoreLiabilityLine.sourceId). */
+  sourceId: string;
   descriptionAr: string;
   descriptionEn: string;
   postedToBalance?: boolean;
@@ -319,6 +321,7 @@ export async function loadMerchantObligationsLedger(
       orderId: l.orderId || null,
       offerId: l.offerId || null,
       source: l.source,
+      sourceId: String(l.sourceId),
       descriptionAr: l.descriptionAr || l.kind,
       descriptionEn: l.descriptionEn || l.kind,
       postedToBalance: l.postedToBalance,
