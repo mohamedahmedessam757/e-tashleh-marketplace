@@ -9,6 +9,11 @@ export const MERCHANT_NET_DEBIT_TYPES = new Set([
   'WITHDRAWAL',
 ]);
 
+/** Credits that clear obligations without counting as sales/profit. */
+export const MERCHANT_NON_PROFIT_CREDIT_TYPES = new Set([
+  'OBLIGATION_SETTLEMENT',
+]);
+
 export const EXCLUDED_ORDER_STATUSES_FOR_SALES = ['CANCELLED', 'REFUNDED'] as const;
 
 export interface VendorLedgerTx {

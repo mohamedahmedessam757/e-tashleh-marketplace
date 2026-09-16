@@ -118,14 +118,27 @@ export class OfferFulfillmentService {
         if (allAccepted.length === 0) {
             return OrderStatus.COLLECTING_OFFERS;
         }
-        if (paidOffers.length === 0) {
+
+        // Cancelled paid offers are isolated — they do not drive order status.
+        const activePaid = paidOffers.filter(
+            (o) => o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+        );
+        const activeAccepted = allAccepted.filter(
+            (o) => o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+        );
+
+        if (activePaid.length === 0) {
+            // All paid offers cancelled (or none paid) — caller may cancel the order.
+            if (paidOffers.length > 0) {
+                return OrderStatus.CANCELLED;
+            }
             return OrderStatus.AWAITING_PAYMENT;
         }
-        if (paidOffers.length < allAccepted.length) {
+        if (activePaid.length < activeAccepted.length) {
             return OrderStatus.PARTIALLY_PAID;
         }
 
-        const shippedCount = paidOffers.filter(
+        const shippedCount = activePaid.filter(
             (o) =>
                 o.shippedFromCart ||
                 o.fulfillmentStatus === OfferFulfillmentStatus.SHIPPED ||
@@ -133,17 +146,17 @@ export class OfferFulfillmentService {
                 o.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED,
         ).length;
 
-        if (shippedCount > 0 && shippedCount < paidOffers.length) {
+        if (shippedCount > 0 && shippedCount < activePaid.length) {
             return OrderStatus.PARTIALLY_SHIPPED;
         }
-        if (shippedCount === paidOffers.length && shippedCount > 0) {
+        if (shippedCount === activePaid.length && shippedCount > 0) {
             return aggregateMultiItemDeliveryStatus(
-                paidOffers.map((o) => o.fulfillmentStatus),
+                activePaid.map((o) => o.fulfillmentStatus),
             );
         }
 
         const minRank = Math.min(
-            ...paidOffers.map((o) => FULFILLMENT_RANK[o.fulfillmentStatus] ?? 0),
+            ...activePaid.map((o) => FULFILLMENT_RANK[o.fulfillmentStatus] ?? 0),
         );
 
         if (minRank <= FULFILLMENT_RANK.IN_PREPARATION) {
@@ -159,6 +172,61 @@ export class OfferFulfillmentService {
             return OrderStatus.VERIFICATION_SUCCESS;
         }
         return OrderStatus.READY_FOR_SHIPPING;
+    }
+
+    /** Offers still stuck in preparation (not yet PREPARED+). */
+    isOfferLateForPreparation(fulfillmentStatus: OfferFulfillmentStatus): boolean {
+        return (
+            fulfillmentStatus === OfferFulfillmentStatus.AWAITING_PAYMENT ||
+            fulfillmentStatus === OfferFulfillmentStatus.IN_PREPARATION
+        );
+    }
+
+    /**
+     * Mark paid offers CANCELLED (item-level isolation). Does not refund — caller does.
+     * Returns cancelled offer ids. Then recomputes order status from remaining active offers.
+     */
+    async cancelOffersFulfillment(
+        orderId: string,
+        offerIds: string[],
+        reason: string,
+    ): Promise<{ cancelledOfferIds: string[]; nextStatus: OrderStatus }> {
+        const uniqueIds = [...new Set(offerIds.filter(Boolean))];
+        if (!uniqueIds.length) {
+            const nextStatus = await this.recomputeOrderStatus(orderId);
+            return { cancelledOfferIds: [], nextStatus };
+        }
+
+        const offers = await this.prisma.offer.findMany({
+            where: {
+                orderId,
+                id: { in: uniqueIds },
+                status: { in: ['accepted', 'ACCEPTED'] },
+                fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
+            },
+            select: { id: true },
+        });
+        const cancelledOfferIds = offers.map((o) => o.id);
+
+        if (cancelledOfferIds.length) {
+            await this.prisma.offer.updateMany({
+                where: { id: { in: cancelledOfferIds } },
+                data: { fulfillmentStatus: OfferFulfillmentStatus.CANCELLED },
+            });
+
+            await this.auditLogs.logAction({
+                orderId,
+                action: 'OFFER_FULFILLMENT_CANCELLED',
+                entity: 'Offer',
+                actorType: ActorType.SYSTEM,
+                actorId: 'SYSTEM_PARTIAL_CANCEL',
+                reason,
+                metadata: { offerIds: cancelledOfferIds },
+            }).catch(() => {});
+        }
+
+        const nextStatus = await this.recomputeOrderStatus(orderId);
+        return { cancelledOfferIds, nextStatus };
     }
 
     async recomputeOrderStatus(orderId: string): Promise<OrderStatus> {

@@ -71,6 +71,8 @@ interface MerchantWalletState {
     openCasesCount?: number;
     withdrawalRestrictionMessageAr?: string | null;
     withdrawalRestrictionMessageEn?: string | null;
+    pendingLiabilities?: number;
+    obligationsTotalDue?: number;
   };
   withdrawalRequests: any[];
   withdrawalLimits: { min: number; max: number; tier?: string; stripeConnectEnabled?: boolean; payoutMethods?: string[] };
@@ -78,10 +80,27 @@ interface MerchantWalletState {
   stripeConnectInfo: StripeConnectDisplay | null;
   transactions: Transaction[];
   notifications: any[];
+  obligations: {
+    totalDue: number;
+    lines: Array<{
+      id: string;
+      kind: string;
+      amount: number;
+      signedAmount: number;
+      status: 'OPEN' | 'SETTLED';
+      createdAt: string;
+      orderId?: string | null;
+      offerId?: string | null;
+      source: string;
+      descriptionAr: string;
+      descriptionEn: string;
+    }>;
+  };
   isLoading: boolean;
 
   // Actions
   fetchWallet: (filters?: { startDate?: string; endDate?: string }) => Promise<void>;
+  fetchObligations: () => Promise<void>;
   fetchWithdrawalData: () => Promise<void>;
   fetchBankDetails: () => Promise<void>;
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
@@ -132,6 +151,7 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
   stripeConnectInfo: null,
   transactions: [],
   notifications: [],
+  obligations: { totalDue: 0, lines: [] },
   isLoading: true,
 
   fetchWallet: async (filters) => {
@@ -154,9 +174,25 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         ...(withdrawalLimits ? { withdrawalLimits } : {}),
         isLoading: false
       });
+      void get().fetchObligations();
     } catch (error) {
       console.error('Failed to fetch merchant wallet dashboard', error);
       set({ isLoading: false });
+    }
+  },
+
+  fetchObligations: async () => {
+    try {
+      const { client } = await import('../services/api/client');
+      const response = await client.get('/payments/merchant/obligations');
+      set({
+        obligations: {
+          totalDue: Number(response.data?.totalDue || 0),
+          lines: Array.isArray(response.data?.lines) ? response.data.lines : [],
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch merchant obligations', error);
     }
   },
 

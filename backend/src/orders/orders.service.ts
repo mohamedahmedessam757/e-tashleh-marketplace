@@ -927,25 +927,34 @@ export class OrdersService {
             order.status !== OrderStatus.CANCELLED
         ) {
             const cancelReason = reason || 'Order cancelled before shipping';
-            void this.escrowService
-                .refundPaidOrderOnCancel(orderId, cancelReason, {
-                    previousStatus: order.status,
-                    merchantFault: isMerchantFaultPreShipCancel({
+            const skipCancelRefund = Boolean(metadata?.skipCancelRefund);
+            if (!skipCancelRefund) {
+                const refundOfferIds = Array.isArray(metadata?.refundOfferIds)
+                    ? (metadata.refundOfferIds as string[]).filter(
+                          (id) => typeof id === 'string' && id.length > 0,
+                      )
+                    : undefined;
+                void this.escrowService
+                    .refundPaidOrderOnCancel(orderId, cancelReason, {
                         previousStatus: order.status,
-                        reason: cancelReason,
-                        merchantFault:
-                            typeof metadata?.merchantFault === 'boolean'
-                                ? metadata.merchantFault
-                                : null,
-                    }),
-                })
-                .catch((err) => {
-                    this.logger.warn(
-                        `Cancel refund failed for ${orderId}: ${
-                            err instanceof Error ? err.message : String(err)
-                        }`,
-                    );
-                });
+                        merchantFault: isMerchantFaultPreShipCancel({
+                            previousStatus: order.status,
+                            reason: cancelReason,
+                            merchantFault:
+                                typeof metadata?.merchantFault === 'boolean'
+                                    ? metadata.merchantFault
+                                    : null,
+                        }),
+                        ...(refundOfferIds?.length ? { offerIds: refundOfferIds } : {}),
+                    })
+                    .catch((err) => {
+                        this.logger.warn(
+                            `Cancel refund failed for ${orderId}: ${
+                                err instanceof Error ? err.message : String(err)
+                            }`,
+                        );
+                    });
+            }
         }
 
         // 3. Notification: Notify Customer & Merchant (Async)
@@ -1553,7 +1562,12 @@ export class OrdersService {
             if (Date.now() - paidAtMs >= assemblyMs) {
                 if (String(order.requestType || '').toLowerCase() === 'multiple') {
                     const pendingOfferIds = order.offers
-                        .filter((o) => o.status === 'accepted' && !o.shippedFromCart)
+                        .filter(
+                            (o) =>
+                                o.status === 'accepted' &&
+                                !o.shippedFromCart &&
+                                o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+                        )
                         .map((o) => o.id);
                     if (pendingOfferIds.length > 0) {
                         await this.requestShipping(order.customerId, [], pendingOfferIds, true);
@@ -1618,9 +1632,24 @@ export class OrdersService {
                 where: { id: orderId },
                 data: { delayedPreparationDeadlineAt: delayedDeadline },
             });
-            for (const offer of order.offers.filter((o: any) => o.status === 'accepted' && o.storeId)) {
+            const isMultiPrep = this.offerFulfillment.isMultiItemOrder(order);
+            const lateOffers = order.offers.filter(
+                (o: any) =>
+                    o.status === 'accepted' &&
+                    o.storeId &&
+                    this.offerFulfillment.isOfferLateForPreparation(
+                        o.fulfillmentStatus as OfferFulfillmentStatus,
+                    ),
+            );
+            const storesToWarn = isMultiPrep
+                ? lateOffers
+                : order.offers.filter((o: any) => o.status === 'accepted' && o.storeId);
+            const warnedStoreIds = new Set<string>();
+            for (const offer of storesToWarn) {
+                if (!offer.storeId || warnedStoreIds.has(offer.storeId)) continue;
+                warnedStoreIds.add(offer.storeId);
                 const store = await this.prisma.store.findUnique({
-                    where: { id: offer.storeId! },
+                    where: { id: offer.storeId },
                     select: { id: true, ownerId: true },
                 });
                 if (store) {
@@ -1635,11 +1664,12 @@ export class OrdersService {
                             orderNumber: order.orderNumber,
                             phase: 'DELAYED_PREPARATION',
                             graceHours: durationCfg.delayedPreparationGraceHours,
+                            offerId: offer.id,
                         },
                         dedupSuffix: `${store.id}:prep48`,
                     }).catch((e) => this.logger.warn(`prep delay violation failed: ${e?.message || e}`));
                 }
-                await this.notifications.notifyMerchantByStoreId(offer.storeId!, {
+                await this.notifications.notifyMerchantByStoreId(offer.storeId, {
                     titleAr: '⚠ تنبيه: تأخر تجهيز الطلب',
                     titleEn: 'Warning: Late order preparation',
                     messageAr: `تنبيه: تأخر تجهيز الطلب #${order.orderNumber}. لم يتم تجهيز الطلب ضمن المدة المحددة، وتم تسجيل مخالفة على حساب متجرك. لديك مهلة إضافية قدرها 24 ساعة لبدء تجهيز الطلب. وفي حال انتهاء المهلة دون إجراء، سيتم إلغاء الطلب وإعادة المبلغ للعميل، مع تطبيق الإجراءات والرسوم المقررة على المتجر.`,
@@ -1649,6 +1679,7 @@ export class OrdersService {
                     metadata: {
                         orderId: order.id,
                         orderNumber: order.orderNumber,
+                        offerId: offer.id,
                         waEvent: 'ORDER_STATUS',
                         status: 'DELAYED_PREPARATION',
                         status_detail: `تأخير تجهيز #${order.orderNumber} — مهلة إضافية 24 ساعة قبل الإلغاء`,
@@ -1662,11 +1693,153 @@ export class OrdersService {
         // --- Delayed prep cancel ---
         if (status === OrderStatus.DELAYED_PREPARATION) {
             if (!expired) return { changed: false, order, reason: 'not_expired' };
+
+            const isMultiDelayed = this.offerFulfillment.isMultiItemOrder(order);
+            const cancelReason =
+                'System: Exceeded extra grace period for preparation. Order abandoned by merchant.';
+
+            if (isMultiDelayed) {
+                const lateOfferIds = order.offers
+                    .filter(
+                        (o: any) =>
+                            ['accepted', 'ACCEPTED'].includes(String(o.status)) &&
+                            this.offerFulfillment.isOfferLateForPreparation(
+                                o.fulfillmentStatus as OfferFulfillmentStatus,
+                            ),
+                    )
+                    .map((o: any) => o.id as string);
+
+                if (!lateOfferIds.length) {
+                    // All offers advanced — leave delayed-prep via recompute.
+                    const next = await this.offerFulfillment.recomputeOrderStatus(orderId);
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: next !== OrderStatus.DELAYED_PREPARATION,
+                        order: refreshed ?? order,
+                        reason: 'delayed_prep_cleared',
+                    };
+                }
+
+                const { cancelledOfferIds, nextStatus } =
+                    await this.offerFulfillment.cancelOffersFulfillment(
+                        orderId,
+                        lateOfferIds,
+                        cancelReason,
+                    );
+
+                if (cancelledOfferIds.length) {
+                    await this.escrowService.refundPaidOrderOnCancel(orderId, cancelReason, {
+                        previousStatus: OrderStatus.DELAYED_PREPARATION,
+                        merchantFault: true,
+                        offerIds: cancelledOfferIds,
+                    });
+                }
+
+                const lateOffers = order.offers.filter((o: any) =>
+                    cancelledOfferIds.includes(o.id),
+                );
+                const notifiedStores = new Set<string>();
+                for (const offer of lateOffers) {
+                    if (!offer.storeId || notifiedStores.has(offer.storeId)) continue;
+                    notifiedStores.add(offer.storeId);
+                    const store = await this.prisma.store.findUnique({
+                        where: { id: offer.storeId },
+                        select: { id: true, ownerId: true },
+                    });
+                    if (store) {
+                        await this.violationsService.autoIssue({
+                            code: 'LATE_PREPARATION_AUTO_CANCEL',
+                            targetUserId: store.ownerId,
+                            targetStoreId: store.id,
+                            targetType: ViolationTargetType.MERCHANT,
+                            orderId: order.id,
+                            reason: `Offer on order #${order.orderNumber} auto-cancelled after delayed preparation grace.`,
+                            metadata: {
+                                orderNumber: order.orderNumber,
+                                offerId: offer.id,
+                                partialCancel: true,
+                            },
+                            dedupSuffix: `${store.id}:delayed_prep:${offer.id}`,
+                        }).catch((e) =>
+                            this.logger.warn(`delayed prep offer violation failed: ${e?.message || e}`),
+                        );
+                    }
+                    await this.notifications.notifyMerchantByStoreId(offer.storeId, {
+                        titleAr: 'تم إلغاء قطعة لتأخر التجهيز',
+                        titleEn: 'Part cancelled — late preparation',
+                        messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع مبلغ هذه القطعة للعميل وتطبيق الرسوم على المتجر.`,
+                        messageEn: `A part on order #${order.orderNumber} was cancelled after the extra preparation grace ended. That part is being refunded; merchant fees apply.`,
+                        type: 'ORDER',
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            offerId: offer.id,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                            partialCancel: true,
+                        },
+                    }).catch(() => undefined);
+                }
+
+                const partLabels = lateOffers.map((o: any) => {
+                    const part = order.parts?.find((p: any) => p.id === o.orderPartId);
+                    return part?.name;
+                });
+                await this.notifications
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:delayed_prep_partial:${cancelledOfferIds.sort().join(',')}`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'إلغاء قطعة من الطلب',
+                            titleEn: 'Part cancelled from order',
+                            messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. باقي القطع إن وُجدت تتابع مسارها، وجاري استرجاع مبلغ القطعة الملغاة.`,
+                            messageEn: `One or more parts on order #${order.orderNumber} were cancelled because the merchant missed the preparation deadline. Remaining parts continue; refund for cancelled parts is processing.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+                                status: nextStatus === OrderStatus.CANCELLED ? 'CANCELLED' : order.status,
+                                cancelKind: 'LATE_PREP',
+                                partialCancel: true,
+                                offerIds: cancelledOfferIds,
+                                partName: resolveCancelPartLabel({ partNames: partLabels }),
+                                part_name: resolveCancelPartLabel({ partNames: partLabels }),
+                                cancel_reason_ar: merchantFaultCancelReasonAr('LATE_PREP'),
+                                status_detail: merchantFaultCancelReasonAr('LATE_PREP'),
+                            },
+                        },
+                    )
+                    .catch(() => undefined);
+
+                if (nextStatus === OrderStatus.CANCELLED) {
+                    // recompute already set CANCELLED; avoid double transition/refund
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: true,
+                        order: refreshed ?? order,
+                        reason: 'cancelled_delayed_prep_all_parts',
+                    };
+                }
+
+                const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                return {
+                    changed: true,
+                    order: refreshed ?? order,
+                    reason: 'cancelled_delayed_prep_partial',
+                };
+            }
+
             const updated = await this.transitionStatus(
                 orderId,
                 OrderStatus.CANCELLED,
                 systemActor,
-                'System: Exceeded extra grace period for preparation. Order abandoned by merchant.',
+                cancelReason,
                 { ...meta, merchantFault: true },
             );
             // Refund + merchant fee liability handled in transitionStatus via merchantFault cancel path
@@ -1737,11 +1910,183 @@ export class OrdersService {
         // --- Correction timeout cancel ---
         if (status === OrderStatus.CORRECTION_PERIOD) {
             if (!expired) return { changed: false, order, reason: 'not_expired' };
+
+            const isMultiCorrection = this.offerFulfillment.isMultiItemOrder(order);
+            const correctionCancelReason =
+                'System: Merchant failed to provide corrected verification within correction limit.';
+
+            if (isMultiCorrection) {
+                // Prefer offers tied to open/rejected verification docs still awaiting correction.
+                const openDocs = await this.prisma.verificationDocument.findMany({
+                    where: {
+                        orderId,
+                        OR: [
+                            { adminStatus: 'REJECTED' },
+                            { adminStatus: { equals: null } },
+                            { adminStatus: 'PENDING' },
+                        ],
+                        offerId: { not: null },
+                    },
+                    select: { offerId: true, storeId: true },
+                    orderBy: { createdAt: 'desc' },
+                });
+                const candidateOfferIds = [
+                    ...new Set(
+                        openDocs
+                            .map((d) => d.offerId)
+                            .filter((id): id is string => !!id),
+                    ),
+                ];
+                const paid = await this.offerFulfillment.getPaidAcceptedOffers(orderId);
+                const targetOffers = paid.filter(
+                    (o) =>
+                        o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED &&
+                        (candidateOfferIds.length
+                            ? candidateOfferIds.includes(o.id)
+                            : o.fulfillmentStatus === OfferFulfillmentStatus.VERIFICATION),
+                );
+
+                if (!targetOffers.length) {
+                    const next = await this.offerFulfillment.recomputeOrderStatus(orderId);
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: next !== OrderStatus.CORRECTION_PERIOD,
+                        order: refreshed ?? order,
+                        reason: 'correction_cleared_no_targets',
+                    };
+                }
+
+                const offerIds = targetOffers.map((o) => o.id);
+                const { cancelledOfferIds, nextStatus } =
+                    await this.offerFulfillment.cancelOffersFulfillment(
+                        orderId,
+                        offerIds,
+                        correctionCancelReason,
+                    );
+
+                if (cancelledOfferIds.length) {
+                    await this.escrowService.refundPaidOrderOnCancel(
+                        orderId,
+                        correctionCancelReason,
+                        {
+                            previousStatus: OrderStatus.CORRECTION_PERIOD,
+                            merchantFault: true,
+                            offerIds: cancelledOfferIds,
+                        },
+                    );
+                }
+
+                for (const offer of targetOffers.filter((o) =>
+                    cancelledOfferIds.includes(o.id),
+                )) {
+                    if (!offer.storeId) continue;
+                    const store = await this.prisma.store.findUnique({
+                        where: { id: offer.storeId },
+                        select: { id: true, ownerId: true },
+                    });
+                    if (store) {
+                        await this.violationsService.autoIssue({
+                            code: 'LATE_CORRECTION',
+                            targetUserId: store.ownerId,
+                            targetStoreId: store.id,
+                            targetType: ViolationTargetType.MERCHANT,
+                            orderId: order.id,
+                            reason: `Merchant did not provide corrected verification within deadline on order #${order.orderNumber} (offer ${offer.id}).`,
+                            metadata: {
+                                orderNumber: order.orderNumber,
+                                offerId: offer.id,
+                                partialCancel: true,
+                            },
+                            dedupSuffix: `${store.id}:late_correction:${offer.id}`,
+                        }).catch((e) =>
+                            this.logger.warn(`enforce late correction violation failed: ${e?.message || e}`),
+                        );
+                    }
+                    await this.notifications.notifyMerchantByStoreId(offer.storeId, {
+                        titleAr: 'تم إلغاء قطعة لانتهاء مهلة التصحيح',
+                        titleEn: 'Part cancelled — correction deadline expired',
+                        messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. جاري استرجاع مبلغ هذه القطعة وتطبيق الرسوم على المتجر.`,
+                        messageEn: `A part on order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. That part is being refunded; merchant fees apply.`,
+                        type: 'ORDER',
+                        link: `/merchant/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            offerId: offer.id,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'CANCELLED',
+                            partialCancel: true,
+                        },
+                    }).catch(() => undefined);
+                }
+
+                await this.notifications
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:correction_partial:${cancelledOfferIds.sort().join(',')}`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'إلغاء قطعة من الطلب',
+                            titleEn: 'Part cancelled from order',
+                            messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وجاري استرجاع مبلغ القطعة الملغاة.`,
+                            messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; refund for cancelled parts is processing.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+                                status: nextStatus === OrderStatus.CANCELLED ? 'CANCELLED' : 'PARTIAL',
+                                cancelKind: 'NON_MATCH',
+                                partialCancel: true,
+                                offerIds: cancelledOfferIds,
+                                partName: resolveCancelPartLabel({
+                                    partNames: targetOffers.map(
+                                        (o) => o.orderPart?.name || order.partName,
+                                    ),
+                                }),
+                                part_name: resolveCancelPartLabel({
+                                    partNames: targetOffers.map(
+                                        (o) => o.orderPart?.name || order.partName,
+                                    ),
+                                }),
+                                cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
+                                status_detail: merchantFaultCancelReasonAr('NON_MATCH'),
+                            },
+                        },
+                    )
+                    .catch(() => undefined);
+
+                // Exit correction-family if remaining offers are healthy.
+                if (nextStatus !== OrderStatus.CANCELLED) {
+                    await this.prisma.order.update({
+                        where: { id: orderId },
+                        data: {
+                            status: nextStatus,
+                            correctionDeadlineAt: null,
+                            updatedAt: new Date(),
+                        },
+                    }).catch(() => {});
+                }
+
+                const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                return {
+                    changed: true,
+                    order: refreshed ?? order,
+                    reason:
+                        nextStatus === OrderStatus.CANCELLED
+                            ? 'cancelled_correction_all_parts'
+                            : 'cancelled_correction_partial',
+                };
+            }
+
             const updated = await this.transitionStatus(
                 orderId,
                 OrderStatus.CANCELLED,
                 systemActor,
-                'System: Merchant failed to provide corrected verification within correction limit.',
+                correctionCancelReason,
                 { ...meta, merchantFault: true },
             );
             if (order.storeId) {
@@ -3470,18 +3815,37 @@ export class OrdersService {
         const isApprove = data.action === 'APPROVE' || data.status === 'APPROVED' || data.approved === true;
         const decision = isApprove ? 'APPROVED' : 'REJECTED';
         const durationCfg = await this.orderDurationConfig.getConfig();
+        const isMultiReview = this.offerFulfillment.isMultiItemOrder(order);
         
         let newOrderStatus: OrderStatus = decision === 'APPROVED' ? OrderStatus.VERIFICATION_SUCCESS : OrderStatus.NON_MATCHING;
         // Order-level 48h correction clock starts when entering CORRECTION_PERIOD (scheduler/transitionStatus),
         // not during the short NON_MATCHING grace window.
         let correctionDeadline: Date | null = null;
+        // Per-offer rejection count (multi-item isolation) — never let reject on part A
+        // consume the second-strike budget of part B.
         let newRejectionCount = order.rejectionCount;
         let cancelAfterReview = false;
+        let offerRejectionCount = 0;
 
         if (decision === 'REJECTED') {
-            newRejectionCount += 1;
-            if (newRejectionCount >= 2) {
-                // Keep current status in DB update; cancel via transitionStatus after txn (chat + refund).
+            const offerScopeId = latestDoc.offerId || data.offerId || null;
+            if (offerScopeId) {
+                const priorRejects = await this.prisma.verificationDocument.count({
+                    where: {
+                        orderId,
+                        offerId: offerScopeId,
+                        adminStatus: 'REJECTED',
+                        id: { not: latestDoc.id },
+                    },
+                });
+                offerRejectionCount = priorRejects + 1;
+                newRejectionCount = Math.max(order.rejectionCount, offerRejectionCount);
+            } else {
+                newRejectionCount = order.rejectionCount + 1;
+                offerRejectionCount = newRejectionCount;
+            }
+            if (offerRejectionCount >= 2) {
+                // Keep current status in DB update; cancel via transitionStatus / partial path after txn.
                 newOrderStatus = order.status as OrderStatus;
                 correctionDeadline = null;
                 cancelAfterReview = true;
@@ -3489,7 +3853,7 @@ export class OrdersService {
         }
 
         const docCorrectionDeadline =
-            decision === 'REJECTED' && !cancelAfterReview && newOrderStatus === OrderStatus.NON_MATCHING
+            decision === 'REJECTED' && !cancelAfterReview
                 ? new Date(Date.now() + this.orderDurationConfig.hoursToMs(durationCfg.correctionPeriodHours))
                 : correctionDeadline;
 
@@ -3572,8 +3936,12 @@ export class OrdersService {
                         reason: cancelAfterReview
                             ? `Repeated non-match on order #${order.orderNumber}; order cancelled.`
                             : `Product not matching on order #${order.orderNumber}.`,
-                        metadata: { orderNumber: order.orderNumber, rejectionCount: newRejectionCount },
-                        dedupSuffix: `${storeForViolation.id}:${code}`,
+                        metadata: {
+                            orderNumber: order.orderNumber,
+                            rejectionCount: offerRejectionCount || newRejectionCount,
+                            offerId: latestDoc.offerId || data.offerId || null,
+                        },
+                        dedupSuffix: `${storeForViolation.id}:${code}:${latestDoc.offerId || 'order'}`,
                     })
                     .catch((e) =>
                         this.logger.warn(`mismatch violation ${code} failed: ${e?.message || e}`),
@@ -3581,34 +3949,13 @@ export class OrdersService {
             }
         }
 
-        if (cancelAfterReview) {
-            try {
-                await this.transitionStatus(
-                    orderId,
-                    OrderStatus.CANCELLED,
-                    { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
-                    'Cancelled after second verification rejection (non-matching).',
-                    {
-                        source: 'adminReviewVerification',
-                        rejectionCount: newRejectionCount,
-                        merchantFault: true,
-                    },
-                );
-                newOrderStatus = OrderStatus.CANCELLED;
-            } catch (cancelErr) {
-                this.logger.error(
-                    `Second-reject cancel via transitionStatus failed for ${orderId}: ${
-                        cancelErr instanceof Error ? cancelErr.message : cancelErr
-                    }`,
-                );
-            }
-        }
+        // cancelAfterReview is applied after offerId resolution below.
 
         let partName = order.partName || 'Part';
-        let resolvedOfferId = latestDoc.offerId ?? null;
+        let resolvedOfferId = latestDoc.offerId ?? data.offerId ?? null;
 
         // Correction docs historically omitted offerId — recover from original / task / single paid offer
-        if (!resolvedOfferId && decision === 'APPROVED') {
+        if (!resolvedOfferId) {
             if (latestDoc.originalDocumentId) {
                 const original = await this.prisma.verificationDocument.findUnique({
                     where: { id: latestDoc.originalDocumentId },
@@ -3640,7 +3987,69 @@ export class OrdersService {
                 partName =
                     linkedOffer.orderPart?.name || order.partName || 'Part';
             }
+        }
 
+        if (cancelAfterReview) {
+            const secondRejectReason =
+                'Cancelled after second verification rejection (non-matching).';
+            try {
+                if (isMultiReview && resolvedOfferId) {
+                    const { cancelledOfferIds, nextStatus } =
+                        await this.offerFulfillment.cancelOffersFulfillment(
+                            orderId,
+                            [resolvedOfferId],
+                            secondRejectReason,
+                        );
+                    if (cancelledOfferIds.length) {
+                        await this.escrowService.refundPaidOrderOnCancel(
+                            orderId,
+                            secondRejectReason,
+                            {
+                                previousStatus: order.status,
+                                merchantFault: true,
+                                offerIds: cancelledOfferIds,
+                            },
+                        );
+                    }
+                    if (nextStatus === OrderStatus.CANCELLED) {
+                        newOrderStatus = OrderStatus.CANCELLED;
+                    } else {
+                        await this.prisma.order.update({
+                            where: { id: orderId },
+                            data: {
+                                status: nextStatus,
+                                correctionDeadlineAt: null,
+                                rejectionCount: newRejectionCount,
+                                updatedAt: new Date(),
+                            },
+                        });
+                        newOrderStatus = nextStatus;
+                    }
+                } else {
+                    await this.transitionStatus(
+                        orderId,
+                        OrderStatus.CANCELLED,
+                        { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
+                        secondRejectReason,
+                        {
+                            source: 'adminReviewVerification',
+                            rejectionCount: offerRejectionCount || newRejectionCount,
+                            merchantFault: true,
+                        },
+                    );
+                    newOrderStatus = OrderStatus.CANCELLED;
+                }
+            } catch (cancelErr) {
+                this.logger.error(
+                    `Second-reject cancel failed for ${orderId}: ${
+                        cancelErr instanceof Error ? cancelErr.message : cancelErr
+                    }`,
+                );
+            }
+        }
+
+        if (resolvedOfferId && !cancelAfterReview) {
+            // Do not overwrite CANCELLED fulfillment after second-reject partial cancel.
             await this.offerFulfillment.applyVerificationDecision(
                 orderId,
                 resolvedOfferId,
@@ -3672,16 +4081,30 @@ export class OrdersService {
 
             // Per-offer path skipped the order update in the txn above — enforce
             // correction SSOT here so aggregate cannot leave the order as PREPARED.
-            if (decision === 'REJECTED') {
-                await this.prisma.order.update({
-                    where: { id: orderId },
-                    data: {
-                        status: newOrderStatus,
-                        correctionDeadlineAt: null,
-                        rejectionCount: newRejectionCount,
-                    },
-                });
-            } else {
+            if (decision === 'REJECTED' && !cancelAfterReview) {
+                if (isMultiReview && resolvedOfferId) {
+                    // Multi: do not freeze the whole cart on first reject of one part.
+                    const next = await this.offerFulfillment.recomputeOrderStatus(orderId);
+                    newOrderStatus = next;
+                    await this.prisma.order.update({
+                        where: { id: orderId },
+                        data: {
+                            rejectionCount: newRejectionCount,
+                            // Keep order out of correction-family when other parts can proceed.
+                            correctionDeadlineAt: null,
+                        },
+                    }).catch(() => {});
+                } else {
+                    await this.prisma.order.update({
+                        where: { id: orderId },
+                        data: {
+                            status: newOrderStatus,
+                            correctionDeadlineAt: null,
+                            rejectionCount: newRejectionCount,
+                        },
+                    });
+                }
+            } else if (decision === 'APPROVED') {
                 const refreshed = await this.prisma.order.findUnique({
                     where: { id: orderId },
                 });
@@ -3691,9 +4114,12 @@ export class OrdersService {
 
         const paidOffers =
             await this.offerFulfillment.getPaidAcceptedOffers(orderId);
+        const activePaidOffers = paidOffers.filter(
+            (o) => o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+        );
         const allOffersVerified =
-            paidOffers.length > 0 &&
-            paidOffers.every(
+            activePaidOffers.length > 0 &&
+            activePaidOffers.every(
                 (o) =>
                     o.fulfillmentStatus === 'VERIFICATION_SUCCESS' ||
                     o.fulfillmentStatus === 'READY_FOR_SHIPPING' ||
@@ -3757,20 +4183,31 @@ export class OrdersService {
                             waEvent: 'VERIFICATION',
                         },
                     });
-                } else if (newRejectionCount >= 2) {
+                } else if (newRejectionCount >= 2 || offerRejectionCount >= 2) {
+                    const isPartial = isMultiReview && newOrderStatus !== OrderStatus.CANCELLED;
                     await this.notifications.create({
                         recipientId: merchantUserId, recipientRole: 'MERCHANT', type: 'system_alert',
-                        titleAr: '❌ رفض نهائي وإلغاء الطلب', titleEn: '❌ Final Rejection & Order Cancelled',
-                        messageAr: `تم رفض مطابقة الطلب #${order.orderNumber} للمرة الثانية. تم إلغاء الطلب وسحب المبلغ.`,
-                        messageEn: `Order #${order.orderNumber} verification rejected twice. Order cancelled.`,
+                        titleAr: isPartial ? '❌ رفض نهائي وإلغاء القطعة' : '❌ رفض نهائي وإلغاء الطلب',
+                        titleEn: isPartial ? '❌ Final Rejection & Part Cancelled' : '❌ Final Rejection & Order Cancelled',
+                        messageAr: isPartial
+                            ? `تم رفض مطابقة «${partName}» للطلب #${order.orderNumber} للمرة الثانية. تم إلغاء هذه القطعة واسترجاع مبلغها.`
+                            : `تم رفض مطابقة الطلب #${order.orderNumber} للمرة الثانية. تم إلغاء الطلب وسحب المبلغ.`,
+                        messageEn: isPartial
+                            ? `Verification for "${partName}" (#${order.orderNumber}) rejected twice. This part was cancelled and refunded.`
+                            : `Order #${order.orderNumber} verification rejected twice. Order cancelled.`,
                         link: `/merchant/orders/${order.id}`,
-                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
+                        metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION', partialCancel: isPartial },
                     });
                     await this.notifications.create({
                         recipientId: order.customerId, recipientRole: 'CUSTOMER', type: 'system_alert',
-                        titleAr: 'إشعار إلغاء الطلب', titleEn: 'Order cancellation notice',
-                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
-                        messageEn: `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
+                        titleAr: isPartial ? 'إلغاء قطعة من الطلب' : 'إشعار إلغاء الطلب',
+                        titleEn: isPartial ? 'Part cancelled from order' : 'Order cancellation notice',
+                        messageAr: isPartial
+                            ? `تم إلغاء القطعة «${partName}» من الطلب #${order.orderNumber} لعدم المطابقة. جاري استرجاع مبلغ هذه القطعة؛ باقي القطع تتابع إن وُجدت.`
+                            : `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
+                        messageEn: isPartial
+                            ? `Part "${partName}" on order #${order.orderNumber} was cancelled due to a non-matching part. Refund for this part is processing; remaining parts continue.`
+                            : `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
                         link: `/customer/orders/${order.id}`,
                         metadata: {
                             orderId: order.id,
@@ -3778,6 +4215,7 @@ export class OrdersService {
                             verification: true,
                             waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
                             cancelKind: 'NON_MATCH',
+                            partialCancel: isPartial,
                             partName: resolveCancelPartLabel({ partName }),
                             part_name: resolveCancelPartLabel({ partName }),
                             cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
@@ -3823,7 +4261,7 @@ export class OrdersService {
             where: { id: orderId },
             include: { 
                 offers: true,
-                verificationDocuments: { orderBy: { createdAt: 'desc' }, take: 1 } 
+                verificationDocuments: { orderBy: { createdAt: 'desc' }, take: 20 } 
             }
         });
         if (!order) throw new NotFoundException('Order not found');
@@ -3832,8 +4270,30 @@ export class OrdersService {
         if (!hasAcceptedOffer) {
             throw new ForbiddenException('Not your order');
         }
-        if (order.status !== OrderStatus.CORRECTION_PERIOD && order.status !== OrderStatus.NON_MATCHING) {
-            throw new BadRequestException('Order not in correction period.');
+
+        const requestedOfferId =
+            typeof data.offerId === 'string' && data.offerId.length > 0 ? data.offerId : null;
+        const isMultiCorrection = this.offerFulfillment.isMultiItemOrder(order);
+        const inOrderCorrectionFamily =
+            order.status === OrderStatus.CORRECTION_PERIOD ||
+            order.status === OrderStatus.NON_MATCHING;
+
+        // Multi-item: allow correction while other parts continue — gated by rejected doc deadline.
+        const storeRejectedDocs = order.verificationDocuments.filter(
+            (d) =>
+                d.storeId === storeId &&
+                String(d.adminStatus || '').toUpperCase() === 'REJECTED' &&
+                (!requestedOfferId || d.offerId === requestedOfferId),
+        );
+        const openCorrectionDoc = storeRejectedDocs.find((d) => {
+            if (!d.correctionDeadlineAt) return true;
+            return new Date(d.correctionDeadlineAt).getTime() >= Date.now();
+        });
+
+        if (!inOrderCorrectionFamily) {
+            if (!(isMultiCorrection && openCorrectionDoc)) {
+                throw new BadRequestException('Order not in correction period.');
+            }
         }
 
         const handoverCheck = assertHandoverNotInPast(data.handoverDate, data.handoverTime);
@@ -3863,12 +4323,18 @@ export class OrdersService {
             });
         }
 
-        const originalDoc = order.verificationDocuments[0];
+        const originalDoc =
+            (requestedOfferId
+                ? order.verificationDocuments.find((d) => d.offerId === requestedOfferId)
+                : null) ||
+            openCorrectionDoc ||
+            order.verificationDocuments[0];
 
         // Prefer latest closed/completed field task as previous cycle anchor.
         const previousTask = await this.prisma.verificationTask.findFirst({
             where: {
                 orderId,
+                ...(requestedOfferId ? { offerId: requestedOfferId } : {}),
                 OR: [
                     { decision: { not: null } },
                     { completedAt: { not: null } },
@@ -3879,7 +4345,32 @@ export class OrdersService {
         });
 
         const correctionOfferId =
-            originalDoc?.offerId ?? previousTask?.offerId ?? null;
+            requestedOfferId ??
+            originalDoc?.offerId ??
+            previousTask?.offerId ??
+            null;
+
+        if (isMultiCorrection && !correctionOfferId) {
+            throw new BadRequestException({
+                statusCode: 400,
+                message: 'offerId is required for multi-item correction.',
+                messageAr: 'معرّف العرض مطلوب لتصحيح طلب متعدد القطع.',
+                messageEn: 'offerId is required for multi-item correction.',
+                code: 'CORRECTION_OFFER_ID_REQUIRED',
+            });
+        }
+
+        if (correctionOfferId) {
+            const offerOwned = order.offers.some(
+                (o) =>
+                    o.id === correctionOfferId &&
+                    o.storeId === storeId &&
+                    ['accepted', 'ACCEPTED'].includes(String(o.status)),
+            );
+            if (!offerOwned) {
+                throw new ForbiddenException('Not your offer on this order');
+            }
+        }
 
         const doc = await this.prisma.verificationDocument.create({
             data: {
@@ -3911,25 +4402,45 @@ export class OrdersService {
             newTask = await this.prisma.verificationTask.create({
                 data: {
                     orderId,
+                    offerId: correctionOfferId,
                     status: 'PENDING_ASSIGNMENT',
                     cycleNumber: 1,
                 },
             });
+            // Keep existing verificationTaskId if multi other parts may use another task.
+            if (!order.verificationTaskId) {
+                await this.prisma.order.update({
+                    where: { id: orderId },
+                    data: { verificationTaskId: newTask.id },
+                });
+            }
+        }
+
+        // Multi with living siblings: do not freeze whole cart into CORRECTION_SUBMITTED.
+        if (!isMultiCorrection || inOrderCorrectionFamily) {
+            await this.prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    status: OrderStatus.CORRECTION_SUBMITTED,
+                    verificationTaskId: newTask.id,
+                },
+            });
+        } else if (newTask?.id) {
             await this.prisma.order.update({
                 where: { id: orderId },
                 data: { verificationTaskId: newTask.id },
-            });
+            }).catch(() => {});
         }
-
-        await this.prisma.order.update({
-            where: { id: orderId },
-            data: { status: OrderStatus.CORRECTION_SUBMITTED, verificationTaskId: newTask.id },
-        });
 
         await this.auditLogs.logAction({
             orderId, action: 'SUBMIT_CORRECTION', entity: 'Order',
             actorType: ActorType.VENDOR, actorId: storeId, actorName: 'Merchant',
-            previousState: order.status, newState: OrderStatus.CORRECTION_SUBMITTED
+            previousState: order.status,
+            newState:
+                !isMultiCorrection || inOrderCorrectionFamily
+                    ? OrderStatus.CORRECTION_SUBMITTED
+                    : order.status,
+            metadata: { offerId: correctionOfferId },
         });
 
         const admins = await this.prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } });
@@ -3943,6 +4454,114 @@ export class OrdersService {
             });
         }
         return { success: true, doc };
+    }
+
+    /**
+     * Multi-item: cancel+refund specific offers after their verification correction
+     * document deadline expired while siblings continue.
+     */
+    async cancelOffersForExpiredCorrection(
+        orderId: string,
+        offerIds: string[],
+    ): Promise<{ changed: boolean; cancelledOfferIds: string[] }> {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                id: true,
+                orderNumber: true,
+                customerId: true,
+                status: true,
+                requestType: true,
+                partName: true,
+                parts: { select: { id: true, name: true } },
+            },
+        });
+        if (!order || !this.offerFulfillment.isMultiItemOrder(order)) {
+            return { changed: false, cancelledOfferIds: [] };
+        }
+        if (
+            (
+                [OrderStatus.CANCELLED, OrderStatus.CLOSED, OrderStatus.REFUNDED] as OrderStatus[]
+            ).includes(order.status as OrderStatus)
+        ) {
+            return { changed: false, cancelledOfferIds: [] };
+        }
+
+        const paid = await this.offerFulfillment.getPaidAcceptedOffers(orderId);
+        const targets = paid.filter(
+            (o) =>
+                offerIds.includes(o.id) &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.VERIFICATION_SUCCESS &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.READY_FOR_SHIPPING &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.SHIPPED &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED &&
+                o.fulfillmentStatus !== OfferFulfillmentStatus.COMPLETED,
+        );
+        if (!targets.length) {
+            return { changed: false, cancelledOfferIds: [] };
+        }
+
+        const reason =
+            'System: Merchant failed to provide corrected verification within correction limit (per-offer).';
+        const ids = targets.map((o) => o.id);
+        const { cancelledOfferIds, nextStatus } =
+            await this.offerFulfillment.cancelOffersFulfillment(orderId, ids, reason);
+
+        if (cancelledOfferIds.length) {
+            await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
+                previousStatus: order.status,
+                merchantFault: true,
+                offerIds: cancelledOfferIds,
+            });
+        }
+
+        for (const offer of targets.filter((o) => cancelledOfferIds.includes(o.id))) {
+            if (!offer.storeId) continue;
+            const store = await this.prisma.store.findUnique({
+                where: { id: offer.storeId },
+                select: { id: true, ownerId: true },
+            });
+            if (store) {
+                await this.violationsService.autoIssue({
+                    code: 'LATE_CORRECTION',
+                    targetUserId: store.ownerId,
+                    targetStoreId: store.id,
+                    targetType: ViolationTargetType.MERCHANT,
+                    orderId: order.id,
+                    reason: `Merchant did not correct verification in time on order #${order.orderNumber} (offer ${offer.id}).`,
+                    metadata: {
+                        orderNumber: order.orderNumber,
+                        offerId: offer.id,
+                        partialCancel: true,
+                    },
+                    dedupSuffix: `${store.id}:late_correction_doc:${offer.id}`,
+                }).catch(() => undefined);
+            }
+            await this.notifications.notifyMerchantByStoreId(offer.storeId, {
+                titleAr: 'تم إلغاء قطعة لانتهاء مهلة التصحيح',
+                titleEn: 'Part cancelled — correction deadline expired',
+                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح. جاري استرجاع مبلغ هذه القطعة.`,
+                messageEn: `A part on order #${order.orderNumber} was cancelled after the correction window ended. Refund for that part is processing.`,
+                type: 'ORDER',
+                link: `/merchant/orders/${order.id}`,
+                metadata: {
+                    orderId: order.id,
+                    offerId: offer.id,
+                    partialCancel: true,
+                    waEvent: 'ORDER_STATUS',
+                },
+            }).catch(() => undefined);
+        }
+
+        if (nextStatus !== order.status && nextStatus !== OrderStatus.CANCELLED) {
+            await this.prisma.order.update({
+                where: { id: orderId },
+                data: { status: nextStatus, correctionDeadlineAt: null, updatedAt: new Date() },
+            }).catch(() => {});
+        }
+
+        return { changed: cancelledOfferIds.length > 0, cancelledOfferIds };
     }
 
     /**

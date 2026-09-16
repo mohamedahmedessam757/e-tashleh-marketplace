@@ -208,6 +208,11 @@ export class PaymentsController {
         return this.paymentsService.getMerchantTransactions(req.user.id);
     }
 
+    @Get('merchant/obligations')
+    getMerchantObligations(@Request() req) {
+        return this.paymentsService.getMerchantObligations(req.user.id);
+    }
+
     @Post('admin/release-escrow')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'edit')

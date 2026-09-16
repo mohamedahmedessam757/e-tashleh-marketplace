@@ -1258,11 +1258,16 @@ export class EscrowService {
     /**
      * Idempotent auto-refund for paid orders cancelled before shipping.
      * Gateway fee = live Stripe settings (percent + fixed) from FinancialConfigService.
+     * When opts.offerIds is set, only those offer payments are refunded (multi-item isolation).
      */
     async refundPaidOrderOnCancel(
         orderId: string,
         reason: string,
-        opts?: { previousStatus?: string | null; merchantFault?: boolean },
+        opts?: {
+            previousStatus?: string | null;
+            merchantFault?: boolean;
+            offerIds?: string[];
+        },
     ): Promise<{
         skipped: boolean;
         reason?: string;
@@ -1294,9 +1299,16 @@ export class EscrowService {
             return { skipped: true, reason: 'SKIP_POST_SHIP_CANCEL_REFUND' };
         }
 
+        const scopedOfferIds = Array.isArray(opts?.offerIds)
+            ? [...new Set(opts.offerIds.filter((id) => typeof id === 'string' && id.length > 0))]
+            : [];
+
         const openDispute = await this.prisma.dispute.findFirst({
             where: {
                 orderId,
+                ...(scopedOfferIds.length
+                    ? { OR: [{ offerId: { in: scopedOfferIds } }, { offerId: null }] }
+                    : {}),
                 status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
             },
             select: { id: true },
@@ -1304,6 +1316,9 @@ export class EscrowService {
         const openReturn = await this.prisma.returnRequest.findFirst({
             where: {
                 orderId,
+                ...(scopedOfferIds.length
+                    ? { OR: [{ offerId: { in: scopedOfferIds } }, { offerId: null }] }
+                    : {}),
                 status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
             },
             select: { id: true },
@@ -1319,6 +1334,10 @@ export class EscrowService {
             where: {
                 orderId,
                 status: { in: ['SUCCESS', 'REFUNDED'] },
+                ...(scopedOfferIds.length ? { offerId: { in: scopedOfferIds } } : {}),
+            },
+            include: {
+                offer: { select: { id: true, storeId: true } },
             },
             orderBy: { paidAt: 'asc' },
         });
@@ -1336,7 +1355,7 @@ export class EscrowService {
         let totalFee = 0;
         let feePctUsed = feePctLive;
         let anyAttempted = false;
-        const storeIdForLiability =
+        const fallbackStoreId =
             order.storeId || order.acceptedOffer?.storeId || null;
 
         for (const payment of payments) {
@@ -1369,6 +1388,8 @@ export class EscrowService {
             }
 
             anyAttempted = true;
+            const paymentStoreId =
+                payment.offer?.storeId || fallbackStoreId || null;
             try {
                 const ctx = await this.executeStripeRefundOnly(
                     orderId,
@@ -1383,11 +1404,12 @@ export class EscrowService {
                 );
                 totalRefundedNow += ctx.refundAmount;
 
-                if (merchantFault && gatewayFeeLiability > 0 && storeIdForLiability) {
+                if (merchantFault && gatewayFeeLiability > 0 && paymentStoreId) {
                     await this.recordMerchantGatewayFeeLiability({
-                        storeId: storeIdForLiability,
+                        storeId: paymentStoreId,
                         orderId,
                         paymentId: payment.id,
+                        offerId: payment.offerId || payment.offer?.id || null,
                         feeAmount: gatewayFeeLiability,
                         reason,
                         feePct: feePctLive,
@@ -1441,7 +1463,10 @@ export class EscrowService {
                     },
                 });
                 const resolvedStoreId =
-                    orderStores?.storeId || orderStores?.acceptedOffer?.storeId || null;
+                    paymentStoreId ||
+                    orderStores?.storeId ||
+                    orderStores?.acceptedOffer?.storeId ||
+                    null;
                 if (resolvedStoreId) {
                     const store = await this.prisma.store.findUnique({
                         where: { id: resolvedStoreId },
@@ -1463,6 +1488,7 @@ export class EscrowService {
                             link: `marketplace/orders/${orderId}`,
                             metadata: {
                                 orderId,
+                                offerId: payment.offerId || undefined,
                                 amount: ctx.refundAmount,
                                 feeAmount: merchantFault ? gatewayFeeLiability : calc.feeAmount,
                                 feePct: feePctLive,
@@ -1549,10 +1575,11 @@ export class EscrowService {
      * Debit store wallet (or leave negative/pending debt) for unrecovered gateway fee
      * when cancel refund is merchant-fault and customer receives a full refund.
      */
-    private async recordMerchantGatewayFeeLiability(input: {
+    async recordMerchantGatewayFeeLiability(input: {
         storeId: string;
         orderId: string;
         paymentId: string;
+        offerId?: string | null;
         feeAmount: number;
         reason: string;
         feePct?: number;
@@ -1610,10 +1637,13 @@ export class EscrowService {
                         kind: 'CANCEL_MERCHANT_GATEWAY_FEE',
                         orderId: input.orderId,
                         paymentId: input.paymentId,
+                        offerId: input.offerId || null,
                         feePct: input.feePct,
                         feeFixed: input.feeFixed,
                         reason: input.reason,
+                        settlementStatus: balanceAfter < 0 ? 'OPEN' : 'SETTLED',
                         futureStoreDebt: balanceAfter < 0,
+                        postedToBalance: true,
                     },
                 } as Prisma.WalletTransactionUncheckedCreateInput,
             });

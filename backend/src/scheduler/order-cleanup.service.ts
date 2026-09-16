@@ -47,6 +47,7 @@ export class OrderCleanupService {
             await this.handleCriticalPreparationFailures();
             await this.handleNonMatchingToCorrection();
             await this.handleCorrectionPeriodExpiry();
+            await this.handleExpiredOfferCorrectionDocs();
             // Formerly hourly — keep ≤1 minute lag when nobody has the order open
             await this.handleOfferAutoCompletion();
             await this.handleSingleItemOrderAutoCompletion();
@@ -829,6 +830,53 @@ export class OrderCleanupService {
                 });
             } catch (err) {
                 this.logger.error(`Failed processing correction timeout for ${order.id}:`, err);
+            }
+        }
+    }
+
+    /**
+     * Multi-item: cancel offers whose verification-doc correction deadline expired
+     * even when the parent order is not in CORRECTION_PERIOD (siblings still progressing).
+     */
+    private async handleExpiredOfferCorrectionDocs() {
+        const now = new Date();
+        const expiredDocs = await this.prisma.verificationDocument.findMany({
+            where: {
+                adminStatus: 'REJECTED',
+                correctionDeadlineAt: { lt: now },
+                offerId: { not: null },
+                order: {
+                    requestType: 'multiple',
+                    status: {
+                        notIn: [
+                            OrderStatus.CANCELLED,
+                            OrderStatus.CLOSED,
+                            OrderStatus.REFUNDED,
+                            OrderStatus.CORRECTION_PERIOD,
+                        ],
+                    },
+                },
+            },
+            select: { id: true, orderId: true, offerId: true },
+            take: 50,
+        });
+
+        const byOrder = new Map<string, string[]>();
+        for (const doc of expiredDocs) {
+            if (!doc.offerId) continue;
+            const list = byOrder.get(doc.orderId) || [];
+            if (!list.includes(doc.offerId)) list.push(doc.offerId);
+            byOrder.set(doc.orderId, list);
+        }
+
+        for (const [orderId, offerIds] of byOrder) {
+            try {
+                await this.ordersService.cancelOffersForExpiredCorrection(orderId, offerIds);
+            } catch (err) {
+                this.logger.error(
+                    `Failed offer-doc correction expiry for ${orderId}:`,
+                    err,
+                );
             }
         }
     }

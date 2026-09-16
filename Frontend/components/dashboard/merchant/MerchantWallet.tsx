@@ -105,6 +105,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
         withdrawalLimits,
         bankDetails,
         stripeConnectInfo,
+        obligations,
         fetchWallet,
         fetchWithdrawalData,
         fetchBankDetails,
@@ -622,24 +623,71 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
         return labels[status?.toUpperCase()] || status;
     };
 
-    const StatCard = ({ label, value, unit, icon: Icon, colorClass, bgClass, borderClass, subtitle }: any) => (
-        <GlassCard className={`p-4 sm:p-5 flex flex-col justify-between min-h-[110px] ${borderClass || 'border-white/5'}`}>
-            <motion.div className="flex justify-between items-start w-full">
-                <p className={`${colorClass || 'text-white/30'} text-[10px] font-black uppercase tracking-wider mb-1`}>{label}</p>
-                <div className={`p-1.5 ${bgClass || 'bg-white/5'} rounded-lg ${colorClass || 'text-white/40'} border border-white/10 shrink-0`}>
-                    <Icon size={14} className="sm:size-[16px]" />
+    const StatCard = ({
+        label,
+        value,
+        unit,
+        icon: Icon,
+        colorClass,
+        bgClass,
+        borderClass,
+        subtitle,
+        onClick,
+        showChevron,
+        signed,
+    }: any) => {
+        const content = (
+            <>
+                <motion.div className="flex justify-between items-start w-full">
+                    <p className={`${colorClass || 'text-white/30'} text-[10px] font-black uppercase tracking-wider mb-1`}>{label}</p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <div className={`p-1.5 ${bgClass || 'bg-white/5'} rounded-lg ${colorClass || 'text-white/40'} border border-white/10`}>
+                            <Icon size={14} className="sm:size-[16px]" />
+                        </div>
+                        {showChevron ? (
+                            isAr ? (
+                                <ChevronRight size={16} className="text-white/35 rotate-180" />
+                            ) : (
+                                <ChevronRight size={16} className="text-white/35" />
+                            )
+                        ) : null}
+                    </div>
+                </motion.div>
+                <div>
+                    <h2 className="text-xl font-bold text-white leading-none mt-2 truncate">
+                        {signed && Number(value || 0) > 0 ? '-' : ''}
+                        {Number(value || 0).toLocaleString()}{' '}
+                        <span className="text-[10px] text-white/30 font-medium">{unit}</span>
+                    </h2>
+                    {subtitle && (
+                        <p className="text-[9px] text-white/35 mt-2 leading-snug">{subtitle}</p>
+                    )}
                 </div>
-            </motion.div>
-            <div>
-                <h2 className="text-xl font-bold text-white leading-none mt-2 truncate">
-                    {Number(value || 0).toLocaleString()} <span className="text-[10px] text-white/30 font-medium">{unit}</span>
-                </h2>
-                {subtitle && (
-                    <p className="text-[9px] text-white/35 mt-2 leading-snug">{subtitle}</p>
-                )}
-            </div>
-        </GlassCard>
-    );
+            </>
+        );
+
+        if (onClick) {
+            return (
+                <button
+                    type="button"
+                    onClick={onClick}
+                    className="text-start w-full rounded-[1.25rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50"
+                >
+                    <GlassCard
+                        className={`p-4 sm:p-5 flex flex-col justify-between min-h-[110px] hover:border-gold-500/30 transition-all cursor-pointer ${borderClass || 'border-white/5'}`}
+                    >
+                        {content}
+                    </GlassCard>
+                </button>
+            );
+        }
+
+        return (
+            <GlassCard className={`p-4 sm:p-5 flex flex-col justify-between min-h-[110px] ${borderClass || 'border-white/5'}`}>
+                {content}
+            </GlassCard>
+        );
+    };
 
     return (
         <div dir={isAr ? 'rtl' : 'ltr'} className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 min-w-0 overflow-x-clip">
@@ -723,6 +771,23 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                         subtitle={w.pendingLiabilitiesHint}
                     />
                 )}
+                <StatCard
+                    label={w.obligationsTotal}
+                    value={Number(
+                        (stats as { obligationsTotalDue?: number }).obligationsTotalDue ??
+                            obligations?.totalDue ??
+                            0,
+                    )}
+                    unit="AED"
+                    icon={Scale}
+                    colorClass="text-rose-300"
+                    bgClass="bg-rose-500/10"
+                    borderClass="border-rose-500/20"
+                    subtitle={w.obligationsHint}
+                    showChevron
+                    signed
+                    onClick={() => onNavigate?.('wallet-obligations')}
+                />
                 <StatCard
                     label={w.pendingBalance}
                     value={stats.pending}

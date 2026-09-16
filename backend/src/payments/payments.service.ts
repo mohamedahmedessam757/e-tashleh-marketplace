@@ -30,6 +30,7 @@ import { buildPayoutBankDetailsResponse, getPayoutReadiness, assertWithdrawalPay
 import {
     formatLiabilitiesBlockMessage,
     loadStorePendingLiabilities,
+    loadMerchantObligationsLedger,
     allocateLiabilitySettlement,
     markSettledLiabilityLinesPaid,
     assertWithdrawalSettlesLiabilitiesOrThrow,
@@ -3122,9 +3123,12 @@ export class PaymentsService {
 
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
         let pendingLiabilitiesTotal = 0;
+        let obligationsTotalDue = 0;
         try {
             const pendingLiabilities = await loadStorePendingLiabilities(this.prisma, store.id);
             pendingLiabilitiesTotal = pendingLiabilities.total;
+            const obligations = await loadMerchantObligationsLedger(this.prisma, store.id);
+            obligationsTotalDue = obligations.totalDue;
         } catch (err) {
             this.logger.warn(
                 `Merchant wallet liabilities lookup failed for store ${store.id}: ${
@@ -3143,6 +3147,8 @@ export class PaymentsService {
                 pending: Number(stats.pending.toFixed(2)),
                 frozen: Number(stats.frozen.toFixed(2)),
                 pendingLiabilities: Number(pendingLiabilitiesTotal.toFixed(2)),
+                /** UI obligations total (includes posted cancel gateway fees still OPEN). */
+                obligationsTotalDue: Number(obligationsTotalDue.toFixed(2)),
                 maxWithdrawableNet: Number(netAvailable.toFixed(2)),
                 totalSales: Number(stats.totalSales.toFixed(2)),
                 netEarnings: Number(stats.netEarnings.toFixed(2)),
@@ -3282,6 +3288,17 @@ export class PaymentsService {
                 order: w.payment?.order || w.escrow?.order || undefined,
             }),
         );
+    }
+
+    async getMerchantObligations(userId: string) {
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            select: { id: true, ownerId: true },
+        });
+        if (!store || store.ownerId !== userId) {
+            throw new NotFoundException('Store not found');
+        }
+        return loadMerchantObligationsLedger(this.prisma, store.id);
     }
 
     async releaseEscrowManually(

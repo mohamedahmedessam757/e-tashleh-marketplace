@@ -8,6 +8,7 @@ import { MarketplaceOfferDetails } from '../components/dashboard/merchant/Market
 import { MerchantOffers } from '../components/dashboard/merchant/MerchantOffers';
 import { MerchantOrders } from '../components/dashboard/merchant/MerchantOrders';
 import { MerchantWallet } from '../components/dashboard/merchant/MerchantWallet';
+import { MerchantObligations } from '../components/dashboard/merchant/MerchantObligations';
 import { MerchantProfile } from '../components/dashboard/merchant/MerchantProfile';
 import { MerchantSettings } from '../components/dashboard/merchant/MerchantSettings';
 import { MerchantNotifications } from '../components/dashboard/merchant/MerchantNotifications';
@@ -187,6 +188,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
           {dashboardPath === 'reviews' && <MerchantReviews />}
           {dashboardPath === 'profile' && <MerchantProfile />}
           {dashboardPath === 'wallet' && <MerchantWallet onNavigate={onNavigate} />}
+          {dashboardPath === 'wallet-obligations' && (
+            <MerchantObligations
+              onNavigate={onNavigate}
+              onBack={() => onNavigate('wallet')}
+            />
+          )}
           {dashboardPath === 'shipments' && <ShipmentsPage onNavigate={onNavigate} />}
           {dashboardPath === 'shipment-details' && (
             <ShipmentDetailsPage

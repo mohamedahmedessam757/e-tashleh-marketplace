@@ -1,18 +1,28 @@
 /**
  * Pending store liabilities settled from withdrawal proceeds before Stripe Transfer (SCT).
- * Reuses adjudication PENDING fee / shipping statuses — no new ledger table.
+ * Reuses adjudication PENDING fee / shipping statuses + cancel gateway fee wallet rows.
  */
 
 import { BadRequestException } from '@nestjs/common';
 
-export type StoreLiabilityLineKind = 'ADJUDICATION_FEE' | 'SHIPPING_FEE';
+export type StoreLiabilityLineKind =
+  | 'ADJUDICATION_FEE'
+  | 'SHIPPING_FEE'
+  | 'GATEWAY_CANCEL_FEE';
 
 export interface StoreLiabilityLine {
-  source: 'return' | 'dispute';
+  source: 'return' | 'dispute' | 'wallet';
   sourceId: string;
   kind: StoreLiabilityLineKind;
   amount: number;
   createdAt: Date;
+  /** Already decremented from store.balance — do not subtract again from withdrawable. */
+  postedToBalance?: boolean;
+  offerId?: string | null;
+  orderId?: string | null;
+  settlementStatus?: 'OPEN' | 'SETTLED';
+  descriptionAr?: string;
+  descriptionEn?: string;
 }
 
 export interface StorePendingLiabilities {
@@ -36,6 +46,7 @@ type FeeCaseRow = {
   shippingCompanyLiability: unknown;
   shippingPaymentStatus: string | null;
   shippingPayee: string | null;
+  orderId?: string | null;
 };
 
 function collectLinesFromCase(
@@ -54,6 +65,10 @@ function collectLinesFromCase(
         kind: 'ADJUDICATION_FEE',
         amount,
         createdAt: row.createdAt,
+        orderId: row.orderId || null,
+        settlementStatus: 'OPEN',
+        descriptionAr: 'رسوم حكم مستحقة',
+        descriptionEn: 'Pending adjudication fee',
       });
     }
   }
@@ -72,6 +87,10 @@ function collectLinesFromCase(
         kind: 'SHIPPING_FEE',
         amount,
         createdAt: row.createdAt,
+        orderId: row.orderId || null,
+        settlementStatus: 'OPEN',
+        descriptionAr: 'رسوم شحن مستحقة',
+        descriptionEn: 'Pending shipping fee',
       });
     }
   }
@@ -83,13 +102,20 @@ function collectLinesFromCase(
 export function aggregateStorePendingLiabilities(input: {
   returns: FeeCaseRow[];
   disputes: FeeCaseRow[];
+  gatewayFees?: StoreLiabilityLine[];
 }): StorePendingLiabilities {
   const lines = [
     ...input.returns.flatMap((r) => collectLinesFromCase('return', r)),
     ...input.disputes.flatMap((d) => collectLinesFromCase('dispute', d)),
+    ...(input.gatewayFees || []),
   ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-  const total = money2(lines.reduce((s, l) => s + l.amount, 0));
+  // Withdrawal settlement total: only amounts NOT already taken from store.balance
+  const total = money2(
+    lines
+      .filter((l) => !l.postedToBalance && l.settlementStatus !== 'SETTLED')
+      .reduce((s, l) => s + l.amount, 0),
+  );
   return { total, lines };
 }
 
@@ -102,7 +128,46 @@ export type LiabilitySettleDb = {
     findMany: (args: any) => Promise<FeeCaseRow[]>;
     update: (args: any) => Promise<unknown>;
   };
+  walletTransaction?: {
+    findMany: (args: any) => Promise<any[]>;
+    update?: (args: any) => Promise<unknown>;
+  };
+  store?: {
+    findUnique: (args: any) => Promise<{ id: string; ownerId: string | null } | null>;
+  };
 };
+
+function metaOf(tx: any): Record<string, unknown> {
+  const m = tx?.metadata;
+  if (m && typeof m === 'object' && !Array.isArray(m)) return m as Record<string, unknown>;
+  return {};
+}
+
+function mapGatewayFeeWalletRows(rows: any[]): StoreLiabilityLine[] {
+  const out: StoreLiabilityLine[] = [];
+  for (const tx of rows) {
+    const meta = metaOf(tx);
+    if (String(meta.kind || '') !== 'CANCEL_MERCHANT_GATEWAY_FEE') continue;
+    const settlementStatus: 'OPEN' | 'SETTLED' =
+      String(meta.settlementStatus || '').toUpperCase() === 'SETTLED' ? 'SETTLED' : 'OPEN';
+    const amount = money2(tx.amount);
+    if (amount <= 0) continue;
+    out.push({
+      source: 'wallet',
+      sourceId: String(tx.id),
+      kind: 'GATEWAY_CANCEL_FEE',
+      amount,
+      createdAt: new Date(tx.createdAt),
+      postedToBalance: meta.postedToBalance !== false,
+      offerId: (meta.offerId as string) || null,
+      orderId: (meta.orderId as string) || null,
+      settlementStatus,
+      descriptionAr: 'رسوم بوابة دفع — إلغاء بخطأ التاجر',
+      descriptionEn: 'Gateway fee — merchant-fault cancellation',
+    });
+  }
+  return out;
+}
 
 export async function loadStorePendingLiabilities(
   db: LiabilitySettleDb | any,
@@ -118,6 +183,7 @@ export async function loadStorePendingLiabilities(
     shippingCompanyLiability: true,
     shippingPaymentStatus: true,
     shippingPayee: true,
+    orderId: true,
   };
 
   const returnDelegate = db.returnRequest ?? db.return;
@@ -150,7 +216,120 @@ export async function loadStorePendingLiabilities(
     }),
   ]);
 
-  return aggregateStorePendingLiabilities({ returns, disputes });
+  // Gateway cancel fees already posted to balance must NOT inflate withdrawal withholding.
+  // Still load OPEN unposted rows if any exist (defensive).
+  let gatewayFees: StoreLiabilityLine[] = [];
+  if (db.store?.findUnique && db.walletTransaction?.findMany) {
+    const store = await db.store.findUnique({
+      where: { id: storeId },
+      select: { id: true, ownerId: true },
+    });
+    if (store?.ownerId) {
+      const feeRows = await db.walletTransaction.findMany({
+        where: {
+          userId: store.ownerId,
+          role: 'VENDOR',
+          type: 'DEBIT',
+          transactionType: { in: ['PENALTY', 'penalty'] },
+        },
+        select: {
+          id: true,
+          amount: true,
+          createdAt: true,
+          metadata: true,
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 500,
+      });
+      gatewayFees = mapGatewayFeeWalletRows(feeRows).filter(
+        (l) => l.settlementStatus === 'OPEN' && !l.postedToBalance,
+      );
+    }
+  }
+
+  return aggregateStorePendingLiabilities({ returns, disputes, gatewayFees });
+}
+
+export interface MerchantObligationLine {
+  id: string;
+  kind: StoreLiabilityLineKind;
+  amount: number;
+  signedAmount: number;
+  status: 'OPEN' | 'SETTLED';
+  createdAt: string;
+  orderId?: string | null;
+  offerId?: string | null;
+  source: 'return' | 'dispute' | 'wallet';
+  descriptionAr: string;
+  descriptionEn: string;
+  postedToBalance?: boolean;
+}
+
+/**
+ * Full obligations ledger for merchant wallet UI (includes posted gateway fees).
+ */
+export async function loadMerchantObligationsLedger(
+  db: LiabilitySettleDb | any,
+  storeId: string,
+): Promise<{ totalDue: number; lines: MerchantObligationLine[] }> {
+  const pending = await loadStorePendingLiabilities(db, storeId);
+
+  let gatewayAll: StoreLiabilityLine[] = [];
+  if (db.store?.findUnique && db.walletTransaction?.findMany) {
+    const store = await db.store.findUnique({
+      where: { id: storeId },
+      select: { id: true, ownerId: true },
+    });
+    if (store?.ownerId) {
+      const feeRows = await db.walletTransaction.findMany({
+        where: {
+          userId: store.ownerId,
+          role: 'VENDOR',
+          type: 'DEBIT',
+          transactionType: { in: ['PENALTY', 'penalty'] },
+        },
+        select: {
+          id: true,
+          amount: true,
+          createdAt: true,
+          metadata: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+      });
+      gatewayAll = mapGatewayFeeWalletRows(feeRows);
+    }
+  }
+
+  const caseOpen = pending.lines.filter((l) => l.source !== 'wallet');
+  const merged = [...caseOpen, ...gatewayAll].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
+
+  const lines: MerchantObligationLine[] = merged.map((l) => {
+    const status = l.settlementStatus === 'SETTLED' ? 'SETTLED' : 'OPEN';
+    const signedAmount = status === 'SETTLED' ? money2(l.amount) : -money2(l.amount);
+    return {
+      id: `${l.source}:${l.sourceId}:${l.kind}`,
+      kind: l.kind,
+      amount: money2(l.amount),
+      signedAmount,
+      status,
+      createdAt: l.createdAt.toISOString(),
+      orderId: l.orderId || null,
+      offerId: l.offerId || null,
+      source: l.source,
+      descriptionAr: l.descriptionAr || l.kind,
+      descriptionEn: l.descriptionEn || l.kind,
+      postedToBalance: l.postedToBalance,
+    };
+  });
+
+  const totalDue = money2(
+    lines.filter((l) => l.status === 'OPEN').reduce((s, l) => s + l.amount, 0),
+  );
+
+  return { totalDue, lines };
 }
 
 /**
@@ -169,8 +348,11 @@ export function allocateLiabilitySettlement(
   const budget = money2(withdrawalAmount);
   let remaining = budget;
   const settled: StoreLiabilityLine[] = [];
+  const settleable = lines.filter(
+    (l) => !l.postedToBalance && l.settlementStatus !== 'SETTLED',
+  );
 
-  for (const line of lines) {
+  for (const line of settleable) {
     if (remaining <= 0) break;
     if (line.amount <= remaining) {
       settled.push(line);
@@ -183,7 +365,7 @@ export function allocateLiabilitySettlement(
 
   const settlementAmount = money2(settled.reduce((s, l) => s + l.amount, 0));
   const transferAmount = money2(budget - settlementAmount);
-  const totalDebt = money2(lines.reduce((s, l) => s + l.amount, 0));
+  const totalDebt = money2(settleable.reduce((s, l) => s + l.amount, 0));
   const remainingLiability = money2(totalDebt - settlementAmount);
 
   return { settlementAmount, transferAmount, settled, remainingLiability };
@@ -194,6 +376,31 @@ export async function markSettledLiabilityLinesPaid(
   settled: StoreLiabilityLine[],
 ): Promise<void> {
   for (const line of settled) {
+    if (line.source === 'wallet') {
+      if (db.walletTransaction?.update) {
+        const existing = await db.walletTransaction.findMany?.({
+          where: { id: line.sourceId },
+          select: { id: true, metadata: true },
+          take: 1,
+        });
+        const row = existing?.[0];
+        if (row) {
+          const meta = metaOf(row);
+          await db.walletTransaction.update({
+            where: { id: line.sourceId },
+            data: {
+              metadata: {
+                ...meta,
+                settlementStatus: 'SETTLED',
+                settledAt: new Date().toISOString(),
+              },
+            },
+          });
+        }
+      }
+      continue;
+    }
+
     const model =
       line.source === 'return'
         ? (db.returnRequest ?? db.return)
