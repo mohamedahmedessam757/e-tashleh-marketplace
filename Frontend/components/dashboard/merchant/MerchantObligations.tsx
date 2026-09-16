@@ -15,6 +15,7 @@ import {
   subscribeToMerchantWalletUpdates,
 } from '../../../stores/useMerchantWalletStore';
 import { getCurrentUser } from '../../../utils/auth';
+import { ObligationPayBanner } from './ObligationPayBanner';
 
 interface MerchantObligationsProps {
   onBack?: () => void;
@@ -29,7 +30,7 @@ export const MerchantObligations: React.FC<MerchantObligationsProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
-  const w = t.merchant.wallet;
+  const w = t.dashboard.merchant.wallet;
   const { stats, obligations, fetchObligations, isLoading } = useMerchantWalletStore();
   const [filter, setFilter] = useState<FilterKey>('ALL');
 
@@ -93,6 +94,8 @@ export const MerchantObligations: React.FC<MerchantObligationsProps> = ({
           </div>
         </GlassCard>
       </div>
+
+      <ObligationPayBanner amount={Number(obligations.totalDue || 0)} />
 
       <div className="flex flex-wrap gap-2">
         {(['ALL', 'OPEN', 'SETTLED'] as FilterKey[]).map((key) => {

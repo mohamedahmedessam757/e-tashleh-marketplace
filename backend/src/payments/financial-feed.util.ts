@@ -242,6 +242,7 @@ export async function fetchUnifiedFeedIndex(
       'FRAUD_PENALTY',
       'PLATFORM_FEE_RETENTION',
       'ESCROW_RELEASE',
+      'OBLIGATION_SETTLEMENT',
     ].includes(typeFilter);
   const includeEscrow = !typeFilter || typeFilter === 'ESCROW';
   const includeWithdrawals = !typeFilter || typeFilter === 'WITHDRAWAL';
@@ -359,6 +360,7 @@ export async function countUnifiedFeed(
       'FRAUD_PENALTY',
       'PLATFORM_FEE_RETENTION',
       'ESCROW_RELEASE',
+      'OBLIGATION_SETTLEMENT',
     ].includes(typeFilter);
   const includeEscrow = !typeFilter || typeFilter === 'ESCROW';
   const includeWithdrawals = !typeFilter || typeFilter === 'WITHDRAWAL';

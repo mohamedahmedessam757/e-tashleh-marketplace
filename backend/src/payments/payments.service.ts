@@ -1142,6 +1142,9 @@ export class PaymentsService {
             if (intent.metadata?.isMerchantSettlement === 'true') {
                 return await this.fulfillMerchantSettlementPayment(intent);
             }
+            if (intent.metadata?.isMerchantObligationPayment === 'true') {
+                return await this.fulfillMerchantObligationPayment(intent);
+            }
             if (intent.metadata?.isAdjudicationFeePayment === 'true') {
                 return await this.fulfillAdjudicationFeePayment(intent);
             }
@@ -3299,6 +3302,543 @@ export class PaymentsService {
             throw new NotFoundException('Store not found');
         }
         return loadMerchantObligationsLedger(this.prisma, store.id);
+    }
+
+    /**
+     * Stripe Checkout for OPEN store obligations (cancel gateway fees + pending case fees).
+     * Existing auto wallet-debit path remains when merchant does not use Stripe.
+     */
+    async createMerchantObligationCheckoutSession(userId: string, frontendUrl?: string) {
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            include: { owner: { select: { id: true, email: true } } },
+        });
+        if (!store || store.ownerId !== userId) {
+            throw new ForbiddenException('Store not found for this merchant');
+        }
+
+        const ledger = await loadMerchantObligationsLedger(this.prisma, store.id);
+        const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
+        if (!openLines.length || !(ledger.totalDue > 0)) {
+            throw new BadRequestException('No open obligations to pay');
+        }
+
+        const amount = Number(ledger.totalDue.toFixed(2));
+        const expectedMinor = Math.round(amount * 100);
+        if (expectedMinor < 50) {
+            throw new BadRequestException('Obligation amount is below Stripe minimum');
+        }
+
+        const baseUrl = (frontendUrl || process.env.FRONTEND_URL || 'https://e-tashleh.net').replace(
+            /\/$/,
+            '',
+        );
+        // Prevent open redirects — only same-origin frontend return.
+        if (frontendUrl) {
+            try {
+                const allowedOrigin = new URL(
+                    (process.env.FRONTEND_URL || 'https://e-tashleh.net').replace(/\/$/, ''),
+                ).origin;
+                const requested = new URL(frontendUrl.replace(/\/$/, ''));
+                if (allowedOrigin !== requested.origin) {
+                    throw new BadRequestException('Invalid frontend URL');
+                }
+            } catch (err) {
+                if (err instanceof BadRequestException) throw err;
+                throw new BadRequestException('Invalid frontend URL');
+            }
+        }
+
+        const successUrl = `${baseUrl}/dashboard/wallet?obligationPayment=success&session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${baseUrl}/dashboard/wallet?obligationPayment=cancel`;
+
+        const session = await this.stripeService.createCheckoutSession({
+            amount: amount.toFixed(2),
+            currency: 'AED',
+            successUrl,
+            cancelUrl,
+            customerEmail: store.owner?.email || undefined,
+            metadata: {
+                isMerchantObligationPayment: 'true',
+                storeId: store.id,
+                merchantUserId: userId,
+                obligationAmount: amount.toFixed(2),
+                obligationLineCount: String(openLines.length),
+            },
+            lineItems: [
+                {
+                    name: 'Store obligations settlement',
+                    description: `تسوية التزامات متجر — ${openLines.length} بند(ود)`,
+                    amount: amount.toFixed(2),
+                },
+            ],
+        });
+
+        return {
+            url: session.url,
+            sessionId: session.id,
+            amount,
+            lineCount: openLines.length,
+        };
+    }
+
+    async confirmMerchantObligationFromClient(
+        userId: string,
+        sessionId?: string,
+        paymentIntentId?: string,
+    ) {
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            select: { id: true, ownerId: true },
+        });
+        if (!store || store.ownerId !== userId) {
+            throw new ForbiddenException('Store not found for this merchant');
+        }
+
+        const stripe = this.stripeService.getStripeClient();
+        let intentId = paymentIntentId || '';
+
+        if (sessionId) {
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+            if (session.metadata?.storeId && session.metadata.storeId !== store.id) {
+                throw new ForbiddenException('Checkout session does not belong to this store');
+            }
+            if (session.metadata?.isMerchantObligationPayment !== 'true') {
+                throw new BadRequestException('Not an obligation checkout session');
+            }
+            if (session.payment_status !== 'paid' && session.status !== 'complete') {
+                return { status: 'pending', paid: false };
+            }
+            const pi = session.payment_intent;
+            intentId = typeof pi === 'string' ? pi : pi?.id || '';
+        }
+
+        if (!intentId) {
+            throw new BadRequestException('paymentIntentId or sessionId required');
+        }
+
+        const intent = await stripe.paymentIntents.retrieve(intentId);
+        if (intent.metadata?.storeId && intent.metadata.storeId !== store.id) {
+            throw new ForbiddenException('Payment does not belong to this store');
+        }
+        if (intent.metadata?.isMerchantObligationPayment !== 'true') {
+            throw new BadRequestException('Not an obligation payment intent');
+        }
+        if (intent.status !== 'succeeded') {
+            return { status: intent.status, paid: false };
+        }
+
+        await this.fulfillMerchantObligationPayment(intent);
+        const ledger = await loadMerchantObligationsLedger(this.prisma, store.id);
+        return {
+            status: 'fulfilled',
+            paid: true,
+            paymentIntentId: intentId,
+            obligationsTotalDue: ledger.totalDue,
+        };
+    }
+
+    /**
+     * Idempotent Stripe fulfillment for merchant OPEN obligations.
+     * Restores wallet debt for posted cancel fees; marks case fees PAID; issues GATEWAY_FEE invoice.
+     */
+    async fulfillMerchantObligationPayment(intent: any) {
+        const meta = intent?.metadata || {};
+        if (meta.isMerchantObligationPayment !== 'true') {
+            return;
+        }
+        const storeId = String(meta.storeId || '');
+        const merchantUserId = String(meta.merchantUserId || '');
+        const expectedAmount = Number(meta.obligationAmount || 0);
+        if (!storeId || !merchantUserId || !(expectedAmount > 0)) {
+            this.logger.warn('Obligation fulfillment missing store/amount metadata');
+            return;
+        }
+
+        const expectedMinor = Math.round(expectedAmount * 100);
+        if (typeof intent.amount_received === 'number' && intent.amount_received !== expectedMinor) {
+            this.logger.error(
+                `Obligation PI ${intent.id} amount mismatch: expected ${expectedMinor}, got ${intent.amount_received}`,
+            );
+            throw new Error('Obligation payment amount mismatch');
+        }
+
+        // Idempotency: already settled this intent
+        const existingSettle = await this.prisma.walletTransaction.findFirst({
+            where: {
+                userId: merchantUserId,
+                role: 'VENDOR',
+                transactionType: 'OBLIGATION_SETTLEMENT',
+                metadata: { path: ['stripeIntentId'], equals: intent.id },
+            },
+            select: { id: true },
+        });
+        if (existingSettle) {
+            this.logger.log(`Obligation PI ${intent.id} already settled; skip`);
+            return { skipped: true, reason: 'ALREADY_SETTLED' };
+        }
+
+        const store = await this.prisma.store.findUnique({
+            where: { id: storeId },
+            select: { id: true, ownerId: true, balance: true, name: true },
+        });
+        if (!store || store.ownerId !== merchantUserId) {
+            this.logger.warn(`Obligation fulfill store/owner mismatch store=${storeId}`);
+            return;
+        }
+
+        const ledger = await loadMerchantObligationsLedger(this.prisma, storeId);
+        const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
+        if (!openLines.length) {
+            this.logger.log(`No OPEN obligations left for store ${storeId}; PI ${intent.id}`);
+            return { skipped: true, reason: 'NO_OPEN' };
+        }
+
+        const openTotal = Number(
+            openLines.reduce((s, l) => s + l.amount, 0).toFixed(2),
+        );
+        // Allow settling if live open total matches checkout (or is less due to race).
+        if (openTotal - expectedAmount > 0.02) {
+            this.logger.error(
+                `Obligation open total ${openTotal} exceeds checkout ${expectedAmount} for PI ${intent.id}`,
+            );
+            throw new Error('Obligation open total exceeds checkout amount');
+        }
+
+        const adminActor = await this.prisma.user.findFirst({
+            where: { role: { in: ['SUPER_ADMIN', 'ADMIN'] }, status: 'ACTIVE' },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+        });
+
+        const result = await this.prisma.$transaction(
+            async (tx) => {
+                let balance = Number(store.balance || 0);
+                const settledIds: string[] = [];
+                const invoiceHints: Array<{
+                    orderId: string;
+                    paymentId: string;
+                    amount: number;
+                    offerId?: string | null;
+                }> = [];
+
+                for (const line of openLines) {
+                    if (line.kind === 'GATEWAY_CANCEL_FEE' && line.source === 'wallet') {
+                        const walletTxId = line.sourceId;
+                        const row = await tx.walletTransaction.findUnique({
+                            where: { id: walletTxId },
+                            select: { id: true, metadata: true, paymentId: true, amount: true },
+                        });
+                        if (!row) continue;
+                        const prevMeta =
+                            row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+                                ? (row.metadata as Record<string, unknown>)
+                                : {};
+                        if (String(prevMeta.settlementStatus || '').toUpperCase() === 'SETTLED') {
+                            continue;
+                        }
+
+                        const feeAmount = Number(line.amount);
+                        balance = Math.round((balance + feeAmount + Number.EPSILON) * 100) / 100;
+                        await tx.store.update({
+                            where: { id: storeId },
+                            data: { balance: { increment: feeAmount } },
+                        });
+
+                        await tx.walletTransaction.update({
+                            where: { id: walletTxId },
+                            data: {
+                                metadata: {
+                                    ...prevMeta,
+                                    settlementStatus: 'SETTLED',
+                                    settledVia: 'STRIPE',
+                                    settledAt: new Date().toISOString(),
+                                    settleStripeIntentId: intent.id,
+                                },
+                            },
+                        });
+
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: merchantUserId,
+                                role: 'VENDOR',
+                                type: 'CREDIT',
+                                transactionType: 'OBLIGATION_SETTLEMENT',
+                                amount: feeAmount,
+                                currency: 'AED',
+                                balanceAfter: balance,
+                                paymentId: row.paymentId || null,
+                                description: `تسوية التزام رسوم إلغاء عبر Stripe`,
+                                metadata: {
+                                    kind: 'OBLIGATION_SETTLEMENT',
+                                    settlesWalletTxId: walletTxId,
+                                    paymentMethod: 'STRIPE',
+                                    stripeIntentId: intent.id,
+                                    orderId: line.orderId || null,
+                                    offerId: line.offerId || null,
+                                    storeId,
+                                },
+                            } as any,
+                        });
+
+                        settledIds.push(line.id);
+                        if (line.orderId && row.paymentId) {
+                            invoiceHints.push({
+                                orderId: line.orderId,
+                                paymentId: row.paymentId,
+                                amount: feeAmount,
+                                offerId: line.offerId,
+                            });
+                        }
+                        continue;
+                    }
+
+                    if (
+                        (line.kind === 'ADJUDICATION_FEE' || line.kind === 'SHIPPING_FEE') &&
+                        (line.source === 'return' || line.source === 'dispute')
+                    ) {
+                        const modelName =
+                            line.source === 'return' ? 'returnRequest' : 'dispute';
+                        let claimed = 0;
+                        if (line.kind === 'ADJUDICATION_FEE') {
+                            const res = await (tx as any)[modelName].updateMany({
+                                where: {
+                                    id: line.sourceId,
+                                    adjudicationFeePaymentStatus: 'PENDING',
+                                },
+                                data: {
+                                    adjudicationFeePaymentStatus: 'PAID',
+                                    adjudicationFeePaymentMethod: 'STRIPE',
+                                    adjudicationFeeStripeId: intent.id,
+                                    updatedAt: new Date(),
+                                },
+                            });
+                            claimed = res.count;
+                        } else {
+                            const res = await (tx as any)[modelName].updateMany({
+                                where: {
+                                    id: line.sourceId,
+                                    shippingPaymentStatus: {
+                                        in: [
+                                            'PENDING',
+                                            'INSUFFICIENT_FUNDS',
+                                            'WITHHELD_PENDING',
+                                        ],
+                                    },
+                                },
+                                data: {
+                                    shippingPaymentStatus: 'PAID',
+                                    shippingPaymentMethod: 'STRIPE',
+                                    shippingStripeId: intent.id,
+                                    updatedAt: new Date(),
+                                },
+                            });
+                            claimed = res.count;
+                        }
+                        if (!claimed) continue;
+
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId: merchantUserId,
+                                role: 'VENDOR',
+                                type: 'DEBIT',
+                                transactionType: line.kind,
+                                amount: line.amount,
+                                currency: 'AED',
+                                balanceAfter: balance,
+                                description: `Paid ${line.kind} via Stripe (obligation settlement)`,
+                                metadata: {
+                                    kind: 'OBLIGATION_CASE_FEE_STRIPE',
+                                    paymentMethod: 'STRIPE',
+                                    stripeIntentId: intent.id,
+                                    caseId: line.sourceId,
+                                    caseType: line.source,
+                                    storeId,
+                                    orderId: line.orderId || null,
+                                },
+                            } as any,
+                        });
+
+                        // Case fees paid by Stripe bring real cash — credit platform fees once
+                        const platformWallet = await tx.platformWallet.findFirst();
+                        if (platformWallet) {
+                            await tx.platformWallet.update({
+                                where: { id: platformWallet.id },
+                                data: {
+                                    feesBalance: { increment: line.amount },
+                                    totalRevenue: { increment: line.amount },
+                                },
+                            });
+                        }
+
+                        settledIds.push(line.id);
+                        if (line.orderId) {
+                            const pay = await tx.paymentTransaction.findFirst({
+                                where: {
+                                    orderId: line.orderId,
+                                    status: { in: ['SUCCESS', 'REFUNDED'] },
+                                },
+                                orderBy: { createdAt: 'desc' },
+                                select: { id: true },
+                            });
+                            if (pay?.id) {
+                                invoiceHints.push({
+                                    orderId: line.orderId,
+                                    paymentId: pay.id,
+                                    amount: line.amount,
+                                    offerId: line.offerId,
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (adminActor?.id && expectedAmount > 0) {
+                    await tx.walletTransaction.create({
+                        data: {
+                            userId: adminActor.id,
+                            role: 'ADMIN',
+                            type: 'CREDIT',
+                            transactionType: 'OBLIGATION_SETTLEMENT',
+                            amount: expectedAmount,
+                            currency: 'AED',
+                            balanceAfter: 0,
+                            description: `Merchant obligation Stripe payment — store ${storeId}`,
+                            metadata: {
+                                kind: 'OBLIGATION_SETTLEMENT',
+                                paymentMethod: 'STRIPE',
+                                stripeIntentId: intent.id,
+                                storeId,
+                                merchantUserId,
+                                settledLineIds: settledIds,
+                            },
+                        } as any,
+                    });
+                }
+
+                return { settledIds, invoiceHints, balance };
+            },
+            { timeout: 25000, maxWait: 10000 },
+        );
+
+        // Invoices (best-effort, idempotent by shippingBatchKey)
+        for (const hint of result.invoiceHints) {
+            await this.issueObligationSettlementInvoice({
+                orderId: hint.orderId,
+                paymentId: hint.paymentId,
+                merchantUserId,
+                amount: hint.amount,
+                stripeIntentId: intent.id,
+                offerId: hint.offerId,
+            }).catch((err) =>
+                this.logger.warn(
+                    `Obligation invoice skipped: ${(err as Error)?.message}`,
+                ),
+            );
+        }
+
+        await this.notifications
+            .create({
+                recipientId: merchantUserId,
+                recipientRole: 'VENDOR',
+                type: 'payment',
+                titleAr: 'تم سداد الالتزامات عبر Stripe',
+                titleEn: 'Obligations paid via Stripe',
+                messageAr: `تم استلام دفع تسوية التزامات بقيمة ${expectedAmount.toFixed(2)} درهم عبر Stripe.`,
+                messageEn: `Obligation settlement of AED ${expectedAmount.toFixed(2)} received via Stripe.`,
+                link: 'wallet',
+                metadata: {
+                    stripeIntentId: intent.id,
+                    amount: expectedAmount,
+                    obligationPayment: true,
+                },
+            })
+            .catch(() => {});
+
+        await this.notifications
+            .notifyAdmins({
+                type: 'PAYMENT',
+                titleAr: 'سداد التزامات تاجر عبر Stripe',
+                titleEn: 'Merchant obligations paid via Stripe',
+                messageAr: `المتجر سدد التزامات بقيمة ${expectedAmount.toFixed(2)} درهم عبر Stripe.`,
+                messageEn: `Store paid obligations of AED ${expectedAmount.toFixed(2)} via Stripe.`,
+                link: '/admin/billing',
+                metadata: {
+                    storeId,
+                    merchantUserId,
+                    stripeIntentId: intent.id,
+                    amount: expectedAmount,
+                },
+            })
+            .catch(() => {});
+
+        return result;
+    }
+
+    private async issueObligationSettlementInvoice(input: {
+        orderId: string;
+        paymentId: string;
+        merchantUserId: string;
+        amount: number;
+        stripeIntentId: string;
+        offerId?: string | null;
+    }) {
+        const batchKey = `OBLIGATION_STRIPE:${input.stripeIntentId}:${input.paymentId}`;
+        const existing = await this.prisma.invoice.findFirst({
+            where: { shippingBatchKey: batchKey },
+            select: { id: true },
+        });
+        if (existing) return existing;
+
+        const order = await this.prisma.order.findUnique({
+            where: { id: input.orderId },
+            select: { id: true, orderNumber: true, customerId: true },
+        });
+        if (!order) return null;
+
+        let invoiceNumber: string;
+        try {
+            const rows = await this.prisma.$queryRaw<{ generate_typed_invoice_number: string }[]>`
+                SELECT generate_typed_invoice_number(${'GATEWAY_FEE'})
+            `;
+            invoiceNumber = rows?.[0]?.generate_typed_invoice_number;
+        } catch {
+            invoiceNumber = undefined as any;
+        }
+        if (!invoiceNumber) {
+            const fallback = await this.prisma.$queryRaw<{ generate_invoice_number: string }[]>`
+                SELECT generate_invoice_number()
+            `;
+            invoiceNumber = String(fallback[0].generate_invoice_number).replace(/^INV-/, 'INV-G-');
+        }
+
+        return this.prisma.invoice.create({
+            data: {
+                invoiceNumber,
+                orderId: input.orderId,
+                paymentId: input.paymentId,
+                // Viewer/payer for this tax doc is the merchant who settled the obligation.
+                customerId: input.merchantUserId,
+                subtotal: input.amount,
+                shipping: 0,
+                commission: 0,
+                total: input.amount,
+                currency: 'AED',
+                status: 'PAID',
+                invoiceType: 'GATEWAY_FEE',
+                shippingBatchKey: batchKey,
+                partNameSnapshot: 'Obligation settlement (Stripe)',
+                lineItems: [
+                    {
+                        kind: 'OBLIGATION_SETTLEMENT',
+                        amount: input.amount,
+                        stripeIntentId: input.stripeIntentId,
+                        offerId: input.offerId || null,
+                        orderNumber: order.orderNumber,
+                    },
+                ] as any,
+            },
+        });
     }
 
     async releaseEscrowManually(

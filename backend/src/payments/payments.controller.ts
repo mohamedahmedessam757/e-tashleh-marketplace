@@ -213,6 +213,31 @@ export class PaymentsController {
         return this.paymentsService.getMerchantObligations(req.user.id);
     }
 
+    @Post('merchant/obligations/checkout')
+    @Throttle({ default: { limit: 8, ttl: 60000 } })
+    createMerchantObligationCheckout(
+        @Request() req,
+        @Body() body: { frontendUrl?: string },
+    ) {
+        return this.paymentsService.createMerchantObligationCheckoutSession(
+            req.user.id,
+            body?.frontendUrl,
+        );
+    }
+
+    @Post('merchant/obligations/confirm')
+    @Throttle({ default: { limit: 15, ttl: 60000 } })
+    confirmMerchantObligation(
+        @Request() req,
+        @Body() body: { sessionId?: string; paymentIntentId?: string },
+    ) {
+        return this.paymentsService.confirmMerchantObligationFromClient(
+            req.user.id,
+            body?.sessionId,
+            body?.paymentIntentId,
+        );
+    }
+
     @Post('admin/release-escrow')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'edit')

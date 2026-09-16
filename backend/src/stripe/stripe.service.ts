@@ -374,6 +374,7 @@ export class StripeService {
     }): Promise<any> {
         const isAdjFee = params.metadata?.isAdjudicationFeePayment === 'true';
         const isSettlement = params.metadata?.isMerchantSettlement === 'true';
+        const isObligation = params.metadata?.isMerchantObligationPayment === 'true';
 
         const line_items =
             params.lineItems && params.lineItems.length > 0
@@ -393,12 +394,16 @@ export class StripeService {
                           price_data: {
                               currency: params.currency,
                               product_data: {
-                                  name: isAdjFee
-                                      ? `Adjudication Fee - Order #${params.metadata.orderNumber || 'N/A'}`
-                                      : `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`,
-                                  description: isAdjFee
-                                      ? `Platform adjudication fees for ${params.metadata.caseType} #${params.metadata.caseId}`
-                                      : `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`,
+                                  name: isObligation
+                                      ? `Store Obligations Settlement`
+                                      : isAdjFee
+                                        ? `Adjudication Fee - Order #${params.metadata.orderNumber || 'N/A'}`
+                                        : `Shipping Payment - Order #${params.metadata.orderNumber || 'N/A'}`,
+                                  description: isObligation
+                                      ? `Merchant store liability settlement / تسوية التزامات المتجر`
+                                      : isAdjFee
+                                        ? `Platform adjudication fees for ${params.metadata.caseType} #${params.metadata.caseId}`
+                                        : `Shipping cost for ${params.metadata.caseType} #${params.metadata.caseId}`,
                               },
                               unit_amount: Math.round(parseFloat(params.amount) * 100),
                           },

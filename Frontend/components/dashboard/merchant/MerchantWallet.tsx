@@ -52,6 +52,7 @@ import { PayoutMethodPanel } from '../wallet/PayoutMethodPanel';
 import { BankDetailsModal } from '../wallet/BankDetailsModal';
 import { PayoutLinkRequiredAlert } from '../wallet/PayoutLinkRequiredAlert';
 import { WithdrawalReceiptModal } from '../shared/WithdrawalReceiptModal';
+import { ObligationPayBanner } from './ObligationPayBanner';
 import { paymentsApi } from '../../../services/api/payments';
 import {
     getPayoutReadiness,
@@ -223,6 +224,54 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const stripeStatus = params.get('stripe_status');
+
+        const obligationPayment = params.get('obligationPayment');
+        if (obligationPayment === 'success' || obligationPayment === 'cancel') {
+            const sessionId = params.get('session_id') || undefined;
+            const cleanUrl = () => {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('obligationPayment');
+                url.searchParams.delete('session_id');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            };
+            if (obligationPayment === 'cancel') {
+                useNotificationStore.getState().addNotification({
+                    type: 'info',
+                    titleAr: w.obligationPayCancelTitle,
+                    titleEn: w.obligationPayCancelTitle,
+                    messageAr: w.obligationPayCancelMsg,
+                    messageEn: w.obligationPayCancelMsg,
+                });
+                cleanUrl();
+                return;
+            }
+            void (async () => {
+                try {
+                    const result = await useMerchantWalletStore
+                        .getState()
+                        .confirmObligationPayment({ sessionId });
+                    if (result.paid) {
+                        useNotificationStore.getState().addNotification({
+                            type: 'success',
+                            titleAr: w.obligationPaySuccessTitle,
+                            titleEn: w.obligationPaySuccessTitle,
+                            messageAr: w.obligationPaySuccessMsg,
+                            messageEn: w.obligationPaySuccessMsg,
+                        });
+                    }
+                } catch (err: any) {
+                    useNotificationStore.getState().addNotification({
+                        type: 'error',
+                        titleAr: w.obligationPayFailedTitle,
+                        titleEn: w.obligationPayFailedTitleEn || 'Confirm failed',
+                        messageAr: err?.message || w.obligationPayFailedMsg,
+                        messageEn: err?.message || w.obligationPayFailedMsgEn,
+                    });
+                } finally {
+                    cleanUrl();
+                }
+            })();
+        }
 
         if (stripeStatus === 'return') {
             const handleReturn = async () => {
@@ -693,6 +742,13 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
         <div dir={isAr ? 'rtl' : 'ltr'} className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 min-w-0 overflow-x-clip">
 
             {/* 0. Governance Alerts (2026 Admin Transparency) */}
+            <ObligationPayBanner
+                amount={Number(
+                    (stats as { obligationsTotalDue?: number }).obligationsTotalDue ??
+                        obligations?.totalDue ??
+                        0,
+                )}
+            />
 
             {/* 1. Header Navigation & Dashboard Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

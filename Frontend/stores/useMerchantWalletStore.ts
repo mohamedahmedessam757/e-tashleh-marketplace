@@ -101,6 +101,11 @@ interface MerchantWalletState {
   // Actions
   fetchWallet: (filters?: { startDate?: string; endDate?: string }) => Promise<void>;
   fetchObligations: () => Promise<void>;
+  createObligationCheckout: () => Promise<{ url: string; sessionId?: string; amount: number }>;
+  confirmObligationPayment: (params: {
+    sessionId?: string;
+    paymentIntentId?: string;
+  }) => Promise<{ paid: boolean; status: string; obligationsTotalDue?: number }>;
   fetchWithdrawalData: () => Promise<void>;
   fetchBankDetails: () => Promise<void>;
   saveBankDetails: (details: { bankName: string; accountHolder: string; iban: string; swift?: string }) => Promise<{ success: boolean; message: string }>;
@@ -194,6 +199,32 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
     } catch (error) {
       console.error('Failed to fetch merchant obligations', error);
     }
+  },
+
+  createObligationCheckout: async () => {
+    const { client } = await import('../services/api/client');
+    const response = await client.post('/payments/merchant/obligations/checkout', {
+      frontendUrl: window.location.origin,
+    });
+    return {
+      url: String(response.data?.url || ''),
+      sessionId: response.data?.sessionId,
+      amount: Number(response.data?.amount || 0),
+    };
+  },
+
+  confirmObligationPayment: async ({ sessionId, paymentIntentId }) => {
+    const { client } = await import('../services/api/client');
+    const response = await client.post('/payments/merchant/obligations/confirm', {
+      sessionId,
+      paymentIntentId,
+    });
+    await Promise.all([get().fetchObligations(), get().fetchWallet()]);
+    return {
+      paid: Boolean(response.data?.paid),
+      status: String(response.data?.status || ''),
+      obligationsTotalDue: Number(response.data?.obligationsTotalDue ?? 0),
+    };
   },
 
   fetchWithdrawalData: async () => {

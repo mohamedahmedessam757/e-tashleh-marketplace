@@ -1,4 +1,7 @@
-import { computeLedgerNetProfit } from './merchant-wallet-metrics.util';
+﻿import {
+  computeLedgerNetProfit,
+  MERCHANT_NON_PROFIT_CREDIT_TYPES,
+} from './merchant-wallet-metrics.util';
 
 describe('computeLedgerNetProfit', () => {
   it('nets a sale credit against a matching REFUND debit to zero', () => {
@@ -60,5 +63,55 @@ describe('computeLedgerNetProfit', () => {
       },
     ]);
     expect(net).toBe(80);
+  });
+
+  it('does not treat OBLIGATION_SETTLEMENT credit as profit after Stripe pay', () => {
+    expect(MERCHANT_NON_PROFIT_CREDIT_TYPES.has('OBLIGATION_SETTLEMENT')).toBe(true);
+
+    const net = computeLedgerNetProfit([
+      {
+        amount: 100,
+        type: 'CREDIT',
+        transactionType: 'PAYMENT',
+        paymentId: 'pay-obl',
+      },
+      {
+        amount: 25,
+        type: 'DEBIT',
+        transactionType: 'PENALTY',
+        paymentId: 'pay-obl',
+      },
+      {
+        amount: 25,
+        type: 'CREDIT',
+        transactionType: 'OBLIGATION_SETTLEMENT',
+        paymentId: 'pay-obl',
+      },
+    ]);
+
+    // Sale 100 − penalty 25; Stripe settlement credit must NOT restore profit.
+    expect(net).toBe(75);
+  });
+
+  it('keeps adjudication/shipping Stripe obligation debits as expenses', () => {
+    const net = computeLedgerNetProfit([
+      {
+        amount: 200,
+        type: 'CREDIT',
+        transactionType: 'PAYMENT',
+        paymentId: 'pay-case',
+      },
+      {
+        amount: 40,
+        type: 'DEBIT',
+        transactionType: 'ADJUDICATION_FEE',
+      },
+      {
+        amount: 15,
+        type: 'DEBIT',
+        transactionType: 'SHIPPING_FEE',
+      },
+    ]);
+    expect(net).toBe(145);
   });
 });
