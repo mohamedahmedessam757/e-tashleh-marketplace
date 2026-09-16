@@ -89,7 +89,15 @@ const VERIFICATION_ORDER_INCLUDE = {
   verificationDocuments: {
     orderBy: { createdAt: 'desc' as const },
     include: {
-      store: { select: { id: true, name: true, storeCode: true, logo: true } },
+      store: {
+        select: {
+          id: true,
+          name: true,
+          storeCode: true,
+          logo: true,
+          owner: { select: { id: true, phone: true, email: true, countryCode: true } },
+        },
+      },
     },
   },
   invoices: {
@@ -752,6 +760,38 @@ export class VerificationTasksService {
       return forOffer ?? docs[0] ?? {};
     }
     return docs[0] ?? {};
+  }
+
+  /**
+   * Keep order.store.owner contact when falling back to verificationDocuments.store
+   * (doc store include may omit owner on older clients).
+   */
+  private resolveOrderStoreForDetails(
+    orderStore: any | null | undefined,
+    docStore: any | null | undefined,
+  ) {
+    if (orderStore) {
+      const owner = orderStore.owner ?? docStore?.owner ?? null;
+      return owner ? { ...orderStore, owner } : { ...orderStore };
+    }
+    return docStore ?? null;
+  }
+
+  /** Last-resort owner contact load if include somehow omitted phone/email. */
+  private async ensureStoreOwnerContact<T extends { id?: string; owner?: any } | null>(
+    store: T,
+  ): Promise<T> {
+    if (!store?.id) return store;
+    const owner = store.owner;
+    if (owner && (owner.phone || owner.email)) return store;
+    const row = await this.prisma.store.findUnique({
+      where: { id: store.id },
+      select: {
+        owner: { select: { id: true, phone: true, email: true, countryCode: true } },
+      },
+    });
+    if (!row?.owner) return store;
+    return { ...store, owner: row.owner };
   }
 
   private resolvePartLabelFromTask(task: any, order: any): string {
@@ -1807,7 +1847,9 @@ export class VerificationTasksService {
     }));
 
     const merchantDoc = this.resolveMerchantDocForTask(task, task.order);
-    const resolvedStore = task.order.store ?? merchantDoc?.store ?? null;
+    const resolvedStore = await this.ensureStoreOwnerContact(
+      this.resolveOrderStoreForDetails(task.order.store, merchantDoc?.store),
+    );
     const partLabel = this.resolvePartLabelFromTask(task, task.order);
 
     return {

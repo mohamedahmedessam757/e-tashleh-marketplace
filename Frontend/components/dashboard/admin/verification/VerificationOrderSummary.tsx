@@ -22,40 +22,23 @@ import {
   taskHasFieldOfficerReport,
   VERIFICATION_TASK_DECISION_LABEL,
 } from './verificationTaskHelpers';
+import {
+  filterMasterInvoices,
+  resolveStoreOwnerContact,
+  shouldUsePartyInvoicesOnVerificationPage,
+  toWhatsAppHref,
+} from './verificationContactUtils';
 import { VerificationImageGrid } from './VerificationImageGrid';
 import { VerificationVideoPlayer } from './VerificationVideoPlayer';
 import { OrderInvoicesPanel } from '../../shared/OrderInvoicesPanel';
 
-type InvoicePanelRole = 'ADMIN' | 'SUPER_ADMIN' | 'MERCHANT' | 'CUSTOMER';
 type InvoiceAudience = 'customer' | 'merchant';
-
-function normalizeRole(viewerRole: string | null | undefined): string {
-  return String(viewerRole || '').toUpperCase();
-}
-
-/** Digits-only WhatsApp deep link; prepend countryCode when local number starts with 0. */
-function toWhatsAppHref(phone?: string | null, countryCode?: string | null): string | null {
-  if (!phone) return null;
-  let digits = String(phone).replace(/\D/g, '');
-  if (!digits) return null;
-  const cc = String(countryCode || '').replace(/\D/g, '');
-  if (digits.startsWith('0') && cc) {
-    digits = `${cc}${digits.replace(/^0+/, '')}`;
-  } else if (cc && !digits.startsWith(cc) && digits.length <= 10) {
-    digits = `${cc}${digits}`;
-  }
-  return digits.length >= 8 ? `https://wa.me/${digits}` : null;
-}
-
-function isMasterInvoice(inv: any): boolean {
-  return String(inv?.invoiceType || 'MASTER').toUpperCase() === 'MASTER';
-}
 
 interface VerificationOrderSummaryProps {
   isAr: boolean;
   order: any;
   task: any;
-  /** Current user role (drives invoice layout: admin vs customer vs merchant — same as OrderDetails). */
+  /** Current user role (kept for callers; matching page always uses party invoices). */
   viewerRole?: string | null;
 }
 
@@ -117,13 +100,8 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
 
   if (!order) return null;
 
-  const role = normalizeRole(viewerRole);
-  const isOfficer = role === 'VERIFICATION_OFFICER';
-  const isRealAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
-  /** Officers and any non-admin on this page always get party invoices (never typed admin tabs). */
-  const usePartyInvoices = isOfficer || !isRealAdmin;
-  const adminInvoiceRole: InvoicePanelRole =
-    role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'ADMIN';
+  // Matching page: always customer|merchant party invoices (never typed admin tabs).
+  const usePartyInvoices = shouldUsePartyInvoicesOnVerificationPage(viewerRole);
 
   const doc =
     task?.merchantVerificationDoc ??
@@ -132,10 +110,10 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
       : null) ??
     order.verificationDocuments?.[0];
   const invoices = Array.isArray(order.invoices) ? order.invoices : [];
-  const masterInvoiceCount = invoices.filter(isMasterInvoice).length;
-  const invoiceBadgeCount = usePartyInvoices ? masterInvoiceCount : invoices.length;
+  const masterInvoices = filterMasterInvoices(invoices);
+  const invoiceBadgeCount = usePartyInvoices ? masterInvoices.length : invoices.length;
   const merchantStore = resolveMerchantStore(order, doc);
-  const storeOwner = order.store?.owner ?? merchantStore?.owner;
+  const storeContact = resolveStoreOwnerContact(order.store, doc?.store ?? merchantStore);
   const multiPart = isMultiPartOrder(order);
   const activeParts = getActiveVerificationParts(order);
   const aggregatedCustomerImages = multiPart ? getCustomerReferenceImages(order) : [];
@@ -144,9 +122,9 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
   const statusLabel = CUSTOMER_ORDER_STATUS_LABEL[order.status];
 
   const customerWa = toWhatsAppHref(order.customer?.phone, order.customer?.countryCode);
-  const storePhone = storeOwner?.phone ?? null;
-  const storeEmail = storeOwner?.email ?? null;
-  const storeWa = toWhatsAppHref(storePhone, storeOwner?.countryCode);
+  const storePhone = storeContact.phone;
+  const storeEmail = storeContact.email;
+  const storeWa = toWhatsAppHref(storePhone, storeContact.countryCode);
   const storeSubParts = [
     merchantStore?.storeCode ? `#${merchantStore.storeCode}` : null,
     storePhone,
@@ -234,12 +212,20 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
                   ariaLabel={isAr ? 'فتح واتساب المتجر' : 'Open store WhatsApp'}
                 />
               )}
-              {storeEmail && (
+              {storeEmail && !storeSubParts.includes(storeEmail) && (
                 <a
                   href={`mailto:${storeEmail}`}
                   className="block mt-1.5 text-[11px] text-sky-400/90 hover:text-sky-300 break-all"
                 >
                   {storeEmail}
+                </a>
+              )}
+              {storeEmail && storeSubParts.includes(storeEmail) && (
+                <a
+                  href={`mailto:${storeEmail}`}
+                  className="inline-flex mt-2 text-[11px] text-sky-400/90 hover:text-sky-300 break-all"
+                >
+                  {isAr ? 'إرسال بريد' : 'Email store'}
                 </a>
               )}
             </InfoTile>
@@ -278,19 +264,19 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
                   .join(' · ')}
               />
             )}
-            {invoices[0] && (
+            {masterInvoices[0] && (
               <InfoTile
                 icon={Receipt}
                 label={isAr ? 'آخر فاتورة' : 'Latest invoice'}
-                value={`#${invoices[0].invoiceNumber}`}
-                sub={`${Number(invoices[0].total).toLocaleString(locale, {
+                value={`#${masterInvoices[0].invoiceNumber}`}
+                sub={`${Number(masterInvoices[0].total).toLocaleString(locale, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })} ${invoices[0].currency || 'AED'} · ${invoices[0].status}`}
+                })} ${masterInvoices[0].currency || 'AED'} · ${masterInvoices[0].status}`}
               />
             )}
           </div>
-        ) : usePartyInvoices ? (
+        ) : (
           <div className="space-y-4 min-w-0">
             <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <button
@@ -317,14 +303,13 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
               </button>
             </div>
             <OrderInvoicesPanel
+              key={`party-${invoiceAudience}`}
               orderId={order.id}
               role={invoiceAudience === 'customer' ? 'CUSTOMER' : 'MERCHANT'}
-              initialData={invoices}
+              initialData={masterInvoices}
               partyInvoicesOnly
             />
           </div>
-        ) : (
-          <OrderInvoicesPanel orderId={order.id} role={adminInvoiceRole} initialData={invoices} />
         )}
       </GlassCard>
 
