@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { getAccessToken } from '../../../utils/auth';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useAdminStore, ShippingRule, AdminActivityLog } from '../../../stores/useAdminStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -158,7 +159,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
     if (activeTab !== 'financial') return;
     const loadFinancial = async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -411,7 +412,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
   const saveFinancialSettings = async (audit: { reason: string; adminName: string; adminSignature: string }) => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       const financialPayload = {
         ...formData.financial,
         ...(pendingStripeConnect !== null ? { stripeConnectEnabled: pendingStripeConnect } : {}),

@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import { getAccessToken } from '../../../utils/auth';
+import React from 'react';
 import { Building2, FileText, Upload } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
@@ -19,7 +20,7 @@ export const AdminSettingsCompanyTab: React.FC<Props> = ({
   const company = formData.company || {};
 
   const uploadNomo = async (file: File) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     const fd = new FormData();
     fd.append('file', file);
     fd.append('assetType', 'nomo-document');

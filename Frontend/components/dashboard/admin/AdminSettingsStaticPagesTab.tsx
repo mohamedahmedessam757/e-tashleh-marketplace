@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState } from 'react';
+import { getAccessToken } from '../../../utils/auth';
+import React, { useEffect, useState } from 'react';
 import { FileText, Eye } from 'lucide-react';
 import { SettingsAuditModal, SettingsAuditPayload } from './SettingsAuditModal';
 
@@ -29,7 +30,7 @@ export const AdminSettingsStaticPagesTab: React.FC<Props> = ({ isAr }) => {
   const load = async (slug: string) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       const res = await fetch(`${API_URL}/admin/static-pages/${slug}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -58,7 +59,7 @@ export const AdminSettingsStaticPagesTab: React.FC<Props> = ({ isAr }) => {
   }, [activeSlug]);
 
   const save = async (audit: SettingsAuditPayload) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     const res = await fetch(`${API_URL}/admin/static-pages/${activeSlug}`, {
       method: 'PUT',
       headers: {

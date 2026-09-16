@@ -1,3 +1,4 @@
+import { getAccessToken } from '../utils/auth';
 
 import { create } from 'zustand';
 import axios from 'axios';
@@ -94,7 +95,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
         const { socket } = get();
         if (socket) return;
 
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const newSocket = io(`${API_URL}/chat`, {
             transports: ['websocket'],
             autoConnect: true,
@@ -173,7 +174,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
         set({ currentType: effectiveType });
 
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await axios.get(`${API_URL}/chats`, {
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
@@ -206,7 +207,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
         }
         
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await axios.get(`${API_URL}/chats/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -238,7 +239,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
                 }
             }
 
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await axios.post(`${API_URL}/chats/${chatId}/admin-action`, 
                 { action, payload },
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -258,7 +259,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
 
     sendMessage: async (chatId, text, mediaUrl, mediaType, mediaName) => {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const activeChat = get().activeChat;
 
             // 1) Optimistic UI update for instant feedback
@@ -315,7 +316,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
 
     toggleTranslation: async (chatId: string, enabled: boolean) => {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             await axios.post(`${API_URL}/chats/${chatId}/translation`,
                 { enabled },
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -337,7 +338,7 @@ export const useAdminChatStore = create<AdminChatState>((set, get) => ({
 
     initSupportChat: async (params) => {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await axios.post(`${API_URL}/chats/admin-init-support`, 
                 params,
                 { headers: { Authorization: `Bearer ${token}` } }

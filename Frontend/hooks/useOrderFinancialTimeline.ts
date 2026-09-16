@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../services/api/config';
+import { getAccessToken } from '../utils/auth';
 
 export interface OrderTimelineEvent {
   id: string;
@@ -59,7 +60,7 @@ async function fetchTimelineFromApi(
   orderId: string,
   signal?: AbortSignal,
 ): Promise<OrderFinancialTimelineData> {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const res = await fetch(
     `${API_URL}/payments/admin/order-financial-timeline/${encodeURIComponent(orderId)}`,
     {

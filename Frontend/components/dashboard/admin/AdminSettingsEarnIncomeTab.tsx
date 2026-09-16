@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+import { getAccessToken } from '../../../utils/auth';
+import React, { useState } from 'react';
 import { ChevronDown, Image, RotateCcw, Sparkles } from 'lucide-react';
 import type { EarnIncomeConfig } from '../../../types/earnIncome';
 import { buildEarnIncomeFromLocale } from '../../../utils/systemConfigDefaults';
@@ -12,7 +13,7 @@ interface Props {
 }
 
 async function uploadAsset(file: File, assetType: string): Promise<string> {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const fd = new FormData();
   fd.append('file', file);
   fd.append('assetType', assetType);

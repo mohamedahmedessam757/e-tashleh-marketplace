@@ -4,6 +4,7 @@ import { useNotificationStore } from './useNotificationStore';
 import { supabase } from '../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { resolveEarliestDocumentExpiry } from '../utils/licenseExpiry';
+import { getAccessToken } from '../utils/auth';
 
 /** Ref-count: multiple components may request vendor profile realtime. */
 let vendorProfileRealtimeRefCount = 0;
@@ -507,7 +508,7 @@ export const useVendorStore = create<VendorState>()(
         .getPublicUrl(filePath);
 
       // SYNC WITH BACKEND (Only if logged in / has token)
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       if (token) {
         try {
           const { client } = await import('../services/api/client');

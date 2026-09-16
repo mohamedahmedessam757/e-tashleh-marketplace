@@ -53,6 +53,7 @@ import {
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
 import { storageApi } from '../../../services/api/storage';
+import { getAccessToken } from '../../../utils/auth';
 
 type AdminEvidenceItem = {
     id: string;
@@ -129,7 +130,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     useEffect(() => {
         const loadGatewayFee = async () => {
             try {
-                const token = localStorage.getItem('access_token');
+                const token = getAccessToken();
                 const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });

@@ -1,3 +1,4 @@
+import { getAccessToken } from '../utils/auth';
 
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
@@ -90,7 +91,7 @@ export const useLoyaltyStore = create<LoyaltyState>((set, get) => ({
         const userId = getCurrentUserId();
         if (!userId) return;
 
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const newSocket = io(`${import.meta.env.VITE_API_URL}/loyalty`, {
             transports: ['websocket'],
             autoConnect: true,
@@ -125,7 +126,7 @@ export const useLoyaltyStore = create<LoyaltyState>((set, get) => ({
     },
 
     fetchLoyaltyData: async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         // Initialize WebSockets when data is fetched
@@ -162,7 +163,7 @@ export const useLoyaltyStore = create<LoyaltyState>((set, get) => ({
     },
 
     fetchReferralHistory: async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         set({ referralHistoryLoading: true });
@@ -198,7 +199,7 @@ export const useLoyaltyStore = create<LoyaltyState>((set, get) => ({
         set({ loading: true, error: null });
 
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await fetch(`${import.meta.env.VITE_API_URL}/loyalty/redeem`, {
                 method: 'POST',
                 headers: {

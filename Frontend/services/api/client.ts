@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_URL } from './config';
 import { clearAuthStorage } from '../../utils/clearAuthStorage';
+import { getAccessToken } from '../../utils/auth';
 import { getCorrelationId, setCorrelationIdFromResponse } from '../../utils/correlationId';
 import { reportPlatformError } from '../../utils/platformErrorReporter';
 import { buildAuthRecoveryRedirectUrl } from '../../utils/widersDeepLink';
@@ -42,7 +43,7 @@ export const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }

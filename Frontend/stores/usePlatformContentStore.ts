@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
+import { getAccessToken } from '../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
@@ -39,7 +40,7 @@ export const usePlatformContentStore = create<PlatformContentState>((set, get) =
   fetchStaticPages: async () => {
     try {
       const res = await fetch(`${API_URL}/admin/static-pages`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        headers: { Authorization: `Bearer ${getAccessToken()}` },
       });
       if (res.ok) set({ staticPages: await res.json() });
     } catch (e) {

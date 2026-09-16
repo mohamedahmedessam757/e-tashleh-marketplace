@@ -1,9 +1,9 @@
-﻿
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Building2, Loader2, X, Check } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { GlassCard } from './GlassCard';
+import { getAccessToken } from '../../utils/auth';
 
 export interface SearchResult {
   id: string;
@@ -64,7 +64,7 @@ export const EntitySearchInput: React.FC<EntitySearchInputProps> = ({
       setIsLoading(true);
       setShowDropdown(true);
       try {
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('token');
+        const token = getAccessToken() || sessionStorage.getItem('token');
         // Correcting API URL: Remove /api suffix and use Vite env variable
         const baseUrl = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         

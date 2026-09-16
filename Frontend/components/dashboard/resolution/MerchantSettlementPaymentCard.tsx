@@ -17,6 +17,7 @@ import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { useResolutionStore, ResolutionCase } from '../../../stores/useResolutionStore';
 import { useMerchantWalletStore } from '../../../stores/useMerchantWalletStore';
 import { Badge } from '../../ui/Badge';
+import { getAccessToken } from '../../../utils/auth';
 
 interface MerchantSettlementPaymentCardProps {
   caseRecord: ResolutionCase;
@@ -94,7 +95,7 @@ export const MerchantSettlementPaymentCard: React.FC<MerchantSettlementPaymentCa
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: JSON.stringify({
           caseId: caseRecord.id,
@@ -135,7 +136,7 @@ export const MerchantSettlementPaymentCard: React.FC<MerchantSettlementPaymentCa
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: JSON.stringify({ caseId: caseRecord.id, caseType }),
       });

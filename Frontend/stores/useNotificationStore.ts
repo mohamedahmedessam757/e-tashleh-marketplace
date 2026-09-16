@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 import { io, Socket } from 'socket.io-client';
 import { API_URL } from '../services/api/config';
-import { getCurrentUserId } from '../utils/auth';
+import { getAccessToken, getCurrentUserId } from '../utils/auth';
 import { notificationsApi } from '../services/api/notifications';
 import {
   addDismissedPopupId,
@@ -267,7 +267,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
 
     // 3. Connect to the NestJS WebSockets Gateway (Phase 1 Infrastructure)
-    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const token = getAccessToken();
     console.log(`[Notifications] Connecting to ${wsBaseUrl}/notifications for user ${userId}...`);
     socket = io(`${wsBaseUrl}/notifications`, {
       transports: ['websocket'],

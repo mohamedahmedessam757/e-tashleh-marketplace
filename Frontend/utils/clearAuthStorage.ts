@@ -1,7 +1,9 @@
+import { clearAccessToken } from './auth';
+
 /** Clears all client-side auth/session keys on logout */
 export function clearAuthStorage(): void {
+  clearAccessToken();
   const keys = [
-    'access_token',
     'token',
     'user',
     'admin_role',

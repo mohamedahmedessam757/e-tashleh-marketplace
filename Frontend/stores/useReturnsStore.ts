@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Return, Dispute } from '../types';
+import { getAccessToken } from '../utils/auth';
 
 interface ReturnsState {
     returns: Return[];
@@ -18,7 +19,7 @@ interface ReturnsState {
 const getApiUrl = () => import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
 const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) throw new Error('No authentication token found');
     return { Authorization: `Bearer ${token}` };
 };
@@ -41,7 +42,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
     error: null,
 
     fetchDeliveredOrders: async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         set({ loading: true, error: null });
@@ -63,7 +64,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
     },
 
     fetchReturnsAndDisputes: async (options?: { silent?: boolean }) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         const silent = options?.silent ?? false;

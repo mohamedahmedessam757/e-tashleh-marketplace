@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Award,
@@ -30,6 +30,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { io, Socket } from 'socket.io-client';
 import { supabase } from '../../../services/supabase';
 import { client } from '../../../services/api/client';
+import { getAccessToken as readAccessToken } from '../../../utils/auth';
 
 // Same origin as rest of app (axios injects access_token)
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
@@ -133,7 +134,7 @@ function normalizePerformance(raw: Record<string, unknown>): PerformanceData {
 }
 
 function getAccessToken(): string | null {
-    return localStorage.getItem('access_token') || localStorage.getItem('token');
+    return readAccessToken() || localStorage.getItem('token');
 }
 
 interface ReferralItem {

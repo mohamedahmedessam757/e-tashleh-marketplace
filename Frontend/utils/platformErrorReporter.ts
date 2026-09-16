@@ -1,6 +1,6 @@
 import { API_URL } from '../services/api/config';
 import { getCorrelationId } from './correlationId';
-import { getCurrentUser } from './auth';
+import { getAccessToken, getCurrentUser } from './auth';
 
 type ReportPayload = {
   errorName: string;
@@ -42,7 +42,7 @@ export async function reportPlatformError(payload: ReportPayload): Promise<void>
   if (!shouldSend(fingerprint)) return;
 
   const user = getCurrentUser();
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
 
   try {
     await fetch(`${API_URL}/system/client-errors`, {

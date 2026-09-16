@@ -7,6 +7,7 @@ import { useAdminStore } from '../../stores/useAdminStore';
 import { authApi } from '@/services/api/auth';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
+import { setAccessToken } from '../../utils/auth';
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
@@ -118,7 +119,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       );
     }
 
-    localStorage.setItem('access_token', loginData.access_token);
+    setAccessToken(loginData.access_token, loginData.user.role);
     loginAdmin(loginData.user, loginData.permissions);
     onLoginSuccess();
   };

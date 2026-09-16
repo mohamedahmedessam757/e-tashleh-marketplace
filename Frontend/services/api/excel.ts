@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken } from '../../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
@@ -7,7 +8,7 @@ export const excelApi = {
      * Download Invoice Excel for a specific order
      */
     async downloadInvoice(orderId: string, orderNumber: string) {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const response = await axios.get(`${API_URL}/orders/${orderId}/export-excel`, {
             headers: { Authorization: `Bearer ${token}` },
             responseType: 'blob'
@@ -26,7 +27,7 @@ export const excelApi = {
      * Download Waybills Excel for a specific order
      */
     async downloadWaybills(orderId: string, shipmentId?: string) {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const urlParams = shipmentId ? `?shipmentId=${shipmentId}` : '';
         const response = await axios.get(`${API_URL}/orders/${orderId}/waybills/export-excel${urlParams}`, {
             headers: { Authorization: `Bearer ${token}` },

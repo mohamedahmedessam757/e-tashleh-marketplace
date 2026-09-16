@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 import { getCurrentUserId, getCurrentUser } from '../utils/auth';
+import { getAccessToken } from '../utils/auth';
 
 export interface UserProfile {
   id: string;
@@ -271,7 +272,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }));
 
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       const payload: Record<string, unknown> = { ...data };
       if (data.language) {
         payload.preferredLanguage = data.language;
@@ -389,7 +390,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       const formData = new FormData();
       formData.append('file', file);
 

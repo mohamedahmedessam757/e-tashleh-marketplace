@@ -13,6 +13,7 @@ import { computeOfferFinalPrice } from '../utils/offerPricing';
 import { canCustomerCancelOrder } from '../utils/orderCancelPolicy';
 import { markOrderCancelledByCustomer, clearOrderCancelledByCustomer } from '../utils/orderExpiryHelpers';
 import { useAdminStore } from './useAdminStore';
+import { getAccessToken } from '../utils/auth';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1246,7 +1247,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     updateOrderStatus: (id: string, status: StatusType) => get().transitionOrder(id, status, 'LEGACY_CALL'),
 
     adminUpdateOffer: async (offerId, updateDto) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         const response = await fetch(`${API_URL}/offers/admin/${offerId}`, {
             method: 'PATCH',
@@ -1266,7 +1267,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     },
 
     adminDeleteOffer: async (offerId) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         const response = await fetch(`${API_URL}/offers/admin/${offerId}`, {
             method: 'DELETE',
@@ -1285,7 +1286,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     },
     
     withdrawOffer: async (offerId) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         const response = await fetch(`${API_URL}/offers/${offerId}/withdraw`, {
             method: 'POST',
@@ -1309,7 +1310,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             orders: state.orders.map(o => String(o.id) === String(orderId) ? { ...o, adminNotes: notes } : o)
         }));
 
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
         const response = await fetch(`${API_URL}/orders/admin/${orderId}/notes`, {
             method: 'PATCH',

@@ -18,6 +18,7 @@ import { useResolutionStore, ResolutionCase } from '../../../stores/useResolutio
 import { useMerchantWalletStore } from '../../../stores/useMerchantWalletStore';
 import { useCustomerWalletStore } from '../../../stores/useCustomerWalletStore';
 import { Badge } from '../../ui/Badge';
+import { getAccessToken } from '../../../utils/auth';
 
 interface AdjudicationFeePaymentCardProps {
   caseRecord: ResolutionCase;
@@ -93,7 +94,7 @@ export const AdjudicationFeePaymentCard: React.FC<AdjudicationFeePaymentCardProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: JSON.stringify({
           caseId: caseRecord.id,
@@ -130,7 +131,7 @@ export const AdjudicationFeePaymentCard: React.FC<AdjudicationFeePaymentCardProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: JSON.stringify({ caseId: caseRecord.id, caseType }),
       });

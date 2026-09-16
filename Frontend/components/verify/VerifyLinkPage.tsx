@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
-import { getCurrentUser } from '../../utils/auth';
+import { clearVerificationOfficerSession, getCurrentUser } from '../../utils/auth';
 import { VerificationSessionCountdown } from '../dashboard/admin/verification/VerificationSessionCountdown';
 
 const AdminLogin = lazy(() =>
@@ -139,6 +139,10 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
     (async () => {
       try {
         setLoading(true);
+        // Every verify-link open requires fresh officer email+password (+ OTP).
+        clearVerificationOfficerSession();
+        setNeedsLogin(true);
+
         const { data } = await verificationTasksApi.validatePublicLink(token);
         if (cancelled) return;
 
@@ -153,9 +157,6 @@ export const VerifyLinkPage: React.FC<VerifyLinkPageProps> = ({
           expiresAt: data.expiresAt,
           sessionDeadline,
         });
-
-        const user = getCurrentUser();
-        if (!user || user.role !== 'VERIFICATION_OFFICER') setNeedsLogin(true);
       } catch (e: unknown) {
         if (!cancelled) {
           const code = extractLinkErrorCode(e);

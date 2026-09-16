@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+import { getAccessToken } from '../../../../utils/auth';
+import React, { useState } from 'react';
 import { useAdminChatStore } from '../../../../stores/useAdminChatStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { admin } from '../../../../data/locales/admin';
@@ -72,7 +73,7 @@ export const AdminChatContext: React.FC = () => {
         setBlockReason('');
         
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const response = await axios.get(`${API_URL}/chats/admin/user-risk/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

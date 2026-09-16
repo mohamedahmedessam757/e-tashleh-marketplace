@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNotificationStore } from '../stores/useNotificationStore';
 import { useResolutionStore } from '../stores/useResolutionStore';
+import { getAccessToken } from './auth';
 
 /**
  * Handles Stripe Checkout return for shipping (?payment=) and adjudication fees (?adjFeePayment=).
@@ -53,7 +54,7 @@ export function useShippingPaymentReturn(
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+                        Authorization: `Bearer ${getAccessToken()}`,
                     },
                     body: JSON.stringify({ caseId, caseType }),
                 });

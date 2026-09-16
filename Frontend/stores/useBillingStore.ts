@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Order } from '../types';
+import { getAccessToken } from '../utils/auth';
 
 interface Invoice extends Order {
     invoice_number: string;
@@ -38,7 +39,7 @@ interface BillingState {
 
 const getApiUrl = () => import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 const getHeaders = () => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     return {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -61,7 +62,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
         if (isInitial) set({ loading: true });
         set({ error: null });
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const userJson = localStorage.getItem('user');
             if (!token || !userJson) {
                 set({ invoices: [], loading: false });
@@ -115,7 +116,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
         if (isInitial) set({ loading: true });
         set({ error: null });
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const userJson = localStorage.getItem('user');
             if (!token || !userJson) return;
 
@@ -145,7 +146,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
     },
 
     fetchCards: async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         set({ cardsLoading: true, error: null });
@@ -177,7 +178,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
     },
 
     addCard: async (cardData) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         set({ cardsLoading: true, error: null });

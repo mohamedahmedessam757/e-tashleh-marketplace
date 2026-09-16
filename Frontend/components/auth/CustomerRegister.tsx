@@ -7,6 +7,7 @@ import { OTPMethodSelection } from './OTPMethodSelection';
 import { OTPVerification } from './OTPVerification';
 import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import { consumeRegisterPrefill } from '../../utils/registerPrefill';
+import { setAccessToken } from '../../utils/auth';
 
 interface CustomerRegisterProps {
   onLoginClick: () => void;
@@ -247,7 +248,7 @@ export const CustomerRegister: React.FC<CustomerRegisterProps> = ({ onLoginClick
       sessionStorage.removeItem('pending_referral_code');
 
       const loginResponse = await authApi.login(formData.email, loginPassword);
-      localStorage.setItem('access_token', loginResponse.access_token);
+      setAccessToken(loginResponse.access_token, loginResponse.user?.role);
       if (loginResponse.user) {
         localStorage.setItem('user', JSON.stringify(loginResponse.user));
       }

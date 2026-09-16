@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { getAccessToken } from '../../../utils/auth';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -109,7 +110,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${getAccessToken()}`
                 },
                 body: JSON.stringify({
                     caseId: caseRecord.id,
@@ -158,7 +159,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${getAccessToken()}`
                 },
                 body: JSON.stringify({
                     caseId: caseRecord.id,

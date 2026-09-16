@@ -9,7 +9,7 @@ import { otpSecondsFromMinutes } from '../../utils/otpConfig';
 import type { PendingRedirect } from '../../utils/widersDeepLink';
 import { isLikelyWhatsAppInAppBrowser, openCurrentUrlInExternalBrowser } from '../../utils/widersDeepLink';
 import { saveRegisterPrefill, type RegisterPrefill } from '../../utils/registerPrefill';
-import { getCurrentUser, isAccessTokenValid, mapBackendRoleToFrontend } from '../../utils/auth';
+import { getCurrentUser, isAccessTokenValid, mapBackendRoleToFrontend, setAccessToken } from '../../utils/auth';
 
 interface LoginPageProps {
   onRegisterClick: () => void;
@@ -291,7 +291,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               );
             }
 
-            localStorage.setItem('access_token', response.access_token);
+            setAccessToken(response.access_token, response.user?.role);
             if (response.user) {
               localStorage.setItem('user', JSON.stringify(response.user));
             }

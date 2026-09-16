@@ -90,7 +90,7 @@ import {
 } from './utils/dashboardEntryResolver';
 
 // Auth Setup
-import { getCurrentUser, mapBackendRoleToFrontend } from './utils/auth';
+import { clearVerificationOfficerSession, getCurrentUser, mapBackendRoleToFrontend, setAccessToken } from './utils/auth';
 import { authApi } from './services/api/auth';
 
 // Auth Components
@@ -235,12 +235,17 @@ function AppContent() {
   );
 
   const syncUrlOnBoot = useCallback(async () => {
+    const initialState = parseUrlToState();
+    // Officer account entry via admin-login must never reuse a prior tab session.
+    if (initialState.view === 'admin-login') {
+      clearVerificationOfficerSession();
+    }
+
     let user = getCurrentUser();
     if (user) {
       setUserRole(mapBackendRoleToFrontend(user.role) as UserRole);
     }
 
-    const initialState = parseUrlToState();
     if (initialState.view === 'verify-link' && initialState.verifyToken) {
       setCurrentView('verify-link');
       setVerifyToken(initialState.verifyToken);
@@ -259,7 +264,7 @@ function AppContent() {
         setDeepLinkBootstrapping(true);
         try {
           const response = await authApi.consumeDeepLink(dl);
-          localStorage.setItem('access_token', response.access_token);
+          setAccessToken(response.access_token, response.user?.role);
           if (response.user) {
             localStorage.setItem('user', JSON.stringify(response.user));
           }
@@ -352,6 +357,16 @@ function AppContent() {
   }, [pushView]);
 
   const handleNavigate = (view: ViewState) => {
+    if (view === 'admin-login') {
+      clearVerificationOfficerSession();
+      setUserRole(null);
+      try {
+        sessionStorage.removeItem('admin');
+        sessionStorage.removeItem('etashleh-admin-storage');
+      } catch {
+        /* ignore */
+      }
+    }
     setCurrentView(view);
     pushView(view);
   };

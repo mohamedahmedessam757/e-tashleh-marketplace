@@ -14,6 +14,7 @@ import {
 } from '../utils/dashboardStats';
 import { getSystemConfigDefaults, mergeSystemConfig } from '../utils/systemConfigDefaults';
 import type { EarnIncomeConfig } from '../types/earnIncome';
+import { clearAccessToken, getAccessToken } from '../utils/auth';
 
 let feedRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -601,7 +602,7 @@ const DEFAULT_STATUS: SystemStatus = {
 
 function readInitialAdmin(): AdminUser | null {
   try {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) {
       sessionStorage.removeItem('admin');
       return null;
@@ -726,7 +727,11 @@ export const useAdminStore = create<AdminState>()(
         sessionStorage.removeItem('etashleh-admin-storage');
 
         sessionStorage.setItem('admin', JSON.stringify(safeUser));
-        localStorage.setItem('admin_role', safeUser.role);
+        if (safeUser.role === 'VERIFICATION_OFFICER') {
+          localStorage.removeItem('admin_role');
+        } else {
+          localStorage.setItem('admin_role', safeUser.role);
+        }
         
         set({ currentAdmin: safeUser, dashboardStatsError: null });
         
@@ -742,7 +747,7 @@ export const useAdminStore = create<AdminState>()(
       logoutAdmin: () => {
         sessionStorage.removeItem('admin');
         localStorage.removeItem('admin_role');
-        localStorage.removeItem('access_token');
+        clearAccessToken();
         set({ currentAdmin: null, dashboardStats: null, dashboardStatsError: null });
         
         // Clear permissions store
@@ -753,7 +758,7 @@ export const useAdminStore = create<AdminState>()(
 
       silentFetchDashboardStats: async (filters) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           if (!token) return;
 
           const currentFilters = filters || get().dashboardFilters;
@@ -768,7 +773,7 @@ export const useAdminStore = create<AdminState>()(
       fetchAdminActivityLogs: async () => {
         set({ isLoadingLogs: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/admin/platform-settings/activity/logs`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -831,7 +836,7 @@ export const useAdminStore = create<AdminState>()(
 
       fetchSystemSettings: async () => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/admin/platform-settings`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -921,7 +926,7 @@ export const useAdminStore = create<AdminState>()(
         adminSignatureType?: 'DRAWN' | 'TYPED';
       }) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           if (key === 'system_status') {
              const newStatus = { 
                ...get().systemStatus,
@@ -1020,7 +1025,7 @@ export const useAdminStore = create<AdminState>()(
       fetchDashboardStats: async (filters) => {
         const { dashboardStats, dashboardFilters } = get();
         const activeFilters = filters || dashboardFilters;
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
 
         if (!token) {
           set({
@@ -1163,7 +1168,7 @@ export const useAdminStore = create<AdminState>()(
 
       saveVendorContract: async (contractData: any) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           if (!token) return false;
           
           const res = await fetch(`${API_URL}/contracts`, {
@@ -1190,7 +1195,7 @@ export const useAdminStore = create<AdminState>()(
       fetchWithdrawals: async (silent = false) => {
         if (!silent) set({ isLoadingWithdrawals: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const { financialFilters } = get();
           const params = new URLSearchParams();
           const status = financialFilters.withdrawalStatus || 'PENDING';
@@ -1218,7 +1223,7 @@ export const useAdminStore = create<AdminState>()(
 
       processWithdrawal: async (id, action, notes, method, signature, adminName, adminEmail) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const endpoint = action === 'reject'
             ? `${API_URL}/payments/admin/withdrawals/${id}/reject`
             : `${API_URL}/payments/admin/withdrawals/${id}/approve`;
@@ -1249,7 +1254,7 @@ export const useAdminStore = create<AdminState>()(
 
       approveWithdrawal: async (id, notes, adminName, adminEmail) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/approve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1268,7 +1273,7 @@ export const useAdminStore = create<AdminState>()(
 
       rejectWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/reject`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1287,7 +1292,7 @@ export const useAdminStore = create<AdminState>()(
 
       completeWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/complete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1312,7 +1317,7 @@ export const useAdminStore = create<AdminState>()(
 
       releaseWithdrawal: async (id, notes, signature, adminName, adminEmail) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/withdrawals/${id}/release`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1337,7 +1342,7 @@ export const useAdminStore = create<AdminState>()(
 
       verifyBankDetails: async (targetId, role) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/verify-bank-details`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -1379,7 +1384,7 @@ export const useAdminStore = create<AdminState>()(
 
       updateWithdrawalLimits: async (limits) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/withdrawal-settings`, {
             method: 'PUT',
             headers: { 
@@ -1656,7 +1661,7 @@ export const useAdminStore = create<AdminState>()(
         }
 
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const queryParams = new URLSearchParams({
             limit: '15',
             type: feedFilters.type || 'ALL',
@@ -1711,7 +1716,7 @@ export const useAdminStore = create<AdminState>()(
         }
 
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/order-financial-timeline/${orderId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -1756,7 +1761,7 @@ export const useAdminStore = create<AdminState>()(
       fetchAdminFinancials: async (filters?: any, silent: boolean = false) => {
         if (!silent) set({ isLoadingFinancials: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const currentFilters = { limit: 500, ...(filters || get().financialFilters) };
           const queryParams = new URLSearchParams(currentFilters as any).toString();
           const res = await fetch(`${API_URL}/payments/admin/financials${queryParams ? `?${queryParams}` : ''}`, {
@@ -1779,7 +1784,7 @@ export const useAdminStore = create<AdminState>()(
 
       exportUnifiedFinancialCSV: async (filters) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const ff = get().financialFilters;
           const fd = get().feedFilters;
           const currentFilters = {
@@ -1825,7 +1830,7 @@ export const useAdminStore = create<AdminState>()(
 
       sendManualPayout: async (dto) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/manual-payout`, {
             method: 'POST',
             headers: { 
@@ -1920,7 +1925,7 @@ export const useAdminStore = create<AdminState>()(
       fetchAdminCustomerInvoices: async (params) => {
         set({ isLoadingCustomerInvoices: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const query = new URLSearchParams();
           if (params?.search) query.set('search', params.search);
           if (params?.entityType) query.set('entityType', params.entityType);
@@ -1948,7 +1953,7 @@ export const useAdminStore = create<AdminState>()(
       fetchAdminStoreInvoices: async (params) => {
         set({ isLoadingStoreInvoices: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const query = new URLSearchParams();
           if (params?.search) query.set('search', params.search);
           if (params?.entityType) query.set('entityType', params.entityType);
@@ -1975,7 +1980,7 @@ export const useAdminStore = create<AdminState>()(
       fetchSellerAccounts: async (search) => {
         set({ isLoadingSellerAccounts: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
           const res = await fetch(`${API_URL}/payments/admin/seller-accounts?search=${encodeURIComponent(q)}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -1994,7 +1999,7 @@ export const useAdminStore = create<AdminState>()(
       fetchCustomerAccounts: async (search) => {
         set({ isLoadingCustomerAccounts: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
           const res = await fetch(`${API_URL}/payments/admin/customer-accounts?search=${encodeURIComponent(q)}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -2013,7 +2018,7 @@ export const useAdminStore = create<AdminState>()(
       fetchFinancialRefunds: async (search) => {
         set({ isLoadingFinancialRefunds: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
           const res = await fetch(`${API_URL}/payments/admin/financial-refunds?search=${encodeURIComponent(q)}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -2032,7 +2037,7 @@ export const useAdminStore = create<AdminState>()(
       fetchSettlementSummary: async () => {
         set({ isLoadingSettlement: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/settlement/summary`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -2048,7 +2053,7 @@ export const useAdminStore = create<AdminState>()(
 
       runFinancialSettlement: async (payload) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/settlement/run`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -2068,7 +2073,7 @@ export const useAdminStore = create<AdminState>()(
 
       fetchSettlementHistory: async () => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/settlement/history?limit=5`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -2084,7 +2089,7 @@ export const useAdminStore = create<AdminState>()(
       fetchFinancialPenalties: async (search) => {
         set({ isLoadingFinancialPenalties: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
           const res = await fetch(`${API_URL}/payments/admin/financial-penalties?search=${encodeURIComponent(q)}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -2103,7 +2108,7 @@ export const useAdminStore = create<AdminState>()(
       fetchFinancialAudit: async (params) => {
         set({ isLoadingFinancialAudit: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const query = new URLSearchParams();
           if (params?.search) query.set('search', params.search);
           if (params?.page) query.set('page', String(params.page));
@@ -2125,7 +2130,7 @@ export const useAdminStore = create<AdminState>()(
       fetchFinancialReport: async (reportId, params) => {
         set({ isLoadingFinancialReport: true, financialReportData: null });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const { financialFilters } = get();
           const query = new URLSearchParams({
             startDate: params?.startDate ?? financialFilters.startDate ?? '',
@@ -2156,7 +2161,7 @@ export const useAdminStore = create<AdminState>()(
           );
         }
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const { financialFilters } = get();
           const query = new URLSearchParams({
             format,
@@ -2188,7 +2193,7 @@ export const useAdminStore = create<AdminState>()(
 
       fetchAdminInvoiceById: async (id) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/invoices/admin/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -2201,7 +2206,7 @@ export const useAdminStore = create<AdminState>()(
 
       resendAdminInvoice: async (id) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/invoices/admin/${id}/resend`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
@@ -2215,7 +2220,7 @@ export const useAdminStore = create<AdminState>()(
 
       updateStoreRestrictions: async (id, data) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/stores/${id}/restrictions`, {
             method: 'PATCH',
             headers: {
@@ -2242,7 +2247,7 @@ export const useAdminStore = create<AdminState>()(
 
       clearStoreRestrictions: async (id, signatureData) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/stores/${id}/clear-restrictions`, {
             method: 'POST',
             headers: {
@@ -2269,7 +2274,7 @@ export const useAdminStore = create<AdminState>()(
       fetchVehicleCatalog: async () => {
         set({ isLoadingCatalog: true });
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/all`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -2286,7 +2291,7 @@ export const useAdminStore = create<AdminState>()(
 
       createVehicleMake: async (dto) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/makes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2300,7 +2305,7 @@ export const useAdminStore = create<AdminState>()(
 
       updateVehicleMake: async (id, dto) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/makes/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2324,7 +2329,7 @@ export const useAdminStore = create<AdminState>()(
 
       createVehicleModel: async (dto) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/models`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2338,7 +2343,7 @@ export const useAdminStore = create<AdminState>()(
 
       updateVehicleModel: async (id, dto) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/models/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2365,7 +2370,7 @@ export const useAdminStore = create<AdminState>()(
 
       toggleAllModels: async (makeId, isActive, signatureData) => {
         try {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const res = await fetch(`${API_URL}/vehicle-catalog/admin/makes/${makeId}/toggle-models`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -2418,7 +2423,7 @@ export const useAdminStore = create<AdminState>()(
       storage: createJSONStorage(() => sessionStorage),
       onRehydrateStorage: () => () => {
         queueMicrotask(() => {
-          const token = localStorage.getItem('access_token');
+          const token = getAccessToken();
           const state = useAdminStore.getState();
           if (!token && state.currentAdmin) {
             useAdminStore.setState({ currentAdmin: null, dashboardStats: null, dashboardStatsError: 'NO_TOKEN' });

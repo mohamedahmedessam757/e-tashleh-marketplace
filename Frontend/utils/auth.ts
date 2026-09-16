@@ -1,5 +1,5 @@
-
 const JWT_EXPIRY_SKEW_SEC = 60;
+const ACCESS_TOKEN_KEY = 'access_token';
 
 export interface DecodedAccessToken {
     sub: string;
@@ -21,19 +21,97 @@ function decodeJwtPayload(token: string): DecodedAccessToken | null {
     }
 }
 
-/** Decode JWT payload without validating expiry (internal use). */
-export function decodeAccessToken(token?: string | null): DecodedAccessToken | null {
-    if (!token) {
-        token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
+export function isVerificationOfficerRole(role?: string | null): boolean {
+    return String(role || '').toUpperCase() === 'VERIFICATION_OFFICER';
+}
+
+/**
+ * Verification officers must not persist auth across browser sessions.
+ * Token lives in sessionStorage only; other roles keep localStorage.
+ */
+export function getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null;
+
+    const sessionTok = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    if (sessionTok) return sessionTok;
+
+    const localTok = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!localTok) return null;
+
+    // Legacy: VO tokens were stored in localStorage — drop them so officers must re-login.
+    const payload = decodeJwtPayload(localTok);
+    if (payload && isVerificationOfficerRole(payload.role)) {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        try {
+            localStorage.removeItem('admin_role');
+        } catch {
+            /* ignore */
+        }
+        return null;
     }
-    if (!token) return null;
-    return decodeJwtPayload(token);
+
+    return localTok;
+}
+
+export function setAccessToken(token: string, role?: string | null): void {
+    if (typeof window === 'undefined') return;
+    // Never leave a token in the wrong bucket (cross-role / shared device).
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+
+    if (isVerificationOfficerRole(role)) {
+        sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+        try {
+            localStorage.removeItem('admin_role');
+        } catch {
+            /* ignore */
+        }
+        return;
+    }
+
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function clearAccessToken(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+/** Wipe officer auth for verify-link entry (always require email+password again). */
+export function clearVerificationOfficerSession(): void {
+    if (typeof window === 'undefined') return;
+    const token = getAccessToken();
+    if (!token) {
+        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+        return;
+    }
+    const payload = decodeJwtPayload(token);
+    if (payload && isVerificationOfficerRole(payload.role)) {
+        clearAccessToken();
+        try {
+            sessionStorage.removeItem('admin');
+            sessionStorage.removeItem('etashleh-admin-storage');
+            localStorage.removeItem('admin_role');
+        } catch {
+            /* ignore */
+        }
+    } else {
+        // Still clear any stray VO session bucket
+        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    }
+}
+
+/** Decode JWT payload without validating expiry. */
+export function decodeAccessToken(token?: string | null): DecodedAccessToken | null {
+    const resolved = token ?? getAccessToken();
+    if (!resolved) return null;
+    return decodeJwtPayload(resolved);
 }
 
 /** Returns false if token is missing, malformed, or past exp (with 60s skew). */
 export function isAccessTokenValid(token?: string | null): boolean {
-    const resolved =
-        token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const resolved = token ?? getAccessToken();
     if (!resolved) return false;
 
     const payload = decodeJwtPayload(resolved);
@@ -55,13 +133,14 @@ export function getAccessTokenRemainingMs(): number {
 }
 
 function clearExpiredToken(): void {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+    clearAccessToken();
+    if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('user');
+    }
 }
 
 /**
- * Get the currently authenticated user's ID from the NestJS JWT token stored in localStorage.
+ * Get the currently authenticated user's ID from the NestJS JWT token.
  * This is the correct ID that matches customer_id in the orders table.
  */
 export function getCurrentUserId(): string | null {

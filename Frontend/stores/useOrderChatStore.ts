@@ -1,3 +1,4 @@
+import { getAccessToken } from '../utils/auth';
 
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
@@ -372,7 +373,7 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
     subscribeToChat: (chatId: string) => {
         const initSocket = () => {
             const baseUrl = (import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net/api').replace(/\/api\/?$/, '');
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             const socket = io(`${baseUrl}/chat`, {
                 path: '/socket.io',
                 transports: ['websocket'],
