@@ -59,7 +59,10 @@ export function setAccessToken(token: string, role?: string | null): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(ACCESS_TOKEN_KEY);
 
-    if (isVerificationOfficerRole(role)) {
+    // Prefer explicit role; fall back to JWT claim so VO never lands in localStorage.
+    const effectiveRole = role || decodeJwtPayload(token)?.role || null;
+
+    if (isVerificationOfficerRole(effectiveRole)) {
         sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
         try {
             localStorage.removeItem('admin_role');
@@ -78,17 +81,26 @@ export function clearAccessToken(): void {
     sessionStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
-/** Wipe officer auth for verify-link entry (always require email+password again). */
+/** Wipe officer auth for verify-link / admin-login entry (always require email+password again). */
 export function clearVerificationOfficerSession(): void {
     if (typeof window === 'undefined') return;
-    const token = getAccessToken();
-    if (!token) {
-        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-        return;
+
+    // Always drop session bucket first (VO non-persistent home).
+    const sessionTok = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+
+    const localTok = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const sessionPayload = sessionTok ? decodeJwtPayload(sessionTok) : null;
+    const localPayload = localTok ? decodeJwtPayload(localTok) : null;
+
+    const sessionIsVo = !!(sessionPayload && isVerificationOfficerRole(sessionPayload.role));
+    const localIsVo = !!(localPayload && isVerificationOfficerRole(localPayload.role));
+
+    if (localIsVo) {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
     }
-    const payload = decodeJwtPayload(token);
-    if (payload && isVerificationOfficerRole(payload.role)) {
-        clearAccessToken();
+
+    if (sessionIsVo || localIsVo) {
         try {
             sessionStorage.removeItem('admin');
             sessionStorage.removeItem('etashleh-admin-storage');
@@ -96,9 +108,6 @@ export function clearVerificationOfficerSession(): void {
         } catch {
             /* ignore */
         }
-    } else {
-        // Still clear any stray VO session bucket
-        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     }
 }
 
