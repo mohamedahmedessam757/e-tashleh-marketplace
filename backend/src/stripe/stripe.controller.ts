@@ -313,17 +313,30 @@ export class StripeController {
                     );
                     if (account) {
                         stripeDisplay = this.stripeService.buildConnectAccountDisplay(account);
-                        if (account?.details_submitted && !user.stripeOnboarded) {
+                        const detailsSubmitted = Boolean(account.details_submitted);
+                        const payoutsEnabled = Boolean(account.payouts_enabled);
+                        // Customer Connect is transfer/payout oriented — treat submitted or payouts-ready as onboarded.
+                        const shouldMarkOnboarded = detailsSubmitted || payoutsEnabled;
+                        if (shouldMarkOnboarded && !user.stripeOnboarded) {
                             await this.prisma.user.update({
                                 where: { id: userId },
                                 data: { stripeOnboarded: true },
                             });
-                            return {
-                                stripeAccountId: user.stripeAccountId,
-                                stripeOnboarded: true,
-                                stripeDisplay,
-                            };
                         }
+                        return {
+                            stripeAccountId: user.stripeAccountId,
+                            stripeOnboarded: shouldMarkOnboarded || Boolean(user.stripeOnboarded),
+                            stripeDisplay,
+                            stripeDetailsSubmitted: detailsSubmitted,
+                            stripePayoutsEnabled: payoutsEnabled,
+                            stripeChargesEnabled: Boolean(account.charges_enabled),
+                            stripeReady: shouldMarkOnboarded || Boolean(user.stripeOnboarded),
+                            stripePhase: detailsSubmitted && !payoutsEnabled
+                                ? 'pending_review'
+                                : shouldMarkOnboarded
+                                  ? 'ready'
+                                  : 'action_required',
+                        };
                     }
                 } catch (error) {
                     this.logger.warn(`Stripe status check failed for user ${userId}: ${error}`);
@@ -333,9 +346,15 @@ export class StripeController {
                 stripeAccountId: user.stripeAccountId,
                 stripeOnboarded: user.stripeOnboarded,
                 stripeDisplay,
+                stripeReady: Boolean(user.stripeOnboarded),
+                stripePhase: user.stripeAccountId
+                    ? user.stripeOnboarded
+                        ? 'ready'
+                        : 'action_required'
+                    : 'not_started',
             };
         }
 
-        return { stripeOnboarded: false, stripeDisplay: null };
+        return { stripeOnboarded: false, stripeDisplay: null, stripeReady: false, stripePhase: 'not_started' };
     }
 }

@@ -157,16 +157,25 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
             client.get('/payments/customer/bank-details'),
             client.get('/stripe/status').catch(() => ({ data: {} })),
         ]);
+        const stripeOnboarded = Boolean(
+          stripeRes.data?.stripeReady ?? stripeRes.data?.stripeOnboarded ?? bankRes.data?.stripeOnboarded,
+        );
+        const stripeAccountId =
+          stripeRes.data?.stripeAccountId ?? bankRes.data?.stripeAccountId ?? null;
         set({
-            bankDetails: bankRes.data,
+            bankDetails: {
+              ...bankRes.data,
+              stripeOnboarded: stripeOnboarded || Boolean(bankRes.data?.stripeOnboarded),
+              stripeAccountId,
+            },
             stripeConnectInfo: stripeRes.data?.stripeDisplay ?? get().stripeConnectInfo,
         });
-        if (stripeRes.data?.stripeOnboarded && get().stats) {
+        if (get().stats) {
             set({
                 stats: {
                     ...get().stats!,
-                    stripeOnboarded: true,
-                    stripeAccountId: stripeRes.data.stripeAccountId ?? get().stats?.stripeAccountId,
+                    stripeOnboarded: stripeOnboarded || Boolean(get().stats?.stripeOnboarded),
+                    stripeAccountId: stripeAccountId ?? get().stats?.stripeAccountId,
                 },
             });
         }
@@ -229,16 +238,46 @@ export const useCustomerWalletStore = create<CustomerWalletState>((set, get) => 
     try {
         const { client } = await import('../services/api/client');
         const response = await client.get('/stripe/status');
-        const onboarded = response.data.stripeOnboarded;
+        const onboarded = Boolean(response.data.stripeReady ?? response.data.stripeOnboarded);
         const stripeDisplay = response.data.stripeDisplay ?? null;
+        const stripeAccountId = response.data.stripeAccountId ?? null;
         
         set({ stripeConnectInfo: stripeDisplay });
 
-        if (onboarded) {
-          await Promise.all([
-            get().fetchWalletData(true),
-            get().fetchBankDetails()
-          ]);
+        if (get().stats) {
+          set({
+            stats: {
+              ...get().stats!,
+              stripeOnboarded: onboarded || Boolean(get().stats?.stripeOnboarded),
+              stripeAccountId: stripeAccountId ?? get().stats?.stripeAccountId,
+            },
+          });
+        }
+
+        const currentBank = get().bankDetails;
+        if (currentBank) {
+          set({
+            bankDetails: {
+              ...currentBank,
+              stripeOnboarded: onboarded || Boolean(currentBank.stripeOnboarded),
+              stripeAccountId: stripeAccountId ?? currentBank.stripeAccountId,
+            },
+          });
+        }
+
+        await Promise.all([
+          get().fetchWalletData(true),
+          get().fetchBankDetails(),
+        ]);
+
+        if (get().stats) {
+          set({
+            stats: {
+              ...get().stats!,
+              stripeOnboarded: onboarded || Boolean(get().stats?.stripeOnboarded),
+              stripeAccountId: stripeAccountId ?? get().stats?.stripeAccountId,
+            },
+          });
         }
         
         return { success: true, onboarded, stripeDisplay };

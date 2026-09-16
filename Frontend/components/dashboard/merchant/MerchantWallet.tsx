@@ -1262,8 +1262,11 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                         mode={payoutMethod}
                                         isAr={isAr}
                                         bankDetails={bankDetails}
-                                        stripeOnboarded={Boolean(stats.stripeOnboarded)}
+                                        stripeOnboarded={Boolean(
+                                            stats.stripeOnboarded || bankDetails?.stripeOnboarded,
+                                        )}
                                         stripeDisplay={stripeConnectInfo}
+                                        stripePhase={(stats as { stripePhase?: string | null }).stripePhase}
                                         isOnboarding={isOnboarding}
                                         bankLinkSuccess={bankLinkSuccess}
                                         onStripeConnect={handleStripeConnect}

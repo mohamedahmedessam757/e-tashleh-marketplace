@@ -65,6 +65,7 @@ interface MerchantWalletState {
     nextTierBenefits: { ar: string; en: string }[];
     stripeOnboarded: boolean;
     stripeAccountId?: string;
+    stripePhase?: string | null;
     withdrawalCapPercent?: number;
     maxWithdrawableAmount?: number;
     hasOpenReturnOrDispute?: boolean;
@@ -250,17 +251,27 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
             client.get('/payments/merchant/bank-details'),
             client.get('/stripe/status').catch(() => ({ data: {} })),
         ]);
+        const stripeOnboarded = Boolean(
+          stripeRes.data?.stripeReady ?? stripeRes.data?.stripeOnboarded ?? bankRes.data?.stripeOnboarded,
+        );
+        const stripeAccountId =
+          stripeRes.data?.stripeAccountId ?? bankRes.data?.stripeAccountId ?? null;
         set({
-            bankDetails: bankRes.data,
+            bankDetails: {
+              ...bankRes.data,
+              stripeOnboarded: stripeOnboarded || Boolean(bankRes.data?.stripeOnboarded),
+              stripeAccountId,
+            },
             stripeConnectInfo: stripeRes.data?.stripeDisplay ?? get().stripeConnectInfo,
         });
-        if (stripeRes.data?.stripeOnboarded) {
-            const currentStats = get().stats;
+        const currentStats = get().stats;
+        if (currentStats) {
             set({
                 stats: {
                     ...currentStats,
-                    stripeOnboarded: true,
-                    stripeAccountId: stripeRes.data.stripeAccountId ?? currentStats.stripeAccountId,
+                    stripeOnboarded: stripeOnboarded || Boolean(currentStats.stripeOnboarded),
+                    stripeAccountId: stripeAccountId ?? currentStats.stripeAccountId,
+                    stripePhase: stripeRes.data?.stripePhase ?? (currentStats as any).stripePhase,
                 },
             });
         }
@@ -328,32 +339,48 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         const storeStatus = response.data.storeStatus as string | undefined;
         const detailsSubmitted = Boolean(response.data.stripeDetailsSubmitted);
         const stripePhase = (response.data.stripePhase as string | undefined) || null;
+        const stripeAccountId = response.data.stripeAccountId ?? null;
 
-        if (onboarded) {
-          const currentStats = get().stats;
+        const currentStats = get().stats;
+        set({
+          stats: {
+            ...currentStats,
+            stripeOnboarded: onboarded || Boolean(currentStats.stripeOnboarded),
+            stripeAccountId: stripeAccountId ?? currentStats.stripeAccountId,
+            stripePhase: stripePhase ?? (currentStats as any).stripePhase,
+          },
+          stripeConnectInfo: stripeDisplay,
+        });
+
+        const currentBank = get().bankDetails;
+        if (currentBank) {
           set({
-            stats: {
-              ...currentStats,
-              stripeOnboarded: true,
-              stripeAccountId: response.data.stripeAccountId ?? currentStats.stripeAccountId,
+            bankDetails: {
+              ...currentBank,
+              stripeOnboarded: onboarded || Boolean(currentBank.stripeOnboarded),
+              stripeAccountId: stripeAccountId ?? currentBank.stripeAccountId,
             },
-            stripeConnectInfo: stripeDisplay,
           });
-          
-          const currentBank = get().bankDetails;
-          if (currentBank) {
-            set({ bankDetails: { ...currentBank, stripeOnboarded: true, stripeAccountId: response.data.stripeAccountId } });
-          }
-
-          Promise.all([
-            get().fetchWallet(),
-            get().fetchBankDetails()
-          ]).catch(err => console.error('Background refetch failed', err));
-        } else {
-          set({ stripeConnectInfo: stripeDisplay });
         }
 
-        // Keep vendor store status in sync after Connect readiness changes (do not trust return_url alone).
+        // Refresh wallet/bank without wiping Connect flags if dashboard lags.
+        await Promise.all([
+          get().fetchWallet(),
+          get().fetchBankDetails(),
+        ]).catch((err) => console.error('Background refetch failed', err));
+
+        // Re-assert live Stripe flags after dashboard merge.
+        const afterStats = get().stats;
+        set({
+          stats: {
+            ...afterStats,
+            stripeOnboarded: onboarded || Boolean(afterStats.stripeOnboarded),
+            stripeAccountId: stripeAccountId ?? afterStats.stripeAccountId,
+            stripePhase: stripePhase ?? (afterStats as any).stripePhase,
+          },
+          stripeConnectInfo: stripeDisplay ?? get().stripeConnectInfo,
+        });
+
         try {
           const { useVendorStore } = await import('./useVendorStore');
           if (storeStatus) {

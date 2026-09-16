@@ -79,7 +79,6 @@ export function isStripeConnectReadyForTransfer(input: {
     return Boolean(
         input.stripeAccountId?.trim() &&
             input.stripeOnboarded &&
-            input.stripeChargesEnabled &&
             input.stripePayoutsEnabled,
     );
 }

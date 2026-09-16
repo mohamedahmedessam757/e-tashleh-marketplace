@@ -54,7 +54,8 @@ export function isStripeFullyReady(
   if ('chargesEnabled' in input && typeof (input as StripeAccountReadinessSnapshot).chargesEnabled === 'boolean') {
     const snap = input as StripeAccountReadinessSnapshot;
     if (!snap.stripeAccountId?.trim()) return false;
-    if (!snap.chargesEnabled || !snap.payoutsEnabled) return false;
+    // Platform Connect accounts request `transfers` (payouts), not card charges on the connected account.
+    if (!snap.payoutsEnabled) return false;
     if (snap.disabledReason) return false;
     if (snap.currentlyDue.length > 0) return false;
     return true;
@@ -62,7 +63,7 @@ export function isStripeFullyReady(
 
   const store = input as StoreActivationFields;
   if (!store.stripeAccountId?.trim()) return false;
-  if (!store.stripeChargesEnabled || !store.stripePayoutsEnabled) return false;
+  if (!store.stripePayoutsEnabled) return false;
   if (store.stripeDisabledReason) return false;
   if (asStringArray(store.stripeRequirementsDue).length > 0) return false;
   return true;

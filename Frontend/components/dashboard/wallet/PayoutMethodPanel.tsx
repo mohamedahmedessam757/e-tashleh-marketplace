@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Settings,
   ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import type { PayoutBankDetails, StripeConnectDisplay } from '../../../types/payout-account';
@@ -18,6 +19,7 @@ interface PayoutMethodPanelProps {
   bankDetails: PayoutBankDetails | null;
   stripeOnboarded: boolean;
   stripeDisplay?: StripeConnectDisplay | null;
+  stripePhase?: string | null;
   isOnboarding?: boolean;
   bankLinkSuccess?: boolean;
   onStripeConnect: () => void;
@@ -35,12 +37,37 @@ function verificationLabel(status: PayoutBankDetails['verificationStatus'], isAr
   return isAr ? 'غير مرتبط' : 'Not Linked';
 }
 
+function resolveStripeUiState(input: {
+  stripeOnboarded: boolean;
+  stripeDisplay?: StripeConnectDisplay | null;
+  bankDetails: PayoutBankDetails | null;
+  stripePhase?: string | null;
+}): 'ready' | 'pending_review' | 'action_required' | 'restricted' | 'not_started' {
+  const phase = String(input.stripePhase || '').toLowerCase();
+  if (phase === 'ready' || input.stripeOnboarded) return 'ready';
+  if (phase === 'pending_review') return 'pending_review';
+  if (phase === 'restricted') return 'restricted';
+  if (phase === 'action_required') return 'action_required';
+
+  const accountId = input.bankDetails?.stripeAccountId || input.stripeDisplay?.maskedAccountId;
+  const detailsSubmitted = Boolean(input.stripeDisplay?.detailsSubmitted);
+  const payoutsEnabled = Boolean(input.stripeDisplay?.payoutsEnabled);
+
+  if (accountId && (detailsSubmitted || payoutsEnabled || input.bankDetails?.stripeOnboarded)) {
+    if (payoutsEnabled || input.stripeOnboarded || input.bankDetails?.stripeOnboarded) return 'ready';
+    return 'pending_review';
+  }
+  if (accountId) return 'action_required';
+  return 'not_started';
+}
+
 export const PayoutMethodPanel: React.FC<PayoutMethodPanelProps> = ({
   mode,
   isAr,
   bankDetails,
   stripeOnboarded,
   stripeDisplay,
+  stripePhase,
   isOnboarding = false,
   bankLinkSuccess = false,
   onStripeConnect,
@@ -53,6 +80,16 @@ export const PayoutMethodPanel: React.FC<PayoutMethodPanelProps> = ({
     (bankDetails?.iban ? `•••• ${bankDetails.iban.slice(-4)}` : null);
 
   if (mode === 'STRIPE') {
+    const stripeState = resolveStripeUiState({
+      stripeOnboarded,
+      stripeDisplay,
+      bankDetails,
+      stripePhase,
+    });
+    const showConnected = stripeState === 'ready';
+    const showPending = stripeState === 'pending_review' || stripeState === 'restricted';
+    const showContinue = stripeState === 'action_required';
+
     return (
       <GlassCard className="p-6 border-[#635BFF]/20 bg-[#635BFF]/5 h-full flex flex-col">
         <div className="flex items-center gap-3 mb-4">
@@ -69,7 +106,7 @@ export const PayoutMethodPanel: React.FC<PayoutMethodPanelProps> = ({
           </div>
         </div>
 
-        {stripeOnboarded ? (
+        {showConnected ? (
           <div className="flex-1 space-y-4">
             <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10">
               <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase mb-3">
@@ -111,6 +148,72 @@ export const PayoutMethodPanel: React.FC<PayoutMethodPanelProps> = ({
                 ? 'حساب Stripe مرتبط بالفعل. لا حاجة لإضافة حسابات إضافية — استخدم نفس الحساب للسحب.'
                 : 'Your Stripe account is already linked. No need to add another — use this account for payouts.'}
             </p>
+          </div>
+        ) : showPending ? (
+          <div className="flex-1 space-y-4">
+            <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10">
+              <div className="flex items-center gap-2 text-amber-400 text-[10px] font-black uppercase mb-3">
+                <Clock size={14} />
+                {stripeState === 'restricted'
+                  ? isAr
+                    ? 'حساب مقيّد — مطلوب إجراء'
+                    : 'Restricted — action needed'
+                  : isAr
+                    ? 'قيد مراجعة Stripe'
+                    : 'Pending Stripe review'}
+              </div>
+              {(stripeDisplay?.maskedAccountId || bankDetails?.stripeAccountId) && (
+                <p className="text-amber-200/80 font-mono text-[11px] tracking-wider mb-2">
+                  {stripeDisplay?.maskedAccountId ||
+                    `acct••••${(bankDetails?.stripeAccountId || '').slice(-4)}`}
+                </p>
+              )}
+              <p className="text-[10px] text-white/50 leading-relaxed">
+                {stripeState === 'restricted'
+                  ? isAr
+                    ? 'أكمل متطلبات Stripe لإعادة تفعيل السحب.'
+                    : 'Complete Stripe requirements to re-enable payouts.'
+                  : isAr
+                    ? 'تم استلام بياناتك. التفعيل يتم تلقائيًا عند اكتمال مراجعة Stripe.'
+                    : 'Details received. Activation happens automatically when Stripe review completes.'}
+              </p>
+            </div>
+            {stripeState === 'restricted' && (
+              <button
+                type="button"
+                onClick={onStripeConnect}
+                disabled={isOnboarding}
+                className="w-full px-6 py-3 bg-[#635BFF] hover:bg-[#7a73ff] text-white rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {isOnboarding ? (
+                  <RotateCcw size={14} className="animate-spin" />
+                ) : (
+                  <ExternalLink size={14} />
+                )}
+                {isAr ? 'متابعة التحقق في Stripe' : 'Continue Stripe verification'}
+              </button>
+            )}
+          </div>
+        ) : showContinue ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
+            <p className="text-white/50 text-[10px] mb-6 px-2 leading-relaxed">
+              {isAr
+                ? 'بدأ ربط Stripe ولم يكتمل بعد. أكمل الخطوات المتبقية.'
+                : 'Stripe linking was started but is incomplete. Finish the remaining steps.'}
+            </p>
+            <button
+              type="button"
+              onClick={onStripeConnect}
+              disabled={isOnboarding}
+              className="px-6 py-3 bg-[#635BFF] hover:bg-[#7a73ff] text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all disabled:opacity-50"
+            >
+              {isOnboarding ? (
+                <RotateCcw size={14} className="animate-spin" />
+              ) : (
+                <ExternalLink size={14} />
+              )}
+              {isAr ? 'إكمال ربط Stripe' : 'Complete Stripe linking'}
+            </button>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-4">

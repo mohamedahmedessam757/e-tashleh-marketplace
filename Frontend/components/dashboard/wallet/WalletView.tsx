@@ -1200,6 +1200,15 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                         bankDetails={bankDetails}
                                         stripeOnboarded={Boolean(bankDetails?.stripeOnboarded || stats?.stripeOnboarded)}
                                         stripeDisplay={stripeConnectInfo}
+                                        stripePhase={
+                                          stripeConnectInfo?.detailsSubmitted && !stripeConnectInfo?.payoutsEnabled
+                                            ? 'pending_review'
+                                            : bankDetails?.stripeOnboarded || stats?.stripeOnboarded
+                                              ? 'ready'
+                                              : bankDetails?.stripeAccountId
+                                                ? 'action_required'
+                                                : 'not_started'
+                                        }
                                         isOnboarding={isOnboarding}
                                         bankLinkSuccess={bankLinkSuccess}
                                         onStripeConnect={handleStripeConnect}

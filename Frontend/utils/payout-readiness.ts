@@ -13,7 +13,10 @@ export function getPayoutReadiness(
   stripeOnboarded?: boolean,
 ): PayoutReadiness {
   const hasBank = Boolean(bankDetails?.isLinked ?? bankDetails?.iban);
-  const hasStripe = Boolean(bankDetails?.stripeOnboarded ?? stripeOnboarded);
+  // Treat linked Connect (account id present or onboarded flag) as Stripe available for wallet UI.
+  const hasStripe = Boolean(
+    bankDetails?.stripeOnboarded || stripeOnboarded || bankDetails?.stripeAccountId,
+  );
   return { hasBank, hasStripe, hasAny: hasBank || hasStripe };
 }
 
