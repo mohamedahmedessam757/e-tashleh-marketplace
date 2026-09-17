@@ -336,8 +336,22 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
         return type === 'MASTER';
     });
+    const partyScopedInvoices = (() => {
+        if (!partyInvoicesOnly) return partyMasterInvoices;
+        if (!highlightOfferId) return partyMasterInvoices;
+        const linked = partyMasterInvoices.filter((inv) => {
+            const oid = inv?.payment?.offerId || inv?.offerId || null;
+            return oid && String(oid) === String(highlightOfferId);
+        });
+        // If the order has any offer-linked MASTER rows, only show this offer's.
+        // Legacy unscoped MASTER (no payment.offerId anywhere) stays visible.
+        const anyLinked = partyMasterInvoices.some(
+            (inv) => inv?.payment?.offerId || inv?.offerId,
+        );
+        return anyLinked ? linked : partyMasterInvoices;
+    })();
     const visibleInvoices = partyInvoicesOnly
-        ? partyMasterInvoices
+        ? partyScopedInvoices
         : showDocTabs
           ? filterInvoicesByTab(invoices, activeDocTab)
           : masterInvoices;
@@ -452,7 +466,13 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
 
     const InvoiceContentBlock = ({ inv }: { inv: any }) => {
         const order = inv?.order || {};
-        const acceptedOffer = order?.offers?.find((o: any) => o.status === 'accepted' || o.status === 'ACCEPTED');
+        const acceptedOffer =
+            order?.offers?.find(
+                (o: any) =>
+                    o.id &&
+                    (o.id === inv?.payment?.offerId || o.id === inv?.offerId),
+            ) ||
+            order?.offers?.find((o: any) => o.status === 'accepted' || o.status === 'ACCEPTED');
         const shippingAddr = order?.shippingAddresses?.[0] || null;
         const customer = order?.customer || null;
         const offerStore = acceptedOffer?.store || order?.store || null;
@@ -574,6 +594,11 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                             <img src="/logo.png" alt="E-Tashleh" className="w-9 h-9 sm:w-10 sm:h-10 object-contain inv-brand-logo shrink-0 print:hidden" />
                             <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white inv-value">E-Tashleh.net</h1>
                         </div>
+                        <p className="text-gold-500/90 text-[11px] sm:text-xs font-black uppercase tracking-widest inv-label print:hidden">
+                            {isMerchant
+                                ? (isAr ? 'بيان مستحقات التاجر' : 'Merchant entitlement statement')
+                                : (isAr ? 'فاتورة الطلب' : 'Order invoice')}
+                        </p>
                         <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider inv-label">{isAr ? 'سوق قطع غيار السيارات' : 'Automotive Marketplace'}</p>
                         <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm text-gray-300">
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">

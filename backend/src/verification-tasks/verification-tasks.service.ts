@@ -114,6 +114,7 @@ const VERIFICATION_ORDER_INCLUDE = {
       currency: true,
       status: true,
       issuedAt: true,
+      payment: { select: { offerId: true } },
     },
   },
   acceptedOffer: {
@@ -844,10 +845,18 @@ export class VerificationTasksService {
     const scopedInvoices =
       offerLinked.length > 0
         ? offerLinked
-        : invoices.filter((inv: any) => {
-            const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
-            return type === 'MASTER';
-          });
+        : (() => {
+            // If any invoice on the payload is offer-linked, do not fall back to all MASTER.
+            const anyLinked = invoices.some((inv: any) => {
+              const payOfferId = inv?.payment?.offerId ?? inv?.offerId ?? null;
+              return !!payOfferId;
+            });
+            if (anyLinked) return offerLinked;
+            return invoices.filter((inv: any) => {
+              const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
+              return type === 'MASTER';
+            });
+          })();
 
     return {
       ...order,

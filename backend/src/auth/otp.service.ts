@@ -177,8 +177,10 @@ export class OtpService {
 
         await this.prisma.otpChallenge.create({
             data: {
-                phone,
-                email,
+                phone: params.channel === 'whatsapp' ? phone : null,
+                // Store email only for email-channel challenges so LOGIN never
+                // leaves an email-addressable row after a WhatsApp-only send.
+                email: params.channel === 'email' ? email : null,
                 channel: params.channel,
                 purpose: params.purpose,
                 role: params.role ?? null,
