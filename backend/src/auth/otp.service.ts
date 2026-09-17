@@ -158,7 +158,22 @@ export class OtpService {
                       verifiedAt: null,
                   };
 
-        await this.prisma.otpChallenge.deleteMany({ where: deleteWhere });
+        // LOGIN: clear unverified challenges on BOTH channels for this identity
+        // so switching WhatsApp↔email (or double-submit) never leaves a live dual OTP.
+        if (params.purpose === OtpPurpose.LOGIN && (email || phone)) {
+            await this.prisma.otpChallenge.deleteMany({
+                where: {
+                    purpose: params.purpose,
+                    verifiedAt: null,
+                    OR: [
+                        ...(email ? [{ email }] : []),
+                        ...(phone ? [{ phone }] : []),
+                    ],
+                },
+            });
+        } else {
+            await this.prisma.otpChallenge.deleteMany({ where: deleteWhere });
+        }
 
         await this.prisma.otpChallenge.create({
             data: {

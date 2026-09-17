@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import {
   ShieldCheck,
@@ -293,6 +293,22 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
     } catch (err) {
       console.error(err);
       flashMessage(isAr ? 'تعذر فتح التقرير' : 'Could not open report');
+    } finally {
+      setOpeningReportTaskId(null);
+    }
+  };
+
+  const exportFieldReportPdf = async (taskId: string) => {
+    setOpeningReportTaskId(taskId);
+    try {
+      const { downloadVerificationReportPdf } = await import('../../../utils/verificationReportPdf');
+      const res = await verificationTasksApi.getReportBlob(taskId);
+      const blob = res.data as Blob;
+      await downloadVerificationReportPdf(blob, `verification-report-${taskId.slice(0, 8)}.pdf`);
+      flashMessage(isAr ? 'تم تصدير PDF' : 'PDF exported');
+    } catch (err) {
+      console.error(err);
+      flashMessage(isAr ? 'تعذر تصدير PDF' : 'Could not export PDF');
     } finally {
       setOpeningReportTaskId(null);
     }
@@ -655,6 +671,7 @@ export const VerificationTaskManager: React.FC<VerificationTaskManagerProps> = (
                   openingReportTaskId={openingReportTaskId}
                   reportBusy={openingReportTaskId !== null}
                   onOpenReport={(id) => void openFieldReport(id)}
+                  onExportPdf={(id) => void exportFieldReportPdf(id)}
                 />
               </div>
             );

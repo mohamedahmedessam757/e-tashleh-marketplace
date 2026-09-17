@@ -67,8 +67,20 @@ export class UploadsService {
         validateUploadedFile(file, 'verification');
 
         let ext = (file.originalname?.split('.').pop() || 'jpg').toLowerCase();
-        if (!/^(jpe?g|png|webp)$/.test(ext)) {
-            ext = file.mimetype?.includes('png') ? 'png' : file.mimetype?.includes('webp') ? 'webp' : 'jpg';
+        if (!/^(jpe?g|png|webp|mp4|webm|mov)$/.test(ext)) {
+            if (file.mimetype?.startsWith('video/')) {
+                ext = file.mimetype.includes('webm')
+                    ? 'webm'
+                    : file.mimetype.includes('quicktime')
+                      ? 'mov'
+                      : 'mp4';
+            } else {
+                ext = file.mimetype?.includes('png')
+                    ? 'png'
+                    : file.mimetype?.includes('webp')
+                      ? 'webp'
+                      : 'jpg';
+            }
         }
 
         const storagePath = `tasks/${taskId}/${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${ext}`;
@@ -76,7 +88,11 @@ export class UploadsService {
         const { error } = await this.supabase.storage
             .from(VERIFICATION_FIELD_PHOTOS_BUCKET)
             .upload(storagePath, file.buffer, {
-                contentType: file.mimetype || `image/${ext}`,
+                contentType:
+                    file.mimetype ||
+                    (ext === 'mp4' || ext === 'mov' || ext === 'webm'
+                        ? `video/${ext === 'mov' ? 'quicktime' : ext}`
+                        : `image/${ext}`),
                 upsert: false,
             });
 

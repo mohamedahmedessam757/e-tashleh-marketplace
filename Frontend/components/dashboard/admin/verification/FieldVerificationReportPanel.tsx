@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, FileText, Image as ImageIcon, Loader2, History } from 'lucide-react';
+import { AlertCircle, FileText, Image as ImageIcon, Loader2, History, Download } from 'lucide-react';
 import {
   VERIFICATION_TASK_DECISION_LABEL,
   VERIFICATION_TASK_STATUS_LABEL,
@@ -32,6 +32,7 @@ interface FieldVerificationReportPanelProps {
   openingReportTaskId?: string | null;
   reportBusy?: boolean;
   onOpenReport: (taskId: string) => void;
+  onExportPdf?: (taskId: string) => void;
 }
 
 export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanelProps> = ({
@@ -41,6 +42,7 @@ export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanel
   openingReportTaskId,
   reportBusy,
   onOpenReport,
+  onExportPdf,
 }) => {
   const fieldPhotoUrls = getFieldPhotoUrlsFromTask(task);
   const isOpening = reportBusy && openingReportTaskId === task.id;
@@ -201,6 +203,17 @@ export const FieldVerificationReportPanel: React.FC<FieldVerificationReportPanel
           {isOpening ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText size={18} className="text-gold-500" />}
           {isAr ? 'عرض تقرير HTML' : 'Open HTML report'}
         </button>
+        {onExportPdf ? (
+          <button
+            type="button"
+            onClick={() => onExportPdf(task.id)}
+            disabled={reportBusy}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 text-sm text-gold-300 font-bold transition-all disabled:opacity-50"
+          >
+            {isOpening ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download size={18} />}
+            {isAr ? 'تصدير PDF' : 'Export PDF'}
+          </button>
+        ) : null}
         {task.completedAt ? (
           <span className="text-xs text-white/40 self-center">
             {isAr ? 'اكتمل:' : 'Completed:'}{' '}

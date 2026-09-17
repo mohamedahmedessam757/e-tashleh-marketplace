@@ -805,6 +805,59 @@ export class VerificationTasksService {
     return order.partName ?? '—';
   }
 
+  /**
+   * When a task is tied to a specific offer/part, shrink the order payload so the
+   * officer only sees that part's photos, docs, offers, and related MASTER invoices.
+   */
+  private scopeOrderPayloadToTaskOffer(order: any, offerId: string | null) {
+    if (!offerId || !order) return order;
+
+    const offers = Array.isArray(order.offers) ? order.offers : [];
+    const targetOffer =
+      offers.find((o: any) => o.id === offerId) ??
+      null;
+    const orderPartId = targetOffer?.orderPartId ?? null;
+
+    const scopedOffers = orderPartId
+      ? offers.filter(
+          (o: any) => o.id === offerId || o.orderPartId === orderPartId,
+        )
+      : offers.filter((o: any) => o.id === offerId);
+
+    const parts = Array.isArray(order.parts) ? order.parts : [];
+    const scopedParts = orderPartId
+      ? parts.filter((p: any) => p.id === orderPartId)
+      : parts;
+
+    const docs = Array.isArray(order.verificationDocuments)
+      ? order.verificationDocuments
+      : [];
+    const scopedDocs = docs.filter((d: any) => d.offerId === offerId);
+
+    const invoices = Array.isArray(order.invoices) ? order.invoices : [];
+    // Prefer offer-linked invoices when payment.offerId is present on the row;
+    // thin VERIFICATION_ORDER_INCLUDE may omit payment — keep MASTER rows then.
+    const offerLinked = invoices.filter((inv: any) => {
+      const payOfferId = inv?.payment?.offerId ?? inv?.offerId ?? null;
+      return payOfferId && String(payOfferId) === String(offerId);
+    });
+    const scopedInvoices =
+      offerLinked.length > 0
+        ? offerLinked
+        : invoices.filter((inv: any) => {
+            const type = String(inv?.invoiceType || 'MASTER').toUpperCase();
+            return type === 'MASTER';
+          });
+
+    return {
+      ...order,
+      parts: scopedParts,
+      offers: scopedOffers.length ? scopedOffers : targetOffer ? [targetOffer] : [],
+      verificationDocuments: scopedDocs,
+      invoices: scopedInvoices,
+    };
+  }
+
   private composeVerificationReportHtml(task: any): string {
     const isAr = true; // Defaulting to Arabic for this template as requested
     const order = task.order ?? {};
@@ -1851,12 +1904,16 @@ export class VerificationTasksService {
       this.resolveOrderStoreForDetails(task.order.store, merchantDoc?.store),
     );
     const partLabel = this.resolvePartLabelFromTask(task, task.order);
+    const scopedOrder = this.scopeOrderPayloadToTaskOffer(
+      { ...task.order, store: resolvedStore },
+      task.offerId ?? null,
+    );
 
     return {
       ...task,
       partLabel,
       merchantVerificationDoc: merchantDoc,
-      order: { ...task.order, store: resolvedStore },
+      order: scopedOrder,
       activeLink,
       sessionDeadline,
       orderTaskHistory: enrichedHistory,

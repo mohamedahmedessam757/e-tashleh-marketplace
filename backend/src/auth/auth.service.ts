@@ -645,6 +645,14 @@ export class AuthService {
             role: user.role,
         });
 
+        if (!result.sent) {
+            throw new BadRequestException(
+                channel === 'whatsapp'
+                    ? 'Failed to send WhatsApp OTP. Try again or use email.'
+                    : 'Failed to send email OTP. Try again or use WhatsApp.',
+            );
+        }
+
         return {
             success: true,
             channel,

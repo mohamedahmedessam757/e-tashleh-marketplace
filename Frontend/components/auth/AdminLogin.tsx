@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ShieldAlert, Lock, Mail } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { OTPVerification } from './OTPVerification';
@@ -16,6 +16,7 @@ interface AdminLoginProps {
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const { t, language } = useLanguage();
   const { loginAdmin } = useAdminStore();
+  const otpSendInFlight = useRef(false);
 
   const [otpStep, setOtpStep] = useState<'none' | 'method' | 'verify'>('none');
   const [otpMethod, setOtpMethod] = useState<'email' | 'whatsapp'>('whatsapp');
@@ -84,6 +85,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   };
 
   const handleMethodSelect = async (method: 'email' | 'whatsapp') => {
+    if (otpSendInFlight.current) return;
+    otpSendInFlight.current = true;
     setOtpMethod(method);
     setMethodError(null);
     setIsSendingOtp(true);
@@ -105,6 +108,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       );
     } finally {
       setIsSendingOtp(false);
+      otpSendInFlight.current = false;
     }
   };
 

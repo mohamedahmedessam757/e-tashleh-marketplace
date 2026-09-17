@@ -42,6 +42,14 @@ export class ResourceAccessService {
       if (vendorOffer) return;
     }
 
+    if (actor.role === 'VERIFICATION_OFFICER') {
+      const task = await this.prisma.verificationTask.findFirst({
+        where: { orderId, officerId: actor.id },
+        select: { id: true },
+      });
+      if (task) return;
+    }
+
     throw new ForbiddenException('Access denied to this order');
   }
 

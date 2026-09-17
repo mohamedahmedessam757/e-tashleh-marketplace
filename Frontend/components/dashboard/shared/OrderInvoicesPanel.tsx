@@ -181,6 +181,8 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
             setError(null);
         } catch (err: any) {
             console.error('Failed to fetch order invoices:', err);
+            // Do not keep sparse initialData cards that look like empty invoices.
+            setInvoices([]);
             setError(err.response?.data?.message || 'Failed to load invoices');
         } finally {
             setIsLoading(false);
@@ -943,10 +945,12 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
                     )}
 
                     {visibleInvoices.length === 0 ? (
+                        error ? null : (
                         <InvoiceDocEmptyState
                             title={typedLabels.emptyTitle}
                             hint={typedLabels.emptyHint}
                         />
+                        )
                     ) : (
                     <div className="grid gap-5 sm:gap-8">
                         {visibleInvoices.map((inv) => (

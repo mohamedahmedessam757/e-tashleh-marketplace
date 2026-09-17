@@ -11,6 +11,7 @@ const ALLOWED_MIME = new Set([
   'application/pdf',
   'video/mp4',
   'video/webm',
+  'video/quicktime',
 ]);
 
 const MAX_BYTES_DEFAULT = 10 * 1024 * 1024;
@@ -66,7 +67,7 @@ const COMPATIBLE: Record<string, string[]> = {
   'image/gif': ['image/gif'],
   'image/webp': ['image/webp'],
   'application/pdf': ['application/pdf'],
-  'video/mp4': ['video/mp4'],
+  'video/mp4': ['video/mp4', 'video/quicktime'],
   'video/webm': ['video/webm'],
 };
 
@@ -97,7 +98,7 @@ export function validateUploadedFile(
   }
 
   const ext = (file.originalname?.split('.').pop() || '').toLowerCase();
-  const allowedExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'mp4', 'webm'];
+  const allowedExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'mp4', 'webm', 'mov'];
   if (ext && !allowedExt.includes(ext)) {
     throw new BadRequestException(`File extension not allowed: .${ext}`);
   }

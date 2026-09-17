@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -13,8 +13,11 @@ import {
   ArrowLeft,
   Loader2,
   FileText,
+  Camera,
+  Video,
+  Trash2,
+  Download,
 } from 'lucide-react';
-import { FileUploader } from '../../ui/FileUploader';
 import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../../utils/auth';
 import { supabase } from '../../../services/supabase';
@@ -24,6 +27,7 @@ import {
   mapGeolocationError,
   requestGeolocationCoords,
 } from '../../../utils/geolocation';
+import { downloadVerificationReportPdf } from '../../../utils/verificationReportPdf';
 
 const ADMIN_ROLES = new Set(['ADMIN', 'SUPER_ADMIN']);
 import { VerificationSessionCountdown } from './verification/VerificationSessionCountdown';
@@ -95,6 +99,19 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const photoPreviewUrls = useMemo(
+    () => photos.map((f) => URL.createObjectURL(f)),
+    [photos],
+  );
+  useEffect(() => {
+    return () => {
+      photoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [photoPreviewUrls]);
 
   const fetchTaskDetails = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -156,8 +173,8 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
 
   const customerImages = useMemo(() => {
     if (!order) return [];
-    return getCustomerReferenceImages(order);
-  }, [order]);
+    return getCustomerReferenceImages(order, { offerId: task?.offerId });
+  }, [order, task?.offerId]);
 
   const storeImages = useMemo(() => (doc ? asImageUrls(doc.images) : []), [doc]);
   const officerImages = useMemo(() => {
@@ -238,8 +255,8 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
     if (!hasCurrentCyclePhotos) {
       alert(
         isAr
-          ? 'يرجى رفع صور المطابقة لهذه الدورة الحالية (صور الدورات السابقة لا تُحتسب).'
-          : 'Please upload field photos for this current cycle (previous-cycle photos do not count).',
+          ? 'يرجى تصوير القطعة من الكاميرا لهذه الدورة (صورة واحدة على الأقل).'
+          : 'Please capture at least one photo with the camera for this cycle.',
       );
       return;
     }
@@ -259,9 +276,20 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
         /* optional at complete */
       }
 
-      if (photos.length > 0) {
-        setCompletingHint(isAr ? 'جاري رفع الصور…' : 'Uploading photos…');
-        await verificationTasksApi.uploadFieldPhotos(taskId, photos);
+      const uploadBatch = [...photos];
+      if (videoFile) uploadBatch.push(videoFile);
+
+      if (uploadBatch.length > 0) {
+        setCompletingHint(
+          isAr
+            ? videoFile
+              ? 'جاري رفع الصور والفيديو…'
+              : 'جاري رفع الصور…'
+            : videoFile
+              ? 'Uploading photos & video…'
+              : 'Uploading photos…',
+        );
+        await verificationTasksApi.uploadFieldPhotos(taskId, uploadBatch);
       }
 
       setCompletingHint(isAr ? 'جاري إرسال القرار وتسجيل المهمة…' : 'Submitting decision…');
@@ -588,16 +616,110 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
                   className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white min-h-[70px]"
                 />
 
-                <div className="p-4 bg-black/20 rounded-xl border border-white/5">
-                  <p className="text-xs font-bold text-white mb-2">
-                    {isAr ? 'صور القطعة الفعلية' : 'Actual part photos'}
+                <div className="p-4 bg-black/20 rounded-xl border border-white/5 space-y-3">
+                  <p className="text-xs font-bold text-white">
+                    {isAr ? 'صور القطعة الفعلية (من الكاميرا)' : 'Actual part photos (camera)'}
                     <span className="text-red-400"> *</span>
                   </p>
-                  <FileUploader
-                    onFilesSelected={setPhotos}
-                    maxFiles={6}
-                    accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.webp'] }}
+                  <p className="text-[11px] text-white/45">
+                    {isAr
+                      ? 'صورة واحدة على الأقل مطلوبة. يمكنك التصوير أكثر من مرة. الفيديو اختياري.'
+                      : 'At least one photo is required. Tap again to add more. Video is optional.'}
+                  </p>
+
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []).filter((f) =>
+                        f.type.startsWith('image/'),
+                      );
+                      if (files.length) {
+                        setPhotos((prev) => [...prev, ...files].slice(0, 12));
+                      }
+                      e.target.value = '';
+                    }}
                   />
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && file.type.startsWith('video/')) {
+                        if (file.size > 50 * 1024 * 1024) {
+                          alert(
+                            isAr
+                              ? 'الحد الأقصى للفيديو 50 ميجابايت'
+                              : 'Max video size is 50MB',
+                          );
+                        } else {
+                          setVideoFile(file);
+                        }
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={!canAct}
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="min-h-[48px] px-3 py-2.5 rounded-xl border border-gold-500/40 bg-gold-500/15 text-gold-300 text-xs font-bold flex items-center justify-center gap-2 hover:bg-gold-500/25 disabled:opacity-40"
+                    >
+                      <Camera size={16} />
+                      {isAr ? 'تصوير من الكاميرا' : 'Capture photo'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canAct}
+                      onClick={() => videoInputRef.current?.click()}
+                      className="min-h-[48px] px-3 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white/80 text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/10 disabled:opacity-40"
+                    >
+                      <Video size={16} />
+                      {isAr ? 'اختيار فيديو' : 'Choose video'}
+                    </button>
+                  </div>
+
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {photos.map((file, idx) => (
+                          <div key={`${file.name}-${file.size}-${idx}`} className="relative aspect-square rounded-lg overflow-hidden border border-white/10">
+                            <img src={photoPreviewUrls[idx]} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 end-1 p-1 rounded-md bg-black/70 text-red-300"
+                              aria-label={isAr ? 'حذف الصورة' : 'Remove photo'}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {videoFile && (
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white/5 border border-white/10 text-[11px] text-white/70">
+                      <span className="truncate flex items-center gap-1.5">
+                        <Video size={14} className="text-gold-400 shrink-0" />
+                        {videoFile.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setVideoFile(null)}
+                        className="text-red-300 shrink-0"
+                        aria-label={isAr ? 'حذف الفيديو' : 'Remove video'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -628,6 +750,7 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
 
 function CompletedState({ task, isAr }: { task: any; isAr: boolean }) {
   const [reportOpening, setReportOpening] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   const matched = task.decision === 'MATCHING';
   const rejected = task.decision === 'NON_MATCHING';
@@ -644,6 +767,23 @@ function CompletedState({ task, isAr }: { task: any; isAr: boolean }) {
       'COMPLETED_MATCH',
       'COMPLETED_NON_MATCH',
     ].includes(task.status);
+
+  const exportPdf = async () => {
+    setPdfExporting(true);
+    try {
+      const res = await verificationTasksApi.getReportBlob(task.id);
+      const blob = res.data;
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error(isAr ? 'التقرير غير متاح' : 'Report is empty or unavailable');
+      }
+      await downloadVerificationReportPdf(blob, `verification-report-${task.id.slice(0, 8)}.pdf`);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      alert(err?.message || (isAr ? 'تعذر تصدير PDF' : 'Could not export PDF'));
+    } finally {
+      setPdfExporting(false);
+    }
+  };
 
   return (
     <div className="text-center p-6 bg-white/5 rounded-xl border border-white/10">
@@ -674,7 +814,7 @@ function CompletedState({ task, isAr }: { task: any; isAr: boolean }) {
               : task.status}
       </h4>
       {canOpenReport && (
-        <div className="mt-4">
+        <div className="mt-4 space-y-2">
           <button
             type="button"
             disabled={reportOpening}
@@ -699,9 +839,25 @@ function CompletedState({ task, isAr }: { task: any; isAr: boolean }) {
             )}
             {reportOpening ? (isAr ? 'جاري الفتح…' : 'Opening…') : (isAr ? 'عرض تقرير HTML' : 'Open HTML report')}
           </button>
-          <p className="mt-2 text-[10px] text-white/40">
-            {isAr ? 'جاهز للتصدير كـ PDF' : 'Ready for PDF export'}
-          </p>
+          <button
+            type="button"
+            disabled={pdfExporting}
+            onClick={() => void exportPdf()}
+            className="w-full py-3 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 rounded-xl text-gold-300 font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+          >
+            {pdfExporting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Download size={18} />
+            )}
+            {pdfExporting
+              ? isAr
+                ? 'جاري التصدير…'
+                : 'Exporting…'
+              : isAr
+                ? 'تصدير PDF'
+                : 'Export PDF'}
+          </button>
         </div>
       )}
       {task.decisionReason && (

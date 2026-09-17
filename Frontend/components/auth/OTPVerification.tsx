@@ -117,8 +117,13 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
   };
 
   const destination = isWhatsapp
-    ? phone || deliveryHint || email
+    ? phone || deliveryHint || null
     : email || deliveryHint;
+
+  const destinationDisplay = destination
+    || (isWhatsapp
+      ? (language === 'ar' ? 'واتساب المسجّل على الحساب' : 'Registered WhatsApp on your account')
+      : '');
 
   const subtitleText = isWhatsapp
     ? t.auth.otp?.sentToWhatsapp ||
@@ -145,7 +150,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
           {subtitleText}
           <br />
           <div className="text-gold-400 font-mono mt-1 text-lg" dir="ltr">
-            {destination}
+            {destinationDisplay}
           </div>
           {!isWhatsapp && (
             <p className="mt-3 text-white/50 text-xs leading-relaxed max-w-sm mx-auto">

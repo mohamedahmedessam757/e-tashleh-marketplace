@@ -115,8 +115,10 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
   const merchantStore = resolveMerchantStore(order, doc);
   const storeContact = resolveStoreOwnerContact(order.store, doc?.store ?? merchantStore);
   const multiPart = isMultiPartOrder(order);
-  const activeParts = getActiveVerificationParts(order);
-  const aggregatedCustomerImages = multiPart ? getCustomerReferenceImages(order) : [];
+  const activeParts = getActiveVerificationParts(order, { offerId: task?.offerId });
+  const aggregatedCustomerImages = multiPart
+    ? getCustomerReferenceImages(order, { offerId: task?.offerId })
+    : [];
   const storeImages = doc ? asImageUrls(doc.images) : [];
   const locale = isAr ? 'ar-EG' : 'en-US';
   const statusLabel = CUSTOMER_ORDER_STATUS_LABEL[order.status];
@@ -308,6 +310,7 @@ export const VerificationOrderSummary: React.FC<VerificationOrderSummaryProps> =
               role={invoiceAudience === 'customer' ? 'CUSTOMER' : 'MERCHANT'}
               initialData={masterInvoices}
               partyInvoicesOnly
+              highlightOfferId={task?.offerId || undefined}
             />
           </div>
         )}

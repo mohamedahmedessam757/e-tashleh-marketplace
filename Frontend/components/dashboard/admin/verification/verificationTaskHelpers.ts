@@ -62,16 +62,29 @@ export function isOfferActiveForVerification(offer: {
   return !INACTIVE_FULFILLMENT.has(fulfillment);
 }
 
-export function getActiveVerificationParts(order: {
-  parts?: { id?: string; images?: unknown; [key: string]: unknown }[] | null;
-  offers?: {
-    status?: string | null;
-    fulfillmentStatus?: string | null;
-    orderPartId?: string | null;
-  }[] | null;
-}): { id?: string; images?: unknown; [key: string]: unknown }[] {
+export function getActiveVerificationParts(
+  order: {
+    parts?: { id?: string; images?: unknown; [key: string]: unknown }[] | null;
+    offers?: {
+      id?: string | null;
+      status?: string | null;
+      fulfillmentStatus?: string | null;
+      orderPartId?: string | null;
+    }[] | null;
+  },
+  opts?: { offerId?: string | null },
+): { id?: string; images?: unknown; [key: string]: unknown }[] {
   const parts = order.parts ?? [];
   const offers = order.offers ?? [];
+  const offerId = opts?.offerId ? String(opts.offerId) : null;
+
+  if (offerId) {
+    const target = offers.find((o) => o.id && String(o.id) === offerId);
+    const partId = target?.orderPartId ? String(target.orderPartId) : null;
+    if (partId) return parts.filter((p) => p.id && String(p.id) === partId);
+    return parts.length ? parts : [];
+  }
+
   // Without offers payload, keep prior behavior so single-part / legacy tasks still render.
   if (!offers.length) return parts;
   const activePartIds = new Set(
@@ -88,24 +101,31 @@ export function getCustomerReferenceImages(
     partImages?: unknown;
     parts?: { id?: string; images?: unknown }[] | null;
     offers?: {
+      id?: string | null;
       status?: string | null;
       fulfillmentStatus?: string | null;
       orderPartId?: string | null;
     }[] | null;
     requestType?: string | null;
   },
-  opts?: { activePartsOnly?: boolean },
+  opts?: { activePartsOnly?: boolean; offerId?: string | null },
 ): string[] {
   const activeOnly = opts?.activePartsOnly !== false;
+  const offerId = opts?.offerId ?? null;
   if (isMultiPartOrder(order)) {
-    const partsForImages = activeOnly ? getActiveVerificationParts(order) : (order.parts ?? []);
+    const partsForImages = activeOnly
+      ? getActiveVerificationParts(order, { offerId })
+      : (order.parts ?? []);
     const fromParts = partsForImages.flatMap((p) => asImageUrls(p.images));
     const fromOrder = asImageUrls(order.partImages);
+    if (offerId) return [...new Set(fromParts)];
     return [...new Set([...fromOrder, ...fromParts])];
   }
   const fromOrder = asImageUrls(order.partImages);
-  if (fromOrder.length > 0) return fromOrder;
-  const partsForImages = activeOnly ? getActiveVerificationParts(order) : (order.parts ?? []);
+  if (fromOrder.length > 0 && !offerId) return fromOrder;
+  const partsForImages = activeOnly
+    ? getActiveVerificationParts(order, { offerId })
+    : (order.parts ?? []);
   const firstPart = partsForImages[0] ?? order.parts?.[0];
   return firstPart ? asImageUrls(firstPart.images) : [];
 }
