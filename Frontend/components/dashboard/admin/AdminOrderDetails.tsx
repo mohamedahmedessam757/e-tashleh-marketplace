@@ -38,6 +38,29 @@ import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
+
+/** Statuses where admin Waybills tab is visible (includes partial ship/delivery). */
+const ADMIN_WAYBILL_TAB_STATUSES = [
+    'PREPARED',
+    'VERIFICATION',
+    'VERIFICATION_SUCCESS',
+    'READY_FOR_SHIPPING',
+    'PARTIALLY_SHIPPED',
+    'PARTIALLY_DELIVERED',
+    'SHIPPED',
+    'DELIVERED',
+    'COMPLETED',
+    'DISPUTED',
+    'RETURNED',
+    'RETURN_REQUESTED',
+    'RETURN_APPROVED',
+    'REFUNDED',
+    'WARRANTY_ACTIVE',
+    'WARRANTY_EXPIRED',
+    'NON_MATCHING',
+    'CORRECTION_PERIOD',
+    'CORRECTION_SUBMITTED',
+] as const;
 import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
@@ -635,7 +658,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             <FileText size={16} />
                             {isAr ? 'الفواتير' : 'Invoices'}
                         </button>
-                        {['PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'RETURNED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'REFUNDED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED'].includes(order.status) && (
+                        {ADMIN_WAYBILL_TAB_STATUSES.includes(order.status as (typeof ADMIN_WAYBILL_TAB_STATUSES)[number]) && (
                             <button
                                 onClick={() => setActiveTab('waybills')}
                                 className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -971,7 +994,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                     </div>
                     {/* WAYBILLS TAB */}
                     <div className={activeTab === 'waybills' ? 'block' : 'hidden'}>
-                        {['VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'RETURNED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'REFUNDED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'].includes(order.status) && (
+                        {ADMIN_WAYBILL_TAB_STATUSES.includes(order.status as (typeof ADMIN_WAYBILL_TAB_STATUSES)[number]) && (
                             <OrderWaybillsPanel 
                                 orderId={order.id} 
                                 orderStatus={order.status} 

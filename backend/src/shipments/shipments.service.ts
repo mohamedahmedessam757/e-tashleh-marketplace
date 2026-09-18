@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { OrdersService } from '../orders/orders.service';
+import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
@@ -157,6 +158,8 @@ export class ShipmentsService {
         private completionFinance: OrderCompletionFinanceService,
         @Inject(forwardRef(() => OrdersService))
         private ordersService: OrdersService,
+        @Inject(forwardRef(() => OfferFulfillmentService))
+        private offerFulfillment: OfferFulfillmentService,
     ) {}
 
     private adminShipmentInclude() {
@@ -389,18 +392,22 @@ export class ShipmentsService {
             }
         });
 
-        // Keep order.status on SHIPPED whenever carrier transit advances (not only first pickup)
+        // Keep order shipping progress in sync — never overwrite PARTIALLY_* with hard SHIPPED.
         if (marksOrderShipped && shipment.order) {
             const orderRow = await this.prisma.order.findUnique({
                 where: { id: shipment.orderId },
                 select: { status: true },
             });
-            const terminal = ['DELIVERED', 'COMPLETED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED', 'CANCELLED'];
-            if (orderRow && !terminal.includes(orderRow.status) && orderRow.status !== 'SHIPPED') {
-                await this.prisma.order.update({
-                    where: { id: shipment.orderId },
-                    data: { status: 'SHIPPED' },
-                });
+            const terminal = [
+                'DELIVERED',
+                'COMPLETED',
+                'WARRANTY_ACTIVE',
+                'WARRANTY_EXPIRED',
+                'CANCELLED',
+                'REFUNDED',
+            ];
+            if (orderRow && !terminal.includes(orderRow.status)) {
+                await this.offerFulfillment.recomputeOrderStatus(shipment.orderId);
             }
         }
 

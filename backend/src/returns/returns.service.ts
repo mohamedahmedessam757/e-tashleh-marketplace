@@ -1598,11 +1598,48 @@ export class ReturnsService {
                             : {}),
                     },
                 });
-                await tx.order.update({
+                const orderForRefund = await tx.order.findUnique({
                     where: { id: caseRecord.orderId },
-                    data: { status: 'REFUNDED' },
+                    select: { id: true, requestType: true, parts: { select: { id: true } } },
                 });
+                const multiRefund = orderForRefund
+                    ? this.isMultiItemOrder(orderForRefund)
+                    : false;
+                if (!multiRefund) {
+                    await tx.order.update({
+                        where: { id: caseRecord.orderId },
+                        data: { status: 'REFUNDED' },
+                    });
+                } else if (caseRecord.offerId) {
+                    await tx.offer.update({
+                        where: { id: caseRecord.offerId },
+                        data: {
+                            resolutionLocked: true,
+                            fulfillmentStatus: OfferFulfillmentStatus.CANCELLED,
+                        },
+                    });
+                }
             });
+            if (this.isMultiItemOrder(caseRecord.order || {}) && caseRecord.offerId) {
+                const paid = await this.offerFulfillment
+                    .getPaidAcceptedOffers(caseRecord.orderId)
+                    .catch(() => []);
+                const activeLeft = paid.filter(
+                    (o) => o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+                );
+                if (paid.length > 0 && activeLeft.length === 0) {
+                    await this.prisma.order
+                        .update({
+                            where: { id: caseRecord.orderId },
+                            data: { status: 'REFUNDED' },
+                        })
+                        .catch(() => {});
+                } else {
+                    await this.offerFulfillment
+                        .recomputeOrderStatus(caseRecord.orderId)
+                        .catch(() => {});
+                }
+            }
             await this.loyaltyService
                 .reverseRewardsForCustomerRefund(caseRecord.orderId, caseId)
                 .catch((err) =>
@@ -2349,13 +2386,8 @@ export class ReturnsService {
                                 : {}),
                         },
                     });
-                    // Refund verdicts (incl. CLOSE_COMPLETE) must surface REFUNDED on the order
-                    if (refundRequired || isCloseCompleteRefund) {
-                        await tx.order.update({
-                            where: { id: caseRecord.orderId },
-                            data: { status: 'REFUNDED' },
-                        });
-                    }
+                    // Multi: never force whole-order REFUNDED while sibling parts remain active.
+                    // Order status is recomputed after the transaction (see below).
                 } else {
                     await tx.order.update({
                         where: { id: caseRecord.orderId },
@@ -2463,14 +2495,22 @@ export class ReturnsService {
                         e?.message,
                     ),
                 );
-            // recompute must not wipe REFUNDED after a refund verdict
+            // Only surface REFUNDED when every active paid offer is cancelled/refunded.
             if (refundRequired || isCloseCompleteRefund) {
-                await this.prisma.order
-                    .update({
-                        where: { id: caseRecord.orderId },
-                        data: { status: 'REFUNDED' },
-                    })
-                    .catch(() => {});
+                const paid = await this.offerFulfillment
+                    .getPaidAcceptedOffers(caseRecord.orderId)
+                    .catch(() => []);
+                const activeLeft = paid.filter(
+                    (o) => o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
+                );
+                if (paid.length > 0 && activeLeft.length === 0) {
+                    await this.prisma.order
+                        .update({
+                            where: { id: caseRecord.orderId },
+                            data: { status: 'REFUNDED' },
+                        })
+                        .catch(() => {});
+                }
             }
         }
 
@@ -3159,33 +3199,53 @@ export class ReturnsService {
             });
             console.log(`[SHIPPING] Updated Existing Shipment: ${existingShipment.id} with Return Waybill ${waybillNumber}`);
         } else {
-            // Fallback: Check for any shipment for this order
-            const anyShipment = await tx.shipment.findFirst({
-                where: { orderId: order.id },
-                orderBy: { createdAt: 'desc' }
-            });
+            // Prefer the outbound shipment linked to this offer/part — never hijack sibling batches.
+            let scopedShipmentId: string | null =
+                caseRecord.shipmentId ||
+                caseRecord.offer?.cartShipmentId ||
+                null;
+            if (!scopedShipmentId && caseRecord.offerId) {
+                const offerRow = await tx.offer.findUnique({
+                    where: { id: caseRecord.offerId },
+                    select: { cartShipmentId: true },
+                });
+                scopedShipmentId = offerRow?.cartShipmentId || null;
+            }
 
-            if (anyShipment) {
-                await tx.shipment.update({
-                    where: { id: anyShipment.id },
-                    data: shipmentData
+            if (scopedShipmentId) {
+                const scoped = await tx.shipment.findUnique({
+                    where: { id: scopedShipmentId },
+                    select: { id: true, status: true },
                 });
-                await tx.shipmentStatusLog.create({
-                    data: {
-                        shipmentId: anyShipment.id,
-                        fromStatus: anyShipment.status,
-                        toStatus: 'RETURN_LABEL_ISSUED' as any,
-                        notes: '📄 يتم أصدار بوليصة أرجاع للمنتج',
-                        source: 'API'
-                    }
-                });
+                if (scoped) {
+                    await tx.shipment.update({
+                        where: { id: scoped.id },
+                        data: shipmentData,
+                    });
+                    await tx.shipmentStatusLog.create({
+                        data: {
+                            shipmentId: scoped.id,
+                            fromStatus: scoped.status,
+                            toStatus: 'RETURN_LABEL_ISSUED' as any,
+                            notes: '📄 يتم أصدار بوليصة أرجاع للمنتج',
+                            source: 'API',
+                        },
+                    });
+                } else {
+                    await tx.shipment.create({
+                        data: {
+                            orderId: order.id,
+                            ...shipmentData,
+                        },
+                    });
+                }
             } else {
-                // Last resort: Create only if no logistics record exists at all
+                // Always create a dedicated return shipment — do not mutate unrelated outbound batches.
                 await tx.shipment.create({
                     data: {
                         orderId: order.id,
-                        ...shipmentData
-                    }
+                        ...shipmentData,
+                    },
                 });
             }
         }

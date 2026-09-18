@@ -4566,7 +4566,7 @@ export class OrdersService {
 
     /**
      * After a shipment batch is marked delivered: update per-offer fulfillment and only
-     * move the order to DELIVERED when every shipment record for the order is delivered.
+     * move the order to DELIVERED when every active paid offer is delivered.
      */
     async syncOrderStatusAfterShipmentDelivery(orderId: string) {
         const shipments = await this.prisma.shipment.findMany({
@@ -4578,6 +4578,21 @@ export class OrdersService {
             return;
         }
 
+        const orderEarly = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                id: true,
+                status: true,
+                orderNumber: true,
+                deliveredAt: true,
+                requestType: true,
+                customerId: true,
+                parts: { select: { id: true, name: true } },
+            },
+        });
+        if (!orderEarly) return;
+
+        const isMulti = this.offerFulfillment.isMultiItemOrder(orderEarly);
         const deliveredStatus = ShipmentStatus.DELIVERED_TO_CUSTOMER;
         const now = new Date();
 
@@ -4593,9 +4608,9 @@ export class OrdersService {
                     deliveredAt: now,
                 },
             });
-            // Legacy/single-shipment: offers without cartShipmentId on one-shipment orders
-            // Do not require SHIPPED/READY — otherwise deliveredAt stays null and grace reminders never fire
-            if (shipments.length === 1) {
+            // Legacy single-item only: one shipment + offers without cartShipmentId.
+            // Never blast unshipped multi-part offers that still have cartShipmentId null.
+            if (!isMulti && shipments.length === 1) {
                 await this.prisma.offer.updateMany({
                     where: {
                         orderId,
@@ -4617,25 +4632,7 @@ export class OrdersService {
             }
         }
 
-        const deliveredCount = shipments.filter(
-            (s) => s.status === deliveredStatus,
-        ).length;
-        const allDelivered = deliveredCount === shipments.length;
-        const someDelivered = deliveredCount > 0 && !allDelivered;
-
-        const order = await this.prisma.order.findUnique({
-            where: { id: orderId },
-            select: {
-                id: true,
-                status: true,
-                orderNumber: true,
-                deliveredAt: true,
-                requestType: true,
-                customerId: true,
-                parts: { select: { id: true, name: true } },
-            },
-        });
-        if (!order) return;
+        const order = orderEarly;
 
         const terminal: OrderStatus[] = [
             OrderStatus.COMPLETED,
@@ -4644,7 +4641,64 @@ export class OrdersService {
             OrderStatus.CANCELLED,
         ];
 
-        const isMulti = this.offerFulfillment.isMultiItemOrder(order);
+        // Multi-part: offer aggregate is SSOT — never infer full DELIVERED from shipment count alone.
+        if (isMulti) {
+            const nextStatus = await this.offerFulfillment.recomputeOrderStatus(orderId);
+            const returnHours = await this.orderDurationConfig.getReturnWindowHours();
+            const deliveredOffers = await this.prisma.offer.findMany({
+                where: {
+                    orderId,
+                    deliveredAt: { gte: new Date(now.getTime() - 60000) },
+                    fulfillmentStatus: OfferFulfillmentStatus.DELIVERED,
+                },
+                include: { orderPart: true },
+            });
+            for (const offer of deliveredOffers) {
+                const partName = offer.orderPart?.name || 'Part';
+                await this.notifications
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${orderId}:delivered_grace_window`,
+                        180,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: `وصلت قطعة: ${partName}`,
+                            titleEn: `Part delivered: ${partName}`,
+                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
+                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${orderId}`,
+                            metadata: {
+                                offerId: offer.id,
+                                orderPartId: offer.orderPartId,
+                                waEvent: 'ORDER_STATUS',
+                                graceWindow: true,
+                            },
+                        },
+                    )
+                    .catch(() => {});
+            }
+            if (
+                nextStatus === OrderStatus.DELIVERED &&
+                order.status !== OrderStatus.DELIVERED &&
+                !terminal.includes(order.status)
+            ) {
+                await this.prisma.order
+                    .update({
+                        where: { id: orderId },
+                        data: { deliveredAt: now },
+                    })
+                    .catch(() => {});
+            }
+            return;
+        }
+
+        const deliveredCount = shipments.filter(
+            (s) => s.status === deliveredStatus,
+        ).length;
+        const allDelivered = deliveredCount === shipments.length;
+        const someDelivered = deliveredCount > 0 && !allDelivered;
 
         if (allDelivered) {
             const wasAlreadyDelivered =
@@ -4662,47 +4716,6 @@ export class OrdersService {
                     `All ${shipments.length} shipment batch(es) delivered to customer`,
                     { deliveredBatchCount: shipments.length },
                 );
-            } else if (isMulti) {
-                await this.offerFulfillment.recomputeOrderStatus(orderId);
-            }
-
-            // Dedicated grace-window alert for multi-item (single-item covered by DELIVERED status message)
-            if (isMulti && !wasAlreadyDelivered) {
-                const returnHours = await this.orderDurationConfig.getReturnWindowHours();
-                const deliveredOffers = await this.prisma.offer.findMany({
-                    where: {
-                        orderId,
-                        deliveredAt: { gte: new Date(now.getTime() - 60000) },
-                        fulfillmentStatus: OfferFulfillmentStatus.DELIVERED,
-                    },
-                    include: { orderPart: true },
-                });
-                for (const offer of deliveredOffers) {
-                    const partName = offer.orderPart?.name || 'Part';
-                    await this.notifications
-                        .notifyWithDedup(
-                            order.customerId,
-                            `wa:ORDER_STATUS:${orderId}:delivered_grace_window`,
-                            180,
-                            {
-                        recipientId: order.customerId,
-                        recipientRole: 'CUSTOMER',
-                        titleAr: `وصلت قطعة: ${partName}`,
-                        titleEn: `Part delivered: ${partName}`,
-                        messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                        messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                        type: 'ORDER',
-                        link: `/dashboard/orders/${orderId}`,
-                        metadata: {
-                            offerId: offer.id,
-                            orderPartId: offer.orderPartId,
-                            waEvent: 'ORDER_STATUS',
-                            graceWindow: true,
-                        },
-                            },
-                        )
-                        .catch(() => {});
-                }
             }
             return;
         }
@@ -4731,47 +4744,7 @@ export class OrdersService {
                     },
                 });
             }
-            const nextStatus = await this.offerFulfillment.recomputeOrderStatus(orderId);
-
-            if (isMulti && nextStatus === OrderStatus.PARTIALLY_DELIVERED) {
-                const returnHours = await this.orderDurationConfig.getReturnWindowHours();
-                const deliveredOffers = await this.prisma.offer.findMany({
-                    where: {
-                        orderId,
-                        deliveredAt: { not: null },
-                        fulfillmentStatus: OfferFulfillmentStatus.DELIVERED,
-                    },
-                    include: { orderPart: true },
-                });
-                for (const offer of deliveredOffers) {
-                    if (offer.deliveredAt && offer.deliveredAt.getTime() >= now.getTime() - 60000) {
-                        const partName = offer.orderPart?.name || 'Part';
-                        await this.notifications
-                            .notifyWithDedup(
-                                order.customerId,
-                                `wa:ORDER_STATUS:${orderId}:delivered_grace_window_partial`,
-                                180,
-                                {
-                            recipientId: order.customerId,
-                            recipientRole: 'CUSTOMER',
-                            titleAr: `وصلت قطعة: ${partName}`,
-                            titleEn: `Part delivered: ${partName}`,
-                            messageAr: `وصلت «${partName}» من الطلب #${order.orderNumber}. لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع على هذه القطعة.`,
-                            messageEn: `"${partName}" from order #${order.orderNumber} has arrived. You have ${returnHours} hours to return or dispute this item.`,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${orderId}`,
-                            metadata: {
-                                offerId: offer.id,
-                                orderPartId: offer.orderPartId,
-                                waEvent: 'ORDER_STATUS',
-                                graceWindow: true,
-                            },
-                                },
-                            )
-                            .catch(() => {});
-                    }
-                }
-            }
+            await this.offerFulfillment.recomputeOrderStatus(orderId);
         }
     }
 

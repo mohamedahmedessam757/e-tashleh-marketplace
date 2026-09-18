@@ -790,6 +790,23 @@ export class OfferFulfillmentService {
                 });
                 return { success: true, orderStatus: order.status, updated: true };
             }
+            const rejectedOpen = await this.prisma.verificationDocument.findFirst({
+                where: {
+                    orderId,
+                    offerId,
+                    adminStatus: 'REJECTED',
+                    OR: [
+                        { correctionDeadlineAt: { gt: new Date() } },
+                        { correctionDeadlineAt: null },
+                    ],
+                },
+                orderBy: { createdAt: 'desc' },
+            });
+            if (rejectedOpen) {
+                throw new BadRequestException(
+                    'Use correction verification endpoint to rematch this rejected part.',
+                );
+            }
             throw new BadRequestException(
                 'Verification is already under admin review and cannot be changed.',
             );

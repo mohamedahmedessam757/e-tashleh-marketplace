@@ -54,6 +54,7 @@ import {
     merchantCanRequestReadyForShipping,
     merchantOfferVerificationPending,
     merchantOfferAdminRejected,
+    merchantOfferNeedsCorrection,
     isPostVerificationSuccessOrderStatus,
     normalizeOfferFulfillmentStatus,
     resolveMerchantTimelineFromOffers,
@@ -433,10 +434,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         () =>
             fulfillmentLocked
                 ? []
-                : merchantAcceptedOffers.filter((o) =>
-                      merchantOfferVerificationPending(o.fulfillmentStatus, order?.status),
-                  ),
-        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
+                : merchantAcceptedOffers.filter((o) => {
+                      const doc = getVerificationDocForOffer(
+                          order?.verificationDocuments,
+                          o.id,
+                      );
+                      return merchantOfferVerificationPending(
+                          o.fulfillmentStatus,
+                          order?.status,
+                          doc,
+                      );
+                  }),
+        [merchantAcceptedOffers, order?.status, order?.verificationDocuments, fulfillmentLocked],
     );
     const offersVerificationApproved = useMemo(
         () =>
@@ -584,11 +593,49 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const verificationExistingData = useMemo(() => {
         if (!verificationOfferId) return undefined;
         const offer = merchantAcceptedOffers.find((o) => o.id === verificationOfferId);
-        if (!offer || !merchantOfferVerificationPending(offer.fulfillmentStatus, order?.status)) {
+        const doc = getVerificationDocForOffer(order?.verificationDocuments, verificationOfferId);
+        // Rematch / correction must start empty — never prefill rejected media.
+        if (
+            merchantOfferNeedsCorrection(offer?.fulfillmentStatus, doc, order?.status) ||
+            merchantOfferAdminRejected(offer?.fulfillmentStatus, doc, order?.status) ||
+            isCorrectionFamilyOrderStatus(order?.status)
+        ) {
             return undefined;
         }
-        return getVerificationDocForOffer(order?.verificationDocuments, verificationOfferId);
+        if (!offer || !merchantOfferVerificationPending(offer.fulfillmentStatus, order?.status, doc)) {
+            return undefined;
+        }
+        return doc;
     }, [verificationOfferId, merchantAcceptedOffers, order?.verificationDocuments, order?.status]);
+
+    const verificationIsCorrection = useMemo(() => {
+        if (!verificationOfferId) {
+            return isCorrectionFamilyOrderStatus(order?.status);
+        }
+        const offer = merchantAcceptedOffers.find((o) => o.id === verificationOfferId);
+        const doc = getVerificationDocForOffer(order?.verificationDocuments, verificationOfferId);
+        return (
+            merchantOfferNeedsCorrection(offer?.fulfillmentStatus, doc, order?.status) ||
+            merchantOfferAdminRejected(offer?.fulfillmentStatus, doc, order?.status) ||
+            isCorrectionFamilyOrderStatus(order?.status)
+        );
+    }, [verificationOfferId, merchantAcceptedOffers, order?.verificationDocuments, order?.status]);
+
+    const verificationCorrectionDeadline = useMemo(() => {
+        if (!verificationOfferId || !verificationIsCorrection) return null;
+        const doc = getVerificationDocForOffer(order?.verificationDocuments, verificationOfferId) as
+            | { correctionDeadlineAt?: string | Date | null }
+            | undefined;
+        const raw = doc?.correctionDeadlineAt || order?.correctionDeadlineAt;
+        if (!raw) return null;
+        const ms = new Date(raw).getTime();
+        return Number.isFinite(ms) ? ms : null;
+    }, [
+        verificationOfferId,
+        verificationIsCorrection,
+        order?.verificationDocuments,
+        order?.correctionDeadlineAt,
+    ]);
 
     /** Timeline reflects this merchant's parts, not the whole multi-vendor order. */
     const merchantTimelineStatus = useMemo((): StatusType => {
@@ -926,30 +973,42 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         <p className="text-white font-bold">{verifyPartName}</p>
                     </div>
                 )}
+                {verificationIsCorrection && verificationCorrectionDeadline && (
+                    <div className="rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-center">
+                        <p className="text-xs text-orange-300/90 uppercase tracking-wider font-bold mb-1">
+                            {(t as any).dashboard?.orders?.sla?.partCorrection ||
+                                (isAr ? 'مهلة التصحيح لهذه القطعة' : 'Correction deadline for this part')}
+                        </p>
+                        <p className="text-white font-mono text-sm" dir="ltr">
+                            {new Date(verificationCorrectionDeadline).toLocaleString(
+                                isAr ? 'ar-EG' : 'en-US',
+                            )}
+                        </p>
+                    </div>
+                )}
                 <VerificationForm
-                    key={verificationOfferId || 'order-verification'}
-                    resetKey={verificationOfferId || 'order-verification'}
+                    key={`${verificationOfferId || 'order-verification'}-${verificationIsCorrection ? 'corr' : 'fresh'}`}
+                    resetKey={`${verificationOfferId || 'order-verification'}-${verificationIsCorrection ? 'corr' : 'fresh'}`}
                     orderId={order.id}
-                    isCorrection={order.status === 'CORRECTION_PERIOD' || order.status === 'NON_MATCHING'}
-                    existingData={
-                        order.status === 'CORRECTION_PERIOD' || order.status === 'NON_MATCHING'
-                            ? order.verificationDocuments?.[0]
-                            : verificationExistingData
-                    }
+                    isCorrection={verificationIsCorrection}
+                    existingData={verificationIsCorrection ? undefined : verificationExistingData}
                     onSubmit={async (payload) => {
                         try {
-                            if (order.status === 'CORRECTION_PERIOD' || order.status === 'NON_MATCHING') {
-                                await ordersApi.submitCorrectionVerification(order.id, payload);
-                                patchOrderFromRealtime(String(order.id), {
-                                    status: 'CORRECTION_SUBMITTED',
+                            const oid = verificationOfferId || offersNeedingVerification[0]?.id;
+                            if (verificationIsCorrection) {
+                                await ordersApi.submitCorrectionVerification(order.id, {
+                                    ...payload,
+                                    ...(oid ? { offerId: oid } : {}),
                                 });
-                            } else {
-                                const oid = verificationOfferId || offersNeedingVerification[0]?.id;
-                                if (oid) {
-                                    await ordersApi.submitOfferVerification(order.id, oid, payload);
-                                } else {
-                                    await ordersApi.submitVerification(order.id, payload);
+                                if (isCorrectionFamilyOrderStatus(order?.status)) {
+                                    patchOrderFromRealtime(String(order.id), {
+                                        status: 'CORRECTION_SUBMITTED',
+                                    });
                                 }
+                            } else if (oid) {
+                                await ordersApi.submitOfferVerification(order.id, oid, payload);
+                            } else {
+                                await ordersApi.submitVerification(order.id, payload);
                             }
                             setShowVerificationForm(false);
                             setVerificationOfferId(null);
@@ -1800,11 +1859,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 const isPartInReview = merchantOfferVerificationPending(
                                                                     partOffer.fulfillmentStatus,
                                                                     order?.status,
+                                                                    partVerificationDoc,
                                                                 );
                                                                 const isPartInCorrection =
                                                                     !fulfillmentLocked &&
                                                                     !isPartVerified &&
-                                                                    isCorrectionFamilyOrderStatus(order?.status);
+                                                                    (merchantOfferNeedsCorrection(
+                                                                        partOffer.fulfillmentStatus,
+                                                                        partVerificationDoc,
+                                                                        order?.status,
+                                                                    ) ||
+                                                                        isCorrectionFamilyOrderStatus(order?.status));
                                                                 return (
                                                                 <div className={`rounded-lg px-2 py-1.5 border col-span-2 sm:col-span-3 ${
                                                                     isPartRejected || isPartInCorrection
@@ -1932,6 +1997,10 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 {merchantOfferVerificationPending(
                                                                     partOffer.fulfillmentStatus,
                                                                     order?.status,
+                                                                    getVerificationDocForOffer(
+                                                                        order?.verificationDocuments,
+                                                                        partOffer.id,
+                                                                    ),
                                                                 ) && (
                                                                     <span className="px-4 py-2 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/25 flex items-center gap-1.5">
                                                                         <Clock size={14} />
@@ -1939,11 +2008,24 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     </span>
                                                                 )}
                                                                 {!fulfillmentLocked &&
-                                                                    isCorrectionFamilyOrderStatus(order?.status) &&
-                                                                    String(order?.status).toUpperCase() !==
-                                                                        'CORRECTION_SUBMITTED' &&
-                                                                    getFulfillmentRank(partOffer.fulfillmentStatus) <
-                                                                        getFulfillmentRank('VERIFICATION_SUCCESS') && (
+                                                                    (() => {
+                                                                        const partDoc = getVerificationDocForOffer(
+                                                                            order?.verificationDocuments,
+                                                                            partOffer.id,
+                                                                        );
+                                                                        return (
+                                                                            merchantOfferNeedsCorrection(
+                                                                                partOffer.fulfillmentStatus,
+                                                                                partDoc,
+                                                                                order?.status,
+                                                                            ) ||
+                                                                            (isCorrectionFamilyOrderStatus(order?.status) &&
+                                                                                String(order?.status).toUpperCase() !==
+                                                                                    'CORRECTION_SUBMITTED' &&
+                                                                                getFulfillmentRank(partOffer.fulfillmentStatus) <
+                                                                                    getFulfillmentRank('VERIFICATION_SUCCESS'))
+                                                                        );
+                                                                    })() && (
                                                                     <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5">
                                                                         <AlertTriangle size={14} />
                                                                         {isAr

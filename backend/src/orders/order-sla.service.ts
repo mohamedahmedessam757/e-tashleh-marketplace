@@ -194,8 +194,7 @@ export class OrderSlaService {
           this.durationConfig.hoursToMs(cfg.shippingSlaHours),
         );
 
-      case OrderStatus.DELIVERED:
-      case OrderStatus.PARTIALLY_DELIVERED: {
+      case OrderStatus.DELIVERED: {
         const returnHours = Math.max(cfg.returnWindowHours, cfg.disputeWindowHours);
         return this.buildSla(
           status,
@@ -204,6 +203,10 @@ export class OrderSlaService {
           this.durationConfig.hoursToMs(returnHours),
         );
       }
+
+      case OrderStatus.PARTIALLY_DELIVERED:
+        // Per-offer return windows only — avoid order-level 24h that pulls undelivered parts.
+        return null;
 
       case OrderStatus.WARRANTY_ACTIVE: {
         const endMs = this.toMs(order.warranty_end_at);

@@ -201,20 +201,49 @@ export function merchantCanSubmitVerification(
     return String(fulfillmentStatus || '').toUpperCase() === 'PREPARED';
 }
 
+export type VerificationDocSummary = {
+    offerId?: string | null;
+    adminStatus?: string | null;
+    adminRejectionReason?: string | null;
+    adminRejectionImages?: string[] | null;
+    adminRejectionVideo?: string | null;
+    correctionDeadlineAt?: string | Date | null;
+};
+
 /**
  * True only while the offer is in first-pass admin verification review.
  * During correction/rematch (order-level), fulfillment often stays VERIFICATION —
- * that must NOT read as "under review".
+ * that must NOT read as "under review". Rejected docs are also not "pending".
  */
 export function merchantOfferVerificationPending(
     fulfillmentStatus?: string,
     orderStatus?: string | null,
+    doc?: Pick<VerificationDocSummary, 'adminStatus'> | null,
 ): boolean {
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     if (isCorrectionFamilyOrderStatus(orderStatus)) return false;
     // Order already past inspection — ignore stale offer.fulfillmentStatus=VERIFICATION
     if (isPostVerificationSuccessOrderStatus(orderStatus)) return false;
+    if (String(doc?.adminStatus || '').toUpperCase() === 'REJECTED') return false;
     return String(fulfillmentStatus || '').toUpperCase() === 'VERIFICATION';
+}
+
+/** Rejected offer still inside its correction window (doc deadline or order correction-family). */
+export function merchantOfferNeedsCorrection(
+    fulfillmentStatus?: string,
+    doc?: Pick<VerificationDocSummary, 'adminStatus' | 'correctionDeadlineAt'> | null,
+    orderStatus?: string | null,
+    nowMs: number = Date.now(),
+): boolean {
+    if (!merchantOfferAdminRejected(fulfillmentStatus, doc, orderStatus)) return false;
+    if (isCorrectionFamilyOrderStatus(orderStatus)) {
+        return String(orderStatus || '').toUpperCase() !== 'CORRECTION_SUBMITTED';
+    }
+    const deadline = doc?.correctionDeadlineAt
+        ? new Date(doc.correctionDeadlineAt).getTime()
+        : NaN;
+    if (!Number.isFinite(deadline)) return true; // rejected with no deadline still needs rematch CTA
+    return nowMs <= deadline;
 }
 
 /** Merchant-facing fulfillment label that respects correction/rematch order status. */
@@ -266,14 +295,6 @@ export function getMerchantFulfillmentDisplayLabel(
     }
     return getFulfillmentLabel(fulfillmentStatus, isAr);
 }
-
-export type VerificationDocSummary = {
-    offerId?: string | null;
-    adminStatus?: string | null;
-    adminRejectionReason?: string | null;
-    adminRejectionImages?: string[] | null;
-    adminRejectionVideo?: string | null;
-};
 
 /** Post-inspection success — never show rematch CTAs even if a stale REJECTED doc remains. */
 const POST_VERIFICATION_SUCCESS_STATUSES = new Set([

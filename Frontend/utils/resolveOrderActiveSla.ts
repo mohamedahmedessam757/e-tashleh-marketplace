@@ -227,8 +227,12 @@ export function resolveOrderActiveSla(
         H(config.shippingSlaHours),
       );
 
-    case 'DELIVERED':
-    case 'PARTIALLY_DELIVERED': {
+    case 'PARTIALLY_DELIVERED':
+      // Multi-part return windows are per-offer (PartReturnWindowCard) — do not
+      // show a single order-level countdown that implies every part entered 24h.
+      return null;
+
+    case 'DELIVERED': {
       const returnHours = Math.max(config.returnWindowHours, config.disputeWindowHours);
       return buildSla(
         status,
