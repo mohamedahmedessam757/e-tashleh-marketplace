@@ -549,9 +549,21 @@ export const OrderInvoicesPanel: React.FC<OrderInvoicesPanelProps> = ({
         const offerWeight = acceptedOffer?.weightKg || '--';
 
         const customerName = customer?.name || shippingAddr?.fullName || (isAr ? 'عميل' : 'Customer');
-        const partName = order.partName || (isAr ? 'قطعة غيار' : 'Spare Part');
-        const partDesc = order.partDescription || '';
+        const scopedPart =
+            acceptedOffer?.orderPart ||
+            (Array.isArray(order.parts)
+                ? order.parts.find((p: any) => p.id === acceptedOffer?.orderPartId)
+                : null);
+        const partName =
+            inv.livePartName ||
+            inv.partNameSnapshot ||
+            scopedPart?.name ||
+            order.partName ||
+            (isAr ? 'قطعة غيار' : 'Spare Part');
+        const partDesc = scopedPart?.description || order.partDescription || '';
         const partImages: string[] = (() => {
+            const fromPart = scopedPart?.images;
+            if (Array.isArray(fromPart) && fromPart.length) return fromPart;
             const imgs = order.partImages;
             if (Array.isArray(imgs)) return imgs;
             if (typeof imgs === 'string') { try { return JSON.parse(imgs); } catch { return []; } }

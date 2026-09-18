@@ -623,8 +623,8 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
                   </p>
                   <p className="text-[11px] text-white/45">
                     {isAr
-                      ? 'صورة واحدة على الأقل مطلوبة. يمكنك التصوير أكثر من مرة. الفيديو اختياري.'
-                      : 'At least one photo is required. Tap again to add more. Video is optional.'}
+                      ? 'صورة واحدة على الأقل مطلوبة. يمكنك التصوير أكثر من مرة. الفيديو اختياري ويُسجَّل من كاميرا الهاتف.'
+                      : 'At least one photo is required. Tap again to add more. Optional video is recorded from the phone camera.'}
                   </p>
 
                   <input
@@ -647,6 +647,7 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
                     ref={videoInputRef}
                     type="file"
                     accept="video/*"
+                    capture="environment"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -682,7 +683,7 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
                       className="min-h-[48px] px-3 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white/80 text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/10 disabled:opacity-40"
                     >
                       <Video size={16} />
-                      {isAr ? 'اختيار فيديو' : 'Choose video'}
+                      {isAr ? 'تصوير فيديو' : 'Record video'}
                     </button>
                   </div>
 

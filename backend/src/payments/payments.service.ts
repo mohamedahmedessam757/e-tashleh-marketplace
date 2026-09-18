@@ -347,7 +347,7 @@ export class PaymentsService {
                 const companySnap = await this.resolveCompanySnapshot(tx);
                 const partName =
                     (offer as any).orderPart?.name ||
-                    (order as any).partName ||
+                    (await this.resolveOfferPartName(tx, offerId, order)) ||
                     'Spare Part';
                 const bundle = await this.invoiceSnapshot.ensurePaymentInvoiceBundle(tx, {
                     orderId,
@@ -1402,7 +1402,7 @@ export class PaymentsService {
             const companySnap = await this.resolveCompanySnapshot(tx);
             const partName =
                 (payment.offer as any)?.orderPart?.name ||
-                (payment.order as any)?.partName ||
+                (await this.resolveOfferPartName(tx, payment.offerId, payment.order)) ||
                 'Spare Part';
             const bundle = await this.invoiceSnapshot.ensurePaymentInvoiceBundle(tx, {
                 orderId: payment.orderId,
@@ -2386,6 +2386,36 @@ export class PaymentsService {
             metadata,
             stripeCustomerId,
         );
+    }
+
+    /**
+     * Multi-part safe part label for invoices: never fall back to order.partName
+     * (legacy field = first part only) when the offer maps to a different part.
+     */
+    private async resolveOfferPartName(
+        tx: Prisma.TransactionClient | PrismaService,
+        offerId: string | null | undefined,
+        order?: { partName?: string | null; parts?: { id: string; name: string }[] | null } | null,
+    ): Promise<string | null> {
+        if (offerId) {
+            const offer = await tx.offer.findUnique({
+                where: { id: offerId },
+                select: {
+                    orderPartId: true,
+                    orderPart: { select: { name: true } },
+                },
+            });
+            if (offer?.orderPart?.name) return offer.orderPart.name;
+            if (offer?.orderPartId && Array.isArray(order?.parts)) {
+                const part = order.parts.find((p) => p.id === offer.orderPartId);
+                if (part?.name) return part.name;
+            }
+        }
+        // Single-part orders only: order.partName is reliable.
+        if (!order?.parts || order.parts.length <= 1) {
+            return order?.partName || null;
+        }
+        return null;
     }
 
     private async resolveCompanySnapshot(tx?: Prisma.TransactionClient): Promise<{

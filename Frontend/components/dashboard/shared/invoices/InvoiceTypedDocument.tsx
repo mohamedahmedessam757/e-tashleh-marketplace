@@ -72,11 +72,12 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
   const order = inv?.order || {};
   const acceptedOffer =
     order?.offers?.find(
-      (o: any) =>
-        o.id === inv?.payment?.offerId ||
-        o.status === 'accepted' ||
-        o.status === 'ACCEPTED',
-    ) || order?.offers?.[0];
+      (o: any) => o.id && o.id === (inv?.payment?.offerId || inv?.offerId),
+    ) ||
+    order?.offers?.find(
+      (o: any) => o.status === 'accepted' || o.status === 'ACCEPTED',
+    ) ||
+    order?.offers?.[0];
   const customer = order?.customer || null;
 
   const invoiceNumber = inv.invoiceNumber || '--';
@@ -97,9 +98,10 @@ export const InvoiceTypedDocument: React.FC<InvoiceTypedDocumentProps> = ({
 
   const currency = inv.currency || 'AED';
   const partName =
+    acceptedOffer?.orderPart?.name ||
     inv.livePartName ||
     inv.partNameSnapshot ||
-    acceptedOffer?.orderPart?.name ||
+    order.parts?.find((p: any) => p.id === acceptedOffer?.orderPartId)?.name ||
     order.partName ||
     (isAr ? 'قطعة غيار' : 'Spare Part');
   const customerName =

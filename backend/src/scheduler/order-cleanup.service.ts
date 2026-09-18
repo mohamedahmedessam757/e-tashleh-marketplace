@@ -311,112 +311,163 @@ export class OrderCleanupService {
         const assemblyHoursLimit = assemblyDays * 24;
         const reminderDay = Math.max(assemblyDays - 1, 1);
         const orders = await this.prisma.order.findMany({
-            where: { status: OrderStatus.PREPARATION },
-            include: { 
+            where: {
+                status: {
+                    in: [
+                        OrderStatus.PREPARATION,
+                        OrderStatus.PARTIALLY_SHIPPED,
+                        OrderStatus.VERIFICATION_SUCCESS,
+                        OrderStatus.READY_FOR_SHIPPING,
+                    ],
+                },
+            },
+            include: {
                 payments: true,
+                parts: { select: { id: true } },
                 offers: {
-                    where: { status: 'accepted' }
-                }
-            }
+                    where: { status: 'accepted' },
+                    include: {
+                        payments: {
+                            where: { status: 'SUCCESS' },
+                            orderBy: { paidAt: 'asc' },
+                            take: 1,
+                            select: { paidAt: true, createdAt: true },
+                        },
+                    },
+                },
+            },
         });
 
         for (const order of orders) {
             try {
-                // Determine when the earliest element was paid
-                const firstPayment = order.payments.sort((a, b) =>
-                    (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0)
+                const isMulti =
+                    String(order.requestType || '').toLowerCase() === 'multiple' ||
+                    (order.parts?.length ?? 0) > 1;
+
+                if (isMulti) {
+                    const agedReadyIds = order.offers
+                        .filter((o) => {
+                            if (o.shippedFromCart) return false;
+                            if (o.fulfillmentStatus === OfferFulfillmentStatus.CANCELLED) {
+                                return false;
+                            }
+                            if (o.fulfillmentStatus !== OfferFulfillmentStatus.READY_FOR_SHIPPING) {
+                                return false;
+                            }
+                            const pay = o.payments?.[0];
+                            const paidAt = pay?.paidAt || pay?.createdAt;
+                            if (!paidAt) return false;
+                            const diffHours =
+                                (now.getTime() - new Date(paidAt).getTime()) / (1000 * 60 * 60);
+                            return diffHours >= assemblyHoursLimit;
+                        })
+                        .map((o) => o.id);
+
+                    if (agedReadyIds.length > 0) {
+                        this.logger.log(
+                            `Auto-shipping ${agedReadyIds.length} aged READY offer(s) for order ${order.orderNumber}`,
+                        );
+                        await this.ordersService.requestShipping(
+                            order.customerId,
+                            [],
+                            agedReadyIds,
+                            true,
+                        );
+                        await this.notificationsService.create({
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'شحن تلقائي لسلة التجميع 📦',
+                            titleEn: 'Auto-Ship: Assembly Cart 📦',
+                            messageAr: `لقد مضى ${assemblyDays} أيام على قطع جاهزة في طلبك رقم #${order.orderNumber}. تم إصدار البوليصة وشحن القطع الجاهزة تلقائياً.`,
+                            messageEn: `${assemblyDays} days have passed for ready parts on order #${order.orderNumber}. Waybills were issued and those parts were auto-shipped.`,
+                            type: 'system_alert',
+                            link: `/dashboard/orders`,
+                        });
+                    }
+                    continue;
+                }
+
+                if (order.status !== OrderStatus.PREPARATION) continue;
+
+                // Single-item: earliest payment clock → cancel after assembly days
+                const firstPayment = order.payments.sort(
+                    (a, b) => (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0),
                 )[0];
                 const paidAt = firstPayment?.paidAt || order.updatedAt;
                 const diffHours = (now.getTime() - paidAt.getTime()) / (1000 * 60 * 60);
 
-                // 1. Check 7 Days passed -> AUTO-SHIP (Consolidation) or AUTO-CANCEL (Single Merchant Inaction)
                 if (diffHours >= assemblyHoursLimit) {
-                    if (order.requestType === 'multiple') {
-                        this.logger.log(`Auto-shipping assembly cart for order ${order.orderNumber} due to ${assemblyDays}-day timeout`);
-                        
-                        const pendingOfferIds = order.offers
-                            .filter(o => !o.shippedFromCart)
-                            .map(o => o.id);
+                    this.logger.error(
+                        `Auto-cancelling single order ${order.orderNumber} due to merchant inaction (${assemblyDays} days)`,
+                    );
+                    await this.ordersService.transitionStatus(
+                        order.id,
+                        OrderStatus.CANCELLED,
+                        { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
+                        `System: Auto-cancelled after ${assemblyDays} days without preparation`,
+                    );
 
-                        if (pendingOfferIds.length > 0) {
-                            // Force shipment of remaining items
-                            await this.ordersService.requestShipping(order.customerId, [], pendingOfferIds, true);
-                            
-                            // Notify Customer
-                            await this.notificationsService.create({
-                                recipientId: order.customerId, recipientRole: 'CUSTOMER',
-                                titleAr: 'شحن تلقائي لسلة التجميع 📦', titleEn: 'Auto-Ship: Assembly Cart 📦',
-                                messageAr: `لقد مضى ${assemblyDays} أيام على تجميع طلبك رقم #${order.orderNumber}. تم شحن القطع المتاحة حالياً إليك تلقائياً لضمان وصولها في الوقت المحدد.`,
-                                messageEn: `${assemblyDays} days have passed for your assembly cart #${order.orderNumber}. Available items have been auto-shipped to ensure timely delivery.`,
-                                type: 'system_alert', link: `/dashboard/orders`
+                    await this.notificationsService.create({
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'تم إلغاء طلبك لعدم استجابة التاجر',
+                        titleEn: 'Order Cancelled: Merchant Inaction',
+                        messageAr: `نعتذر منك، تم إلغاء الطلب #${order.orderNumber} تلقائياً لعدم قيام التاجر بتجهيزه خلال مهلة ${assemblyDays} أيام. سيتم البدء بإجراءات استرداد المبلغ.`,
+                        messageEn: `We apologize. Order #${order.orderNumber} was auto-cancelled as the merchant failed to prepare it within ${assemblyDays} days. Refund process initiated.`,
+                        type: 'system_alert',
+                        link: `/dashboard/orders`,
+                    });
+
+                    for (const offer of order.offers) {
+                        if (offer.storeId) {
+                            const store = await this.prisma.store.findUnique({
+                                where: { id: offer.storeId },
+                                select: { id: true, ownerId: true },
                             });
-                        }
-                    } else {
-                        // Single order auto-cancel (standard behavior)
-                        this.logger.error(`Auto-cancelling single order ${order.orderNumber} due to merchant inaction (${assemblyDays} days)`);
-                        await this.ordersService.transitionStatus(
-                            order.id, OrderStatus.CANCELLED,
-                            { type: ActorType.SYSTEM, id: 'system-scheduler', name: 'System Scheduler' },
-                            `System: Auto-cancelled after ${assemblyDays} days without preparation`
-                        );
-
-                        await this.notificationsService.create({
-                            recipientId: order.customerId, recipientRole: 'CUSTOMER',
-                            titleAr: 'تم إلغاء طلبك لعدم استجابة التاجر', titleEn: 'Order Cancelled: Merchant Inaction',
-                            messageAr: `نعتذر منك، تم إلغاء الطلب #${order.orderNumber} تلقائياً لعدم قيام التاجر بتجهيزه خلال مهلة ${assemblyDays} أيام. سيتم البدء بإجراءات استرداد المبلغ.`,
-                            messageEn: `We apologize. Order #${order.orderNumber} was auto-cancelled as the merchant failed to prepare it within ${assemblyDays} days. Refund process initiated.`,
-                            type: 'system_alert', link: `/dashboard/orders`
-                        });
-
-                        for (const offer of order.offers) {
-                            if (offer.storeId) {
-                                // 2026 Auto-Violation: 7-day no-prep auto-cancel
-                                const store = await this.prisma.store.findUnique({
-                                    where: { id: offer.storeId },
-                                    select: { id: true, ownerId: true },
+                            if (store) {
+                                await this.violationsService.autoIssue({
+                                    code: 'LATE_PREPARATION_AUTO_CANCEL',
+                                    targetUserId: store.ownerId,
+                                    targetStoreId: store.id,
+                                    targetType: ViolationTargetType.MERCHANT,
+                                    orderId: order.id,
+                                    reason: `Order #${order.orderNumber} auto-cancelled after ${assemblyDays} days without preparation.`,
+                                    metadata: { orderNumber: order.orderNumber },
+                                    dedupSuffix: store.id,
                                 });
-                                if (store) {
-                                    await this.violationsService.autoIssue({
-                                        code: 'LATE_PREPARATION_AUTO_CANCEL',
-                                        targetUserId: store.ownerId,
-                                        targetStoreId: store.id,
-                                        targetType: ViolationTargetType.MERCHANT,
-                                        orderId: order.id,
-                                        reason: `Order #${order.orderNumber} auto-cancelled after ${assemblyDays} days without preparation.`,
-                                        metadata: { orderNumber: order.orderNumber },
-                                        dedupSuffix: store.id,
-                                    });
-                                }
                             }
                         }
                     }
-                }
-                // 2. Check 48 Hours passed -> URGENT MERCHANT WARNING
-                else if (diffHours >= 48 && diffHours < 49) {
+                } else if (diffHours >= 48 && diffHours < 49) {
                     this.logger.warn(`Sending 48h urgent warning for order ${order.orderNumber}`);
                     for (const offer of order.offers) {
                         if (offer.storeId) {
                             await this.notificationsService.notifyMerchantByStoreId(offer.storeId, {
-                                titleAr: '⚠️ إشعار عاجل: تبقت 5 أيام على الإلغاء', titleEn: '⚠️ Urgent: 5 Days Until Cancellation',
+                                titleAr: '⚠️ إشعار عاجل: تبقت أيام على الإلغاء',
+                                titleEn: '⚠️ Urgent: Days Until Cancellation',
                                 messageAr: `مرت 48 ساعة على دفع الطلب #${order.orderNumber}. يرجى البدء بالتجهيز والتوثيق فوراً لتجنب الإلغاء التلقائي والمخالفات.`,
                                 messageEn: `48 hours have passed since payment for Order #${order.orderNumber}. Please start preparation and verification immediately to avoid auto-cancellation and penalties.`,
-                                type: 'system_alert', link: `/merchant/orders/${order.id}`
+                                type: 'system_alert',
+                                link: `/merchant/orders/${order.id}`,
                             });
                         }
                     }
-                }
-                // 3. 6 Day reminder for customer
-                else if (diffHours >= reminderDay * 24 && diffHours < (reminderDay * 24) + 1) {
+                } else if (diffHours >= reminderDay * 24 && diffHours < reminderDay * 24 + 1) {
                     await this.notificationsService.create({
-                        recipientId: order.customerId, recipientRole: 'CUSTOMER',
-                        titleAr: 'تذكير: اقتراب الشحن التلقائي', titleEn: 'Reminder: Auto-Ship Approaching',
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'تذكير: اقتراب الشحن التلقائي',
+                        titleEn: 'Reminder: Auto-Ship Approaching',
                         messageAr: `عناصرك المحتجزة للطلب #${order.orderNumber} أوشكت على إنهاء مدة الحفظ (${assemblyDays} أيام). يرجى تأكيد استلام الشحنة إذا لم تكن ستنتظر قطعاً أخرى.`,
                         messageEn: `Your reserved items for order #${order.orderNumber} are nearing the ${assemblyDays}-day limit. Please request shipping soon.`,
-                        type: 'system_alert', link: `/dashboard/shipping-cart`
+                        type: 'system_alert',
+                        link: `/dashboard/shipping-cart`,
                     });
                 }
-            } catch (err) {
-                this.logger.error(`Error processing assembly cart auto-ship for order ${order.id}:`, err);
+            } catch (err: any) {
+                this.logger.error(
+                    `Assembly cart expiry failed for order ${order.id}: ${err?.message || err}`,
+                );
             }
         }
     }

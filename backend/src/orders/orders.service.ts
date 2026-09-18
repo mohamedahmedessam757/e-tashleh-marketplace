@@ -1372,6 +1372,12 @@ export class OrdersService {
                         deliveredAt: true,
                         resolutionLocked: true,
                         shippedFromCart: true,
+                        payments: {
+                            where: { status: { in: ['SUCCESS', 'COMPLETED'] } },
+                            orderBy: { paidAt: 'asc' },
+                            take: 1,
+                            select: { paidAt: true, createdAt: true, status: true },
+                        },
                     },
                 },
                 parts: { select: { id: true, name: true } },
@@ -1547,6 +1553,52 @@ export class OrdersService {
         }
 
         // --- Preparation: assembly-cart hard limit, then 48h → delayed ---
+        // Multi-part: also run after PARTIALLY_SHIPPED so remaining aged READY parts still auto-ship.
+        const multiAssemblyStatuses = new Set<OrderStatus>([
+            OrderStatus.PREPARATION,
+            OrderStatus.PARTIALLY_SHIPPED,
+            OrderStatus.VERIFICATION_SUCCESS,
+            OrderStatus.READY_FOR_SHIPPING,
+        ]);
+        const isMultiOrder =
+            String(order.requestType || '').toLowerCase() === 'multiple' ||
+            (order.parts?.length ?? 0) > 1;
+
+        if (isMultiOrder && multiAssemblyStatuses.has(status)) {
+            const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
+            const assemblyMs = assemblyDays * 24 * 60 * 60 * 1000;
+            const nowMs = Date.now();
+            const agedOfferIds = order.offers
+                .filter((o) => {
+                    if (o.status !== 'accepted' && String(o.status).toLowerCase() !== 'accepted') {
+                        return false;
+                    }
+                    if (o.shippedFromCart) return false;
+                    if (o.fulfillmentStatus === OfferFulfillmentStatus.CANCELLED) return false;
+                    // requestShipping only ships READY — skip early to avoid noisy empty batches
+                    if (o.fulfillmentStatus !== OfferFulfillmentStatus.READY_FOR_SHIPPING) {
+                        return false;
+                    }
+                    const pay = (o as any).payments?.[0];
+                    const paidAtMs =
+                        (pay?.paidAt ? new Date(pay.paidAt).getTime() : null) ??
+                        (pay?.createdAt ? new Date(pay.createdAt).getTime() : null);
+                    if (paidAtMs == null || !Number.isFinite(paidAtMs)) return false;
+                    return nowMs - paidAtMs >= assemblyMs;
+                })
+                .map((o) => o.id);
+
+            if (agedOfferIds.length > 0) {
+                await this.requestShipping(order.customerId, [], agedOfferIds, true);
+                const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                return {
+                    changed: true,
+                    order: refreshed ?? order,
+                    reason: 'assembly_auto_ship_per_offer',
+                };
+            }
+        }
+
         if (status === OrderStatus.PREPARATION) {
             const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
             const assemblyMs = assemblyDays * 24 * 60 * 60 * 1000;
@@ -1560,24 +1612,9 @@ export class OrdersService {
                 new Date(order.updatedAt).getTime();
 
             if (Date.now() - paidAtMs >= assemblyMs) {
-                if (String(order.requestType || '').toLowerCase() === 'multiple') {
-                    const pendingOfferIds = order.offers
-                        .filter(
-                            (o) =>
-                                o.status === 'accepted' &&
-                                !o.shippedFromCart &&
-                                o.fulfillmentStatus !== OfferFulfillmentStatus.CANCELLED,
-                        )
-                        .map((o) => o.id);
-                    if (pendingOfferIds.length > 0) {
-                        await this.requestShipping(order.customerId, [], pendingOfferIds, true);
-                    }
-                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
-                    return {
-                        changed: true,
-                        order: refreshed ?? order,
-                        reason: 'assembly_auto_ship',
-                    };
+                if (isMultiOrder) {
+                    // Multi handled above with per-offer clocks; nothing left to cancel.
+                    return { changed: false, order, reason: 'multi_awaiting_ready_parts' };
                 }
 
                 const updated = await this.transitionStatus(

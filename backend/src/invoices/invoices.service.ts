@@ -612,8 +612,11 @@ export class InvoicesService {
                 (o: any) => o.id === inv.payment?.offerId,
             );
             const partLive =
-                inv.partNameSnapshot ||
                 offerForPayment?.orderPart?.name ||
+                inv.partNameSnapshot ||
+                (inv.order as any)?.parts?.find(
+                    (p: any) => p.id === offerForPayment?.orderPartId,
+                )?.name ||
                 (inv.order as any)?.partName ||
                 null;
             return {
