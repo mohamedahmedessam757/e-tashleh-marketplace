@@ -6,6 +6,7 @@ import { MerchantCartItem } from './MerchantCartItem';
 import { GlassCard } from '../../ui/GlassCard';
 import { useCartStore } from '../../../stores/useCartStore';
 import { getCurrentUserId } from '../../../utils/auth';
+import { AssemblyCartAutoShipNote } from '../shipping-cart/AssemblyCartAutoShipNote';
 
 export const MerchantShippingCartPage: React.FC = () => {
     const { t } = useLanguage();
@@ -42,6 +43,8 @@ export const MerchantShippingCartPage: React.FC = () => {
                     <p className="opacity-80 leading-relaxed">{t.dashboard.merchant.shippingCart.dataMaskingNote}</p>
                 </div>
             </div>
+
+            <AssemblyCartAutoShipNote />
 
             {/* Content List */}
             <div className="space-y-4">

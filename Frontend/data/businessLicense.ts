@@ -1,4 +1,4 @@
-﻿export interface LicenseField {
+export interface LicenseField {
   labelAr: string;
   labelEn: string;
   valueAr: string;

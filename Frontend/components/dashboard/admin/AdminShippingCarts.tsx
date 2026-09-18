@@ -2,13 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { Clock, User, Phone, Mail, ChevronRight, Box, Loader2, ShieldAlert } from 'lucide-react';
+import { Clock, User, Phone, Mail, Box, Loader2, ShieldAlert } from 'lucide-react';
 import { ordersApi } from '../../../services/api/orders';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { AdminSearchInput } from './AdminSearchInput';
+import { CountdownTimer } from '../shipping-cart/CountdownTimer';
+import { AssemblyCartAutoShipNote } from '../shipping-cart/AssemblyCartAutoShipNote';
+import { getFulfillmentLabel } from '../../../utils/offerFulfillmentHelpers';
 
 export const AdminShippingCarts: React.FC = () => {
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const isAr = language === 'ar';
     const [carts, setCarts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -45,8 +48,8 @@ export const AdminShippingCarts: React.FC = () => {
                 </h2>
                 <p className="text-white/40 text-sm mt-1">
                     {isAr
-                        ? 'إدارة ومراقبة الطلبات التي تنتظر تجميعها قبل الشحن النهائي.'
-                        : 'Manage and monitor orders awaiting consolidation before final shipping.'}
+                        ? 'نفس مؤقت العميل لكل قطعة — مراقبة الطلبات التي تنتظر التجميع قبل الشحن.'
+                        : 'Same per-part timer as the customer — monitor carts awaiting consolidation before shipping.'}
                 </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -115,10 +118,11 @@ export const AdminShippingCarts: React.FC = () => {
         return (
             <div className="space-y-6">
                 {header}
+                <AssemblyCartAutoShipNote />
                 <div className="flex flex-col items-center justify-center py-40 text-center animate-in fade-in zoom-in duration-700">
                     <div className="relative mb-8">
                         <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 relative z-10">
-                            <Box size={48} className="text-white/10 group-hover:scale-110 transition-transform" />
+                            <Box size={48} className="text-white/10" />
                         </div>
                         <div className="absolute inset-0 bg-gold-500/5 blur-3xl rounded-full" />
                     </div>
@@ -140,14 +144,6 @@ export const AdminShippingCarts: React.FC = () => {
                               ? 'سيظهر هنا العملاء الذين لديهم طلبات جاهزة للشحن ولكنها تنتظر تجميعها قبل إصدار البوليصة النهائية.'
                               : 'Customers with orders ready for shipping but awaiting consolidation will appear here for batch processing.'}
                     </p>
-                    {!search.trim() && (
-                        <div className="mt-10 flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                                {isAr ? 'نظام المراقبة اللحظي نشط' : 'Real-time Monitoring Active'}
-                            </span>
-                        </div>
-                    )}
                 </div>
             </div>
         );
@@ -156,9 +152,17 @@ export const AdminShippingCarts: React.FC = () => {
     return (
         <div className="space-y-6">
             {header}
+            <AssemblyCartAutoShipNote />
 
             <div className="grid grid-cols-1 gap-6">
-                {carts.map((cart: any, idx: number) => (
+                {carts.map((cart: any, idx: number) => {
+                    const nearestExpiry = cart.nearestExpiry
+                        ? new Date(cart.nearestExpiry)
+                        : null;
+                    const readyCount = (cart.offers || []).filter(
+                        (o: any) => o.canSelectForShipping,
+                    ).length;
+                    return (
                     <motion.div
                         key={cart.customerId}
                         initial={{ opacity: 0, y: 20 }}
@@ -168,13 +172,12 @@ export const AdminShippingCarts: React.FC = () => {
                         <GlassCard className="overflow-hidden border-white/5 bg-[#1A1814] hover:border-gold-500/20 transition-all duration-500">
                             <div className="p-6">
                                 <div className="flex flex-wrap items-center justify-between gap-6">
-                                    {/* Left: Customer Info */}
                                     <div className="flex items-center gap-4 min-w-[250px]">
                                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold-500/20 to-transparent border border-gold-500/20 flex items-center justify-center shrink-0">
                                             <User size={28} className="text-gold-400" />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-bold text-white group-hover:text-gold-400 transition-colors">{cart.customerName}</h3>
+                                            <h3 className="text-lg font-bold text-white">{cart.customerName}</h3>
                                             <div className="flex flex-col gap-1 mt-1">
                                                 <div className="flex items-center gap-2 text-xs text-white/40">
                                                     <Phone size={12} />
@@ -188,49 +191,57 @@ export const AdminShippingCarts: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Center: Cart Stats */}
-                                    <div className="flex items-center gap-8">
+                                    <div className="flex items-center gap-6 flex-wrap">
                                         <div className="text-center">
                                             <div className="text-2xl font-bold text-white">{cart.totalItems}</div>
                                             <div className="text-[10px] text-white/20 uppercase font-bold tracking-tighter">{isAr ? 'في السلة' : 'Total Items'}</div>
                                         </div>
-                                        <div className="w-px h-10 bg-white/5" />
+                                        <div className="w-px h-10 bg-white/5 hidden sm:block" />
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-blue-400">
-                                                {cart.offers.filter((o: any) => o.shippedFromCart).length}
-                                            </div>
-                                            <div className="text-[10px] text-blue-400/30 uppercase font-bold tracking-tighter">{isAr ? 'تم شحنه' : 'Shipped'}</div>
+                                            <div className="text-2xl font-bold text-green-400">{readyCount}</div>
+                                            <div className="text-[10px] text-green-400/40 uppercase font-bold tracking-tighter">{isAr ? 'جاهز للشحن' : 'Ready'}</div>
                                         </div>
-                                        <div className="w-px h-10 bg-white/5" />
-                                        <div className="text-center">
-                                            <div className="flex items-center gap-1.5 text-gold-500 mb-1">
-                                                <Clock size={14} />
-                                                <span className="text-lg font-bold">
-                                                    {Math.floor((Date.now() - new Date(cart.earliestPayment).getTime()) / (1000 * 60 * 60 * 24))}d
-                                                </span>
-                                            </div>
-                                            <div className="text-[10px] text-gold-500/30 uppercase font-bold tracking-tighter">{isAr ? 'عمر السلة' : 'Cart Age'}</div>
+                                        <div className="w-px h-10 bg-white/5 hidden sm:block" />
+                                        <div className="text-center min-w-[140px]">
+                                            <p className="text-[10px] text-white/40 uppercase font-bold mb-1">
+                                                {t.dashboard.shippingCart.daysRemaining}
+                                            </p>
+                                            {nearestExpiry ? (
+                                                <CountdownTimer targetDate={nearestExpiry} />
+                                            ) : (
+                                                <span className="text-white/30 text-xs">—</span>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Right: Actions */}
-                                    <div className="flex items-center gap-3">
-                                         {Math.floor((Date.now() - new Date(cart.earliestPayment).getTime()) / (1000 * 60 * 60 * 24)) >= 5 && (
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                         {nearestExpiry && nearestExpiry.getTime() - Date.now() <= 2 * 24 * 60 * 60 * 1000 && (
                                              <div className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase animate-pulse flex items-center gap-2">
                                                  <Clock size={12} />
-                                                 {isAr ? 'تجاوز المهلة' : 'Aging Alert'}
+                                                 {isAr ? 'اقتراب انتهاء المهلة' : 'Expiring soon'}
                                              </div>
                                          )}
                                          <button 
                                             onClick={async () => {
-                                                 if (confirm(isAr ? 'هل أنت متأكد من شحن جميع القطع المتبقية؟' : 'Are you sure you want to force ship all remaining items?')) {
-                                                     await ordersApi.requestShipping(undefined, cart.offers.filter((o: any) => !o.shippedFromCart).map((o: any) => o.id), cart.customerId);
+                                                 const readyIds = (cart.offers || [])
+                                                     .filter((o: any) => o.canSelectForShipping && !o.shippedFromCart)
+                                                     .map((o: any) => o.offerId || o.id);
+                                                 if (readyIds.length === 0) {
+                                                     alert(isAr
+                                                         ? 'لا توجد قطع جاهزة للشحن (READY_FOR_SHIPPING) في هذه السلة.'
+                                                         : 'No READY_FOR_SHIPPING parts in this cart.');
+                                                     return;
+                                                 }
+                                                 if (confirm(isAr
+                                                     ? `شحن ${readyIds.length} قطعة جاهزة الآن؟`
+                                                     : `Ship ${readyIds.length} ready part(s) now?`)) {
+                                                     await ordersApi.requestShipping(undefined, readyIds, cart.customerId);
                                                      void fetchCarts();
                                                  }
                                             }}
                                             className="px-4 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/20 transition-all"
                                          >
-                                            {isAr ? 'شحن الكل فوراً' : 'Force Ship All'}
+                                            {isAr ? 'شحن الجاهز' : 'Ship ready'}
                                          </button>
                                          <button 
                                             onClick={() => window.dispatchEvent(new CustomEvent('admin-nav', { detail: { path: 'customer-profile', id: cart.customerId } }))}
@@ -238,35 +249,54 @@ export const AdminShippingCarts: React.FC = () => {
                                          >
                                             {isAr ? 'عرض الملف' : 'View Profile'}
                                          </button>
-                                         <button 
-                                            className="p-3 rounded-xl bg-white/5 hover:bg-gold-500/20 text-white/40 hover:text-gold-400 transition-all group/btn"
-                                         >
-                                            <ChevronRight size={20} className="group-hover/btn:translate-x-1 transition-transform rtl:rotate-180" />
-                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Items Preview */}
                             <div className="px-6 pb-6 pt-4 border-t border-white/5 bg-black/20">
-                                <h4 className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">{isAr ? 'محتويات السلة' : 'Cart Contents'}</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {cart.offers.map((offer: any) => (
-                                        <div key={offer.id} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex flex-col gap-1 hover:bg-white/10 transition-colors">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] text-white/40 font-mono">#{offer.orderNumber}</span>
-                                                <span className="text-xs text-white/80 max-w-[150px] truncate">{offer.partName}</span>
+                                <h4 className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">{isAr ? 'محتويات السلة (نفس بيانات العميل)' : 'Cart contents (same data as customer)'}</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {(cart.offers || []).map((offer: any) => (
+                                        <div key={offer.id} className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2 hover:bg-white/10 transition-colors">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="text-[10px] text-white/40 font-mono">#{offer.orderNumber}</span>
+                                                    <span className="text-sm text-white font-bold truncate">{offer.partName}</span>
+                                                </div>
+                                                <span className="text-gold-400 font-bold text-sm whitespace-nowrap">
+                                                    {Number(offer.totalPaid || offer.price || 0).toFixed(2)} AED
+                                                </span>
                                             </div>
-                                            <CartShipmentBadge
-                                                offer={offer}
-                                                order={{ requestType: 'multiple', shippingType: 'combined' }}
-                                                inAssemblyCart={!offer.shippedFromCart}
-                                                isAr={isAr}
-                                                className="mt-1"
-                                            />
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[9px] text-white/20 font-bold uppercase">{offer.storeName || 'Merchant'}</span>
-                                                <span className="text-[9px] text-gold-500/50">{offer.totalValue || offer.price} AED</span>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <CartShipmentBadge
+                                                    offer={offer}
+                                                    order={{ requestType: offer.requestType || 'multiple', shippingType: offer.shippingType || 'combined' }}
+                                                    inAssemblyCart={!offer.shippedFromCart}
+                                                    isAr={isAr}
+                                                />
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                                    offer.canSelectForShipping
+                                                        ? 'bg-green-500/15 text-green-400 border-green-500/25'
+                                                        : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                                                }`}>
+                                                    {getFulfillmentLabel(offer.fulfillmentStatus, isAr)}
+                                                </span>
+                                            </div>
+                                            {(offer.lockReasonAr || offer.lockReasonEn) && !offer.canSelectForShipping && (
+                                                <p className="text-[11px] text-amber-300/80">
+                                                    {isAr ? offer.lockReasonAr : offer.lockReasonEn}
+                                                </p>
+                                            )}
+                                            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-white/5">
+                                                <span className="text-[10px] text-white/30 font-bold uppercase">{offer.storeName || 'Merchant'}</span>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] text-white/40 mb-1">{t.dashboard.shippingCart.daysRemaining}</p>
+                                                    {offer.expiryDate ? (
+                                                        <CountdownTimer targetDate={offer.expiryDate} />
+                                                    ) : (
+                                                        <span className="text-white/30 text-xs">—</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -274,7 +304,8 @@ export const AdminShippingCarts: React.FC = () => {
                             </div>
                         </GlassCard>
                     </motion.div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

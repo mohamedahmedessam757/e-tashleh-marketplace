@@ -4,6 +4,7 @@ import { ShoppingBag, ArrowRight, Info, PackageCheck, CheckSquare, Square } from
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { CartItem } from './CartItem';
 import { AssemblyCartHandoverBanner } from './AssemblyCartHandoverBanner';
+import { AssemblyCartAutoShipNote } from './AssemblyCartAutoShipNote';
 import { GlassCard } from '../../ui/GlassCard';
 import { useCartStore } from '../../../stores/useCartStore';
 import { getCurrentUserId } from '../../../utils/auth';
@@ -102,6 +103,9 @@ export const ShippingCartPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <AssemblyCartAutoShipNote />
+            <AssemblyCartHandoverBanner items={items} />
 
             {selectedOfferIds.length > 0 && (
                 <motion.div

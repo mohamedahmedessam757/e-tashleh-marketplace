@@ -3070,19 +3070,25 @@ export class OrdersService {
         // Format for the frontend CartItemType
         const cartItems = [];
         for (const order of orders) {
-            // Find the first payment to get the paidAt date for the 7-day timer
-            const firstPayment = order.payments.sort((a, b) =>
-                (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0)
-            )[0];
-
-            let paidAt = firstPayment?.paidAt || order.updatedAt;
-            let expiryDate = new Date(paidAt.getTime() + assemblyCartMs);
-
             // For each accepted offer (which is paid, since order is PREPARATION)
             const acceptedOffers = order.offers.length > 0 ? order.offers : (order.acceptedOffer ? [order.acceptedOffer] : []);
 
             for (const offer of acceptedOffers as any[]) {
                 if (!offer.payments?.length) continue;
+
+                // Per-offer 7-day clock (matches auto-ship SLA) — not order first payment.
+                const offerPayment = offer.payments
+                    .slice()
+                    .sort(
+                        (a: any, b: any) =>
+                            (a.paidAt?.getTime?.() || a.createdAt?.getTime?.() || 0) -
+                            (b.paidAt?.getTime?.() || b.createdAt?.getTime?.() || 0),
+                    )[0];
+                const paidAt =
+                    offerPayment?.paidAt ||
+                    offerPayment?.createdAt ||
+                    order.updatedAt;
+                const expiryDate = new Date(new Date(paidAt).getTime() + assemblyCartMs);
 
                 const part = order.parts.find(p => p.id === offer.orderPartId) || order.parts[0];
                 const partName = part?.name || order.partName || 'Multi-Part Order';
@@ -3090,7 +3096,6 @@ export class OrdersService {
                 const orderImages = (order.partImages as string[]) || [];
                 const partImage = (partImages.length > 0) ? partImages[0] : (orderImages.length > 0 ? orderImages[0] : null);
 
-                const offerPayment = offer.payments?.[0];
                 const finalPrice = offerPayment?.totalAmount ? Number(offerPayment.totalAmount) : (Number(offer.unitPrice) + Number(offer.shippingCost));
 
                 const fulfillmentStatus = offer.fulfillmentStatus as OfferFulfillmentStatus;
@@ -3184,18 +3189,25 @@ export class OrdersService {
         const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
         const cartItems = [];
         for (const order of orders) {
-            const firstPayment = order.payments.sort((a, b) =>
-                (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0)
-            )[0];
-
-            let paidAt = firstPayment?.paidAt || order.updatedAt;
-            let expiryDate = new Date(paidAt.getTime() + assemblyCartMs);
-
             for (const offer of order.offers as any[]) {
                 if (!offer.payments?.length) continue;
                 const isMyOffer = offer.storeId === storeId;
                 const part = order.parts.find(p => p.id === offer.orderPartId) || order.parts[0];
                 const partName = part?.name || order.partName || 'Multi-Part Order';
+
+                // Per-offer timer — same clock as customer cart / auto-ship.
+                const offerPayment = offer.payments
+                    .slice()
+                    .sort(
+                        (a: any, b: any) =>
+                            (a.paidAt?.getTime?.() || a.createdAt?.getTime?.() || 0) -
+                            (b.paidAt?.getTime?.() || b.createdAt?.getTime?.() || 0),
+                    )[0];
+                const paidAt =
+                    offerPayment?.paidAt ||
+                    offerPayment?.createdAt ||
+                    order.updatedAt;
+                const expiryDate = new Date(new Date(paidAt).getTime() + assemblyCartMs);
                 
                 // Privacy Masking: If not my offer, hide price, store name, and images
                 const partImages = (part?.images as string[]) || [];
@@ -3204,7 +3216,6 @@ export class OrdersService {
                     ? ((partImages.length > 0) ? partImages[0] : (orderImages.length > 0 ? orderImages[0] : null))
                     : null;
 
-                const offerPayment = offer.payments?.[0];
                 const finalPrice = isMyOffer 
                     ? (offerPayment?.totalAmount ? Number(offerPayment.totalAmount) : (Number(offer.unitPrice) + Number(offer.shippingCost)))
                     : 0;
@@ -4916,6 +4927,9 @@ export class OrdersService {
             order.offers.some((o) => o.payments?.length > 0),
         );
 
+        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
+        const assemblyCartDays = await this.orderDurationConfig.getAssemblyCartDays();
+
         // Group by customer for better admin oversight
         const cartsByCustomer = ordersWithPaidOffers.reduce((acc, order) => {
             if (!acc[order.customerId]) {
@@ -4926,40 +4940,85 @@ export class OrdersService {
                     customerPhone: order.customer.phone,
                     totalItems: 0,
                     totalValue: 0,
-                    earliestPayment: new Date(),
+                    earliestPayment: null as Date | null,
+                    nearestExpiry: null as Date | null,
+                    assemblyCartDays,
                     offers: [],
                     orders: []
                 };
             }
             
-            const firstPayment = order.payments?.sort((a, b) => 
-                (a.paidAt?.getTime() || 0) - (b.paidAt?.getTime() || 0)
-            )[0];
-            const paidAt = firstPayment?.paidAt || order.updatedAt;
-            
-            if (new Date(paidAt) < new Date(acc[order.customerId].earliestPayment)) {
-                acc[order.customerId].earliestPayment = paidAt;
-            }
-
             const enrichedOffers = this.enrichOffersWithCartBatch(order.offers as any[]);
-            enrichedOffers.forEach((offer) => {
-                acc[order.customerId].totalItems += 1;
-                acc[order.customerId].totalValue += (Number(offer.unitPrice) + Number(offer.shippingCost));
-                
-                // Add specific offer info for the preview
-                acc[order.customerId].offers.push({
+            enrichedOffers.forEach((offer: any) => {
+                if (!offer.payments?.length) return;
+
+                const offerPayment = offer.payments
+                    .slice()
+                    .sort(
+                        (a: any, b: any) =>
+                            (a.paidAt?.getTime?.() || a.createdAt?.getTime?.() || 0) -
+                            (b.paidAt?.getTime?.() || b.createdAt?.getTime?.() || 0),
+                    )[0];
+                const paidAt =
+                    offerPayment?.paidAt ||
+                    offerPayment?.createdAt ||
+                    order.updatedAt;
+                const expiryDate = new Date(new Date(paidAt).getTime() + assemblyCartMs);
+                const lockReason = this.offerFulfillment.getLockReason(
+                    offer.fulfillmentStatus as OfferFulfillmentStatus,
+                );
+                const canSelectForShipping =
+                    offer.fulfillmentStatus === OfferFulfillmentStatus.READY_FOR_SHIPPING;
+                const totalPaid = offerPayment?.totalAmount
+                    ? Number(offerPayment.totalAmount)
+                    : Number(offer.unitPrice) + Number(offer.shippingCost);
+
+                const bucket = acc[order.customerId];
+                if (
+                    !bucket.earliestPayment ||
+                    new Date(paidAt) < new Date(bucket.earliestPayment)
+                ) {
+                    bucket.earliestPayment = paidAt;
+                }
+                if (
+                    !bucket.nearestExpiry ||
+                    new Date(expiryDate) < new Date(bucket.nearestExpiry)
+                ) {
+                    bucket.nearestExpiry = expiryDate;
+                }
+
+                bucket.totalItems += 1;
+                bucket.totalValue += totalPaid;
+
+                bucket.offers.push({
                     id: offer.id,
+                    offerId: offer.id,
+                    orderId: order.id,
                     orderNumber: order.orderNumber,
-                    partName: order.parts.find(p => p.id === offer.orderPartId)?.name || order.partName,
+                    partName:
+                        order.parts.find((p) => p.id === offer.orderPartId)?.name ||
+                        order.partName,
                     storeName: offer.store?.name,
                     shippedFromCart: offer.shippedFromCart,
                     fulfillmentStatus: offer.fulfillmentStatus,
                     handoverPending: offer.handoverPending,
+                    canSelectForShipping,
+                    lockReasonAr: lockReason.ar,
+                    lockReasonEn: lockReason.en,
                     cartShipmentId: offer.cartShipmentId,
                     cartBatchType: offer.cartBatchType,
                     cartBatchSize: offer.cartBatchSize,
                     price: Number(offer.unitPrice),
+                    shippingCost: Number(offer.shippingCost),
+                    totalPaid,
+                    paidAt,
+                    expiryDate,
                     status: order.status,
+                    vehicleMake: order.vehicleMake,
+                    vehicleModel: order.vehicleModel,
+                    vehicleYear: order.vehicleYear,
+                    requestType: order.requestType,
+                    shippingType: order.shippingType,
                 });
             });
 
