@@ -26,13 +26,30 @@ const getAuthHeaders = (): HeadersInit => {
 
 const parseApiError = async (response: Response, fallback: string) => {
     const errorText = await response.text();
+    let raw = fallback;
     try {
         const parsed = JSON.parse(errorText);
-        return parsed?.message || parsed?.error || errorText || fallback;
+        raw = parsed?.message || parsed?.error || errorText || fallback;
     } catch {
-        return errorText || fallback;
+        raw = errorText || fallback;
     }
+    return localizeReturnsApiError(String(raw));
 };
+
+/** Map known backend English errors to bilingual-friendly Arabic (UI language handled by callers via message). */
+function localizeReturnsApiError(message: string): string {
+    const lower = message.toLowerCase();
+    if (lower.includes('orderpartid is required') || lower.includes('select the specific part')) {
+        return 'يجب اختيار القطعة المحددة في الطلب المجمع قبل تقديم الإرجاع أو النزاع. / orderPartId is required — select the specific part.';
+    }
+    if (lower.includes('invalid order part id')) {
+        return 'معرف القطعة غير صالح. / Invalid order part ID.';
+    }
+    if (lower.includes('no accepted offer found')) {
+        return 'لا يوجد عرض مقبول لهذه القطعة. / No accepted offer found for the selected part.';
+    }
+    return message;
+}
 
 export const useReturnsStore = create<ReturnsState>((set, get) => ({
     returns: [],

@@ -130,10 +130,17 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
   };
 
   const handleSelectOrder = (order: Order, type: 'return' | 'dispute', partId?: string) => {
+    const resolvedPartId = partId || order.parts?.[0]?.id || '';
+    const resolvedPartName =
+      (resolvedPartId
+        ? order.parts?.find((p) => String(p.id) === String(resolvedPartId))?.name
+        : undefined) ||
+      order.part ||
+      'Part';
     setSelectedDeliveredItem({
       orderId: order.id,
-      orderPartId: partId || order.parts?.[0]?.id || '',
-      partName: order.part,
+      orderPartId: resolvedPartId,
+      partName: resolvedPartName,
       merchantName: order.merchantName || 'Store',
       orderNumber: order.orderNumber,
     });

@@ -221,10 +221,18 @@ const ReturnCard = ({ order, type, onCancel, t, language, ArrowIcon, onSuccess }
     // Determine status color
     const isDispute = type === 'dispute';
 
-    // Access joined order details
+    // Access joined order details — resolve part by case orderPartId when multi-item
     const orderDetails = order.order || {};
-    // Fallback logic for Part Name: partName -> parts[0].name -> "Unknown Item"
-    const partName = orderDetails.partName || (orderDetails.parts && orderDetails.parts.length > 0 ? orderDetails.parts[0].name : null) || (language === 'ar' ? 'منتج غير معروف' : 'Unknown Item');
+    const casePartId = order.orderPartId ?? order.order_part_id ?? null;
+    const matchedPart =
+        casePartId && Array.isArray(orderDetails.parts)
+            ? orderDetails.parts.find((p: any) => String(p.id) === String(casePartId))
+            : null;
+    const partName =
+        matchedPart?.name ||
+        orderDetails.partName ||
+        (orderDetails.parts?.length === 1 ? orderDetails.parts[0].name : null) ||
+        (language === 'ar' ? 'منتج غير معروف' : 'Unknown Item');
 
     // Evidence files (using camelCase as per new types)
     const evidenceFiles = order.evidenceFiles || [];

@@ -844,10 +844,16 @@ export const customer = {
       form: {
         reason: 'السبب',
         desc: 'وصف تفصيلي',
+        description: 'وصف تفصيلي',
         evidence: 'الأدلة (صور/فيديو)',
         submitReturn: 'إرسال طلب الإرجاع',
         submitDispute: 'فتح نزاع رسمي',
-        upload: 'رفع الملفات'
+        upload: 'رفع الملفات',
+        capturePhoto: 'التقاط صورة بالكاميرا',
+        optionalVideo: 'تصوير فيديو (اختياري)',
+        requiredHint: 'يلزم صورة ملتقطة بالكاميرا لإثبات الحالة ومنع التلاعب',
+        maxReached: 'تم الوصول للحد الأقصى من المرفقات',
+        photoRequired: 'يجب التقاط صورة واحدة على الأقل',
       },
       alerts: {
         freeze: 'تنبيه: سيتم تجميد المبلغ لدى المنصة حتى حل النزاع.',
@@ -1843,10 +1849,16 @@ export const customer = {
       form: {
         reason: 'Reason',
         desc: 'Detailed Description',
+        description: 'Detailed Description',
         evidence: 'Evidence (Photos/Video)',
         submitReturn: 'Submit Return Request',
         submitDispute: 'Open Official Dispute',
-        upload: 'Upload Files'
+        upload: 'Upload Files',
+        capturePhoto: 'Capture photo with camera',
+        optionalVideo: 'Record video (optional)',
+        requiredHint: 'A live camera photo is required to prove condition and prevent tampering',
+        maxReached: 'Maximum attachments reached',
+        photoRequired: 'At least one camera photo is required',
       },
       alerts: {
         freeze: 'Notice: The funds will be held by the platform until the dispute is resolved.',

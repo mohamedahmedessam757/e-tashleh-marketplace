@@ -49,6 +49,8 @@ export interface ResolutionCase {
     merchantName: string;
     merchantStoreId?: string; // Phase 4
     partName: string;
+    orderPartId?: string | null;
+    offerId?: string | null;
     updatedAt: string;
     handoverDeadline?: string; // Phase 4
 
@@ -161,6 +163,21 @@ interface ResolutionState {
     escalateCase: (id: string) => Promise<void>;
 }
 
+function resolveCasePartName(r: {
+    orderPartId?: string | null;
+    order_part_id?: string | null;
+    order?: { parts?: Array<{ id?: string; name?: string }> | null } | null;
+}): string {
+    const partId = r.orderPartId ?? r.order_part_id ?? null;
+    const parts = r.order?.parts ?? [];
+    if (partId && Array.isArray(parts)) {
+        const hit = parts.find((p) => String(p.id) === String(partId));
+        if (hit?.name) return String(hit.name);
+    }
+    if (parts.length === 1 && parts[0]?.name) return String(parts[0].name);
+    return 'Parts';
+}
+
 export const useResolutionStore = create<ResolutionState>((set, get) => ({
     cases: [],
     caseMessages: [],
@@ -190,7 +207,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: 'Your Store',
                 merchantLogo: (r as any).merchantStore?.logo || r.order?.acceptedOffer?.store?.logo || r.order?.store?.logo,
                 merchantStoreId: (r as any).merchantStore?.id || r.order?.acceptedOffer?.storeId,
-                partName: (r.order as any)?.parts?.[0]?.name || 'Parts',
+                orderPartId: (r as any).orderPartId ?? (r as any).order_part_id ?? null,
+                offerId: (r as any).offerId ?? (r as any).offer_id ?? null,
+                partName: resolveCasePartName(r as any),
                 updatedAt: r.updatedAt,
                 usageCondition: r.usageCondition,
                 handoverDeadline: r.handoverDeadline,
@@ -268,7 +287,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: 'Your Store',
                 merchantLogo: (d as any).merchantStore?.logo || d.order?.acceptedOffer?.store?.logo || d.order?.store?.logo,
                 merchantStoreId: (d as any).merchantStore?.id || d.order?.acceptedOffer?.storeId,
-                partName: (d.order as any)?.parts?.[0]?.name || 'Parts',
+                orderPartId: (d as any).orderPartId ?? (d as any).order_part_id ?? null,
+                offerId: (d as any).offerId ?? (d as any).offer_id ?? null,
+                partName: resolveCasePartName(d as any),
                 updatedAt: d.updatedAt,
                 usageCondition: (d as any).usageCondition,
                 handoverDeadline: d.handoverDeadline,
@@ -379,7 +400,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: (r as any).merchantStore?.name || r.order?.acceptedOffer?.store?.name || r.order?.store?.name || 'Store',
                 merchantLogo: (r as any).merchantStore?.logo || r.order?.acceptedOffer?.store?.logo || r.order?.store?.logo,
                 merchantStoreId: (r as any).merchantStore?.id || r.order?.acceptedOffer?.storeId,
-                partName: r.order?.parts?.[0]?.name || 'Parts',
+                orderPartId: (r as any).orderPartId ?? (r as any).order_part_id ?? null,
+                offerId: (r as any).offerId ?? (r as any).offer_id ?? null,
+                partName: resolveCasePartName(r as any),
                 updatedAt: r.updatedAt,
                 usageCondition: r.usageCondition,
                 handoverDeadline: r.handoverDeadline,
@@ -451,7 +474,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: (d as any).merchantStore?.name || d.order?.acceptedOffer?.store?.name || d.order?.store?.name || 'Store',
                 merchantLogo: (d as any).merchantStore?.logo || d.order?.acceptedOffer?.store?.logo || d.order?.store?.logo,
                 merchantStoreId: (d as any).merchantStore?.id || d.order?.acceptedOffer?.storeId,
-                partName: d.order?.parts?.[0]?.name || 'Parts',
+                orderPartId: (d as any).orderPartId ?? (d as any).order_part_id ?? null,
+                offerId: (d as any).offerId ?? (d as any).offer_id ?? null,
+                partName: resolveCasePartName(d as any),
                 updatedAt: d.updatedAt,
                 usageCondition: d.usageCondition,
                 handoverDeadline: d.handoverDeadline,
@@ -533,7 +558,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: (r as any).store?.name || r.order?.acceptedOffer?.store?.name || r.order?.store?.name || 'Store',
                 merchantLogo: (r as any).store?.logo || r.order?.acceptedOffer?.store?.logo || r.order?.store?.logo,
                 merchantStoreId: r.order?.acceptedOffer?.storeId || r.fallbackStore?.id,
-                partName: r.order?.parts?.[0]?.name || 'Parts',
+                orderPartId: (r as any).orderPartId ?? (r as any).order_part_id ?? null,
+                offerId: (r as any).offerId ?? (r as any).offer_id ?? null,
+                partName: resolveCasePartName(r as any),
                 updatedAt: r.updatedAt,
                 usageCondition: (r as any).usageCondition,
                 handoverDeadline: r.handoverDeadline,
@@ -611,7 +638,9 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
                 merchantName: (d as any).store?.name || d.order?.acceptedOffer?.store?.name || d.order?.store?.name || 'Store',
                 merchantLogo: (d as any).store?.logo || d.order?.acceptedOffer?.store?.logo || d.order?.store?.logo,
                 merchantStoreId: d.order?.acceptedOffer?.storeId || d.fallbackStore?.id,
-                partName: d.order?.parts?.[0]?.name || 'Parts',
+                orderPartId: (d as any).orderPartId ?? (d as any).order_part_id ?? null,
+                offerId: (d as any).offerId ?? (d as any).offer_id ?? null,
+                partName: resolveCasePartName(d as any),
                 updatedAt: d.updatedAt,
                 usageCondition: (d as any).usageCondition,
                 handoverDeadline: d.handoverDeadline,

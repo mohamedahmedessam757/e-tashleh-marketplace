@@ -745,7 +745,42 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             )
             .subscribe();
 
-        set({ subscription: { ordersChannel: channel, offersChannel } });
+        // Returns / disputes: refresh open order detail when case lifecycle changes
+        // (multi-item cases often update only these tables, not orders.status).
+        const returnsChannel = supabase
+            .channel(`returns-realtime-${userId || 'global'}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'returns' },
+                (payload) =>
+                    handleGlobalRealtimeEvent('returns table', payload as {
+                        new?: Record<string, unknown>;
+                        old?: Record<string, unknown>;
+                    }),
+            )
+            .subscribe();
+
+        const disputesChannel = supabase
+            .channel(`disputes-realtime-${userId || 'global'}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'disputes' },
+                (payload) =>
+                    handleGlobalRealtimeEvent('disputes table', payload as {
+                        new?: Record<string, unknown>;
+                        old?: Record<string, unknown>;
+                    }),
+            )
+            .subscribe();
+
+        set({
+            subscription: {
+                ordersChannel: channel,
+                offersChannel,
+                returnsChannel,
+                disputesChannel,
+            },
+        });
     },
 
     stopRealtime: () => {
@@ -753,6 +788,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         if (subscription) {
             if (subscription.ordersChannel) supabase.removeChannel(subscription.ordersChannel);
             if (subscription.offersChannel) supabase.removeChannel(subscription.offersChannel);
+            if (subscription.returnsChannel) supabase.removeChannel(subscription.returnsChannel);
+            if (subscription.disputesChannel) supabase.removeChannel(subscription.disputesChannel);
         }
         set({ subscription: null });
     },

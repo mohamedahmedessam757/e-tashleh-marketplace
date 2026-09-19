@@ -1124,9 +1124,34 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 >
                     <WarrantyProtectionCard 
                         order={order} 
-                        onClaim={(id) => {
+                        onClaim={(offerId) => {
                             setReturnInitialReason('warranty_claim');
-                            // If a specific offer/part ID is passed, we can handle it in the modal or store
+                            const offer = order.offers?.find(
+                                (o: any) => String(o.id) === String(offerId),
+                            );
+                            const orderPartId =
+                                offer?.orderPartId ||
+                                (offer as any)?.order_part_id ||
+                                undefined;
+                            const part = order.parts?.find(
+                                (p: any) => String(p.id) === String(orderPartId),
+                            );
+                            if (!orderPartId && isMultiPartOrder) {
+                                return;
+                            }
+                            setResolutionPart({
+                                orderPartId,
+                                partName:
+                                    part?.name ||
+                                    (offer as any)?.partName ||
+                                    order.part ||
+                                    'Part',
+                                merchantName:
+                                    (offer as any)?.merchantName ||
+                                    (offer as any)?.store?.name ||
+                                    order.merchantName ||
+                                    'Store',
+                            });
                             setShowReturnModal(true);
                         }} 
                     />
@@ -1381,33 +1406,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         {t.dashboard.resolution.newDispute}
                                     </button>
                                 </div>
-                            )}
-
-                            {isMultiPartOrder && eligibleResolutionParts.length > 0 && (
-                                <button
-                                    onClick={() => {
-                                        setResolutionPart(null);
-                                        setReturnInitialReason(undefined);
-                                        setShowReturnModal(true);
-                                    }}
-                                    className="flex items-center justify-center gap-2 px-5 py-3 bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(34,211,238,0.35)] w-full sm:w-auto"
-                                >
-                                    <RefreshCcw size={18} />
-                                    {language === 'ar' ? 'طلب إرجاع (اختر قطعة)' : 'Request Return (select part)'}
-                                </button>
-                            )}
-
-                            {isMultiPartOrder && eligibleResolutionParts.length > 0 && (
-                                <button
-                                    onClick={() => {
-                                        setResolutionPart(null);
-                                        setShowDisputeModal(true);
-                                    }}
-                                    className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500/15 hover:bg-red-600 text-red-300 hover:text-white border border-red-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(239,68,68,0.4)] w-full sm:w-auto"
-                                >
-                                    <AlertTriangle size={18} />
-                                    {language === 'ar' ? 'فتح نزاع (اختر قطعة)' : 'Open Dispute (select part)'}
-                                </button>
                             )}
 
                             {/* Dynamic Phase Timer (COLLECTING_OFFERS / AWAITING_SELECTION with offers) */}

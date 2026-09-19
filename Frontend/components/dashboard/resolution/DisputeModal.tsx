@@ -17,7 +17,7 @@ import {
 import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useReturnsStore } from '../../../stores/useReturnsStore';
-import { FileUploader } from '../../ui/FileUploader';
+import { EvidenceCaptureField } from './EvidenceCaptureField';
 import { ResolutionPartPicker } from './ResolutionPartPicker';
 import type { EligibleResolutionPart } from './resolutionTypes';
 import { ordersApi } from '../../../services/api/orders';
@@ -151,7 +151,8 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
 
     const handleSubmit = async () => {
         setAttemptedSubmit(true);
-        if (!activeOrderId || !reason || !description || files.length === 0) return;
+        const hasPhoto = files.some((f) => f.type.startsWith('image/'));
+        if (!activeOrderId || !reason || !description || !hasPhoto) return;
         if (partSelectionRequired && !activeOrderPartId) return;
         if (!confirmations.integrity || !confirmations.policy) return;
         
@@ -317,16 +318,20 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
 
                                 <div className="space-y-3">
                                     <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">{t.dashboard.resolution.form.evidence}</label>
-                                    <div className={`rounded-3xl transition-all ${attemptedSubmit && files.length === 0 ? 'ring-2 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : ''}`}>
-                                        <FileUploader
-                                            onFilesSelected={setFiles}
-                                            accept={{
-                                                'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.heic'],
-                                                'video/*': ['.mp4', '.mov', '.webm']
-                                            }}
-                                            maxFiles={5}
-                                        />
-                                    </div>
+                                    <EvidenceCaptureField
+                                        files={files}
+                                        onChange={setFiles}
+                                        isAr={isAr}
+                                        accent="red"
+                                        showError={attemptedSubmit}
+                                        labels={{
+                                            capturePhoto: t.dashboard.resolution.form.capturePhoto,
+                                            optionalVideo: t.dashboard.resolution.form.optionalVideo,
+                                            requiredHint: t.dashboard.resolution.form.requiredHint,
+                                            maxReached: t.dashboard.resolution.form.maxReached,
+                                            photoRequired: t.dashboard.resolution.form.photoRequired,
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="space-y-4 pt-4 border-t border-white/5">

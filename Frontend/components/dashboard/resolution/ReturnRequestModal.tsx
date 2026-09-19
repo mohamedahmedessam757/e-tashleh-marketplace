@@ -13,7 +13,7 @@ import {
 import { CloseIconButton } from '../../ui/CloseIconButton';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useReturnsStore } from '../../../stores/useReturnsStore';
-import { FileUploader } from '../../ui/FileUploader';
+import { EvidenceCaptureField } from './EvidenceCaptureField';
 import { ResolutionPartPicker } from './ResolutionPartPicker';
 import type { EligibleResolutionPart } from './resolutionTypes';
 import { ordersApi } from '../../../services/api/orders';
@@ -175,7 +175,8 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
 
     const handleSubmit = useCallback(async () => {
         setAttemptedSubmit(true);
-        if (!activeOrderId || !reason || !description || !usageCondition || files.length === 0) return;
+        const hasPhoto = files.some((f) => f.type.startsWith('image/'));
+        if (!activeOrderId || !reason || !description || !usageCondition || !hasPhoto) return;
         if (partSelectionRequired && !activeOrderPartId) return;
         if (!confirmations.integrity || !confirmations.packaging || !confirmations.policy) return;
         
@@ -385,15 +386,22 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
 
                             <div>
                                 <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 ml-2">
-                                    {isAr ? 'المرفقات (إلزامي)' : 'Evidence (Required)'}
+                                    {t.dashboard.resolution.form.evidence}
                                 </label>
-                                <FileUploader onFilesSelected={handleFilesSelected} maxFiles={5} />
-                                {attemptedSubmit && files.length === 0 && (
-                                    <p className="text-red-400 text-xs mt-2 flex items-center gap-1">
-                                        <AlertCircle size={12} />
-                                        {isAr ? 'يجب إرفاق صورة واحدة على الأقل' : 'At least one image is required'}
-                                    </p>
-                                )}
+                                <EvidenceCaptureField
+                                    files={files}
+                                    onChange={handleFilesSelected}
+                                    isAr={isAr}
+                                    accent="cyan"
+                                    showError={attemptedSubmit}
+                                    labels={{
+                                        capturePhoto: t.dashboard.resolution.form.capturePhoto,
+                                        optionalVideo: t.dashboard.resolution.form.optionalVideo,
+                                        requiredHint: t.dashboard.resolution.form.requiredHint,
+                                        maxReached: t.dashboard.resolution.form.maxReached,
+                                        photoRequired: t.dashboard.resolution.form.photoRequired,
+                                    }}
+                                />
                             </div>
 
                             <div className="space-y-3 pt-2">
