@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { useAuditStore } from './useAuditStore';
 import { returnsApi } from '../services/api/returns';
 import { supabase } from '../services/supabase';
+import { resolveCasePartName } from '../utils/resolveCasePartName';
 
 export type CaseType = 'return' | 'dispute';
 export type CaseStatus = 'OPEN' | 'AWAITING_MERCHANT' | 'AWAITING_ADMIN' | 'APPROVED' | 'RESOLVED' | 'CLOSED' | 'REFUNDED' | 'ESCALATED' | 'UNDER_REVIEW' | 'PENDING' | 'MERCHANT_REJECTED' | 'RETURN_STARTED';
@@ -161,21 +162,6 @@ interface ResolutionState {
 
     getCaseById: (id: string) => ResolutionCase | undefined;
     escalateCase: (id: string) => Promise<void>;
-}
-
-function resolveCasePartName(r: {
-    orderPartId?: string | null;
-    order_part_id?: string | null;
-    order?: { parts?: Array<{ id?: string; name?: string }> | null } | null;
-}): string {
-    const partId = r.orderPartId ?? r.order_part_id ?? null;
-    const parts = r.order?.parts ?? [];
-    if (partId && Array.isArray(parts)) {
-        const hit = parts.find((p) => String(p.id) === String(partId));
-        if (hit?.name) return String(hit.name);
-    }
-    if (parts.length === 1 && parts[0]?.name) return String(parts[0].name);
-    return 'Parts';
 }
 
 export const useResolutionStore = create<ResolutionState>((set, get) => ({

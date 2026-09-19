@@ -11,6 +11,7 @@ import {
     shouldShowReturnDisputeBanner,
 } from '../ui/ReturnDisputePhaseBanner';
 import { formatOrderDisplayId } from '../../utils/orderDisplayId';
+import { resolveWarrantyClaimFromOffer } from '../../utils/resolveCasePartName';
 import { OfferCard } from './OfferCard';
 import { PartOffersDrawer } from './PartOffersDrawer';
 import { ChevronRight, ChevronLeft, Calendar, FileText, Package, Clock, Shield, Truck, Search, MapPin, Star, AlertTriangle, RefreshCcw, CheckCircle2, XCircle, Loader2, Eye, ChevronDown, ChevronUp, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
@@ -1125,33 +1126,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     <WarrantyProtectionCard 
                         order={order} 
                         onClaim={(offerId) => {
+                            const resolved = resolveWarrantyClaimFromOffer(
+                                order,
+                                String(offerId || ''),
+                                isMultiPartOrder,
+                            );
+                            if (!resolved) return;
                             setReturnInitialReason('warranty_claim');
-                            const offer = order.offers?.find(
-                                (o: any) => String(o.id) === String(offerId),
-                            );
-                            const orderPartId =
-                                offer?.orderPartId ||
-                                (offer as any)?.order_part_id ||
-                                undefined;
-                            const part = order.parts?.find(
-                                (p: any) => String(p.id) === String(orderPartId),
-                            );
-                            if (!orderPartId && isMultiPartOrder) {
-                                return;
-                            }
-                            setResolutionPart({
-                                orderPartId,
-                                partName:
-                                    part?.name ||
-                                    (offer as any)?.partName ||
-                                    order.part ||
-                                    'Part',
-                                merchantName:
-                                    (offer as any)?.merchantName ||
-                                    (offer as any)?.store?.name ||
-                                    order.merchantName ||
-                                    'Store',
-                            });
+                            setResolutionPart(resolved);
                             setShowReturnModal(true);
                         }} 
                     />
@@ -1275,8 +1257,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     <WarrantyProtectionCard 
                                         order={order} 
                                         variant="compact"
-                                        onClaim={(id) => {
+                                        onClaim={(offerId) => {
+                                            const resolved = resolveWarrantyClaimFromOffer(
+                                                order,
+                                                String(offerId || ''),
+                                                isMultiPartOrder,
+                                            );
+                                            if (!resolved) return;
                                             setReturnInitialReason('warranty_claim');
+                                            setResolutionPart(resolved);
                                             setShowReturnModal(true);
                                         }} 
                                     />
