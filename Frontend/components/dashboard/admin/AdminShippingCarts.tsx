@@ -4,11 +4,10 @@ import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Clock, User, Phone, Mail, Box, Loader2, ShieldAlert } from 'lucide-react';
 import { ordersApi } from '../../../services/api/orders';
-import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { AdminSearchInput } from './AdminSearchInput';
 import { CountdownTimer } from '../shipping-cart/CountdownTimer';
 import { AssemblyCartAutoShipNote } from '../shipping-cart/AssemblyCartAutoShipNote';
-import { getFulfillmentLabel } from '../../../utils/offerFulfillmentHelpers';
+import { AssemblyCartPartCard } from '../shipping-cart/AssemblyCartPartCard';
 
 export const AdminShippingCarts: React.FC = () => {
     const { language, t } = useLanguage();
@@ -254,51 +253,48 @@ export const AdminShippingCarts: React.FC = () => {
                             </div>
 
                             <div className="px-6 pb-6 pt-4 border-t border-white/5 bg-black/20">
-                                <h4 className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">{isAr ? 'محتويات السلة (نفس بيانات العميل)' : 'Cart contents (same data as customer)'}</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <h4 className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3">
+                                    {isAr ? 'محتويات السلة (نفس بيانات العميل + الأطراف)' : 'Cart contents (same as customer + parties)'}
+                                </h4>
+                                <div className="grid grid-cols-1 gap-4">
                                     {(cart.offers || []).map((offer: any) => (
-                                        <div key={offer.id} className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2 hover:bg-white/10 transition-colors">
-                                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <span className="text-[10px] text-white/40 font-mono">#{offer.orderNumber}</span>
-                                                    <span className="text-sm text-white font-bold truncate">{offer.partName}</span>
-                                                </div>
-                                                <span className="text-gold-400 font-bold text-sm whitespace-nowrap">
-                                                    {Number(offer.totalPaid || offer.price || 0).toFixed(2)} AED
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <CartShipmentBadge
-                                                    offer={offer}
-                                                    order={{ requestType: offer.requestType || 'multiple', shippingType: offer.shippingType || 'combined' }}
-                                                    inAssemblyCart={!offer.shippedFromCart}
-                                                    isAr={isAr}
-                                                />
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                                                    offer.canSelectForShipping
-                                                        ? 'bg-green-500/15 text-green-400 border-green-500/25'
-                                                        : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                                                }`}>
-                                                    {getFulfillmentLabel(offer.fulfillmentStatus, isAr)}
-                                                </span>
-                                            </div>
-                                            {(offer.lockReasonAr || offer.lockReasonEn) && !offer.canSelectForShipping && (
-                                                <p className="text-[11px] text-amber-300/80">
-                                                    {isAr ? offer.lockReasonAr : offer.lockReasonEn}
-                                                </p>
-                                            )}
-                                            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-white/5">
-                                                <span className="text-[10px] text-white/30 font-bold uppercase">{offer.storeName || 'Merchant'}</span>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] text-white/40 mb-1">{t.dashboard.shippingCart.daysRemaining}</p>
-                                                    {offer.expiryDate ? (
-                                                        <CountdownTimer targetDate={offer.expiryDate} />
-                                                    ) : (
-                                                        <span className="text-white/30 text-xs">—</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <AssemblyCartPartCard
+                                            key={offer.id || offer.offerId}
+                                            showAdminParties
+                                            item={{
+                                                id: offer.orderId || offer.id,
+                                                offerId: offer.offerId || offer.id,
+                                                orderNumber: offer.orderNumber,
+                                                name: offer.name || offer.partName,
+                                                price: Number(offer.price || 0),
+                                                shippingCost: Number(offer.shippingCost || 0),
+                                                hasWarranty: !!offer.hasWarranty,
+                                                warrantyDuration: offer.warrantyDuration,
+                                                condition: offer.condition,
+                                                partType: offer.partType,
+                                                partImage: offer.partImage || null,
+                                                expiryDate: offer.expiryDate,
+                                                paidAt: offer.paidAt,
+                                                storeName: offer.storeName || 'Merchant',
+                                                vehicleMake: offer.vehicleMake,
+                                                vehicleModel: offer.vehicleModel,
+                                                vehicleYear: offer.vehicleYear,
+                                                vin: offer.vin || null,
+                                                partsCount: 1,
+                                                requestType: offer.requestType || 'multiple',
+                                                shippingType: offer.shippingType || 'combined',
+                                                totalPaid: Number(offer.totalPaid || offer.price || 0),
+                                                shippingAddress: offer.shippingAddress || null,
+                                                fulfillmentStatus: offer.fulfillmentStatus,
+                                                canSelectForShipping: offer.canSelectForShipping,
+                                                handoverPending: offer.handoverPending,
+                                                lockReasonAr: offer.lockReasonAr,
+                                                lockReasonEn: offer.lockReasonEn,
+                                                customerName: offer.customerName || cart.customerName,
+                                                customerPhone: offer.customerPhone || cart.customerPhone,
+                                                customerEmail: offer.customerEmail || cart.customerEmail,
+                                            }}
+                                        />
                                     ))}
                                 </div>
                             </div>

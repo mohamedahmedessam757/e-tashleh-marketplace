@@ -1571,8 +1571,9 @@ export class VerificationTasksService {
             requestType: true,
             rejectionCount: true,
             customerId: true,
-            verificationDocuments: { orderBy: { createdAt: 'desc' }, take: 1 },
-            parts: { select: { id: true } },
+            partName: true,
+            verificationDocuments: { orderBy: { createdAt: 'desc' }, take: 8 },
+            parts: { select: { id: true, name: true } },
           },
         },
       },
@@ -1583,48 +1584,64 @@ export class VerificationTasksService {
     }
 
     const officerDecision = task.decision ?? 'MATCHING';
+    const isMulti = this.offerFulfillment.isMultiItemOrder(task.order);
+    const offerScopeId = task.offerId || null;
+
     let newOrderStatus: OrderStatus = task.order.status;
-    let correctionDeadline: Date | null = null;
     let newRejectionCount = task.order.rejectionCount;
+    let offerRejectionCount = 0;
     let cancelAfterReview = false;
     let issueNotMatch = false;
+    let countsAsRejectStrike = false;
 
     if (dto.approved) {
-      // Admin agrees with the officer's field decision
       if (officerDecision === 'NON_MATCHING') {
-        newRejectionCount += 1;
-        if (newRejectionCount >= 2) {
-          newOrderStatus = task.order.status;
-          correctionDeadline = null;
-          cancelAfterReview = true;
-        } else {
-          // Unify with document path: short NON_MATCHING grace, then CORRECTION_PERIOD via SLA.
-          newOrderStatus = OrderStatus.NON_MATCHING;
-          correctionDeadline = null;
-          issueNotMatch = true;
-        }
+        countsAsRejectStrike = true;
       } else {
         newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
-        correctionDeadline = null;
       }
+    } else if (officerDecision === 'NON_MATCHING') {
+      newOrderStatus = OrderStatus.VERIFICATION;
     } else {
-      // Admin rejects the officer's recommendation
-      if (officerDecision === 'NON_MATCHING') {
-        // Admin overrides: part is acceptable — continue verification flow
-        newOrderStatus = OrderStatus.VERIFICATION;
-        correctionDeadline = null;
+      countsAsRejectStrike = true;
+    }
+
+    if (countsAsRejectStrike) {
+      if (offerScopeId) {
+        const priorFieldRejects = await this.prisma.verificationTask.count({
+          where: {
+            orderId: task.orderId,
+            offerId: offerScopeId,
+            id: { not: taskId },
+            OR: [
+              { decision: 'NON_MATCHING', status: 'ADMIN_APPROVED' },
+              { decision: 'MATCHING', status: 'ADMIN_REJECTED' },
+            ],
+          },
+        });
+        const priorDocRejects = await this.prisma.verificationDocument.count({
+          where: {
+            orderId: task.orderId,
+            offerId: offerScopeId,
+            adminStatus: 'REJECTED',
+          },
+        });
+        offerRejectionCount = Math.max(priorFieldRejects, priorDocRejects) + 1;
+        newRejectionCount = Math.max(task.order.rejectionCount, offerRejectionCount);
       } else {
-        // Officer said match but admin disagrees — merchant must correct
-        newRejectionCount += 1;
-        if (newRejectionCount >= 2) {
-          newOrderStatus = task.order.status;
-          correctionDeadline = null;
-          cancelAfterReview = true;
-        } else {
-          newOrderStatus = OrderStatus.NON_MATCHING;
-          correctionDeadline = null;
-          issueNotMatch = true;
-        }
+        offerRejectionCount = task.order.rejectionCount + 1;
+        newRejectionCount = offerRejectionCount;
+      }
+
+      if (offerRejectionCount >= 2) {
+        cancelAfterReview = true;
+        newOrderStatus = task.order.status;
+        issueNotMatch = false;
+      } else {
+        issueNotMatch = true;
+        // Multi: do not freeze whole cart into NON_MATCHING — siblings continue.
+        newOrderStatus =
+          isMulti && offerScopeId ? task.order.status : OrderStatus.NON_MATCHING;
       }
     }
 
@@ -1635,16 +1652,13 @@ export class VerificationTasksService {
       });
 
       const orderData: Prisma.OrderUpdateInput = {
-        status: cancelAfterReview ? task.order.status : newOrderStatus,
         rejectionCount: newRejectionCount,
+        correctionDeadlineAt: null,
       };
-
-      if (newOrderStatus === OrderStatus.NON_MATCHING) {
-        orderData.correctionDeadlineAt = null;
-      } else if (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS || newOrderStatus === OrderStatus.VERIFICATION) {
-        orderData.correctionDeadlineAt = null;
-      } else if (cancelAfterReview) {
-        orderData.correctionDeadlineAt = null;
+      if (!isMulti || !offerScopeId) {
+        if (!cancelAfterReview) {
+          orderData.status = newOrderStatus;
+        }
       }
 
       await tx.order.update({
@@ -1661,6 +1675,9 @@ export class VerificationTasksService {
             adminId,
             reason: dto.reason ?? null,
             source: 'FIELD',
+            offerId: offerScopeId,
+            offerRejectionCount,
+            multiIsolated: isMulti && !!offerScopeId,
           } as Prisma.InputJsonValue,
         },
       });
@@ -1671,28 +1688,50 @@ export class VerificationTasksService {
       });
     });
 
-    if (!dto.approved && !cancelAfterReview) {
-      // Rematch only when admin rejection means the field visit must be redone
-      // (officer MATCHING rejected → NON_MATCHING / correction cycle).
-      if (newOrderStatus === OrderStatus.NON_MATCHING && officerDecision === 'MATCHING') {
-        await this.startNewCycle({
-          orderId: task.orderId,
-          offerId: task.offerId,
-          previousTaskId: taskId,
-          adminId,
-        });
+    if (
+      !dto.approved &&
+      !cancelAfterReview &&
+      issueNotMatch &&
+      officerDecision === 'MATCHING'
+    ) {
+      await this.startNewCycle({
+        orderId: task.orderId,
+        offerId: task.offerId,
+        previousTaskId: taskId,
+        adminId,
+      });
+    }
+
+    if (issueNotMatch && offerScopeId && !cancelAfterReview) {
+      await this.offerFulfillment
+        .applyVerificationDecision(task.orderId, offerScopeId, false)
+        .catch((e) =>
+          this.logger.warn(
+            `Field non-match offer sync failed: ${e instanceof Error ? e.message : e}`,
+          ),
+        );
+      if (isMulti) {
+        newOrderStatus = await this.offerFulfillment.recomputeOrderStatus(task.orderId);
       }
     }
 
-    // Sync offer fulfillment + clear stale REJECTED docs so merchant UI advances
-    if (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS) {
+    if (
+      newOrderStatus === OrderStatus.VERIFICATION_SUCCESS ||
+      (dto.approved && officerDecision === 'MATCHING' && !cancelAfterReview)
+    ) {
       try {
         await this.syncOfferAndDocsAfterVerificationSuccess({
           orderId: task.orderId,
           offerId: task.offerId,
           adminId,
           storeIdHint: task.order.verificationDocuments?.[0]?.storeId ?? null,
+          isMulti,
         });
+        if (isMulti) {
+          newOrderStatus = await this.offerFulfillment.recomputeOrderStatus(task.orderId);
+        } else {
+          newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
+        }
       } catch (syncErr) {
         this.logger.warn(
           `Field approve fulfillment sync failed: ${syncErr instanceof Error ? syncErr.message : syncErr}`,
@@ -1701,7 +1740,8 @@ export class VerificationTasksService {
     }
 
     if (
-      newOrderStatus === OrderStatus.VERIFICATION_SUCCESS &&
+      (newOrderStatus === OrderStatus.VERIFICATION_SUCCESS ||
+        newOrderStatus === OrderStatus.READY_FOR_SHIPPING) &&
       this.waybillsService.shouldAutoIssueOnVerification(task.order)
     ) {
       try {
@@ -1716,7 +1756,10 @@ export class VerificationTasksService {
       }
     }
 
-    const storeIdForViolation = task.order.verificationDocuments?.[0]?.storeId ?? null;
+    const storeIdForViolation =
+      task.order.verificationDocuments?.find((d) => d.offerId === offerScopeId)?.storeId ??
+      task.order.verificationDocuments?.[0]?.storeId ??
+      null;
     if ((issueNotMatch || cancelAfterReview) && storeIdForViolation) {
       const store = await this.prisma.store.findUnique({
         where: { id: storeIdForViolation },
@@ -1724,6 +1767,7 @@ export class VerificationTasksService {
       });
       if (store) {
         const code = cancelAfterReview ? 'REPEAT_NOT_MATCH' : 'NOT_MATCH';
+        const partial = isMulti && !!offerScopeId && cancelAfterReview;
         await this.violationsService
           .autoIssue({
             code,
@@ -1732,32 +1776,76 @@ export class VerificationTasksService {
             targetType: ViolationTargetType.MERCHANT,
             orderId: task.orderId,
             reason: cancelAfterReview
-              ? `Repeated field non-match on order #${task.order.orderNumber}; order cancelled.`
+              ? partial
+                ? `Repeated field non-match on order #${task.order.orderNumber} (offer ${offerScopeId}); part cancelled.`
+                : `Repeated field non-match on order #${task.order.orderNumber}; order cancelled.`
               : `Field verification non-match on order #${task.order.orderNumber}.`,
-            metadata: { orderNumber: task.order.orderNumber, rejectionCount: newRejectionCount, source: 'FIELD' },
-            dedupSuffix: `${store.id}:${code}:field`,
+            metadata: {
+              orderNumber: task.order.orderNumber,
+              rejectionCount: offerRejectionCount || newRejectionCount,
+              source: 'FIELD',
+              offerId: offerScopeId,
+              partialCancel: partial,
+            },
+            dedupSuffix: `${store.id}:${code}:field:${offerScopeId || 'order'}`,
           })
           .catch((e) => this.logger.warn(`field mismatch violation failed: ${e?.message || e}`));
       }
     }
 
     if (cancelAfterReview) {
+      const secondRejectReason =
+        'Cancelled after second field verification rejection (non-matching).';
       try {
-        await this.ordersService.transitionStatus(
-          task.orderId,
-          OrderStatus.CANCELLED,
-          { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
-          'Cancelled after second field verification rejection (non-matching).',
-          {
-            source: 'adminReviewFieldVerification',
-            rejectionCount: newRejectionCount,
-            merchantFault: true,
-          },
-        );
-        newOrderStatus = OrderStatus.CANCELLED;
+        if (isMulti && offerScopeId) {
+          const { cancelledOfferIds, nextStatus } =
+            await this.offerFulfillment.cancelOffersFulfillment(
+              task.orderId,
+              [offerScopeId],
+              secondRejectReason,
+            );
+          if (cancelledOfferIds.length) {
+            await this.escrowService.refundPaidOrderOnCancel(
+              task.orderId,
+              secondRejectReason,
+              {
+                previousStatus: task.order.status,
+                merchantFault: true,
+                offerIds: cancelledOfferIds,
+              },
+            );
+          }
+          if (nextStatus === OrderStatus.CANCELLED) {
+            newOrderStatus = OrderStatus.CANCELLED;
+          } else {
+            await this.prisma.order.update({
+              where: { id: task.orderId },
+              data: {
+                status: nextStatus,
+                correctionDeadlineAt: null,
+                rejectionCount: newRejectionCount,
+                updatedAt: new Date(),
+              },
+            });
+            newOrderStatus = nextStatus;
+          }
+        } else {
+          await this.ordersService.transitionStatus(
+            task.orderId,
+            OrderStatus.CANCELLED,
+            { type: ActorType.ADMIN, id: adminId, name: 'Admin' },
+            secondRejectReason,
+            {
+              source: 'adminReviewFieldVerification',
+              rejectionCount: offerRejectionCount || newRejectionCount,
+              merchantFault: true,
+            },
+          );
+          newOrderStatus = OrderStatus.CANCELLED;
+        }
       } catch (cancelErr) {
         this.logger.error(
-          `Field second-reject cancel via transitionStatus failed for ${task.orderId}: ${
+          `Field second-reject cancel failed for ${task.orderId}: ${
             cancelErr instanceof Error ? cancelErr.message : cancelErr
           }`,
         );
@@ -1777,6 +1865,9 @@ export class VerificationTasksService {
         metadata: {
           taskId,
           reason: dto.reason ?? null,
+          offerId: offerScopeId,
+          offerRejectionCount,
+          multiIsolated: isMulti && !!offerScopeId,
           timestamp: new Date().toISOString(),
         },
       })
@@ -1785,15 +1876,21 @@ export class VerificationTasksService {
     void this.dispatchFieldAdminReviewNotifications({
       taskId,
       order: task.order,
-      storeId: task.order.verificationDocuments?.[0]?.storeId ?? null,
+      storeId: storeIdForViolation,
       officerId: task.officerId,
       approved: dto.approved,
       officerDecision,
       newOrderStatus,
-      newRejectionCount,
+      newRejectionCount: offerRejectionCount || newRejectionCount,
     }).catch((e) => this.logger.warn(`field admin review notifications: ${e}`));
 
-    return { success: true, orderStatus: newOrderStatus, taskStatus: dto.approved ? 'ADMIN_APPROVED' : 'ADMIN_REJECTED' };
+    return {
+      success: true,
+      orderStatus: newOrderStatus,
+      taskStatus: dto.approved ? 'ADMIN_APPROVED' : 'ADMIN_REJECTED',
+      offerId: offerScopeId,
+      cancelledPart: cancelAfterReview && isMulti && !!offerScopeId,
+    };
   }
 
   async getTaskDetails(taskId: string, userId: string, role: string) {
@@ -2019,6 +2116,7 @@ export class VerificationTasksService {
     offerId?: string | null;
     adminId: string;
     storeIdHint?: string | null;
+    isMulti?: boolean;
   }) {
     let offerId = params.offerId ?? null;
     let storeId = params.storeIdHint ?? null;
@@ -2052,7 +2150,11 @@ export class VerificationTasksService {
       orderId: params.orderId,
       adminStatus: { in: ['REJECTED', 'PENDING'] },
     };
-    if (offerId && storeId) {
+    if (offerId && params.isMulti) {
+      // Multi: never approve sibling null-scoped docs.
+      docWhere.offerId = offerId;
+      if (storeId) docWhere.storeId = storeId;
+    } else if (offerId && storeId) {
       docWhere.AND = [
         { OR: [{ offerId }, { offerId: null }] },
         { storeId },

@@ -7,6 +7,11 @@ import { UsersService } from '../users/users.service';
 import { EscrowService, StripeRefundContext } from '../payments/escrow.service';
 import { ActorType, ViolationTargetType, Prisma } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
+import {
+    isOfferInWarranty,
+    isWarrantyClaimReason,
+    offerHasUsableWarranty,
+} from '../orders/warranty-activation.util';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../orders/order-time.constants';
 import {
     computeAdjudicationFinancials,
@@ -165,6 +170,7 @@ export class ReturnsService {
         order: { id: string; customerId: string; requestType?: string | null; parts: { id: string }[]; status: string; deliveredAt?: Date | null; updatedAt: Date },
         orderPartId: string | undefined,
         mode: 'return' | 'dispute',
+        reason?: string,
     ) {
         const isMulti = this.isMultiItemOrder(order);
 
@@ -185,14 +191,23 @@ export class ReturnsService {
         }
 
         if (isMulti) {
-            this.offerFulfillment.assertOfferReturnWindow(acceptedOffer);
+            this.offerFulfillment.assertOfferReturnWindow(acceptedOffer, { mode, reason });
         } else if (order.status === 'DELIVERED') {
             const deliveryMoment = order.deliveredAt ?? order.updatedAt;
             const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
-            if (deliveryMoment < new Date(Date.now() - windowMs)) {
-                throw new BadRequestException(
-                    `${mode === 'return' ? 'Return' : 'Dispute'} window (${POST_DELIVERY_RETURN_DISPUTE_HOURS} hours) has expired for this order`,
-                );
+            const inShortWindow = deliveryMoment >= new Date(Date.now() - windowMs);
+            if (!inShortWindow) {
+                if (
+                    mode === 'return' &&
+                    isWarrantyClaimReason(reason) &&
+                    isOfferInWarranty(acceptedOffer)
+                ) {
+                    // Single-item warranty claim after short window — allowed.
+                } else {
+                    throw new BadRequestException(
+                        `${mode === 'return' ? 'Return' : 'Dispute'} window (${POST_DELIVERY_RETURN_DISPUTE_HOURS} hours) has expired for this order`,
+                    );
+                }
             }
         } else if (mode === 'dispute') {
             if (['COMPLETED', 'CANCELLED', 'REFUNDED'].includes(order.status)) {
@@ -411,6 +426,7 @@ export class ReturnsService {
             order,
             orderPartId,
             'return',
+            reason,
         );
 
         // Prevent Duplicate Returns for the same part/order
@@ -458,33 +474,40 @@ export class ReturnsService {
                 ? await tx.shipment.findFirst({ where: { id: acceptedOffer.cartShipmentId } })
                 : await tx.shipment.findFirst({ where: { orderId: orderId } });
 
-            // Determine if this is a Warranty Return (Exchange Only) Ref: Spec §5
+            // Determine if this is a Warranty Return (Exchange Only) — offer-scoped, not order.warranty_end_at
             let returnType = 'REFUND';
             let shouldAutoApprove = false;
 
-            if (order.warranty_end_at && new Date(order.warranty_end_at) > new Date()) {
-                // If within warranty period, we prefer replacement
-                if (reason === 'warranty_claim' || reason === 'replacement') {
-                    returnType = 'EXCHANGE';
-                    shouldAutoApprove = true;
-                }
-            } else if (order.acceptedOffer?.hasWarranty) {
-                const standardWindowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
-                const deliveryMoment = order.deliveredAt ?? order.updatedAt;
-                const isPastStandard = deliveryMoment < new Date(Date.now() - standardWindowMs);
-                if (isPastStandard) {
-                    returnType = 'EXCHANGE';
-                }
-            }
-
-            // Resolve relevant Offer & Store
             const acceptedOfferResolved = acceptedOffer ?? await tx.offer.findFirst({
                 where: {
                     orderId: orderId,
                     ...(orderPartId ? { orderPartId: orderPartId } : {}),
-                    status: 'accepted'
-                }
+                    status: 'accepted',
+                },
             });
+
+            if (
+                acceptedOfferResolved &&
+                isWarrantyClaimReason(reason) &&
+                isOfferInWarranty(acceptedOfferResolved)
+            ) {
+                returnType = 'EXCHANGE';
+                shouldAutoApprove = true;
+            } else if (
+                acceptedOfferResolved &&
+                offerHasUsableWarranty(acceptedOfferResolved) &&
+                isWarrantyClaimReason(reason)
+            ) {
+                // Has warranty flag but end date not stamped yet — treat past short window as EXCHANGE.
+                const standardWindowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+                const deliveryMoment =
+                    (acceptedOfferResolved as { deliveredAt?: Date | null }).deliveredAt ??
+                    order.deliveredAt ??
+                    order.updatedAt;
+                if (deliveryMoment < new Date(Date.now() - standardWindowMs)) {
+                    returnType = 'EXCHANGE';
+                }
+            }
 
             const nextStatus = shouldAutoApprove ? 'APPROVED' : 'PENDING';
             const handoverDeadline = shouldAutoApprove ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null;
@@ -3045,32 +3068,51 @@ export class ReturnsService {
                 const isMulti = this.isMultiItemOrder(record.order);
 
                 if (isMulti && record.offerId) {
+                    // Unlock so the delivered offer can complete after missed return handover.
                     await tx.offer.update({
                         where: { id: record.offerId },
-                        data: { resolutionLocked: true },
+                        data: { resolutionLocked: false },
                     });
-                } else if (!isMulti) {
-                    const nextStatus = await this.offerFulfillment.recomputeOrderStatus(
-                        record.orderId,
-                    );
-                    if (nextStatus) {
-                        await tx.order.update({
-                            where: { id: record.orderId },
-                            data: { status: nextStatus },
-                        });
-                    }
-                } else {
-                    const nextStatus = await this.offerFulfillment.recomputeOrderStatus(
-                        record.orderId,
-                    );
-                    if (nextStatus) {
-                        await tx.order.update({
-                            where: { id: record.orderId },
-                            data: { status: nextStatus },
-                        });
-                    }
+                }
+
+                const nextStatus = await this.offerFulfillment.recomputeOrderStatus(
+                    record.orderId,
+                );
+                if (nextStatus && !isMulti) {
+                    await tx.order.update({
+                        where: { id: record.orderId },
+                        data: { status: nextStatus },
+                    });
                 }
             });
+
+            // Unfreeze escrow for this case's offer payment (outside txn — Stripe/DB side effects).
+            try {
+                const payment = record.offerId
+                    ? await this.prisma.paymentTransaction.findFirst({
+                          where: { offerId: record.offerId, status: 'SUCCESS' },
+                      })
+                    : await this.prisma.paymentTransaction.findFirst({
+                          where: { orderId: record.orderId, status: 'SUCCESS' },
+                      });
+                if (payment) {
+                    await this.escrowService.unfreezeFundsForPayment(
+                        payment.id,
+                        'Return handover deadline expired — escrow released',
+                    );
+                }
+            } catch (e) {
+                console.error(
+                    `[ReturnsService] Failed to unfreeze escrow after expired handover ${record.id}:`,
+                    e,
+                );
+            }
+
+            if (this.isMultiItemOrder(record.order)) {
+                await this.offerFulfillment
+                    .recomputeOrderStatus(record.orderId)
+                    .catch(() => {});
+            }
 
             const partLabel = record.orderPartId
                 ? record.order.parts?.find((p) => p.id === record.orderPartId)?.name
@@ -3115,18 +3157,30 @@ export class ReturnsService {
         const customerCity = shippingAddr?.city || (order.customer as any)?.country || '';
         const customerCountry = shippingAddr?.country || (order.customer as any)?.country || '';
         
-        // 2026 Financial Hardening: Match original waybill logic (Invoice Total > Unit Price > Order Total)
-        const mainInvoice = (order as any).invoices?.[0];
-        const invoiceTotal = mainInvoice?.total ? Number(mainInvoice.total) : (mainInvoice?.totalAmount ? Number(mainInvoice.totalAmount) : 0);
+        // Prefer offer/case invoice amount over whole-order invoice (multi isolation).
+        let offerInvoiceTotal = 0;
+        if (caseRecord.invoiceId) {
+            const caseInvoice = await tx.invoice.findUnique({
+                where: { id: caseRecord.invoiceId },
+                select: { total: true, totalAmount: true },
+            });
+            offerInvoiceTotal = Number(
+                (caseInvoice as any)?.total ?? (caseInvoice as any)?.totalAmount ?? 0,
+            );
+        }
         const offerPrice = Number(caseRecord.offer?.unitPrice || 0);
         const acceptedOfferPrice = Number(order.acceptedOffer?.unitPrice || 0);
         const orderTotal = Number(order.totalAmount || 0);
-        
-        const finalPrice = invoiceTotal > 0 
-            ? invoiceTotal 
-            : (offerPrice > 0 
-                ? offerPrice 
-                : (acceptedOfferPrice > 0 ? acceptedOfferPrice : orderTotal));
+        const isMultiReturn = this.isMultiItemOrder(order);
+
+        const finalPrice =
+            offerInvoiceTotal > 0
+                ? offerInvoiceTotal
+                : offerPrice > 0
+                  ? offerPrice
+                  : acceptedOfferPrice > 0
+                    ? acceptedOfferPrice
+                    : orderTotal;
 
         // Create a Validated Waybill record
         const waybill = await tx.shippingWaybill.create({
@@ -3164,13 +3218,15 @@ export class ReturnsService {
             }
         });
 
-        // 2026 Unified Logistics: Update EXISTING shipment instead of creating a redundant new one
-        const existingShipment = await tx.shipment.findFirst({
-            where: { 
+        // Multi / shared assembly cart: always create a dedicated return shipment.
+        // Never flip a shared outbound cartShipmentId to RETURN_LABEL_ISSUED.
+        const existingReturnShipment = await tx.shipment.findFirst({
+            where: {
                 orderId: order.id,
-                waybill: { partId: caseRecord.orderPartId }
+                waybill: { partId: caseRecord.orderPartId },
+                status: { in: ['RETURN_LABEL_ISSUED', 'RETURN_IN_TRANSIT', 'RETURN_RECEIVED'] as any },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         const shipmentData = {
@@ -3178,28 +3234,39 @@ export class ReturnsService {
             status: 'RETURN_LABEL_ISSUED' as any,
             carrierName: 'Tashleh Express',
             trackingNumber: waybillNumber,
-            statusNotes: `[RETURN] Automated Label Issued. Handover Deadline: ${handoverDeadline.toLocaleDateString()}`
+            statusNotes: `[RETURN] Automated Label Issued. Handover Deadline: ${handoverDeadline.toLocaleDateString()}`,
         };
 
-        if (existingShipment) {
-            await tx.shipment.update({
-                where: { id: existingShipment.id },
-                data: shipmentData
+        const createDedicatedReturnShipment = async () => {
+            await tx.shipment.create({
+                data: {
+                    orderId: order.id,
+                    ...shipmentData,
+                },
             });
+            console.log(
+                `[SHIPPING] Created dedicated return shipment with waybill ${waybillNumber} for case ${caseRecord.id}`,
+            );
+        };
 
-            // Create status log for audit trail
+        if (existingReturnShipment) {
+            await tx.shipment.update({
+                where: { id: existingReturnShipment.id },
+                data: shipmentData,
+            });
             await tx.shipmentStatusLog.create({
                 data: {
-                    shipmentId: existingShipment.id,
-                    fromStatus: existingShipment.status,
+                    shipmentId: existingReturnShipment.id,
+                    fromStatus: existingReturnShipment.status,
                     toStatus: 'RETURN_LABEL_ISSUED' as any,
                     notes: '📄 يتم أصدار بوليصة أرجاع للمنتج',
-                    source: 'API'
-                }
+                    source: 'API',
+                },
             });
-            console.log(`[SHIPPING] Updated Existing Shipment: ${existingShipment.id} with Return Waybill ${waybillNumber}`);
+        } else if (isMultiReturn) {
+            await createDedicatedReturnShipment();
         } else {
-            // Prefer the outbound shipment linked to this offer/part — never hijack sibling batches.
+            // Single-item: may update dedicated outbound if it is not a shared cart batch.
             let scopedShipmentId: string | null =
                 caseRecord.shipmentId ||
                 caseRecord.offer?.cartShipmentId ||
@@ -3212,7 +3279,19 @@ export class ReturnsService {
                 scopedShipmentId = offerRow?.cartShipmentId || null;
             }
 
+            let siblingCount = 0;
             if (scopedShipmentId) {
+                siblingCount = await tx.offer.count({
+                    where: {
+                        cartShipmentId: scopedShipmentId,
+                        id: caseRecord.offerId
+                            ? { not: caseRecord.offerId }
+                            : undefined,
+                    },
+                });
+            }
+
+            if (scopedShipmentId && siblingCount === 0) {
                 const scoped = await tx.shipment.findUnique({
                     where: { id: scopedShipmentId },
                     select: { id: true, status: true },
@@ -3232,21 +3311,10 @@ export class ReturnsService {
                         },
                     });
                 } else {
-                    await tx.shipment.create({
-                        data: {
-                            orderId: order.id,
-                            ...shipmentData,
-                        },
-                    });
+                    await createDedicatedReturnShipment();
                 }
             } else {
-                // Always create a dedicated return shipment — do not mutate unrelated outbound batches.
-                await tx.shipment.create({
-                    data: {
-                        orderId: order.id,
-                        ...shipmentData,
-                    },
-                });
+                await createDedicatedReturnShipment();
             }
         }
 

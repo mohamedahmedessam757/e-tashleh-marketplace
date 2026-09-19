@@ -29,7 +29,7 @@ import {
   resolveStoreIds,
   resolveUserIds,
 } from '../common/search/admin-entity-search.util';
-import { resolveCompletionWarranty } from './warranty-activation.util';
+import { resolveCompletionWarranty, isOfferInWarranty } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { isMerchantFaultPreShipCancel } from '../payments/cancel-refund.util';
 import {
@@ -3423,11 +3423,14 @@ export class OrdersService {
                 const isOfferCompleted =
                     offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED ||
                     !!(offer as { resolutionLocked?: boolean }).resolutionLocked;
+                const inShortWindow =
+                    offerDeliveredAt != null && Date.now() <= returnExpiryDate.getTime();
+                const warrantyActive = isOfferInWarranty(offer as any);
                 const isReturnEligible =
                     !isOfferCompleted &&
+                    offer.fulfillmentStatus === OfferFulfillmentStatus.DELIVERED &&
                     offerDeliveredAt != null &&
-                    Date.now() <= returnExpiryDate.getTime() &&
-                    offer.fulfillmentStatus === OfferFulfillmentStatus.DELIVERED;
+                    (inShortWindow || warrantyActive);
 
                 const offerPayment = order.payments?.find((p) => p.offerId === offer.id);
 
@@ -3447,6 +3450,7 @@ export class OrdersService {
                     deliveredAt: itemDeliveredAt,
                     returnExpiryDate: returnExpiryDate,
                     isReturnEligible: isReturnEligible,
+                    isWarrantyEligible: warrantyActive,
                     storeName: offer.store?.name || order.store?.name || 'Verified Seller',
                     vehicleMake: order.vehicleMake,
                     vehicleModel: order.vehicleModel,
@@ -4110,7 +4114,9 @@ export class OrdersService {
                         orderId,
                         storeId: latestDoc.storeId,
                         adminStatus: { in: ['REJECTED', 'PENDING'] },
-                        OR: [{ offerId: resolvedOfferId }, { offerId: null }],
+                        ...(isMultiReview
+                          ? { offerId: resolvedOfferId }
+                          : { OR: [{ offerId: resolvedOfferId }, { offerId: null }] }),
                     },
                     data: {
                         adminStatus: 'APPROVED',
@@ -4909,6 +4915,7 @@ export class OrdersService {
                 customer: { select: { id: true, name: true, email: true, phone: true } },
                 parts: true,
                 payments: { where: { status: 'SUCCESS' } },
+                shippingAddresses: true,
                 offers: {
                     where: {
                         status: { in: ['accepted', 'ACCEPTED'] },
@@ -4990,18 +4997,34 @@ export class OrdersService {
                 bucket.totalItems += 1;
                 bucket.totalValue += totalPaid;
 
+                const part = order.parts.find((p) => p.id === offer.orderPartId) || order.parts[0];
+                const partName = part?.name || order.partName || 'Part';
+                const partImages = (part?.images as string[]) || [];
+                const orderImages = (order.partImages as string[]) || [];
+                const partImage =
+                    partImages.length > 0
+                        ? partImages[0]
+                        : orderImages.length > 0
+                          ? orderImages[0]
+                          : null;
+                const handoverPending =
+                    offer.fulfillmentStatus === OfferFulfillmentStatus.VERIFICATION_SUCCESS;
+
                 bucket.offers.push({
                     id: offer.id,
                     offerId: offer.id,
                     orderId: order.id,
                     orderNumber: order.orderNumber,
-                    partName:
-                        order.parts.find((p) => p.id === offer.orderPartId)?.name ||
-                        order.partName,
-                    storeName: offer.store?.name,
+                    name: partName,
+                    partName,
+                    storeName: offer.store?.name || 'Verified Seller',
+                    storeId: offer.storeId,
+                    customerName: order.customer.name || 'Anonymous',
+                    customerPhone: order.customer.phone,
+                    customerEmail: order.customer.email,
                     shippedFromCart: offer.shippedFromCart,
                     fulfillmentStatus: offer.fulfillmentStatus,
-                    handoverPending: offer.handoverPending,
+                    handoverPending,
                     canSelectForShipping,
                     lockReasonAr: lockReason.ar,
                     lockReasonEn: lockReason.en,
@@ -5010,6 +5033,13 @@ export class OrdersService {
                     cartBatchSize: offer.cartBatchSize,
                     price: Number(offer.unitPrice),
                     shippingCost: Number(offer.shippingCost),
+                    hasWarranty: offer.hasWarranty,
+                    warrantyDuration: offer.warrantyDuration,
+                    condition: offer.condition,
+                    partType: offer.partType,
+                    partImage,
+                    vin: order.vin,
+                    shippingAddress: order.shippingAddresses?.[0] || null,
                     totalPaid,
                     paidAt,
                     expiryDate,

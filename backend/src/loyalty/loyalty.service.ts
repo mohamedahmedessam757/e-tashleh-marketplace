@@ -15,6 +15,10 @@ import {
   CLOSED_DISPUTE_STATUSES,
   CLOSED_RETURN_STATUSES,
 } from '../chat/chat-completion-lock.util';
+import {
+  computeLoyaltyReverseProportion,
+  computePartialReverseAmount,
+} from './loyalty-reverse.util';
 
 const TERMINAL_REWARD_STATUSES = new Set([
   'COMPLETED',
@@ -829,7 +833,9 @@ export class LoyaltyService {
 
   /**
    * Reverse cashback + referral credits after a successful customer refund.
-   * Idempotent via metadata.reverses + caseId.
+   * Multi/partial: reverse proportion refundBasis/orderPaidTotal per credit.
+   * Full order refund / single-item: reverse remaining credit balance.
+   * Idempotent via metadata.reverses + caseId partial debits.
    */
   async reverseRewardsForCustomerRefund(orderId: string, caseId: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
@@ -838,6 +844,9 @@ export class LoyaltyService {
         id: true,
         orderNumber: true,
         customerId: true,
+        requestType: true,
+        status: true,
+        parts: { select: { id: true } },
         customer: { select: { id: true, customerBalance: true, loyaltyPoints: true } },
       },
     });
@@ -845,6 +854,74 @@ export class LoyaltyService {
       await this.reverseMerchantCompletionCounters(orderId);
       return;
     }
+
+    const isMulti =
+      String(order.requestType || '').toLowerCase() === 'multiple' ||
+      (order.parts?.length ?? 0) > 1;
+
+    let offerId: string | null = null;
+    let refundBasis = 0;
+    const returnCase = await this.prisma.returnRequest.findUnique({
+      where: { id: caseId },
+      select: {
+        offerId: true,
+        refundAmount: true,
+        finalCustomerRefundAmount: true,
+      },
+    });
+    const disputeCase = returnCase
+      ? null
+      : await this.prisma.dispute.findUnique({
+          where: { id: caseId },
+          select: {
+            offerId: true,
+            refundAmount: true,
+            finalCustomerRefundAmount: true,
+          },
+        });
+    const caseRow = returnCase || disputeCase;
+    offerId = caseRow?.offerId || null;
+    refundBasis = Number(
+      caseRow?.finalCustomerRefundAmount ?? caseRow?.refundAmount ?? 0,
+    );
+
+    if (offerId && refundBasis <= 0) {
+      const offerPayment = await this.prisma.paymentTransaction.findFirst({
+        where: { offerId, status: { in: ['SUCCESS', 'REFUNDED'] } },
+        select: { totalAmount: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      refundBasis = Number(offerPayment?.totalAmount || 0);
+    }
+
+    const paidPayments = await this.prisma.paymentTransaction.findMany({
+      where: { orderId, status: { in: ['SUCCESS', 'REFUNDED'] } },
+      select: { totalAmount: true, offerId: true, status: true },
+    });
+    const orderPaidTotal = paidPayments.reduce(
+      (sum, p) => sum + Number(p.totalAmount || 0),
+      0,
+    );
+
+    const activePaidLeft = await this.prisma.offer.count({
+      where: {
+        orderId,
+        status: { in: ['accepted', 'ACCEPTED'] },
+        fulfillmentStatus: { not: 'CANCELLED' },
+        payments: { some: { status: { in: ['SUCCESS', 'REFUNDED'] } } },
+      },
+    });
+
+    const fullReverse =
+      !isMulti ||
+      !offerId ||
+      order.status === 'REFUNDED' ||
+      order.status === 'CANCELLED' ||
+      activePaidLeft === 0;
+
+    const proportion = fullReverse
+      ? 1
+      : computeLoyaltyReverseProportion(refundBasis, orderPaidTotal);
 
     const profitCredits = await this.prisma.walletTransaction.findMany({
       where: {
@@ -857,15 +934,43 @@ export class LoyaltyService {
     for (const credit of profitCredits) {
       const amount = Number(credit.amount || 0);
 
-      const existing = await this.prisma.walletTransaction.findFirst({
+      const priorDebits = await this.prisma.walletTransaction.findMany({
         where: {
           type: 'DEBIT',
           transactionType: credit.transactionType,
-          metadata: { path: ['reverses'], equals: credit.id },
+          OR: [
+            { metadata: { path: ['reverses'], equals: credit.id } },
+            {
+              AND: [
+                { metadata: { path: ['reversesCreditId'], equals: credit.id } },
+                { metadata: { path: ['orderId'], equals: orderId } },
+              ],
+            },
+          ],
         },
-        select: { id: true },
+        select: { id: true, amount: true, metadata: true },
       });
-      if (existing) continue;
+
+      const alreadyFullyReversed = priorDebits.some(
+        (d) => (d.metadata as any)?.reverses === credit.id,
+      );
+      if (alreadyFullyReversed) continue;
+
+      const caseAlready = priorDebits.some(
+        (d) => (d.metadata as any)?.caseId === caseId,
+      );
+      if (caseAlready) continue;
+
+      const alreadyReversed = priorDebits.reduce(
+        (sum, d) => sum + Number(d.amount || 0),
+        0,
+      );
+      const targetDebit = computePartialReverseAmount(
+        amount,
+        alreadyReversed,
+        proportion,
+      );
+      if (targetDebit <= 0.009 && proportion < 1) continue;
 
       const user = await this.prisma.user.findUnique({
         where: { id: credit.userId },
@@ -873,31 +978,38 @@ export class LoyaltyService {
       });
       if (!user) continue;
 
-      const debitAmount = Math.min(Math.max(0, amount), Number(user.customerBalance || 0));
-      const remainingLiability = Number(Math.max(0, amount - debitAmount).toFixed(2));
-      const fullyRecovered = remainingLiability <= 0.009;
+      const debitAmount = Math.min(
+        Math.max(0, targetDebit > 0 ? targetDebit : amount - alreadyReversed),
+        Number(user.customerBalance || 0),
+      );
+      const remainingAfterThis = Number(
+        Math.max(0, amount - alreadyReversed - debitAmount).toFixed(2),
+      );
+      const fullyRecovered = remainingAfterThis <= 0.009;
       const creditMeta = (credit.metadata || {}) as {
         commission?: number;
         earnedPoints?: number;
       };
-      // ORDER_PROFIT points = floor(commission); REFERRAL_PROFIT points = floor(reward amount)
-      const pointsToRemove =
+      const fullPoints =
         credit.transactionType === 'ORDER_PROFIT'
-          ? Math.min(
-              Number(user.loyaltyPoints || 0),
-              Math.max(0, Math.floor(Number(creditMeta.commission || creditMeta.earnedPoints || 0))),
-            )
+          ? Math.max(0, Math.floor(Number(creditMeta.commission || creditMeta.earnedPoints || 0)))
           : credit.transactionType === 'REFERRAL_PROFIT'
-            ? Math.min(
-                Number(user.loyaltyPoints || 0),
-                Math.max(0, Math.floor(amount)),
-              )
+            ? Math.max(0, Math.floor(amount))
             : 0;
+      const pointsTarget = Math.floor(fullPoints * proportion);
+      const pointsAlready = priorDebits.reduce(
+        (sum, d) => sum + Number((d.metadata as any)?.pointsReversed || 0),
+        0,
+      );
+      const pointsToRemove = Math.min(
+        Number(user.loyaltyPoints || 0),
+        Math.max(0, pointsTarget - pointsAlready),
+      );
 
       if (debitAmount <= 0 && pointsToRemove <= 0) {
         if (amount > 0) {
           this.logger.warn(
-            `[LoyaltyEngine] Refund reversal deferred for tx=${credit.id} order=${orderId}: wallet empty, remaining=${amount}`,
+            `[LoyaltyEngine] Refund reversal deferred for tx=${credit.id} order=${orderId}: wallet empty, remaining=${amount - alreadyReversed}`,
           );
         }
         continue;
@@ -911,7 +1023,7 @@ export class LoyaltyService {
         },
       });
 
-      if (debitAmount > 0) {
+      if (debitAmount > 0 || pointsToRemove > 0) {
         await this.prisma.walletTransaction.create({
           data: {
             userId: user.id,
@@ -928,9 +1040,12 @@ export class LoyaltyService {
             metadata: {
               orderId,
               caseId,
+              offerId,
+              proportion,
+              reversesCreditId: credit.id,
               ...(fullyRecovered ? { reverses: credit.id } : {}),
               originalAmount: amount,
-              remainingLiability,
+              remainingLiability: remainingAfterThis,
               pointsReversed: pointsToRemove,
             },
           },
@@ -961,7 +1076,10 @@ export class LoyaltyService {
     }
 
     await this.syncCustomerSpendAfterRefund(order.customerId);
-    await this.reverseMerchantCompletionCounters(orderId);
+    // Merchant counters: only when order is fully terminal (avoid mid multi under-count).
+    if (fullReverse) {
+      await this.reverseMerchantCompletionCounters(orderId);
+    }
   }
 
   /** Align users.totalSpent + loyaltyTier with live non-refunded purchases. */

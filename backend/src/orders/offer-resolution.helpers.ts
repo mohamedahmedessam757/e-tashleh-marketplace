@@ -11,6 +11,11 @@ export function isOfferReturnEligible(input: {
     deliveredAt: Date | null;
     resolutionLocked: boolean;
     now?: number;
+    warrantyEndAt?: Date | null;
+    hasWarranty?: boolean | null;
+    warrantyDuration?: string | null;
+    warrantyActiveAt?: Date | null;
+    completedAt?: Date | null;
 }): boolean {
     if (input.resolutionLocked) return false;
     if (input.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED) return false;
@@ -18,7 +23,10 @@ export function isOfferReturnEligible(input: {
     if (!input.deliveredAt) return false;
     const endsAt = getOfferReturnWindowEndsAt(input.deliveredAt);
     const now = input.now ?? Date.now();
-    return now <= endsAt.getTime();
+    if (now <= endsAt.getTime()) return true;
+    // After short window: still eligible when offer warranty is active (warranty claims).
+    if (input.warrantyEndAt && new Date(input.warrantyEndAt).getTime() > now) return true;
+    return false;
 }
 
 export function aggregateMultiItemDeliveryStatus(

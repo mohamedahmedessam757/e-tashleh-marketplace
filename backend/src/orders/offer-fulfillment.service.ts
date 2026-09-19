@@ -23,6 +23,8 @@ import { aggregateMultiItemDeliveryStatus } from './offer-resolution.helpers';
 import {
     calculateWarrantyEndDate,
     resolveCompletionWarranty,
+    isOfferInWarranty,
+    isOfferWarrantyClaimEligible,
 } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
@@ -1122,19 +1124,6 @@ export class OfferFulfillmentService {
         return new Date(offer.deliveredAt.getTime() + windowMs);
     }
 
-    isOfferReturnEligible(offer: {
-        fulfillmentStatus: OfferFulfillmentStatus;
-        deliveredAt?: Date | null;
-        resolutionLocked?: boolean;
-    }) {
-        if (offer.resolutionLocked) return false;
-        if (offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED) return false;
-        if (offer.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED) return false;
-        if (!offer.deliveredAt) return false;
-        const endsAt = this.getOfferReturnWindowEndsAt(offer);
-        return endsAt != null && Date.now() <= endsAt.getTime();
-    }
-
     async hasOpenCaseForOffer(
         offerId: string,
         orderPartId?: string | null,
@@ -1176,13 +1165,24 @@ export class OfferFulfillmentService {
         return false;
     }
 
-    assertOfferReturnWindow(offer: {
-        id: string;
-        fulfillmentStatus: OfferFulfillmentStatus;
-        deliveredAt?: Date | null;
-        resolutionLocked?: boolean;
-        orderPart?: { name: string } | null;
-    }) {
+    assertOfferReturnWindow(
+        offer: {
+            id: string;
+            fulfillmentStatus: OfferFulfillmentStatus;
+            deliveredAt?: Date | null;
+            resolutionLocked?: boolean;
+            orderPart?: { name: string } | null;
+            hasWarranty?: boolean | null;
+            warrantyDuration?: string | null;
+            warrantyEndAt?: Date | null;
+            warrantyActiveAt?: Date | null;
+            completedAt?: Date | null;
+        },
+        opts?: {
+            mode?: 'return' | 'dispute';
+            reason?: string | null;
+        },
+    ) {
         const partName = offer.orderPart?.name || 'this item';
         if (offer.resolutionLocked || offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED) {
             throw new BadRequestException(
@@ -1200,12 +1200,45 @@ export class OfferFulfillmentService {
             );
         }
         const endsAt = this.getOfferReturnWindowEndsAt(offer);
-        if (!endsAt || Date.now() > endsAt.getTime()) {
-            const returnHours = this.orderDurationConfig.getReturnWindowHoursSync();
-            throw new BadRequestException(
-                `Return/dispute window (${returnHours} hours) has expired for "${partName}".`,
-            );
+        const inShortWindow = !!(endsAt && Date.now() <= endsAt.getTime());
+        if (inShortWindow) return;
+
+        // Past short window: warranty claims/replacements still allowed while offer warranty is active.
+        // Disputes never get the warranty extension.
+        if (
+            opts?.mode !== 'dispute' &&
+            isOfferWarrantyClaimEligible(offer, opts?.reason ?? undefined, {
+                inShortReturnWindow: false,
+            })
+        ) {
+            return;
         }
+
+        const returnHours = this.orderDurationConfig.getReturnWindowHoursSync();
+        throw new BadRequestException(
+            `Return/dispute window (${returnHours} hours) has expired for "${partName}".`,
+        );
+    }
+
+    isOfferReturnEligible(offer: {
+        fulfillmentStatus: OfferFulfillmentStatus;
+        deliveredAt?: Date | null;
+        resolutionLocked?: boolean;
+        hasWarranty?: boolean | null;
+        warrantyDuration?: string | null;
+        warrantyEndAt?: Date | null;
+        warrantyActiveAt?: Date | null;
+        completedAt?: Date | null;
+    }) {
+        if (offer.resolutionLocked) return false;
+        if (offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED) return false;
+        if (offer.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED) return false;
+        if (!offer.deliveredAt) return false;
+        const endsAt = this.getOfferReturnWindowEndsAt(offer);
+        const inShortWindow = endsAt != null && Date.now() <= endsAt.getTime();
+        if (inShortWindow) return true;
+        // Warranty-active offers remain eligible for warranty claims after the short window.
+        return isOfferInWarranty(offer);
     }
 
     async completeOfferAfterWindow(

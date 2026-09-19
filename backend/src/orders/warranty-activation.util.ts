@@ -3,7 +3,71 @@ import { OrderStatus } from '@prisma/client';
 export type WarrantyOfferLike = {
   hasWarranty?: boolean | null;
   warrantyDuration?: string | null;
+  warrantyEndAt?: Date | string | null;
+  warrantyActiveAt?: Date | string | null;
+  completedAt?: Date | string | null;
+  deliveredAt?: Date | string | null;
 };
+
+const WARRANTY_CLAIM_REASONS = new Set(['warranty_claim', 'replacement']);
+
+export function isWarrantyClaimReason(reason?: string | null): boolean {
+  return WARRANTY_CLAIM_REASONS.has(String(reason || '').trim().toLowerCase());
+}
+
+function asDate(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * True when this offer's warranty period is still active.
+ * Prefers warrantyEndAt; falls back to duration from warrantyActiveAt/completedAt/deliveredAt.
+ */
+export function isOfferInWarranty(
+  offer: WarrantyOfferLike,
+  now: Date = new Date(),
+): boolean {
+  const end = asDate(offer.warrantyEndAt);
+  if (end) return end.getTime() > now.getTime();
+
+  if (!offerHasUsableWarranty(offer)) return false;
+
+  const start =
+    asDate(offer.warrantyActiveAt) ||
+    asDate(offer.completedAt) ||
+    asDate(offer.deliveredAt);
+  if (!start) return false;
+
+  const computedEnd = calculateWarrantyEndDate(
+    start,
+    String(offer.warrantyDuration),
+  );
+  return computedEnd.getTime() > now.getTime();
+}
+
+/**
+ * Short post-delivery return window OR (warranty claim/replacement while in warranty).
+ * Disputes should not use the warranty branch — callers pass reason only for returns.
+ */
+export function isOfferWarrantyClaimEligible(
+  offer: WarrantyOfferLike & {
+    fulfillmentStatus?: string | null;
+    resolutionLocked?: boolean | null;
+  },
+  reason: string | undefined,
+  opts: {
+    inShortReturnWindow: boolean;
+    now?: Date;
+  },
+): boolean {
+  if (offer.resolutionLocked) return false;
+  if (String(offer.fulfillmentStatus || '') === 'COMPLETED') return false;
+  if (opts.inShortReturnWindow) return true;
+  if (!isWarrantyClaimReason(reason)) return false;
+  return isOfferInWarranty(offer, opts.now ?? new Date());
+}
 
 export type CompletionWarrantyResult = {
   activate: boolean;

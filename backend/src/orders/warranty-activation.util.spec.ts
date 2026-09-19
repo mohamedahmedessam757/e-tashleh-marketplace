@@ -3,6 +3,9 @@ import { OrderStatus } from '@prisma/client';
 import {
   calculateWarrantyEndDate,
   resolveCompletionWarranty,
+  isOfferInWarranty,
+  isOfferWarrantyClaimEligible,
+  isWarrantyClaimReason,
 } from './warranty-activation.util';
 
 describe('calculateWarrantyEndDate', () => {
@@ -66,5 +69,79 @@ describe('resolveCompletionWarranty', () => {
         OrderStatus.DELIVERED,
       ),
     ).toEqual({ activate: false, effectiveStatus: OrderStatus.DELIVERED });
+  });
+});
+
+describe('isWarrantyClaimReason', () => {
+  it('accepts warranty_claim and replacement', () => {
+    expect(isWarrantyClaimReason('warranty_claim')).toBe(true);
+    expect(isWarrantyClaimReason('replacement')).toBe(true);
+    expect(isWarrantyClaimReason('damaged')).toBe(false);
+  });
+});
+
+describe('isOfferInWarranty', () => {
+  const now = new Date('2026-07-01T12:00:00.000Z');
+
+  it('uses warrantyEndAt when present', () => {
+    expect(
+      isOfferInWarranty(
+        { warrantyEndAt: new Date('2026-08-01T00:00:00.000Z') },
+        now,
+      ),
+    ).toBe(true);
+    expect(
+      isOfferInWarranty(
+        { warrantyEndAt: new Date('2026-06-01T00:00:00.000Z') },
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it('falls back to duration from warrantyActiveAt', () => {
+    expect(
+      isOfferInWarranty(
+        {
+          hasWarranty: true,
+          warrantyDuration: 'month1',
+          warrantyActiveAt: new Date('2026-06-15T00:00:00.000Z'),
+        },
+        now,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('isOfferWarrantyClaimEligible', () => {
+  const offer = {
+    fulfillmentStatus: 'DELIVERED',
+    resolutionLocked: false,
+    warrantyEndAt: new Date('2026-09-01T00:00:00.000Z'),
+  };
+
+  it('allows short window without warranty reason', () => {
+    expect(
+      isOfferWarrantyClaimEligible(offer, 'damaged', {
+        inShortReturnWindow: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('allows warranty claim after short window when in warranty', () => {
+    expect(
+      isOfferWarrantyClaimEligible(offer, 'warranty_claim', {
+        inShortReturnWindow: false,
+        now: new Date('2026-07-01T12:00:00.000Z'),
+      }),
+    ).toBe(true);
+  });
+
+  it('blocks non-warranty reason after short window', () => {
+    expect(
+      isOfferWarrantyClaimEligible(offer, 'damaged', {
+        inShortReturnWindow: false,
+        now: new Date('2026-07-01T12:00:00.000Z'),
+      }),
+    ).toBe(false);
   });
 });
