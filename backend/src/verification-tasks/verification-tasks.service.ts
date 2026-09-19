@@ -1601,8 +1601,10 @@ export class VerificationTasksService {
         newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
       }
     } else if (officerDecision === 'NON_MATCHING') {
-      // Admin overrides officer non-match: treat part as matching (isolated approve).
-      newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
+      // Admin disagrees with officer non-match: part is acceptable — stay in
+      // VERIFICATION so merchant/admin continue the normal post-verify path
+      // (do NOT auto-jump to VERIFICATION_SUCCESS).
+      newOrderStatus = OrderStatus.VERIFICATION;
     } else {
       countsAsRejectStrike = true;
     }
