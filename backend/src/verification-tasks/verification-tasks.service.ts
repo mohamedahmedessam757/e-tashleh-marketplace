@@ -1587,64 +1587,53 @@ export class VerificationTasksService {
     const isMulti = this.offerFulfillment.isMultiItemOrder(task.order);
     const offerScopeId = task.offerId || null;
 
+    // Admin alone decides. Officer MATCHING/NON_MATCHING is recommendation-only
+    // (audit/UI). dto.approved = approve verification; !dto.approved = reject it.
     let newOrderStatus: OrderStatus = task.order.status;
     let newRejectionCount = task.order.rejectionCount;
     let offerRejectionCount = 0;
     let cancelAfterReview = false;
     let issueNotMatch = false;
-    let countsAsRejectStrike = false;
 
     if (dto.approved) {
-      if (officerDecision === 'NON_MATCHING') {
-        countsAsRejectStrike = true;
-      } else {
-        newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
-      }
-    } else if (officerDecision === 'NON_MATCHING') {
-      // Admin disagrees with officer non-match: part is acceptable — stay in
-      // VERIFICATION so merchant/admin continue the normal post-verify path
-      // (do NOT auto-jump to VERIFICATION_SUCCESS).
-      newOrderStatus = OrderStatus.VERIFICATION;
-    } else {
-      countsAsRejectStrike = true;
-    }
-
-    if (countsAsRejectStrike) {
-      if (offerScopeId) {
-        const priorFieldRejects = await this.prisma.verificationTask.count({
-          where: {
-            orderId: task.orderId,
-            offerId: offerScopeId,
-            id: { not: taskId },
-            OR: [
-              { decision: 'NON_MATCHING', status: 'ADMIN_APPROVED' },
-              { decision: 'MATCHING', status: 'ADMIN_REJECTED' },
-            ],
-          },
-        });
-        const priorDocRejects = await this.prisma.verificationDocument.count({
-          where: {
-            orderId: task.orderId,
-            offerId: offerScopeId,
-            adminStatus: 'REJECTED',
-          },
-        });
-        offerRejectionCount = Math.max(priorFieldRejects, priorDocRejects) + 1;
-        newRejectionCount = Math.max(task.order.rejectionCount, offerRejectionCount);
-      } else {
-        offerRejectionCount = task.order.rejectionCount + 1;
-        newRejectionCount = offerRejectionCount;
-      }
+      newOrderStatus = OrderStatus.VERIFICATION_SUCCESS;
+    } else if (offerScopeId) {
+      const priorFieldRejects = await this.prisma.verificationTask.count({
+        where: {
+          orderId: task.orderId,
+          offerId: offerScopeId,
+          id: { not: taskId },
+          status: 'ADMIN_REJECTED',
+        },
+      });
+      const priorDocRejects = await this.prisma.verificationDocument.count({
+        where: {
+          orderId: task.orderId,
+          offerId: offerScopeId,
+          adminStatus: 'REJECTED',
+        },
+      });
+      offerRejectionCount = Math.max(priorFieldRejects, priorDocRejects) + 1;
+      newRejectionCount = Math.max(task.order.rejectionCount, offerRejectionCount);
 
       if (offerRejectionCount >= 2) {
         cancelAfterReview = true;
         newOrderStatus = task.order.status;
-        issueNotMatch = false;
       } else {
         issueNotMatch = true;
         // Multi: do not freeze whole cart into NON_MATCHING — siblings continue.
         newOrderStatus =
-          isMulti && offerScopeId ? task.order.status : OrderStatus.NON_MATCHING;
+          isMulti ? task.order.status : OrderStatus.NON_MATCHING;
+      }
+    } else {
+      offerRejectionCount = task.order.rejectionCount + 1;
+      newRejectionCount = offerRejectionCount;
+      if (offerRejectionCount >= 2) {
+        cancelAfterReview = true;
+        newOrderStatus = task.order.status;
+      } else {
+        issueNotMatch = true;
+        newOrderStatus = OrderStatus.NON_MATCHING;
       }
     }
 
@@ -1681,6 +1670,9 @@ export class VerificationTasksService {
             offerId: offerScopeId,
             offerRejectionCount,
             multiIsolated: isMulti && !!offerScopeId,
+            // Recommendation only — does not drive approve/reject outcome.
+            officerRecommendation: officerDecision,
+            adminDecision: dto.approved ? 'APPROVE_VERIFICATION' : 'REJECT_VERIFICATION',
           } as Prisma.InputJsonValue,
         },
       });
@@ -1691,12 +1683,8 @@ export class VerificationTasksService {
       });
     });
 
-    if (
-      !dto.approved &&
-      !cancelAfterReview &&
-      issueNotMatch &&
-      officerDecision === 'MATCHING'
-    ) {
+    // Admin rejected verification → start a new field cycle for rematch.
+    if (!dto.approved && !cancelAfterReview && issueNotMatch) {
       await this.startNewCycle({
         orderId: task.orderId,
         offerId: task.offerId,
@@ -1710,7 +1698,7 @@ export class VerificationTasksService {
         .applyVerificationDecision(task.orderId, offerScopeId, false)
         .catch((e) =>
           this.logger.warn(
-            `Field non-match offer sync failed: ${e instanceof Error ? e.message : e}`,
+            `Field reject offer sync failed: ${e instanceof Error ? e.message : e}`,
           ),
         );
       if (isMulti) {
@@ -1718,10 +1706,7 @@ export class VerificationTasksService {
       }
     }
 
-    if (
-      newOrderStatus === OrderStatus.VERIFICATION_SUCCESS ||
-      (dto.approved && officerDecision === 'MATCHING' && !cancelAfterReview)
-    ) {
+    if (dto.approved && !cancelAfterReview) {
       try {
         await this.syncOfferAndDocsAfterVerificationSuccess({
           orderId: task.orderId,
@@ -2236,16 +2221,6 @@ export class VerificationTasksService {
             waEvent: 'VERIFICATION',
           },
         });
-      } else if (newOrderStatus === OrderStatus.VERIFICATION && !approved && officerDecision === 'NON_MATCHING') {
-        await this.notifications.notifyMerchantByStoreId(storeId, {
-          titleAr: 'تم تجاوز عدم المطابقة',
-          titleEn: 'Non-match overridden by admin',
-          messageAr: `رفض الإدارة توصية عدم المطابقة للطلب #${order.orderNumber}. يستمر الطلب في مسار التوثيق.`,
-          messageEn: `Admin overrode the non-match recommendation for order #${order.orderNumber}. Verification continues.`,
-          type: 'system_alert',
-          link,
-          metadata: { orderId: order.id, verification: true, waEvent: 'VERIFICATION' },
-        });
       }
     }
 
@@ -2282,23 +2257,17 @@ export class VerificationTasksService {
     }
 
     if (officerId) {
-      const officerTitleAr = approved ? 'تم اعتماد تقريرك' : 'تم رفض التقرير من الإدارة';
-      const officerTitleEn = approved ? 'Your report was approved' : 'Admin rejected your report';
-      let officerMsgAr: string;
-      let officerMsgEn: string;
-      if (approved && officerDecision === 'MATCHING') {
-        officerMsgAr = `تم اعتماد مطابقة الطلب #${order.orderNumber} من قبل الإدارة.`;
-        officerMsgEn = `Admin approved your matching report for order #${order.orderNumber}.`;
-      } else if (approved && officerDecision === 'NON_MATCHING') {
-        officerMsgAr = `تم اعتماد توصية عدم المطابقة للطلب #${order.orderNumber} — بدأت فترة التصحيح للمتجر.`;
-        officerMsgEn = `Admin approved your non-match report for order #${order.orderNumber}; merchant correction period started.`;
-      } else if (!approved && officerDecision === 'MATCHING') {
-        officerMsgAr = `رفض الإدارة اعتماد المطابقة للطلب #${order.orderNumber} — يُطلب من المتجر التصحيح.`;
-        officerMsgEn = `Admin rejected your match report for order #${order.orderNumber}; merchant must correct.`;
-      } else {
-        officerMsgAr = `رفض الإدارة توصية عدم المطابقة للطلب #${order.orderNumber}.`;
-        officerMsgEn = `Admin rejected your non-match recommendation for order #${order.orderNumber}.`;
-      }
+      // Officer is notified for awareness only; their recommendation did not decide the outcome.
+      const officerTitleAr = approved ? 'تم اعتماد التوثيق من الإدارة' : 'تم رفض التوثيق من الإدارة';
+      const officerTitleEn = approved
+        ? 'Admin approved the verification'
+        : 'Admin rejected the verification';
+      const officerMsgAr = approved
+        ? `اعتمدت الإدارة توثيق الطلب #${order.orderNumber} (توصيتك كانت: ${officerDecision === 'MATCHING' ? 'مطابق' : 'غير مطابق'}).`
+        : `رفضت الإدارة توثيق الطلب #${order.orderNumber} (توصيتك كانت: ${officerDecision === 'MATCHING' ? 'مطابق' : 'غير مطابق'}).`;
+      const officerMsgEn = approved
+        ? `Admin approved verification for order #${order.orderNumber} (your recommendation: ${officerDecision}).`
+        : `Admin rejected verification for order #${order.orderNumber} (your recommendation: ${officerDecision}).`;
       await this.notifications.notifyUser(officerId, 'VERIFICATION_OFFICER', {
         titleAr: officerTitleAr,
         titleEn: officerTitleEn,
