@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useDeferredValue, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, DollarSign, Car, Loader2, Calculator, ShieldCheck, PlayCircle, AlertCircle, Check, Package, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, DollarSign, Car, Loader2, Calculator, ShieldCheck, PlayCircle, AlertCircle, Check, Package, CheckCircle2, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
@@ -124,11 +124,11 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
     shippingLabel: string;
 }) {
     return (
-        <div className="bg-[#12110F] rounded-3xl border border-gold-500/20 p-4 sm:p-6 relative overflow-hidden shadow-2xl">
+        <div className="bg-[#12110F] rounded-2xl sm:rounded-3xl border border-gold-500/20 p-3.5 sm:p-6 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-50" />
-            <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500 shadow-lg shadow-gold-500/5">
-                    <Calculator size={20} />
+            <div className="flex items-center gap-3 mb-4 sm:mb-8">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-500 shadow-lg shadow-gold-500/5">
+                    <Calculator size={18} />
                 </div>
                 <div>
                     <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-white/40">{calcTitle}</h3>
@@ -137,13 +137,13 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
                     </p>
                 </div>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-6">
                 <div className="flex justify-between items-center group">
                     <span className="text-xs font-bold text-white/30 uppercase tracking-wider group-hover:text-white/60 transition-colors">
                         {merchantNetLabel}
                     </span>
                     <span
-                        className={`font-mono text-xl text-white font-black transition-opacity ${isPriceSyncing ? 'opacity-60' : 'opacity-100'}`}
+                        className={`font-mono text-lg sm:text-xl text-white font-black transition-opacity ${isPriceSyncing ? 'opacity-60' : 'opacity-100'}`}
                     >
                         {(parseFloat(basePriceDisplay || '0')).toLocaleString()}{' '}
                         <span className="text-[10px] text-white/20 ml-1">AED</span>
@@ -160,7 +160,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
                         <span className="text-[10px] text-white/20 ml-1">AED</span>
                     </span>
                 </div>
-                <div className="p-6 rounded-[2rem] bg-gradient-to-br from-gold-500/10 via-gold-500/[0.02] to-transparent border border-gold-500/20 shadow-inner">
+                <div className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-gold-500/10 via-gold-500/[0.02] to-transparent border border-gold-500/20 shadow-inner">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black text-gold-500 uppercase tracking-widest">{finalPriceLabel}</span>
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
@@ -178,7 +178,7 @@ const LivePriceCalculator = memo(function LivePriceCalculator({
                     </div>
                 </div>
             </div>
-            <div className="mt-8 pt-6 border-t border-white/5">
+            <div className="mt-4 sm:mt-8 pt-4 sm:pt-6 border-t border-white/5">
                 <div className="flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
                     <ShieldCheck size={12} className="text-gold-500/30" />
                     {isAr ? 'نظام تسعير ذكي معتمد' : 'Smart Certified Engine'}
@@ -226,6 +226,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
     const [submitProgress, setSubmitProgress] = useState<{ current: number; total: number } | null>(null);
     const [customWarranties, setCustomWarranties] = useState<Record<string, string>>({}); // NEW for custom free text warranty
     const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
+    const [partsPanelCollapsed, setPartsPanelCollapsed] = useState(false);
 
     // Build a map of existing offers by partId for quick lookup
     const existingOfferMap = useMemo(() => {
@@ -795,104 +796,161 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
 
                     {/* ====== PART SELECTION BAR (Multi-Part Only) ====== */}
                     {isMultiPart && (
-                        <div className="border-b border-white/10 bg-white/5 p-4 shrink-0">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                    <Package size={16} className="text-gold-400" />
-                                    {isAr ? 'اختر القطع للعرض عليها' : 'Select Parts to Bid On'}
+                        <div className="border-b border-white/10 bg-white/5 shrink-0">
+                            <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2 min-w-0">
+                                    <Package size={16} className="text-gold-400 shrink-0" />
+                                    <span className="truncate">
+                                        {isAr ? 'اختر القطع للعرض عليها' : 'Select Parts to Bid On'}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gold-400/70 shrink-0">
+                                        {selectedPartIds.size}/{parts.length}
+                                    </span>
                                 </h3>
-                                <button onClick={onClose} className="text-white/40 hover:text-white"><X size={20} /></button>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPartsPanelCollapsed((v) => !v)}
+                                        className="inline-flex items-center justify-center min-h-[40px] min-w-[40px] rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-gold-400 hover:border-gold-500/40 transition-colors"
+                                        title={
+                                            partsPanelCollapsed
+                                                ? (isAr ? 'إظهار القطع' : 'Show parts')
+                                                : (isAr ? 'إخفاء القطع' : 'Hide parts')
+                                        }
+                                        aria-label={
+                                            partsPanelCollapsed
+                                                ? (isAr ? 'إظهار القطع' : 'Show parts')
+                                                : (isAr ? 'إخفاء القطع' : 'Hide parts')
+                                        }
+                                        aria-expanded={!partsPanelCollapsed}
+                                    >
+                                        <ChevronsUpDown size={16} className={partsPanelCollapsed ? 'opacity-60' : 'text-gold-400'} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="inline-flex items-center justify-center min-h-[40px] min-w-[40px] rounded-xl text-white/40 hover:text-white hover:bg-white/10"
+                                        aria-label="Close"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-2 max-h-[40vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
-                                {parts.map((p: any) => {
-                                    const isSelected = selectedPartIds.has(p.id);
-                                    const isActive = activePartId === p.id;
-                                    const hasExistingOffer = existingOfferMap.has(p.id);
-                                    const isAwardedToOther = awardedToOthersMap.get(p.id);
-                                    const isPartBlocked = (blockedPartIds || []).includes(p.id);
-                                    const isLocked = isAwardedToOther || (hasExistingOffer && !editOfferId) || isPartBlocked;
 
-                                    return (
-                                        <button
-                                            key={p.id}
-                                            type="button"
-                                            disabled={isLocked || !!editOfferId}
-                                            onClick={() => {
-                                                if (isLocked || editOfferId) return;
-                                                togglePart(p.id);
-                                                if (!isSelected) setActivePartId(p.id);
-                                                else if (isActive && selectedPartIds.size > 1) {
-                                                    const remaining = Array.from(selectedPartIds).filter(id => id !== p.id);
-                                                    setActivePartId(remaining[0]);
-                                                }
-                                            }}
-                                            className={`relative flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium transition-all border w-full text-start ${
-                                                isPartBlocked
-                                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400/70 cursor-not-allowed'
-                                                    : isAwardedToOther
-                                                    ? 'bg-red-500/5 border-red-500/10 text-red-400/50 cursor-not-allowed opacity-60'
-                                                : hasExistingOffer
-                                                    ? 'bg-green-500/5 border-green-500/20 text-green-400/60 cursor-not-allowed opacity-75'
-                                                : isSelected
-                                                    ? (isActive
-                                                        ? 'bg-gold-500/20 border-gold-500/50 text-gold-400 ring-2 ring-gold-500/30'
-                                                        : 'bg-gold-500/10 border-gold-500/30 text-gold-400')
-                                                    : 'bg-white/5 border-white/10 text-white/50 hover:border-white/20 hover:text-white/70'
-                                                }`}
-                                        >
-                                            <div className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
-                                                isAwardedToOther ? 'bg-red-500/10 border-red-500/30' 
-                                                : hasExistingOffer ? 'bg-green-500/10 border-green-500/30' 
-                                                : isSelected ? 'bg-gold-500 border-gold-500' 
-                                                : 'border-white/20'
-                                            }`}>
-                                                {isAwardedToOther ? <AlertCircle size={12} className="text-red-400" /> : isSelected ? <Check size={12} className="text-black" /> : hasExistingOffer ? <CheckCircle2 size={12} className="text-green-400" /> : null}
-                                            </div>
-                                            {p.images?.[0] && (
-                                                <PartThumb
-                                                    src={p.images[0]}
-                                                    className={`w-8 h-8 rounded object-cover shrink-0 ${isAwardedToOther ? 'grayscale' : ''}`}
-                                                />
-                                            )}
-                                            <span className="flex-1 min-w-0 font-bold truncate">{p.name}</span>
-                                            {isPartBlocked ? (
-                                                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0">
-                                                    {isAr ? 'انسحاب' : 'Withdrawn'}
-                                                </span>
-                                            ) : isAwardedToOther ? (
-                                                <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20 whitespace-nowrap shrink-0">
-                                                    {isAr ? 'تم الاختيار' : 'Sold'}
-                                                </span>
-                                            ) : hasExistingOffer && (
-                                                <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded-full border border-green-500/20 whitespace-nowrap shrink-0">
-                                                    {isAr ? 'عرض مقدم' : 'Offered'}
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                            {partsPanelCollapsed ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setPartsPanelCollapsed(false)}
+                                    className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center justify-between gap-2 min-h-[44px] px-3 py-2 rounded-xl border border-gold-500/25 bg-gold-500/10 text-start"
+                                >
+                                    <div className="min-w-0">
+                                        <div className="text-[10px] font-bold text-gold-400/80 uppercase tracking-wider">
+                                            {isAr ? 'القطع مخفية — اضغط للإظهار' : 'Parts hidden — tap to expand'}
+                                        </div>
+                                        <div className="text-xs font-bold text-white truncate mt-0.5">
+                                            {activePartName
+                                                ? (isAr ? `النشط: ${activePartName}` : `Active: ${activePartName}`)
+                                                : (isAr ? `${selectedPartIds.size} محددة` : `${selectedPartIds.size} selected`)}
+                                        </div>
+                                    </div>
+                                    <ChevronDown size={18} className="text-gold-400 shrink-0" />
+                                </button>
+                            ) : (
+                                <div className="px-4 pb-3">
+                                    <div className="flex flex-col gap-2 max-h-[28vh] sm:max-h-[32vh] lg:max-h-[40vh] overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar">
+                                        {parts.map((p: any) => {
+                                            const isSelected = selectedPartIds.has(p.id);
+                                            const isActive = activePartId === p.id;
+                                            const hasExistingOffer = existingOfferMap.has(p.id);
+                                            const isAwardedToOther = awardedToOthersMap.get(p.id);
+                                            const isPartBlocked = (blockedPartIds || []).includes(p.id);
+                                            const isLocked = isAwardedToOther || (hasExistingOffer && !editOfferId) || isPartBlocked;
+
+                                            return (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    disabled={isLocked || !!editOfferId}
+                                                    onClick={() => {
+                                                        if (isLocked || editOfferId) return;
+                                                        togglePart(p.id);
+                                                        if (!isSelected) setActivePartId(p.id);
+                                                        else if (isActive && selectedPartIds.size > 1) {
+                                                            const remaining = Array.from(selectedPartIds).filter(id => id !== p.id);
+                                                            setActivePartId(remaining[0]);
+                                                        }
+                                                    }}
+                                                    className={`relative flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium transition-all border w-full text-start ${
+                                                        isPartBlocked
+                                                            ? 'bg-amber-500/10 border-amber-500/20 text-amber-400/70 cursor-not-allowed'
+                                                            : isAwardedToOther
+                                                            ? 'bg-red-500/5 border-red-500/10 text-red-400/50 cursor-not-allowed opacity-60'
+                                                        : hasExistingOffer
+                                                            ? 'bg-green-500/5 border-green-500/20 text-green-400/60 cursor-not-allowed opacity-75'
+                                                        : isSelected
+                                                            ? (isActive
+                                                                ? 'bg-gold-500/20 border-gold-500/50 text-gold-400 ring-2 ring-gold-500/30'
+                                                                : 'bg-gold-500/10 border-gold-500/30 text-gold-400')
+                                                            : 'bg-white/5 border-white/10 text-white/50 hover:border-white/20 hover:text-white/70'
+                                                        }`}
+                                                >
+                                                    <div className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
+                                                        isAwardedToOther ? 'bg-red-500/10 border-red-500/30' 
+                                                        : hasExistingOffer ? 'bg-green-500/10 border-green-500/30' 
+                                                        : isSelected ? 'bg-gold-500 border-gold-500' 
+                                                        : 'border-white/20'
+                                                    }`}>
+                                                        {isAwardedToOther ? <AlertCircle size={12} className="text-red-400" /> : isSelected ? <Check size={12} className="text-black" /> : hasExistingOffer ? <CheckCircle2 size={12} className="text-green-400" /> : null}
+                                                    </div>
+                                                    {p.images?.[0] && (
+                                                        <PartThumb
+                                                            src={p.images[0]}
+                                                            className={`w-8 h-8 rounded object-cover shrink-0 ${isAwardedToOther ? 'grayscale' : ''}`}
+                                                        />
+                                                    )}
+                                                    <span className="flex-1 min-w-0 font-bold truncate">{p.name}</span>
+                                                    {isPartBlocked ? (
+                                                        <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0">
+                                                            {isAr ? 'انسحاب' : 'Withdrawn'}
+                                                        </span>
+                                                    ) : isAwardedToOther ? (
+                                                        <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20 whitespace-nowrap shrink-0">
+                                                            {isAr ? 'تم الاختيار' : 'Sold'}
+                                                        </span>
+                                                    ) : hasExistingOffer && (
+                                                        <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded-full border border-green-500/20 whitespace-nowrap shrink-0">
+                                                            {isAr ? 'عرض مقدم' : 'Offered'}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {selectedPartIds.size > 1 && (
-                                <div className="flex gap-1 mt-3 border-t border-white/5 pt-3 overflow-x-auto">
+                                <div className="flex gap-1 px-4 pb-3 border-t border-white/5 pt-3 overflow-x-auto overscroll-x-contain">
                                     {Array.from(selectedPartIds).map((partId) => {
                                         const part = parts.find((p: any) => p.id === partId);
                                         const isActive = activePartId === partId;
                                         const form = formDataMap[partId];
-                                        const hasData = form?.basePrice;
+                                        const hasData = !!form?.basePrice;
                                         return (
                                             <button
                                                 key={partId}
                                                 type="button"
                                                 onClick={() => setActivePartId(partId)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${isActive
-                                                    ? 'bg-gold-500 text-black'
-                                                    : hasData
-                                                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                                        : 'bg-white/5 text-white/50 hover:text-white/70'
-                                                    }`}
+                                                className={`shrink-0 min-h-[36px] px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all inline-flex items-center gap-1 ${
+                                                    isActive
+                                                        ? 'bg-gold-500 text-black border-gold-400'
+                                                        : hasData
+                                                            ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                                                            : 'bg-white/5 text-white/60 border-white/10 hover:border-gold-500/30'
+                                                }`}
                                             >
                                                 {hasData && !isActive && <Check size={10} />}
-                                                {part?.name || partId}
+                                                {part?.name || partId.slice(0, 6)}
                                             </button>
                                         );
                                     })}
@@ -906,10 +964,10 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                         <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
 
                             {/* LEFT SIDE: Order Details & Live Calc — accordion on mobile */}
-                            <div className="w-full lg:w-[45%] bg-white/5 border-b lg:border-b-0 lg:border-e border-white/10 lg:overflow-y-auto overscroll-contain [contain:layout] min-w-0 shrink-0 lg:shrink">
+                            <div className="w-full lg:w-[45%] bg-white/5 border-b lg:border-b-0 lg:border-e border-white/10 min-w-0 shrink-0 lg:shrink lg:overflow-y-auto lg:overscroll-contain [contain:layout]">
                                 <button
                                     type="button"
-                                    className="lg:hidden w-full flex items-center justify-between gap-3 p-4 text-start"
+                                    className="lg:hidden w-full flex items-center justify-between gap-3 p-4 text-start border-b border-white/5"
                                     onClick={() => setMobileCalcOpen((v) => !v)}
                                 >
                                     <span className="text-xs font-black text-gold-400 uppercase tracking-widest">
@@ -920,7 +978,11 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                         className={`text-white/40 transition-transform ${mobileCalcOpen ? 'rotate-180' : ''}`}
                                     />
                                 </button>
-                                <div className={`${mobileCalcOpen ? 'block' : 'hidden'} lg:block p-4 sm:p-6 md:p-8`}>
+                                <div
+                                    className={`${
+                                        mobileCalcOpen ? 'block max-h-[38vh] overflow-y-auto overscroll-contain' : 'hidden'
+                                    } lg:block lg:max-h-none lg:overflow-visible p-4 sm:p-6 md:p-8`}
+                                >
 
                                 {/* Active Part Name Header */}
                                 <div className="mb-4 px-3 py-2.5 bg-gold-500/10 border border-gold-500/20 rounded-xl">
