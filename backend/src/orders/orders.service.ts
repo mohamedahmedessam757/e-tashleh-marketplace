@@ -43,6 +43,7 @@ import {
     isMultiItemOrder,
     offerAcceptedPartial,
     offersAcceptedForPayment,
+    customerCancelledBySelf,
 } from './order-notification-copy.util';
 import {
     isReorderEligibleSourceStatus,
@@ -1026,11 +1027,35 @@ export class OrdersService {
                     messageAr = `وصلت الأمانة! 🏠 لديك ${returnHours} ساعة لطلب الإرجاع أو فتح نزاع إن لزم الأمر. نأمل أن تنال إعجابك.`;
                     messageEn = `Delivered! 🏠 You have ${returnHours} hours to request a return or open a dispute if needed. We hope you love it!`;
                 }
+                // Customer self-cancel: same copy as in-app modal (WhatsApp status_detail uses messageAr/En)
+                const isCustomerSelfCancel =
+                    notifyStatus === OrderStatus.CANCELLED &&
+                    (actor.type === ActorType.CUSTOMER ||
+                        /cancelled by customer/i.test(String(reason || '')));
+                let customerCancelPartLabel: string | undefined;
+                if (isCustomerSelfCancel) {
+                    customerCancelPartLabel = resolveCancelPartLabel({
+                        partNames: (order.parts || []).map(
+                            (p: { name?: string | null }) => p.name,
+                        ),
+                    });
+                    const copy = customerCancelledBySelf({
+                        isMulti: isMultiItemOrder(order),
+                        orderNumber: order.orderNumber,
+                        partName: customerCancelPartLabel,
+                    });
+                    messageAr = copy.messageAr;
+                    messageEn = copy.messageEn;
+                }
                 await this.notifications.create({
                     recipientId: order.customerId,
                     recipientRole: 'CUSTOMER',
-                    titleAr: 'تحديث حالة الطلب #' + order.orderNumber,
-                    titleEn: 'Order Status Update #' + order.orderNumber,
+                    titleAr: isCustomerSelfCancel
+                        ? 'تم إلغاء الطلب'
+                        : 'تحديث حالة الطلب #' + order.orderNumber,
+                    titleEn: isCustomerSelfCancel
+                        ? 'Order Cancelled'
+                        : 'Order Status Update #' + order.orderNumber,
                     messageAr,
                     messageEn,
                     type: 'ORDER',
@@ -1041,6 +1066,15 @@ export class OrdersService {
                         waEvent: isVerificationStatus ? 'VERIFICATION' : 'ORDER_STATUS',
                         ...(isVerificationStatus ? { verification: true } : {}),
                         ...(notifyStatus === OrderStatus.DELIVERED ? { graceWindow: true } : {}),
+                        ...(isCustomerSelfCancel
+                            ? {
+                                  customerSelfCancel: true,
+                                  partName: customerCancelPartLabel,
+                                  part_name: customerCancelPartLabel,
+                                  status_detail: messageAr,
+                                  status_detail_en: messageEn,
+                              }
+                            : {}),
                     },
                 });
             }

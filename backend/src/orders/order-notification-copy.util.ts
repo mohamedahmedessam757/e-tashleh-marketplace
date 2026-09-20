@@ -185,6 +185,16 @@ export function paymentConfirmedPrepare(ctx: OrderCopyContext): BilingualMessage
     };
 }
 
+/** Customer self-cancel (offer collection). Matches FE customerCancelledModal copy. */
+export function customerCancelledBySelf(ctx: OrderCopyContext): BilingualMessage {
+    const orderNumber = String(ctx.orderNumber || '').trim() || '—';
+    const partName = String(ctx.partName || '').trim() || 'القطعة';
+    return {
+        messageAr: `تم إلغاء الطلب من قبلكم على الطلب رقم (#${orderNumber}) لقطعة (${partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.`,
+        messageEn: `Your order (#${orderNumber}) for part (${partName}) was cancelled by you. You may resubmit during business days (Monday–Thursday).`,
+    };
+}
+
 /** Customer deep-link for ready-to-ship notifications. */
 export function readyForShippingCustomerLink(isMulti: boolean, orderId: string): string {
     return isMulti ? `/dashboard/shipping-cart` : `/dashboard/orders/${orderId}`;
