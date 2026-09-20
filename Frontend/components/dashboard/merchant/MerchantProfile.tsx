@@ -118,16 +118,17 @@ export const MerchantProfile: React.FC = () => {
         }
     };
 
-    const InputGroup = ({ label, value, onChange, disabled = false, type = "text" }: any) => (
-        <div className="space-y-2">
-            <label className="text-xs text-white/40 uppercase tracking-wider">{label}</label>
+    const InputGroup = ({ label, value, onChange, disabled = false, type = "text", placeholder }: any) => (
+        <div className="space-y-2 min-w-0 w-full">
+            <label className="text-xs text-white/40 uppercase tracking-wider block truncate">{label}</label>
             <input
                 type={type}
                 value={value}
                 onChange={onChange}
+                placeholder={placeholder}
                 disabled={!isEditing || disabled}
                 className={`
-            w-full bg-[#1A1814] border rounded-xl px-4 py-3 text-white outline-none transition-colors 
+            w-full min-w-0 bg-[#1A1814] border rounded-xl px-4 py-3 text-white outline-none transition-colors 
             ${isEditing ? 'border-white/10 focus:border-gold-500 shadow-[0_0_15px_rgba(212,175,55,0.1)]' : 'border-transparent text-white/70'}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
@@ -152,7 +153,11 @@ export const MerchantProfile: React.FC = () => {
     if (isLoadingProfile) return <ProfileSkeleton />;
 
     return (
-        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-visible pb-[max(5rem,env(safe-area-inset-bottom))] sm:pb-8">
+        <div className={`space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-visible sm:pb-8 ${
+            isEditing && activeProfileTab === 'info'
+                ? 'pb-[max(9.5rem,calc(5.5rem+env(safe-area-inset-bottom)))]'
+                : 'pb-[max(5rem,env(safe-area-inset-bottom))]'
+        }`}>
             <LicenseExpiryBanner
                 onNavigate={() => {
                     setActiveProfileTab('info');
@@ -164,17 +169,17 @@ export const MerchantProfile: React.FC = () => {
                     }, 120);
                 }}
             />
-            <div className="flex flex-col gap-3 bg-black/20 p-3 sm:p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40 min-w-0">
+            <div className="flex flex-col gap-3 bg-black/20 p-3 sm:p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-30 min-w-0">
                 <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-3">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                        <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20 shrink-0">
-                            <Store className="text-gold-500" size={24} />
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="p-2.5 sm:p-3 bg-gold-500/10 rounded-xl border border-gold-500/20 shrink-0">
+                            <Store className="text-gold-500" size={22} />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-none mb-1">
+                            <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-tight truncate">
                                 {t.dashboard.merchant.storeProfile.title}
                             </h1>
-                            <p className="text-xs text-white/40">{t.dashboard.merchant.profile.verified}</p>
+                            <p className="text-xs text-white/40 truncate">{t.dashboard.merchant.profile.verified}</p>
                         </div>
                     </div>
 
@@ -214,7 +219,7 @@ export const MerchantProfile: React.FC = () => {
                     )}
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-0.5 custom-scrollbar px-0.5">
+                <div className="flex gap-2 overflow-x-auto pb-0.5 custom-scrollbar">
                     <button
                         onClick={() => setActiveProfileTab('info')}
                         className={`shrink-0 px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold transition-all border ${
@@ -247,34 +252,16 @@ export const MerchantProfile: React.FC = () => {
                     </button>
                 </div>
 
-                {activeProfileTab === 'info' && (
-                    <div className="flex sm:hidden gap-2 w-full">
-                        {isEditing ? (
-                            <>
-                                <button
-                                    onClick={() => setIsEditing(false)}
-                                    className="px-4 py-3 min-h-[48px] rounded-xl font-bold text-white/60 border border-white/10"
-                                >
-                                    {t.common?.cancel || (language === 'ar' ? 'إلغاء' : 'Cancel')}
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-gold-500 hover:bg-gold-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] disabled:opacity-50"
-                                >
-                                    {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save size={18} />}
-                                    {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-white/10 text-white border border-white/10"
-                            >
-                                <Edit3 size={18} />
-                                {t.dashboard.merchant.storeProfile.actions.edit}
-                            </button>
-                        )}
+                {/* Mobile edit entry only — save/cancel live in bottom bar to avoid covering fields */}
+                {activeProfileTab === 'info' && !isEditing && (
+                    <div className="flex sm:hidden w-full">
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-white/10 text-white border border-white/10"
+                        >
+                            <Edit3 size={18} />
+                            {t.dashboard.merchant.storeProfile.actions.edit}
+                        </button>
                     </div>
                 )}
             </div>
@@ -451,9 +438,9 @@ export const MerchantProfile: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="grid lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-1 space-y-6">
-                                <GlassCard className="p-8 text-center relative group overflow-hidden">
+                        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 min-w-0">
+                            <div className="lg:col-span-1 space-y-4 sm:space-y-6 min-w-0">
+                                <GlassCard className="p-4 sm:p-6 md:p-8 text-center relative group overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4">
                                         <div className="bg-green-500/10 text-green-400 text-[10px] font-bold px-2 py-1 rounded-md border border-green-500/20 uppercase">
                                             {language === 'ar' ? 'نشط' : 'Active'}
@@ -554,24 +541,24 @@ export const MerchantProfile: React.FC = () => {
                                     </div>
                                 </GlassCard>
 
-                                <GlassCard className="p-6">
-                                    <h3 className="text-sm font-bold text-gold-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <GlassCard className="p-4 sm:p-6">
+                                    <h3 className="text-sm font-bold text-gold-500 uppercase tracking-widest mb-4 sm:mb-6 flex items-center gap-2">
                                         <Phone size={14} />
                                         {t.dashboard.merchant.storeProfile.sections.contact}
                                     </h3>
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 min-w-0">
                                         {[
                                             { icon: User, label: t.dashboard.merchant.profile.manager, value: account.name, color: 'text-blue-400' },
                                             { icon: Phone, label: t.dashboard.merchant.profile.mobile, value: account.phone, color: 'text-green-400' },
                                             { icon: Mail, label: t.dashboard.merchant.profile.email, value: account.email, color: 'text-purple-400' }
                                         ].map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-colors">
-                                                <div className={`p-2 rounded-lg bg-white/5 ${item.color}`}>
+                                            <div key={idx} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-colors min-w-0">
+                                                <div className={`p-2 rounded-lg bg-white/5 ${item.color} shrink-0`}>
                                                     <item.icon size={18} />
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <div className="text-[10px] text-white/40 uppercase tracking-wider">{item.label}</div>
-                                                    <div className="text-white text-sm font-medium truncate">{item.value}</div>
+                                                    <div className="text-white text-sm font-medium truncate break-all">{item.value}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -579,23 +566,25 @@ export const MerchantProfile: React.FC = () => {
                                 </GlassCard>
                             </div>
 
-                            <div className="lg:col-span-2 space-y-6">
-                                <GlassCard className="p-8 relative z-[3]">
-                                    <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
-                                        <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                                            <div className="w-1 h-6 bg-gold-500 rounded-full" />
-                                            {t.dashboard.merchant.storeProfile.sections.basic}
+                            <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
+                                <GlassCard className="p-4 sm:p-6 md:p-8 relative z-[3] overflow-visible">
+                                    <div className="flex items-center justify-between mb-6 sm:mb-8 border-b border-white/5 pb-4 sm:pb-6 min-w-0">
+                                        <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-3 min-w-0">
+                                            <div className="w-1 h-6 bg-gold-500 rounded-full shrink-0" />
+                                            <span className="truncate">{t.dashboard.merchant.storeProfile.sections.basic}</span>
                                         </h3>
                                     </div>
 
-                                    <div className="grid md:grid-cols-2 gap-6 mb-8">
-                                        <InputGroup
-                                            label={t.dashboard.merchant.storeProfile.fields.name}
-                                            value={storeInfo.storeName}
-                                            onChange={(e: any) => updateStoreInfo('storeName', e.target.value)}
-                                        />
+                                    <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 min-w-0">
+                                        <div className="md:col-span-2 min-w-0">
+                                            <InputGroup
+                                                label={t.dashboard.merchant.storeProfile.fields.name}
+                                                value={storeInfo.storeName}
+                                                onChange={(e: any) => updateStoreInfo('storeName', e.target.value)}
+                                            />
+                                        </div>
                                         
-                                        <div className="space-y-6 md:col-span-2 min-w-0">
+                                        <div className="space-y-4 sm:space-y-6 md:col-span-2 min-w-0">
                                             <MultiSelectDropdown
                                                 label={language === 'ar' ? 'تخصص شركات السيارات' : 'Car Makes Specialization'}
                                                 items={makes.map(m => ({ id: m.name, name: m.name, nameAr: m.nameAr }))}
@@ -637,7 +626,7 @@ export const MerchantProfile: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 min-w-0">
                                         <label className="text-xs text-white/40 uppercase tracking-wider block">{t.dashboard.merchant.storeProfile.fields.bio}</label>
                                         <textarea
                                             value={storeInfo.bio}
@@ -645,7 +634,7 @@ export const MerchantProfile: React.FC = () => {
                                             disabled={!isEditing}
                                             rows={4}
                                             className={`
-                                            w-full bg-[#1A1814] border rounded-2xl px-5 py-4 text-white outline-none transition-all resize-none
+                                            w-full min-w-0 bg-[#1A1814] border rounded-2xl px-4 sm:px-5 py-3 sm:py-4 text-white outline-none transition-all resize-none
                                             ${isEditing ? 'border-white/10 focus:border-gold-500 shadow-[0_0_20px_rgba(212,175,55,0.05)]' : 'border-transparent text-white/70'}
                                         `}
                                         />
@@ -654,44 +643,44 @@ export const MerchantProfile: React.FC = () => {
 
 
 
-                                <GlassCard className="p-8 relative z-[2]">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <MapPin size={24} className="text-gold-500" />
-                                        <h3 className="text-lg font-bold text-white">
+                                <GlassCard className="p-4 sm:p-6 md:p-8 relative z-[2]">
+                                    <div className="flex items-center gap-3 mb-4 sm:mb-6 min-w-0">
+                                        <MapPin size={22} className="text-gold-500 shrink-0" />
+                                        <h3 className="text-base sm:text-lg font-bold text-white truncate">
                                             {t.dashboard.merchant.profile.location}
                                         </h3>
                                     </div>
-                                    <div className="relative group/map h-auto min-h-[12rem] bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-6 text-white/40 transition-all hover:bg-white/[0.07]">
+                                    <div className="relative group/map h-auto min-h-[12rem] bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-4 sm:p-6 text-white/40 transition-all hover:bg-white/[0.07] min-w-0">
                                         <Globe className="mb-3 opacity-20 group-hover/map:scale-110 group-hover/map:opacity-40 transition-all" size={32} />
                                         
                                         {isEditing ? (
-                                            <div className="w-full space-y-4">
+                                            <div className="w-full space-y-4 min-w-0">
                                                 <InputGroup 
                                                     label={language === 'ar' ? 'العنوان' : 'Address'}
                                                     value={storeInfo.address}
                                                     onChange={(e: any) => updateStoreInfo('address', e.target.value)}
                                                     placeholder={language === 'ar' ? 'أدخل العنوان التفصيلي' : 'Enter detailed address'}
                                                 />
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-1">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+                                                    <div className="space-y-1 min-w-0">
                                                         <label className="text-[10px] text-white/40 uppercase tracking-widest">{language === 'ar' ? 'خط العرض' : 'Latitude'}</label>
                                                         <input 
                                                             type="number" 
                                                             step="any"
                                                             value={storeInfo.lat || ''} 
                                                             onChange={(e) => updateStoreInfo('lat', parseFloat(e.target.value))}
-                                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-gold-500 outline-none"
+                                                            className="w-full min-w-0 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-gold-500 outline-none"
                                                             placeholder="e.g. 24.7136"
                                                         />
                                                     </div>
-                                                    <div className="space-y-1">
+                                                    <div className="space-y-1 min-w-0">
                                                         <label className="text-[10px] text-white/40 uppercase tracking-widest">{language === 'ar' ? 'خط الطول' : 'Longitude'}</label>
                                                         <input 
                                                             type="number" 
                                                             step="any"
                                                             value={storeInfo.lng || ''} 
                                                             onChange={(e) => updateStoreInfo('lng', parseFloat(e.target.value))}
-                                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-gold-500 outline-none"
+                                                            className="w-full min-w-0 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-gold-500 outline-none"
                                                             placeholder="e.g. 46.6753"
                                                         />
                                                     </div>
@@ -699,10 +688,10 @@ export const MerchantProfile: React.FC = () => {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="text-xs font-mono px-6 text-center leading-relaxed text-white/70">
+                                                <div className="text-xs font-mono px-4 sm:px-6 text-center leading-relaxed text-white/70 break-words min-w-0">
                                                     {storeInfo.address || (language === 'ar' ? 'الموقع غير محدد' : 'Location not specified')}
                                                 </div>
-                                                <div className="mt-4 flex gap-2">
+                                                <div className="mt-4 flex flex-wrap justify-center gap-2">
                                                     <div className="text-[10px] bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 font-mono text-gold-500/80">
                                                         LAT: {(() => {
                                                             const lat = Number(storeInfo.lat);
@@ -721,7 +710,7 @@ export const MerchantProfile: React.FC = () => {
                                     </div>
                                 </GlassCard>
 
-                                <GlassCard id="merchant-docs-section" className="p-8 bg-gradient-to-b from-[#1A1814]/50 to-transparent relative z-[1] scroll-mt-24">
+                                <GlassCard id="merchant-docs-section" className="p-4 sm:p-6 md:p-8 bg-gradient-to-b from-[#1A1814]/50 to-transparent relative z-[1] scroll-mt-24">
                                     <div className="flex items-center justify-between mb-8">
                                         <h3 className="text-lg font-bold text-white flex items-center gap-3">
                                             <FileText size={20} className="text-gold-500" />
@@ -1182,6 +1171,30 @@ export const MerchantProfile: React.FC = () => {
                         storeName={storeInfo.storeName}
                         language={language}
                     />
+                </div>
+            )}
+
+            {/* Mobile save bar — above bottom nav, never covers Multiselect portal sheet */}
+            {activeProfileTab === 'info' && isEditing && (
+                <div className="sm:hidden fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-50 px-3 pointer-events-none">
+                    <div className="pointer-events-auto flex gap-2 w-full max-w-lg mx-auto p-2 rounded-2xl bg-[#12100E]/95 border border-white/10 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.45)]">
+                        <button
+                            type="button"
+                            onClick={() => setIsEditing(false)}
+                            className="px-4 py-3 min-h-[48px] rounded-xl font-bold text-white/70 border border-white/10 shrink-0"
+                        >
+                            {t.common?.cancel || (language === 'ar' ? 'إلغاء' : 'Cancel')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-gold-500 hover:bg-gold-600 text-black disabled:opacity-50"
+                        >
+                            {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save size={18} />}
+                            {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

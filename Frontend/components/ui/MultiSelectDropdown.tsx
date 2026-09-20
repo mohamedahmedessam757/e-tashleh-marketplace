@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -121,17 +122,17 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   const panelBody = (
     <>
       <div className="p-3 border-b border-white/10 bg-white/5 shrink-0">
-        <div className="relative">
+        <div className="relative min-w-0">
           <Search
             size={16}
-            className={`absolute top-3.5 ${isAr ? 'right-3' : 'left-3'} text-white/40`}
+            className="absolute top-3.5 start-3 text-white/40 pointer-events-none"
           />
           <input
             type="text"
             placeholder={searchPlaceholder || (isAr ? 'بحث...' : 'Search...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full bg-black/40 border border-white/10 rounded-lg py-3 min-h-[44px] ${isAr ? 'pr-9 pl-4' : 'pl-9 pr-4'} text-sm text-white focus:border-gold-500 outline-none transition-colors`}
+            className="w-full bg-black/40 border border-white/10 rounded-lg py-3 min-h-[44px] ps-9 pe-4 text-sm text-white focus:border-gold-500 outline-none transition-colors"
             autoFocus
           />
         </div>
@@ -330,41 +331,45 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         </AnimatePresence>
       </div>
 
-      <AnimatePresence>
-        {isOpen && !disabled && isMobile && (
-          <div className="fixed inset-0 z-[200] flex items-end justify-center">
-            <motion.button
-              type="button"
-              aria-label="Close"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
-              onClick={() => setIsOpen(false)}
-            />
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
-              className="relative z-10 w-full max-h-[85vh] bg-[#12100E] border border-white/10 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-            >
-              <div className="flex items-center justify-between gap-3 p-4 border-b border-white/10 shrink-0">
-                <h3 className="text-base font-black text-white truncate">{label}</h3>
-                <button
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && !disabled && isMobile && (
+              <div className="fixed inset-0 z-[9999] flex items-end justify-center isolate">
+                <motion.button
                   type="button"
+                  aria-label="Close"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 min-h-[44px] rounded-xl bg-gold-500 text-black font-black text-sm shrink-0"
+                />
+                <motion.div
+                  role="dialog"
+                  aria-modal="true"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 24 }}
+                  className="relative z-10 w-full max-h-[85vh] bg-[#12100E] border border-white/10 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]"
                 >
-                  {isAr ? 'تم' : 'Done'}
-                </button>
+                  <div className="flex items-center justify-between gap-3 p-4 border-b border-white/10 shrink-0">
+                    <h3 className="text-base font-black text-white truncate min-w-0">{label}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="px-4 py-2 min-h-[44px] rounded-xl bg-gold-500 text-black font-black text-sm shrink-0"
+                    >
+                      {isAr ? 'تم' : 'Done'}
+                    </button>
+                  </div>
+                  {panelBody}
+                </motion.div>
               </div>
-              {panelBody}
-            </motion.div>
-          </div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
 
       {customValue && !isOpen && (
         <div className="mt-2 text-xs text-white/60 flex items-center gap-1">
