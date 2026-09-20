@@ -304,8 +304,165 @@ export class OrderCleanupService {
         if (!ran) this.logger.debug('Assembly cart cron skipped (locked).');
     }
 
+    /**
+     * Customer reminders for READY parts still sitting in the assembly/shipping cart:
+     * - Days from payment listed in reminderDaysBeforeAssemblyExpiry (default 5 & 6)
+     * - Final reminder ~6 hours before the assembly-cart auto-ship deadline
+     *
+     * Conditions (all required):
+     * 1) Multi-part order (shipping cart)
+     * 2) Offer accepted, paid (SUCCESS), not shippedFromCart
+     * 3) fulfillmentStatus === READY_FOR_SHIPPING (selectable / shippable)
+     * 4) Order still in a cart-eligible status
+     * 5) Deadline not yet passed (auto-ship handler covers post-deadline)
+     * 6) Deduped once per offer per reminder stage
+     */
+    private async handleAssemblyCartCustomerReminders() {
+        const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
+        const assemblyMs = assemblyDays * 24 * 60 * 60 * 1000;
+        const assemblyHoursLimit = assemblyDays * 24;
+        const reminderDays = await this.orderDurationConfig.getReminderDaysBeforeAssemblyExpiry();
+        const finalLeadMs = 6 * 60 * 60 * 1000;
+        const minRemainingMs = 15 * 60 * 1000;
+        const now = Date.now();
+        const dedupeTtlMinutes = Math.max(assemblyDays * 24 * 60, 7 * 24 * 60);
+
+        const offers = await this.prisma.offer.findMany({
+            where: {
+                status: 'accepted',
+                shippedFromCart: false,
+                fulfillmentStatus: OfferFulfillmentStatus.READY_FOR_SHIPPING,
+                payments: {
+                    some: { status: 'SUCCESS' },
+                },
+                order: {
+                    status: {
+                        in: [
+                            OrderStatus.PREPARATION,
+                            OrderStatus.PARTIALLY_SHIPPED,
+                            OrderStatus.VERIFICATION_SUCCESS,
+                            OrderStatus.READY_FOR_SHIPPING,
+                        ],
+                    },
+                },
+            },
+            include: {
+                orderPart: { select: { name: true } },
+                order: {
+                    select: {
+                        id: true,
+                        orderNumber: true,
+                        customerId: true,
+                        requestType: true,
+                        parts: { select: { id: true } },
+                    },
+                },
+                payments: {
+                    where: { status: 'SUCCESS' },
+                    orderBy: { paidAt: 'asc' },
+                    take: 1,
+                    select: { paidAt: true, createdAt: true },
+                },
+            },
+        });
+
+        for (const offer of offers) {
+            try {
+                const order = offer.order;
+                const isMulti =
+                    String(order.requestType || '').toLowerCase() === 'multiple' ||
+                    (order.parts?.length ?? 0) > 1;
+                if (!isMulti) continue;
+
+                const pay = offer.payments?.[0];
+                const paidAtRaw = pay?.paidAt || pay?.createdAt;
+                if (!paidAtRaw) continue;
+
+                const paidAtMs = new Date(paidAtRaw).getTime();
+                const ageMs = now - paidAtMs;
+                const ageHours = ageMs / (1000 * 60 * 60);
+                const expiryAtMs = paidAtMs + assemblyMs;
+                const remainingMs = expiryAtMs - now;
+
+                // Past deadline → leave to auto-ship path
+                if (remainingMs <= 0 || ageHours >= assemblyHoursLimit) continue;
+
+                const partName = offer.orderPart?.name || 'Part';
+                const orderNumber = order.orderNumber;
+                const daysLeft = Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+                const linkBase = `/dashboard/shipping-cart`;
+
+                for (const day of reminderDays) {
+                    if (!Number.isFinite(day) || day < 1 || day >= assemblyDays) continue;
+                    const windowStartH = day * 24;
+                    const windowEndH = Math.min((day + 1) * 24, assemblyHoursLimit);
+                    if (ageHours < windowStartH || ageHours >= windowEndH) continue;
+
+                    const dedupKey = `assembly_cart_day${day}_${offer.id}`;
+                    await this.notificationsService.notifyWithDedup(
+                        order.customerId,
+                        dedupKey,
+                        dedupeTtlMinutes,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'تذكير: قطعة جاهزة في سلة الشحن',
+                            titleEn: 'Reminder: ready part in shipping cart',
+                            messageAr: `القطعة «${partName}» جاهزة للاختيار في سلة الشحن للطلب #${orderNumber} (اليوم ${day} من ${assemblyDays}). متبقّى تقريباً ${daysLeft} يوم قبل الشحن التلقائي — اطلب الشحن الآن أو انتظر قطعاً أخرى.`,
+                            messageEn: `"${partName}" is ready to select in the shipping cart for order #${orderNumber} (day ${day} of ${assemblyDays}). About ${daysLeft} day(s) left before auto-ship — request shipping now or wait for other parts.`,
+                            type: 'system_alert',
+                            link: `${linkBase}?${dedupKey}=1`,
+                            metadata: {
+                                offerId: offer.id,
+                                orderId: order.id,
+                                waEvent: 'ORDER_STATUS',
+                                assemblyCartReminder: true,
+                                reminderStage: `day_${day}`,
+                                dedupKey,
+                            },
+                        },
+                    );
+                }
+
+                // Final window: ≤6.5h remaining, still >15m (catch-up if cron was delayed)
+                if (remainingMs > minRemainingMs && remainingMs <= finalLeadMs + 30 * 60 * 1000) {
+                    const remainingHours = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
+                    const dedupKey = `assembly_cart_t6h_${offer.id}`;
+                    await this.notificationsService.notifyWithDedup(
+                        order.customerId,
+                        dedupKey,
+                        dedupeTtlMinutes,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'تنبيه عاجل: الشحن التلقائي خلال ساعات',
+                            titleEn: 'Urgent: auto-ship in a few hours',
+                            messageAr: `متبقّى حوالي ${remainingHours} ساعة على الشحن التلقائي للقطعة «${partName}» في الطلب #${orderNumber}. اخترها من سلة الشحن الآن إن أردت تجميعها مع قطع أخرى، وإلا ستُشحن تلقائياً.`,
+                            messageEn: `About ${remainingHours} hour(s) left before auto-ship of "${partName}" on order #${orderNumber}. Select it in the shipping cart now if you want to combine parts; otherwise it will ship automatically.`,
+                            type: 'system_alert',
+                            link: `${linkBase}?${dedupKey}=1`,
+                            metadata: {
+                                offerId: offer.id,
+                                orderId: order.id,
+                                waEvent: 'ORDER_STATUS',
+                                assemblyCartReminder: true,
+                                reminderStage: 't_minus_6h',
+                                dedupKey,
+                            },
+                        },
+                    );
+                }
+            } catch (err: any) {
+                this.logger.error(
+                    `Assembly cart reminder failed for offer ${offer.id}: ${err?.message || err}`,
+                );
+            }
+        }
+    }
+
     private async handleAssemblyCartExpiry() {
         this.logger.debug('Checking assembly-cart / long prep timeouts...');
+        await this.handleAssemblyCartCustomerReminders();
         const now = new Date();
         const assemblyDays = await this.orderDurationConfig.getAssemblyCartDays();
         const assemblyHoursLimit = assemblyDays * 24;
@@ -453,15 +610,16 @@ export class OrderCleanupService {
                         }
                     }
                 } else if (diffHours >= reminderDay * 24 && diffHours < reminderDay * 24 + 1) {
+                    // Single-item prep path only — not shipping-cart auto-ship
                     await this.notificationsService.create({
                         recipientId: order.customerId,
                         recipientRole: 'CUSTOMER',
-                        titleAr: 'تذكير: اقتراب الشحن التلقائي',
-                        titleEn: 'Reminder: Auto-Ship Approaching',
-                        messageAr: `عناصرك المحتجزة للطلب #${order.orderNumber} أوشكت على إنهاء مدة الحفظ (${assemblyDays} أيام). يرجى تأكيد استلام الشحنة إذا لم تكن ستنتظر قطعاً أخرى.`,
-                        messageEn: `Your reserved items for order #${order.orderNumber} are nearing the ${assemblyDays}-day limit. Please request shipping soon.`,
+                        titleAr: 'تذكير: اقتراب مهلة التجهيز',
+                        titleEn: 'Reminder: preparation deadline approaching',
+                        messageAr: `طلبك #${order.orderNumber} أوشك على إنهاء مهلة التجهيز (${assemblyDays} أيام). إذا لم يُجهَّز التاجر الطلب قد يُلغى تلقائياً.`,
+                        messageEn: `Order #${order.orderNumber} is nearing the ${assemblyDays}-day preparation limit. If the merchant does not prepare it, it may be auto-cancelled.`,
                         type: 'system_alert',
-                        link: `/dashboard/shipping-cart`,
+                        link: `/dashboard/orders/${order.id}`,
                     });
                 }
             } catch (err: any) {
