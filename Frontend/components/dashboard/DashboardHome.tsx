@@ -125,7 +125,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-8"
+            className="space-y-8 min-w-0"
         >
             <motion.div variants={itemVariants}>
                 <PolicyChangeBanner audience="CUSTOMER" />
@@ -200,7 +200,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                             {dh?.filters?.byStatus || (isAr ? 'حسب الحالة' : 'By status')}
                         </span>
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
+                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-1">
                         <button
                             type="button"
                             onClick={() => setHomeStatusFilter('ALL')}

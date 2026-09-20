@@ -214,7 +214,7 @@ export const MerchantProfile: React.FC = () => {
                     )}
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-0.5 custom-scrollbar -mx-0.5 px-0.5">
+                <div className="flex gap-2 overflow-x-auto pb-0.5 custom-scrollbar px-0.5">
                     <button
                         onClick={() => setActiveProfileTab('info')}
                         className={`shrink-0 px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold transition-all border ${
@@ -388,7 +388,7 @@ export const MerchantProfile: React.FC = () => {
                                         <div className="p-4 bg-red-500 text-white rounded-2xl shadow-xl shadow-red-500/40 animate-bounce">
                                             <ShieldAlert size={24} />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-2 flex items-center gap-2">
                                                 {language === 'ar' ? 'تنبيه عاجل: مستند يحتاج إلى تصحيح' : 'Urgent: Document Correction Required'}
                                                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
@@ -595,7 +595,7 @@ export const MerchantProfile: React.FC = () => {
                                             onChange={(e: any) => updateStoreInfo('storeName', e.target.value)}
                                         />
                                         
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 md:col-span-2 min-w-0">
                                             <MultiSelectDropdown
                                                 label={language === 'ar' ? 'تخصص شركات السيارات' : 'Car Makes Specialization'}
                                                 items={makes.map(m => ({ id: m.name, name: m.name, nameAr: m.nameAr }))}
@@ -968,21 +968,21 @@ export const MerchantProfile: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{contractT?.secondParty.company || 'الشركة'}</span>
-                                                <span className="text-white font-medium">{contractAcceptance.secondPartyData?.companyName}</span>
+                                            <div className="flex justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 min-w-0">
+                                                <span className="text-white/40 shrink-0">{contractT?.secondParty.company || 'الشركة'}</span>
+                                                <span className="text-white font-medium min-w-0 text-end truncate">{contractAcceptance.secondPartyData?.companyName}</span>
                                             </div>
-                                            <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{contractT?.secondParty.manager || 'المدير المسؤول'}</span>
-                                                <span className="text-white font-medium">{contractAcceptance.secondPartyData?.managerName}</span>
+                                            <div className="flex justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 min-w-0">
+                                                <span className="text-white/40 shrink-0">{contractT?.secondParty.manager || 'المدير المسؤول'}</span>
+                                                <span className="text-white font-medium min-w-0 text-end truncate">{contractAcceptance.secondPartyData?.managerName}</span>
                                             </div>
-                                            <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{contractT?.secondParty.crNumber || 'السجل'}</span>
-                                                <span className="text-white font-medium">{contractAcceptance.secondPartyData?.crNumber}</span>
+                                            <div className="flex justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 min-w-0">
+                                                <span className="text-white/40 shrink-0">{contractT?.secondParty.crNumber || 'السجل'}</span>
+                                                <span className="text-white font-medium min-w-0 text-end truncate">{contractAcceptance.secondPartyData?.crNumber}</span>
                                             </div>
-                                            <div className="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <span className="text-white/40">{contractT?.secondParty.license || 'الرخصة / انتهاء الصلاحية'}</span>
-                                                <span className="text-white font-medium">
+                                            <div className="flex justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 min-w-0">
+                                                <span className="text-white/40 shrink-0">{contractT?.secondParty.license || 'الرخصة / انتهاء الصلاحية'}</span>
+                                                <span className="text-white font-medium min-w-0 text-end break-words">
                                                     {contractAcceptance.secondPartyData?.licenseNumber || contractAcceptance.secondPartyData?.municipalityLicense}
                                                     {contractAcceptance.secondPartyData?.licenseExpiry && ` / ${contractAcceptance.secondPartyData.licenseExpiry}`}
                                                 </span>

@@ -1408,7 +1408,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             {((order.status === 'COLLECTING_OFFERS') ||
                                 (order.status === 'AWAITING_SELECTION' && visibleOffers.length > 0)) &&
                                 !expiryScenario && (
-                                <div className="text-right hidden md:block border-l border-white/10 pl-4 ml-2">
+                                <div className="text-end hidden md:block border-s border-white/10 ps-4 ms-2">
                                     <div className="text-xs text-gold-500/60 font-bold uppercase tracking-widest mb-1">
                                         {order.status === 'COLLECTING_OFFERS' 
                                             ? (language === 'ar' ? 'كشف العروض خلال' : 'Revealing In')
@@ -1421,7 +1421,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 </div>
                             )}
 
-                            <div className="text-right hidden md:block border-l border-white/10 pl-4 ml-2">
+                            <div className="text-end hidden md:block border-s border-white/10 ps-4 ms-2">
                                 <div className="text-xs text-white/40 mb-1">{(t.dashboard.orders as any).requestDate}</div>
                                 <div className="flex items-center gap-2 text-white/80 font-mono text-sm">
                                     <Calendar size={14} />
@@ -1456,10 +1456,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         {shipment ? (
                                             <div className="space-y-6">
                                                 {/* Meta Info */}
-                                                <div className="flex flex-wrap gap-4 items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10">
-                                                    <div>
+                                                <div className="flex flex-wrap gap-4 items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10 min-w-0">
+                                                    <div className="min-w-0">
                                                         <p className="text-sm text-white/50">{language === 'ar' ? 'رقم التتبع' : 'Tracking Num'}</p>
-                                                        <p className="font-mono font-bold text-lg text-gold-400">{shipment.trackingNumber || 'PENDING'}</p>
+                                                        <p className="font-mono font-bold text-lg text-gold-400 break-all">{shipment.trackingNumber || 'PENDING'}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-sm text-white/50">{language === 'ar' ? 'الشركة الناقلة' : 'Carrier'}</p>
@@ -1790,7 +1790,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                             {/* Part Row */}
                                             <div className="p-5 flex flex-wrap items-center justify-between gap-4">
                                                 {/* Part Info */}
-                                                <div className="flex items-center gap-4 flex-1 min-w-[200px]">
+                                                <div className="flex items-center gap-4 flex-1 min-w-0 sm:min-w-[200px]">
                                                     <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
                                                         {partImgSrc ? (
                                                             <img src={partImgSrc} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
@@ -1798,8 +1798,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             <Package size={24} className="text-white/20" />
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-lg">{p.name}</h4>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-white text-lg truncate">{p.name}</h4>
                                                         {p.description && <p className="text-white/60 text-sm line-clamp-1">{p.description}</p>}
                                                         <span className="text-[10px] font-mono text-gold-500/50 uppercase mt-1 block tracking-wider">
                                                             {language === 'ar' ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}

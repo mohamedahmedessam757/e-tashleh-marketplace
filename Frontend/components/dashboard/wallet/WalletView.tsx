@@ -526,7 +526,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-2 sm:px-0" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-2 sm:px-3 min-w-0" dir={isAr ? 'rtl' : 'ltr'}>
             {/* 2026 Admin Transparency Banner */}
             
             {/* 1. Header Navigation & Title */}
@@ -747,7 +747,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
 
                         <div className="overflow-x-auto overflow-y-auto max-h-[500px] relative custom-scrollbar">
                             {/* Mobile Scroll Indicator */}
-                            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/40 to-transparent pointer-events-none sm:hidden" />
+                            <div className="absolute end-0 top-0 bottom-0 w-8 bg-gradient-to-l rtl:bg-gradient-to-r from-black/40 to-transparent pointer-events-none sm:hidden" />
                             
                             <table className="w-full text-sm text-center border-collapse min-w-[640px] md:min-w-[800px]">
                                 <thead>
@@ -1127,7 +1127,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                 <div className="space-y-4">
                                     <label className="text-[10px] font-black text-white/30 uppercase tracking-[2px] block">{isAr ? 'مبلغ السحب (AED)' : 'Withdrawal Amount (AED)'}</label>
                                     <div className="relative group">
-                                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                        <div className="absolute inset-y-0 start-4 flex items-center pointer-events-none">
                                             <Wallet size={18} className="text-gold-500/50 group-focus-within:text-gold-500 transition-colors" />
                                         </div>
                                         <input 
@@ -1136,7 +1136,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                             onChange={(e) => setWithdrawAmount(e.target.value)}
                                             placeholder="0.00"
                                             disabled={!canWithdraw || stats?.withdrawalsFrozen}
-                                            className={`w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all ${!canWithdraw ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`w-full bg-black/40 border border-white/10 rounded-2xl py-4 ps-12 pe-4 text-xl font-bold text-white outline-none focus:border-gold-500/50 transition-all ${!canWithdraw ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     </div>
                                     <div className="flex justify-between text-[10px] font-bold">

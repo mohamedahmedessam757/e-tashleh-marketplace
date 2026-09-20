@@ -34,6 +34,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(({
         shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] 
         rounded-2xl 
         p-6 
+        min-w-0
         ${enableHover ? 'hover:bg-white/10 hover:border-gold-400/30' : ''}
         transition-colors 
         duration-300

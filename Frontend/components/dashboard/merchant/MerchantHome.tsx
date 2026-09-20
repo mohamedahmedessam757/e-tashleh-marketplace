@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge, StatusType } from '../../ui/Badge';
 import { TrendingUp, Package, DollarSign, Clock, CheckCircle2, Box, RefreshCcw, Activity, Zap, Star, AlertTriangle, ShieldAlert, Car, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, MessageSquare, ListChecks, FileText, Sparkles } from 'lucide-react';
@@ -14,6 +14,7 @@ import { MerchantShippingPayAlert } from './MerchantShippingPayAlert';
 import { LicenseExpiryBanner } from './LicenseExpiryBanner';
 import { StripeActivationBanner } from './StripeActivationBanner';
 import { PolicyChangeBanner } from '../../ui/PolicyChangeBanner';
+import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import {
     belongsToMerchantStore,
     getMerchantOrderProgress,
@@ -33,7 +34,7 @@ interface MerchantHomeProps {
 
 export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
-    const { orders, fetchOrders } = useOrderStore();
+    const { orders, fetchOrders, silentFetch } = useOrderStore();
     const { performance, documents, vendorStatus, storeId: myStoreId, storeInfo, withdrawalsFrozen, offerLimit, dailyOfferCount, visibilityRestricted, visibilityRate, restrictionAlertMessage } = useVendorStore();
     const monthlyDeletions = performance?.monthlyOfferDeletionCount ?? 0;
     const biddingRestrictedUntil = performance?.offerBiddingRestrictedUntil
@@ -67,6 +68,17 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             fetchOrders({ page: 1, limit: 100 }),
         ]).finally(() => fetchLock.current = false);
     }, [fetchDashboardStats, fetchVendorProfile, fetchImpactRules, fetchMerchantStats, fetchMerchantCases, fetchOrders]);
+
+    // Refresh orders when tab becomes visible so banner appears/hides without hard reload
+    useEffect(() => {
+        const onVis = () => {
+            if (document.visibilityState === 'visible') {
+                void silentFetch();
+            }
+        };
+        document.addEventListener('visibilitychange', onVis);
+        return () => document.removeEventListener('visibilitychange', onVis);
+    }, [silentFetch]);
 
     // Live Stripe sync when Connect gate is open (do not rely on wallet return alone).
     useEffect(() => {
@@ -235,38 +247,43 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             <StripeActivationBanner onNavigate={onNavigate} />
             <LicenseExpiryBanner onNavigate={onNavigate} />
 
-            {newRequests > 0 && (
-                <motion.button
-                    type="button"
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => onNavigate('marketplace')}
-                    className="w-full text-start relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-[#1A1814] to-gold-500/5 p-5 shadow-[0_0_30px_rgba(34,211,238,0.08)] hover:border-cyan-400/50 transition-all"
-                >
-                    <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                            <Sparkles className="text-cyan-400" size={22} />
+            <AnimatePresence>
+                {newRequests > 0 && (
+                    <motion.button
+                        key="new-requests-banner"
+                        type="button"
+                        initial={{ opacity: 0, y: -8, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -8, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        onClick={() => onNavigate('marketplace')}
+                        className="w-full text-start relative overflow-hidden rounded-2xl border border-gold-500/30 bg-gradient-to-r from-gold-500/10 via-[#1A1814] to-gold-500/5 p-5 shadow-[0_0_30px_rgba(212,175,55,0.08)] hover:border-gold-400/50 transition-all"
+                    >
+                        <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+                            <div className="w-12 h-12 rounded-2xl bg-gold-500/20 border border-gold-500/30 flex items-center justify-center shrink-0">
+                                <Sparkles className="text-gold-400" size={22} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-gold-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                                    {isAr ? 'طلبات جديدة متاحة' : 'New requests available'}
+                                </p>
+                                <h3 className="text-white font-black text-lg leading-tight">
+                                    {isAr
+                                        ? `${newRequests} طلب يمكنك التقديم عليه الآن`
+                                        : `${newRequests} request${newRequests > 1 ? 's' : ''} you can bid on now`}
+                                </h3>
+                                <p className="text-white/50 text-sm mt-1">
+                                    {isAr ? 'اضغط للانتقال إلى السوق وتقديم عرضك' : 'Tap to open the marketplace and submit your offer'}
+                                </p>
+                            </div>
+                            <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 text-black font-black text-sm shrink-0">
+                                {isAr ? 'افتح السوق' : 'Open marketplace'}
+                                <ArrowIcon size={16} />
+                            </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-                                {isAr ? 'طلبات جديدة متاحة' : 'New requests available'}
-                            </p>
-                            <h3 className="text-white font-black text-lg leading-tight">
-                                {isAr
-                                    ? `${newRequests} طلب يمكنك التقديم عليه الآن`
-                                    : `${newRequests} request${newRequests > 1 ? 's' : ''} you can bid on now`}
-                            </h3>
-                            <p className="text-white/50 text-sm mt-1">
-                                {isAr ? 'اضغط للانتقال إلى السوق وتقديم عرضك' : 'Tap to open the marketplace and submit your offer'}
-                            </p>
-                        </div>
-                        <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 text-black font-black text-sm shrink-0">
-                            {isAr ? 'افتح السوق' : 'Open marketplace'}
-                            <ArrowIcon size={16} />
-                        </span>
-                    </div>
-                </motion.button>
-            )}
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             {isBiddingRestricted && (
                 <GlassCard className="bg-red-500/10 border-red-500/30 p-4 flex items-start gap-3">
@@ -433,7 +450,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                         {isAr ? 'حسب الحالة' : 'By status'}
                     </span>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-1">
                     {filterChips.map((chip) => (
                         <button
                             key={chip.key}
@@ -508,29 +525,31 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                             onClick={() => onNavigate('explore-offer', liveOrder.id)}
                             className="p-0 overflow-hidden bg-[#151310] border-gold-500/10 hover:border-gold-500/30 transition-all duration-500 group shadow-xl cursor-pointer"
                         >
-                            <div className="p-8">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gold-500 group-hover:scale-110 transition-transform duration-500">
-                                            <Car size={32} />
+                            <div className="p-4 sm:p-6 md:p-8 min-w-0">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 mb-6 md:mb-8 min-w-0">
+                                    <div className="flex items-center gap-3 sm:gap-5 min-w-0 w-full md:w-auto">
+                                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gold-500 group-hover:scale-110 transition-transform duration-500 shrink-0">
+                                            <Car size={28} />
                                         </div>
-                                        <div>
-                                            <h4 className="text-2xl font-bold text-white mb-1">{liveOrder.car}</h4>
-                                            <div className="flex items-center gap-3 text-sm">
-                                                <span className="text-white/60">{liveOrder.part}</span>
-                                                <span className="w-1 h-1 rounded-full bg-white/20" />
-                                                <span className="text-gold-500/80 font-mono">#{liveOrder.id}</span>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">{liveOrder.car}</h4>
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm min-w-0">
+                                                <span className="text-white/60 truncate max-w-[10rem] sm:max-w-[14rem]">{liveOrder.part}</span>
+                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
+                                                <span className="text-gold-500/80 font-mono text-xs truncate max-w-[9rem] sm:max-w-[12rem]">
+                                                    #{formatOrderDisplayId(liveOrder)}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                    <Badge status={liveOrder.status as StatusType} />
+                                    <Badge status={liveOrder.status as StatusType} className="shrink-0" />
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div>
-                                        <div className="flex justify-between text-xs font-bold mb-3">
-                                            <span className="text-white/40 uppercase tracking-widest">{t.dashboard.orders.status}</span>
-                                            <span className="text-gold-500">{getMerchantOrderProgress(liveOrder.status)}%</span>
+                                <div className="space-y-6 min-w-0">
+                                    <div className="min-w-0">
+                                        <div className="flex items-center justify-between gap-3 text-xs font-bold mb-3 min-w-0">
+                                            <span className="text-white/40 uppercase tracking-widest shrink-0">{t.dashboard.orders.status}</span>
+                                            <span className="text-gold-500 tabular-nums shrink-0">{getMerchantOrderProgress(liveOrder.status)}%</span>
                                         </div>
                                         <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden p-[1px]">
                                             <motion.div 
@@ -541,7 +560,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap items-center gap-4 text-xs">
+                                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs min-w-0">
                                         <div className="px-3 py-1.5 rounded-lg bg-gold-500/5 border border-gold-500/10 text-gold-500/80 font-bold">
                                             {liveOrder.offersCount} {t.dashboard.merchant.marketplace.competingOffers}
                                         </div>
@@ -557,7 +576,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                                 className="w-full py-4 border-t border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-center justify-center gap-2 group/btn"
                             >
                                 <span className="text-sm font-bold text-white/60 group-hover/btn:text-white transition-colors">{t.dashboard.merchant.marketplace.viewDetails}</span>
-                                <ArrowIcon size={16} className="text-white/20 group-hover/btn:text-gold-500 transition-all group-hover/btn:translate-x-1" />
+                                <ArrowIcon size={16} className="text-white/20 group-hover/btn:text-gold-500 transition-all" />
                             </button>
                         </GlassCard>
                     ) : (
