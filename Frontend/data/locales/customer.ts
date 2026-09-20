@@ -308,7 +308,7 @@ export const customer = {
       },
       partNoOffers: {
         message: 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى',
-        rejectedByYou: 'تم رفض العروض من قبلكم يمكنك إعادة تقديم الطلب مرة أخرى',
+        rejectedByYou: 'تم إلغاء الطلب من قبلكم على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.',
         reorderBtn: 'إعادة الطلب',
         waiting: 'لا توجد عروض لهذه القطعة بعد',
         selectParts: 'حدد القطع بدون عروض لإعادة طلبها',
@@ -1405,7 +1405,7 @@ export const customer = {
       },
       partNoOffers: {
         message: 'We apologize — no offers were available. Please submit a new request.',
-        rejectedByYou: 'Offers were rejected by you. You can submit the request again.',
+        rejectedByYou: 'Your order (#{orderNumber}) for part ({partName}) was cancelled by you. You may resubmit during business days (Monday–Thursday).',
         reorderBtn: 'Reorder',
         waiting: 'No offers yet for this part',
         selectParts: 'Select parts without offers to request again',

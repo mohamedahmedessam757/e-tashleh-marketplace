@@ -1743,10 +1743,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                     );
                                     const wasRejectedByCustomer = rejectedOffersForPart.length > 0;
                                     const noOffersMessage = wasRejectedByCustomer
-                                        ? ((t.dashboard.orders as any)?.partNoOffers?.rejectedByYou ||
+                                        ? (
+                                            ((t.dashboard.orders as any)?.partNoOffers?.rejectedByYou as string | undefined) ||
                                             (language === 'ar'
-                                                ? 'تم رفض العروض من قبلكم يمكنك إعادة تقديم الطلب مرة أخرى'
-                                                : 'Offers were rejected by you. You can submit the request again.'))
+                                                ? 'تم إلغاء الطلب من قبلكم على الطلب رقم (#{orderNumber}) لقطعة ({partName}). يمكنك إعادة إرسال الطلب خلال أيام العمل من الاثنين إلى الخميس.'
+                                                : 'Your order (#{orderNumber}) for part ({partName}) was cancelled by you. You may resubmit during business days (Monday–Thursday).')
+                                          )
+                                            .replace('#{orderNumber}', order.orderNumber || order.id)
+                                            .replace('{partName}', p.name || '')
                                         : ((t.dashboard.orders as any)?.partNoOffers?.message ||
                                             (language === 'ar'
                                                 ? 'نعتذر منك لعدم توفر عروض يرجى اعاده الطلب مره أخرى'

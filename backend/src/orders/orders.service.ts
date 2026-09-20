@@ -2644,7 +2644,8 @@ export class OrdersService {
     async rejectOffer(orderId: string, offerId: string, customerId: string, reason: string, customReason?: string) {
         // 1. Verify existence and ownership
         const order = await this.prisma.order.findUnique({
-            where: { id: orderId }
+            where: { id: orderId },
+            include: { parts: { select: { id: true, name: true } } },
         });
 
         if (!order) {
@@ -2702,6 +2703,87 @@ export class OrdersService {
                     waEvent: 'ORDER_STATUS',
                 },
             }).catch(e => console.error('Failed to notify merchant of specific rejection', e));
+        }
+
+        // 5. If customer rejected the last remaining offer on this part (multi or single),
+        //    send the same self-cancel copy used for full order cancel (WA + in-app).
+        try {
+            const partScopeId = offer.orderPartId || null;
+            const partOfferFilter: Prisma.OfferWhereInput = partScopeId
+                ? { orderId, orderPartId: partScopeId }
+                : order.parts.length === 1
+                  ? {
+                        orderId,
+                        OR: [
+                            { orderPartId: null },
+                            { orderPartId: order.parts[0].id },
+                        ],
+                    }
+                  : {
+                        // Legacy multi offers without part id — scope to this orphan bucket only
+                        orderId,
+                        orderPartId: null,
+                    };
+
+            const stillActive = await this.prisma.offer.count({
+                where: {
+                    ...partOfferFilter,
+                    status: { notIn: ['rejected', 'withdrawn', 'cancelled'] },
+                },
+            });
+
+            if (stillActive === 0) {
+                const partLabel = resolveCancelPartLabel({
+                    partName: partScopeId
+                        ? order.parts.find((p) => p.id === partScopeId)?.name
+                        : order.parts[0]?.name,
+                    partNames: order.parts.map((p) => p.name),
+                });
+                const copy = customerCancelledBySelf({
+                    isMulti: isMultiItemOrder(order),
+                    orderNumber: order.orderNumber,
+                    partName: partLabel,
+                });
+                const dedupSuffix = partScopeId || order.parts[0]?.id || 'order';
+                await this.notifications
+                    .notifyWithDedup(
+                        order.customerId,
+                        `wa:ORDER_STATUS:${order.id}:CUSTOMER_REJECTED_ALL_OFFERS:${dedupSuffix}`,
+                        120,
+                        {
+                            recipientId: order.customerId,
+                            recipientRole: 'CUSTOMER',
+                            titleAr: 'تم إلغاء الطلب',
+                            titleEn: 'Order Cancelled',
+                            messageAr: copy.messageAr,
+                            messageEn: copy.messageEn,
+                            type: 'ORDER',
+                            link: `/dashboard/orders/${order.id}`,
+                            metadata: {
+                                orderId: order.id,
+                                orderNumber: order.orderNumber,
+                                status: order.status,
+                                waEvent: 'ORDER_STATUS',
+                                customerSelfCancel: true,
+                                customerRejectedAllOffersOnPart: true,
+                                orderPartId: partScopeId,
+                                partName: partLabel,
+                                part_name: partLabel,
+                                status_detail: copy.messageAr,
+                                status_detail_en: copy.messageEn,
+                            },
+                        },
+                    )
+                    .catch((e) =>
+                        this.logger.warn(
+                            `customer rejected-all-offers notify failed: ${e?.message || e}`,
+                        ),
+                    );
+            }
+        } catch (err) {
+            this.logger.warn(
+                `rejectOffer customer notify skipped: ${err instanceof Error ? err.message : err}`,
+            );
         }
 
         return { success: true, message: 'Offer rejected successfully', rejection: result[1] };
