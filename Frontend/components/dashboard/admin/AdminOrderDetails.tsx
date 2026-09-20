@@ -733,6 +733,103 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 {isAr ? 'القطع المطلوبة والعروض' : 'Requested Parts & Offers'}
                             </h3>
 
+                            {/* Shipping-class mismatches (customer vs merchant) */}
+                            {(() => {
+                                const mismatches = (order.offers || []).filter((o: any) => {
+                                    if (!isActiveMerchantOffer(o)) return false;
+                                    const part = (order.parts || []).find((p: any) => p.id === o.orderPartId);
+                                    const cust = part?.shippingClass;
+                                    const merch = o.partType;
+                                    return (
+                                        cust &&
+                                        merch &&
+                                        ['engine', 'gearbox', 'standard'].includes(String(cust)) &&
+                                        String(cust) !== String(merch)
+                                    );
+                                });
+                                if (!mismatches.length) return null;
+                                return (
+                                    <GlassCard className="p-4 border-amber-500/40 bg-amber-500/10 space-y-3">
+                                        <div className="flex items-center gap-2 text-amber-300 font-black text-sm">
+                                            <AlertTriangle size={18} />
+                                            {isAr
+                                                ? 'اختلاف نوع الشحن بين العميل والتاجر'
+                                                : 'Shipping class mismatch (customer vs merchant)'}
+                                        </div>
+                                        {mismatches.map((o: any) => {
+                                            const part = (order.parts || []).find((p: any) => p.id === o.orderPartId);
+                                            return (
+                                                <div
+                                                    key={o.id}
+                                                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/10 min-w-0"
+                                                >
+                                                    <div className="flex-1 min-w-0 text-xs text-white/80 space-y-1">
+                                                        <div className="font-bold text-white truncate">
+                                                            {part?.name || o.partName || 'Part'}
+                                                        </div>
+                                                        <div>
+                                                            {isAr ? 'عميل' : 'Customer'}:{' '}
+                                                            <span className="text-gold-400">{part?.shippingClass}</span>
+                                                            {' · '}
+                                                            {isAr ? 'تاجر' : 'Merchant'}:{' '}
+                                                            <span className="text-amber-300">{o.partType}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            className="px-3 py-2 min-h-[40px] rounded-lg bg-gold-500 text-black text-xs font-black"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await ordersApi.adminResolveShippingClass(
+                                                                        order.id,
+                                                                        o.id,
+                                                                        {
+                                                                            shippingClass: part.shippingClass,
+                                                                            applyTo: 'both',
+                                                                            cylinders: o.cylinders,
+                                                                            weightKg: o.weight,
+                                                                        },
+                                                                    );
+                                                                    await fetchOrder(String(order.id));
+                                                                } catch (e: any) {
+                                                                    alert(e?.response?.data?.message || e?.message || 'Failed');
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isAr ? 'اعتماد تصنيف العميل' : 'Use customer class'}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="px-3 py-2 min-h-[40px] rounded-lg bg-white/10 text-white text-xs font-bold border border-white/20"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await ordersApi.adminResolveShippingClass(
+                                                                        order.id,
+                                                                        o.id,
+                                                                        {
+                                                                            shippingClass: o.partType,
+                                                                            applyTo: 'both',
+                                                                            cylinders: o.cylinders,
+                                                                            weightKg: o.weight,
+                                                                        },
+                                                                    );
+                                                                    await fetchOrder(String(order.id));
+                                                                } catch (e: any) {
+                                                                    alert(e?.response?.data?.message || e?.message || 'Failed');
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isAr ? 'اعتماد تصنيف التاجر' : 'Use merchant class'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </GlassCard>
+                                );
+                            })()}
+
                             <div className="space-y-4">
                                 {order.parts.map((p: any, idx: number) => {
                                     // Active marketplace offers only — withdrawn/cancelled/deleted stay in audit history

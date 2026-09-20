@@ -188,6 +188,23 @@ export const ordersApi = {
         return response.data as { changed: boolean; order?: any; reason?: string };
     },
 
+    adminResolveShippingClass: async (
+        orderId: string,
+        offerId: string,
+        body: {
+            shippingClass: 'engine' | 'gearbox' | 'standard';
+            applyTo: 'customer' | 'merchant' | 'both';
+            cylinders?: number;
+            weightKg?: number;
+        },
+    ) => {
+        const response = await client.patch(
+            `/orders/admin/${orderId}/offers/${offerId}/shipping-class`,
+            body,
+        );
+        return response.data;
+    },
+
     cancel: async (id: string, reason?: string) => {
         const response = await client.patch(`/orders/${id}/transition`, {
             newStatus: 'CANCELLED',

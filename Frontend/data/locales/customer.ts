@@ -203,7 +203,11 @@ export const customer = {
         desc: 'وصف تفصيلي',
         descPlaceholder: 'اذكر أي تفاصيل إضافية تساعد في تحديد القطعة بدقة... (إجباري)',
         images: 'صور القطعة',
-        upload: 'رفع صورة'
+        upload: 'رفع صورة',
+        shippingClassTitle: 'تصنيف نوع الشحن (إلزامي)',
+        shippingClassQEngine: 'هل القطعه مكينه - محرك - Engine ؟',
+        shippingClassQGearbox: 'هل القطعه ناقل حركه - قير - جيربوكس - قير بوكس - Domination ؟',
+        shippingClassQOther: 'هل القطعه أخرى غير ذالك ؟',
       },
       prefs: {
         condition: 'حالة القطعة المفضلة',
@@ -1300,7 +1304,12 @@ export const customer = {
         desc: 'Detailed Description',
         descPlaceholder: 'Mention any additional details to identify the part... (Required)',
         images: 'Part Images',
-        upload: 'Upload'
+        upload: 'Upload',
+        shippingClassTitle: 'Shipping class (required)',
+        shippingClassQEngine: 'Is the part an Engine - مكينه - محرك - Engine?',
+        shippingClassQGearbox:
+          'Is the part a Transmission - Gear - Gearbox - قير بوكس - Domination?',
+        shippingClassQOther: 'Is the part Other than that?',
       },
       prefs: {
         condition: 'Preferred Condition',

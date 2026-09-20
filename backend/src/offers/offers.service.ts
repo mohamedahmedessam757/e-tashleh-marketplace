@@ -251,6 +251,18 @@ export class OffersService {
                 metadata: { orderId: orderInfo.id, offerId: offer.id }
             }).catch(() => {});
 
+            // Shipping-class mismatch vs customer declaration
+            if (createOfferDto.orderPartId && createOfferDto.partType) {
+                void this.notifyShippingClassMismatchIfNeeded({
+                    orderId: orderInfo.id,
+                    orderNumber: orderInfo.orderNumber,
+                    offerId: offer.id,
+                    storeName: store.name,
+                    orderPartId: createOfferDto.orderPartId,
+                    merchantPartType: String(createOfferDto.partType),
+                });
+            }
+
             // 8. Notify Merchant about edit/cancel window (Governance Info)
             this.notificationsService.create({
                 recipientId: userId,
@@ -913,6 +925,45 @@ export class OffersService {
             }).catch(e => console.error('Failed to notify customer of admin delete', e));
         }
         return { message: 'Offer deleted successfully by admin' };
+    }
+
+    private async notifyShippingClassMismatchIfNeeded(params: {
+        orderId: string;
+        orderNumber: string;
+        offerId: string;
+        storeName: string;
+        orderPartId: string;
+        merchantPartType: string;
+    }) {
+        try {
+            const part = await this.prisma.orderPart.findUnique({
+                where: { id: params.orderPartId },
+                select: { id: true, name: true, shippingClass: true },
+            });
+            const customerClass = part?.shippingClass ? String(part.shippingClass) : null;
+            if (!customerClass) return;
+            if (customerClass === params.merchantPartType) return;
+
+            await this.notificationsService.notifyAdmins({
+                titleAr: '⚠️ اختلاف نوع الشحن بين العميل والتاجر',
+                titleEn: '⚠️ Shipping class mismatch (customer vs merchant)',
+                messageAr: `الطلب #${params.orderNumber} — القطعة «${part?.name || params.orderPartId}»: العميل=${customerClass} / التاجر (${params.storeName})=${params.merchantPartType}. يرجى المراجعة وتصحيح التصنيف قبل الدفع.`,
+                messageEn: `Order #${params.orderNumber} — part "${part?.name || params.orderPartId}": customer=${customerClass} / merchant (${params.storeName})=${params.merchantPartType}. Please review and correct before payment.`,
+                type: 'alert',
+                link: `/admin/orders/${params.orderId}`,
+                metadata: {
+                    orderId: params.orderId,
+                    offerId: params.offerId,
+                    orderPartId: params.orderPartId,
+                    customerShippingClass: customerClass,
+                    merchantPartType: params.merchantPartType,
+                    urgent: true,
+                    shippingClassMismatch: true,
+                },
+            });
+        } catch (e) {
+            console.error('notifyShippingClassMismatchIfNeeded failed', e);
+        }
     }
 
     /** Notify admins on every offer edit/cancel/withdraw with monthly deletion stats. */

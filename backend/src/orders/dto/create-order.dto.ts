@@ -38,6 +38,11 @@ export class CreateOrderPartDto {
     @IsString()
     @IsOptional()
     video?: string;
+
+    /** Customer logistics class: engine | gearbox | standard */
+    @IsString()
+    @IsIn(['engine', 'gearbox', 'standard'])
+    shippingClass: 'engine' | 'gearbox' | 'standard';
 }
 
 

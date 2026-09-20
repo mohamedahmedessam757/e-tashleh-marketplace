@@ -7,7 +7,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, OfferFulfillmentStatus } from '@prisma/client';
+import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import {
   isUuid,
   mergeWhereWithSearch,
@@ -25,9 +26,133 @@ export class ReviewsService {
     private prisma: PrismaService,
     private notifications: NotificationsService,
     private auditLogs: AuditLogsService,
+    private readonly orderDurationConfig: OrderDurationConfigService,
     @Inject(forwardRef(() => MerchantPerformanceService))
     private readonly merchantPerformance: MerchantPerformanceService,
   ) {}
+
+  private async hasOpenCaseForOffer(offerId: string, orderPartId?: string | null) {
+    const [openReturn, openDispute] = await Promise.all([
+      this.prisma.returnRequest.findFirst({
+        where: {
+          offerId,
+          status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
+        },
+        select: { id: true },
+      }),
+      this.prisma.dispute.findFirst({
+        where: {
+          offerId,
+          status: { notIn: ['CLOSED', 'RESOLVED'] },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (openReturn || openDispute) return true;
+    if (orderPartId) {
+      const [partReturn, partDispute] = await Promise.all([
+        this.prisma.returnRequest.findFirst({
+          where: {
+            orderPartId,
+            status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
+          },
+          select: { id: true },
+        }),
+        this.prisma.dispute.findFirst({
+          where: {
+            orderPartId,
+            status: { notIn: ['CLOSED', 'RESOLVED'] },
+          },
+          select: { id: true },
+        }),
+      ]);
+      if (partReturn || partDispute) return true;
+    }
+    return false;
+  }
+
+  private async assertOfferReviewEligible(
+    offer: {
+      id: string;
+      orderPartId?: string | null;
+      fulfillmentStatus: OfferFulfillmentStatus | string;
+      deliveredAt?: Date | null;
+    },
+    orderDeliveredAt?: Date | null,
+  ) {
+    const fs = String(offer.fulfillmentStatus || '').toUpperCase();
+    if (['CANCELLED', 'CANCELED', 'RETURNED', 'REFUNDED'].includes(fs)) {
+      throw new BadRequestException(
+        'Returned or cancelled parts cannot be reviewed',
+      );
+    }
+    if (fs !== 'DELIVERED' && fs !== 'COMPLETED') {
+      throw new BadRequestException(
+        'This part must be delivered before it can be reviewed',
+      );
+    }
+
+    if (await this.hasOpenCaseForOffer(offer.id, offer.orderPartId)) {
+      throw new BadRequestException(
+        'Please wait until your return/dispute case is closed before reviewing',
+      );
+    }
+
+    if (fs === 'COMPLETED') return;
+
+    const deliveredAt = offer.deliveredAt || orderDeliveredAt;
+    if (!deliveredAt) {
+      throw new BadRequestException(
+        'Delivery time is missing; review is not available yet',
+      );
+    }
+    const windowMs = this.orderDurationConfig.getReturnDisputeMsSync();
+    if (Date.now() < deliveredAt.getTime() + windowMs) {
+      throw new BadRequestException(
+        'Review opens after the return/dispute window ends without an open case',
+      );
+    }
+  }
+
+  private async assertOrderLevelReviewEligible(order: {
+    id: string;
+    deliveredAt?: Date | null;
+    status: string;
+  }) {
+    const deliveredAt = order.deliveredAt;
+    if (!deliveredAt) {
+      throw new BadRequestException(
+        'Delivery time is missing; review is not available yet',
+      );
+    }
+    const windowMs = this.orderDurationConfig.getReturnDisputeMsSync();
+    if (Date.now() < deliveredAt.getTime() + windowMs) {
+      throw new BadRequestException(
+        'Review opens after the return/dispute window ends without an open case',
+      );
+    }
+    const [openReturn, openDispute] = await Promise.all([
+      this.prisma.returnRequest.findFirst({
+        where: {
+          orderId: order.id,
+          status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
+        },
+        select: { id: true },
+      }),
+      this.prisma.dispute.findFirst({
+        where: {
+          orderId: order.id,
+          status: { notIn: ['CLOSED', 'RESOLVED'] },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (openReturn || openDispute) {
+      throw new BadRequestException(
+        'Please wait until your return/dispute case is closed before reviewing',
+      );
+    }
+  }
 
   async create(customerId: string, createReviewDto: CreateReviewDto) {
     const orderId = createReviewDto.orderId;
@@ -42,6 +167,7 @@ export class ReviewsService {
         orderNumber: true,
         storeId: true,
         requestType: true,
+        deliveredAt: true,
         parts: { select: { id: true } },
         offers: {
           where: { status: { in: ['accepted', 'ACCEPTED'] } },
@@ -51,6 +177,8 @@ export class ReviewsService {
             storeId: true,
             orderPartId: true,
             fulfillmentStatus: true,
+            deliveredAt: true,
+            resolutionLocked: true,
           },
         },
       },
@@ -93,13 +221,13 @@ export class ReviewsService {
       throw new BadRequestException('Offer does not belong to this order');
     }
 
-    if (isMultiPart && targetOffer) {
-      const eligibleFulfillment = ['DELIVERED', 'COMPLETED'];
-      if (!eligibleFulfillment.includes(String(targetOffer.fulfillmentStatus))) {
-        throw new BadRequestException(
-          'This part must be delivered or completed before it can be reviewed',
-        );
-      }
+    if (targetOffer) {
+      await this.assertOfferReviewEligible(targetOffer, order.deliveredAt);
+    } else if (isMultiPart) {
+      throw new BadRequestException('Offer not found for review');
+    } else {
+      // Single-item without offer row: use order-level delivery clock
+      await this.assertOrderLevelReviewEligible(order);
     }
 
     const existingReview = await this.prisma.review.findFirst({

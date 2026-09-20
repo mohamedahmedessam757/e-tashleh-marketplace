@@ -105,6 +105,8 @@ export interface PartItem {
   /** Parallel to File images, or URL-only list when images=[] (reorder prefill) */
   uploadedImageUrls?: string[];
   uploadedVideoUrl?: string | null;
+  /** Customer logistics class — required before leaving part step */
+  shippingClass?: 'engine' | 'gearbox' | 'standard' | null;
 }
 
 export function partHasMedia(part: PartItem): boolean {
@@ -183,6 +185,7 @@ const getInitialPart = (): PartItem => ({
   notes: '',
   uploadedImageUrls: [],
   uploadedVideoUrl: null,
+  shippingClass: null,
 });
 
 /** Module-level: one in-flight submit + stable idempotency key across retries */
@@ -678,12 +681,13 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
               throw new Error('Part media upload incomplete');
             }
             return {
-              name: part.name,
-              description: part.description,
-              notes: part.notes,
-              images: paired.filter(Boolean),
-              video: part.uploadedVideoUrl || undefined,
-            };
+            name: part.name,
+            description: part.description,
+            notes: part.notes,
+            images: paired.filter(Boolean),
+            video: part.uploadedVideoUrl || undefined,
+            shippingClass: part.shippingClass,
+          };
           }
           if (!urls.length || (part.video && !part.uploadedVideoUrl)) {
             throw new Error('Part media upload incomplete');
@@ -694,6 +698,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
             notes: part.notes,
             images: urls,
             video: part.uploadedVideoUrl || undefined,
+            shippingClass: part.shippingClass,
           };
         });
 

@@ -196,6 +196,22 @@ export class OrdersController {
         return this.ordersService.updateAdminNotes(orderId, notes, req.user);
     }
 
+    @Patch('admin/:id/offers/:offerId/shipping-class')
+    adminResolveShippingClass(
+        @Request() req,
+        @Param('id') orderId: string,
+        @Param('offerId') offerId: string,
+        @Body()
+        body: {
+            shippingClass: 'engine' | 'gearbox' | 'standard';
+            applyTo: 'customer' | 'merchant' | 'both';
+            cylinders?: number;
+            weightKg?: number;
+        },
+    ) {
+        return this.ordersService.adminResolveShippingClass(orderId, offerId, req.user, body);
+    }
+
     @Get(':id/fulfillment-summary')
     async getFulfillmentSummary(@Request() req, @Param('id') orderId: string) {
         await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), orderId);

@@ -1,5 +1,6 @@
 import type { Order, OrderOffer } from '../stores/useOrderStore';
 import { isAcceptedOfferStatus } from './offerStatusHelpers';
+import { getReturnDisputeHours } from './orderSla';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -11,7 +12,16 @@ export const REVIEWABLE_ORDER_STATUSES = [
   'WARRANTY_ACTIVE',
 ] as const;
 
-const REVIEWABLE_OFFER_FULFILLMENT = new Set(['DELIVERED', 'COMPLETED']);
+/** Fulfillment states that can become reviewable after the return window (not during DELIVERED alone). */
+const POST_DELIVERY_FULFILLMENT = new Set(['DELIVERED', 'COMPLETED']);
+
+/** Terminal returned / cancelled — never reviewable. */
+const NON_REVIEWABLE_FULFILLMENT = new Set([
+  'CANCELLED',
+  'CANCELED',
+  'RETURNED',
+  'REFUNDED',
+]);
 
 export type OrderReviewEntry = {
   id: string;
@@ -39,12 +49,63 @@ function normalizeFulfillment(status?: string | null): string {
   return String(status || '').toUpperCase();
 }
 
-function isOfferFulfillmentReviewable(offer: OrderOffer): boolean {
+function parseTime(value?: string | Date | null): number | null {
+  if (!value) return null;
+  const ms = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * Unified review gate (customer banner + OrderDetails + should match ReviewsService.create):
+ * 1) Delivered (or completed) — not cancelled/returned
+ * 2) Return/dispute window ended (deliveredAt + configured hours)
+ * 3) No open return/dispute case
+ * 4) Not already reviewed (checked by caller via reviewed set)
+ */
+export function isOfferEligibleForReview(
+  offer: OrderOffer,
+  order: Order,
+  nowMs: number = Date.now(),
+): boolean {
   const fs = normalizeFulfillment(offer.fulfillmentStatus);
-  if (REVIEWABLE_OFFER_FULFILLMENT.has(fs)) return true;
-  // Some payloads omit fulfillment while offer status already terminal
-  const st = String(offer.status || '').toUpperCase();
-  return st === 'DELIVERED' || st === 'COMPLETED';
+  if (NON_REVIEWABLE_FULFILLMENT.has(fs)) return false;
+
+  // Prefer per-offer fulfillment; fall back to order-level delivered-like for single-offer payloads
+  const orderStatus = String(order.status || '').toUpperCase();
+  const looksDelivered =
+    POST_DELIVERY_FULFILLMENT.has(fs) ||
+    (!fs &&
+      (orderStatus === 'DELIVERED' ||
+        orderStatus === 'COMPLETED' ||
+        orderStatus === 'WARRANTY_ACTIVE' ||
+        orderStatus === 'PARTIALLY_DELIVERED'));
+
+  if (!looksDelivered) return false;
+
+  if (offer.hasOpenCase === true) return false;
+
+  // COMPLETED (post-window auto-complete with no open case) is always reviewable
+  if (fs === 'COMPLETED') return true;
+
+  const deliveredMs =
+    parseTime(offer.deliveredAt) ??
+    parseTime(order.deliveredAt) ??
+    null;
+
+  if (deliveredMs == null) {
+    return false;
+  }
+
+  const windowEndsMs =
+    parseTime(offer.returnWindowEndsAt) ??
+    deliveredMs + getReturnDisputeHours() * 60 * 60 * 1000;
+
+  if (nowMs < windowEndsMs) return false;
+
+  // Past window on DELIVERED: require explicit hasOpenCase === false when known.
+  // List payloads without case meta: wait until COMPLETED (cron) to avoid false positives.
+  if (offer.hasOpenCase === false) return true;
+  return false;
 }
 
 /** Deduped accepted offers from both list + detail payload shapes. */
@@ -52,7 +113,6 @@ export function getAcceptedOffers(order: Order | null | undefined): OrderOffer[]
   if (!order) return [];
   const fromAccepted = Array.isArray(order.acceptedOffers) ? order.acceptedOffers : [];
   const fromOffers = Array.isArray(order.offers) ? order.offers : [];
-  // Prefer non-empty acceptedOffers; always merge offers that pass acceptance
   const merged = [...fromAccepted, ...fromOffers].filter(isAcceptedOffer);
   const seen = new Set<string>();
   const out: OrderOffer[] = [];
@@ -93,12 +153,7 @@ export function getReviewedOfferIds(order: Order | null | undefined): Set<string
   return ids;
 }
 
-function isOrderFullySettled(order: Order): boolean {
-  const s = String(order.status || '').toUpperCase();
-  return s === 'COMPLETED' || s === 'DELIVERED' || s === 'WARRANTY_ACTIVE';
-}
-
-/** Accepted offers that are delivered/completed and not yet reviewed. */
+/** Accepted offers eligible for customer review (post return-window, no open case, not returned). */
 export function getReviewableOffers(order: Order | null | undefined): OrderOffer[] {
   if (!order) return [];
   if (
@@ -111,16 +166,12 @@ export function getReviewableOffers(order: Order | null | undefined): OrderOffer
 
   const acceptedList = getAcceptedOffers(order);
   const reviewed = getReviewedOfferIds(order);
-  const orderSettled = isOrderFullySettled(order);
+  const now = Date.now();
 
   return acceptedList.filter((offer) => {
     if (!offer?.id) return false;
     if (reviewed.has(String(offer.id))) return false;
-    // Single accepted offer: order-level status is enough
-    if (acceptedList.length === 1) return true;
-    // Multi: prefer per-offer fulfillment; if missing and whole order settled, allow
-    if (!offer.fulfillmentStatus && orderSettled) return true;
-    return isOfferFulfillmentReviewable(offer);
+    return isOfferEligibleForReview(offer, order, now);
   });
 }
 
@@ -164,7 +215,6 @@ export function resolveReviewTarget(
       ? order.acceptedOffer
       : acceptedList[0];
 
-  // Never drop an explicitly selected offerId (multi-part backend requires it)
   const resolvedOfferId = primary?.id
     ? String(primary.id)
     : explicitId || undefined;
@@ -177,7 +227,6 @@ export function resolveReviewTarget(
 
   if (!storeId) return null;
 
-  // Multi-part: refuse a target without offerId (prevents "offerId is required")
   if (isMultiPartOrder(order) && !resolvedOfferId) {
     return null;
   }

@@ -200,6 +200,7 @@ export class OrdersService {
                             notes: part.notes,
                             images: part.images || [],
                             video: part.video,
+                            shippingClass: part.shippingClass || null,
                         })) : []
                     }
                 },
@@ -554,7 +555,7 @@ export class OrdersService {
                 take,
                 orderBy: { createdAt: 'desc' },
                 include: {
-                    parts: { select: { id: true, name: true, quantity: true, description: true, images: true, notes: true } },
+                    parts: { select: { id: true, name: true, quantity: true, description: true, images: true, notes: true, shippingClass: true } },
                     customer: { select: { id: true, name: true, email: true, avatar: true } },
                     reviews: {
                         select: {
@@ -3619,6 +3620,154 @@ export class OrdersService {
         });
 
         return { success: true, message: 'Admin notes updated', adminNotes: updatedOrder.adminNotes };
+    }
+
+    /**
+     * Admin corrects customer shippingClass and/or merchant offer.partType before payment,
+     * recomputes shippingCost, notifies both parties.
+     */
+    async adminResolveShippingClass(
+        orderId: string,
+        offerId: string,
+        adminUser: { id: string; role: string; name?: string; email?: string },
+        body: {
+            shippingClass: 'engine' | 'gearbox' | 'standard';
+            applyTo: 'customer' | 'merchant' | 'both';
+            cylinders?: number;
+            weightKg?: number;
+        },
+    ) {
+        if (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN') {
+            throw new ForbiddenException('Only administrators can resolve shipping class');
+        }
+        const allowed = ['engine', 'gearbox', 'standard'] as const;
+        if (!allowed.includes(body.shippingClass)) {
+            throw new BadRequestException('Invalid shippingClass');
+        }
+        if (!['customer', 'merchant', 'both'].includes(body.applyTo)) {
+            throw new BadRequestException('Invalid applyTo');
+        }
+
+        const offer = await this.prisma.offer.findFirst({
+            where: { id: offerId, orderId },
+            include: {
+                orderPart: true,
+                store: { select: { id: true, name: true, ownerId: true } },
+                order: { select: { id: true, orderNumber: true, customerId: true } },
+                payments: {
+                    where: { status: 'SUCCESS' },
+                    take: 1,
+                    select: { id: true },
+                },
+            },
+        });
+        if (!offer) throw new NotFoundException('Offer not found on this order');
+        if (offer.payments?.length) {
+            throw new BadRequestException(
+                'Cannot change shipping class after payment. Escrow amounts are locked.',
+            );
+        }
+
+        const logistics = await this.logisticsConfig.getConfig();
+        const nextCylinders =
+            body.shippingClass === 'engine'
+                ? (body.cylinders ?? offer.cylinders ?? undefined)
+                : null;
+        const nextWeight =
+            body.shippingClass === 'standard'
+                ? Number(body.weightKg ?? offer.weightKg ?? 0)
+                : Number(offer.weightKg || 0);
+
+        if (body.shippingClass === 'engine' && !nextCylinders) {
+            throw new BadRequestException('cylinders required for engine shipping class');
+        }
+        if (body.shippingClass === 'standard' && !(nextWeight > 0)) {
+            throw new BadRequestException('weightKg required for standard shipping class');
+        }
+
+        const shippingCost = this.logisticsConfig.computeShippingCost({
+            partType: body.shippingClass,
+            weightKg: nextWeight,
+            cylinders: nextCylinders ?? undefined,
+            config: logistics,
+        });
+
+        const updated = await this.prisma.$transaction(async (tx) => {
+            if ((body.applyTo === 'customer' || body.applyTo === 'both') && offer.orderPartId) {
+                await tx.orderPart.update({
+                    where: { id: offer.orderPartId },
+                    data: { shippingClass: body.shippingClass },
+                });
+            }
+            if (body.applyTo === 'merchant' || body.applyTo === 'both') {
+                await tx.offer.update({
+                    where: { id: offerId },
+                    data: {
+                        partType: body.shippingClass,
+                        shippingCost,
+                        cylinders: nextCylinders,
+                        weightKg: nextWeight,
+                    },
+                });
+            } else if (body.applyTo === 'customer') {
+                // Customer-only change: still align merchant offer if they matched old class? No —
+                // only update customer part; leave offer unless both.
+            }
+            return tx.offer.findUnique({
+                where: { id: offerId },
+                include: { orderPart: true },
+            });
+        });
+
+        await this.auditLogs.logAction({
+            orderId,
+            action: 'ADMIN_RESOLVE_SHIPPING_CLASS',
+            entity: 'Offer',
+            actorType: ActorType.ADMIN,
+            actorId: adminUser.id,
+            actorName: adminUser.name || adminUser.email || 'Admin',
+            previousState: String(offer.partType || ''),
+            newState: body.shippingClass,
+            metadata: {
+                offerId,
+                applyTo: body.applyTo,
+                shippingCost,
+                previousCustomerClass: offer.orderPart?.shippingClass ?? null,
+            },
+        });
+
+        const partName = offer.orderPart?.name || 'Part';
+        const msgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} إلى ${body.shippingClass}. تكلفة الشحن المحسوبة: ${shippingCost} AED.`;
+        const msgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated to ${body.shippingClass}. Computed shipping: ${shippingCost} AED.`;
+
+        if (offer.order.customerId) {
+            await this.notifications.create({
+                recipientId: offer.order.customerId,
+                recipientRole: 'CUSTOMER',
+                titleAr: 'تحديث نوع الشحن من الإدارة',
+                titleEn: 'Shipping class updated by admin',
+                messageAr: msgAr,
+                messageEn: msgEn,
+                type: 'ORDER',
+                link: `/dashboard/orders/${orderId}`,
+                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS' },
+            }).catch(() => {});
+        }
+        if (offer.store?.ownerId) {
+            await this.notifications.create({
+                recipientId: offer.store.ownerId,
+                recipientRole: 'MERCHANT',
+                titleAr: 'تحديث نوع الشحن من الإدارة',
+                titleEn: 'Shipping class updated by admin',
+                messageAr: msgAr,
+                messageEn: msgEn,
+                type: 'ORDER',
+                link: `/merchant/orders/${orderId}`,
+                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS' },
+            }).catch(() => {});
+        }
+
+        return { success: true, offer: updated, shippingCost };
     }
 
     async requestShipping(

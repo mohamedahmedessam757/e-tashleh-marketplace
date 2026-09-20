@@ -9,6 +9,12 @@ import { useVendorStore } from '../../../stores/useVendorStore';
 import { offersApi } from '../../../services/api/offers';
 import { supabase } from '../../../services/supabase';
 import { OfferEvidenceCapture } from './OfferEvidenceCapture';
+import { ShippingClassQuestions } from '../../ui/ShippingClassQuestions';
+import {
+    isShippingClass,
+    shippingClassLabel,
+    type ShippingClass,
+} from '../../../utils/shippingClass';
 
 interface SubmitOfferModalProps {
     isOpen: boolean;
@@ -301,14 +307,24 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
         if (parts.length === 1) {
             const partId = parts[0].id || 'single';
             const existingOffer = existingOfferMap.get(partId);
+            const customerClass = parts[0]?.shippingClass;
+            const seeded = existingOffer
+                ? buildFormFromOffer(existingOffer)
+                : {
+                      ...DEFAULT_FORM,
+                      partType: isShippingClass(customerClass) ? customerClass : DEFAULT_FORM.partType,
+                  };
             setSelectedPartIds(new Set([partId]));
             setActivePartId(partId);
-            setFormDataMap({ [partId]: existingOffer ? buildFormFromOffer(existingOffer) : { ...DEFAULT_FORM } });
+            setFormDataMap({ [partId]: seeded });
         } else if (parts.length > 1) {
             const preSelectedIds = new Set<string>();
             const map: Record<string, PartFormData> = {};
             parts.forEach((p: any) => {
-                map[p.id] = { ...DEFAULT_FORM };
+                map[p.id] = {
+                    ...DEFAULT_FORM,
+                    partType: isShippingClass(p?.shippingClass) ? p.shippingClass : DEFAULT_FORM.partType,
+                };
             });
             // Auto-select first available part that:
             // 1. the merchant has NO existing offer on
@@ -1023,26 +1039,50 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div className="space-y-3 min-w-0 md:col-span-2">
                                                 <label className="block text-[10px] font-black text-white/40 mb-2 uppercase tracking-widest">
                                                     {t.dashboard.merchant.offerModal.partTypeLabel}
                                                 </label>
-                                                <div className="relative group">
-                                                    <select
-                                                        value={activeForm.partType}
-                                                        onChange={(e) => handlePartTypeChange(e.target.value)}
-                                                        className="w-full bg-black/40 border border-white/5 hover:border-white/10 focus:border-gold-500/50 rounded-2xl py-4 px-4 text-white text-sm font-bold focus:bg-gold-500/5 outline-none appearance-none transition-all cursor-pointer"
-                                                    >
-                                                        {shipmentTypeOptions.map((type: any) => (
-                                                            <option key={type.id} value={type.id} className="bg-[#1A1814]">
-                                                                {isAr ? type.nameAr : type.nameEn}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute inset-y-0 end-4 flex items-center pointer-events-none text-white/20 group-hover:text-gold-500 transition-colors">
-                                                        <ChevronDown size={16} />
-                                                    </div>
-                                                </div>
+                                                {(() => {
+                                                    const custClass = activePartPreview?.shippingClass;
+                                                    const mismatch =
+                                                        isShippingClass(custClass) &&
+                                                        activeForm.partType !== custClass;
+                                                    return (
+                                                        <>
+                                                            {isShippingClass(custClass) && (
+                                                                <p className="text-xs text-white/50 mb-2">
+                                                                    {isAr ? 'تصنيف العميل: ' : 'Customer class: '}
+                                                                    <span className="text-gold-400 font-bold">
+                                                                        {shippingClassLabel(custClass, isAr)}
+                                                                    </span>
+                                                                </p>
+                                                            )}
+                                                            <ShippingClassQuestions
+                                                                isAr={isAr}
+                                                                value={
+                                                                    isShippingClass(activeForm.partType)
+                                                                        ? (activeForm.partType as ShippingClass)
+                                                                        : null
+                                                                }
+                                                                onChange={(next) => {
+                                                                    if (next) handlePartTypeChange(next);
+                                                                }}
+                                                                title={isAr ? 'حدد نوع الشحن للقطعة' : 'Select shipping class'}
+                                                            />
+                                                            {mismatch && (
+                                                                <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-200 text-xs font-bold leading-relaxed">
+                                                                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                                                                    <span>
+                                                                        {isAr
+                                                                            ? 'تصنيفك يختلف عن تصنيف العميل. يمكن تقديم العرض وسيُبلَّغ الإدارة للمراجعة.'
+                                                                            : 'Your class differs from the customer. You can still submit; admins will be alerted.'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>

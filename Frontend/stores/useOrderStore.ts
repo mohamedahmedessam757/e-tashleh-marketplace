@@ -143,6 +143,12 @@ export interface OrderOffer {
     preparedAt?: string;
     verificationSubmittedAt?: string;
     readyForShippingAt?: string;
+    /** Per-offer delivery clock for review / return window */
+    deliveredAt?: string;
+    completedAt?: string;
+    resolutionLocked?: boolean;
+    hasOpenCase?: boolean;
+    returnWindowEndsAt?: string;
 }
 
 /** Grouped-order shipment batch (one customer selection = one shipment + waybill). */
@@ -200,6 +206,7 @@ export interface Order {
         images: (string | File)[];
         video?: string | File;
         notes?: string;
+        shippingClass?: string | null;
     }[];
     preferences?: {
         condition: 'new' | 'used';
@@ -969,7 +976,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     description: p.description,
                     images: parseJsonArray(p.images),
                     video: p.video || null,
-                    notes: p.notes
+                    notes: p.notes,
+                    shippingClass: p.shippingClass || p.shipping_class || null,
                 })) : [],
                 vin: o.vin,
                 requestType: o.requestType,
@@ -1038,6 +1046,19 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     preparedAt: offer.preparedAt || offer.prepared_at,
                     verificationSubmittedAt: offer.verificationSubmittedAt || offer.verification_submitted_at,
                     readyForShippingAt: offer.readyForShippingAt || offer.ready_for_shipping_at,
+                    deliveredAt: offer.deliveredAt || offer.delivered_at || undefined,
+                    completedAt: offer.completedAt || offer.completed_at || undefined,
+                    resolutionLocked: !!(offer.resolutionLocked ?? offer.resolution_locked),
+                    hasOpenCase:
+                        typeof offer.hasOpenCase === 'boolean'
+                            ? offer.hasOpenCase
+                            : typeof offer.has_open_case === 'boolean'
+                              ? offer.has_open_case
+                              : undefined,
+                    returnWindowEndsAt:
+                        offer.returnWindowEndsAt ||
+                        offer.return_window_ends_at ||
+                        undefined,
                 })) : [],
                 createdAt: o.createdAt,
                 updatedAt: o.updatedAt,

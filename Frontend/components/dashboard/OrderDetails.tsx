@@ -48,7 +48,13 @@ import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from './resolution/AdjudicationFeePaymentCard';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
-import { getOrderReview, getReviewedOfferIds, resolveReviewTarget } from '../../utils/reviewHelpers';
+import {
+    getOrderReview,
+    getReviewableOffers,
+    getReviewedOfferIds,
+    isOfferEligibleForReview,
+    resolveReviewTarget,
+} from '../../utils/reviewHelpers';
 import { parseImageList, resolveMediaSrc, resolvePartPrimaryImage } from '../../utils/partMedia';
 import { ordersApi } from '../../services/api/orders';
 import {
@@ -1342,8 +1348,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                             {/* Warranty Badge Removed (Replaced by Hub above or Compact Badge in header) */}
 
-                            {/* Review: write CTA or submitted badge (single-item orders) */}
-                            {!isMultiPartOrder && (order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'PARTIALLY_DELIVERED' || order.status === 'WARRANTY_ACTIVE') && (() => {
+                            {/* Review: write CTA or submitted badge — gated by return window */}
+                            {!isMultiPartOrder && (() => {
                                 const existingReview = getOrderReview(order);
                                 if (existingReview) {
                                     return (
@@ -1366,6 +1372,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         </div>
                                     );
                                 }
+                                if (getReviewableOffers(order).length === 0) return null;
                                 return (
                                     <button
                                         onClick={() => setShowReviewModal(true)}
@@ -1965,11 +1972,29 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                 }}
                                                             />
                                                         )}
-                                                        {(cardOffer.fulfillmentStatus === 'COMPLETED' ||
-                                                            cardOffer.fulfillmentStatus === 'completed' ||
-                                                            cardOffer.fulfillmentStatus === 'DELIVERED' ||
-                                                            cardOffer.fulfillmentStatus === 'delivered') &&
-                                                            !reviewedOfferIds.has(acceptedPartOffer.id) && (
+                                                        {(() => {
+                                                            const offerForReview: typeof cardOffer = {
+                                                                ...cardOffer,
+                                                                hasOpenCase:
+                                                                    typeof meta?.hasOpenCase === 'boolean'
+                                                                        ? meta.hasOpenCase
+                                                                        : cardOffer.hasOpenCase,
+                                                                returnWindowEndsAt:
+                                                                    (typeof meta?.returnWindowEndsAt === 'string'
+                                                                        ? meta.returnWindowEndsAt
+                                                                        : cardOffer.returnWindowEndsAt) || undefined,
+                                                                deliveredAt:
+                                                                    (typeof meta?.deliveredAt === 'string'
+                                                                        ? meta.deliveredAt
+                                                                        : cardOffer.deliveredAt) || undefined,
+                                                            };
+                                                            if (
+                                                                reviewedOfferIds.has(acceptedPartOffer.id) ||
+                                                                !isOfferEligibleForReview(offerForReview, order)
+                                                            ) {
+                                                                return null;
+                                                            }
+                                                            return (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => {
@@ -1981,7 +2006,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                 <Star size={14} />
                                                                 {language === 'ar' ? 'قيّم هذا المتجر' : 'Review this store'}
                                                             </button>
-                                                        )}
+                                                            );
+                                                        })()}
                                                     </div>
                                                 );
                                             })()}

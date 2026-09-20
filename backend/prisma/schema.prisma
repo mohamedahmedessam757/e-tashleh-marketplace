@@ -829,6 +829,8 @@ model OrderPart {
   images      String[] // Array of URLs
   video       String? // URL
   quantity    Int      @default(1)
+  /// Customer-declared logistics class: engine | gearbox | standard
+  shippingClass String? @map("shipping_class")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz

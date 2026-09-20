@@ -188,12 +188,12 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         hasError = true;
       } else {
         // Validate ALL parts
-        const isValid = parts.every(p => p.name && p.description && partHasMedia(p));
+        const isValid = parts.every(p => p.name && p.description && partHasMedia(p) && p.shippingClass);
         if (!isValid) {
           notify(
             language === 'ar'
-              ? 'يرجى تعبئة جميع البيانات الإلزامية وإرفاق صورة واحدة على الأقل لكل قطعة'
-              : 'Please fill all mandatory details and attach at least one image for all parts',
+              ? 'يرجى تعبئة جميع البيانات الإلزامية وإرفاق صورة واحدة على الأقل والإجابة على أسئلة نوع الشحن لكل قطعة'
+              : 'Please fill all mandatory details, attach at least one image, and answer the shipping-class questions for every part',
           );
           hasError = true;
         }

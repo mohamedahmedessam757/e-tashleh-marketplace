@@ -4,8 +4,10 @@ import { Package, FileText, UploadCloud, X, Plus, Trash2, AlertTriangle, Info, T
 import { useCreateOrderStore, MAX_PARTS_PER_ORDER, partHasMedia } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { GlassCard } from '../../../ui/GlassCard';
+import { ShippingClassQuestions } from '../../../ui/ShippingClassQuestions';
 import { useObjectUrl } from '../../../../utils/objectUrl';
 import { normalizePartName } from '../../../../utils/normalizePartName';
+import type { ShippingClass } from '../../../../utils/shippingClass';
 
 const PartImagePreview: React.FC<{
   file: File;
@@ -416,6 +418,14 @@ export const PartDetailsStep: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              <ShippingClassQuestions
+                isAr={isRTL}
+                value={(part.shippingClass as ShippingClass | null) ?? null}
+                showError={showErrors && !part.shippingClass}
+                onChange={(next) => updatePart(part.id, 'shippingClass', next)}
+                title={isRTL ? 'تصنيف نوع الشحن (إلزامي)' : 'Shipping class (required)'}
+              />
             </div>
           </GlassCard>
         ))}
