@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   applyShippingClassAnswer,
   answersFromShippingClass,
@@ -18,6 +18,12 @@ interface ShippingClassQuestionsProps {
   title?: string;
 }
 
+const EMPTY_ANSWERS: ShippingClassAnswers = {
+  engine: null,
+  gearbox: null,
+  other: null,
+};
+
 export const ShippingClassQuestions: React.FC<ShippingClassQuestionsProps> = ({
   value,
   onChange,
@@ -26,13 +32,45 @@ export const ShippingClassQuestions: React.FC<ShippingClassQuestionsProps> = ({
   isAr,
   title,
 }) => {
-  const answers: ShippingClassAnswers = answersFromShippingClass(value ?? null);
+  // Intermediate cascade answers must live in local state. Parent only stores the
+  // final ShippingClass; deriving answers from null after "No" used to wipe Q2/Q3.
+  const [answers, setAnswers] = useState<ShippingClassAnswers>(() =>
+    answersFromShippingClass(value ?? null),
+  );
+
+  useEffect(() => {
+    if (value === 'engine' || value === 'gearbox' || value === 'standard') {
+      setAnswers((prev) => {
+        const localResolved = shippingClassFromAnswers(prev);
+        // Parent may still hold the previous final class while cascade is mid-answer
+        // (e.g. merchant onChange ignored null). Do not wipe Q2/Q3.
+        if (
+          localResolved == null &&
+          (prev.engine !== null || prev.gearbox !== null || prev.other !== null)
+        ) {
+          return prev;
+        }
+        if (localResolved === value) return prev;
+        return answersFromShippingClass(value);
+      });
+      return;
+    }
+    // Parent cleared — keep in-progress cascade; only empty when truly fresh.
+    setAnswers((prev) => {
+      if (prev.engine == null && prev.gearbox == null && prev.other == null) {
+        return EMPTY_ANSWERS;
+      }
+      return prev;
+    });
+  }, [value]);
+
   const q = isAr ? SHIPPING_CLASS_QUESTIONS_AR : SHIPPING_CLASS_QUESTIONS_EN;
   const yesLabel = isAr ? 'نعم' : 'Yes';
   const noLabel = isAr ? 'لا' : 'No';
 
   const setAnswer = (key: keyof ShippingClassAnswers, yes: boolean) => {
     const nextAnswers = applyShippingClassAnswer(answers, key, yes);
+    setAnswers(nextAnswers);
     onChange(shippingClassFromAnswers(nextAnswers));
   };
 

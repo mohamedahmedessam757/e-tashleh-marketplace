@@ -420,6 +420,7 @@ export const PartDetailsStep: React.FC = () => {
               </div>
 
               <ShippingClassQuestions
+                key={part.id}
                 isAr={isRTL}
                 value={(part.shippingClass as ShippingClass | null) ?? null}
                 showError={showErrors && !part.shippingClass}

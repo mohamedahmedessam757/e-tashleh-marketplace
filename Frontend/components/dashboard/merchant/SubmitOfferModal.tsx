@@ -1059,6 +1059,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                                 </p>
                                                             )}
                                                             <ShippingClassQuestions
+                                                                key={activePartId || 'part'}
                                                                 isAr={isAr}
                                                                 value={
                                                                     isShippingClass(activeForm.partType)
@@ -1066,7 +1067,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                                         : null
                                                                 }
                                                                 onChange={(next) => {
-                                                                    if (next) handlePartTypeChange(next);
+                                                                    handlePartTypeChange(next ?? '');
                                                                 }}
                                                                 title={isAr ? 'حدد نوع الشحن للقطعة' : 'Select shipping class'}
                                                             />
