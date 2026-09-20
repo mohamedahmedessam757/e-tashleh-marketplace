@@ -3684,6 +3684,12 @@ export class OrdersService {
         if (body.shippingClass === 'standard' && !(nextWeight > 0)) {
             throw new BadRequestException('weightKg required for standard shipping class');
         }
+        if (body.cylinders != null && (!Number.isFinite(Number(body.cylinders)) || Number(body.cylinders) <= 0)) {
+            throw new BadRequestException('Invalid cylinders');
+        }
+        if (body.weightKg != null && (!Number.isFinite(Number(body.weightKg)) || Number(body.weightKg) < 0)) {
+            throw new BadRequestException('Invalid weightKg');
+        }
 
         const shippingCost = this.logisticsConfig.computeShippingCost({
             partType: body.shippingClass,

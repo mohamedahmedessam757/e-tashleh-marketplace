@@ -87,6 +87,28 @@ export function isOfferEligibleForReview(
   // COMPLETED (post-window auto-complete with no open case) is always reviewable
   if (fs === 'COMPLETED') return true;
 
+  // Single-item / sparse payloads: order already past short window into COMPLETED/WARRANTY
+  if (
+    (!fs || fs === 'DELIVERED') &&
+    (orderStatus === 'COMPLETED' || orderStatus === 'WARRANTY_ACTIVE') &&
+    offer.hasOpenCase !== true
+  ) {
+    // Still require delivery clock when offer remains DELIVERED (not yet COMPLETED)
+    if (fs === 'DELIVERED') {
+      const deliveredMs =
+        parseTime(offer.deliveredAt) ?? parseTime(order.deliveredAt) ?? null;
+      if (deliveredMs == null) return false;
+      const windowEndsMs =
+        parseTime(offer.returnWindowEndsAt) ??
+        deliveredMs + getReturnDisputeHours() * 60 * 60 * 1000;
+      if (nowMs < windowEndsMs) return false;
+      if (offer.hasOpenCase === false) return true;
+      // Order COMPLETED implies window path succeeded without open case
+      return orderStatus === 'COMPLETED' || orderStatus === 'WARRANTY_ACTIVE';
+    }
+    return true;
+  }
+
   const deliveredMs =
     parseTime(offer.deliveredAt) ??
     parseTime(order.deliveredAt) ??
