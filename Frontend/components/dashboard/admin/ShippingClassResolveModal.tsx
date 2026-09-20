@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Edit3, Loader2, Package, Truck, X } from 'lucide-react';
 import { ShippingClassQuestions } from '../../ui/ShippingClassQuestions';
 import {
@@ -9,8 +9,9 @@ import {
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { ordersApi } from '../../../services/api/orders';
 
-type ResolveOffer = {
+export type ShippingResolveOffer = {
   id: string;
+  orderPartId?: string | null;
   partType?: string | null;
   unitPrice?: number | string | null;
   shippingCost?: number | string | null;
@@ -21,19 +22,27 @@ type ResolveOffer = {
   condition?: string | null;
 };
 
-type ResolvePart = {
+export type ShippingResolvePart = {
   id?: string;
   name?: string | null;
   shippingClass?: string | null;
 };
 
+export type ShippingMismatchItem = {
+  offer: ShippingResolveOffer;
+  part: ShippingResolvePart;
+  partIndex: number;
+};
+
 interface ShippingClassResolveModalProps {
   orderId: string;
-  offer: ResolveOffer;
-  part: ResolvePart | null | undefined;
+  items: ShippingMismatchItem[];
+  initialOfferId: string;
   isAr: boolean;
+  isMultiPart?: boolean;
+  shippingType?: string | null;
   onClose: () => void;
-  onResolved: () => void;
+  onResolved: () => void | Promise<void>;
 }
 
 function computeShippingPreview(
@@ -65,34 +74,70 @@ function computeShippingPreview(
   return Number(shipmentType.basePrice) || 0;
 }
 
+function formDefaults(item: ShippingMismatchItem | undefined) {
+  const offer = item?.offer;
+  const part = item?.part;
+  const initialClass: ShippingClass | null = isShippingClass(offer?.partType)
+    ? (offer!.partType as ShippingClass)
+    : isShippingClass(part?.shippingClass)
+      ? (part!.shippingClass as ShippingClass)
+      : null;
+  return {
+    shippingClass: initialClass,
+    cylinders: (offer?.cylinders != null ? Number(offer.cylinders) : '') as number | '',
+    weightKg: String(offer?.weightKg ?? offer?.weight ?? ''),
+  };
+}
+
 export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps> = ({
   orderId,
-  offer,
-  part,
+  items,
+  initialOfferId,
   isAr,
+  isMultiPart = false,
+  shippingType,
   onClose,
   onResolved,
 }) => {
   const shipmentTypes = useAdminStore((s) => s.systemConfig.logistics?.shipmentTypes) ?? [];
   const financial = useAdminStore((s) => s.systemConfig?.financial);
 
-  const initialClass: ShippingClass | null = isShippingClass(offer.partType)
-    ? offer.partType
-    : isShippingClass(part?.shippingClass)
-      ? part!.shippingClass!
-      : null;
+  const [activeOfferId, setActiveOfferId] = useState(initialOfferId);
+  const activeItem = useMemo(
+    () => items.find((i) => i.offer.id === activeOfferId) || items[0],
+    [items, activeOfferId],
+  );
 
-  const [shippingClass, setShippingClass] = useState<ShippingClass | null>(initialClass);
-  const [cylinders, setCylinders] = useState<number | ''>(
-    offer.cylinders != null ? Number(offer.cylinders) : '',
-  );
-  const [weightKg, setWeightKg] = useState<string>(
-    String(offer.weightKg ?? offer.weight ?? ''),
-  );
+  const defaults = formDefaults(activeItem);
+  const [shippingClass, setShippingClass] = useState<ShippingClass | null>(defaults.shippingClass);
+  const [cylinders, setCylinders] = useState<number | ''>(defaults.cylinders);
+  const [weightKg, setWeightKg] = useState<string>(defaults.weightKg);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const basePrice = Number(offer.unitPrice) || 0;
+  // Keep selection valid as parent refreshes after each decision
+  useEffect(() => {
+    if (!items.length) {
+      onClose();
+      return;
+    }
+    if (!items.some((i) => i.offer.id === activeOfferId)) {
+      setActiveOfferId(items[0].offer.id);
+    }
+  }, [items, activeOfferId, onClose]);
+
+  // Reset form when switching part/offer
+  useEffect(() => {
+    const next = formDefaults(activeItem);
+    setShippingClass(next.shippingClass);
+    setCylinders(next.cylinders);
+    setWeightKg(next.weightKg);
+    setError(null);
+  }, [activeItem?.offer.id]);
+
+  const offer = activeItem?.offer;
+  const part = activeItem?.part;
+  const basePrice = Number(offer?.unitPrice) || 0;
   const previewShipping = useMemo(() => {
     if (!shippingClass) return 0;
     return computeShippingPreview(
@@ -112,12 +157,16 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
   const needsCylinders = shippingClass === 'engine';
   const needsWeight = shippingClass === 'standard';
   const canSubmit =
+    !!offer?.id &&
     !!shippingClass &&
     (!needsCylinders || (typeof cylinders === 'number' && cylinders > 0)) &&
     (!needsWeight || (parseFloat(weightKg) || 0) > 0);
 
+  const showPartPicker = items.length > 1;
+  const isCombined = shippingType === 'combined';
+
   const submit = async () => {
-    if (!shippingClass || !canSubmit) return;
+    if (!offer?.id || !shippingClass || !canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -127,14 +176,21 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
         cylinders: needsCylinders ? Number(cylinders) : undefined,
         weightKg: needsWeight ? parseFloat(weightKg) : undefined,
       });
-      onResolved();
-      onClose();
+      const remaining = items.filter((i) => i.offer.id !== offer.id);
+      await onResolved();
+      if (remaining.length > 0) {
+        setActiveOfferId(remaining[0].offer.id);
+      } else {
+        onClose();
+      }
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Failed');
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (!activeItem || !offer) return null;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
@@ -152,7 +208,11 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
                 {isAr ? 'القرار النهائي — نوع الشحن' : 'Final decision — shipping class'}
               </h3>
               <p className="text-[11px] text-white/45 truncate">
-                {part?.name || (isAr ? 'قطعة' : 'Part')}
+                {isMultiPart
+                  ? isAr
+                    ? `قطعة ${activeItem.partIndex} · ${part?.name || 'قطعة'}`
+                    : `Part ${activeItem.partIndex} · ${part?.name || 'Part'}`
+                  : part?.name || (isAr ? 'قطعة' : 'Part')}
                 {offer.storeName ? ` · ${offer.storeName}` : ''}
               </p>
             </div>
@@ -168,6 +228,43 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
         </div>
 
         <div className="p-5 space-y-5">
+          {showPartPicker && (
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold text-white/60">
+                {isAr ? 'اختر القطعة / العرض للاختلاف' : 'Select mismatched part / offer'}
+              </span>
+              <select
+                value={activeOfferId}
+                onChange={(e) => setActiveOfferId(e.target.value)}
+                className="w-full min-h-[44px] rounded-xl bg-white/5 border border-gold-500/30 px-3 text-white text-sm font-bold"
+              >
+                {items.map((item) => {
+                  const label = isAr
+                    ? `قطعة ${item.partIndex} — ${item.part.name || 'قطعة'}${item.offer.storeName ? ` · ${item.offer.storeName}` : ''}`
+                    : `Part ${item.partIndex} — ${item.part.name || 'Part'}${item.offer.storeName ? ` · ${item.offer.storeName}` : ''}`;
+                  return (
+                    <option key={item.offer.id} value={item.offer.id} className="bg-[#1A1814]">
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="text-[10px] text-white/40 leading-relaxed">
+                {isAr
+                  ? `متبقي ${items.length} اختلاف${isCombined ? ' — قرار كل قطعة مستقل حتى في الشحن المجمع' : ''}.`
+                  : `${items.length} mismatch(es) left${isCombined ? ' — each part is decided independently (including combined shipping)' : ''}.`}
+              </p>
+            </label>
+          )}
+
+          {(isMultiPart || isCombined) && !showPartPicker && (
+            <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-[11px] text-white/55 leading-relaxed">
+              {isAr
+                ? 'القرار يخص هذه القطعة فقط ولا يغيّر تصنيف القطع الأخرى في الطلب المجمع.'
+                : 'This decision applies to this part only and does not change other parts on a combined order.'}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div className="rounded-xl border border-white/10 bg-black/25 p-3">
               <div className="text-white/40 mb-1">{isAr ? 'تصنيف العميل' : 'Customer class'}</div>
@@ -184,10 +281,11 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
           </div>
 
           <ShippingClassQuestions
+            key={offer.id}
             isAr={isAr}
             value={shippingClass}
             onChange={setShippingClass}
-            title={isAr ? 'اختر التصنيف النهائي' : 'Choose final shipping class'}
+            title={isAr ? 'اختر التصنيف النهائي لهذه القطعة' : 'Choose final class for this part'}
           />
 
           {needsCylinders && (
@@ -227,11 +325,10 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
             </label>
           )}
 
-          {/* Offer appearance + price preview (admin-only; customer won't get price in notification) */}
           <div className="rounded-2xl border border-gold-500/25 bg-gold-500/5 p-4 space-y-3">
             <div className="flex items-center gap-2 text-gold-300 text-xs font-black uppercase tracking-wider">
               <Package size={14} />
-              {isAr ? 'معاينة العرض بعد القرار' : 'Offer preview after decision'}
+              {isAr ? 'معاينة العرض بعد القرار (لهذه القطعة)' : 'Offer preview after decision (this part)'}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gold-500/30 bg-black/30 text-gold-200 text-xs font-bold">
@@ -268,8 +365,8 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
             </div>
             <p className="text-[10px] text-white/40 leading-relaxed">
               {isAr
-                ? 'التحكم هنا على نوع الشحن فقط. السعر النهائي يظهر لك وللتجار في الإشعار؛ العميل يُبلَّغ بالتغيير دون ذكر السعر.'
-                : 'You only control shipping class here. Final price is shown to you and merchants in the notice; the customer is notified of the class change without the price.'}
+                ? 'التحكم هنا على نوع شحن هذه القطعة فقط. العميل يُبلَّغ بالتغيير دون السعر؛ التاجر يرى تكلفة الشحن.'
+                : 'You only control shipping class for this part. Customer is notified without price; merchant sees shipping cost.'}
             </p>
           </div>
 
@@ -293,7 +390,13 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
             ) : (
               <>
                 <Edit3 size={18} />
-                {isAr ? 'إرسال القرار النهائي' : 'Send final decision'}
+                {items.length > 1
+                  ? isAr
+                    ? `إرسال قرار هذه القطعة (${items.length} متبقية)`
+                    : `Send decision for this part (${items.length} left)`
+                  : isAr
+                    ? 'إرسال القرار النهائي'
+                    : 'Send final decision'}
               </>
             )}
           </button>

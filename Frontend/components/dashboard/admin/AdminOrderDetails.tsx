@@ -39,7 +39,16 @@ import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { shippingClassShortLabel } from '../../../utils/shippingClass';
-import { ShippingClassResolveModal } from './ShippingClassResolveModal';
+import { ShippingClassResolveModal, type ShippingMismatchItem } from './ShippingClassResolveModal';
+import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
+import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
+import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
+import {
+    computeShipmentDeliverySummary,
+    resolveOrderTimelineStatus,
+} from '../../../utils/offerFulfillmentHelpers';
+import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
+import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
 
 /** Statuses where admin Waybills tab is visible (includes partial ship/delivery). */
 const ADMIN_WAYBILL_TAB_STATUSES = [
@@ -63,15 +72,6 @@ const ADMIN_WAYBILL_TAB_STATUSES = [
     'CORRECTION_PERIOD',
     'CORRECTION_SUBMITTED',
 ] as const;
-import { MultiItemCompletionBadge } from '../shared/MultiItemCompletionBadge';
-import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
-import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
-import {
-    computeShipmentDeliverySummary,
-    resolveOrderTimelineStatus,
-} from '../../../utils/offerFulfillmentHelpers';
-import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
-import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
 
 interface AdminOrderDetailsProps {
     orderId: any;
@@ -330,7 +330,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         image?: string;
         index: number;
     } | null>(null);
-    const [shippingResolveOffer, setShippingResolveOffer] = useState<any | null>(null);
+    const [shippingResolveOfferId, setShippingResolveOfferId] = useState<string | null>(null);
 
     const { adminUpdateOffer, adminDeleteOffer } = useOrderStore();
 
@@ -342,6 +342,46 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                 isActiveMerchantOffer(o),
         );
     }, [drawerPart, order?.offers]);
+
+    const shippingMismatchItems = useMemo((): ShippingMismatchItem[] => {
+        if (!order) return [];
+        const parts = order.parts || [];
+        return (order.offers || [])
+            .filter((o: any) => {
+                if (!isActiveMerchantOffer(o)) return false;
+                const part = parts.find((p: any) => p.id === o.orderPartId);
+                const cust = part?.shippingClass;
+                const merch = o.partType;
+                return (
+                    cust &&
+                    merch &&
+                    ['engine', 'gearbox', 'standard'].includes(String(cust)) &&
+                    ['engine', 'gearbox', 'standard'].includes(String(merch)) &&
+                    String(cust) !== String(merch)
+                );
+            })
+            .map((o: any) => {
+                const partIdx = parts.findIndex((p: any) => p.id === o.orderPartId);
+                const part = partIdx >= 0 ? parts[partIdx] : parts.find((p: any) => p.id === o.orderPartId);
+                return {
+                    offer: {
+                        ...o,
+                        storeName: o.storeName || o.store?.name,
+                        weight: o.weight ?? o.weightKg,
+                    },
+                    part: part || { name: o.partName, shippingClass: null },
+                    partIndex: partIdx >= 0 ? partIdx + 1 : 1,
+                };
+            });
+    }, [order]);
+
+    const openShippingResolve = (offerId?: string) => {
+        const first = offerId
+            ? shippingMismatchItems.find((i) => i.offer.id === offerId)
+            : shippingMismatchItems[0];
+        if (!first) return;
+        setShippingResolveOfferId(first.offer.id);
+    };
 
     // Permissions
     const isAdmin = currentAdmin?.role === 'ADMIN' || currentAdmin?.role === 'SUPER_ADMIN';
@@ -736,77 +776,72 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 {isAr ? 'القطع المطلوبة والعروض' : 'Requested Parts & Offers'}
                             </h3>
 
-                            {/* Shipping-class mismatches — only when customer ≠ merchant */}
-                            {(() => {
-                                const mismatches = (order.offers || []).filter((o: any) => {
-                                    if (!isActiveMerchantOffer(o)) return false;
-                                    const part = (order.parts || []).find((p: any) => p.id === o.orderPartId);
-                                    const cust = part?.shippingClass;
-                                    const merch = o.partType;
-                                    return (
-                                        cust &&
-                                        merch &&
-                                        ['engine', 'gearbox', 'standard'].includes(String(cust)) &&
-                                        ['engine', 'gearbox', 'standard'].includes(String(merch)) &&
-                                        String(cust) !== String(merch)
-                                    );
-                                });
-                                if (!mismatches.length) return null;
-                                return (
-                                    <GlassCard className="p-4 border-amber-500/40 bg-amber-500/10 space-y-3">
+                            {/* Shipping-class mismatches — only when customer ≠ merchant (per part / offer) */}
+                            {shippingMismatchItems.length > 0 && (
+                                <GlassCard className="p-4 border-amber-500/40 bg-amber-500/10 space-y-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 text-amber-300 font-black text-sm">
                                             <AlertTriangle size={18} />
                                             {isAr
                                                 ? 'اختلاف نوع الشحن بين العميل والتاجر'
                                                 : 'Shipping class mismatch (customer vs merchant)'}
                                         </div>
-                                        {mismatches.map((o: any) => {
-                                            const part = (order.parts || []).find((p: any) => p.id === o.orderPartId);
-                                            return (
-                                                <div
-                                                    key={o.id}
-                                                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/10 min-w-0"
-                                                >
-                                                    <div className="flex-1 min-w-0 text-xs text-white/80 space-y-1">
-                                                        <div className="font-bold text-white truncate">
-                                                            {part?.name || o.partName || 'Part'}
-                                                        </div>
-                                                        <div>
-                                                            {isAr ? 'عميل' : 'Customer'}:{' '}
-                                                            <span className="text-gold-400">
-                                                                {shippingClassShortLabel(part?.shippingClass, isAr)}
-                                                            </span>
-                                                            {' · '}
-                                                            {isAr ? 'تاجر' : 'Merchant'}:{' '}
-                                                            <span className="text-amber-300">
-                                                                {shippingClassShortLabel(o.partType, isAr)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        title={isAr ? 'القرار النهائي' : 'Final decision'}
-                                                        aria-label={isAr ? 'القرار النهائي' : 'Final decision'}
-                                                        className="inline-flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-4 rounded-xl bg-gold-500 text-black text-xs font-black hover:bg-gold-400 transition-colors shrink-0"
-                                                        onClick={() =>
-                                                            setShippingResolveOffer({
-                                                                ...o,
-                                                                storeName: o.storeName || o.store?.name,
-                                                                weight: o.weight ?? o.weightKg,
-                                                            })
-                                                        }
-                                                    >
-                                                        <Edit3 size={16} />
-                                                        <span className="hidden sm:inline">
-                                                            {isAr ? 'القرار النهائي' : 'Decide'}
-                                                        </span>
-                                                    </button>
+                                        <span className="text-[10px] font-bold text-amber-200/70 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg">
+                                            {isAr
+                                                ? `${shippingMismatchItems.length} اختلاف · قرار لكل قطعة`
+                                                : `${shippingMismatchItems.length} mismatch(es) · per-part decision`}
+                                        </span>
+                                    </div>
+                                    {(order.requestType === 'multiple' || order.shippingType === 'combined') && (
+                                        <p className="text-[11px] text-white/50 leading-relaxed">
+                                            {isAr
+                                                ? 'في الطلب المتعدد/المجمع: اختر القطعة ثم أصدر القرار لها فقط — باقي القطع تبقى كما هي حتى تُعالَج.'
+                                                : 'On multi-part/combined orders: pick the part and decide for it only — other parts stay unchanged until resolved.'}
+                                        </p>
+                                    )}
+                                    {shippingMismatchItems.map((item) => (
+                                        <div
+                                            key={item.offer.id}
+                                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/10 min-w-0"
+                                        >
+                                            <div className="flex-1 min-w-0 text-xs text-white/80 space-y-1">
+                                                <div className="font-bold text-white truncate flex flex-wrap items-center gap-2">
+                                                    <span className="text-[10px] font-mono text-amber-300/80">
+                                                        {isAr ? `قطعة ${item.partIndex}` : `Part ${item.partIndex}`}
+                                                    </span>
+                                                    <span>{item.part?.name || (item.offer as any).partName || 'Part'}</span>
                                                 </div>
-                                            );
-                                        })}
-                                    </GlassCard>
-                                );
-                            })()}
+                                                <div>
+                                                    {isAr ? 'عميل' : 'Customer'}:{' '}
+                                                    <span className="text-gold-400">
+                                                        {shippingClassShortLabel(item.part?.shippingClass, isAr)}
+                                                    </span>
+                                                    {' · '}
+                                                    {isAr ? 'تاجر' : 'Merchant'}:{' '}
+                                                    <span className="text-amber-300">
+                                                        {shippingClassShortLabel(item.offer.partType, isAr)}
+                                                    </span>
+                                                    {item.offer.storeName ? (
+                                                        <span className="text-white/40"> · {item.offer.storeName}</span>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                title={isAr ? 'القرار النهائي لهذه القطعة' : 'Final decision for this part'}
+                                                aria-label={isAr ? 'القرار النهائي لهذه القطعة' : 'Final decision for this part'}
+                                                className="inline-flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-4 rounded-xl bg-gold-500 text-black text-xs font-black hover:bg-gold-400 transition-colors shrink-0"
+                                                onClick={() => openShippingResolve(item.offer.id)}
+                                            >
+                                                <Edit3 size={16} />
+                                                <span className="hidden sm:inline">
+                                                    {isAr ? 'قرار القطعة' : 'Decide part'}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </GlassCard>
+                            )}
 
                             <div className="space-y-4">
                                 {order.parts.map((p: any, idx: number) => {
@@ -853,6 +888,19 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                                     <Truck size={10} />
                                                                     {shippingClassShortLabel(p.shippingClass, isAr)}
                                                                 </span>
+                                                            )}
+                                                            {shippingMismatchItems.some((m) => m.offer.orderPartId === p.id) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const hit = shippingMismatchItems.find((m) => m.offer.orderPartId === p.id);
+                                                                        openShippingResolve(hit?.offer.id);
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-500/40 bg-amber-500/15 text-amber-200 text-[10px] font-black hover:bg-amber-500/25"
+                                                                >
+                                                                    <Edit3 size={10} />
+                                                                    {isAr ? 'قرار الاختلاف' : 'Resolve mismatch'}
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -1619,15 +1667,18 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                 />
             )}
 
-            {shippingResolveOffer && order && (
+            {shippingResolveOfferId && order && shippingMismatchItems.length > 0 && (
                 <ShippingClassResolveModal
+                    key={shippingResolveOfferId}
                     orderId={String(order.id)}
-                    offer={shippingResolveOffer}
-                    part={(order.parts || []).find((p: any) => p.id === shippingResolveOffer.orderPartId)}
+                    items={shippingMismatchItems}
+                    initialOfferId={shippingResolveOfferId}
                     isAr={isAr}
-                    onClose={() => setShippingResolveOffer(null)}
-                    onResolved={() => {
-                        void fetchOrder(String(order.id));
+                    isMultiPart={(order.parts?.length ?? 0) > 1 || order.requestType === 'multiple'}
+                    shippingType={order.shippingType}
+                    onClose={() => setShippingResolveOfferId(null)}
+                    onResolved={async () => {
+                        await fetchOrder(String(order.id));
                     }}
                 />
             )}
