@@ -55,12 +55,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
     setPending(true);
     try {
+      const trimmedOfferId = typeof offerId === 'string' ? offerId.trim() : offerId;
       const created = await submitReview({
           orderId: String(orderId),
           storeId: storeId.trim(),
           rating,
           comment,
-          offerId,
+          ...(trimmedOfferId ? { offerId: trimmedOfferId } : {}),
       });
 
       if (created) {

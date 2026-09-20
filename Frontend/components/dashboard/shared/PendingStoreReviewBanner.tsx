@@ -7,6 +7,7 @@ import { ReviewModal } from '../reviews/ReviewModal';
 import {
   findOrdersPendingReview,
   getReviewableOffers,
+  isMultiPartOrder,
   orderNeedsReview,
   resolveReviewTarget,
 } from '../../../utils/reviewHelpers';
@@ -51,16 +52,13 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
 
   const targetOrder = activeOrder ?? pendingOrders[0];
   const reviewable = getReviewableOffers(targetOrder);
-  const offerForModal =
-    selectedOfferId
-      ? reviewable.find((o) => o.id === selectedOfferId) ?? reviewable[0]
-      : reviewable[0];
-  const reviewTarget = resolveReviewTarget(targetOrder, offerForModal?.id);
+  const modalOfferId = selectedOfferId || reviewable[0]?.id;
+  const reviewTarget = resolveReviewTarget(targetOrder, modalOfferId);
   if (!reviewTarget && reviewable.length === 0) return null;
 
   const partLabel = (offer: OrderOffer) =>
     offer.partName ||
-    targetOrder.parts?.find((p) => p.id === offer.orderPartId)?.name ||
+    targetOrder.parts?.find((p) => String(p.id) === String(offer.orderPartId))?.name ||
     targetOrder.part ||
     (isAr ? 'قطعة' : 'Part');
 
@@ -77,21 +75,38 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
       return;
     }
     if (offers.length === 1) {
-      setSelectedOfferId(offers[0].id);
+      const onlyId = String(offers[0].id);
+      setSelectedOfferId(onlyId);
+      // Multi-part still needs explicit offerId — we always set it above
       setShowModal(true);
       return;
     }
+    setSelectedOfferId(undefined);
     setShowPicker(true);
   };
 
   const pickOffer = (offerId: string) => {
-    setSelectedOfferId(offerId);
+    setSelectedOfferId(String(offerId));
     setShowPicker(false);
     setShowModal(true);
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedOfferId(undefined);
+    setActiveOrder(null);
+  };
+
   const bannerTarget = resolveReviewTarget(targetOrder, reviewable[0]?.id) ?? reviewTarget;
   if (!bannerTarget) return null;
+
+  // Hard gate: never submit multi without a concrete offerId
+  const effectiveOfferId = String(
+    selectedOfferId || reviewTarget?.offerId || reviewable[0]?.id || '',
+  );
+  const canOpenModal =
+    Boolean(reviewTarget?.storeId) &&
+    (!isMultiPartOrder(targetOrder) || Boolean(effectiveOfferId));
 
   return (
     <>
@@ -207,7 +222,7 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
                   <button
                     key={offer.id}
                     type="button"
-                    onClick={() => pickOffer(offer.id)}
+                    onClick={() => pickOffer(String(offer.id))}
                     className="w-full min-h-[52px] flex items-center gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gold-500/10 hover:border-gold-500/30 text-start transition-all"
                   >
                     <span className="w-10 h-10 rounded-xl bg-gold-500/15 border border-gold-500/25 flex items-center justify-center text-gold-400 shrink-0">
@@ -232,19 +247,15 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
         )}
       </AnimatePresence>
 
-      {reviewTarget && (
+      {canOpenModal && reviewTarget && (
         <ReviewModal
           isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedOfferId(undefined);
-            setActiveOrder(null);
-          }}
+          onClose={closeModal}
           orderId={targetOrder.id}
           storeId={reviewTarget.storeId}
           merchantName={reviewTarget.merchantName}
           partName={reviewTarget.partName}
-          offerId={reviewTarget.offerId}
+          offerId={effectiveOfferId || reviewTarget.offerId}
           onSuccess={(review) => {
             useOrderStore.getState().patchOrderReview(String(targetOrder.id), {
               id: review.id,
@@ -252,11 +263,9 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
               comment: review.comment,
               adminStatus: review.adminStatus,
               createdAt: review.createdAt,
-              offerId: reviewTarget.offerId,
+              offerId: effectiveOfferId || reviewTarget.offerId || null,
             });
-            setShowModal(false);
-            setSelectedOfferId(undefined);
-            setActiveOrder(null);
+            closeModal();
           }}
         />
       )}

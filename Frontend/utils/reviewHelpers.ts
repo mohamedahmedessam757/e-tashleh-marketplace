@@ -26,6 +26,10 @@ export function isValidUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID_RE.test(value);
 }
 
+function idsEqual(a: unknown, b: unknown): boolean {
+  return String(a ?? '') === String(b ?? '') && String(a ?? '').length > 0;
+}
+
 function isAcceptedOffer(offer?: OrderOffer | null): boolean {
   if (!offer) return false;
   return isAcceptedOfferStatus(offer.status);
@@ -36,7 +40,32 @@ function normalizeFulfillment(status?: string | null): string {
 }
 
 function isOfferFulfillmentReviewable(offer: OrderOffer): boolean {
-  return REVIEWABLE_OFFER_FULFILLMENT.has(normalizeFulfillment(offer.fulfillmentStatus));
+  const fs = normalizeFulfillment(offer.fulfillmentStatus);
+  if (REVIEWABLE_OFFER_FULFILLMENT.has(fs)) return true;
+  // Some payloads omit fulfillment while offer status already terminal
+  const st = String(offer.status || '').toUpperCase();
+  return st === 'DELIVERED' || st === 'COMPLETED';
+}
+
+/** Deduped accepted offers from both list + detail payload shapes. */
+export function getAcceptedOffers(order: Order | null | undefined): OrderOffer[] {
+  if (!order) return [];
+  const fromAccepted = Array.isArray(order.acceptedOffers) ? order.acceptedOffers : [];
+  const fromOffers = Array.isArray(order.offers) ? order.offers : [];
+  // Prefer non-empty acceptedOffers; always merge offers that pass acceptance
+  const merged = [...fromAccepted, ...fromOffers].filter(isAcceptedOffer);
+  const seen = new Set<string>();
+  const out: OrderOffer[] = [];
+  for (const o of merged) {
+    const id = String(o.id || '');
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(o);
+  }
+  if (out.length === 0 && order.acceptedOffer && isAcceptedOffer(order.acceptedOffer)) {
+    out.push(order.acceptedOffer);
+  }
+  return out;
 }
 
 /** All reviews on the order (singular `review` + `reviews[]`). */
@@ -64,6 +93,11 @@ export function getReviewedOfferIds(order: Order | null | undefined): Set<string
   return ids;
 }
 
+function isOrderFullySettled(order: Order): boolean {
+  const s = String(order.status || '').toUpperCase();
+  return s === 'COMPLETED' || s === 'DELIVERED' || s === 'WARRANTY_ACTIVE';
+}
+
 /** Accepted offers that are delivered/completed and not yet reviewed. */
 export function getReviewableOffers(order: Order | null | undefined): OrderOffer[] {
   if (!order) return [];
@@ -75,18 +109,17 @@ export function getReviewableOffers(order: Order | null | undefined): OrderOffer
     return [];
   }
 
-  const acceptedList =
-    order.acceptedOffers?.filter(isAcceptedOffer) ??
-    order.offers?.filter(isAcceptedOffer) ??
-    [];
-
+  const acceptedList = getAcceptedOffers(order);
   const reviewed = getReviewedOfferIds(order);
+  const orderSettled = isOrderFullySettled(order);
 
   return acceptedList.filter((offer) => {
     if (!offer?.id) return false;
     if (reviewed.has(String(offer.id))) return false;
-    // Single-offer orders may lack per-offer fulfillment; order status is enough
-    if (acceptedList.length === 1 && !offer.fulfillmentStatus) return true;
+    // Single accepted offer: order-level status is enough
+    if (acceptedList.length === 1) return true;
+    // Multi: prefer per-offer fulfillment; if missing and whole order settled, allow
+    if (!offer.fulfillmentStatus && orderSettled) return true;
     return isOfferFulfillmentReviewable(offer);
   });
 }
@@ -97,6 +130,12 @@ export function orderNeedsReview(order: Order | null | undefined): boolean {
 
 export function findOrdersPendingReview(orders: Order[]): Order[] {
   return orders.filter(orderNeedsReview);
+}
+
+export function isMultiPartOrder(order: Order | null | undefined): boolean {
+  if (!order) return false;
+  if (order.requestType === 'multiple') return true;
+  return (order.parts?.length ?? 0) > 1;
 }
 
 /** Resolve store + display labels for the customer review modal. */
@@ -111,16 +150,24 @@ export function resolveReviewTarget(
 } | null {
   if (!order) return null;
 
-  const acceptedList =
-    order.acceptedOffers?.filter(isAcceptedOffer) ??
-    order.offers?.filter(isAcceptedOffer) ??
-    [];
+  const acceptedList = getAcceptedOffers(order);
+  const allOffers = [
+    ...acceptedList,
+    ...(Array.isArray(order.offers) ? order.offers : []),
+  ];
 
-  const primary = offerId
-    ? acceptedList.find((o) => o.id === offerId)
+  const explicitId = offerId ? String(offerId) : '';
+  const primary = explicitId
+    ? allOffers.find((o) => idsEqual(o.id, explicitId)) ||
+      acceptedList.find((o) => idsEqual(o.id, explicitId))
     : order.acceptedOffer && isAcceptedOffer(order.acceptedOffer)
       ? order.acceptedOffer
       : acceptedList[0];
+
+  // Never drop an explicitly selected offerId (multi-part backend requires it)
+  const resolvedOfferId = primary?.id
+    ? String(primary.id)
+    : explicitId || undefined;
 
   const storeId =
     (primary?.storeId && isValidUuid(primary.storeId) ? primary.storeId : undefined) ??
@@ -130,6 +177,11 @@ export function resolveReviewTarget(
 
   if (!storeId) return null;
 
+  // Multi-part: refuse a target without offerId (prevents "offerId is required")
+  if (isMultiPartOrder(order) && !resolvedOfferId) {
+    return null;
+  }
+
   const merchantName =
     primary?.merchantName ||
     order.merchantName ||
@@ -137,7 +189,7 @@ export function resolveReviewTarget(
 
   const partFromPrimary =
     primary?.partName ||
-    order.parts?.find((p) => p.id === primary?.orderPartId)?.name;
+    order.parts?.find((p) => idsEqual(p.id, primary?.orderPartId))?.name;
 
   const partName =
     partFromPrimary ||
@@ -145,5 +197,5 @@ export function resolveReviewTarget(
     order.parts?.[0]?.name ||
     'Part';
 
-  return { storeId, merchantName, partName, offerId: primary?.id };
+  return { storeId, merchantName, partName, offerId: resolvedOfferId };
 }

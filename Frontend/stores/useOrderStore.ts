@@ -14,6 +14,7 @@ import { canCustomerCancelOrder } from '../utils/orderCancelPolicy';
 import { markOrderCancelledByCustomer, clearOrderCancelledByCustomer } from '../utils/orderExpiryHelpers';
 import { useAdminStore } from './useAdminStore';
 import { getAccessToken } from '../utils/auth';
+import { isAcceptedOfferStatus } from '../utils/offerStatusHelpers';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1069,7 +1070,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 })(),
                 merchantName: o.offers?.find((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase()))?.store?.name || null,
                 acceptedOffer: o.offers?.find((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())),
-                acceptedOffers: o.offers?.filter((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())),
+                    acceptedOffers: o.offers?.filter((of: any) =>
+                        isAcceptedOfferStatus(of.status),
+                    ),
                 verificationDocuments: normalizeVerificationDocuments(o.verificationDocuments),
                 auditLogs: Array.isArray(o.auditLogs)
                     ? o.auditLogs.map((log: any) => ({
