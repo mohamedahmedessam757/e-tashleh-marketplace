@@ -48,7 +48,7 @@ import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from './resolution/AdjudicationFeePaymentCard';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
-import { getOrderReview, resolveReviewTarget } from '../../utils/reviewHelpers';
+import { getOrderReview, getReviewedOfferIds, resolveReviewTarget } from '../../utils/reviewHelpers';
 import { parseImageList, resolveMediaSrc, resolvePartPrimaryImage } from '../../utils/partMedia';
 import { ordersApi } from '../../services/api/orders';
 import {
@@ -213,6 +213,11 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviewOfferId, setReviewOfferId] = useState<string | undefined>(undefined);
     const [reviewedOfferIds, setReviewedOfferIds] = useState<Set<string>>(() => new Set());
+
+    React.useEffect(() => {
+        if (!order) return;
+        setReviewedOfferIds(getReviewedOfferIds(order));
+    }, [order?.id, order?.reviews, order?.review]);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [showExpiredModal, setShowExpiredModal] = useState(false);
@@ -1064,6 +1069,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 comment: review.comment,
                                 adminStatus: review.adminStatus,
                                 createdAt: review.createdAt,
+                                offerId: reviewTarget?.offerId ?? null,
                             });
                         }}
                     />
@@ -1959,7 +1965,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             />
                                                         )}
                                                         {(cardOffer.fulfillmentStatus === 'COMPLETED' ||
-                                                            cardOffer.fulfillmentStatus === 'completed') &&
+                                                            cardOffer.fulfillmentStatus === 'completed' ||
+                                                            cardOffer.fulfillmentStatus === 'DELIVERED' ||
+                                                            cardOffer.fulfillmentStatus === 'delivered') &&
                                                             !reviewedOfferIds.has(acceptedPartOffer.id) && (
                                                             <button
                                                                 type="button"

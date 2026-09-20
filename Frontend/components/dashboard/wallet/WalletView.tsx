@@ -48,6 +48,7 @@ import {
 
 import { RestrictionAlertBanner } from '../shared/RestrictionAlertBanner';
 import { WithdrawalReceiptModal } from '../shared/WithdrawalReceiptModal';
+import { ReferralShareDestinations } from '../rewards/ReferralShareDestinations';
 import { paymentsApi } from '../../../services/api/payments';
 import { PayoutMethodPanel } from './PayoutMethodPanel';
 import { BankDetailsModal } from './BankDetailsModal';
@@ -85,6 +86,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     } = useCustomerWalletStore();
     const { notifications, fetchNotifications } = useNotificationStore();
     const [copied, setCopied] = useState(false);
+    const [shareSheetOpen, setShareSheetOpen] = useState(false);
     const [filter, setFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -1415,11 +1417,14 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                         </div>
                                         
                                         <button 
-                                            onClick={handleCopyReferral}
-                                            className={`w-full py-3.5 rounded-xl transition-all shadow-xl font-black text-[10px] uppercase tracking-[2px] relative overflow-hidden group/btn flex items-center justify-center gap-2 ${copied ? 'bg-emerald-500 text-black shadow-emerald-500/20' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 hover:-translate-y-0.5'}`}
+                                            onClick={() => {
+                                                if (!stats?.referralCode) return;
+                                                setShareSheetOpen(true);
+                                            }}
+                                            className="w-full py-3.5 rounded-xl transition-all shadow-xl font-black text-[10px] uppercase tracking-[2px] relative overflow-hidden group/btn flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 hover:-translate-y-0.5"
                                         >
-                                            {copied ? <CheckCircle2 size={16} /> : <Share2 size={16} className="group-hover/btn:rotate-12 transition-transform" />}
-                                            {copied ? (isAr ? 'تم النسخ!' : 'LINK COPIED!') : (isAr ? 'دعوة صديق الآن' : 'INVITE PARTNER')}
+                                            <Share2 size={16} className="group-hover/btn:rotate-12 transition-transform" />
+                                            {isAr ? 'دعوة صديق الآن' : 'INVITE PARTNER'}
                                         </button>
                                         
                                         <div className="p-3 bg-white/[0.03] rounded-xl border border-white/5 space-y-2">
@@ -1609,6 +1614,16 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {stats?.referralCode && (
+                <ReferralShareDestinations
+                    referralCode={stats.referralCode}
+                    isAr={isAr}
+                    variant="sheet"
+                    isOpen={shareSheetOpen}
+                    onClose={() => setShareSheetOpen(false)}
+                />
+            )}
         </div>
     );
 };

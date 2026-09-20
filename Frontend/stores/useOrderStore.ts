@@ -287,7 +287,22 @@ export interface Order {
     selectionDeadlineAt?: string;
 
     // Review
-    review?: any;
+    review?: {
+        id: string;
+        rating?: number;
+        comment?: string | null;
+        adminStatus?: string;
+        offerId?: string | null;
+        createdAt?: string;
+    };
+    reviews?: {
+        id: string;
+        rating?: number;
+        comment?: string | null;
+        adminStatus?: string;
+        offerId?: string | null;
+        createdAt?: string;
+    }[];
 }
 
 const parseJsonArray = (value: unknown): string[] => {
@@ -819,9 +834,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     patchOrderReview: (orderId, review) => {
         set((state) => ({
-            orders: state.orders.map((o) =>
-                String(o.id) === String(orderId) ? { ...o, review } : o,
-            ),
+            orders: state.orders.map((o) => {
+                if (String(o.id) !== String(orderId)) return o;
+                const prevReviews = Array.isArray(o.reviews) ? o.reviews : o.review ? [o.review] : [];
+                const withoutDup = prevReviews.filter(
+                    (r) =>
+                        String(r.id) !== String(review.id) &&
+                        !(review.offerId && r.offerId && String(r.offerId) === String(review.offerId)),
+                );
+                const nextReviews = [...withoutDup, review];
+                return { ...o, review, reviews: nextReviews };
+            }),
         }));
     },
 
@@ -1099,9 +1122,31 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                         rating: raw.rating,
                         comment: raw.comment,
                         adminStatus: raw.adminStatus,
+                        offerId: raw.offerId ?? null,
                         createdAt: raw.createdAt,
                     };
                 })(),
+                reviews: Array.isArray(o.reviews)
+                    ? o.reviews.map((r: any) => ({
+                          id: r.id,
+                          rating: r.rating,
+                          comment: r.comment,
+                          adminStatus: r.adminStatus,
+                          offerId: r.offerId ?? null,
+                          createdAt: r.createdAt,
+                      }))
+                    : o.review
+                      ? [
+                            {
+                                id: o.review.id,
+                                rating: o.review.rating,
+                                comment: o.review.comment,
+                                adminStatus: o.review.adminStatus,
+                                offerId: o.review.offerId ?? null,
+                                createdAt: o.review.createdAt,
+                            },
+                        ]
+                      : undefined,
             }));
     },
 

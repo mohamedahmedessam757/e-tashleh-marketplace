@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Star, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, ChevronRight, ChevronLeft, Sparkles, X, Package } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { useOrderStore, type Order } from '../../../stores/useOrderStore';
+import { useOrderStore, type Order, type OrderOffer } from '../../../stores/useOrderStore';
 import { ReviewModal } from '../reviews/ReviewModal';
 import {
   findOrdersPendingReview,
+  getReviewableOffers,
   orderNeedsReview,
   resolveReviewTarget,
 } from '../../../utils/reviewHelpers';
@@ -28,7 +29,10 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
   const { orders, fetchOrders } = useOrderStore();
 
   const [showModal, setShowModal] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(undefined);
+  const [pickerMessage, setPickerMessage] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (!orderProp && orders.length === 0) {
@@ -46,13 +50,48 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
   if (pendingOrders.length === 0) return null;
 
   const targetOrder = activeOrder ?? pendingOrders[0];
-  const reviewTarget = resolveReviewTarget(targetOrder);
-  if (!reviewTarget) return null;
+  const reviewable = getReviewableOffers(targetOrder);
+  const offerForModal =
+    selectedOfferId
+      ? reviewable.find((o) => o.id === selectedOfferId) ?? reviewable[0]
+      : reviewable[0];
+  const reviewTarget = resolveReviewTarget(targetOrder, offerForModal?.id);
+  if (!reviewTarget && reviewable.length === 0) return null;
 
-  const openReview = (order: Order) => {
+  const partLabel = (offer: OrderOffer) =>
+    offer.partName ||
+    targetOrder.parts?.find((p) => p.id === offer.orderPartId)?.name ||
+    targetOrder.part ||
+    (isAr ? 'قطعة' : 'Part');
+
+  const openReviewFlow = (order: Order) => {
     setActiveOrder(order);
+    setPickerMessage(null);
+    const offers = getReviewableOffers(order);
+    if (offers.length === 0) {
+      setPickerMessage(
+        isAr
+          ? 'لا توجد قطع مكتملة بانتظار التقييم حالياً.'
+          : 'No completed parts awaiting review right now.',
+      );
+      return;
+    }
+    if (offers.length === 1) {
+      setSelectedOfferId(offers[0].id);
+      setShowModal(true);
+      return;
+    }
+    setShowPicker(true);
+  };
+
+  const pickOffer = (offerId: string) => {
+    setSelectedOfferId(offerId);
+    setShowPicker(false);
     setShowModal(true);
   };
+
+  const bannerTarget = resolveReviewTarget(targetOrder, reviewable[0]?.id) ?? reviewTarget;
+  if (!bannerTarget) return null;
 
   return (
     <>
@@ -73,20 +112,30 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
               </p>
               <h3 className="text-white font-black text-lg leading-tight">
                 {isAr
-                  ? `قيّم ${reviewTarget.merchantName} — طلب #${targetOrder.orderNumber || targetOrder.id}`
-                  : `Rate ${reviewTarget.merchantName} — Order #${targetOrder.orderNumber || targetOrder.id}`}
+                  ? `قيّم ${bannerTarget.merchantName} — طلب #${targetOrder.orderNumber || targetOrder.id}`
+                  : `Rate ${bannerTarget.merchantName} — Order #${targetOrder.orderNumber || targetOrder.id}`}
               </h3>
               <p className="text-white/55 text-sm mt-1.5 leading-relaxed">
                 {isAr
                   ? 'تقييمك يساعد التاجر على التقدم في مستوى المتجر ويحسّن تجربة الجميع على المنصة.'
                   : 'Your rating helps the merchant advance their store level and improves the marketplace for everyone.'}
               </p>
-              {pendingOrders.length > 1 && (
+              {reviewable.length > 1 && (
                 <p className="text-gold-500/70 text-xs font-bold mt-2">
+                  {isAr
+                    ? `${reviewable.length} قطع مكتملة بانتظار تقييمك`
+                    : `${reviewable.length} completed parts awaiting your review`}
+                </p>
+              )}
+              {pendingOrders.length > 1 && (
+                <p className="text-gold-500/70 text-xs font-bold mt-1">
                   {isAr
                     ? `${pendingOrders.length} طلبات بانتظار تقييمك`
                     : `${pendingOrders.length} orders awaiting your review`}
                 </p>
+              )}
+              {pickerMessage && (
+                <p className="text-amber-400/90 text-xs font-bold mt-2">{pickerMessage}</p>
               )}
             </div>
           </div>
@@ -103,7 +152,7 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
             )}
             <button
               type="button"
-              onClick={() => openReview(targetOrder)}
+              onClick={() => openReviewFlow(targetOrder)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-black font-black text-sm transition-all shadow-lg shadow-gold-500/20"
             >
               <Star size={16} fill="currentColor" />
@@ -114,28 +163,103 @@ export const PendingStoreReviewBanner: React.FC<PendingStoreReviewBannerProps> =
         </div>
       </motion.div>
 
-      <ReviewModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setActiveOrder(null);
-        }}
-        orderId={targetOrder.id}
-        storeId={reviewTarget.storeId}
-        merchantName={reviewTarget.merchantName}
-        partName={reviewTarget.partName}
-        onSuccess={(review) => {
-          useOrderStore.getState().patchOrderReview(String(targetOrder.id), {
-            id: review.id,
-            rating: review.rating,
-            comment: review.comment,
-            adminStatus: review.adminStatus,
-            createdAt: review.createdAt,
-          });
-          setShowModal(false);
-          setActiveOrder(null);
-        }}
-      />
+      <AnimatePresence>
+        {showPicker && (
+          <div className="fixed inset-0 z-[130] flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <motion.button
+              type="button"
+              aria-label="Close"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+              onClick={() => setShowPicker(false)}
+            />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              className="relative z-10 w-full sm:max-w-md bg-[#12100E] border border-white/10 rounded-t-3xl sm:rounded-3xl p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl max-h-[80vh] overflow-y-auto"
+            >
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    {isAr ? 'اختر القطعة للتقييم' : 'Choose a part to review'}
+                  </h3>
+                  <p className="text-xs text-white/45 mt-1">
+                    {isAr
+                      ? 'قطع مكتملة فقط — كل تقييم مرتبط بعرض ومتجر'
+                      : 'Completed parts only — each review is tied to an offer and store'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPicker(false)}
+                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {reviewable.map((offer) => (
+                  <button
+                    key={offer.id}
+                    type="button"
+                    onClick={() => pickOffer(offer.id)}
+                    className="w-full min-h-[52px] flex items-center gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gold-500/10 hover:border-gold-500/30 text-start transition-all"
+                  >
+                    <span className="w-10 h-10 rounded-xl bg-gold-500/15 border border-gold-500/25 flex items-center justify-center text-gold-400 shrink-0">
+                      <Package size={18} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-black text-white truncate">
+                        {partLabel(offer)}
+                      </span>
+                      <span className="block text-[11px] text-white/45 font-bold mt-0.5 truncate">
+                        {offer.merchantName || bannerTarget.merchantName}
+                        {' · '}
+                        {isAr ? 'مكتمل' : 'Completed'}
+                      </span>
+                    </span>
+                    <Chevron size={18} className="text-white/30 shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {reviewTarget && (
+        <ReviewModal
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedOfferId(undefined);
+            setActiveOrder(null);
+          }}
+          orderId={targetOrder.id}
+          storeId={reviewTarget.storeId}
+          merchantName={reviewTarget.merchantName}
+          partName={reviewTarget.partName}
+          offerId={reviewTarget.offerId}
+          onSuccess={(review) => {
+            useOrderStore.getState().patchOrderReview(String(targetOrder.id), {
+              id: review.id,
+              rating: review.rating,
+              comment: review.comment,
+              adminStatus: review.adminStatus,
+              createdAt: review.createdAt,
+              offerId: reviewTarget.offerId,
+            });
+            setShowModal(false);
+            setSelectedOfferId(undefined);
+            setActiveOrder(null);
+          }}
+        />
+      )}
     </>
   );
 };

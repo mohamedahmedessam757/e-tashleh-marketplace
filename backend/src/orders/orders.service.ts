@@ -565,7 +565,6 @@ export class OrdersService {
                             offerId: true,
                             createdAt: true,
                         },
-                        take: 1,
                         orderBy: { createdAt: 'desc' },
                     },
                     offers: {

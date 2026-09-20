@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useDeferredValue, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, DollarSign, UploadCloud, Car, Loader2, Calculator, ShieldCheck, PlayCircle, AlertCircle, Check, Package, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, DollarSign, Car, Loader2, Calculator, ShieldCheck, PlayCircle, AlertCircle, Check, Package, CheckCircle2, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAdminStore } from '../../../stores/useAdminStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { offersApi } from '../../../services/api/offers';
 import { supabase } from '../../../services/supabase';
+import { OfferEvidenceCapture } from './OfferEvidenceCapture';
 
 interface SubmitOfferModalProps {
     isOpen: boolean;
@@ -44,6 +45,8 @@ interface PartFormData {
     condition: string;
     notes: string;
     imageUrl: string | null;
+    imageUrls: string[];
+    videoUrl: string | null;
     cylinders?: number;
 }
 
@@ -57,6 +60,8 @@ const DEFAULT_FORM: PartFormData = {
     condition: 'used_clean',
     notes: '',
     imageUrl: null,
+    imageUrls: [],
+    videoUrl: null,
     cylinders: undefined,
 };
 
@@ -214,6 +219,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
     const [shake, setShake] = useState(false);
     const [submitProgress, setSubmitProgress] = useState<{ current: number; total: number } | null>(null);
     const [customWarranties, setCustomWarranties] = useState<Record<string, string>>({}); // NEW for custom free text warranty
+    const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
 
     // Build a map of existing offers by partId for quick lookup
     const existingOfferMap = useMemo(() => {
@@ -268,6 +274,10 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                 condition: offer.condition || 'used_clean',
                 notes: offer.notes || '',
                 imageUrl: offer.offerImage || offer.offer_image || null,
+                imageUrls: (offer.offerImage || offer.offer_image)
+                    ? [offer.offerImage || offer.offer_image]
+                    : [],
+                videoUrl: null,
                 cylinders: offer.cylinders ? Number(offer.cylinders) : undefined,
             };
         };
@@ -468,31 +478,70 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
         [shipmentTypes],
     );
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !activePartId) return;
+    const uploadOfferFile = async (file: File): Promise<string> => {
+        const fileExt = file.name.split('.').pop() || 'bin';
+        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+            .from('offer-attachments')
+            .upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('offer-attachments').getPublicUrl(fileName);
+        return urlData.publicUrl;
+    };
 
-        const file = e.target.files[0];
+    const handleCapturePhoto = async (file: File) => {
+        if (!activePartId) return;
         setUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const { data, error } = await supabase.storage
-                .from('offer-attachments')
-                .upload(fileName, file);
-
-            if (error) throw error;
-
-            const { data: urlData } = supabase.storage
-                .from('offer-attachments')
-                .getPublicUrl(fileName);
-
-            updateField('imageUrl', urlData.publicUrl);
-        } catch (error) {
-            console.error('Upload failed:', error);
+            const url = await uploadOfferFile(file);
+            setFormDataMap((prev) => {
+                const cur = prev[activePartId] || DEFAULT_FORM;
+                const nextUrls = [...(cur.imageUrls || []), url];
+                return {
+                    ...prev,
+                    [activePartId]: {
+                        ...cur,
+                        imageUrls: nextUrls,
+                        imageUrl: nextUrls[0] || null,
+                    },
+                };
+            });
+        } catch (err) {
+            console.error('Upload failed:', err);
             alert(isAr ? 'فشل رفع الصورة. حاول مرة أخرى.' : 'Upload failed. Please try again.');
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleCaptureVideo = async (file: File) => {
+        if (!activePartId) return;
+        setUploading(true);
+        try {
+            const url = await uploadOfferFile(file);
+            updateField('videoUrl', url);
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert(isAr ? 'فشل رفع الفيديو. حاول مرة أخرى.' : 'Video upload failed. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        if (!activePartId) return;
+        setFormDataMap((prev) => {
+            const cur = prev[activePartId] || DEFAULT_FORM;
+            const nextUrls = (cur.imageUrls || []).filter((_, i) => i !== index);
+            return {
+                ...prev,
+                [activePartId]: {
+                    ...cur,
+                    imageUrls: nextUrls,
+                    imageUrl: nextUrls[0] || null,
+                },
+            };
+        });
     };
 
     const triggerError = (msg: string) => {
@@ -544,9 +593,9 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                 setActivePartId(partId);
                 return;
             }
-            if (!form.imageUrl) {
+            if (!form.imageUrl && !(form.imageUrls?.length)) {
                 const partName = parts.find((p: any) => p.id === partId)?.name || requestDetails?.part || '';
-                triggerError(isAr ? `يرجى رفع صورة للقطعة: ${partName}` : `Please upload an image for: ${partName}`);
+                triggerError(isAr ? `يرجى التقاط صورة بالكاميرا للقطعة: ${partName}` : `Please capture a camera photo for: ${partName}`);
                 setActivePartId(partId);
                 return;
             }
@@ -576,6 +625,13 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                 const existingOffer = existingOfferMap.get(partId);
 
                 // Editable fields (shared between create and update)
+                const primaryImage = form.imageUrls?.[0] || form.imageUrl || undefined;
+                const notesWithVideo =
+                    form.videoUrl && form.notes
+                        ? `${form.notes}\n[video]${form.videoUrl}`
+                        : form.videoUrl
+                          ? `[video]${form.videoUrl}`
+                          : form.notes;
                 const editableFields = {
                     unitPrice: price,
                     weightKg: w,
@@ -586,8 +642,8 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                         ? (form.warrantyDuration === 'custom' ? customWarranties[partId] : form.warrantyDuration) 
                         : undefined,
                     deliveryDays: form.deliveryTime,
-                    notes: form.notes,
-                    offerImage: form.imageUrl || undefined,
+                    notes: notesWithVideo,
+                    offerImage: primaryImage,
                     shippingCost,
                     cylinders: normalizedCylinders,
                 };
@@ -723,7 +779,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
 
                     {/* ====== PART SELECTION BAR (Multi-Part Only) ====== */}
                     {isMultiPart && (
-                        <div className="border-b border-white/10 bg-white/5 p-4">
+                        <div className="border-b border-white/10 bg-white/5 p-4 shrink-0">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                                     <Package size={16} className="text-gold-400" />
@@ -731,7 +787,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                 </h3>
                                 <button onClick={onClose} className="text-white/40 hover:text-white"><X size={20} /></button>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-col gap-2 max-h-[40vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
                                 {parts.map((p: any) => {
                                     const isSelected = selectedPartIds.has(p.id);
                                     const isActive = activePartId === p.id;
@@ -754,7 +810,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                     setActivePartId(remaining[0]);
                                                 }
                                             }}
-                                            className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
+                                            className={`relative flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium transition-all border w-full text-start ${
                                                 isPartBlocked
                                                     ? 'bg-amber-500/10 border-amber-500/20 text-amber-400/70 cursor-not-allowed'
                                                     : isAwardedToOther
@@ -768,7 +824,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                     : 'bg-white/5 border-white/10 text-white/50 hover:border-white/20 hover:text-white/70'
                                                 }`}
                                         >
-                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                                            <div className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
                                                 isAwardedToOther ? 'bg-red-500/10 border-red-500/30' 
                                                 : hasExistingOffer ? 'bg-green-500/10 border-green-500/30' 
                                                 : isSelected ? 'bg-gold-500 border-gold-500' 
@@ -779,20 +835,20 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                             {p.images?.[0] && (
                                                 <PartThumb
                                                     src={p.images[0]}
-                                                    className={`w-6 h-6 rounded object-cover ${isAwardedToOther ? 'grayscale' : ''}`}
+                                                    className={`w-8 h-8 rounded object-cover shrink-0 ${isAwardedToOther ? 'grayscale' : ''}`}
                                                 />
                                             )}
-                                            <span className="truncate max-w-[120px]">{p.name}</span>
+                                            <span className="flex-1 min-w-0 font-bold truncate">{p.name}</span>
                                             {isPartBlocked ? (
-                                                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+                                                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0">
                                                     {isAr ? 'انسحاب' : 'Withdrawn'}
                                                 </span>
                                             ) : isAwardedToOther ? (
-                                                <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20 whitespace-nowrap">
+                                                <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20 whitespace-nowrap shrink-0">
                                                     {isAr ? 'تم الاختيار' : 'Sold'}
                                                 </span>
                                             ) : hasExistingOffer && (
-                                                <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded-full border border-green-500/20 whitespace-nowrap">
+                                                <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded-full border border-green-500/20 whitespace-nowrap shrink-0">
                                                     {isAr ? 'عرض مقدم' : 'Offered'}
                                                 </span>
                                             )}
@@ -800,9 +856,8 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                     );
                                 })}
                             </div>
-                            {/* Part Tabs for switching */}
                             {selectedPartIds.size > 1 && (
-                                <div className="flex gap-1 mt-3 border-t border-white/5 pt-3">
+                                <div className="flex gap-1 mt-3 border-t border-white/5 pt-3 overflow-x-auto">
                                     {Array.from(selectedPartIds).map((partId) => {
                                         const part = parts.find((p: any) => p.id === partId);
                                         const isActive = activePartId === partId;
@@ -813,7 +868,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                 key={partId}
                                                 type="button"
                                                 onClick={() => setActivePartId(partId)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isActive
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${isActive
                                                     ? 'bg-gold-500 text-black'
                                                     : hasData
                                                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
@@ -832,10 +887,24 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
 
                     {/* ====== MAIN CONTENT ====== */}
                     {activePartId && selectedPartIds.size > 0 ? (
-                        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
 
-                            {/* LEFT SIDE: Order Details & Live Calc */}
-                            <div className="w-full lg:w-[45%] p-4 sm:p-6 md:p-8 bg-white/5 border-b lg:border-b-0 lg:border-e border-white/10 overflow-y-auto overscroll-contain [contain:layout] min-w-0">
+                            {/* LEFT SIDE: Order Details & Live Calc — accordion on mobile */}
+                            <div className="w-full lg:w-[45%] bg-white/5 border-b lg:border-b-0 lg:border-e border-white/10 lg:overflow-y-auto overscroll-contain [contain:layout] min-w-0 shrink-0 lg:shrink">
+                                <button
+                                    type="button"
+                                    className="lg:hidden w-full flex items-center justify-between gap-3 p-4 text-start"
+                                    onClick={() => setMobileCalcOpen((v) => !v)}
+                                >
+                                    <span className="text-xs font-black text-gold-400 uppercase tracking-widest">
+                                        {isAr ? 'معاينة الطلب والحساب' : 'Order preview & calculator'}
+                                    </span>
+                                    <ChevronDown
+                                        size={18}
+                                        className={`text-white/40 transition-transform ${mobileCalcOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+                                <div className={`${mobileCalcOpen ? 'block' : 'hidden'} lg:block p-4 sm:p-6 md:p-8`}>
 
                                 {/* Active Part Name Header */}
                                 <div className="mb-4 px-3 py-2.5 bg-gold-500/10 border border-gold-500/20 rounded-xl">
@@ -902,11 +971,12 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                     finalPriceLabel={t.dashboard.merchant.offerModal.calc.finalCustomerPrice}
                                     shippingLabel={t.dashboard.merchant.offerModal.calc.shipping || (isAr ? 'تكلفة الشحن' : 'Shipping')}
                                 />
+                                </div>
                             </div>
 
-                            {/* RIGHT SIDE: Offer Form */}
-                            <div className="w-full lg:w-[55%] flex flex-col min-h-0 bg-[#1A1814] overflow-y-auto overscroll-contain [contain:layout]">
-                                <div className="p-4 sm:p-6 md:p-8 border-b border-white/5 flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-black/20 min-w-0">
+                            {/* RIGHT SIDE: Offer Form — single scroll on mobile; sticky actions */}
+                            <div className="w-full lg:w-[55%] flex flex-col min-h-0 bg-[#1A1814] flex-1">
+                                <div className="p-4 sm:p-6 md:p-8 border-b border-white/5 flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-black/20 min-w-0 shrink-0">
                                     <div className="min-w-0">
                                         <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">{t.dashboard.merchant.offerModal.yourOffer}</h3>
                                         <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest mt-1">{isAr ? 'أدخل تفاصيل عرضك بدقة' : 'Enter your offer details with precision'}</p>
@@ -921,7 +991,8 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                     )}
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 min-h-0">
+                                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                                <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 md:p-8 space-y-6 min-h-0">
 
                                     {/* SECTION 1: PRICE & LOGISTICS */}
                                     <div className="space-y-4">
@@ -1062,7 +1133,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                                         <option value="new" className="bg-[#1A1814]">{t.dashboard.merchant.offerModal.conditions.new}</option>
                                                         <option value="used_clean" className="bg-[#1A1814]">{t.dashboard.merchant.offerModal.conditions.used_clean}</option>
                                                     </select>
-                                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-white/20 group-hover:text-gold-500 transition-colors">
+                                                    <div className="absolute inset-y-0 end-4 flex items-center pointer-events-none text-white/20 group-hover:text-gold-500 transition-colors">
                                                         <ChevronDown size={16} />
                                                     </div>
                                                 </div>
@@ -1140,30 +1211,18 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                         />
                                     </div>
 
-                                    {/* 6. Image Upload */}
-                                    <div className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-white/30 hover:bg-white/5 cursor-pointer transition-all group overflow-hidden ${error && !activeForm.imageUrl ? 'border-red-500 ring-2 ring-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/10 hover:border-gold-500/30'}`}>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileUpload}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        />
-                                        {uploading ? (
-                                            <Loader2 className="animate-spin text-gold-500" />
-                                        ) : activeForm.imageUrl ? (
-                                            <div className="relative w-full h-32">
-                                                <img src={activeForm.imageUrl} alt="Uploaded" className="w-full h-full object-contain rounded-lg" />
-                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs">
-                                                    {isAr ? 'اضغط لتغيير' : 'Click to Change'}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <UploadCloud size={24} className="mb-2 group-hover:text-gold-400 transition-colors" />
-                                                <span className="text-xs font-bold">{t.dashboard.merchant.offerModal.uploadLabel}</span>
-                                            </>
-                                        )}
-                                    </div>
+                                    {/* 6. Camera evidence */}
+                                    <OfferEvidenceCapture
+                                        imageUrls={activeForm.imageUrls?.length ? activeForm.imageUrls : (activeForm.imageUrl ? [activeForm.imageUrl] : [])}
+                                        videoUrl={activeForm.videoUrl}
+                                        uploading={uploading}
+                                        error={!!(error && !activeForm.imageUrl)}
+                                        isAr={isAr}
+                                        onCapturePhoto={handleCapturePhoto}
+                                        onCaptureVideo={handleCaptureVideo}
+                                        onRemoveImage={handleRemoveImage}
+                                        onRemoveVideo={() => updateField('videoUrl', null)}
+                                    />
 
                                     {/* Error */}
                                     <AnimatePresence>
@@ -1195,20 +1254,21 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                             </div>
                                         </div>
                                     )}
+                                </div>
 
-                                    {/* ENHANCED FOOTER ACTIONS */}
-                                    <div className="pt-8 mt-8 border-t border-white/5 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+                                    {/* Sticky footer actions */}
+                                    <div className="shrink-0 border-t border-white/10 bg-[#1A1814]/95 backdrop-blur-md p-3 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                                         <button
                                             type="button"
                                             onClick={onClose}
-                                            className="px-8 py-4 min-h-[44px] bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl font-black transition-all border border-white/5 uppercase tracking-widest text-[10px]"
+                                            className="px-8 py-4 min-h-[48px] bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl font-black transition-all border border-white/5 uppercase tracking-widest text-[10px]"
                                         >
                                             {t.common.cancel || (isAr ? "إلغاء" : "Cancel")}
                                         </button>
                                         <button
-                                            onClick={handleSubmit}
+                                            type="submit"
                                             disabled={isSubmitting || (offerLimit !== -1 && dailyOfferCount >= offerLimit)}
-                                            className={`flex-1 relative group overflow-hidden bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black font-black py-4 min-h-[44px] rounded-2xl transition-all shadow-xl shadow-gold-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
+                                            className={`flex-1 relative group overflow-hidden bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black font-black py-4 min-h-[48px] rounded-2xl transition-all shadow-xl shadow-gold-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                             {isSubmitting ? (

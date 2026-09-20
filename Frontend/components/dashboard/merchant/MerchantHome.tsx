@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge, StatusType } from '../../ui/Badge';
-import { TrendingUp, Package, DollarSign, Clock, CheckCircle2, Box, RefreshCcw, Activity, Zap, Star, AlertTriangle, ShieldAlert, Car, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, MessageSquare, ListChecks, FileText } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, Clock, CheckCircle2, Box, RefreshCcw, Activity, Zap, Star, AlertTriangle, ShieldAlert, Car, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, MessageSquare, ListChecks, FileText, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
@@ -45,6 +45,9 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     const isAr = language === 'ar';
     const ChevronIcon = isAr ? ChevronLeft : ChevronRight;
     const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
+    const [homeFilter, setHomeFilter] = useState<
+        'ALL' | 'NEW' | 'NEGOTIATING' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED'
+    >('ALL');
 
     // Fetch Dashboard Stats on Mount
     const { fetchDashboardStats, fetchVendorProfile } = useVendorStore();
@@ -120,23 +123,26 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     const myOrders = orders.filter(o => belongsToMerchantStore(o, myStoreId));
 
     // 1. New marketplace requests (open bidding only — never AWAITING_SELECTION)
-    const newRequests = orders.filter((o) => {
-        if (!isEligibleMerchantIncomingOrder(o)) return false;
+    const newRequestOrders = useMemo(() => {
+        return orders.filter((o) => {
+            if (!isEligibleMerchantIncomingOrder(o)) return false;
 
-        const make = (o.vehicle?.make || o.car || '').toLowerCase();
-        const model = (o.vehicle?.model || '').toLowerCase();
+            const make = (o.vehicle?.make || o.car || '').toLowerCase();
+            const model = (o.vehicle?.model || '').toLowerCase();
 
-        const selectedMakesLower = (storeInfo?.selectedMakes || []).map((m: string) => m.toLowerCase());
-        const selectedModelsLower = (storeInfo?.selectedModels || []).map((m: string) => m.toLowerCase());
+            const selectedMakesLower = (storeInfo?.selectedMakes || []).map((m: string) => m.toLowerCase());
+            const selectedModelsLower = (storeInfo?.selectedModels || []).map((m: string) => m.toLowerCase());
 
-        const hasMakes = selectedMakesLower.length > 0;
-        const hasModels = selectedModelsLower.length > 0;
+            const hasMakes = selectedMakesLower.length > 0;
+            const hasModels = selectedModelsLower.length > 0;
 
-        const matchesSpecialization = !hasMakes || selectedMakesLower.some((m: string) => make.includes(m));
-        const matchesModel = !hasModels || selectedModelsLower.some((m: string) => model.includes(m));
+            const matchesSpecialization = !hasMakes || selectedMakesLower.some((m: string) => make.includes(m));
+            const matchesModel = !hasModels || selectedModelsLower.some((m: string) => model.includes(m));
 
-        return matchesSpecialization && matchesModel;
-    }).length;
+            return matchesSpecialization && matchesModel;
+        });
+    }, [orders, storeInfo?.selectedMakes, storeInfo?.selectedModels]);
+    const newRequests = newRequestOrders.length;
     
     // 3. Orders Awaiting Verification Alert
     const preparedOrders = myOrders.filter(o => o.status === 'PREPARED');
@@ -156,19 +162,58 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     const inProgress = myOrders.filter(o => isMerchantInProgress(o.status)).length;
     const completedCount = myOrders.filter(o => isMerchantCompleted(o.status)).length;
     
-    // Rejected: Count of orders where ALL of my offers were rejected
-    const rejectedCount = orders.filter(o => {
-        const merchantOffers = o.offers?.filter(off => off.storeId === myStoreId) || [];
-        return merchantOffers.length > 0 && merchantOffers.every(off => off.status?.toLowerCase() === 'rejected');
-    }).length;
+    const rejectedOrders = useMemo(
+        () =>
+            orders.filter((o) => {
+                const merchantOffers = o.offers?.filter((off) => off.storeId === myStoreId) || [];
+                return (
+                    merchantOffers.length > 0 &&
+                    merchantOffers.every((off) => off.status?.toLowerCase() === 'rejected')
+                );
+            }),
+        [orders, myStoreId],
+    );
+    const rejectedCount = rejectedOrders.length;
 
     const statsCards = [
-        { label: t.dashboard.merchant.kpi.newRequests, value: newRequests, icon: Box, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        { label: t.dashboard.merchant.kpi.negotiating, value: negotiating, icon: MessageSquare, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-        { label: t.dashboard.merchant.kpi.executing, value: inProgress, icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-        { label: t.dashboard.merchant.kpi.done, value: completedCount, icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10' },
-        { label: t.dashboard.merchant.kpi.rejected, value: rejectedCount, icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
+        { key: 'NEW' as const, label: t.dashboard.merchant.kpi.newRequests, value: newRequests, icon: Box, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+        { key: 'NEGOTIATING' as const, label: t.dashboard.merchant.kpi.negotiating, value: negotiating, icon: MessageSquare, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+        { key: 'IN_PROGRESS' as const, label: t.dashboard.merchant.kpi.executing, value: inProgress, icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+        { key: 'COMPLETED' as const, label: t.dashboard.merchant.kpi.done, value: completedCount, icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10' },
+        { key: 'REJECTED' as const, label: t.dashboard.merchant.kpi.rejected, value: rejectedCount, icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
     ];
+
+    const filterChips = [
+        { key: 'ALL' as const, label: isAr ? 'الكل' : 'All', count: myOrders.length + newRequests },
+        { key: 'NEW' as const, label: isAr ? 'طلبات جديدة' : 'New requests', count: newRequests },
+        { key: 'NEGOTIATING' as const, label: t.dashboard.merchant.kpi.negotiating, count: negotiating },
+        { key: 'IN_PROGRESS' as const, label: t.dashboard.merchant.kpi.executing, count: inProgress },
+        { key: 'COMPLETED' as const, label: t.dashboard.merchant.kpi.done, count: completedCount },
+        { key: 'REJECTED' as const, label: t.dashboard.merchant.kpi.rejected, count: rejectedCount },
+    ];
+
+    const filteredActivityOrders = useMemo(() => {
+        if (homeFilter === 'ALL') {
+            return myOrders.filter((o) => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any));
+        }
+        if (homeFilter === 'NEW') return newRequestOrders;
+        if (homeFilter === 'NEGOTIATING') return myOrders.filter((o) => isMerchantNegotiating(o.status));
+        if (homeFilter === 'IN_PROGRESS') return myOrders.filter((o) => isMerchantInProgress(o.status));
+        if (homeFilter === 'COMPLETED') return myOrders.filter((o) => isMerchantCompleted(o.status));
+        if (homeFilter === 'REJECTED') return rejectedOrders;
+        return myOrders;
+    }, [homeFilter, myOrders, newRequestOrders, rejectedOrders]);
+
+    const filteredLiveOrder = useMemo(() => {
+        if (homeFilter === 'NEW') return newRequestOrders[0] || null;
+        const pool = filteredActivityOrders;
+        return (
+            MERCHANT_LIVE_TRACKING_STATUSES.map((status) => pool.find((o) => o.status === status)).find(Boolean) ||
+            pool.find((o) => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any)) ||
+            pool[0] ||
+            null
+        );
+    }, [homeFilter, filteredActivityOrders, newRequestOrders]);
 
     // --- Logic for Offers Summary (KPIs area) ---
     const offersSent = orders.reduce((acc, o) => acc + (o.offers?.filter(off => off.storeId === myStoreId).length || 0), 0);
@@ -181,9 +226,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
         { label: t.dashboard.merchant.kpi.offersRejected, value: offersRejectedTotal, icon: AlertTriangle, color: 'text-red-400' }
     ];
 
-    const liveOrder = MERCHANT_LIVE_TRACKING_STATUSES
-        .map(status => myOrders.find(o => o.status === status))
-        .find(Boolean) || myOrders.find(o => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any));
+    const liveOrder = filteredLiveOrder;
 
     return (
         <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 min-w-0 overflow-x-clip">
@@ -191,6 +234,39 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             <PolicyChangeBanner audience="VENDOR" />
             <StripeActivationBanner onNavigate={onNavigate} />
             <LicenseExpiryBanner onNavigate={onNavigate} />
+
+            {newRequests > 0 && (
+                <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => onNavigate('marketplace')}
+                    className="w-full text-start relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-[#1A1814] to-gold-500/5 p-5 shadow-[0_0_30px_rgba(34,211,238,0.08)] hover:border-cyan-400/50 transition-all"
+                >
+                    <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                            <Sparkles className="text-cyan-400" size={22} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                                {isAr ? 'طلبات جديدة متاحة' : 'New requests available'}
+                            </p>
+                            <h3 className="text-white font-black text-lg leading-tight">
+                                {isAr
+                                    ? `${newRequests} طلب يمكنك التقديم عليه الآن`
+                                    : `${newRequests} request${newRequests > 1 ? 's' : ''} you can bid on now`}
+                            </h3>
+                            <p className="text-white/50 text-sm mt-1">
+                                {isAr ? 'اضغط للانتقال إلى السوق وتقديم عرضك' : 'Tap to open the marketplace and submit your offer'}
+                            </p>
+                        </div>
+                        <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 text-black font-black text-sm shrink-0">
+                            {isAr ? 'افتح السوق' : 'Open marketplace'}
+                            <ArrowIcon size={16} />
+                        </span>
+                    </div>
+                </motion.button>
+            )}
 
             {isBiddingRestricted && (
                 <GlassCard className="bg-red-500/10 border-red-500/30 p-4 flex items-start gap-3">
@@ -328,8 +404,14 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                 </GlassCard>
 
                 <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {statsCards.map((stat, idx) => (
-                        <GlassCard key={idx} className="p-5 flex flex-col justify-between h-32 hover:border-gold-500/30 transition-all group cursor-default">
+                    {statsCards.map((stat) => (
+                        <GlassCard
+                            key={stat.key}
+                            onClick={() => setHomeFilter(stat.key)}
+                            className={`p-5 flex flex-col justify-between h-32 hover:border-gold-500/30 transition-all group cursor-pointer ${
+                                homeFilter === stat.key ? 'border-gold-500/40 ring-1 ring-gold-500/20' : ''
+                            }`}
+                        >
                             <div className="flex justify-between items-start">
                                 <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
                                     <stat.icon size={20} />
@@ -340,6 +422,31 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                                 <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider">{stat.label}</div>
                             </div>
                         </GlassCard>
+                    ))}
+                </div>
+            </div>
+
+            {/* Status filter chips */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                    <span className="text-xs font-bold text-white/40 uppercase tracking-wider">
+                        {isAr ? 'حسب الحالة' : 'By status'}
+                    </span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
+                    {filterChips.map((chip) => (
+                        <button
+                            key={chip.key}
+                            type="button"
+                            onClick={() => setHomeFilter(chip.key)}
+                            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
+                                homeFilter === chip.key
+                                    ? 'bg-gold-500 text-black border-gold-400 shadow-[0_0_14px_rgba(196,169,92,0.45)]'
+                                    : 'bg-white/5 text-white/70 border-white/10 hover:border-gold-500/40 hover:text-gold-300'
+                            }`}
+                        >
+                            {chip.label} ({chip.count})
+                        </button>
                     ))}
                 </div>
             </div>
@@ -494,15 +601,14 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                            {myOrders.filter(o => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any)).length === 0 ? (
+                            {filteredActivityOrders.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center text-white/10 space-y-3 py-20">
                                     <Activity size={40} />
                                     <span className="text-sm font-medium">{t.common.noData}</span>
                                 </div>
                             ) : (
-                                myOrders
-                                    .filter(o => !MERCHANT_TERMINAL_STATUSES.includes(o.status as any))
-                                    .slice(0, 5)
+                                filteredActivityOrders
+                                    .slice(0, 8)
                                     .map((order, i) => {
                                         const getStatusLabel = (status: string) => getMerchantStatusLabel(status, isAr);
 
@@ -516,7 +622,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
 
                                         return (
                                             <motion.div 
-                                                key={i}
+                                                key={order.id || i}
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.1 }}

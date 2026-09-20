@@ -52,6 +52,7 @@ import { PayoutMethodPanel } from '../wallet/PayoutMethodPanel';
 import { BankDetailsModal } from '../wallet/BankDetailsModal';
 import { PayoutLinkRequiredAlert } from '../wallet/PayoutLinkRequiredAlert';
 import { WithdrawalReceiptModal } from '../shared/WithdrawalReceiptModal';
+import { ReferralShareDestinations } from '../rewards/ReferralShareDestinations';
 import { ObligationPayBanner } from './ObligationPayBanner';
 import { paymentsApi } from '../../../services/api/payments';
 import {
@@ -123,6 +124,7 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
     const [filter, setFilter] = useState<'ALL' | 'DONE' | 'PENDING'>('ALL');
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
     // Withdrawal Form State
     const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -1463,9 +1465,18 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                         </button>
                                     </div>
                                 </div>
-                                <button onClick={handleCopyReferral} className={`w-full py-3.5 rounded-xl transition-all shadow-xl font-black text-[10px] uppercase tracking-[2px] relative overflow-hidden group/btn flex items-center justify-center gap-2 ${copied ? 'bg-emerald-500 text-black' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
-                                    {copied ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
-                                    {copied ? (isAr ? 'تم نسخ الرابط!' : 'LINK COPIED!') : (isAr ? 'دعوة صديق الآن' : 'INVITE PARTNER')}
+                                <button
+                                    onClick={() => {
+                                        if (!stats?.referralCode) {
+                                            alert(isAr ? 'جاري تجهيز كود الإحالة الخاص بك... يرجى المحاولة بعد قليل.' : 'Referral code is being generated... please try again in a moment.');
+                                            return;
+                                        }
+                                        setShareSheetOpen(true);
+                                    }}
+                                    className="w-full py-3.5 rounded-xl transition-all shadow-xl font-black text-[10px] uppercase tracking-[2px] relative overflow-hidden group/btn flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white"
+                                >
+                                    <Share2 size={16} />
+                                    {isAr ? 'دعوة صديق الآن' : 'INVITE PARTNER'}
                                 </button>
 
                                 {/* Fixed 1% Referral CTA + 6-month Window Note (v2 2026) */}
@@ -1626,6 +1637,16 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                     </div>
                 )}
             </AnimatePresence>
+
+            {stats?.referralCode && (
+                <ReferralShareDestinations
+                    referralCode={stats.referralCode}
+                    isAr={isAr}
+                    variant="sheet"
+                    isOpen={shareSheetOpen}
+                    onClose={() => setShareSheetOpen(false)}
+                />
+            )}
         </div>
     );
 };

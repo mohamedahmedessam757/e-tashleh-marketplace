@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Store, MapPin, Clock, FileText, UploadCloud, Edit3, Save, CheckCircle2, User, Phone, Mail, Shield, ShieldCheck, Fingerprint, Globe, RefreshCw, Eye, Archive, CreditCard, ExternalLink, AlertTriangle, Star, ShieldAlert, Info, PenTool } from 'lucide-react';
+import { Store, MapPin, Clock, FileText, UploadCloud, Edit3, Save, CheckCircle2, User, Phone, Mail, Shield, ShieldCheck, Fingerprint, Globe, RefreshCw, Eye, Archive, CreditCard, ExternalLink, AlertTriangle, Star, ShieldAlert, Info, PenTool, Pencil } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { useReviewStore } from '../../../stores/useReviewStore';
@@ -152,7 +152,7 @@ export const MerchantProfile: React.FC = () => {
     if (isLoadingProfile) return <ProfileSkeleton />;
 
     return (
-        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-clip">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-visible pb-[max(5rem,env(safe-area-inset-bottom))] sm:pb-8">
             <LicenseExpiryBanner
                 onNavigate={() => {
                     setActiveProfileTab('info');
@@ -164,86 +164,119 @@ export const MerchantProfile: React.FC = () => {
                     }, 120);
                 }}
             />
-            <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-3 bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40 min-w-0">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20 shrink-0">
-                        <Store className="text-gold-500" size={24} />
-                    </div>
-                    <div className="min-w-0">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-none mb-1">
-                            {t.dashboard.merchant.storeProfile.title}
-                        </h1>
-                        <p className="text-xs text-white/40">{t.dashboard.merchant.profile.verified}</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 mr-4">
-                        <button
-                            onClick={() => setActiveProfileTab('info')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                                activeProfileTab === 'info' 
-                                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' 
-                                : 'text-white/60 hover:text-white'
-                            }`}
-                        >
-                            {t.dashboard.merchant.storeProfile.sections.basic}
-                        </button>
-                        <button
-                            onClick={() => setActiveProfileTab('contract')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                                activeProfileTab === 'contract' 
-                                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' 
-                                : 'text-white/60 hover:text-white'
-                            }`}
-                        >
-                            {t.dashboard.merchant.storeProfile.contract?.tab || 'العقد'}
-                        </button>
-                        <button
-                            onClick={() => setActiveProfileTab('restrictions')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                                activeProfileTab === 'restrictions' 
-                                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20' 
-                                : 'text-white/60 hover:text-white'
-                            }`}
-                        >
-                            {language === 'ar' ? 'القيود والتحكم' : 'Restrictions'}
-                        </button>
+            <div className="flex flex-col gap-3 bg-black/20 p-3 sm:p-4 rounded-2xl border border-white/5 backdrop-blur-xl sticky top-0 z-40 min-w-0">
+                <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="p-3 bg-gold-500/10 rounded-xl border border-gold-500/20 shrink-0">
+                            <Store className="text-gold-500" size={24} />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-none mb-1">
+                                {t.dashboard.merchant.storeProfile.title}
+                            </h1>
+                            <p className="text-xs text-white/40">{t.dashboard.merchant.profile.verified}</p>
+                        </div>
                     </div>
 
                     {activeProfileTab === 'info' && (
-                        isEditing ? (
+                        <div className="hidden sm:flex items-center gap-3 shrink-0">
+                            {isEditing ? (
+                                <>
+                                    <button
+                                        onClick={() => setIsEditing(false)}
+                                        className="px-5 py-2 rounded-xl font-bold transition-all text-white/60 hover:text-white"
+                                    >
+                                        {t.common?.cancel || (language === 'ar' ? 'إلغاء' : 'Cancel')}
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-gold-500 hover:bg-gold-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all disabled:opacity-50"
+                                    >
+                                        {isSaving ? (
+                                            <RefreshCw className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Save size={18} />
+                                        )}
+                                        {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all"
+                                >
+                                    <Edit3 size={18} />
+                                    {t.dashboard.merchant.storeProfile.actions.edit}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto pb-0.5 custom-scrollbar -mx-0.5 px-0.5">
+                    <button
+                        onClick={() => setActiveProfileTab('info')}
+                        className={`shrink-0 px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold transition-all border ${
+                            activeProfileTab === 'info'
+                                ? 'bg-gold-500 text-black border-gold-400 shadow-lg shadow-gold-500/20'
+                                : 'bg-white/5 text-white/60 border-white/10 hover:text-white'
+                        }`}
+                    >
+                        {t.dashboard.merchant.storeProfile.sections.basic}
+                    </button>
+                    <button
+                        onClick={() => setActiveProfileTab('contract')}
+                        className={`shrink-0 px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold transition-all border ${
+                            activeProfileTab === 'contract'
+                                ? 'bg-gold-500 text-black border-gold-400 shadow-lg shadow-gold-500/20'
+                                : 'bg-white/5 text-white/60 border-white/10 hover:text-white'
+                        }`}
+                    >
+                        {t.dashboard.merchant.storeProfile.contract?.tab || 'العقد'}
+                    </button>
+                    <button
+                        onClick={() => setActiveProfileTab('restrictions')}
+                        className={`shrink-0 px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold transition-all border ${
+                            activeProfileTab === 'restrictions'
+                                ? 'bg-gold-500 text-black border-gold-400 shadow-lg shadow-gold-500/20'
+                                : 'bg-white/5 text-white/60 border-white/10 hover:text-white'
+                        }`}
+                    >
+                        {language === 'ar' ? 'القيود والتحكم' : 'Restrictions'}
+                    </button>
+                </div>
+
+                {activeProfileTab === 'info' && (
+                    <div className="flex sm:hidden gap-2 w-full">
+                        {isEditing ? (
                             <>
                                 <button
                                     onClick={() => setIsEditing(false)}
-                                    className="px-5 py-2 rounded-xl font-bold transition-all text-white/60 hover:text-white"
+                                    className="px-4 py-3 min-h-[48px] rounded-xl font-bold text-white/60 border border-white/10"
                                 >
                                     {t.common?.cancel || (language === 'ar' ? 'إلغاء' : 'Cancel')}
                                 </button>
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-gold-500 hover:bg-gold-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all disabled:opacity-50"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-gold-500 hover:bg-gold-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] disabled:opacity-50"
                                 >
-                                    {isSaving ? (
-                                        <RefreshCw className="w-5 h-5 animate-spin" />
-                                    ) : (
-                                        <Save size={18} />
-                                    )}
+                                    {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save size={18} />}
                                     {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
                                 </button>
                             </>
                         ) : (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl font-bold bg-white/10 text-white border border-white/10"
                             >
                                 <Edit3 size={18} />
                                 {t.dashboard.merchant.storeProfile.actions.edit}
                             </button>
-                        )
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
             <AnimatePresence mode="wait">
                         {activeProfileTab === 'restrictions' && (
@@ -822,11 +855,13 @@ export const MerchantProfile: React.FC = () => {
                                                         }`} title={
                                                             hasActiveBusiness 
                                                                 ? (language === 'ar' ? 'يمكن الرفع الآن، وسيتم بدء المراجعة بعد اكتمال طلباتك النشطة' : 'Upload enabled; formal review will begin after your active orders are completed.')
-                                                                : (language === 'ar' ? 'تحديث المستند' : 'Update Document')
-                                                        }>
+                                                                : (language === 'ar' ? 'تعديل المستند' : 'Edit document')
+                                                        }
+                                                        aria-label={language === 'ar' ? 'تعديل المستند' : 'Edit document'}
+                                                        >
                                                             {displayStatus === 'uploading'
                                                                 ? <RefreshCw size={18} className="animate-spin" />
-                                                                : <UploadCloud size={18} />}
+                                                                : <Pencil size={18} aria-hidden />}
                                                         </button>
                                                     </div>
                                                 </div>

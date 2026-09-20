@@ -152,31 +152,30 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className="absolute z-[100] w-full top-full left-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-xl"
-              style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}
+              className="absolute z-[100] w-full top-full left-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-xl max-h-[min(60vh,420px)] sm:max-h-[400px] flex flex-col"
             >
               {/* Search Header */}
-              <div className="p-3 border-b border-white/10 bg-white/5">
+              <div className="p-3 border-b border-white/10 bg-white/5 shrink-0">
                 <div className="relative">
-                  <Search size={16} className={`absolute top-3 ${isAr ? 'right-3' : 'left-3'} text-white/40`} />
+                  <Search size={16} className={`absolute top-3.5 ${isAr ? 'right-3' : 'left-3'} text-white/40`} />
                   <input
                     type="text"
                     placeholder={searchPlaceholder || (isAr ? 'بحث...' : 'Search...')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full bg-black/40 border border-white/10 rounded-lg py-2.5 ${isAr ? 'pr-9 pl-4' : 'pl-9 pr-4'} text-sm text-white focus:border-gold-500 outline-none transition-colors`}
+                    className={`w-full bg-black/40 border border-white/10 rounded-lg py-3 min-h-[44px] ${isAr ? 'pr-9 pl-4' : 'pl-9 pr-4'} text-sm text-white focus:border-gold-500 outline-none transition-colors`}
                     autoFocus
                   />
                 </div>
               </div>
 
               {/* List Body */}
-              <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin scrollbar-thumb-white/10 p-2 space-y-1">
+              <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin scrollbar-thumb-white/10 p-2 space-y-1 overscroll-contain">
                 {filteredItems.length > 0 && (
                   <button
                     type="button"
                     onClick={toggleAll}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors text-sm text-gold-400 font-medium mb-2 border-b border-white/5 pb-3"
+                    className="w-full flex items-center justify-between p-3 min-h-[44px] rounded-lg hover:bg-white/5 transition-colors text-sm text-gold-400 font-medium mb-2 border-b border-white/5 pb-3"
                   >
                     <span>{allSelected ? (isAr ? 'إلغاء تحديد الكل' : 'Deselect All') : (isAr ? 'تحديد الكل' : 'Select All')}</span>
                     {allSelected && <Check size={16} />}
@@ -194,7 +193,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                       <div
                         key={item.id}
                         onClick={(e) => toggleItem(item.id, e)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group"
+                        className="w-full flex items-center justify-between p-3 min-h-[44px] rounded-lg hover:bg-white/5 transition-colors cursor-pointer group"
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all flex-shrink-0 ${
