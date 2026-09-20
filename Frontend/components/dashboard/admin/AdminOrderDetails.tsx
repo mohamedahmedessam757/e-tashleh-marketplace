@@ -38,6 +38,7 @@ import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
+import { shippingClassShortLabel } from '../../../utils/shippingClass';
 
 /** Statuses where admin Waybills tab is visible (includes partial ship/delivery). */
 const ADMIN_WAYBILL_TAB_STATUSES = [
@@ -769,7 +770,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         </div>
                                                         <div>
                                                             {isAr ? 'عميل' : 'Customer'}:{' '}
-                                                            <span className="text-gold-400">{part?.shippingClass}</span>
+                                                            <span className="text-gold-400">{shippingClassShortLabel(part?.shippingClass, isAr)}</span>
                                                             {' · '}
                                                             {isAr ? 'تاجر' : 'Merchant'}:{' '}
                                                             <span className="text-amber-300">{o.partType}</span>

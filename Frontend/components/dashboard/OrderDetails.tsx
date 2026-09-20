@@ -56,6 +56,7 @@ import {
     resolveReviewTarget,
 } from '../../utils/reviewHelpers';
 import { parseImageList, resolveMediaSrc, resolvePartPrimaryImage } from '../../utils/partMedia';
+import { shippingClassShortLabel } from '../../utils/shippingClass';
 import { ordersApi } from '../../services/api/orders';
 import {
     getFulfillmentLabel,
@@ -1808,9 +1809,20 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     <div className="min-w-0">
                                                         <h4 className="font-bold text-white text-lg truncate">{p.name}</h4>
                                                         {p.description && <p className="text-white/60 text-sm line-clamp-1">{p.description}</p>}
-                                                        <span className="text-[10px] font-mono text-gold-500/50 uppercase mt-1 block tracking-wider">
-                                                            {language === 'ar' ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}
-                                                        </span>
+                                                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                                            <span className="text-[10px] font-mono text-gold-500/50 uppercase tracking-wider">
+                                                                {language === 'ar' ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}
+                                                            </span>
+                                                            {p.shippingClass && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gold-500/30 bg-gold-500/10 text-gold-300 text-[10px] font-bold">
+                                                                    <Truck size={10} className="shrink-0" />
+                                                                    <span className="text-white/40 font-bold me-0.5">
+                                                                        {language === 'ar' ? 'نوع الشحن:' : 'Ship:'}
+                                                                    </span>
+                                                                    {shippingClassShortLabel(p.shippingClass, language === 'ar')}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { getOfferModificationMetrics, getMonthlyOfferDeletionMetrics, isActiveMerchantOffer } from '../../../utils/merchantOffers';
+import { shippingClassShortLabel } from '../../../utils/shippingClass';
 import { useOrderById } from '../../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../../hooks/useOrderRealtimeSync';
 import { useEnforceExpiredOrderSla } from '../../../hooks/useEnforceExpiredOrderSla';
@@ -1758,6 +1759,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                             <div className="flex-1">
                                                 <div className="flex flex-wrap items-center gap-2 mb-2">
                                                     <h3 className="text-lg font-bold text-white">{part.name || order.part}</h3>
+                                                    {part.shippingClass && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gold-500/30 bg-gold-500/10 text-gold-300 text-[10px] font-bold">
+                                                            <Truck size={10} className="shrink-0" />
+                                                            {isAr ? 'نوع الشحن:' : 'Ship:'}{' '}
+                                                            {shippingClassShortLabel(part.shippingClass, isAr)}
+                                                        </span>
+                                                    )}
                                                     {hasOffer && (() => {
                                                         const meta = partResolutionByOfferId.get(partOffer.id);
                                                         if (!meta?.hasOpenCase && !(meta?.resolutionLocked && meta.fulfillmentStatus !== 'COMPLETED')) {

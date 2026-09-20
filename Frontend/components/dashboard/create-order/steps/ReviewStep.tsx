@@ -5,6 +5,7 @@ import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { usePlatformSettingsStore } from '../../../../stores/usePlatformSettingsStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useObjectUrl } from '../../../../utils/objectUrl';
+import { shippingClassShortLabel } from '../../../../utils/shippingClass';
 
 interface ReviewStepProps {
     onConfirm: () => void;
@@ -187,6 +188,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                             <div key={p.id} className="bg-[#151310] border border-white/10 rounded-2xl p-4 relative">
                                 <span className="absolute top-4 right-4 text-xs font-bold text-white/30">#{idx + 1}</span>
                                 <h4 className="font-bold text-gold-400 mb-2">{p.name}</h4>
+                                <div className="mb-3 flex flex-wrap items-center gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                                        {isRTL ? 'نوع الشحن' : 'Shipping class'}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gold-500/30 bg-gold-500/10 text-gold-300 text-xs font-bold">
+                                        <Truck size={12} className="shrink-0" />
+                                        {shippingClassShortLabel(p.shippingClass, isRTL)}
+                                    </span>
+                                </div>
                                 <div className="text-sm text-white/80 mb-3 bg-[#0F0E0C] p-3 rounded-lg overflow-hidden text-ellipsis">
                                     {p.description}
                                 </div>

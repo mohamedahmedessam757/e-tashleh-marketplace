@@ -37,6 +37,23 @@ export function shippingClassLabel(
   }
 }
 
+/** Compact label for review / order-details badges (not the full question wording). */
+export function shippingClassShortLabel(
+  value: ShippingClass | string | null | undefined,
+  isAr: boolean,
+): string {
+  switch (value) {
+    case 'engine':
+      return isAr ? 'محرك / Engine' : 'Engine';
+    case 'gearbox':
+      return isAr ? 'ناقل حركة / Gearbox' : 'Gearbox / Transmission';
+    case 'standard':
+      return isAr ? 'أخرى (شحن عادي)' : 'Other (standard shipping)';
+    default:
+      return isAr ? 'غير محدد' : 'Not set';
+  }
+}
+
 /**
  * Cascade yes/no → exactly one ShippingClass.
  * Answers: engineYes / gearboxYes / otherYes — only one may be true.
