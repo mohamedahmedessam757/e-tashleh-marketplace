@@ -213,11 +213,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviewOfferId, setReviewOfferId] = useState<string | undefined>(undefined);
     const [reviewedOfferIds, setReviewedOfferIds] = useState<Set<string>>(() => new Set());
-
-    React.useEffect(() => {
-        if (!order) return;
-        setReviewedOfferIds(getReviewedOfferIds(order));
-    }, [order?.id, order?.reviews, order?.review]);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [showExpiredModal, setShowExpiredModal] = useState(false);
@@ -256,6 +251,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const [showConfirmDeliveryModal, setShowConfirmDeliveryModal] = useState(false);
 
     const order = useOrderById(orderId || undefined);
+
+    React.useEffect(() => {
+        if (!order) return;
+        setReviewedOfferIds(getReviewedOfferIds(order));
+    }, [order?.id, order?.reviews, order?.review]);
+
     const [detailFetchState, setDetailFetchState] = useState<'idle' | 'loading' | 'missing'>(
         orderId && !order ? 'loading' : 'idle',
     );
