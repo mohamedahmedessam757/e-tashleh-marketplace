@@ -1425,6 +1425,16 @@ export const useAdminStore = create<AdminState>()(
           )
           .on(
             'postgres_changes',
+            { event: '*', schema: 'public', table: 'offers' },
+            debouncedFetch,
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'order_parts' },
+            debouncedFetch,
+          )
+          .on(
+            'postgres_changes',
             { event: '*', schema: 'public', table: 'users' },
             debouncedFetch,
           )

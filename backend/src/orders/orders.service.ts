@@ -3743,8 +3743,11 @@ export class OrdersService {
         });
 
         const partName = offer.orderPart?.name || 'Part';
-        const msgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} إلى ${body.shippingClass}. تكلفة الشحن المحسوبة: ${shippingCost} AED.`;
-        const msgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated to ${body.shippingClass}. Computed shipping: ${shippingCost} AED.`;
+        const classLabel = body.shippingClass;
+        const customerMsgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} بقرار من الإدارة إلى (${classLabel}).`;
+        const customerMsgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated by admin to (${classLabel}).`;
+        const merchantMsgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} بقرار من الإدارة إلى (${classLabel}). تكلفة الشحن المحسوبة: ${shippingCost} AED.`;
+        const merchantMsgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated by admin to (${classLabel}). Computed shipping: ${shippingCost} AED.`;
 
         if (offer.order.customerId) {
             await this.notifications.create({
@@ -3752,11 +3755,11 @@ export class OrdersService {
                 recipientRole: 'CUSTOMER',
                 titleAr: 'تحديث نوع الشحن من الإدارة',
                 titleEn: 'Shipping class updated by admin',
-                messageAr: msgAr,
-                messageEn: msgEn,
+                messageAr: customerMsgAr,
+                messageEn: customerMsgEn,
                 type: 'ORDER',
                 link: `/dashboard/orders/${orderId}`,
-                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS' },
+                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS', hidePrice: true },
             }).catch(() => {});
         }
         if (offer.store?.ownerId) {
@@ -3765,11 +3768,11 @@ export class OrdersService {
                 recipientRole: 'MERCHANT',
                 titleAr: 'تحديث نوع الشحن من الإدارة',
                 titleEn: 'Shipping class updated by admin',
-                messageAr: msgAr,
-                messageEn: msgEn,
+                messageAr: merchantMsgAr,
+                messageEn: merchantMsgEn,
                 type: 'ORDER',
                 link: `/merchant/orders/${orderId}`,
-                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS' },
+                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS', shippingCost },
             }).catch(() => {});
         }
 

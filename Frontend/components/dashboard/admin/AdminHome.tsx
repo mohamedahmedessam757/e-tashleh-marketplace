@@ -215,6 +215,11 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         setStatsRequested(true);
         fetchDashboardStats(debouncedRange);
         subscribeToStats();
+
+        // Polling fallback — covers RLS/realtime gaps on admin dashboard smart alerts
+        const pollId = window.setInterval(() => {
+            void fetchDashboardStats(debouncedRange);
+        }, 20_000);
         
         // Shipment sync — admins only (officer has no shipments permission → 403 noise)
         if (!['VERIFICATION_OFFICER'].includes(currentAdmin?.role || '')) {
@@ -236,6 +241,7 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         window.addEventListener('admin-nav', handleInternalNav);
 
         return () => {
+            window.clearInterval(pollId);
             unsubscribeFromStats();
             useShipmentStore.getState().stopRealtime();
             window.removeEventListener('admin-nav', handleInternalNav);

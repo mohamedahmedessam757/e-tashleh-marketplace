@@ -57,6 +57,13 @@ export const AdminAlerts: React.FC = () => {
                     title = t.admin.alerts.types.contract_changes;
                     msg = isAr ? `يوجد ${a.count} طلبات تعديل بيانات عقد بانتظار المراجعة` : `${a.count} contract amendment requests pending review`;
                     break;
+                case 'SHIPPING_CLASS_MISMATCH':
+                    title = (t.admin.alerts.types as any).shipping_class_mismatch
+                        || (isAr ? 'اختلاف نوع الشحن' : 'Shipping class mismatch');
+                    msg = isAr
+                        ? `يوجد ${a.count} عرض/عروض باختلاف تصنيف الشحن بين العميل والتاجر — راجع قبل الدفع`
+                        : `${a.count} offer(s) have customer vs merchant shipping-class mismatch — review before payment`;
+                    break;
                 default:
                     title = isAr ? 'تنبيه نظام' : 'System Alert';
                     msg = `Code: ${a.code}`;
@@ -91,6 +98,7 @@ export const AdminAlerts: React.FC = () => {
             case 'LATE_RESPONSE':
             case 'LATE_PREP':
             case 'STALLED_VERIFICATION':
+            case 'SHIPPING_CLASS_MISMATCH':
                 navigate('orders-control');
                 break;
             default:

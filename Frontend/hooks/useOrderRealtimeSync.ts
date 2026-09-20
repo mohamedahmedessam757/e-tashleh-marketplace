@@ -86,6 +86,20 @@ export function useOrderRealtimeSync(
             )
             .subscribe();
 
+        const orderPartsChannel = supabase
+            .channel(`order_parts_sync_${orderId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'order_parts',
+                    filter: `order_id=eq.${orderId}`,
+                },
+                () => scheduleFetch(orderId),
+            )
+            .subscribe();
+
         const verificationChannel = supabase
             .channel(`order_verification_sync_${orderId}`)
             .on(
@@ -125,6 +139,7 @@ export function useOrderRealtimeSync(
             setActiveOrderId(null);
             supabase.removeChannel(orderChannel);
             supabase.removeChannel(offersChannel);
+            supabase.removeChannel(orderPartsChannel);
             supabase.removeChannel(verificationChannel);
             if (reviewsChannel) supabase.removeChannel(reviewsChannel);
         };

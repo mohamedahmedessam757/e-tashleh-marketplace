@@ -19,7 +19,7 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import {
     ChevronLeft, ChevronRight, User, Store, DollarSign, Settings2, ShieldAlert,
     AlertTriangle, Clock, PlayCircle, Search, Package, Eye, Truck, Calendar, FileText, MapPin, X,
-    Edit2, Trash2, Ban, Copy, CheckCircle2, MessageSquare, Info, CreditCard, Box, XCircle, RotateCcw, AlertOctagon, Award, Zap,
+    Edit2, Edit3, Trash2, Ban, Copy, CheckCircle2, MessageSquare, Info, CreditCard, Box, XCircle, RotateCcw, AlertOctagon, Award, Zap,
     History, RefreshCw,
 } from 'lucide-react';
 import { VerificationReviewPanel } from './VerificationReviewPanel';
@@ -39,6 +39,7 @@ import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { shippingClassShortLabel } from '../../../utils/shippingClass';
+import { ShippingClassResolveModal } from './ShippingClassResolveModal';
 
 /** Statuses where admin Waybills tab is visible (includes partial ship/delivery). */
 const ADMIN_WAYBILL_TAB_STATUSES = [
@@ -329,6 +330,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         image?: string;
         index: number;
     } | null>(null);
+    const [shippingResolveOffer, setShippingResolveOffer] = useState<any | null>(null);
 
     const { adminUpdateOffer, adminDeleteOffer } = useOrderStore();
 
@@ -734,7 +736,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                 {isAr ? 'القطع المطلوبة والعروض' : 'Requested Parts & Offers'}
                             </h3>
 
-                            {/* Shipping-class mismatches (customer vs merchant) */}
+                            {/* Shipping-class mismatches — only when customer ≠ merchant */}
                             {(() => {
                                 const mismatches = (order.offers || []).filter((o: any) => {
                                     if (!isActiveMerchantOffer(o)) return false;
@@ -745,6 +747,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         cust &&
                                         merch &&
                                         ['engine', 'gearbox', 'standard'].includes(String(cust)) &&
+                                        ['engine', 'gearbox', 'standard'].includes(String(merch)) &&
                                         String(cust) !== String(merch)
                                     );
                                 });
@@ -770,60 +773,34 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         </div>
                                                         <div>
                                                             {isAr ? 'عميل' : 'Customer'}:{' '}
-                                                            <span className="text-gold-400">{shippingClassShortLabel(part?.shippingClass, isAr)}</span>
+                                                            <span className="text-gold-400">
+                                                                {shippingClassShortLabel(part?.shippingClass, isAr)}
+                                                            </span>
                                                             {' · '}
                                                             {isAr ? 'تاجر' : 'Merchant'}:{' '}
-                                                            <span className="text-amber-300">{o.partType}</span>
+                                                            <span className="text-amber-300">
+                                                                {shippingClassShortLabel(o.partType, isAr)}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <button
-                                                            type="button"
-                                                            className="px-3 py-2 min-h-[40px] rounded-lg bg-gold-500 text-black text-xs font-black"
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await ordersApi.adminResolveShippingClass(
-                                                                        order.id,
-                                                                        o.id,
-                                                                        {
-                                                                            shippingClass: part.shippingClass,
-                                                                            applyTo: 'both',
-                                                                            cylinders: o.cylinders,
-                                                                            weightKg: o.weight,
-                                                                        },
-                                                                    );
-                                                                    await fetchOrder(String(order.id));
-                                                                } catch (e: any) {
-                                                                    alert(e?.response?.data?.message || e?.message || 'Failed');
-                                                                }
-                                                            }}
-                                                        >
-                                                            {isAr ? 'اعتماد تصنيف العميل' : 'Use customer class'}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="px-3 py-2 min-h-[40px] rounded-lg bg-white/10 text-white text-xs font-bold border border-white/20"
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await ordersApi.adminResolveShippingClass(
-                                                                        order.id,
-                                                                        o.id,
-                                                                        {
-                                                                            shippingClass: o.partType,
-                                                                            applyTo: 'both',
-                                                                            cylinders: o.cylinders,
-                                                                            weightKg: o.weight,
-                                                                        },
-                                                                    );
-                                                                    await fetchOrder(String(order.id));
-                                                                } catch (e: any) {
-                                                                    alert(e?.response?.data?.message || e?.message || 'Failed');
-                                                                }
-                                                            }}
-                                                        >
-                                                            {isAr ? 'اعتماد تصنيف التاجر' : 'Use merchant class'}
-                                                        </button>
-                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        title={isAr ? 'القرار النهائي' : 'Final decision'}
+                                                        aria-label={isAr ? 'القرار النهائي' : 'Final decision'}
+                                                        className="inline-flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-4 rounded-xl bg-gold-500 text-black text-xs font-black hover:bg-gold-400 transition-colors shrink-0"
+                                                        onClick={() =>
+                                                            setShippingResolveOffer({
+                                                                ...o,
+                                                                storeName: o.storeName || o.store?.name,
+                                                                weight: o.weight ?? o.weightKg,
+                                                            })
+                                                        }
+                                                    >
+                                                        <Edit3 size={16} />
+                                                        <span className="hidden sm:inline">
+                                                            {isAr ? 'القرار النهائي' : 'Decide'}
+                                                        </span>
+                                                    </button>
                                                 </div>
                                             );
                                         })}
@@ -867,9 +844,17 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                     <div>
                                                         <h4 className="font-bold text-white text-lg">{p.name}</h4>
                                                         {p.description && <p className="text-white/60 text-sm line-clamp-1">{p.description}</p>}
-                                                        <span className="text-[10px] font-mono text-gold-500/50 uppercase mt-1 block tracking-wider">
-                                                            {isAr ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}
-                                                        </span>
+                                                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                                            <span className="text-[10px] font-mono text-gold-500/50 uppercase tracking-wider">
+                                                                {isAr ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}
+                                                            </span>
+                                                            {p.shippingClass && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/15 bg-white/5 text-white/70 text-[10px] font-bold">
+                                                                    <Truck size={10} />
+                                                                    {shippingClassShortLabel(p.shippingClass, isAr)}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -1630,6 +1615,19 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         } catch (err: any) {
                             alert(err.message);
                         }
+                    }}
+                />
+            )}
+
+            {shippingResolveOffer && order && (
+                <ShippingClassResolveModal
+                    orderId={String(order.id)}
+                    offer={shippingResolveOffer}
+                    part={(order.parts || []).find((p: any) => p.id === shippingResolveOffer.orderPartId)}
+                    isAr={isAr}
+                    onClose={() => setShippingResolveOffer(null)}
+                    onResolved={() => {
+                        void fetchOrder(String(order.id));
                     }}
                 />
             )}

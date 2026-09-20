@@ -155,7 +155,8 @@ export const admin = {
         unpaid: 'طلب غير مدفوع',
         contract_changes: 'طلبات تعديل العقد',
         stripe_pending: 'متجر بانتظار Stripe',
-        stripe_restricted: 'تقييد حساب Stripe لمتجر'
+        stripe_restricted: 'تقييد حساب Stripe لمتجر',
+        shipping_class_mismatch: 'اختلاف نوع الشحن',
       },
       legend: {
         completed: 'مكتمل',
@@ -1832,7 +1833,8 @@ export const admin = {
         unpaid: 'Unpaid Order',
         contract_changes: 'Contract Amendments',
         stripe_pending: 'Store awaiting Stripe',
-        stripe_restricted: 'Store Stripe restricted'
+        stripe_restricted: 'Store Stripe restricted',
+        shipping_class_mismatch: 'Shipping class mismatch',
       },
       legend: {
         completed: 'Completed',

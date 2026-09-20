@@ -56,6 +56,7 @@ export class DashboardService {
             expiredLicensesCount,
             stalledVerificationCount,
             pendingContractChangesCount,
+            shippingClassMismatchCount,
             lastOrders,
         ] = await Promise.all([
             this.prisma.order.count({ where: orderDateFilter }),
@@ -154,6 +155,40 @@ export class DashboardService {
             this.prisma.contractChangeRequest.count({
                 where: { status: 'PENDING_REVIEW' },
             }),
+            (async () => {
+                // Active pre-payment offers where merchant partType ≠ customer shippingClass
+                const rows = await this.prisma.offer.findMany({
+                    where: {
+                        isWithdrawn: false,
+                        status: { notIn: ['REJECTED', 'rejected', 'WITHDRAWN', 'withdrawn', 'CANCELLED', 'cancelled'] },
+                        orderPartId: { not: null },
+                        partType: { not: null },
+                        order: {
+                            status: {
+                                in: [
+                                    OrderStatus.AWAITING_OFFERS,
+                                    OrderStatus.COLLECTING_OFFERS,
+                                    OrderStatus.AWAITING_SELECTION,
+                                    OrderStatus.AWAITING_PAYMENT,
+                                ],
+                            },
+                        },
+                        payments: { none: { status: 'SUCCESS' } },
+                        orderPart: { shippingClass: { not: null } },
+                    },
+                    select: {
+                        partType: true,
+                        orderPart: { select: { shippingClass: true } },
+                    },
+                    take: 500,
+                });
+                return rows.filter(
+                    (r) =>
+                        r.orderPart?.shippingClass &&
+                        r.partType &&
+                        String(r.orderPart.shippingClass) !== String(r.partType),
+                ).length;
+            })(),
             this.prisma.order.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -258,6 +293,14 @@ export class DashboardService {
                       code: 'CONTRACT_CHANGES_PENDING',
                       count: pendingContractChangesCount,
                       priority: 'medium',
+                  }
+                : null,
+            shippingClassMismatchCount > 0
+                ? {
+                      type: 'warning',
+                      code: 'SHIPPING_CLASS_MISMATCH',
+                      count: shippingClassMismatchCount,
+                      priority: 'high',
                   }
                 : null,
         ].filter(Boolean);
