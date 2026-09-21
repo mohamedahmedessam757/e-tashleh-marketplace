@@ -52,8 +52,11 @@ export class ReturnsService {
         private loyaltyService: LoyaltyService,
     ) { }
 
-    private isMultiItemOrder(order: { requestType?: string | null; parts?: { id: string }[] }) {
-        return this.offerFulfillment.isMultiItemOrder(order);
+    private isMultiItemOrder(order?: {
+        requestType?: string | null;
+        parts?: unknown[] | null;
+    } | null) {
+        return this.offerFulfillment.isMultiItemOrder(order || {});
     }
 
     private async walletTxExistsByKey(
@@ -1702,7 +1705,13 @@ export class ReturnsService {
         caseRecord: {
             orderId: string;
             offerId?: string | null;
-            order?: { invoices?: { total?: unknown }[]; price?: unknown; totalAmount?: unknown } | null;
+            order?: {
+                requestType?: string | null;
+                parts?: unknown[] | null;
+                invoices?: { total?: unknown }[];
+                price?: unknown;
+                totalAmount?: unknown;
+            } | null;
         },
         extra: Record<string, unknown>,
         isCloseCompleteRefund: boolean,
@@ -1772,7 +1781,10 @@ export class ReturnsService {
         orderId: string,
         caseRecord: {
             offerId?: string | null;
-            order?: { requestType?: string | null; parts?: { id: string }[] | null } | null;
+            order?: {
+                requestType?: string | null;
+                parts?: unknown[] | null;
+            } | null;
         },
     ): Promise<number> {
         if (caseRecord.offerId) {
@@ -1781,7 +1793,7 @@ export class ReturnsService {
                 return this.escrowService.resolveMaxRefundableAmountForPayment(offerBase.paymentId);
             }
             // Multi: never fall back to order-wide max refundable (sibling payments).
-            if (this.isMultiItemOrder(caseRecord.order || {})) return 0;
+            if (this.isMultiItemOrder(caseRecord.order)) return 0;
         }
         return this.escrowService.resolveMaxRefundableAmount(orderId);
     }
