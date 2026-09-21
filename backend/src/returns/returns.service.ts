@@ -3270,7 +3270,15 @@ export class ReturnsService {
             where: {
                 orderId: order.id,
                 waybill: { partId: caseRecord.orderPartId },
-                status: { in: ['RETURN_LABEL_ISSUED', 'RETURN_IN_TRANSIT', 'RETURN_RECEIVED'] as any },
+                status: {
+                    in: [
+                        'RETURN_LABEL_ISSUED',
+                        'RETURN_STARTED',
+                        'RETURN_WAYBILL_ISSUED',
+                        'RECEIVED_FROM_CUSTOMER',
+                        'RETURN_RECEIVED',
+                    ],
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
