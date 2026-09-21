@@ -122,18 +122,18 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
     // Removed handleDelete as per requirements
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip">
             {/* Header & Controls */}
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-white mb-2">{t.dashboard.menu.orders}</h1>
+            <div className="flex flex-col gap-5 sm:gap-6 min-w-0">
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                    <div className="min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{t.dashboard.menu.orders}</h1>
                         <p className="text-white/50 text-sm">{t.dashboard.orders.manageTitle}</p>
                     </div>
-                    <div>
+                    <div className="shrink-0">
                         <button
                             onClick={() => fetchOrders()}
-                            className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+                            className="min-h-[44px] min-w-[44px] p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center"
                             title="Refresh"
                         >
                             <RefreshCw size={20} className={`text-gold-500 ${loading ? 'animate-spin' : ''}`} />
@@ -151,30 +151,30 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                         <GlassCard className="p-0 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
                             <div className="flex items-stretch">
                                 <div className="w-2 bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]"></div>
-                                <div className="p-5 flex flex-col sm:flex-row items-center justify-between gap-6 w-full">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-inner">
+                                <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 w-full min-w-0">
+                                    <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0">
+                                        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-inner shrink-0">
                                             <ShieldAlert size={26} className="animate-pulse" />
                                         </div>
-                                        <div>
-                                            <h4 className="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
+                                        <div className="min-w-0">
+                                            <h4 className="text-base font-black text-white uppercase tracking-tight flex flex-wrap items-center gap-2">
                                                 {isAr ? 'تنبيه: قيود نشطة على الطلبات' : 'Alert: Active Order Restrictions'}
                                                 <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black text-[9px] font-black">{isAr ? 'نشط' : 'ACTIVE'}</span>
                                             </h4>
-                                            <p className="text-xs text-white/50 font-medium mt-1">
+                                            <p className="text-xs text-white/50 font-medium mt-1 break-words">
                                                 {user.restrictionAlertMessage || (isAr 
                                                     ? `تم وضع سقف لطلباتك اليومية بحد أقصى ${user.orderLimit} طلبات.` 
                                                     : `Your account has a daily order limit of ${user.orderLimit} requests.`)}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 w-full sm:w-auto">
                                         <div className="text-right hidden sm:block">
                                             <div className="text-[10px] font-black text-amber-500/50 uppercase tracking-widest">{isAr ? 'الحد المسموح' : 'Limit'}</div>
                                             <div className="text-lg font-black text-white">{user.orderLimit} <span className="text-[10px] text-white/30">{isAr ? 'طلبات' : 'Orders'}</span></div>
                                         </div>
                                         <div className="w-px h-8 bg-white/10 mx-2 hidden sm:block"></div>
-                                        <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all">
+                                        <button className="min-h-[44px] px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all w-full sm:w-auto">
                                             {isAr ? 'التفاصيل' : 'Details'}
                                         </button>
                                     </div>

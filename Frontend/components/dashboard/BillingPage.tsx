@@ -16,21 +16,21 @@ export const BillingPage: React.FC = () => {
     }, [fetchInvoices]);
 
     return (
-        <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-white mb-6">{t.dashboard.menu.billing}</h1>
+        <div className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">{t.dashboard.menu.billing}</h1>
 
             {/* Tabs */}
-            <div className="flex items-center gap-6 border-b border-white/10 pb-4 mb-6">
+            <div className="flex items-center gap-4 sm:gap-6 border-b border-white/10 pb-4 mb-6 overflow-x-auto min-w-0">
                 <button
                     onClick={() => setActiveTab('INVOICES')}
-                    className={`text-sm font-bold pb-4 transition-colors relative ${activeTab === 'INVOICES' ? 'text-gold-500' : 'text-white/50'}`}
+                    className={`text-sm font-bold pb-4 transition-colors relative min-h-[44px] whitespace-nowrap ${activeTab === 'INVOICES' ? 'text-gold-500' : 'text-white/50'}`}
                 >
                     {t.dashboard.billing?.invoices || 'Invoices'}
                     {activeTab === 'INVOICES' && <motion.div layoutId="billingTab" className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-gold-500" />}
                 </button>
                 <button
                     onClick={() => setActiveTab('WALLET')}
-                    className={`text-sm font-bold pb-4 transition-colors relative ${activeTab === 'WALLET' ? 'text-gold-500' : 'text-white/50'}`}
+                    className={`text-sm font-bold pb-4 transition-colors relative min-h-[44px] whitespace-nowrap ${activeTab === 'WALLET' ? 'text-gold-500' : 'text-white/50'}`}
                 >
                     {t.dashboard.billing?.wallet || 'My Wallet'}
                     {activeTab === 'WALLET' && <motion.div layoutId="billingTab" className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-gold-500" />}

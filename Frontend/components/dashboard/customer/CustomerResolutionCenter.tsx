@@ -198,7 +198,7 @@ export const CustomerResolutionCenter: React.FC<CustomerResolutionCenterProps> =
   };
 
   return (
-    <div className="space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-5 sm:space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 overflow-x-clip">
       
       {/* 2026 Luxury Hero Section */}
       <div className="relative overflow-hidden rounded-[24px] md:rounded-[40px] bg-gradient-to-br from-[#141210] to-[#0A0908] border border-white/5 shadow-2xl p-4 md:p-8 lg:p-12 min-w-0">
@@ -707,7 +707,7 @@ const EscalationConfirmModal: React.FC<{ isOpen: boolean, onClose: () => void, o
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             <button 
               onClick={onClose}
               className="py-4 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"

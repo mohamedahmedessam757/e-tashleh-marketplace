@@ -323,10 +323,10 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
   const activeStepIndex = Math.max(steps.findIndex((s) => s.id === step), 0);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-8 min-w-0 overflow-x-clip px-1 sm:px-0">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white mb-4">{t.dashboard.createOrder.title}</h1>
+      <div className="text-center mb-6 sm:mb-8 min-w-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 break-words">{t.dashboard.createOrder.title}</h1>
         <p className="text-white/80 text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
           {language === 'ar'
             ? 'اطلب قطع غيار أصلية مستعملة من التشاليح في دول الخليج عبر منصة اي-تشليح'
@@ -400,7 +400,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
       </div>
 
       {/* Main Content Card — solid opaque surface (no glass/blur stacking on mobile) */}
-      <div className="no-entrance-anim bg-[#1A1814] border border-gold-500/10 rounded-2xl p-6 md:p-10 min-h-[400px] flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+      <div className="no-entrance-anim bg-[#1A1814] border border-gold-500/10 rounded-2xl p-4 sm:p-6 md:p-10 min-h-[400px] flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] min-w-0">
         <div className="flex-1">
           <AnimatePresence mode="wait">
             {step === 1 && <VehicleDetailsStep key="step1" />}

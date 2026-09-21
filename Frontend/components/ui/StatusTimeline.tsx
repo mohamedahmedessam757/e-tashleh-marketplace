@@ -127,8 +127,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
           : `calc(${activeIndex} / ${n - 1} * (100% - 100% / ${n}))`;
 
   return (
-    <div className="w-full py-4 sm:py-8 px-0 sm:px-2 md:px-4 isolate overflow-x-auto" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="min-w-[300px] sm:min-w-0">
+    <div className="w-full py-4 sm:py-8 px-0 sm:px-2 md:px-4 isolate overflow-x-auto min-w-0" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="min-w-[280px] sm:min-w-0">
       {/* Circles + connector line (line aligned to circle centers) */}
       <div className="relative h-8 sm:h-10 w-full">
         <div

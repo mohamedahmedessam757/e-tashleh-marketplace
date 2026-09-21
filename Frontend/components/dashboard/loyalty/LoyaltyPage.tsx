@@ -10,15 +10,15 @@ export const LoyaltyPage: React.FC = () => {
     const isAr = language === 'ar';
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 min-w-0 overflow-x-clip">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-4">
-                        <div className="p-3 bg-gold-500/10 rounded-2xl border border-gold-500/20 shadow-lg shadow-gold-500/5">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3 sm:gap-4">
+                        <div className="p-3 bg-gold-500/10 rounded-2xl border border-gold-500/20 shadow-lg shadow-gold-500/5 shrink-0">
                             <Trophy className="text-gold-500" size={32} />
                         </div>
-                        {isAr ? 'مركز الولاء والمكافآت 2026' : 'Loyalty & Rewards Hub 2026'}
+                        <span className="break-words">{isAr ? 'مركز الولاء والمكافآت 2026' : 'Loyalty & Rewards Hub 2026'}</span>
                     </h1>
                     <p className="text-white/50 mt-2 max-w-2xl leading-relaxed">
                         {isAr 

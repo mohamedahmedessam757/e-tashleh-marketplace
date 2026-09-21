@@ -526,7 +526,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-2 sm:px-3 min-w-0" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-2 sm:px-3 min-w-0 overflow-x-clip" dir={isAr ? 'rtl' : 'ltr'}>
             {/* 2026 Admin Transparency Banner */}
             
             {/* 1. Header Navigation & Title */}
@@ -563,7 +563,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
                                 type="date" 
                                 value={dateRange.start}
                                 onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                className="bg-white/5 border border-white/10 rounded-lg ps-9 pe-2 py-2 text-[10px] outline-none focus:border-gold-500/50 transition-all w-40 text-white/70"
+                                className="bg-white/5 border border-white/10 rounded-lg ps-9 pe-2 py-2 text-[10px] outline-none focus:border-gold-500/50 transition-all w-full sm:w-40 text-white/70 [color-scheme:dark]"
                             />
                         </div>
                     </div>

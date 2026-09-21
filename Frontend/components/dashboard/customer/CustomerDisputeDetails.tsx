@@ -102,17 +102,17 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
   const showCountdown = (dispute.status === 'AWAITING_MERCHANT' || dispute.status === 'OPEN');
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-20">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-20 min-w-0 overflow-x-clip">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <button onClick={onBack} className="flex items-center gap-3 text-white/40 hover:text-gold-400 transition-all group font-black tracking-tight text-sm uppercase">
-          <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-gold-500/50">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 sm:gap-6 min-w-0">
+        <button onClick={onBack} className="flex items-center gap-3 text-white/40 hover:text-gold-400 transition-all group font-black tracking-tight text-sm uppercase min-h-[44px]">
+          <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-gold-500/50 shrink-0">
             <ArrowIcon size={20} />
           </div>
           {t.dashboard.resolution.details.back}
         </button>
         
-        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-xl shrink-0">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-xl w-full sm:w-auto min-w-0">
            {dispute.adminApproval && (
              <div className={`px-4 py-2 rounded-xl flex items-center gap-2 border shadow-lg
                 ${dispute.adminApproval === 'APPROVED' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
@@ -121,7 +121,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
              </div>
            )}
            {showCountdown && (
-             <div className="px-4 py-2 text-right">
+             <div className="px-4 py-2 text-right min-w-0">
               <span className="block text-[9px] text-white/30 uppercase font-black mb-1">
                 {isAr ? 'التصعيد التلقائي خلال' : 'Auto-Escalation In'}
               </span>
@@ -159,16 +159,16 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
          </div>
       </GlassCard>
 
-      <div className="grid lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-           <GlassCard className="p-4 md:p-8 space-y-6 md:space-y-8 border-white/5 relative group">
-              <div className="flex items-center gap-6">
-                 <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform duration-500 shrink-0">
+      <div className="grid lg:grid-cols-12 gap-4 md:gap-8 min-w-0">
+        <div className="lg:col-span-8 space-y-5 sm:space-y-8 min-w-0">
+           <GlassCard className="p-4 md:p-8 space-y-6 md:space-y-8 border-white/5 relative group min-w-0">
+              <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                 <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/5 rounded-3xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform duration-500 shrink-0">
                     <Package size={40} className="text-white/20 group-hover:text-gold-500 transition-colors" />
                  </div>
-                 <div>
+                 <div className="min-w-0">
                      <h4 className="text-[10px] font-black text-gold-500 uppercase tracking-tight mb-1">{dispute.type === 'dispute' ? (isAr ? 'نزاع' : 'Dispute') : (isAr ? 'إرجاع' : 'Return')}</h4>
-                     <h2 className="text-3xl font-black text-white tracking-tight uppercase leading-tight">{dispute.partName}</h2>
+                     <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight uppercase leading-tight break-words">{dispute.partName}</h2>
                      <p className="text-white/40 text-[12px] font-bold flex flex-wrap items-center gap-2 mt-1">
                        <CopyableIdBadge
                          labelAr={t.admin.ids.caseReference}
@@ -211,7 +211,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
               {dispute.customerEvidence && dispute.customerEvidence.length > 0 && (
                 <div className="space-y-4">
                    <span className="text-[10px] font-black text-white/30 uppercase tracking-tight">{t.dashboard.resolution.details.evidence}</span>
-                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                       {dispute.customerEvidence.map((img, i) => (
                         <motion.div 
                           key={i} 
@@ -266,7 +266,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                               <Search size={14} className="text-white/20" />
                               <span className="text-[10px] font-black text-white/30 uppercase tracking-tight">{isAr ? 'الأدلة المقدمة من التاجر' : 'MERCHANT EVIDENCE ASSETS'}</span>
                            </div>
-                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                               {dispute.merchantResponse.evidence.map((img, i) => (
                                  <motion.div 
                                     key={i} 

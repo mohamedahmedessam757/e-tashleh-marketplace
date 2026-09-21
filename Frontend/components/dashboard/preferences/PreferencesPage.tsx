@@ -16,27 +16,27 @@ export const PreferencesPage: React.FC<{ onNavigate?: (path: string, id?: any) =
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <Settings className="text-gold-500" size={32} />
-                        {t.dashboard.profile.tabs.settings || (language === 'ar' ? 'التفضيلات والإشعارات' : 'Preferences & Notifications')}
+            <div className="flex items-center justify-between min-w-0">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                        <Settings className="text-gold-500 shrink-0" size={32} />
+                        <span className="break-words">{t.dashboard.profile.tabs.settings || (language === 'ar' ? 'التفضيلات والإشعارات' : 'Preferences & Notifications')}</span>
                     </h1>
-                    <p className="text-white/50 mt-2">
+                    <p className="text-white/50 mt-2 text-sm sm:text-base">
                         {t.dashboard.profile.tabs.settingsDesc || (language === 'ar' ? 'إدارة إعدادات حسابك، الإشعارات، وتفضيلات اللغة' : 'Manage your account settings, notifications, and language preferences')}
                     </p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar min-w-0">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${activeTab === tab.id
+                        className={`flex items-center gap-2 min-h-[44px] px-5 sm:px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${activeTab === tab.id
                             ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20'
                             : 'bg-[#151310] text-white/50 hover:text-white hover:bg-white/5 border border-white/5 hover:border-white/10'
                             }`}

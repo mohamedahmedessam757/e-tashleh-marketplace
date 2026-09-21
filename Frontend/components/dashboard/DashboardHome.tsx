@@ -125,7 +125,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-8 min-w-0"
+            className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip"
         >
             <motion.div variants={itemVariants}>
                 <PolicyChangeBanner audience="CUSTOMER" />
@@ -157,10 +157,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
 
                     <button
                         onClick={() => onNavigate('create-order')}
-                        className="group relative px-8 py-4 bg-white text-gold-600 rounded-xl font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-3 whitespace-nowrap"
+                        className="group relative w-full md:w-auto min-h-[48px] px-8 py-4 bg-white text-gold-600 rounded-xl font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
                     >
                         <span>{t.dashboard.menu.create}</span>
-                        <div className="w-8 h-8 rounded-full bg-gold-50 flex items-center justify-center group-hover:bg-gold-600 group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-gold-50 flex items-center justify-center group-hover:bg-gold-600 group-hover:text-white transition-colors shrink-0">
                             <Plus size={20} />
                         </div>
                     </button>
@@ -175,7 +175,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                 ].map((stat, idx) => (
                     <motion.div key={idx} variants={itemVariants}>
                         <GlassCard
-                            className={`p-6 flex items-center justify-between group hover:-translate-y-1 transition-transform duration-300 ${stat.bg} ${stat.border} ${stat.action ? 'cursor-pointer hover:shadow-lg' : ''}`}
+                            className={`p-4 sm:p-6 flex items-center justify-between group hover:-translate-y-1 transition-transform duration-300 ${stat.bg} ${stat.border} ${stat.action ? 'cursor-pointer hover:shadow-lg' : ''}`}
                             onClick={stat.action}
                         >
                             <div>
@@ -200,11 +200,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                             {dh?.filters?.byStatus || (isAr ? 'حسب الحالة' : 'By status')}
                         </span>
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-1">
+                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-1 min-w-0">
                         <button
                             type="button"
                             onClick={() => setHomeStatusFilter('ALL')}
-                            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
+                            className={`shrink-0 min-h-[44px] px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
                                 homeStatusFilter === 'ALL'
                                     ? 'bg-gold-500 text-black border-gold-400 shadow-[0_0_14px_rgba(196,169,92,0.45)]'
                                     : 'bg-white/5 text-white/70 border-white/10 hover:border-gold-500/40 hover:text-gold-300'
@@ -217,7 +217,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                                 key={status}
                                 type="button"
                                 onClick={() => setHomeStatusFilter(status)}
-                                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
+                                className={`shrink-0 min-h-[44px] px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
                                     homeStatusFilter === status
                                         ? 'bg-gold-500 text-black border-gold-400 shadow-[0_0_14px_rgba(196,169,92,0.45)]'
                                         : 'bg-white/5 text-white/70 border-white/10 hover:border-gold-500/40 hover:text-gold-300'
@@ -245,8 +245,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
 
                     {activeOrder ? (
                         <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-gold-500/30 shadow-[0_0_30px_rgba(168,139,62,0.05)]">
-                            <div className="p-6 md:p-8">
-                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                            <div className="p-4 sm:p-6 md:p-8">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 min-w-0">
                                     <div className="flex items-center gap-4 min-w-0 flex-1">
                                         <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 shrink-0">
                                             <Car size={28} />

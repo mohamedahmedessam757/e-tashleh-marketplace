@@ -1038,7 +1038,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative min-w-0 overflow-x-clip">
 
             <PolicyChangeBanner audience="CUSTOMER" />
 
@@ -1214,10 +1214,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
             {/* 1. Header & Timeline Section (Full Width) */}
             <div className="space-y-4">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2 min-w-0">
                     <button
                         onClick={onBack}
-                        className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group"
+                        className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group min-h-[44px]"
                     >
                         <BackIcon size={18} className="group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
                         <span className="text-sm font-medium">{t.dashboard.orders.backToList}</span>
@@ -1226,11 +1226,11 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID', 'PREPARATION', 'DELAYED_PREPARATION', 'NON_MATCHING', 'CORRECTION_PERIOD'].includes(order.status) &&
                         !expiryScenario &&
                         !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) && (
-                        <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
+                        <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
                     )}
                     {!isMultiPartOrder &&
                         ['DELIVERED', 'PARTIALLY_DELIVERED', 'DELIVERED_TO_CUSTOMER'].includes(order.status) && (
-                        <OrderStatusCountdown order={order} variant="card" className="max-w-md shrink-0" />
+                        <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
                     )}
                 </div>
 
@@ -1340,7 +1340,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             {canConfirmFullReceipt && (
                                 <button
                                     onClick={() => setShowConfirmDeliveryModal(true)}
-                                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black rounded-lg transition-all shadow-[0_0_15px_rgba(212,175,55,0.3)] font-black text-sm"
+                                    className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-6 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-black rounded-lg transition-all shadow-[0_0_15px_rgba(212,175,55,0.3)] font-black text-sm"
                                 >
                                     <Truck size={16} />
                                     {language === 'ar' ? 'تأكيد الاستلام' : 'Confirm Receipt'}
@@ -1354,7 +1354,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 const existingReview = getOrderReview(order);
                                 if (existingReview) {
                                     return (
-                                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                                        <div className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                                             <div className="flex gap-0.5">
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <Star
@@ -1377,7 +1377,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 return (
                                     <button
                                         onClick={() => setShowReviewModal(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-400 hover:text-white border border-gold-500/30 rounded-lg transition-all font-bold text-sm"
+                                        className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-4 py-2 bg-gold-500/10 hover:bg-gold-500 text-gold-400 hover:text-white border border-gold-500/30 rounded-lg transition-all font-bold text-sm"
                                     >
                                         <Star size={16} />
                                         {t.dashboard.reviews.writeTitle}
@@ -1546,10 +1546,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     )}
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-4 border-b border-white/10 pb-2 overflow-x-auto hide-scrollbar">
+                    <div className="flex gap-2 sm:gap-4 border-b border-white/10 pb-2 overflow-x-auto hide-scrollbar min-w-0">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap ${
+                            className={`min-h-[44px] px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap ${
                                 activeTab === 'overview' ? 'bg-gold-500 text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'
                             }`}
                         >
@@ -1557,7 +1557,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         </button>
                         <button
                             onClick={() => setActiveTab('invoices')}
-                            className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
+                            className={`min-h-[44px] px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
                                 activeTab === 'invoices' ? 'bg-gold-500 text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'
                             }`}
                         >
@@ -1567,7 +1567,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         {!['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED'].includes(order.status) && (
                             <button
                                 onClick={() => setActiveTab('waybills')}
-                                className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
+                                className={`min-h-[44px] px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
                                     activeTab === 'waybills' ? 'bg-gold-500 text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'
                                 }`}
                             >
@@ -1794,12 +1794,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                         : parseImageList(order.partImages);
 
                                     return (
-                                        <GlassCard key={p.id || idx} className="p-0 overflow-hidden border-white/5 bg-[#1A1814]">
+                                        <GlassCard key={p.id || idx} className="p-0 overflow-hidden border-white/5 bg-[#1A1814] min-w-0">
                                             {/* Part Row */}
-                                            <div className="p-5 flex flex-wrap items-center justify-between gap-4">
+                                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 min-w-0">
                                                 {/* Part Info */}
-                                                <div className="flex items-center gap-4 flex-1 min-w-0 sm:min-w-[200px]">
-                                                    <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                                                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
                                                         {partImgSrc ? (
                                                             <img src={partImgSrc} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
                                                         ) : (
@@ -1807,7 +1807,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h4 className="font-bold text-white text-lg truncate">{p.name}</h4>
+                                                        <h4 className="font-bold text-white text-base sm:text-lg truncate">{p.name}</h4>
                                                         {p.description && <p className="text-white/60 text-sm line-clamp-1">{p.description}</p>}
                                                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                                                             <span className="text-[10px] font-mono text-gold-500/50 uppercase tracking-wider">
@@ -1827,9 +1827,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                 </div>
 
                                                 {/* Actions */}
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto min-w-0">
                                                     {/* Offer Count Badge */}
-                                                    <div className="flex flex-col items-center">
+                                                    <div className="flex flex-col items-center shrink-0">
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mb-1 ${hasOffers ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'bg-white/5 text-white/20 border border-white/5'}`}>
                                                             {partOffers.length}
                                                         </div>
@@ -1862,7 +1862,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                                                     {/* Image preview circles */}
                                                     {thumbImages.length > 0 && (
-                                                        <div className="flex -space-x-3 rtl:space-x-reverse overflow-hidden">
+                                                        <div className="flex -space-x-3 rtl:space-x-reverse overflow-hidden shrink-0">
                                                             {thumbImages.slice(0, 3).map((img: string, i: number) => {
                                                                 const src = resolveMediaSrc(img);
                                                                 if (!src) return null;
@@ -1880,7 +1880,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     <button
                                                         onClick={() => setDrawerPart({ id: p.id, name: p.name, description: p.description, image: partImgSrc, index: idx })}
                                                         disabled={!hasOffers}
-                                                        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${hasOffers
+                                                        className={`flex items-center justify-center gap-2 flex-1 sm:flex-none min-h-[44px] px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${hasOffers
                                                             ? 'bg-gold-500 text-black border border-gold-400 shadow-[0_0_18px_rgba(196,169,92,0.45)] hover:bg-gold-400 hover:shadow-[0_0_24px_rgba(196,169,92,0.55)]'
                                                             : 'bg-white/3 text-white/15 border border-white/5 cursor-not-allowed'
                                                             }`}
@@ -2132,7 +2132,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                     {isMultiPartOrder && (
                         <MultiItemResolutionProgress fulfillmentSummary={fulfillmentSummary} />
                     )}
-                    <GlassCard className="bg-[#1A1814] border-white/5 p-6">
+                    <GlassCard className="bg-[#1A1814] border-white/5 p-4 sm:p-6 min-w-0">
                         <h3 className="text-sm font-bold text-white/50 uppercase tracking-wider mb-6 pb-2 border-b border-white/10">
                             {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
                         </h3>
