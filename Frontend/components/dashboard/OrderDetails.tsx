@@ -86,7 +86,6 @@ import { PendingStoreReviewBanner } from './shared/PendingStoreReviewBanner';
 import { MultiItemCompletionBadge } from './shared/MultiItemCompletionBadge';
 import { MultiItemResolutionProgress } from './shared/MultiItemResolutionProgress';
 import { readDashboardDeepLink } from '../../utils/widersDeepLink';
-import { getServerNowMs } from '../../utils/serverClock';
 import { isOrderExpired as isOrderPastDeadline } from '../../utils/dateUtils';
 
 interface OrderDetailsProps {
