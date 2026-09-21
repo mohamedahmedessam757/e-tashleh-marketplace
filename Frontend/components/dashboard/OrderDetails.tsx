@@ -29,6 +29,7 @@ import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla
 import { writeCreateOrderPrefill, useCreateOrderStore } from '../../stores/useCreateOrderStore';
 import { isShippingClass } from '../../utils/shippingClass';
 import { getServerNowMs, syncServerClock } from '../../utils/serverClock';
+import { PartCorrectionStatus } from './shared/PartCorrectionStatus';
 import { useOrderChatStore } from '../../stores/useOrderChatStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { TrackingView } from './tracking/TrackingView';
@@ -62,6 +63,8 @@ import { shippingClassShortLabel } from '../../utils/shippingClass';
 import { ordersApi } from '../../services/api/orders';
 import {
     getFulfillmentLabel,
+    getVerificationDocForOffer,
+    merchantOfferNeedsCorrection,
     computeShipmentDeliverySummary,
     allShipmentBatchesDelivered,
     resolveOrderTimelineStatus,
@@ -1911,8 +1914,19 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             </span>
                                                         )}
                                                         {acceptedPartOffer?.fulfillmentStatus && !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status) && (
-                                                            <span className="text-[9px] text-gold-400/90 font-bold mt-1 block">
-                                                                {getFulfillmentLabel(acceptedPartOffer.fulfillmentStatus, language === 'ar')}
+                                                            <span className="text-[9px] text-gold-400/90 font-bold mt-1 block text-center">
+                                                                {merchantOfferNeedsCorrection(
+                                                                    acceptedPartOffer.fulfillmentStatus,
+                                                                    getVerificationDocForOffer(
+                                                                        order.verificationDocuments,
+                                                                        acceptedPartOffer.id,
+                                                                    ),
+                                                                    order.status,
+                                                                )
+                                                                    ? (language === 'ar'
+                                                                        ? 'رفض مطابقة — تصحيح'
+                                                                        : 'Non-matching — correction')
+                                                                    : getFulfillmentLabel(acceptedPartOffer.fulfillmentStatus, language === 'ar')}
                                                             </span>
                                                         )}
                                                         {acceptedPartOffer && order.requestType === 'multiple' && (
@@ -1958,6 +1972,20 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            {acceptedPartOffer && (
+                                                <div className="px-4 sm:px-5 pb-3">
+                                                    <PartCorrectionStatus
+                                                        isAr={language === 'ar'}
+                                                        compact
+                                                        fulfillmentStatus={acceptedPartOffer.fulfillmentStatus}
+                                                        orderStatus={order.status}
+                                                        verificationDocuments={order.verificationDocuments}
+                                                        offerId={acceptedPartOffer.id}
+                                                        orderCorrectionDeadlineAt={order.correctionDeadlineAt}
+                                                    />
+                                                </div>
+                                            )}
 
                                             {showPaidShippingCartBanner && (
                                                 <div className="mx-5 mb-4 px-4 py-3 rounded-xl border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-sm font-medium leading-relaxed flex items-start gap-2">

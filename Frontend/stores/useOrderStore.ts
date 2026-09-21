@@ -330,6 +330,9 @@ const normalizeVerificationDocuments = (docs: any[] | undefined) =>
     docs
         ? docs.map((doc) => ({
               ...doc,
+              offerId: doc.offerId ?? doc.offer_id ?? null,
+              correctionDeadlineAt:
+                  doc.correctionDeadlineAt ?? doc.correction_deadline_at ?? null,
               images: parseJsonArray(doc.images),
               adminRejectionImages: parseJsonArray(doc.adminRejectionImages),
           }))
@@ -361,6 +364,7 @@ export const mapVerificationDocFromRow = (row: Record<string, unknown>): Record<
     id: row.id,
     orderId: row.order_id ?? row.orderId,
     storeId: row.store_id ?? row.storeId,
+    offerId: row.offer_id ?? row.offerId ?? null,
     images: parseJsonArray(row.images),
     videoUrl: row.video_url ?? row.videoUrl,
     description: row.description,
@@ -380,6 +384,7 @@ export const mapVerificationDocFromRow = (row: Record<string, unknown>): Record<
     adminSignatureType: row.admin_signature_type ?? row.adminSignatureType,
     adminSignatureText: row.admin_signature_text ?? row.adminSignatureText,
     isCorrection: row.is_correction ?? row.isCorrection,
+    correctionDeadlineAt: row.correction_deadline_at ?? row.correctionDeadlineAt ?? null,
     createdAt: row.created_at ?? row.createdAt,
     updatedAt: row.updated_at ?? row.updatedAt,
 });

@@ -8,6 +8,7 @@ import {
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { GlassCard } from '../../ui/GlassCard';
 import { AdminSignatureModal } from './AdminSignatureModal';
+import { CorrectionCountdown, resolvePartCorrectionDeadline } from '../shared/PartCorrectionStatus';
 import { isVerificationFlowStatus } from '../../../utils/orderVerificationVisibility';
 
 interface VerificationReviewPanelProps {
@@ -302,26 +303,40 @@ export const VerificationReviewPanel: React.FC<VerificationReviewPanelProps> = (
                                         : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
                                 }`}
                             >
-                                <span className="flex items-center gap-1.5">
-                                    {isDocApproved && <CheckCircle2 size={12} className="text-green-400" />}
-                                    {isDocRejected && <XCircle size={12} className="text-red-400" />}
-                                    {label}
+                                <span className="flex flex-col items-start gap-0.5">
+                                    <span className="flex items-center gap-1.5">
+                                        {isDocApproved && <CheckCircle2 size={12} className="text-green-400" />}
+                                        {isDocRejected && <XCircle size={12} className="text-red-400" />}
+                                        {label}
+                                    </span>
+                                    {isDocPending && (
+                                        <span className="text-[9px] text-amber-400/80 font-normal">
+                                            {isAr ? 'قيد المراجعة' : 'Pending'}
+                                        </span>
+                                    )}
+                                    {isDocApproved && (
+                                        <span className="text-[9px] text-green-400/80 font-normal">
+                                            {isAr ? 'معتمد' : 'Approved'}
+                                        </span>
+                                    )}
+                                    {isDocRejected && (
+                                        <span className="text-[9px] text-red-400/80 font-normal">
+                                            {isAr ? 'مرفوض' : 'Rejected'}
+                                        </span>
+                                    )}
+                                    {isDocRejected && (() => {
+                                        const deadlineAt = resolvePartCorrectionDeadline(doc, null);
+                                        if (!deadlineAt) return null;
+                                        return (
+                                            <CorrectionCountdown
+                                                deadlineAt={deadlineAt}
+                                                isAr={isAr}
+                                                labeled
+                                                className="text-[10px] ps-0.5"
+                                            />
+                                        );
+                                    })()}
                                 </span>
-                                {isDocPending && (
-                                    <span className="block text-[9px] text-amber-400/80 font-normal mt-0.5">
-                                        {isAr ? 'قيد المراجعة' : 'Pending'}
-                                    </span>
-                                )}
-                                {isDocApproved && (
-                                    <span className="block text-[9px] text-green-400/80 font-normal mt-0.5">
-                                        {isAr ? 'معتمد' : 'Approved'}
-                                    </span>
-                                )}
-                                {isDocRejected && (
-                                    <span className="block text-[9px] text-red-400/80 font-normal mt-0.5">
-                                        {isAr ? 'مرفوض' : 'Rejected'}
-                                    </span>
-                                )}
                             </button>
                         );
                     })}
@@ -471,20 +486,45 @@ export const VerificationReviewPanel: React.FC<VerificationReviewPanelProps> = (
             </div>
 
             {/* Admin Rejection Evidence (if already rejected and docs exist) */}
-            {activeDoc.adminStatus === 'REJECTED' && activeDoc.adminRejectionReason && (
+            {activeDoc.adminStatus === 'REJECTED' && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-4">
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div className="space-y-1 min-w-0">
                             <h4 className="text-sm font-bold text-red-400 flex items-center gap-2">
                                 <XCircle size={16} /> {isAr ? 'سبب الرفض المسجّل من الإدارة' : 'Admin Rejection Reason on Record'}
                             </h4>
-                            <p className="text-white/80 text-sm">{activeDoc.adminRejectionReason}</p>
+                            {activeDoc.adminRejectionReason ? (
+                                <p className="text-white/80 text-sm break-words">{activeDoc.adminRejectionReason}</p>
+                            ) : (
+                                <p className="text-white/50 text-sm">
+                                    {isAr ? 'تم رفض المطابقة لهذه القطعة' : 'Matching was rejected for this part'}
+                                </p>
+                            )}
                         </div>
-                        {activeDoc.adminReviewedAt && (
-                            <div className="text-[10px] text-white/30 font-mono">
-                                {new Date(activeDoc.adminReviewedAt).toLocaleString(isAr ? 'ar-EG' : 'en-GB')}
-                            </div>
-                        )}
+                        <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+                            {activeDoc.adminReviewedAt && (
+                                <div className="text-[10px] text-white/30 font-mono">
+                                    {new Date(activeDoc.adminReviewedAt).toLocaleString(isAr ? 'ar-EG' : 'en-GB')}
+                                </div>
+                            )}
+                            {(() => {
+                                const deadlineAt = resolvePartCorrectionDeadline(activeDoc, null);
+                                if (!deadlineAt) return null;
+                                return (
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/25">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-300/80">
+                                            {isAr ? 'مهلة التصحيح' : 'Correction window'}
+                                        </span>
+                                        <CorrectionCountdown
+                                          deadlineAt={deadlineAt}
+                                          isAr={isAr}
+                                          labeled
+                                          className="text-xs"
+                                        />
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
 
                     {/* Admin Signature Display */}
@@ -508,7 +548,7 @@ export const VerificationReviewPanel: React.FC<VerificationReviewPanelProps> = (
                     )}
 
                     {activeDoc.adminRejectionImages?.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                             {activeDoc.adminRejectionImages.map((img: string, i: number) => (
                                 <a key={i} href={img} target="_blank" rel="noopener noreferrer"
                                     className="aspect-square rounded-xl overflow-hidden border border-red-500/20">

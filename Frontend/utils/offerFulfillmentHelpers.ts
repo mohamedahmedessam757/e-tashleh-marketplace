@@ -354,13 +354,34 @@ export function getVerificationDocForOffer(
     offerId: string,
 ): VerificationDocSummary | undefined {
     if (!documents?.length || !offerId) return undefined;
-    return (
-        documents.find(
-            (d) =>
-                d.offerId === offerId &&
-                (!d.adminStatus || String(d.adminStatus).toUpperCase() === 'PENDING'),
-        ) ?? documents.find((d) => d.offerId === offerId)
+    const forOffer = documents.filter((d) => String(d.offerId || '') === String(offerId));
+    const pool = forOffer.length
+        ? forOffer
+        : // Single-item / legacy docs sometimes omit offerId
+          documents.length === 1 && !documents[0]?.offerId
+            ? documents
+            : [];
+    if (!pool.length) return undefined;
+
+    const pending = pool.find(
+        (d) => !d.adminStatus || String(d.adminStatus).toUpperCase() === 'PENDING',
     );
+    if (pending) return pending;
+
+    const rejectedOpen = pool.find((d) => {
+        if (String(d.adminStatus || '').toUpperCase() !== 'REJECTED') return false;
+        const deadline = d.correctionDeadlineAt
+            ? new Date(d.correctionDeadlineAt).getTime()
+            : NaN;
+        if (!Number.isFinite(deadline)) return true;
+        return Date.now() <= deadline;
+    });
+    if (rejectedOpen) return rejectedOpen;
+
+    const anyRejected = pool.find(
+        (d) => String(d.adminStatus || '').toUpperCase() === 'REJECTED',
+    );
+    return anyRejected ?? pool[0];
 }
 
 export function merchantCanRequestReadyForShipping(

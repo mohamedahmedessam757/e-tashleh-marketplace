@@ -36,6 +36,7 @@ import {
 } from '../../ui/ReturnDisputePhaseBanner';
 import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
+import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { shippingClassShortLabel } from '../../../utils/shippingClass';
@@ -921,6 +922,20 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {primaryOffer && (
+                                                <div className="px-4 sm:px-5 pb-3">
+                                                    <PartCorrectionStatus
+                                                        isAr={isAr}
+                                                        compact
+                                                        fulfillmentStatus={primaryOffer.fulfillmentStatus}
+                                                        orderStatus={order.status}
+                                                        verificationDocuments={order.verificationDocuments}
+                                                        offerId={primaryOffer.id}
+                                                        orderCorrectionDeadlineAt={order.correctionDeadlineAt}
+                                                    />
+                                                </div>
+                                            )}
 
                                             {/* Admin: Expand/Collapse ALL offers for this part */}
                                             {hasOffers ? (

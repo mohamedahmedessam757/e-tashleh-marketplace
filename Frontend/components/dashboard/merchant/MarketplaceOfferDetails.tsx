@@ -13,6 +13,7 @@ import {
     ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
+import { PartCorrectionStatus, CorrectionCountdown, resolvePartCorrectionDeadline } from '../shared/PartCorrectionStatus';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { SubmitOfferModal } from './SubmitOfferModal';
@@ -1916,6 +1917,26 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             {partVerificationDoc.adminRejectionReason}
                                                                         </p>
                                                                     )}
+                                                                    {isPartInCorrection && (() => {
+                                                                        const deadlineAt = resolvePartCorrectionDeadline(
+                                                                            partVerificationDoc,
+                                                                            order?.correctionDeadlineAt,
+                                                                        );
+                                                                        if (!deadlineAt) return null;
+                                                                        return (
+                                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-red-300/70">
+                                                                                    {isAr ? 'متبقي للتصحيح' : 'Correction left'}
+                                                                                </span>
+                                                                                <CorrectionCountdown
+                                                                                    deadlineAt={deadlineAt}
+                                                                                    isAr={isAr}
+                                                                                    labeled
+                                                                                    className="text-xs"
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    })()}
                                                                     {order.requestType === 'multiple' && (
                                                                         <div className="mt-2">
                                                                             <CartShipmentBadge
@@ -2034,12 +2055,37 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                     getFulfillmentRank('VERIFICATION_SUCCESS'))
                                                                         );
                                                                     })() && (
-                                                                    <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5">
-                                                                        <AlertTriangle size={14} />
-                                                                        {isAr
-                                                                            ? 'مطلوب إعادة التوثيق — فترة التصحيح'
-                                                                            : 'Correction required — rematch'}
-                                                                    </span>
+                                                                    <div className="w-full min-w-0 flex flex-col sm:flex-row sm:items-center gap-2">
+                                                                        <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5 w-full sm:w-auto min-h-[40px]">
+                                                                            <AlertTriangle size={14} />
+                                                                            {isAr
+                                                                                ? 'مطلوب إعادة التوثيق — فترة التصحيح'
+                                                                                : 'Correction required — rematch'}
+                                                                        </span>
+                                                                        {(() => {
+                                                                            const partDoc = getVerificationDocForOffer(
+                                                                                order?.verificationDocuments,
+                                                                                partOffer.id,
+                                                                            );
+                                                                            const deadlineAt = resolvePartCorrectionDeadline(
+                                                                                partDoc,
+                                                                                order?.correctionDeadlineAt,
+                                                                            );
+                                                                            if (!deadlineAt) return null;
+                                                                            return (
+                                                                                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs">
+                                                                                    <span className="text-red-300/70 font-bold uppercase tracking-wider text-[10px]">
+                                                                                        {isAr ? 'متبقي' : 'Left'}
+                                                                                    </span>
+                                                                                    <CorrectionCountdown
+                                                                                        deadlineAt={deadlineAt}
+                                                                                        isAr={isAr}
+                                                                                        labeled
+                                                                                    />
+                                                                                </span>
+                                                                            );
+                                                                        })()}
+                                                                    </div>
                                                                 )}
                                                                 {!fulfillmentLocked &&
                                                                     String(order?.status).toUpperCase() ===
@@ -2105,6 +2151,17 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 )}
                                                             </div>
                                                         )}
+
+                                                        <PartCorrectionStatus
+                                                            isAr={isAr}
+                                                            compact
+                                                            className="mt-3"
+                                                            fulfillmentStatus={partOffer.fulfillmentStatus}
+                                                            orderStatus={order?.status}
+                                                            verificationDocuments={order?.verificationDocuments}
+                                                            offerId={partOffer.id}
+                                                            orderCorrectionDeadlineAt={order?.correctionDeadlineAt}
+                                                        />
 
                                                         {/* 2026 Governance: Edit / Cancel until offersStopAt */}
                                                         {(order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') &&
