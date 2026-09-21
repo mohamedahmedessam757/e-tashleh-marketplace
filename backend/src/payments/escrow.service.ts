@@ -983,19 +983,30 @@ export class EscrowService {
             await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, ctx.paymentId);
         }
 
+        const paymentRow = await tx.paymentTransaction.findUnique({
+            where: { id: ctx.paymentId },
+            select: {
+                offerId: true,
+                offer: { select: { storeId: true } },
+            },
+        });
         const order = await tx.order.findUnique({
             where: { id: ctx.orderId },
-            include: { acceptedOffer: { select: { storeId: true } } },
+            select: {
+                storeId: true,
+                requestType: true,
+                acceptedOffer: { select: { storeId: true } },
+            },
         });
+        const isMulti =
+            String(order?.requestType || '').toLowerCase() === 'multiple';
+        // Multi: clawback MUST follow the payment's offer store — never order.acceptedOffer
+        // or an unrelated dispute on a sibling part (wrong merchant ledger).
         const storeId =
-            order?.storeId ||
-            order?.acceptedOffer?.storeId ||
-            (
-                await tx.dispute.findFirst({
-                    where: { orderId: ctx.orderId },
-                    select: { storeId: true },
-                })
-            )?.storeId;
+            paymentRow?.offer?.storeId ||
+            (!isMulti
+                ? order?.storeId || order?.acceptedOffer?.storeId || null
+                : null);
 
         if (order && storeId) {
             const storeBefore = await tx.store.findUnique({
@@ -1307,7 +1318,7 @@ export class EscrowService {
             where: {
                 orderId,
                 ...(scopedOfferIds.length
-                    ? { OR: [{ offerId: { in: scopedOfferIds } }, { offerId: null }] }
+                    ? { offerId: { in: scopedOfferIds } }
                     : {}),
                 status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
             },
@@ -1317,7 +1328,7 @@ export class EscrowService {
             where: {
                 orderId,
                 ...(scopedOfferIds.length
-                    ? { OR: [{ offerId: { in: scopedOfferIds } }, { offerId: null }] }
+                    ? { offerId: { in: scopedOfferIds } }
                     : {}),
                 status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED', 'CLOSED'] },
             },

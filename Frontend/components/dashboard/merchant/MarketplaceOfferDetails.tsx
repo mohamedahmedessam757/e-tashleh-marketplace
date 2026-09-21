@@ -1943,6 +1943,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                   partOffer.fulfillmentStatus,
                                                                                   order?.status,
                                                                                   isAr,
+                                                                                  { requestType: order?.requestType },
                                                                               )}
                                                                     </span>
                                                                     {isPartRejected && partVerificationDoc?.adminRejectionReason && (

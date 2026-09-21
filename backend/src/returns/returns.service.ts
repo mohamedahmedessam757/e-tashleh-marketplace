@@ -1094,7 +1094,7 @@ export class ReturnsService {
         });
         const storeIds = merchantStores.map(s => s.id);
         
-        const isOwner = storeIds.includes(returnRequest.storeId) || storeIds.includes(returnRequest.order?.acceptedOffer?.storeId);
+        const isOwner = storeIds.includes(returnRequest.storeId);
 
         if (!isOwner) {
             throw new ForbiddenException('Access denied - This case does not belong to your store');
@@ -1205,7 +1205,7 @@ export class ReturnsService {
         });
         const storeIds = merchantStores.map(s => s.id);
         
-        const isOwner = storeIds.includes(dispute.storeId) || storeIds.includes(dispute.order?.acceptedOffer?.storeId);
+        const isOwner = storeIds.includes(dispute.storeId);
 
         if (!isOwner) {
             throw new ForbiddenException('Access denied - This case does not belong to your store');
@@ -1745,12 +1745,20 @@ export class ReturnsService {
         orderId: string,
         caseRecord: {
             offerId?: string | null;
-            order?: { invoices?: { total?: unknown }[]; price?: unknown; totalAmount?: unknown } | null;
+            order?: {
+                requestType?: string | null;
+                parts?: unknown[] | null;
+                invoices?: { total?: unknown }[];
+                price?: unknown;
+                totalAmount?: unknown;
+            } | null;
         },
     ): Promise<number> {
         if (caseRecord.offerId) {
             const offerBase = await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId);
             if (offerBase.paidTotal > 0) return offerBase.paidTotal;
+            // Multi: never fall back to full-order paid total (would inflate sibling math).
+            if (this.isMultiItemOrder(caseRecord.order)) return 0;
         }
         const base = await this.escrowService.resolveOrderPaymentBase(orderId);
         if (base.paidTotal > 0) return base.paidTotal;
@@ -1762,13 +1770,18 @@ export class ReturnsService {
 
     private async resolveAdjudicationMaxRefundable(
         orderId: string,
-        caseRecord: { offerId?: string | null },
+        caseRecord: {
+            offerId?: string | null;
+            order?: { requestType?: string | null; parts?: { id: string }[] | null } | null;
+        },
     ): Promise<number> {
         if (caseRecord.offerId) {
             const offerBase = await this.escrowService.resolveOfferPaymentBase(caseRecord.offerId);
             if (offerBase.paymentId) {
                 return this.escrowService.resolveMaxRefundableAmountForPayment(offerBase.paymentId);
             }
+            // Multi: never fall back to order-wide max refundable (sibling payments).
+            if (this.isMultiItemOrder(caseRecord.order || {})) return 0;
         }
         return this.escrowService.resolveMaxRefundableAmount(orderId);
     }
@@ -2224,6 +2237,12 @@ export class ReturnsService {
                         paymentId = offerBase?.paymentId ?? null;
                     }
                     if (!paymentId) {
+                        const isMulti = this.isMultiItemOrder(caseRecord.order);
+                        if (isMulti || caseRecord.offerId) {
+                            throw new BadRequestException(
+                                'Cannot release funds: payment for this part/offer was not found. Sibling payments must not be used.',
+                            );
+                        }
                         const fallbackPayment = await tx.paymentTransaction.findFirst({
                             where: { orderId: caseRecord.orderId, status: 'SUCCESS' },
                             orderBy: { paidAt: 'asc' },
@@ -2806,9 +2825,16 @@ export class ReturnsService {
 
         if (!record) throw new NotFoundException('Case not found');
 
-        // Authorization check
+        // Authorization: case.storeId only (never order.acceptedOffer — sibling merchants).
         const isCustomer = record.customerId === userId;
-        const isMerchant = record.order.acceptedOffer?.store.ownerId === userId;
+        let isMerchant = false;
+        if (record.storeId) {
+            const caseStore = await this.prisma.store.findFirst({
+                where: { id: record.storeId, ownerId: userId },
+                select: { id: true },
+            });
+            isMerchant = Boolean(caseStore);
+        }
         
         let actorType: 'CUSTOMER' | 'VENDOR' | 'ADMIN' = isCustomer ? 'CUSTOMER' : 'VENDOR';
         let isAuthorized = isCustomer || isMerchant;

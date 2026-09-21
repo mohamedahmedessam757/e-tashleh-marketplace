@@ -270,6 +270,7 @@ export function getMerchantFulfillmentDisplayLabel(
     fulfillmentStatus: string | undefined,
     orderStatus: string | null | undefined,
     isAr: boolean,
+    opts?: { requestType?: string | null; isMulti?: boolean },
 ): string {
     const fs = String(fulfillmentStatus || '').toUpperCase();
     // Per-offer cancel is SSOT — never paint cancelled parts as verified because the
@@ -279,20 +280,29 @@ export function getMerchantFulfillmentDisplayLabel(
     }
 
     const os = String(orderStatus || '').toUpperCase();
+    const isMulti =
+        opts?.isMulti === true ||
+        String(opts?.requestType || '').toLowerCase() === 'multiple';
+
+    // Whole-order cancel/close still applies to every part.
     if (os === 'CANCELLED' || os === 'CLOSED') {
         return isAr ? 'ملغى — لا يمكن إعادة التوثيق' : 'Cancelled — re-verification not allowed';
     }
-    if (os === 'RETURN_REQUESTED') {
-        return isAr ? 'طلب إرجاع مفتوح — بعد التسليم' : 'Return requested — after delivery';
-    }
-    if (os === 'RETURN_APPROVED') {
-        return isAr ? 'تمت الموافقة على الإرجاع' : 'Return approved';
-    }
-    if (os === 'DISPUTED') {
-        return isAr ? 'نزاع مفتوح — بعد التسليم' : 'Dispute open — after delivery';
-    }
-    if (os === 'RETURNED') {
-        return isAr ? 'تم الإرجاع' : 'Returned';
+
+    // Multi-item: RETURN/DISPUTE are per-offer — never paint siblings from order status.
+    if (!isMulti) {
+        if (os === 'RETURN_REQUESTED') {
+            return isAr ? 'طلب إرجاع مفتوح — بعد التسليم' : 'Return requested — after delivery';
+        }
+        if (os === 'RETURN_APPROVED') {
+            return isAr ? 'تمت الموافقة على الإرجاع' : 'Return approved';
+        }
+        if (os === 'DISPUTED') {
+            return isAr ? 'نزاع مفتوح — بعد التسليم' : 'Dispute open — after delivery';
+        }
+        if (os === 'RETURNED') {
+            return isAr ? 'تم الإرجاع' : 'Returned';
+        }
     }
     if (os === 'CORRECTION_PERIOD' || os === 'NON_MATCHING') {
         return isAr
