@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Return, Dispute } from '../types';
 import { getAccessToken } from '../utils/auth';
+import { bumpFulfillmentSummary } from '../utils/fulfillmentSummarySync';
 
 interface ReturnsState {
     returns: Return[];
@@ -135,6 +136,13 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             }
 
             void get().fetchReturnsAndDisputes({ silent: true });
+            bumpFulfillmentSummary(orderId);
+            void import('./useOrderStore').then(({ useOrderStore }) => {
+                void useOrderStore.getState().fetchOrder(orderId);
+            });
+            void import('./useResolutionStore').then(({ useResolutionStore }) => {
+                void useResolutionStore.getState().fetchUserRequests(true);
+            });
             return true;
         } catch (error: any) {
             console.error('Failed to request return:', error);
@@ -184,6 +192,13 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             }
 
             void get().fetchReturnsAndDisputes({ silent: true });
+            bumpFulfillmentSummary(orderId);
+            void import('./useOrderStore').then(({ useOrderStore }) => {
+                void useOrderStore.getState().fetchOrder(orderId);
+            });
+            void import('./useResolutionStore').then(({ useResolutionStore }) => {
+                void useResolutionStore.getState().fetchUserRequests(true);
+            });
             return true;
         } catch (error: any) {
             console.error('Failed to escalate dispute:', error);

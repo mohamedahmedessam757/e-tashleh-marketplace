@@ -35,9 +35,17 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
 }) => {
     const status = String(offer.fulfillmentStatus || '').toUpperCase();
     const isDelivered = status === 'DELIVERED';
-    const isCompleted = status === 'COMPLETED' || offer.resolutionLocked;
     const hasOpenCase = !!offer.hasOpenCase;
-    const canAct = !!offer.isReturnEligible && isDelivered && !hasOpenCase;
+    // Locked without an open case = return window closed. Keep DELIVERED+locked+open-case as dispute UI.
+    const isCompleted =
+        status === 'COMPLETED' || (!!offer.resolutionLocked && !hasOpenCase);
+    // While fulfillment-summary is still loading, isReturnEligible may be undefined —
+    // keep the timer visible instead of flashing "expired".
+    const canAct =
+        isDelivered &&
+        !hasOpenCase &&
+        !isCompleted &&
+        offer.isReturnEligible !== false;
 
     if (!isDelivered && !isCompleted) return null;
 
@@ -116,7 +124,7 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                         </div>
                     </>
                 )}
-                {isDelivered && !canAct && !hasOpenCase && !isCompleted && (
+                {isDelivered && !canAct && !hasOpenCase && !isCompleted && offer.isReturnEligible === false && (
                     <div className="flex items-center gap-2 text-red-400 text-[11px] font-bold">
                         <CheckCircle2 size={14} />
                         {isAr ? 'انتهت مهلة الإرجاع لهذه القطعة' : 'Return window expired for this item'}

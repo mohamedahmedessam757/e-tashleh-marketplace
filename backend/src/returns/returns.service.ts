@@ -548,6 +548,11 @@ export class ReturnsService {
                     where: { id: acceptedOfferResolved.id },
                     data: { resolutionLocked: true },
                 });
+                // Touch order so customer/merchant order realtime listeners refresh immediately
+                await tx.order.update({
+                    where: { id: orderId },
+                    data: { updatedAt: new Date() },
+                });
             }
 
             // --- 2026 Risk Management: Update Customer Return Stats ---
@@ -759,6 +764,11 @@ export class ReturnsService {
                 await tx.offer.update({
                     where: { id: acceptedOffer.id },
                     data: { resolutionLocked: true },
+                });
+                // Touch order so customer/merchant order realtime listeners refresh immediately
+                await tx.order.update({
+                    where: { id: orderId },
+                    data: { updatedAt: new Date() },
                 });
             }
 

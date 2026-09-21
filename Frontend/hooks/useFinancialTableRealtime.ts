@@ -6,7 +6,8 @@ const DEFAULT_CHANNELS = [
   'stores',
   'wallet_transactions',
   'withdrawal_requests',
-  'return_requests',
+  'returns',
+  'disputes',
   'invoices',
   'payment_transactions',
 ] as const;

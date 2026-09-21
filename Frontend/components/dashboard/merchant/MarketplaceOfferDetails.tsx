@@ -1790,17 +1790,48 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                     )}
                                                     {hasOffer && (() => {
                                                         const meta = partResolutionByOfferId.get(partOffer.id);
-                                                        if (!meta?.hasOpenCase && !(meta?.resolutionLocked && meta.fulfillmentStatus !== 'COMPLETED')) {
+                                                        const openCase = cases.some(
+                                                            (c) =>
+                                                                String(c.orderId) === String(orderId) &&
+                                                                (c.type === 'return' || c.type === 'dispute') &&
+                                                                ![
+                                                                    'RESOLVED',
+                                                                    'CLOSED',
+                                                                    'CANCELLED',
+                                                                    'REFUNDED',
+                                                                ].includes(c.status) &&
+                                                                (String(c.offerId || '') ===
+                                                                    String(partOffer.id) ||
+                                                                    String(c.orderPartId || '') ===
+                                                                        String(part.id)),
+                                                        );
+                                                        const hasOpenCase = Boolean(
+                                                            meta?.hasOpenCase || openCase,
+                                                        );
+                                                        const resolutionLocked = Boolean(
+                                                            meta?.resolutionLocked ??
+                                                                partOffer.resolutionLocked,
+                                                        );
+                                                        const fulfillmentStatus =
+                                                            meta?.fulfillmentStatus ??
+                                                            partOffer.fulfillmentStatus;
+                                                        if (
+                                                            !hasOpenCase &&
+                                                            !(
+                                                                resolutionLocked &&
+                                                                fulfillmentStatus !== 'COMPLETED'
+                                                            )
+                                                        ) {
                                                             return null;
                                                         }
                                                         return (
                                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                                                meta.hasOpenCase
+                                                                hasOpenCase
                                                                     ? 'bg-red-500/10 text-red-400 border-red-500/30'
                                                                     : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                                                             }`}>
                                                                 <AlertTriangle size={10} />
-                                                                {meta.hasOpenCase
+                                                                {hasOpenCase
                                                                     ? (isAr ? 'نزاع/إرجاع' : 'Open case')
                                                                     : (isAr ? 'مقفل' : 'Locked')}
                                                             </span>

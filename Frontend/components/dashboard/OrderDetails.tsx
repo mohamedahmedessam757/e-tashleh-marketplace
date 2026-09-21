@@ -47,9 +47,10 @@ import { OrderCountdown } from '../ui/OrderCountdown';
 import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
 import { useResolutionStore } from '../../stores/useResolutionStore';
+import { bumpFulfillmentSummary } from '../../utils/fulfillmentSummarySync';
+import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { ShippingPaymentCard } from './resolution/ShippingPaymentCard';
 import { AdjudicationFeePaymentCard } from './resolution/AdjudicationFeePaymentCard';
-import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
 import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
 import {
     getOrderReview,
@@ -497,6 +498,35 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         });
         return map;
     }, [fulfillmentSummary]);
+
+    const refreshResolutionUi = () => {
+        if (!order?.id) return;
+        void fetchCases('customer', true);
+        void useOrderStore.getState().fetchOrder(order.id);
+        bumpFulfillmentSummary(order.id);
+    };
+
+    const partHasOpenResolutionCase = (offerId: string, orderPartId: string) =>
+        cases.some(
+            (c) =>
+                String(c.orderId) === String(orderId) &&
+                (c.type === 'return' || c.type === 'dispute') &&
+                !['RESOLVED', 'CLOSED', 'CANCELLED', 'REFUNDED'].includes(c.status) &&
+                (String(c.offerId || '') === String(offerId) ||
+                    String(c.orderPartId || '') === String(orderPartId)),
+        );
+
+    const clientReturnEligible = (
+        deliveredAt?: string | null,
+        resolutionLocked?: boolean,
+        hasOpenCase?: boolean,
+    ) => {
+        if (hasOpenCase || resolutionLocked) return false;
+        if (!deliveredAt) return false;
+        const ends =
+            new Date(deliveredAt).getTime() + POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
+        return Date.now() < ends;
+    };
 
     const eligibleResolutionParts = useMemo((): EligibleResolutionPart[] => {
         if (!order || !fulfillmentSummary?.parts?.length) return [];
@@ -2057,6 +2087,29 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                                             {acceptedPartOffer && isMultiPartOrder && (() => {
                                                 const meta = partResolutionByOfferId.get(acceptedPartOffer.id);
+                                                const openCase = partHasOpenResolutionCase(
+                                                    acceptedPartOffer.id,
+                                                    String(p.id),
+                                                );
+                                                const deliveredAt =
+                                                    meta?.deliveredAt ??
+                                                    acceptedPartOffer.deliveredAt ??
+                                                    null;
+                                                const resolutionLocked = Boolean(
+                                                    meta?.resolutionLocked ??
+                                                        acceptedPartOffer.resolutionLocked,
+                                                );
+                                                const hasOpenCase = Boolean(
+                                                    meta?.hasOpenCase ?? openCase,
+                                                );
+                                                const isReturnEligible =
+                                                    typeof meta?.isReturnEligible === 'boolean'
+                                                        ? meta.isReturnEligible
+                                                        : clientReturnEligible(
+                                                              deliveredAt,
+                                                              resolutionLocked,
+                                                              hasOpenCase,
+                                                          );
                                                 const cardOffer: PartReturnWindowOffer = {
                                                     offerId: acceptedPartOffer.id,
                                                     orderPartId: p.id,
@@ -2066,12 +2119,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                         order.merchantName ||
                                                         'Store',
                                                     fulfillmentStatus: acceptedPartOffer.fulfillmentStatus,
-                                                    deliveredAt: meta?.deliveredAt ?? null,
-                                                    completedAt: meta?.completedAt ?? null,
+                                                    deliveredAt,
+                                                    completedAt: meta?.completedAt ?? acceptedPartOffer.completedAt ?? null,
                                                     returnWindowEndsAt: meta?.returnWindowEndsAt ?? null,
-                                                    isReturnEligible: Boolean(meta?.isReturnEligible),
-                                                    resolutionLocked: Boolean(meta?.resolutionLocked),
-                                                    hasOpenCase: Boolean(meta?.hasOpenCase),
+                                                    isReturnEligible,
+                                                    resolutionLocked,
+                                                    hasOpenCase,
                                                 };
                                                 return (
                                                     <div className="border-t border-white/5 px-5 py-4 space-y-3">
@@ -2618,7 +2671,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 initialReason={returnInitialReason}
                 merchantName={modalMerchantName}
                 partName={modalPartName}
-                onSuccess={() => useOrderStore.getState().fetchOrder(order.id)}
+                onSuccess={refreshResolutionUi}
             />
 
             <DisputeModal 
@@ -2632,7 +2685,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 eligibleParts={isMultiPartOrder ? eligibleResolutionParts : undefined}
                 merchantName={modalMerchantName}
                 partName={modalPartName}
-                onSuccess={() => useOrderStore.getState().fetchOrder(order.id)}
+                onSuccess={refreshResolutionUi}
             />
         </div >
     );

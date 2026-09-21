@@ -15,6 +15,7 @@ import { markOrderCancelledByCustomer, clearOrderCancelledByCustomer } from '../
 import { useAdminStore } from './useAdminStore';
 import { getAccessToken } from '../utils/auth';
 import { isAcceptedOfferStatus } from '../utils/offerStatusHelpers';
+import { bumpFulfillmentSummary } from '../utils/fulfillmentSummarySync';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -648,7 +649,12 @@ const handleGlobalRealtimeEvent = (source: string, payload?: { new?: Record<stri
 
         // Detail view: refresh the open order; skip heavy list reload
         if (openId) {
-            void fetchOrder(openId);
+            void fetchOrder(openId).finally(() => {
+                // Multi-item return/dispute UI depends on fulfillment-summary, not order.status
+                if (source.includes('returns') || source.includes('disputes') || source.includes('offers')) {
+                    bumpFulfillmentSummary(openId);
+                }
+            });
             return;
         }
 
@@ -659,7 +665,11 @@ const handleGlobalRealtimeEvent = (source: string, payload?: { new?: Record<stri
         }
 
         // Few targeted updates (incl. new inserts): fetch each id (prepend if missing)
-        void Promise.all(ids.map((id) => fetchOrder(id)));
+        void Promise.all(ids.map((id) => fetchOrder(id))).finally(() => {
+            if (source.includes('returns') || source.includes('disputes') || source.includes('offers')) {
+                ids.forEach((id) => bumpFulfillmentSummary(id));
+            }
+        });
     }, debounceMs);
 };
 

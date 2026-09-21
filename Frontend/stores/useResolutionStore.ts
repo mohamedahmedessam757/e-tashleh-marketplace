@@ -4,6 +4,7 @@ import { useAuditStore } from './useAuditStore';
 import { returnsApi } from '../services/api/returns';
 import { supabase } from '../services/supabase';
 import { resolveCasePartName } from '../utils/resolveCasePartName';
+import { bumpFulfillmentSummary } from '../utils/fulfillmentSummarySync';
 
 export type CaseType = 'return' | 'dispute';
 export type CaseStatus = 'OPEN' | 'AWAITING_MERCHANT' | 'AWAITING_ADMIN' | 'APPROVED' | 'RESOLVED' | 'CLOSED' | 'REFUNDED' | 'ESCALATED' | 'UNDER_REVIEW' | 'PENDING' | 'MERCHANT_REJECTED' | 'RETURN_STARTED';
@@ -923,15 +924,41 @@ export const useResolutionStore = create<ResolutionState>((set, get) => ({
         const sub = supabase.channel(`resolution-changes-${role}-${Math.random().toString(36).substring(7)}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'returns' }, (payload) => {
                 console.log('[RT] Return updated:', payload);
+                const orderId = String(
+                    (payload.new as { order_id?: string; orderId?: string } | null)?.order_id
+                        ?? (payload.new as { orderId?: string } | null)?.orderId
+                        ?? (payload.old as { order_id?: string; orderId?: string } | null)?.order_id
+                        ?? (payload.old as { orderId?: string } | null)?.orderId
+                        ?? '',
+                );
                 if (role === 'admin') get().fetchAdminCases(true);
                 else if (role === 'customer') get().fetchUserRequests(true);
                 else get().fetchMerchantCases(true);
+                bumpFulfillmentSummary(orderId || undefined);
+                if (orderId) {
+                    void import('./useOrderStore').then(({ useOrderStore }) => {
+                        void useOrderStore.getState().fetchOrder(orderId);
+                    });
+                }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, (payload) => {
                 console.log('[RT] Dispute updated:', payload);
+                const orderId = String(
+                    (payload.new as { order_id?: string; orderId?: string } | null)?.order_id
+                        ?? (payload.new as { orderId?: string } | null)?.orderId
+                        ?? (payload.old as { order_id?: string; orderId?: string } | null)?.order_id
+                        ?? (payload.old as { orderId?: string } | null)?.orderId
+                        ?? '',
+                );
                 if (role === 'admin') get().fetchAdminCases(true);
                 else if (role === 'customer') get().fetchUserRequests(true);
                 else get().fetchMerchantCases(true);
+                bumpFulfillmentSummary(orderId || undefined);
+                if (orderId) {
+                    void import('./useOrderStore').then(({ useOrderStore }) => {
+                        void useOrderStore.getState().fetchOrder(orderId);
+                    });
+                }
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'case_messages' }, (payload) => {
                 const newMsg = payload.new as CaseMessage;
