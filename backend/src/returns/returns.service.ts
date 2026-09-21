@@ -3266,6 +3266,8 @@ export class ReturnsService {
 
         // Multi / shared assembly cart: always create a dedicated return shipment.
         // Never flip a shared outbound cartShipmentId to RETURN_LABEL_ISSUED.
+        // Only use shipment_status values that exist in Postgres (see warranty_migration.sql).
+        // Prisma schema has legacy labels (e.g. RETURN_WAYBILL_ISSUED) that are not in the DB enum.
         const existingReturnShipment = await tx.shipment.findFirst({
             where: {
                 orderId: order.id,
@@ -3274,9 +3276,8 @@ export class ReturnsService {
                     in: [
                         'RETURN_LABEL_ISSUED',
                         'RETURN_STARTED',
-                        'RETURN_WAYBILL_ISSUED',
                         'RECEIVED_FROM_CUSTOMER',
-                        'RETURN_RECEIVED',
+                        'DELIVERED_TO_VENDOR',
                     ],
                 },
             },
