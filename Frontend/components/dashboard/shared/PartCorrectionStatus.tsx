@@ -3,6 +3,8 @@ import { AlertTriangle, Clock } from 'lucide-react';
 import { getServerNowMs } from '../../../utils/serverClock';
 import {
   getVerificationDocForOffer,
+  isOfferFulfillmentCancelled,
+  merchantOfferCorrectionExpiredPendingCancel,
   merchantOfferNeedsCorrection,
   type VerificationDocSummary,
 } from '../../../utils/offerFulfillmentHelpers';
@@ -114,16 +116,32 @@ export const PartCorrectionStatus: React.FC<PartCorrectionStatusProps> = ({
   compact = false,
   className = '',
 }) => {
-  if (!offerId) return null;
+  const [, setTick] = useState(0);
 
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  if (!offerId) return null;
+  if (isOfferFulfillmentCancelled(fulfillmentStatus)) return null;
+
+  const nowMs = getServerNowMs();
   const doc = getVerificationDocForOffer(verificationDocuments, offerId);
   const needsCorrection = merchantOfferNeedsCorrection(
     fulfillmentStatus || undefined,
     doc,
     orderStatus,
-    getServerNowMs(),
+    nowMs,
   );
-  if (!needsCorrection) return null;
+  const pendingCancel = merchantOfferCorrectionExpiredPendingCancel(
+    fulfillmentStatus || undefined,
+    doc,
+    orderStatus,
+    nowMs,
+  );
+
+  if (!needsCorrection && !pendingCancel) return null;
 
   const deadlineAt = resolvePartCorrectionDeadline(doc, orderCorrectionDeadlineAt);
   const reason = doc?.adminRejectionReason?.trim() || null;
@@ -139,18 +157,22 @@ export const PartCorrectionStatus: React.FC<PartCorrectionStatusProps> = ({
           <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className={`font-bold text-red-200 leading-snug ${compact ? 'text-xs' : 'text-sm'}`}>
-              {isAr
-                ? 'رفض مطابقة — مهلة التصحيح لهذه القطعة'
-                : 'Matching rejected — correction window for this part'}
+              {pendingCancel
+                ? isAr
+                  ? 'انتهت مهلة التصحيح — جاري إلغاء القطعة تلقائياً'
+                  : 'Correction window ended — cancelling this part'
+                : isAr
+                  ? 'رفض مطابقة — مهلة التصحيح لهذه القطعة'
+                  : 'Matching rejected — correction window for this part'}
             </p>
-            {reason && (
+            {reason && !pendingCancel && (
               <p className="text-[11px] text-red-200/75 mt-1 leading-relaxed break-words line-clamp-2">
                 {reason}
               </p>
             )}
           </div>
         </div>
-        {deadlineAt && (
+        {deadlineAt && !pendingCancel && (
           <div className="flex items-center gap-2 shrink-0 ps-6 sm:ps-0">
             <span className="text-[10px] font-bold uppercase tracking-wider text-red-300/70">
               {isAr ? 'متبقي' : 'Left'}

@@ -5,7 +5,7 @@ import {
     mapRealtimeOrderRow,
 } from '../stores/useOrderStore';
 
-const DETAIL_FETCH_DEBOUNCE_MS = 300;
+const DETAIL_FETCH_DEBOUNCE_MS = 150;
 
 export interface UseOrderRealtimeSyncOptions {
     /** Subscribe to review changes (customer order details). */

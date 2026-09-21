@@ -246,6 +246,25 @@ export function merchantOfferNeedsCorrection(
     return nowMs <= deadline;
 }
 
+/**
+ * Rejected + correction clock already elapsed, but fulfill cancel has not landed yet.
+ * Used for optimistic UI so rematch CTAs never linger after 00:00:00.
+ */
+export function merchantOfferCorrectionExpiredPendingCancel(
+    fulfillmentStatus?: string,
+    doc?: Pick<VerificationDocSummary, 'adminStatus' | 'correctionDeadlineAt'> | null,
+    orderStatus?: string | null,
+    nowMs: number = Date.now(),
+): boolean {
+    if (isOfferFulfillmentCancelled(fulfillmentStatus)) return false;
+    if (!merchantOfferAdminRejected(fulfillmentStatus, doc, orderStatus)) return false;
+    if (isCorrectionFamilyOrderStatus(orderStatus)) return false;
+    const deadline = doc?.correctionDeadlineAt
+        ? new Date(doc.correctionDeadlineAt).getTime()
+        : NaN;
+    return Number.isFinite(deadline) && nowMs > deadline;
+}
+
 /** Merchant-facing fulfillment label that respects correction/rematch order status. */
 export function getMerchantFulfillmentDisplayLabel(
     fulfillmentStatus: string | undefined,

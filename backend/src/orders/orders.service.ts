@@ -4660,9 +4660,22 @@ export class OrdersService {
             if (!d.correctionDeadlineAt) return true;
             return new Date(d.correctionDeadlineAt).getTime() >= Date.now();
         });
+        const expiredCorrectionDoc = storeRejectedDocs.find((d) => {
+            if (!d.correctionDeadlineAt) return false;
+            return new Date(d.correctionDeadlineAt).getTime() < Date.now();
+        });
 
         if (!inOrderCorrectionFamily) {
             if (!(isMultiCorrection && openCorrectionDoc)) {
+                if (isMultiCorrection && expiredCorrectionDoc) {
+                    throw new BadRequestException({
+                        statusCode: 400,
+                        message: 'Correction window has expired for this part.',
+                        messageAr: 'انتهت مهلة التصحيح لهذه القطعة — لا يمكن إعادة التوثيق.',
+                        messageEn: 'Correction window has expired for this part — rematch is not allowed.',
+                        code: 'CORRECTION_DEADLINE_EXPIRED',
+                    });
+                }
                 throw new BadRequestException('Order not in correction period.');
             }
         }

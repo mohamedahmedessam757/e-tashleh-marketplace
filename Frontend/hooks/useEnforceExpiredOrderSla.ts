@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ordersApi } from '../services/api/orders';
 import { useOrderStore } from '../stores/useOrderStore';
 import { shouldEnforceExpiredSla } from '../utils/orderExpiryHelpers';
@@ -50,6 +50,8 @@ const TIMER_DRIVEN_STATUSES = new Set([
   'VERIFICATION_SUCCESS',
 ]);
 
+const POST_SUCCESS_COOLDOWN_MS = 2_000;
+
 function hasExpiredOfferCorrectionDoc(order: OrderLike, nowMs: number): boolean {
   const docs = order?.verificationDocuments;
   if (!docs?.length) return false;
@@ -69,10 +71,24 @@ function hasExpiredOfferCorrectionDoc(order: OrderLike, nowMs: number): boolean 
 /**
  * When any timer-driven SLA has elapsed (server clock), ask the backend to apply
  * the due transition (idempotent). Cron remains the safety net.
+ *
+ * Ticks every 1s while the open order is timer-driven so per-offer correction
+ * deadlines fire immediately at 00:00:00 (not only when React deps change).
  */
 export function useEnforceExpiredOrderSla(order: OrderLike) {
   const sla = useOrderActiveSla(order as any);
-  const inFlight = useRef<string | null>(null);
+  const inFlight = useRef(false);
+  const cooldownUntilMs = useRef(0);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!order?.id) return;
+    const status = String(order.status || '');
+    if (!TIMER_DRIVEN_STATUSES.has(status)) return;
+
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [order?.id, order?.status]);
 
   useEffect(() => {
     if (!order?.id) return;
@@ -87,19 +103,24 @@ export function useEnforceExpiredOrderSla(order: OrderLike) {
     const selectionPaymentExpired = shouldEnforceExpiredSla(order);
     const offerCorrectionExpired = hasExpiredOfferCorrectionDoc(order, nowMs);
     if (!slaExpired && !selectionPaymentExpired && !offerCorrectionExpired) return;
-    if (inFlight.current === order.id) return;
+    if (inFlight.current) return;
+    if (Date.now() < cooldownUntilMs.current) return;
 
     let cancelled = false;
-    inFlight.current = order.id;
+    inFlight.current = true;
 
     void (async () => {
       try {
         await ordersApi.enforceExpiredSla(order.id!);
         if (cancelled) return;
         await useOrderStore.getState().fetchOrder(order.id!);
+        cooldownUntilMs.current = Date.now() + POST_SUCCESS_COOLDOWN_MS;
       } catch (err) {
         console.warn('[useEnforceExpiredOrderSla] failed', err);
-        inFlight.current = null;
+        // Brief backoff so a transient error does not hammer the API every tick.
+        cooldownUntilMs.current = Date.now() + POST_SUCCESS_COOLDOWN_MS;
+      } finally {
+        inFlight.current = false;
       }
     })();
 
@@ -107,6 +128,7 @@ export function useEnforceExpiredOrderSla(order: OrderLike) {
       cancelled = true;
     };
   }, [
+    tick,
     order?.id,
     order?.status,
     order?.requestType,

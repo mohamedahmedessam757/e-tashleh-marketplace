@@ -56,6 +56,7 @@ import {
     merchantCanRequestReadyForShipping,
     merchantOfferVerificationPending,
     merchantOfferAdminRejected,
+    merchantOfferCorrectionExpiredPendingCancel,
     merchantOfferNeedsCorrection,
     isPostVerificationSuccessOrderStatus,
     normalizeOfferFulfillmentStatus,
@@ -475,9 +476,23 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                           order?.verificationDocuments,
                           o.id,
                       );
-                      return merchantOfferAdminRejected(o.fulfillmentStatus, doc, order?.status);
+                      // Only while correction window is open — never after 00:00:00.
+                      return merchantOfferNeedsCorrection(
+                          o.fulfillmentStatus,
+                          doc,
+                          order?.status,
+                          getServerNowMs(),
+                      );
                   }),
-        [merchantAcceptedOffers, order?.verificationDocuments, order?.status, fulfillmentLocked],
+        // govTick keeps the list in sync with the live correction clock.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [
+            merchantAcceptedOffers,
+            order?.verificationDocuments,
+            order?.status,
+            fulfillmentLocked,
+            govTick,
+        ],
     );
     const offersReadyForHandover = useMemo(
         () =>
@@ -1868,10 +1883,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     'CANCELLED';
                                                                 const isPartRejected =
                                                                     !isPartCancelled &&
-                                                                    merchantOfferAdminRejected(
+                                                                    merchantOfferNeedsCorrection(
                                                                         partOffer.fulfillmentStatus,
                                                                         partVerificationDoc,
                                                                         order?.status,
+                                                                        getServerNowMs(),
                                                                     );
                                                                 const isPartVerified =
                                                                     !isPartCancelled &&
@@ -2036,32 +2052,53 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 )}
                                                                 {!fulfillmentLocked &&
                                                                     (() => {
+                                                                        void govTick;
+                                                                        const nowMs = getServerNowMs();
                                                                         const partDoc = getVerificationDocForOffer(
                                                                             order?.verificationDocuments,
                                                                             partOffer.id,
                                                                         );
-                                                                        return (
+                                                                        if (
+                                                                            merchantOfferCorrectionExpiredPendingCancel(
+                                                                                partOffer.fulfillmentStatus,
+                                                                                partDoc,
+                                                                                order?.status,
+                                                                                nowMs,
+                                                                            )
+                                                                        ) {
+                                                                            return (
+                                                                                <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5">
+                                                                                    <Loader2 size={14} className="animate-spin" />
+                                                                                    {isAr
+                                                                                        ? 'انتهت المهلة — جاري إلغاء القطعة'
+                                                                                        : 'Deadline ended — cancelling part'}
+                                                                                </span>
+                                                                            );
+                                                                        }
+                                                                        const showRematchBanner =
                                                                             merchantOfferNeedsCorrection(
                                                                                 partOffer.fulfillmentStatus,
                                                                                 partDoc,
                                                                                 order?.status,
+                                                                                nowMs,
                                                                             ) ||
                                                                             (isCorrectionFamilyOrderStatus(order?.status) &&
                                                                                 String(order?.status).toUpperCase() !==
                                                                                     'CORRECTION_SUBMITTED' &&
                                                                                 getFulfillmentRank(partOffer.fulfillmentStatus) <
-                                                                                    getFulfillmentRank('VERIFICATION_SUCCESS'))
+                                                                                    getFulfillmentRank('VERIFICATION_SUCCESS'));
+                                                                        if (!showRematchBanner) return null;
+                                                                        return (
+                                                                            <div className="w-full min-w-0 flex flex-col sm:flex-row sm:items-center gap-2">
+                                                                                <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5 w-full sm:w-auto min-h-[40px]">
+                                                                                    <AlertTriangle size={14} />
+                                                                                    {isAr
+                                                                                        ? 'مطلوب إعادة التوثيق — فترة التصحيح'
+                                                                                        : 'Correction required — rematch'}
+                                                                                </span>
+                                                                            </div>
                                                                         );
-                                                                    })() && (
-                                                                    <div className="w-full min-w-0 flex flex-col sm:flex-row sm:items-center gap-2">
-                                                                        <span className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-300 border border-red-500/25 flex items-center gap-1.5 w-full sm:w-auto min-h-[40px]">
-                                                                            <AlertTriangle size={14} />
-                                                                            {isAr
-                                                                                ? 'مطلوب إعادة التوثيق — فترة التصحيح'
-                                                                                : 'Correction required — rematch'}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                                    })()}
                                                                 {!fulfillmentLocked &&
                                                                     String(order?.status).toUpperCase() ===
                                                                     'CORRECTION_SUBMITTED' &&
@@ -2075,15 +2112,19 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     </span>
                                                                 )}
                                                                 {(() => {
+                                                                    void govTick;
+                                                                    const nowMs = getServerNowMs();
                                                                     const partDoc = getVerificationDocForOffer(
                                                                         order?.verificationDocuments,
                                                                         partOffer.id,
                                                                     );
+                                                                    // Rematch CTA only while correction window is open.
                                                                     if (
-                                                                        !merchantOfferAdminRejected(
+                                                                        !merchantOfferNeedsCorrection(
                                                                             partOffer.fulfillmentStatus,
                                                                             partDoc,
                                                                             order?.status,
+                                                                            nowMs,
                                                                         )
                                                                     ) {
                                                                         return null;

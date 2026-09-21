@@ -19,6 +19,7 @@ import { isAcceptedOfferStatus } from '../utils/offerStatusHelpers';
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
 let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const REALTIME_DEBOUNCE_MS = 2000; // Throttle list refreshes on mobile after order bursts
+const REALTIME_ACTIVE_ORDER_DEBOUNCE_MS = 200; // Open detail page: near-instant refresh
 /** Accumulate order ids during debounce so a burst of creates is not reduced to the last event only */
 const pendingRealtimeOrderIds = new Set<string>();
 let pendingRealtimeNeedsSilent = false;
@@ -633,17 +634,21 @@ const handleGlobalRealtimeEvent = (source: string, payload?: { new?: Record<stri
     }
 
     if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
+    const { activeOrderId } = useOrderStore.getState();
+    const debounceMs = activeOrderId
+        ? REALTIME_ACTIVE_ORDER_DEBOUNCE_MS
+        : REALTIME_DEBOUNCE_MS;
     realtimeDebounceTimer = setTimeout(() => {
         const ids = Array.from(pendingRealtimeOrderIds);
         const needSilent = pendingRealtimeNeedsSilent;
         pendingRealtimeOrderIds.clear();
         pendingRealtimeNeedsSilent = false;
 
-        const { activeOrderId, fetchOrder, silentFetch } = useOrderStore.getState();
+        const { activeOrderId: openId, fetchOrder, silentFetch } = useOrderStore.getState();
 
         // Detail view: refresh the open order; skip heavy list reload
-        if (activeOrderId) {
-            void fetchOrder(activeOrderId);
+        if (openId) {
+            void fetchOrder(openId);
             return;
         }
 
@@ -655,7 +660,7 @@ const handleGlobalRealtimeEvent = (source: string, payload?: { new?: Record<stri
 
         // Few targeted updates (incl. new inserts): fetch each id (prepend if missing)
         void Promise.all(ids.map((id) => fetchOrder(id)));
-    }, REALTIME_DEBOUNCE_MS);
+    }, debounceMs);
 };
 
 export const useOrderStore = create<OrderState>((set, get) => ({
