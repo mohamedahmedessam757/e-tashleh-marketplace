@@ -3883,8 +3883,13 @@ export class OrdersService {
             });
         }
 
-        // Weight was validated when each offer was submitted. Do NOT re-sum batch weight
-        // against single-package globalMax — cart batches intentionally combine parts.
+        // POLICY: no combined-weight limit for assembly-cart batches (manual or auto-ship).
+        // Individual offer weights may be checked at submit time; never sum them here.
+        if (!this.logisticsConfig.allowsUnlimitedCartBatchWeight()) {
+            throw new BadRequestException(
+                'Cart batch weight policy misconfigured — combined weight must remain unlimited.',
+            );
+        }
 
         // Actor info for logging
         const actor = isSystemAutoTrigger 

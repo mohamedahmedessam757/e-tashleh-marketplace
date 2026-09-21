@@ -62,6 +62,13 @@ export class LogisticsConfigService {
     }
   }
 
+  /**
+   * Validates a SINGLE offer/package weight against platform min/max.
+   *
+   * NEVER pass the sum of multiple assembly-cart offers. Cart batch shipping has
+   * no combined-weight limit by product policy (2026) — parts are priced/accepted
+   * individually, then may ship together on one waybill regardless of total kg.
+   */
   async assertWeightAllowed(
     weightKg: number,
     options?: { shipmentTypeId?: string },
@@ -92,6 +99,14 @@ export class LogisticsConfigService {
           : `Weight must be between ${cfg.globalMinWeightKg} and ${cfg.globalMaxWeightKg} kg`,
       );
     }
+  }
+
+  /**
+   * Assembly-cart / multi-offer batch shipping: always unlimited combined weight.
+   * Call sites must not invent a sum cap — keep this as the SSOT policy flag.
+   */
+  allowsUnlimitedCartBatchWeight(): boolean {
+    return true;
   }
 
   isWeightEnforcementEnabled(config?: LogisticsConfig): boolean {
