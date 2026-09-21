@@ -48,7 +48,7 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                     <div className="bg-[#2E965E] p-4 flex items-center justify-center gap-3">
                         <ShoppingCart className="text-white w-6 h-6" />
                         <h1 className="text-xl md:text-2xl font-bold text-white">
-                            {t.wholesale?.title || 'طلبات الجملة للشركات'}
+                            {t.common.wholesale?.title || 'طلبات الجملة للشركات'}
                         </h1>
                     </div>
 
@@ -57,7 +57,7 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                         {/* Welcome Section */}
                         <div>
                             <h2 className="text-2xl font-bold text-white relative inline-block pb-2">
-                                {t.wholesale?.welcome || 'مرحباً بكم'}
+                                {t.common.wholesale?.welcome || 'مرحباً بكم'}
                                 <span className="absolute bottom-0 left-0 right-0 h-1 bg-[#2E965E] rounded-full"></span>
                             </h2>
                         </div>
@@ -72,30 +72,30 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                         {/* Instructions */}
                         <div className="space-y-4">
                             <p className="text-white/80 text-lg">
-                                {t.wholesale?.instruction || 'لطلبات الجملة للشركات فضلاً ارسال خطاب الشركة الى الايميل التالي:'}
+                                {t.common.wholesale?.instruction || 'لطلبات الجملة للشركات فضلاً ارسال خطاب الشركة الى الايميل التالي:'}
                             </p>
 
                             <div className="border border-[#2E965E]/30 bg-[#2E965E]/5 rounded-xl p-6 py-8">
                                 <p className="text-[#2E965E] text-sm mb-2 font-medium">
-                                    {t.wholesale?.emailLabel || 'البريد الإلكتروني'}
+                                    {t.common.wholesale?.emailLabel || 'البريد الإلكتروني'}
                                 </p>
                                 <a
                                     href={`mailto:${siteContacts.wholesale}`}
                                     className="text-2xl md:text-3xl font-bold text-white hover:text-[#2E965E] transition-colors dir-ltr font-mono"
                                 >
-                                    {t.wholesale?.email || siteContacts.wholesale}
+                                    {t.common.wholesale?.email || siteContacts.wholesale}
                                 </a>
                             </div>
 
                             <p className="text-white/60">
-                                {t.wholesale?.followUp || 'وسيتم التواصل معكم عبر أحد مدراء المبيعات'}
+                                {t.common.wholesale?.followUp || 'وسيتم التواصل معكم عبر أحد مدراء المبيعات'}
                             </p>
                         </div>
 
                         {/* Success Banner */}
                         <div className="bg-[#2E965E]/10 border border-[#2E965E]/20 p-4 rounded-xl">
                             <p className="text-[#2E965E] font-bold">
-                                {t.wholesale?.thanks || 'شكراً لثقتكم ونتمنى لكم التوفيق'}
+                                {t.common.wholesale?.thanks || 'شكراً لثقتكم ونتمنى لكم التوفيق'}
                             </p>
                         </div>
 
@@ -106,13 +106,13 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                                 className="flex items-center justify-center gap-2 bg-[#2E965E] hover:bg-[#257a4d] text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-[#2E965E]/20 active:scale-95"
                             >
                                 <Send size={18} />
-                                <span>{t.wholesale?.sendRequest || 'إرسال طلب جملة'}</span>
+                                <span>{t.common.wholesale?.sendRequest || 'إرسال طلب جملة'}</span>
                             </a>
                             <button
                                 onClick={onBack}
                                 className="flex items-center justify-center gap-2 bg-[#333] hover:bg-[#444] text-white px-8 py-3 rounded-xl font-bold transition-all active:scale-95 border border-white/5"
                             >
-                                <span className="mt-1">{t.wholesale?.backHome || 'العودة للرئيسية'}</span>
+                                <span className="mt-1">{t.common.wholesale?.backHome || 'العودة للرئيسية'}</span>
                                 <ArrowIcon size={18} />
                             </button>
                         </div>
@@ -130,10 +130,10 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                             </div>
                             <div>
                                 <h3 className="text-white font-bold mb-1">
-                                    {t.wholesale?.contactInfo || 'معلومات التواصل'}
+                                    {t.common.wholesale?.contactInfo || 'معلومات التواصل'}
                                 </h3>
                                 <p className="text-white/50 text-sm leading-relaxed">
-                                    {t.wholesale?.contactDesc || 'يمكنكم التواصل معنا عبر البريد الإلكتروني، أو زيارة موقعنا للحصول على المزيد من المعلومات حول خدماتنا'}
+                                    {t.common.wholesale?.contactDesc || 'يمكنكم التواصل معنا عبر البريد الإلكتروني، أو زيارة موقعنا للحصول على المزيد من المعلومات حول خدماتنا'}
                                 </p>
                             </div>
                         </div>
@@ -146,10 +146,10 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
                             </div>
                             <div>
                                 <h3 className="text-white font-bold mb-1">
-                                    {t.wholesale?.howItWorks || 'كيفية العمل'}
+                                    {t.common.wholesale?.howItWorks || 'كيفية العمل'}
                                 </h3>
                                 <p className="text-white/50 text-sm leading-relaxed">
-                                    {t.wholesale?.howItWorksDesc || 'بعد إرسال خطاب الشركة، سيتواصل معكم أحد مدراء المبيعات خلال 24-48 ساعة لمناقشة تفاصيل طلبكم'}
+                                    {t.common.wholesale?.howItWorksDesc || 'بعد إرسال خطاب الشركة، سيتواصل معكم أحد مدراء المبيعات خلال 24-48 ساعة لمناقشة تفاصيل طلبكم'}
                                 </p>
                             </div>
                         </div>

@@ -13,6 +13,7 @@ import { MerchantProfile } from '../components/dashboard/merchant/MerchantProfil
 import { MerchantSettings } from '../components/dashboard/merchant/MerchantSettings';
 import { MerchantNotifications } from '../components/dashboard/merchant/MerchantNotifications';
 import { MerchantStatusGuard } from '../components/dashboard/merchant/MerchantStatusGuard';
+import { AccountAccessGuard } from '../components/dashboard/shared/AccountAccessGuard';
 import { MerchantDisputeDetails } from '../components/dashboard/merchant/MerchantDisputeDetails';
 import { MerchantShippingCartPage } from '../components/dashboard/merchant/MerchantShippingCartPage';
 import { MerchantSupportPage } from '../components/dashboard/merchant/support/MerchantSupportPage';
@@ -102,6 +103,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
     return (
       <>
         <DashboardAutomationRunner maintenanceMode={maintenanceMode} />
+        <AccountAccessGuard audience="customer">
         <DashboardLayout
         role="customer"
         onLogout={onLogout}
@@ -160,6 +162,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
         {dashboardPath === 'violations' && <ViolationsPage role="customer" />}
         {dashboardPath === 'info-center' && <InfoCenter />}
       </DashboardLayout>
+        </AccountAccessGuard>
       </>
     );
   }
@@ -240,6 +243,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
       onNavigate={onNavigate}
       onBack={onBack}
     >
+      <AccountAccessGuard audience="admin">
       {dashboardPath === 'home' && <AdminHome />}
       {dashboardPath === 'users' && <AdminHome subPath="users" />}
       {dashboardPath === 'store-profile' && <AdminHome subPath="store-profile" viewId={viewId} />}
@@ -292,6 +296,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
         />
       )}
       {dashboardPath === 'profile' && <ProfileView />}
+      </AccountAccessGuard>
     </DashboardLayout>
     </>
   );

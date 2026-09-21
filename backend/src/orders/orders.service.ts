@@ -3746,8 +3746,9 @@ export class OrdersService {
         const classLabel = body.shippingClass;
         const customerMsgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} بقرار من الإدارة إلى (${classLabel}).`;
         const customerMsgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated by admin to (${classLabel}).`;
-        const merchantMsgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} بقرار من الإدارة إلى (${classLabel}). تكلفة الشحن المحسوبة: ${shippingCost} AED.`;
-        const merchantMsgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated by admin to (${classLabel}). Computed shipping: ${shippingCost} AED.`;
+        // Merchant gets the same public copy — shipping cost must not appear in platform/WhatsApp notices
+        const merchantMsgAr = customerMsgAr;
+        const merchantMsgEn = customerMsgEn;
 
         if (offer.order.customerId) {
             await this.notifications.create({
@@ -3772,7 +3773,7 @@ export class OrdersService {
                 messageEn: merchantMsgEn,
                 type: 'ORDER',
                 link: `/merchant/orders/${orderId}`,
-                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS', shippingCost },
+                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS', hidePrice: true },
             }).catch(() => {});
         }
 

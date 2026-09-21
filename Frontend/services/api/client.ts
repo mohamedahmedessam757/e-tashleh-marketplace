@@ -76,8 +76,15 @@ client.interceptors.response.use(
         if (error.response?.status === 401) {
             const requestUrl = error.config?.url as string | undefined;
             const skipRedirect = isAuthApiRequest(requestUrl) || isAuthPage();
+            const message = String(
+                error.response?.data?.message || error.message || '',
+            ).toLowerCase();
+            const isAccessBan =
+                message.includes('suspended') ||
+                message.includes('blocked') ||
+                message.includes('inactive');
 
-            if (!skipRedirect) {
+            if (!skipRedirect && !isAccessBan) {
                 clearAuthStorage();
                 if (typeof window !== 'undefined') {
                     window.location.href = buildAuthRecoveryRedirectUrl();

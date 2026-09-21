@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AccountAccessNotifyService } from '../notifications/account-access-notify.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 /**
@@ -16,6 +17,7 @@ export class StoreSuspensionService {
     constructor(
         private prisma: PrismaService,
         private notifications: NotificationsService,
+        private accountAccessNotify: AccountAccessNotifyService,
         private auditLogs: AuditLogsService,
     ) { }
 
@@ -116,6 +118,16 @@ export class StoreSuspensionService {
                         type: 'SUCCESS',
                         link: '/dashboard',
                         metadata: { storeId: store.id, event: 'STORE_AUTO_UNSUSPEND', restoreStatus },
+                    });
+
+                    void this.accountAccessNotify.notify({
+                        recipientId: store.ownerId,
+                        recipientRole: 'VENDOR',
+                        scope: 'MERCHANT',
+                        action: 'UNBAN',
+                        banKind: 'NONE',
+                        reason: 'Suspension period expired',
+                        storeName: store.name,
                     });
 
                     // Notify Admins

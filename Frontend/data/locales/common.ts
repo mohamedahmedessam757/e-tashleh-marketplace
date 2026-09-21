@@ -224,6 +224,21 @@ export const common = {
       recoveredTitle: 'عاد الاتصال',
       recoveredBody: 'تم استعادة الخدمة بنجاح.',
       retry: 'إعادة المحاولة',
+    },
+    accountAccess: {
+      permanentTitle: 'تم حظر حسابك',
+      temporaryTitle: 'تم إيقاف حسابك مؤقتاً',
+      permanentSubtitle: 'لا يمكنك تنفيذ عمليات على المنصة حتى يتم تنشيط الحساب من الإدارة.',
+      temporarySubtitle: 'يمكنك تصفح اللوحة فقط. العمليات الحساسة موقوفة حتى انتهاء المدة أو التنشيط.',
+      reasonLabel: 'سبب الإجراء',
+      durationLabel: 'المدة المتبقية',
+      endsAtLabel: 'ينتهي في',
+      permanentBadge: 'حظر دائم',
+      temporaryBadge: 'إيقاف مؤقت',
+      supportWhatsapp: 'واتساب الدعم',
+      supportEmail: 'بريد الدعم',
+      contactSupport: 'تواصل مع الدعم',
+      noReason: 'قرار إداري',
     }
   },
   en: {
@@ -467,6 +482,21 @@ export const common = {
       recoveredTitle: 'Connection restored',
       recoveredBody: 'Service is back online.',
       retry: 'Retry',
+    },
+    accountAccess: {
+      permanentTitle: 'Your account is blocked',
+      temporaryTitle: 'Your account is temporarily suspended',
+      permanentSubtitle: 'You cannot perform actions on the platform until admin reactivation.',
+      temporarySubtitle: 'You can browse the dashboard only. Sensitive actions stay locked until the period ends or reactivation.',
+      reasonLabel: 'Action reason',
+      durationLabel: 'Time remaining',
+      endsAtLabel: 'Ends at',
+      permanentBadge: 'Permanent ban',
+      temporaryBadge: 'Temporary suspension',
+      supportWhatsapp: 'Support WhatsApp',
+      supportEmail: 'Support email',
+      contactSupport: 'Contact support',
+      noReason: 'Administrative decision',
     }
   }
 };

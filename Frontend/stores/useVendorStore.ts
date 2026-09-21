@@ -149,6 +149,7 @@ export interface VendorState {
   vendorStatus: MerchantStatus;
   storeId: string | null;
   storeRejectionReason: string | null;
+  storeSuspendedUntil: string | null;
   stripeActivationRequired: boolean;
   stripeChargesEnabled: boolean;
   stripePayoutsEnabled: boolean;
@@ -281,6 +282,7 @@ export const useVendorStore = create<VendorState>()(
   vendorStatus: 'IDLE',
   storeId: null,
   storeRejectionReason: null,
+  storeSuspendedUntil: null,
   stripeActivationRequired: false,
   stripeChargesEnabled: false,
   stripePayoutsEnabled: false,
@@ -590,6 +592,7 @@ export const useVendorStore = create<VendorState>()(
           storeId: data.id,
           vendorStatus: data.status,
           storeRejectionReason: data.rejectionReason,
+          storeSuspendedUntil: data.suspendedUntil || null,
           storeInfo: {
             storeName: data.name,
             selectedMakes: data.selectedMakes || [],
@@ -796,7 +799,7 @@ export const useVendorStore = create<VendorState>()(
       
       // Update local status if it happens to be the current vendor (for simulation)
       if (get().vendorStatus !== 'ACTIVE') {
-        set({ vendorStatus: 'ACTIVE', storeRejectionReason: null });
+        set({ vendorStatus: 'ACTIVE', storeRejectionReason: null, storeSuspendedUntil: null });
       }
       
       useNotificationStore.getState().addNotification({
@@ -923,6 +926,8 @@ export const useVendorStore = create<VendorState>()(
           if (!row) return;
           set({
             vendorStatus: row.status,
+            storeRejectionReason: row.rejection_reason ?? get().storeRejectionReason,
+            storeSuspendedUntil: row.suspended_until ?? null,
             withdrawalsFrozen: row.withdrawals_frozen,
             withdrawalFreezeNote: row.withdrawal_freeze_note,
             offerLimit: row.offer_limit,
@@ -986,6 +991,7 @@ export const useVendorStore = create<VendorState>()(
       vendorStatus: 'IDLE', // Default to IDLE instead of PENDING_DOCUMENTS for clean state
       storeId: null,
       storeRejectionReason: null,
+      storeSuspendedUntil: null,
       stripeActivationRequired: false,
       stripeChargesEnabled: false,
       stripePayoutsEnabled: false,
@@ -1046,6 +1052,7 @@ export const useVendorStore = create<VendorState>()(
     vendorStatus: state.vendorStatus, 
     storeId: state.storeId, 
     storeRejectionReason: state.storeRejectionReason,
+    storeSuspendedUntil: state.storeSuspendedUntil,
     storeInfo: { 
       storeName: state.storeInfo.storeName,
       selectedMakes: state.storeInfo.selectedMakes,

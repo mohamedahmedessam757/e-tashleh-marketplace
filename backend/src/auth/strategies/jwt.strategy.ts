@@ -30,10 +30,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException();
         }
 
-        // Per-request account status check — a suspended/blocked account cannot keep using a
-        // token that was valid at login time.
-        if ((user as any).status === 'SUSPENDED' || (user as any).status === 'BLOCKED') {
-            throw new UnauthorizedException('Account is suspended or blocked');
+        // Suspended/blocked accounts stay authenticated so the UI can show an access banner.
+        // Mutating APIs are blocked by AccountWriteGuard.
+        let accountAccessBlocked =
+            (user as any).status === 'SUSPENDED' || (user as any).status === 'BLOCKED';
+
+        const staffRoles = [
+            'ADMIN',
+            'SUPER_ADMIN',
+            'SUPPORT',
+            'VERIFICATION_OFFICER',
+            'ACCOUNTANT',
+        ];
+        let adminInactive = false;
+        if (staffRoles.includes(String((user as any).role || '').toUpperCase())) {
+            const adminPerm = await this.prisma.adminPermission.findUnique({
+                where: { userId: user.id },
+                select: { isActive: true },
+            });
+            if (adminPerm && !adminPerm.isActive) {
+                adminInactive = true;
+                accountAccessBlocked = true;
+            }
         }
 
         // Session-bound revocation: the presented token must still correspond to a live session.
@@ -53,6 +71,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         return sanitizeUser({
             ...user,
             storeId: user.store?.id || null,
+            accountAccessBlocked,
+            adminInactive,
+            status:
+                adminInactive && (user as any).status === 'ACTIVE'
+                    ? 'SUSPENDED'
+                    : (user as any).status,
         });
     }
 }

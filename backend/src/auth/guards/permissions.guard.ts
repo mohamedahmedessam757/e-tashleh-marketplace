@@ -58,6 +58,13 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (!adminPerm.isActive) {
+      // Allow read-only dashboard shell so an access banner can render.
+      const method = String(
+        context.switchToHttp().getRequest()?.method || 'GET',
+      ).toUpperCase();
+      if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+        return true;
+      }
       throw new ForbiddenException('Admin account is inactive');
     }
 

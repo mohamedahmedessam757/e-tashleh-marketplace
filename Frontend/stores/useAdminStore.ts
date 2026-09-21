@@ -64,6 +64,11 @@ export interface AdminUser {
   email: string;
   role: AdminRole;
   avatar?: string;
+  status?: string;
+  suspendReason?: string | null;
+  suspendedUntil?: string | null;
+  accountAccessBlocked?: boolean;
+  adminInactive?: boolean;
 }
 
 export interface AdminActivityLog {
@@ -720,6 +725,11 @@ export const useAdminStore = create<AdminState>()(
           email: String(user.email || ''),
           role: user.role as AdminRole,
           avatar: user.avatar,
+          status: (user as any).status,
+          suspendReason: (user as any).suspendReason ?? null,
+          suspendedUntil: (user as any).suspendedUntil ?? null,
+          accountAccessBlocked: Boolean((user as any).accountAccessBlocked),
+          adminInactive: Boolean((user as any).adminInactive),
         };
 
         // Clear any stale session data before writing fresh login

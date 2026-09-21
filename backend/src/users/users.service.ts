@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Prisma, User } from '@prisma/client';
 import { normalizeSearchQuery, resolveUserIds } from '../common/search/admin-entity-search.util';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AccountAccessNotifyService } from '../notifications/account-access-notify.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
@@ -21,6 +22,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private accountAccessNotify: AccountAccessNotifyService,
     private auditLogs: AuditLogsService
   ) { }
 
@@ -679,21 +681,30 @@ export class UsersService {
     });
   }
 
-  async adminUpdateStatus(id: string, status: 'ACTIVE' | 'SUSPENDED', reason?: string) {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Update User Record
-      const user = await tx.user.update({
+  async adminUpdateStatus(
+    id: string,
+    status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED',
+    reason?: string,
+    suspendedUntil?: Date | null,
+    durationDays?: number | null,
+  ) {
+    const isBan = status === 'SUSPENDED' || status === 'BLOCKED';
+    const effectiveUntil =
+      status === 'SUSPENDED' && suspendedUntil ? suspendedUntil : null;
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
         where: { id },
-        data: { 
+        data: {
           status,
-          suspendReason: status === 'SUSPENDED' ? reason : null
-        }
+          suspendReason: isBan ? (reason ?? null) : null,
+          suspendedUntil: effectiveUntil,
+        },
       });
 
-      // 2. Precise Administrative Audit Log (2026 Security Standard)
       await tx.auditLog.create({
         data: {
-          action: status === 'SUSPENDED' ? 'USER_BAN' : 'USER_ACTIVATE',
+          action: isBan ? 'USER_BAN' : 'USER_ACTIVATE',
           entity: 'USER',
           actorType: 'ADMIN',
           actorId: id,
@@ -701,48 +712,47 @@ export class UsersService {
           newState: status,
           metadata: {
             adminAction: true,
-            timestamp: new Date().toISOString()
-          }
-        }
+            suspendedUntil: effectiveUntil?.toISOString() ?? null,
+            durationDays: durationDays ?? null,
+            timestamp: new Date().toISOString(),
+          },
+        },
       });
 
-      // 3. Notify Admin Group (Oversight)
       await this.notificationsService.notifyAdmins({
-        titleAr: status === 'SUSPENDED' ? 'تم إيقاف حساب مستخدم ⛔' : 'تم تفعيل حساب مستخدم ✅',
-        titleEn: status === 'SUSPENDED' ? 'User Account Suspended ⛔' : 'User Account Activated ✅',
-        messageAr: `قام أدمن بتغيير حالة المستخدم (${user.name || user.email}) إلى ${status}. السبب: ${reason || 'لا يوجد'}`,
-        messageEn: `Admin changed status for user (${user.name || user.email}) to ${status}. Reason: ${reason || 'None'}`,
+        titleAr: isBan ? 'تم إيقاف حساب مستخدم ⛔' : 'تم تفعيل حساب مستخدم ✅',
+        titleEn: isBan ? 'User Account Suspended ⛔' : 'User Account Activated ✅',
+        messageAr: `قام أدمن بتغيير حالة المستخدم (${updated.name || updated.email}) إلى ${status}. السبب: ${reason || 'لا يوجد'}`,
+        messageEn: `Admin changed status for user (${updated.name || updated.email}) to ${status}. Reason: ${reason || 'None'}`,
         type: 'SECURITY',
-        metadata: { userId: id, status }
+        metadata: { userId: id, status },
       });
 
-      // 4. Notify the customer directly
-      if (status === 'SUSPENDED') {
-        this.notificationsService.create({
-          recipientId: id,
-          recipientRole: 'CUSTOMER',
-          titleAr: '⛔ تم إيقاف حسابك',
-          titleEn: '⛔ Your Account Has Been Suspended',
-          messageAr: `تم إيقاف حسابك. السبب: ${reason || 'قرار إداري'}. يرجى التواصل مع الدعم الفني للاستفسار.`,
-          messageEn: `Your account has been suspended. Reason: ${reason || 'Administrative decision'}. Please contact support for assistance.`,
-          type: 'SECURITY',
-          link: '/auth/login'
-        }).catch(() => {});
-      } else {
-        this.notificationsService.create({
-          recipientId: id,
-          recipientRole: 'CUSTOMER',
-          titleAr: '✅ تم تنشيط حسابك',
-          titleEn: '✅ Your Account Has Been Reactivated',
-          messageAr: 'تم تنشيط حسابك بنجاح. يمكنك الآن الوصول إلى المنصة واستخدام خدماتها.',
-          messageEn: 'Your account has been reactivated. You can now access the platform and use its services.',
-          type: 'SYSTEM',
-          link: '/dashboard/customer'
-        }).catch(() => {});
-      }
-
-      return user;
+      return updated;
     });
+
+    const scope =
+      user.role === 'VENDOR'
+        ? 'MERCHANT'
+        : ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'VERIFICATION_OFFICER', 'ACCOUNTANT'].includes(
+              user.role,
+            )
+          ? 'ADMIN'
+          : 'CUSTOMER';
+
+    void this.accountAccessNotify.notify({
+      recipientId: id,
+      recipientRole: user.role,
+      scope: scope as 'CUSTOMER' | 'MERCHANT' | 'ADMIN',
+      action: isBan ? 'BAN' : 'UNBAN',
+      banKind: status === 'BLOCKED' ? 'PERMANENT' : status === 'SUSPENDED' ? 'TEMPORARY' : 'NONE',
+      reason,
+      suspendedUntil: effectiveUntil,
+      durationDays: durationDays ?? null,
+      recipientName: user.name,
+    });
+
+    return user;
   }
 
   async adminUpdateCustomer(id: string, data: { name?: string; email?: string; country?: string; phone?: string }) {

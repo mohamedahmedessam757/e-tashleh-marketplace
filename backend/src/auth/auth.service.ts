@@ -115,17 +115,23 @@ export class AuthService {
     }
 
     async login(user: any, ip?: string, userAgent?: string, fingerprint?: string) {
+        // Suspended / inactive staff may still obtain a session so the dashboard can render
+        // an access banner (mutations remain blocked by AccountWriteGuard).
+        let adminInactive = false;
         if (this.isStaffRole(user.role)) {
             const adminPerm = await this.prisma.adminPermission.findUnique({
                 where: { userId: user.id },
             });
             if (adminPerm && !adminPerm.isActive) {
-                throw new ForbiddenException('Admin account is inactive. Contact Super Admin.');
-            }
-            if (user.status === 'SUSPENDED' || user.status === 'BLOCKED') {
-                throw new ForbiddenException('Account is suspended or blocked.');
+                adminInactive = true;
+                if (user.status === 'ACTIVE') {
+                    user = { ...user, status: 'SUSPENDED' };
+                }
             }
         }
+        const accountAccessBlocked =
+            user.status === 'SUSPENDED' || user.status === 'BLOCKED' || adminInactive;
+        user = { ...user, accountAccessBlocked, adminInactive };
 
         const payload = { email: user.email, sub: user.id, role: user.role };
         const token = this.jwtService.sign(payload, {
@@ -697,8 +703,31 @@ export class AuthService {
         const user = await this.usersService.findById(userId);
         if (!user) return null;
         // Return safe user object
-        const { passwordHash, otpCode, otpExpiresAt, ...result } = user;
-        return result;
+        const { passwordHash, otpCode, otpExpiresAt, ...result } = user as any;
+
+        let adminInactive = false;
+        if (this.isStaffRole(result.role)) {
+            const adminPerm = await this.prisma.adminPermission.findUnique({
+                where: { userId },
+                select: { isActive: true },
+            });
+            adminInactive = Boolean(adminPerm && !adminPerm.isActive);
+        }
+
+        const accountAccessBlocked =
+            result.status === 'SUSPENDED' ||
+            result.status === 'BLOCKED' ||
+            adminInactive;
+
+        return {
+            ...result,
+            adminInactive,
+            accountAccessBlocked,
+            status:
+                adminInactive && result.status === 'ACTIVE'
+                    ? 'SUSPENDED'
+                    : result.status,
+        };
     }
 
     async getActiveSessions(userId: string, currentToken?: string, locale: 'en' | 'ar' = 'en') {

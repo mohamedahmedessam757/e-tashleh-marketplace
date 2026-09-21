@@ -201,6 +201,21 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
         buttonUrlDynamic: false,
     }),
 
+    // Account ban / unban
+    // Body: {{1}} name · {{2}} status_detail
+    def('txn_account_access_customer', 'ar', 'customer', ['name', 'status_detail'], {
+        headerText: 'حالة الوصول للحساب',
+        buttonLabel: 'فتح اللوحة',
+        buttonSuffixPattern: 'home',
+        buttonUrlDynamic: false,
+    }),
+    def('txn_account_access_merchant', 'ar', 'merchant', ['name', 'status_detail'], {
+        headerText: 'حالة الوصول للحساب',
+        buttonLabel: 'فتح اللوحة',
+        buttonSuffixPattern: suffix.storeHome,
+        buttonUrlDynamic: false,
+    }),
+
     // Violations & penalties
     // Customer: {{1}} name · {{2}} status_detail
     def('txn_violation_customer', 'ar', 'customer', ['name', 'status_detail'], {

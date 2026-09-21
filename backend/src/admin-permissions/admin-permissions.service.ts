@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { AccountAccessNotifyService } from '../notifications/account-access-notify.service';
 import * as bcrypt from 'bcrypt';
 import { CreateAdminDto, UpdatePermissionsDto, ChangeAdminPasswordDto } from './dto/admin-permissions.dto';
 import { ToggleAdminStatusDto } from '../platform-settings/dto/settings-audit.dto';
@@ -12,7 +12,7 @@ export class AdminPermissionsService {
   constructor(
     private prisma: PrismaService,
     private auditLogs: AuditLogsService,
-    private notifications: NotificationsService,
+    private accountAccessNotify: AccountAccessNotifyService,
   ) {}
 
   private buildFullPhone(countryCode: string, localPhone: string): string {
@@ -248,6 +248,17 @@ export class AdminPermissionsService {
       }, tx);
 
       return { success: true, isActive: dto.isActive };
+    }).then(async (result) => {
+      void this.accountAccessNotify.notify({
+        recipientId: targetUserId,
+        recipientRole: targetUser.role,
+        scope: 'ADMIN',
+        action: dto.isActive ? 'UNBAN' : 'BAN',
+        banKind: dto.isActive ? 'NONE' : 'PERMANENT',
+        reason: dto.reason,
+        recipientName: targetUser.name,
+      });
+      return result;
     });
   }
 

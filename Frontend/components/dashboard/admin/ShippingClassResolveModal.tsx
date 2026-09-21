@@ -365,8 +365,8 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
             </div>
             <p className="text-[10px] text-white/40 leading-relaxed">
               {isAr
-                ? 'التحكم هنا على نوع شحن هذه القطعة فقط. العميل يُبلَّغ بالتغيير دون السعر؛ التاجر يرى تكلفة الشحن.'
-                : 'You only control shipping class for this part. Customer is notified without price; merchant sees shipping cost.'}
+                ? 'التحكم هنا على نوع شحن هذه القطعة فقط. معاينة السعر ظاهرة لك فقط؛ إشعارات العميل والتاجر لا تتضمن تكلفة الشحن.'
+                : 'You only control shipping class for this part. Price preview is admin-only; customer and merchant notices omit shipping cost.'}
             </p>
           </div>
 

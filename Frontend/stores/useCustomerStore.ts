@@ -77,7 +77,12 @@ interface CustomerState {
   fetchCustomers: (options?: { search?: string }) => Promise<void>;
   customersSearchQuery: string;
   fetchCustomerById: (id: string) => Promise<Customer | null>;
-  toggleStatus: (id: string, reason?: string, currentStatus?: Customer['status']) => Promise<void>;
+  toggleStatus: (
+    id: string,
+    reason?: string,
+    currentStatus?: Customer['status'],
+    options?: { banKind?: 'BLOCKED' | 'SUSPENDED'; durationDays?: number },
+  ) => Promise<void>;
   updateNotes: (id: string, notes: string) => Promise<void>;
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
   updateCustomerRestrictions: (id: string, data: any) => Promise<void>;
@@ -123,7 +128,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
     return response.json();
   },
 
-  toggleStatus: async (id: string, reason?: string, currentStatus?: Customer['status']) => {
+  toggleStatus: async (id: string, reason?: string, currentStatus?: Customer['status'], options?: { banKind?: 'BLOCKED' | 'SUSPENDED'; durationDays?: number }) => {
     let status = currentStatus ?? get().customers.find(c => c.id === id)?.status;
 
     if (!status) {
@@ -132,13 +137,28 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       status = fetched.status;
     }
 
-    const newStatus: Customer['status'] = status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const isCurrentlyBanned = status === 'SUSPENDED' || status === 'BLOCKED';
+    const newStatus: Customer['status'] = isCurrentlyBanned
+      ? 'ACTIVE'
+      : (options?.banKind || 'SUSPENDED');
     const previousCustomers = get().customers;
+    const durationDays = options?.durationDays;
+    const suspendedUntil =
+      newStatus === 'SUSPENDED' && durationDays
+        ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+        : undefined;
 
     if (previousCustomers.some(c => c.id === id)) {
       set((state) => ({
         customers: state.customers.map(c =>
-          c.id === id ? { ...c, status: newStatus, suspendReason: newStatus === 'SUSPENDED' ? reason : undefined } : c
+          c.id === id
+            ? {
+                ...c,
+                status: newStatus,
+                suspendReason: newStatus === 'ACTIVE' ? undefined : reason,
+                suspendedUntil: newStatus === 'SUSPENDED' ? suspendedUntil : undefined,
+              }
+            : c
         )
       }));
     }
@@ -152,7 +172,12 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: newStatus, reason })
+        body: JSON.stringify({
+          status: newStatus,
+          reason,
+          durationDays: newStatus === 'SUSPENDED' ? durationDays : undefined,
+          suspendedUntil: newStatus === 'SUSPENDED' ? suspendedUntil : undefined,
+        })
       });
       if (!response.ok) throw new Error('Failed to toggle status');
     } catch (err) {

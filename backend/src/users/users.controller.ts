@@ -48,10 +48,27 @@ export class UsersController {
   @Permissions('customers', 'edit')
   @Patch('admin/customers/:id/status')
   async updateCustomerStatus(
-    @Param('id') id: string, 
-    @Body() body: { status: 'ACTIVE' | 'SUSPENDED'; reason?: string }
+    @Param('id') id: string,
+    @Body()
+    body: {
+      status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED';
+      reason?: string;
+      suspendedUntil?: string;
+      durationDays?: number;
+    },
   ) {
-    return this.usersService.adminUpdateStatus(id, body.status, body.reason);
+    const suspendedUntil = body.suspendedUntil
+      ? new Date(body.suspendedUntil)
+      : body.durationDays && body.status === 'SUSPENDED'
+        ? new Date(Date.now() + body.durationDays * 24 * 60 * 60 * 1000)
+        : null;
+    return this.usersService.adminUpdateStatus(
+      id,
+      body.status,
+      body.reason,
+      suspendedUntil,
+      body.durationDays ?? null,
+    );
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)

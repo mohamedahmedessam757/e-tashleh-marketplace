@@ -18,6 +18,11 @@ export interface UserProfile {
   totalDeliveredOrders?: number;
   totalReturnDisputeOrders?: number;
   cachedReturnRate?: number;
+  status?: string;
+  suspendReason?: string | null;
+  suspendedUntil?: string | null;
+  accountAccessBlocked?: boolean;
+  adminInactive?: boolean;
 }
 
 export interface Address {
@@ -125,7 +130,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       // 1. Fetch user data
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, name, email, phone, role, avatar, withdrawals_frozen, withdrawal_freeze_note, order_limit, restriction_alert_message, violation_score, total_delivered_orders, total_return_dispute_orders, cached_return_rate')
+        .select('id, name, email, phone, role, avatar, status, suspend_reason, suspended_until, withdrawals_frozen, withdrawal_freeze_note, order_limit, restriction_alert_message, violation_score, total_delivered_orders, total_return_dispute_orders, cached_return_rate')
         .eq('id', userId)
         .maybeSingle();
 
@@ -141,6 +146,11 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             phone: p.phone,
             role: p.role,
             avatar: p.avatar,
+            status: p.status,
+            suspendReason: p.suspendReason ?? p.suspend_reason ?? null,
+            suspendedUntil: p.suspendedUntil ?? p.suspended_until ?? null,
+            accountAccessBlocked: Boolean(p.accountAccessBlocked),
+            adminInactive: Boolean(p.adminInactive),
             withdrawalsFrozen: p.withdrawalsFrozen,
             withdrawalFreezeNote: p.withdrawalFreezeNote,
             orderLimit: p.orderLimit,
@@ -166,6 +176,11 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           phone: userData.phone || '',
           role: userData.role || 'CUSTOMER',
           avatar: userData.avatar,
+          status: userData.status,
+          suspendReason: userData.suspend_reason ?? null,
+          suspendedUntil: userData.suspended_until ?? null,
+          accountAccessBlocked:
+            userData.status === 'SUSPENDED' || userData.status === 'BLOCKED',
           withdrawalsFrozen: userData.withdrawals_frozen,
           withdrawalFreezeNote: userData.withdrawal_freeze_note,
           orderLimit: userData.order_limit,
@@ -482,9 +497,19 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         },
         (payload) => {
           const newData = payload.new as any;
+          const status = newData.status ?? undefined;
           set((state) => ({
             user: state.user ? {
               ...state.user,
+              status: status ?? state.user.status,
+              suspendReason: newData.suspend_reason ?? state.user.suspendReason,
+              suspendedUntil: newData.suspended_until ?? state.user.suspendedUntil,
+              accountAccessBlocked:
+                status === 'SUSPENDED' || status === 'BLOCKED'
+                  ? true
+                  : status === 'ACTIVE'
+                    ? false
+                    : state.user.accountAccessBlocked,
               withdrawalsFrozen: newData.withdrawals_frozen ?? state.user.withdrawalsFrozen,
               withdrawalFreezeNote: newData.withdrawal_freeze_note ?? state.user.withdrawalFreezeNote,
               orderLimit: newData.order_limit ?? state.user.orderLimit,

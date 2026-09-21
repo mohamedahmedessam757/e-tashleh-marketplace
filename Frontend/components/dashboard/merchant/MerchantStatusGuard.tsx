@@ -9,6 +9,7 @@ import {
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteContacts } from '../../../config/site';
+import { AccountAccessBanner } from '../shared/AccountAccessBanner';
 import { buildAuthRecoveryRedirectUrl } from '../../../utils/widersDeepLink';
 
 interface MerchantStatusGuardProps {
@@ -18,6 +19,7 @@ interface MerchantStatusGuardProps {
 export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ children }) => {
   const vendorStatus = useVendorStore(state => state.vendorStatus);
   const storeRejectionReason = useVendorStore(state => state.storeRejectionReason);
+  const storeSuspendedUntil = useVendorStore(state => state.storeSuspendedUntil);
   const fetchVendorProfile = useVendorStore(state => state.fetchVendorProfile);
   
   const { t, language } = useLanguage();
@@ -47,6 +49,8 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
       'PENDING_REVIEW',
       'PENDING_DOCUMENTS',
       'PENDING_STRIPE',
+      'SUSPENDED',
+      'BLOCKED',
       'IDLE',
     ]);
     if (!pendingStatuses.has(vendorStatus)) return;
@@ -270,44 +274,29 @@ export const MerchantStatusGuard: React.FC<MerchantStatusGuardProps> = ({ childr
   // 3. SUSPENDED
   if (vendorStatus === 'SUSPENDED') {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <GlassCard className="max-w-md w-full text-center p-10 border-red-500/20 bg-red-900/5">
-          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
-            <ShieldAlert size={40} />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">
-             {isAr ? 'الحساب معلق' : 'Account Suspended'}
-          </h2>
-          <p className="text-white/60 leading-relaxed">
-            {isAr 
-              ? 'لقد تم تعليق حسابك مؤقتاً لمخالفة سياسات المنصة. يرجى التواصل مع الدعم الفني.'
-              : 'Your account has been temporarily suspended for violating platform policies. Please contact support.'
-            }
-          </p>
-        </GlassCard>
-      </div>
+      <AccountAccessBanner
+        kind="TEMPORARY"
+        reason={storeRejectionReason}
+        suspendedUntil={storeSuspendedUntil}
+        audience="merchant"
+        lockInteraction
+      >
+        {children}
+      </AccountAccessBanner>
     );
   }
 
   // 4. BLOCKED
   if (vendorStatus === 'BLOCKED') {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <GlassCard className="max-w-md w-full text-center p-10 border-red-500/20 bg-black shadow-[0_0_50px_rgba(255,0,0,0.1)]">
-          <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-white/30 border border-white/10">
-            <Lock size={40} />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">
-             {isAr ? 'تم حظر الحساب' : 'Account Blocked'}
-          </h2>
-          <p className="text-white/60 leading-relaxed">
-            {isAr 
-              ? 'تم حظر هذا الحساب بشكل نهائي من قبل الإدارة. لم تعد قادراً على استخدام منصة إي تشليح.'
-              : 'This account has been permanently blocked by administration. You are no longer able to use E-Tashleh platform.'
-            }
-          </p>
-        </GlassCard>
-      </div>
+      <AccountAccessBanner
+        kind="PERMANENT"
+        reason={storeRejectionReason}
+        audience="merchant"
+        lockInteraction
+      >
+        {children}
+      </AccountAccessBanner>
     );
   }
 

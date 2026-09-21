@@ -19,7 +19,8 @@ export type WhatsAppEvent =
     | 'STORE_PENDING_STRIPE'
     | 'STORE_STRIPE_RESULT'
     | 'CHAT_MESSAGE'
-    | 'ORDER_CANCEL_MERCHANT_FAULT';
+    | 'ORDER_CANCEL_MERCHANT_FAULT'
+    | 'ACCOUNT_ACCESS';
 
 export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'ORDER_CREATED',
@@ -40,6 +41,7 @@ export const WHATSAPP_EVENTS: readonly WhatsAppEvent[] = [
     'STORE_STRIPE_RESULT',
     'CHAT_MESSAGE',
     'ORDER_CANCEL_MERCHANT_FAULT',
+    'ACCOUNT_ACCESS',
 ] as const;
 
 export interface NotificationDispatchInput {
@@ -207,6 +209,10 @@ function resolveByWaEvent(
             return orderFamily(role);
         case 'OFFER_BIDDING_RESTRICTED':
             return role === 'MERCHANT' ? 'txn_offer_restriction_vendor' : null;
+        case 'ACCOUNT_ACCESS':
+            return role === 'MERCHANT'
+                ? 'txn_account_access_merchant'
+                : 'txn_account_access_customer';
         case 'VIOLATION_ISSUED':
             return role === 'MERCHANT' ? 'txn_violation_vendor' : 'txn_violation_customer';
         case 'ORDER_CANCEL_MERCHANT_FAULT':

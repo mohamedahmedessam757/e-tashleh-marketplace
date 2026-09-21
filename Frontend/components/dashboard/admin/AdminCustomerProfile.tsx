@@ -57,6 +57,8 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
     const [isBanning, setIsBanning] = useState(false);
     const [isBanModalOpen, setIsBanModalOpen] = useState(false);
     const [banReason, setBanReason] = useState('');
+    const [banType, setBanType] = useState<'BLOCKED' | 'SUSPENDED'>('SUSPENDED');
+    const [suspensionDays, setSuspensionDays] = useState(7);
 
     const [isLive, setIsLive] = useState(false);
     const isAr = language === 'ar';
@@ -142,7 +144,10 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
         if (!customer || !banReason.trim()) return;
         setIsBanning(true);
         try {
-            await toggleStatus(customer.id, banReason, customer.status);
+            await toggleStatus(customer.id, banReason, customer.status, {
+                banKind: banType,
+                durationDays: banType === 'SUSPENDED' ? suspensionDays : undefined,
+            });
             await loadData(true);
             setIsBanModalOpen(false);
             setBanReason('');
@@ -417,6 +422,24 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                         </p>
                                     </div>
                                 )}
+                                {customer.status === 'SUSPENDED' && customer.suspendedUntil && (
+                                    <p className="text-xs text-orange-300/90">
+                                        {isAr ? 'ينتهي في:' : 'Ends:'}{' '}
+                                        <span dir="ltr">
+                                            {new Date(customer.suspendedUntil).toLocaleString(isAr ? 'ar-EG' : 'en-GB')}
+                                        </span>
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleToggleStatus}
+                                    disabled={isBanning}
+                                    className="mt-3 inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-xl bg-green-500 text-[#0F0E0D] font-black text-xs uppercase tracking-widest hover:bg-green-400 disabled:opacity-50"
+                                >
+                                    {isBanning
+                                        ? (isAr ? 'جاري التنشيط...' : 'Activating...')
+                                        : (isAr ? 'رفع الحظر / تنشيط' : 'Lift ban / Activate')}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1530,6 +1553,41 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                 </div>
 
                                 <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setBanType('SUSPENDED')}
+                                            disabled={isBanning}
+                                            className={`p-4 rounded-xl border transition-all text-center disabled:opacity-50 ${banType === 'SUSPENDED' ? 'bg-orange-500/20 border-orange-500 text-white' : 'bg-white/5 border-white/10 text-white/50'}`}
+                                        >
+                                            <div className="text-xs font-bold uppercase tracking-wider">{isAr ? 'إيقاف مؤقت' : 'Temporary'}</div>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBanType('BLOCKED')}
+                                            disabled={isBanning}
+                                            className={`p-4 rounded-xl border transition-all text-center disabled:opacity-50 ${banType === 'BLOCKED' ? 'bg-red-500/20 border-red-500 text-white' : 'bg-white/5 border-white/10 text-white/50'}`}
+                                        >
+                                            <div className="text-xs font-bold uppercase tracking-wider">{isAr ? 'حظر دائم' : 'Permanent'}</div>
+                                        </button>
+                                    </div>
+                                    {banType === 'SUSPENDED' && (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-white/40 uppercase px-1">{isAr ? 'المدة' : 'Duration'}</label>
+                                            <select
+                                                value={suspensionDays}
+                                                onChange={(e) => setSuspensionDays(Number(e.target.value))}
+                                                disabled={isBanning}
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-orange-500/50"
+                                            >
+                                                <option value={3}>3 {isAr ? 'أيام' : 'Days'}</option>
+                                                <option value={7}>7 {isAr ? 'أيام' : 'Days'}</option>
+                                                <option value={15}>15 {isAr ? 'يوم' : 'Days'}</option>
+                                                <option value={30}>30 {isAr ? 'يوم' : 'Days'}</option>
+                                                <option value={90}>90 {isAr ? 'يوم' : 'Days'}</option>
+                                            </select>
+                                        </div>
+                                    )}
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-white/40 uppercase px-1">{isAr ? 'سبب الحظر' : 'Ban Reason'}</label>
                                         <textarea
@@ -1543,8 +1601,8 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                     <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
                                         <p className="text-[10px] text-red-500/70 font-medium leading-relaxed">
                                             {isAr
-                                                ? 'سيتم تسجيل هذا الإجراء في سجل العمليات الآمنة (Audit Log) وسيفقد المستخدم الوصول للمنصة فوراً.'
-                                                : 'This action will be recorded in the security logs, and the user will lose platform access immediately.'}
+                                                ? 'سيتم تسجيل هذا الإجراء ويبقى العميل داخل اللوحة مع بانر حظر، دون طرد صامت.'
+                                                : 'This action is logged. The customer stays signed in and sees an access banner instead of a silent logout.'}
                                         </p>
                                     </div>
                                 </div>

@@ -929,6 +929,17 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                         </p>
                                     </div>
                                 )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusUpdate('ACTIVE')}
+                                    disabled={isUpdating}
+                                    className="mt-3 inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-xl bg-green-500 text-[#0F0E0D] font-black text-xs uppercase tracking-widest hover:bg-green-400 disabled:opacity-50"
+                                >
+                                    {pendingStatusUpdate === 'ACTIVE'
+                                        ? (isAr ? 'جاري التنشيط...' : 'Activating...')
+                                        : (isAr ? 'رفع الحظر / تنشيط المتجر' : 'Lift ban / Activate store')}
+                                </button>
                             </div>
                         </div>
                     </div>

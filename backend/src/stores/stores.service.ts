@@ -4,6 +4,7 @@ import { UploadStoreDocumentDto } from './dto/upload-store-document.dto';
 import { Prisma, StoreStatus, OrderStatus, StoreSubscriptionTier, ActorType } from '@prisma/client';
 import { normalizeSearchQuery, resolveStoreIds } from '../common/search/admin-entity-search.util';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AccountAccessNotifyService } from '../notifications/account-access-notify.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MerchantPerformanceService } from '../merchant-performance/merchant-performance.service';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
@@ -16,6 +17,7 @@ export class StoresService {
     constructor(
         private prisma: PrismaService,
         private notificationsService: NotificationsService,
+        private accountAccessNotify: AccountAccessNotifyService,
         private auditLogs: AuditLogsService,
         @Inject(forwardRef(() => MerchantPerformanceService))
         private readonly merchantPerformance: MerchantPerformanceService,
@@ -853,42 +855,66 @@ export class StoresService {
             }
 
             if (effectiveStatus === StoreStatus.SUSPENDED && result.ownerId) {
-                const untilLabel = suspendedUntil
-                    ? new Date(suspendedUntil).toLocaleString('ar-EG', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                      })
-                    : '';
-                void this.notificationsService
-                    .create({
+                const days =
+                    suspendedUntil != null
+                        ? Math.max(
+                              1,
+                              Math.ceil(
+                                  (new Date(suspendedUntil).getTime() - Date.now()) /
+                                      (24 * 60 * 60 * 1000),
+                              ),
+                          )
+                        : null;
+                void this.accountAccessNotify
+                    .notify({
                         recipientId: result.ownerId,
-                        recipientRole: 'MERCHANT',
-                        titleAr: '⏸️ تم إيقاف متجرك مؤقتاً',
-                        titleEn: '⏸️ Your Store Has Been Temporarily Suspended',
-                        messageAr: `تم إيقاف متجر (${result.name}) مؤقتاً.${untilLabel ? ` ينتهي الإيقاف في: ${untilLabel}.` : ''} السبب: ${reason || 'قرار إداري'}.`,
-                        messageEn: `Store (${result.name}) has been temporarily suspended.${untilLabel ? ` Suspension ends: ${untilLabel}.` : ''} Reason: ${reason || 'Administrative decision'}.`,
-                        type: 'SECURITY',
-                        link: '/dashboard/merchant/profile',
+                        recipientRole: 'VENDOR',
+                        scope: 'MERCHANT',
+                        action: 'BAN',
+                        banKind: 'TEMPORARY',
+                        reason,
+                        suspendedUntil,
+                        durationDays: days,
+                        storeName: result.name,
                     })
                     .catch((e) => console.error('Failed to send store suspension notification', e));
             }
 
             if (effectiveStatus === StoreStatus.BLOCKED && result.ownerId) {
-                void this.notificationsService
-                    .create({
+                void this.accountAccessNotify
+                    .notify({
                         recipientId: result.ownerId,
-                        recipientRole: 'MERCHANT',
-                        titleAr: '⛔ تم حظر متجرك بشكل دائم',
-                        titleEn: '⛔ Your Store Has Been Permanently Blocked',
-                        messageAr: `تم حظر متجر (${result.name}) بشكل دائم. السبب: ${reason || 'قرار إداري'}. يرجى التواصل مع الدعم الفني.`,
-                        messageEn: `Store (${result.name}) has been permanently blocked. Reason: ${reason || 'Administrative decision'}. Please contact support.`,
-                        type: 'SECURITY',
-                        link: '/dashboard/merchant/profile',
+                        recipientRole: 'VENDOR',
+                        scope: 'MERCHANT',
+                        action: 'BAN',
+                        banKind: 'PERMANENT',
+                        reason,
+                        storeName: result.name,
                     })
                     .catch((e) => console.error('Failed to send store block notification', e));
+            }
+
+            const wasBanned =
+                existing.status === StoreStatus.SUSPENDED ||
+                existing.status === StoreStatus.BLOCKED;
+            const isNowOpen =
+                effectiveStatus === StoreStatus.ACTIVE ||
+                effectiveStatus === StoreStatus.PENDING_STRIPE ||
+                effectiveStatus === StoreStatus.STRIPE_RESTRICTED ||
+                effectiveStatus === StoreStatus.PENDING_REVIEW ||
+                effectiveStatus === StoreStatus.PENDING_DOCUMENTS;
+            if (wasBanned && isNowOpen && result.ownerId) {
+                void this.accountAccessNotify
+                    .notify({
+                        recipientId: result.ownerId,
+                        recipientRole: 'VENDOR',
+                        scope: 'MERCHANT',
+                        action: 'UNBAN',
+                        banKind: 'NONE',
+                        reason: reason || 'Administrative reactivation',
+                        storeName: result.name,
+                    })
+                    .catch((e) => console.error('Failed to send store unban notification', e));
             }
 
             await this.auditLogs.logAction({
