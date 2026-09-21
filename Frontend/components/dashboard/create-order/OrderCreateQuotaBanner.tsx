@@ -18,7 +18,10 @@ function formatRemaining(ms: number): string {
 export const OrderCreateQuotaBanner: React.FC<{
   refreshKey?: number;
   onQuotaLoaded?: (quota: Quota) => void;
-}> = ({ refreshKey = 0, onQuotaLoaded }) => {
+  /** When reordering from an active multi order, show that this source is exempt. */
+  reorderSourceOrderId?: string | null;
+  isReorderPrefill?: boolean;
+}> = ({ refreshKey = 0, onQuotaLoaded, reorderSourceOrderId = null, isReorderPrefill = false }) => {
   const { t, language } = useLanguage();
   const isRTL = language === 'ar';
   const rules = t.dashboard.createOrder.rules;
@@ -80,9 +83,20 @@ export const OrderCreateQuotaBanner: React.FC<{
     : 0;
   const atSingleLimit = quota.single.remaining <= 0;
   const multiBlocked = !quota.multiple.canCreate;
+  const reorderExemptMulti =
+    isReorderPrefill &&
+    !!reorderSourceOrderId &&
+    quota.multiple.blockingOrderId === reorderSourceOrderId;
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4 space-y-3 text-start">
+      {reorderExemptMulti && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200 leading-relaxed">
+          {isRTL
+            ? 'إعادة الطلب من طلبك المجمع الحالي مسموحة الآن حتى لو كان الطلب المجمع الجديد مؤجلاً للطلبات الأخرى.'
+            : 'Reordering from your current multiple order is allowed now, even while a new multiple request is locked for other creates.'}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <div className="p-2 rounded-lg bg-gold-500/15 text-gold-400 shrink-0">

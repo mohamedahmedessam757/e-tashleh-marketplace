@@ -10,6 +10,7 @@ export interface CreateOrderPrefillPart {
   notes?: string;
   images: string[];
   video?: string | null;
+  shippingClass?: 'engine' | 'gearbox' | 'standard' | null;
 }
 
 export interface CreateOrderPrefillPayload {
@@ -28,69 +29,131 @@ function isHttpUrl(value: unknown): value is string {
   return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
 }
 
+function isShippingClassValue(
+  value: unknown,
+): value is 'engine' | 'gearbox' | 'standard' {
+  return value === 'engine' || value === 'gearbox' || value === 'standard';
+}
+
+function parseCreateOrderPrefill(raw: unknown): CreateOrderPrefillPayload | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const parsed = raw as Record<string, unknown>;
+  if (typeof parsed.make !== 'string' || typeof parsed.model !== 'string') return null;
+  if (!parsed.make.trim() || !parsed.model.trim()) return null;
+
+  let parts: CreateOrderPrefillPart[] | undefined;
+  if (Array.isArray(parsed.parts)) {
+    parts = parsed.parts
+      .map((p) => {
+        if (!p || typeof p !== 'object') return null;
+        const row = p as Record<string, unknown>;
+        if (typeof row.name !== 'string' || typeof row.description !== 'string') return null;
+        const images = Array.isArray(row.images)
+          ? row.images.filter(isHttpUrl).map((u) => u.trim())
+          : [];
+        return {
+          name: row.name,
+          description: row.description,
+          notes: typeof row.notes === 'string' ? row.notes : undefined,
+          images,
+          video: isHttpUrl(row.video) ? String(row.video).trim() : null,
+          shippingClass: isShippingClassValue(row.shippingClass) ? row.shippingClass : null,
+        } satisfies CreateOrderPrefillPart;
+      })
+      .filter((p): p is CreateOrderPrefillPart => !!p);
+    if (!parts.length) parts = undefined;
+  }
+
+  const sourcePartIds = Array.isArray(parsed.sourcePartIds)
+    ? parsed.sourcePartIds.filter((id): id is string => typeof id === 'string' && !!id.trim())
+    : undefined;
+
+  const conditionPref =
+    parsed.conditionPref === 'new' || parsed.conditionPref === 'used'
+      ? parsed.conditionPref
+      : parsed.conditionPref === null
+        ? null
+        : undefined;
+
+  const shippingType =
+    parsed.shippingType === 'separate' || parsed.shippingType === 'combined'
+      ? parsed.shippingType
+      : undefined;
+
+  const year =
+    typeof parsed.year === 'string'
+      ? parsed.year
+      : typeof parsed.year === 'number' && Number.isFinite(parsed.year)
+        ? String(parsed.year)
+        : undefined;
+
+  return {
+    make: parsed.make,
+    model: parsed.model,
+    year,
+    sourceOrderId: typeof parsed.sourceOrderId === 'string' ? parsed.sourceOrderId : undefined,
+    sourcePartId: typeof parsed.sourcePartId === 'string' ? parsed.sourcePartId : undefined,
+    sourcePartIds,
+    parts,
+    conditionPref,
+    shippingType,
+  };
+}
+
+/** Survives React Strict Mode double-mount (sessionStorage alone is consumed twice). */
+let stagedCreateOrderPrefill: CreateOrderPrefillPayload | null = null;
+
 export function writeCreateOrderPrefill(payload: CreateOrderPrefillPayload): void {
-  sessionStorage.setItem(CREATE_ORDER_PREFILL_KEY, JSON.stringify(payload));
+  stagedCreateOrderPrefill = payload;
+  try {
+    sessionStorage.setItem(CREATE_ORDER_PREFILL_KEY, JSON.stringify(payload));
+  } catch {
+    // ignore quota / private mode
+  }
 }
 
 export function consumeCreateOrderPrefill(): CreateOrderPrefillPayload | null {
+  if (stagedCreateOrderPrefill) {
+    const staged = stagedCreateOrderPrefill;
+    stagedCreateOrderPrefill = null;
+    try {
+      sessionStorage.removeItem(CREATE_ORDER_PREFILL_KEY);
+    } catch {
+      // ignore
+    }
+    return staged;
+  }
+
   try {
     const raw = sessionStorage.getItem(CREATE_ORDER_PREFILL_KEY);
     sessionStorage.removeItem(CREATE_ORDER_PREFILL_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (typeof parsed.make !== 'string' || typeof parsed.model !== 'string') return null;
-
-    let parts: CreateOrderPrefillPart[] | undefined;
-    if (Array.isArray(parsed.parts)) {
-      parts = parsed.parts
-        .map((p) => {
-          if (!p || typeof p !== 'object') return null;
-          const row = p as Record<string, unknown>;
-          if (typeof row.name !== 'string' || typeof row.description !== 'string') return null;
-          const images = Array.isArray(row.images)
-            ? row.images.filter(isHttpUrl).map((u) => u.trim())
-            : [];
-          return {
-            name: row.name,
-            description: row.description,
-            notes: typeof row.notes === 'string' ? row.notes : undefined,
-            images,
-            video: isHttpUrl(row.video) ? String(row.video).trim() : null,
-          } satisfies CreateOrderPrefillPart;
-        })
-        .filter((p): p is CreateOrderPrefillPart => !!p);
-      if (!parts.length) parts = undefined;
-    }
-
-    const sourcePartIds = Array.isArray(parsed.sourcePartIds)
-      ? parsed.sourcePartIds.filter((id): id is string => typeof id === 'string' && !!id.trim())
-      : undefined;
-
-    const conditionPref =
-      parsed.conditionPref === 'new' || parsed.conditionPref === 'used'
-        ? parsed.conditionPref
-        : parsed.conditionPref === null
-          ? null
-          : undefined;
-
-    const shippingType =
-      parsed.shippingType === 'separate' || parsed.shippingType === 'combined'
-        ? parsed.shippingType
-        : undefined;
-
-    return {
-      make: parsed.make,
-      model: parsed.model,
-      year: typeof parsed.year === 'string' ? parsed.year : undefined,
-      sourceOrderId: typeof parsed.sourceOrderId === 'string' ? parsed.sourceOrderId : undefined,
-      sourcePartId: typeof parsed.sourcePartId === 'string' ? parsed.sourcePartId : undefined,
-      sourcePartIds,
-      parts,
-      conditionPref,
-      shippingType,
-    };
+    return parseCreateOrderPrefill(JSON.parse(raw));
   } catch {
     return null;
+  }
+}
+
+/** Peek without clearing — used so Strict Mode remount can re-apply. */
+export function peekCreateOrderPrefill(): CreateOrderPrefillPayload | null {
+  if (stagedCreateOrderPrefill) return stagedCreateOrderPrefill;
+  try {
+    const raw = sessionStorage.getItem(CREATE_ORDER_PREFILL_KEY);
+    if (!raw) return null;
+    const parsed = parseCreateOrderPrefill(JSON.parse(raw));
+    if (parsed) stagedCreateOrderPrefill = parsed;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function clearCreateOrderPrefill(): void {
+  stagedCreateOrderPrefill = null;
+  try {
+    sessionStorage.removeItem(CREATE_ORDER_PREFILL_KEY);
+  } catch {
+    // ignore
   }
 }
 
@@ -454,6 +517,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
     submitInflight = null;
     uploadInflight = null;
     slotUploadInflight.clear();
+    clearCreateOrderPrefill();
     set({
       step: 1,
       vehicle: { make: '', model: '', year: '', vin: '', vinImage: null },
@@ -518,6 +582,7 @@ export const useCreateOrderStore = create<OrderState>((set, get) => ({
           videoPreview: null as string | null,
           uploadedImageUrls: (p.images || []).filter(isHttpUrl),
           uploadedVideoUrl: p.video && isHttpUrl(p.video) ? p.video : null,
+          shippingClass: isShippingClassValue(p.shippingClass) ? p.shippingClass : null,
         }))
       : [getInitialPart()];
 

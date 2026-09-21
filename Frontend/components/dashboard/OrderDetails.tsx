@@ -26,7 +26,9 @@ import { isAcceptedOfferStatus, isVisibleMarketplaceOffer, isRejectedOfferStatus
 import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
 import { getOrderPaymentDisplay, getOrderPaymentDisplayClasses } from '../../utils/orderPaymentDisplay';
 import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla';
-import { writeCreateOrderPrefill } from '../../stores/useCreateOrderStore';
+import { writeCreateOrderPrefill, useCreateOrderStore } from '../../stores/useCreateOrderStore';
+import { isShippingClass } from '../../utils/shippingClass';
+import { getServerNowMs, syncServerClock } from '../../utils/serverClock';
 import { useOrderChatStore } from '../../stores/useOrderChatStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { TrackingView } from './tracking/TrackingView';
@@ -591,10 +593,21 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     const expiredPartIdsWithoutOffers = new Set(expiredPartsWithoutOffers.map((p) => p.id));
     const paidOfferIdsForBanner = collectPaidOfferIdsFromOrder(order);
 
-    const handleReorderSelectedParts = (explicitPartIds?: string[]) => {
-        const make = order.vehicle?.make;
-        const model = order.vehicle?.model;
-        if (!make || !model || !order.parts?.length) return;
+    const handleReorderSelectedParts = async (explicitPartIds?: string[]) => {
+        const make = order.vehicle?.make || (order as { vehicleMake?: string }).vehicleMake;
+        const model = order.vehicle?.model || (order as { vehicleModel?: string }).vehicleModel;
+        const yearRaw = order.vehicle?.year ?? (order as { vehicleYear?: number | string }).vehicleYear;
+        if (!make || !model || !order.parts?.length) {
+            useNotificationStore.getState().addNotification({
+                type: 'SYSTEM',
+                titleAr: 'تنبيه',
+                titleEn: 'Notice',
+                messageAr: 'تعذر تجهيز إعادة الطلب: بيانات المركبة غير مكتملة.',
+                messageEn: 'Cannot start reorder: vehicle details are incomplete.',
+                recipientRole: 'CUSTOMER',
+            });
+            return;
+        }
 
         const ids =
             explicitPartIds?.length
@@ -619,6 +632,57 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         const selectedParts = order.parts.filter((p) => ids.includes(p.id));
         if (!selectedParts.length) return;
 
+        const asMultiple = selectedParts.length >= 2;
+        const rules = t.dashboard.createOrder.rules;
+        const formatRemaining = (ms: number) => {
+            if (ms <= 0) return '00:00:00';
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
+        };
+
+        try {
+            await syncServerClock(true);
+            const quota = await ordersApi.getCreateQuota();
+            const now = getServerNowMs();
+            const unlockLabel = rules?.unlockIn || (language === 'ar' ? 'يفتح بعد' : 'Unlocks in');
+
+            if (asMultiple) {
+                const blockingId = quota.multiple.blockingOrderId;
+                const exemptSameSource = blockingId && blockingId === order.id;
+                if (!quota.multiple.canCreate && !exemptSameSource) {
+                    const unlockMs = quota.multiple.unlockAt
+                        ? Math.max(0, new Date(quota.multiple.unlockAt).getTime() - now)
+                        : 0;
+                    const wait =
+                        unlockMs > 0
+                            ? `\n${unlockLabel} ${formatRemaining(unlockMs)}`
+                            : '';
+                    useNotificationStore.getState().addNotification({
+                        type: 'SYSTEM',
+                        titleAr: 'الطلب المجمع غير متاح الآن',
+                        titleEn: 'Multiple request unavailable now',
+                        messageAr:
+                            (rules?.multipleCooldown ||
+                                'لا يمكنك تقديم طلب مجمع آخر إلا بعد مرور المدة على طلبك المجمع السابق.') +
+                            wait,
+                        messageEn:
+                            (rules?.multipleCooldown ||
+                                'You cannot submit another multiple request until the previous window ends.') +
+                            wait,
+                        recipientRole: 'CUSTOMER',
+                    });
+                    return;
+                }
+            }
+            // Single-part reorder from this multi order is quota-exempt on the server
+            // (assertCanCreate + reorderExempt). No client block here.
+        } catch {
+            // Soft-fail: backend still enforces on submit; continue with prefill.
+        }
+
         const toHttpUrls = (images: unknown): string[] => {
             const list = Array.isArray(images)
                 ? images
@@ -637,10 +701,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 .map((u) => u.trim());
         };
 
-        writeCreateOrderPrefill({
-            make,
-            model,
-            year: order.vehicle?.year ? String(order.vehicle.year) : undefined,
+        const payload = {
+            make: String(make),
+            model: String(model),
+            year: yearRaw != null && String(yearRaw).trim() ? String(yearRaw) : undefined,
             sourceOrderId: order.id,
             sourcePartIds: selectedParts.map((p) => p.id),
             conditionPref:
@@ -657,8 +721,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 notes: p.notes || undefined,
                 images: toHttpUrls(p.images),
                 video: typeof p.video === 'string' && /^https?:\/\//i.test(p.video) ? p.video : null,
+                shippingClass: isShippingClass(p.shippingClass) ? p.shippingClass : null,
             })),
-        });
+        };
+
+        // Apply into the store before navigation so Strict Mode remount cannot wipe sessionStorage-only prefill.
+        writeCreateOrderPrefill(payload);
+        useCreateOrderStore.getState().applyReorderPrefill(payload);
         onNavigate('create-order');
     };
 

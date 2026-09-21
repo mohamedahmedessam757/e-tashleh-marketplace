@@ -88,6 +88,11 @@ export const VehicleDetailsStep: React.FC = () => {
               <option value="" disabled className="bg-[#1A1814] text-gray-400">
                 {isLoading ? (language === 'ar' ? "جاري التحميل..." : "Loading...") : (language === 'ar' ? "اختر الشركة المصنعة" : "Select Manufacturer")}
               </option>
+              {vehicle.make && !makes.some((m) => m.name === vehicle.make) && (
+                <option value={vehicle.make} className="bg-[#1A1814] text-white">
+                  {vehicle.make}
+                </option>
+              )}
               {makes.map((m) => (
                 <option key={m.id} value={m.name} className="bg-[#1A1814] text-white">
                   {language === 'ar' ? m.nameAr : m.name}
@@ -120,6 +125,12 @@ export const VehicleDetailsStep: React.FC = () => {
               <option value="" disabled className="bg-[#1A1814] text-gray-400">
                 {language === 'ar' ? "اختر نوع السيارة" : "Select Vehicle Type"}
               </option>
+              {vehicle.model &&
+                !(selectedManufacturer?.models || []).some((m) => m.name === vehicle.model) && (
+                <option value={vehicle.model} className="bg-[#1A1814] text-white">
+                  {vehicle.model}
+                </option>
+              )}
               {selectedManufacturer?.models.map((model) => (
                 <option key={model.id} value={model.name} className="bg-[#1A1814] text-white">
                   {language === 'ar' ? model.nameAr : model.name}

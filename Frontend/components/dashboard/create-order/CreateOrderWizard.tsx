@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
-import { useCreateOrderStore, consumeCreateOrderPrefill, partHasMedia } from '../../../stores/useCreateOrderStore';
+import { useCreateOrderStore, peekCreateOrderPrefill, clearCreateOrderPrefill, partHasMedia } from '../../../stores/useCreateOrderStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
 import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
@@ -98,18 +98,26 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
   const [quotaRefreshKey, setQuotaRefreshKey] = React.useState(0);
 
   useEffect(() => {
-    const prefill = consumeCreateOrderPrefill();
+    // React Strict Mode remounts once in dev: never reset() after a successful reorder apply.
+    const prefill = peekCreateOrderPrefill();
+    const state = useCreateOrderStore.getState();
+    const alreadyPrefilled =
+      state.isReorderPrefill && !!state.vehicle.make && state.parts.some((p) => !!p.name?.trim());
+
     if (prefill?.parts?.length) {
       applyReorderPrefill(prefill);
+      clearCreateOrderPrefill();
     } else if (prefill) {
       prefillVehicle({
         make: prefill.make,
         model: prefill.model,
         year: prefill.year,
       });
-    } else {
+      clearCreateOrderPrefill();
+    } else if (!alreadyPrefilled) {
       reset();
     }
+
     void fetchFeatureFlags();
     const unsub = subscribeFeatureFlags();
     setIsReady(true);
@@ -348,7 +356,11 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         </div>
       )}
 
-      <OrderCreateQuotaBanner refreshKey={quotaRefreshKey} />
+      <OrderCreateQuotaBanner
+        refreshKey={quotaRefreshKey}
+        isReorderPrefill={isReorderPrefill}
+        reorderSourceOrderId={reorderFromOrderId}
+      />
 
       <OrderCreateRuleAlert
         message={ruleAlertMessage}
