@@ -39,22 +39,43 @@ export class OrderCleanupService {
             return;
         }
         // Prevent overlapping runs across instances (and slow ticks overlapping themselves).
-        const { ran } = await this.cronLock.runWithLock('order-cleanup-minute', async () => {
-            await this.handleCollectingOffersReveal();
-            await this.expireAwaitingSelection();
-            await this.expireAwaitingPayment();
-            await this.handlePreparationDelays();
-            await this.handleCriticalPreparationFailures();
-            await this.handleNonMatchingToCorrection();
-            await this.handleCorrectionPeriodExpiry();
-            await this.handleExpiredOfferCorrectionDocs();
-            // Formerly hourly — keep ≤1 minute lag when nobody has the order open
-            await this.handleOfferAutoCompletion();
-            await this.handleSingleItemOrderAutoCompletion();
-            await this.handleAssemblyCartExpiry();
-            await this.expireActiveWarranties();
-        });
-        if (!ran) this.logger.debug('Order cleanup skipped (locked by another instance).');
+        // Stripe refunds must run AFTER the advisory lock transaction commits — never inside it.
+        type PendingCorrectionRefund = { orderId: string; offerIds: string[]; previousStatus?: string | null };
+        const { ran, result: pendingRefunds } = await this.cronLock.runWithLock(
+            'order-cleanup-minute',
+            async (): Promise<PendingCorrectionRefund[]> => {
+                await this.handleCollectingOffersReveal();
+                await this.expireAwaitingSelection();
+                await this.expireAwaitingPayment();
+                await this.handlePreparationDelays();
+                await this.handleCriticalPreparationFailures();
+                await this.handleNonMatchingToCorrection();
+                await this.handleCorrectionPeriodExpiry();
+                const pending = await this.handleExpiredOfferCorrectionDocs();
+                // Formerly hourly — keep ≤1 minute lag when nobody has the order open
+                await this.handleOfferAutoCompletion();
+                await this.handleSingleItemOrderAutoCompletion();
+                await this.handleAssemblyCartExpiry();
+                await this.expireActiveWarranties();
+                return pending;
+            },
+        );
+        if (!ran) {
+            this.logger.debug('Order cleanup skipped (locked by another instance).');
+            return;
+        }
+        for (const job of pendingRefunds || []) {
+            try {
+                await this.ordersService.refundCancelledCorrectionOffers(job.orderId, job.offerIds, {
+                    previousStatus: job.previousStatus,
+                });
+            } catch (err) {
+                this.logger.error(
+                    `Deferred correction refund failed for ${job.orderId}:`,
+                    err,
+                );
+            }
+        }
     }
 
     // Safety-net duplicate (idempotent handlers). Primary path is the minute cron above.
@@ -1046,8 +1067,11 @@ export class OrderCleanupService {
     /**
      * Multi-item: cancel offers whose verification-doc correction deadline expired
      * even when the parent order is not in CORRECTION_PERIOD (siblings still progressing).
+     * Returns refund jobs to run AFTER the cron advisory lock is released (Stripe I/O).
      */
-    private async handleExpiredOfferCorrectionDocs() {
+    private async handleExpiredOfferCorrectionDocs(): Promise<
+        Array<{ orderId: string; offerIds: string[]; previousStatus?: string | null }>
+    > {
         const now = new Date();
         const expiredDocs = await this.prisma.verificationDocument.findMany({
             where: {
@@ -1066,21 +1090,41 @@ export class OrderCleanupService {
                     },
                 },
             },
-            select: { id: true, orderId: true, offerId: true },
+            select: { id: true, orderId: true, offerId: true, order: { select: { status: true } } },
             take: 50,
         });
 
-        const byOrder = new Map<string, string[]>();
+        const byOrder = new Map<string, { offerIds: string[]; previousStatus: string | null }>();
         for (const doc of expiredDocs) {
             if (!doc.offerId) continue;
-            const list = byOrder.get(doc.orderId) || [];
-            if (!list.includes(doc.offerId)) list.push(doc.offerId);
-            byOrder.set(doc.orderId, list);
+            const entry = byOrder.get(doc.orderId) || {
+                offerIds: [],
+                previousStatus: doc.order?.status ?? null,
+            };
+            if (!entry.offerIds.includes(doc.offerId)) entry.offerIds.push(doc.offerId);
+            byOrder.set(doc.orderId, entry);
         }
 
-        for (const [orderId, offerIds] of byOrder) {
+        const pendingRefunds: Array<{
+            orderId: string;
+            offerIds: string[];
+            previousStatus?: string | null;
+        }> = [];
+
+        for (const [orderId, meta] of byOrder) {
             try {
-                await this.ordersService.cancelOffersForExpiredCorrection(orderId, offerIds);
+                const result = await this.ordersService.cancelOffersForExpiredCorrection(
+                    orderId,
+                    meta.offerIds,
+                    { skipRefund: true },
+                );
+                if (result.pendingRefundOfferIds?.length) {
+                    pendingRefunds.push({
+                        orderId,
+                        offerIds: result.pendingRefundOfferIds,
+                        previousStatus: meta.previousStatus,
+                    });
+                }
             } catch (err) {
                 this.logger.error(
                     `Failed offer-doc correction expiry for ${orderId}:`,
@@ -1088,5 +1132,6 @@ export class OrderCleanupService {
                 );
             }
         }
+        return pendingRefunds;
     }
 }

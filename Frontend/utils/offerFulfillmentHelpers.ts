@@ -252,6 +252,13 @@ export function getMerchantFulfillmentDisplayLabel(
     orderStatus: string | null | undefined,
     isAr: boolean,
 ): string {
+    const fs = String(fulfillmentStatus || '').toUpperCase();
+    // Per-offer cancel is SSOT — never paint cancelled parts as verified because the
+    // sibling-driven order status advanced to VERIFICATION_SUCCESS / shipping.
+    if (fs === 'CANCELLED') {
+        return isAr ? 'ملغى' : 'Cancelled';
+    }
+
     const os = String(orderStatus || '').toUpperCase();
     if (os === 'CANCELLED' || os === 'CLOSED') {
         return isAr ? 'ملغى — لا يمكن إعادة التوثيق' : 'Cancelled — re-verification not allowed';
@@ -279,8 +286,10 @@ export function getMerchantFulfillmentDisplayLabel(
             : 'Correction submitted — awaiting review';
     }
     // Order ahead of offer row (rematch approve lag) — show order-level success label
+    // Never apply this lag-fill to terminal/cancelled fulfillment rows.
     if (
         isPostVerificationSuccessOrderStatus(os) &&
+        getFulfillmentRank(fulfillmentStatus) >= 0 &&
         getFulfillmentRank(fulfillmentStatus) < FULFILLMENT_RANK.VERIFICATION_SUCCESS
     ) {
         if (os === 'READY_FOR_SHIPPING' || getOrderTimelineStepIndex(os) >= 5) {
@@ -294,6 +303,11 @@ export function getMerchantFulfillmentDisplayLabel(
         }
     }
     return getFulfillmentLabel(fulfillmentStatus, isAr);
+}
+
+/** True when this accepted offer was cancelled at fulfillment (multi-item partial cancel). */
+export function isOfferFulfillmentCancelled(fulfillmentStatus?: string | null): boolean {
+    return String(fulfillmentStatus || '').toUpperCase() === 'CANCELLED';
 }
 
 /** Post-inspection success — never show rematch CTAs even if a stale REJECTED doc remains. */

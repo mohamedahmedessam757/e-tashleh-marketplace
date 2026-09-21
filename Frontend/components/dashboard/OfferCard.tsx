@@ -2,7 +2,8 @@ import React, { useState, memo, useMemo } from 'react';
 import { Star, ShieldCheck, Truck, MessageSquare, CheckCircle2, Box, Tag, X, ZoomIn, Settings, Clock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { isAcceptedOfferStatus, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
-import { isOrderChatClosedStatus } from '../../utils/orderChatLock';
+import { isOfferChatLocked } from '../../utils/orderChatLock';
+import { isOfferFulfillmentCancelled } from '../../utils/offerFulfillmentHelpers';
 
 export interface OfferProps {
     id: number | string;
@@ -16,6 +17,8 @@ export interface OfferProps {
     warranty: string | boolean;
     deliveryTime: string;
     status?: string;
+    /** Multi-item: per-offer fulfillment (CANCELLED = partial cancel after payment). */
+    fulfillmentStatus?: string | null;
     onAccept: () => void;
     onChat: () => void;
     onReject?: () => void;
@@ -48,6 +51,7 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     warranty,
     deliveryTime,
     status,
+    fulfillmentStatus,
     onAccept,
     onChat,
     onReject,
@@ -71,6 +75,12 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 }) => {
     const { t, language } = useLanguage();
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const fulfillmentCancelled = isOfferFulfillmentCancelled(fulfillmentStatus);
+    const chatLocked = isOfferChatLocked({
+        orderStatus,
+        fulfillmentStatus,
+        offerStatus: status,
+    });
 
     const toSafeNumber = (value: number | string | undefined | null, fallback = 0) => {
         const parsed = typeof value === 'number' ? value : Number(value);
@@ -121,7 +131,10 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     return (
         <>
             <div
-                className={`rounded-2xl p-4 sm:p-6 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 contain-paint min-w-0 ${isSelected
+                className={`rounded-2xl p-4 sm:p-6 relative overflow-hidden group transition-[border-color,transform,box-shadow,background-color] duration-300 contain-paint min-w-0 ${
+                    fulfillmentCancelled
+                        ? 'bg-red-500/10 border-2 border-red-500/45'
+                        : isSelected
                     ? 'bg-gradient-to-br from-gold-500/10 to-transparent border-2 border-gold-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]'
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
                     } ${disabled ? 'opacity-50 grayscale-[50%] pointer-events-none' : ''}`}
@@ -297,17 +310,21 @@ export const OfferCard: React.FC<OfferProps> = memo(({
 
                 {/* Actions */}
                 <div className="flex justify-end items-center gap-3 mt-4">
-                    {/* Chat — locked (non-clickable) when order is cancel/complete/warranty */}
+                    {/* Chat — locked when order closed OR this part's fulfillment was cancelled */}
                     {status !== 'rejected' && (
-                        isOrderChatClosedStatus(orderStatus) ? (
+                        chatLocked ? (
                             <button
                                 type="button"
                                 disabled
                                 aria-disabled="true"
                                 title={
                                     language === 'ar'
-                                        ? 'المحادثة مغلقة لأن الطلب مكتمل أو في فترة الضمان'
-                                        : 'Chat is closed for completed or warranty orders'
+                                        ? fulfillmentCancelled
+                                            ? 'المحادثة مغلقة لأن هذه القطعة ملغاة'
+                                            : 'المحادثة مغلقة لأن الطلب مكتمل أو في فترة الضمان'
+                                        : fulfillmentCancelled
+                                            ? 'Chat is closed because this part was cancelled'
+                                            : 'Chat is closed for completed or warranty orders'
                                 }
                                 className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/30 opacity-50 cursor-not-allowed pointer-events-none flex items-center gap-2"
                             >
@@ -336,6 +353,11 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             <span>{language === 'ar' ? 'جاري القبول...' : 'Accepting...'}</span>
                         </button>
+                    ) : fulfillmentCancelled ? (
+                        <div className="px-6 py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 font-bold text-sm flex items-center gap-2">
+                            <X size={18} />
+                            {language === 'ar' ? 'ملغى' : 'Cancelled'}
+                        </div>
                     ) : isAcceptedOfferStatus(status) ? (
                         <div className="px-6 py-3 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 font-bold text-sm flex items-center gap-2">
                             <CheckCircle2 size={18} />

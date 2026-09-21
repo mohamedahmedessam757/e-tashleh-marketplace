@@ -16,3 +16,18 @@ export function isOrderChatClosedStatus(
   if (!status) return false;
   return (ORDER_CHAT_CLOSED_STATUSES as readonly string[]).includes(status);
 }
+
+/** Per-offer fulfillment cancel must also lock chat (multi-item partial cancel). */
+export function isOfferChatLocked(opts: {
+  orderStatus?: string | null;
+  fulfillmentStatus?: string | null;
+  offerStatus?: string | null;
+}): boolean {
+  if (isOrderChatClosedStatus(opts.orderStatus)) return true;
+  if (String(opts.fulfillmentStatus || '').toUpperCase() === 'CANCELLED') return true;
+  const offerStatus = String(opts.offerStatus || '').toLowerCase();
+  if (offerStatus === 'rejected' || offerStatus === 'withdrawn' || offerStatus === 'cancelled') {
+    return true;
+  }
+  return false;
+}

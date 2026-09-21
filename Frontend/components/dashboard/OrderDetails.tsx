@@ -866,13 +866,19 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     };
 
     const handleChat = async (offer: any) => {
-        if (isOrderChatClosedStatus(order.status)) {
+        if (isOrderChatClosedStatus(order.status) || String(offer?.fulfillmentStatus || '').toUpperCase() === 'CANCELLED') {
             useNotificationStore.getState().addNotification({
                 type: 'SYSTEM',
                 titleAr: 'المحادثة مغلقة',
                 titleEn: 'Chat Closed',
-                messageAr: 'لا يمكن فتح المحادثة لأن الطلب ملغى أو مكتمل أو في فترة الضمان.',
-                messageEn: 'Chat is unavailable because this order is cancelled, completed, or in the warranty period.',
+                messageAr:
+                    String(offer?.fulfillmentStatus || '').toUpperCase() === 'CANCELLED'
+                        ? 'لا يمكن فتح المحادثة لأن هذه القطعة ملغاة.'
+                        : 'لا يمكن فتح المحادثة لأن الطلب ملغى أو مكتمل أو في فترة الضمان.',
+                messageEn:
+                    String(offer?.fulfillmentStatus || '').toUpperCase() === 'CANCELLED'
+                        ? 'Chat is unavailable because this part was cancelled.'
+                        : 'Chat is unavailable because this order is cancelled, completed, or in the warranty period.',
                 recipientRole: 'CUSTOMER'
             });
             return;
@@ -1908,9 +1914,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             {language === 'ar' ? 'عرض' : partOffers.length === 1 ? 'Offer' : 'Offers'}
                                                         </span>
                                                         {partHasAcceptedOffer && (
-                                                            <span className="text-[9px] text-green-400 font-bold mt-1 flex items-center gap-0.5">
+                                                            <span className={`text-[9px] font-bold mt-1 flex items-center gap-0.5 ${
+                                                                fulfillmentStatus === 'CANCELLED'
+                                                                    ? 'text-red-400'
+                                                                    : 'text-green-400'
+                                                            }`}>
                                                                 <CheckCircle2 size={10} />
-                                                                {language === 'ar' ? 'مقبول' : 'Accepted'}
+                                                                {fulfillmentStatus === 'CANCELLED'
+                                                                    ? (language === 'ar' ? 'ملغى' : 'Cancelled')
+                                                                    : (language === 'ar' ? 'مقبول' : 'Accepted')}
                                                             </span>
                                                         )}
                                                         {acceptedPartOffer?.fulfillmentStatus && !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status) && (
@@ -1929,7 +1941,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                     : getFulfillmentLabel(acceptedPartOffer.fulfillmentStatus, language === 'ar')}
                                                             </span>
                                                         )}
-                                                        {acceptedPartOffer && order.requestType === 'multiple' && (
+                                                        {acceptedPartOffer &&
+                                                            order.requestType === 'multiple' &&
+                                                            fulfillmentStatus !== 'CANCELLED' && (
                                                             <div className="mt-1.5">
                                                                 <CartShipmentBadge
                                                                     offer={acceptedPartOffer}

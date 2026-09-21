@@ -1863,20 +1863,29 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     order?.verificationDocuments,
                                                                     partOffer.id,
                                                                 );
-                                                                const isPartRejected = merchantOfferAdminRejected(
-                                                                    partOffer.fulfillmentStatus,
-                                                                    partVerificationDoc,
-                                                                    order?.status,
-                                                                );
+                                                                const isPartCancelled =
+                                                                    String(partOffer.fulfillmentStatus || '').toUpperCase() ===
+                                                                    'CANCELLED';
+                                                                const isPartRejected =
+                                                                    !isPartCancelled &&
+                                                                    merchantOfferAdminRejected(
+                                                                        partOffer.fulfillmentStatus,
+                                                                        partVerificationDoc,
+                                                                        order?.status,
+                                                                    );
                                                                 const isPartVerified =
+                                                                    !isPartCancelled &&
                                                                     getFulfillmentRank(partOffer.fulfillmentStatus) >=
-                                                                    getFulfillmentRank('VERIFICATION_SUCCESS');
-                                                                const isPartInReview = merchantOfferVerificationPending(
-                                                                    partOffer.fulfillmentStatus,
-                                                                    order?.status,
-                                                                    partVerificationDoc,
-                                                                );
+                                                                        getFulfillmentRank('VERIFICATION_SUCCESS');
+                                                                const isPartInReview =
+                                                                    !isPartCancelled &&
+                                                                    merchantOfferVerificationPending(
+                                                                        partOffer.fulfillmentStatus,
+                                                                        order?.status,
+                                                                        partVerificationDoc,
+                                                                    );
                                                                 const isPartInCorrection =
+                                                                    !isPartCancelled &&
                                                                     !fulfillmentLocked &&
                                                                     !isPartVerified &&
                                                                     (merchantOfferNeedsCorrection(
@@ -1887,7 +1896,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         isCorrectionFamilyOrderStatus(order?.status));
                                                                 return (
                                                                 <div className={`rounded-lg px-2 py-1.5 border col-span-2 sm:col-span-3 ${
-                                                                    isPartRejected || isPartInCorrection
+                                                                    isPartCancelled || isPartRejected || isPartInCorrection
                                                                         ? 'bg-red-500/10 border-red-500/25'
                                                                         : isPartInReview
                                                                         ? 'bg-amber-500/10 border-amber-500/25'
@@ -1896,7 +1905,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                           : 'bg-blue-500/10 border-blue-500/20'
                                                                 }`}>
                                                                     <span className={`text-[10px] block font-bold flex items-center gap-1 ${
-                                                                        isPartRejected || isPartInCorrection
+                                                                        isPartCancelled || isPartRejected || isPartInCorrection
                                                                             ? 'text-red-400'
                                                                             : isPartInReview
                                                                             ? 'text-amber-400'
@@ -1904,13 +1913,15 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                               ? 'text-green-400'
                                                                               : 'text-blue-400'
                                                                     }`}>
-                                                                        {(isPartRejected || isPartInCorrection) && <XCircle size={12} />}
+                                                                        {(isPartCancelled || isPartRejected || isPartInCorrection) && <XCircle size={12} />}
                                                                         {isPartInReview && <Clock size={12} />}
                                                                         {isPartVerified && <CheckCircle2 size={12} />}
                                                                         {isAr ? 'حالة التجهيز' : 'Fulfillment'}
                                                                     </span>
                                                                     <span className="text-sm font-bold text-white">
-                                                                        {isPartRejected
+                                                                        {isPartCancelled
+                                                                            ? (isAr ? 'ملغى' : 'Cancelled')
+                                                                            : isPartRejected
                                                                             ? (isAr ? 'مرفوض — مطلوب إعادة التوثيق' : 'Rejected — re-verify required')
                                                                             : getMerchantFulfillmentDisplayLabel(
                                                                                   partOffer.fulfillmentStatus,
@@ -1923,7 +1934,8 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             {partVerificationDoc.adminRejectionReason}
                                                                         </p>
                                                                     )}
-                                                                    {order.requestType === 'multiple' && (
+                                                                    {order.requestType === 'multiple' &&
+                                                                        !isPartCancelled && (
                                                                         <div className="mt-2">
                                                                             <CartShipmentBadge
                                                                                 offer={partOffer}

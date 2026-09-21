@@ -4830,11 +4830,16 @@ export class OrdersService {
     /**
      * Multi-item: cancel+refund specific offers after their verification correction
      * document deadline expired while siblings continue.
+     *
+     * @param opts.skipRefund — when true, only cancel + notify; caller refunds after
+     *   releasing any DB advisory lock (Stripe must not run inside a held transaction).
      */
     async cancelOffersForExpiredCorrection(
         orderId: string,
         offerIds: string[],
-    ): Promise<{ changed: boolean; cancelledOfferIds: string[] }> {
+        opts?: { skipRefund?: boolean },
+    ): Promise<{ changed: boolean; cancelledOfferIds: string[]; pendingRefundOfferIds: string[] }> {
+        const empty = { changed: false, cancelledOfferIds: [] as string[], pendingRefundOfferIds: [] as string[] };
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
             select: {
@@ -4848,14 +4853,14 @@ export class OrdersService {
             },
         });
         if (!order || !this.offerFulfillment.isMultiItemOrder(order)) {
-            return { changed: false, cancelledOfferIds: [] };
+            return empty;
         }
         if (
             (
                 [OrderStatus.CANCELLED, OrderStatus.CLOSED, OrderStatus.REFUNDED] as OrderStatus[]
             ).includes(order.status as OrderStatus)
         ) {
-            return { changed: false, cancelledOfferIds: [] };
+            return empty;
         }
 
         const paid = await this.offerFulfillment.getPaidAcceptedOffers(orderId);
@@ -4870,7 +4875,7 @@ export class OrdersService {
                 o.fulfillmentStatus !== OfferFulfillmentStatus.COMPLETED,
         );
         if (!targets.length) {
-            return { changed: false, cancelledOfferIds: [] };
+            return empty;
         }
 
         const reason =
@@ -4891,11 +4896,12 @@ export class OrdersService {
                 data: { correctionDeadlineAt: null, updatedAt: new Date() },
             }).catch(() => undefined);
 
-            await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
-                previousStatus: order.status,
-                merchantFault: true,
-                offerIds: cancelledOfferIds,
-            });
+            if (!opts?.skipRefund) {
+                await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
+                    previousStatus: order.status,
+                    reason,
+                });
+            }
         }
 
         for (const offer of targets.filter((o) => cancelledOfferIds.includes(o.id))) {
@@ -5004,7 +5010,54 @@ export class OrdersService {
             }).catch(() => {});
         }
 
-        return { changed: cancelledOfferIds.length > 0, cancelledOfferIds };
+        return {
+            changed: cancelledOfferIds.length > 0,
+            cancelledOfferIds,
+            pendingRefundOfferIds: opts?.skipRefund ? cancelledOfferIds : [],
+        };
+    }
+
+    /**
+     * Stripe/DB refund for offers already cancelled by correction-deadline expiry.
+     * Must run outside any Postgres advisory-lock transaction.
+     */
+    async refundCancelledCorrectionOffers(
+        orderId: string,
+        offerIds: string[],
+        opts?: { previousStatus?: string | null; reason?: string },
+    ): Promise<void> {
+        const unique = [...new Set(offerIds.filter(Boolean))];
+        if (!unique.length) return;
+        const reason =
+            opts?.reason ||
+            'System: Merchant failed to provide corrected verification within correction limit (per-offer).';
+        const result = await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
+            previousStatus: opts?.previousStatus,
+            merchantFault: true,
+            offerIds: unique,
+        });
+        if (result?.skipped || (result?.amountRefunded ?? 0) <= 0) {
+            this.logger.error(
+                `Correction cancel refund incomplete order=${orderId} offers=${unique.join(',')} ` +
+                    `skipped=${result?.skipped} reason=${result?.reason} amount=${result?.amountRefunded ?? 0}`,
+            );
+            await this.notifications
+                .notifyAdmins({
+                    titleAr: 'استرداد معلّق بعد إلغاء قطعة',
+                    titleEn: 'Refund pending after part cancel',
+                    messageAr: `تم إلغاء عروض من الطلب لكن الاسترداد لم يكتمل (سبب: ${result?.reason || 'unknown'}). راجع المدفوعات يدويًا.`,
+                    messageEn: `Offers were cancelled on the order but refund did not complete (reason: ${result?.reason || 'unknown'}). Review payments manually.`,
+                    type: 'ORDER',
+                    link: `/admin/orders/${orderId}`,
+                    metadata: {
+                        orderId,
+                        offerIds: unique,
+                        refundReason: result?.reason || null,
+                        source: 'correction_cancel_refund_pending',
+                    },
+                })
+                .catch(() => undefined);
+        }
     }
 
     /**
