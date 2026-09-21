@@ -514,10 +514,10 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
     const recentOrders = dashboardStats.recentOrders ?? [];
 
     return (
-        <div className="space-y-8 pb-10 [contain:layout_style]">
+        <div className="space-y-5 sm:space-y-8 pb-10 min-w-0 overflow-x-clip [contain:layout_style]">
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-gradient-to-r from-[#1A1814] to-transparent p-6 rounded-3xl border border-white/5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-gradient-to-r from-[#1A1814] to-transparent p-4 sm:p-6 rounded-3xl border border-white/5 min-w-0">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="flex items-center gap-2 bg-black/20 px-2 py-1 rounded-full border border-white/10">
@@ -537,17 +537,17 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                     </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
                     <button
                         onClick={() => navigate('security-audit')}
-                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                        className="px-4 py-2 min-h-[44px] bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
                     >
                         <ShieldCheck size={14} />
                         {t.admin.security.title}
                     </button>
                     <button 
                         onClick={() => fetchDashboardStats(localDateRange)}
-                        className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold shadow-lg shadow-gold-500/20 transition-all active:scale-95"
+                        className="px-4 py-2 min-h-[44px] bg-gold-500 hover:bg-gold-600 text-black rounded-xl text-xs font-bold shadow-lg shadow-gold-500/20 transition-all active:scale-95"
                     >
                         {t.admin.actions.refresh}
                     </button>

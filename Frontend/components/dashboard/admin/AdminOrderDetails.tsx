@@ -114,9 +114,9 @@ const EditOfferModal = ({ offer, onClose, onSave }: { offer: any, onClose: () =>
     ];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto pt-24 pb-12">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#1a1c1e] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden mt-8 mb-8 my-auto max-h-[90vh] flex flex-col">
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-transparent shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto sm:pt-24 sm:pb-12">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#1a1c1e] border border-white/10 rounded-t-3xl sm:rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden mt-0 sm:mt-8 mb-0 sm:mb-8 my-auto max-h-[92vh] flex flex-col">
+                <div className="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-transparent shrink-0">
                     <div className="flex flex-col">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             <Edit2 size={18} className="text-blue-400" />
@@ -130,7 +130,7 @@ const EditOfferModal = ({ offer, onClose, onSave }: { offer: any, onClose: () =>
                     <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={20} /></button>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto">
+                <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto">
                     {/* Unit Price */}
                     <div className="space-y-2">
                         <label className="text-xs text-white/40 uppercase font-bold tracking-wider">{et.unitPrice} (AED)</label>
@@ -217,8 +217,8 @@ const EditOfferModal = ({ offer, onClose, onSave }: { offer: any, onClose: () =>
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-white/10 bg-black/20 flex gap-3 shrink-0">
-                    <button onClick={onClose} className="flex-1 py-3 px-4 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all">
+                <div className="p-4 sm:p-6 border-t border-white/10 bg-black/20 flex flex-col-reverse sm:flex-row gap-3 shrink-0">
+                    <button onClick={onClose} className="flex-1 py-3 px-4 min-h-[44px] rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all">
                         {et.cancel}
                     </button>
                     <button
@@ -234,7 +234,7 @@ const EditOfferModal = ({ offer, onClose, onSave }: { offer: any, onClose: () =>
                             isShippingIncluded,
                             notes: offerNotes
                         })}
-                        className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
+                        className="flex-1 py-3 px-4 min-h-[44px] rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
                     >
                         {et.save}
                     </button>
@@ -440,7 +440,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
     const orderPrice = Number(order.price) || 0;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 relative">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 relative min-w-0 overflow-x-clip">
             {/* Media Lightbox */}
             <AnimatePresence>
                 {activeMedia && (
@@ -485,23 +485,23 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
             {/* 1. Header & Timeline Section (Full Width) */}
             <div className="space-y-4">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2 min-w-0">
                     <button
                         onClick={onBack}
-                        className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group"
+                        className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group min-h-[44px]"
                     >
                         <ArrowIcon size={18} className="group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform" />
                         <span className="text-sm font-medium">{(t.dashboard.orders as any)?.backToList || 'Back to list'}</span>
                     </button>
 
-                    <OrderStatusCountdown order={order} variant="card" className="max-w-md" />
+                    <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
                 </div>
 
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
-                    <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
+                    <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+                        <div className="min-w-0">
                             <div className="flex items-center gap-3 mb-1 flex-wrap">
-                                <h1 className="text-2xl font-bold text-white">
+                                <h1 className="text-xl sm:text-2xl font-bold text-white break-words">
                                     {(order.parts && order.parts.length > 1)
                                         ? (isAr ? `طلبية متعددة (${order.parts.length} قطع)` : `Multi-Part Order (${order.parts.length} items)`)
                                         : order.part}
@@ -558,14 +558,14 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
                     {/* Premium Warranty Protection Hub for Admin */}
                     {order.status === 'WARRANTY_ACTIVE' && order.warranty_end_at && (
-                        <div className="px-6 py-4 border-b border-white/5 bg-emerald-500/5">
+                        <div className="px-4 sm:px-6 py-4 border-b border-white/5 bg-emerald-500/5">
                             <WarrantyProtectionCard order={order} role="admin" />
                         </div>
                     )}
 
-                    <div className="px-6 pt-4 space-y-4">
+                    <div className="px-4 sm:px-6 pt-4 space-y-4">
                         {String(order.status).toUpperCase() === 'REFUNDED' && (
-                            <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4">
+                            <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-4 sm:px-5 py-4">
                                 <p className="text-sm font-black text-indigo-200 uppercase tracking-wider">
                                     {isAr ? 'تم استرداد أموال هذا الطلب' : 'This order has been refunded'}
                                 </p>
@@ -678,7 +678,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
             </div>
 
             {/* 2. Main Grid: Actions/Offers (Left) vs Summary (Right) */}
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-5 sm:gap-8 min-w-0">
 
                 {/* Left Column (Spans 2 cols): Content changes based on Active Tab */}
                 <div className="lg:col-span-2 space-y-6 flex flex-col">
@@ -866,7 +866,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                             {/* Part Row */}
                                             <div className="p-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/5">
                                                 {/* Part Info */}
-                                                <div className="flex items-center gap-4 flex-1 min-w-[200px]">
+                                                <div className="flex items-center gap-4 flex-1 min-w-0 sm:min-w-[200px]">
                                                     <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer"
                                                         onClick={() => partImgSrc && setActiveMedia({ type: 'image', url: partImgSrc })}>
                                                         {partImgSrc ? (
@@ -1226,25 +1226,25 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         </h3>
                         <div className="space-y-3">
                             {/* Customer */}
-                            <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-blue-500/10 group">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-full bg-blue-500/10 text-blue-400"><User size={16} /></div>
-                                    <div>
+                            <div className="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-xl border border-blue-500/10 group min-w-0">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="p-2 rounded-full bg-blue-500/10 text-blue-400 shrink-0"><User size={16} /></div>
+                                    <div className="min-w-0">
                                         <div className="text-[10px] text-white/40">{t.admin.orderDetails.customerInfo || 'Customer Info'}</div>
-                                        <div className="text-sm font-bold text-white">{order.customer?.name}</div>
+                                        <div className="text-sm font-bold text-white truncate">{order.customer?.name}</div>
                                     </div>
                                 </div>
-                                <button onClick={() => alert('Ban Customer')} className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all tooltip" title={isAr ? "حظر العميل" : "Ban Customer"}><Ban size={14} /></button>
+                                <button onClick={() => alert('Ban Customer')} className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-red-500 hover:bg-red-500/10 rounded-lg transition-all shrink-0" title={isAr ? "حظر العميل" : "Ban Customer"}><Ban size={14} /></button>
                             </div>
 
                             {/* Merchant(s) from accepted offers */}
                             {order.acceptedOffers?.length > 0 && order.acceptedOffers.map((offer: any, oIdx: number) => (
-                                <div key={offer.id || oIdx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-gold-500/10 group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-full bg-gold-500/10 text-gold-400"><Store size={16} /></div>
-                                        <div>
+                                <div key={offer.id || oIdx} className="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-xl border border-gold-500/10 group min-w-0">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="p-2 rounded-full bg-gold-500/10 text-gold-400 shrink-0"><Store size={16} /></div>
+                                        <div className="min-w-0">
                                             <div className="text-[10px] text-white/40">{t.admin.orderDetails.merchantInfo || 'Merchant Info'}</div>
-                                            <div className="text-sm font-bold text-white">{offer.merchantName || offer.store?.name || offer.dealerName || (isAr ? 'تاجر غير معروف' : 'Unknown Merchant')}</div>
+                                            <div className="text-sm font-bold text-white truncate">{offer.merchantName || offer.store?.name || offer.dealerName || (isAr ? 'تاجر غير معروف' : 'Unknown Merchant')}</div>
                                         </div>
                                     </div>
                                     <button onClick={() => {
@@ -1252,7 +1252,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                             useAdminStore.getState().updateVendorStatus(offer.storeId || offer.store?.id || '', 'BANNED' as any);
                                             alert(isAr ? 'تم حظر التاجر' : 'Vendor Banned');
                                         }
-                                    }} className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all tooltip" title={isAr ? "حظر التاجر" : "Ban Vendor"}><Ban size={14} /></button>
+                                    }} className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-red-500 hover:bg-red-500/10 rounded-lg transition-all shrink-0" title={isAr ? "حظر التاجر" : "Ban Vendor"}><Ban size={14} /></button>
                                 </div>
                             ))}
                         </div>
@@ -1504,9 +1504,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         <div key={offer.id || idx} className="space-y-2 p-3 bg-black/40 rounded-xl border border-white/5 relative overflow-hidden group">
                                             <div className="absolute top-0 left-0 w-1 h-full bg-green-500/40" />
                                             <div className="pl-3 rtl:pl-0 rtl:pr-3">
-                                                <div className="text-[10px] font-bold text-gold-400 uppercase mb-2 flex justify-between items-center gap-2">
-                                                    <span className="truncate max-w-[150px]">{partDisplayName}</span>
-                                                    <button onClick={() => setEditingOffer(offer)} className="text-white/20 hover:text-white transition-colors opacity-0 group-hover:opacity-100"><Edit2 size={10} /></button>
+                                                <div className="text-[10px] font-bold text-gold-400 uppercase mb-2 flex justify-between items-center gap-2 min-w-0">
+                                                    <span className="truncate min-w-0 flex-1">{partDisplayName}</span>
+                                                    <button onClick={() => setEditingOffer(offer)} className="text-white/40 hover:text-white transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"><Edit2 size={10} /></button>
                                                 </div>
                                                 {order.requestType === 'multiple' && (
                                                     <div className="mb-2">

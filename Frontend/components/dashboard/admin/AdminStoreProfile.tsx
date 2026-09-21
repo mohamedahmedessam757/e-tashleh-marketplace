@@ -799,13 +799,13 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                             value={suspensionDays}
                                             onChange={(e) => setSuspensionDays(Number(e.target.value))}
                                             disabled={isBanActionLoading}
-                                            className="w-full bg-[#0F0E0C] border border-white/10 rounded-xl p-4 text-white focus:border-orange-500/50 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full min-h-[44px] bg-[#0F0E0C] border border-white/10 rounded-xl p-4 text-white focus:border-orange-500/50 outline-none disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer [color-scheme:dark]"
                                         >
-                                            <option value={3}>3 {isAr ? 'أيام' : 'Days'}</option>
-                                            <option value={7}>7 {isAr ? 'أيام' : 'Days'}</option>
-                                            <option value={15}>15 {isAr ? 'يوم' : 'Days'}</option>
-                                            <option value={30}>30 {isAr ? 'يوم' : 'Days'}</option>
-                                            <option value={90}>90 {isAr ? 'يوم' : 'Days'}</option>
+                                            <option value={3} className="bg-[#0F0E0C] text-white">3 {isAr ? 'أيام' : 'Days'}</option>
+                                            <option value={7} className="bg-[#0F0E0C] text-white">7 {isAr ? 'أيام' : 'Days'}</option>
+                                            <option value={15} className="bg-[#0F0E0C] text-white">15 {isAr ? 'يوم' : 'Days'}</option>
+                                            <option value={30} className="bg-[#0F0E0C] text-white">30 {isAr ? 'يوم' : 'Days'}</option>
+                                            <option value={90} className="bg-[#0F0E0C] text-white">90 {isAr ? 'يوم' : 'Days'}</option>
                                         </select>
                                     </div>
                                 )}

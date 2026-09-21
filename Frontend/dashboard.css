@@ -39,3 +39,14 @@
 .animate-shine {
   animation: shine 2s infinite ease-in-out;
 }
+
+/* Native <select> dropdowns: force dark chrome on Windows/macOS browsers */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #1a1814;
+  color: #ffffff;
+}

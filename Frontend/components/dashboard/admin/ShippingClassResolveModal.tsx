@@ -193,9 +193,9 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
   if (!activeItem || !offer) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80" onClick={onClose}>
       <div
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#1A1814] shadow-2xl"
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-white/10 bg-[#1A1814] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-[#1A1814]/95 backdrop-blur">
@@ -236,7 +236,7 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
               <select
                 value={activeOfferId}
                 onChange={(e) => setActiveOfferId(e.target.value)}
-                className="w-full min-h-[44px] rounded-xl bg-white/5 border border-gold-500/30 px-3 text-white text-sm font-bold"
+                className="w-full min-h-[44px] rounded-xl bg-[#1A1814] border border-gold-500/30 px-3 text-white text-sm font-bold appearance-none cursor-pointer [color-scheme:dark]"
               >
                 {items.map((item) => {
                   const label = isAr
@@ -296,11 +296,11 @@ export const ShippingClassResolveModal: React.FC<ShippingClassResolveModalProps>
               <select
                 value={cylinders === '' ? '' : String(cylinders)}
                 onChange={(e) => setCylinders(e.target.value ? Number(e.target.value) : '')}
-                className="w-full min-h-[44px] rounded-xl bg-white/5 border border-white/10 px-3 text-white text-sm"
+                className="w-full min-h-[44px] rounded-xl bg-[#1A1814] border border-white/10 px-3 text-white text-sm appearance-none cursor-pointer [color-scheme:dark]"
               >
-                <option value="">{isAr ? 'اختر…' : 'Select…'}</option>
+                <option value="" className="bg-[#1A1814] text-white">{isAr ? 'اختر…' : 'Select…'}</option>
                 {[3, 4, 5, 6, 8, 10, 12].map((n) => (
-                  <option key={n} value={n} className="bg-[#1A1814]">
+                  <option key={n} value={n} className="bg-[#1A1814] text-white">
                     {n}
                   </option>
                 ))}

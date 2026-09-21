@@ -384,7 +384,7 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
     const isCustomerBanned = customer.status === 'SUSPENDED' || customer.status === 'BLOCKED';
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 min-w-0 overflow-x-clip">
 
             {/* Account Ban Status Banner */}
             {isCustomerBanned && (
@@ -393,7 +393,7 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                     animate={{ opacity: 1, y: 0 }}
                     className="p-1 rounded-3xl bg-gradient-to-r from-red-500/20 via-red-600/10 to-red-500/20 border border-red-500/30 overflow-hidden shadow-lg shadow-red-500/10"
                 >
-                    <div className="bg-[#0F0E0D]/80 backdrop-blur-xl p-5 rounded-[22px]">
+                    <div className="bg-[#0F0E0D]/80 backdrop-blur-xl p-4 sm:p-5 rounded-[22px]">
                         <div className="flex items-start gap-4">
                             <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center border border-red-500/30 shrink-0">
                                 <Lock size={28} className="text-red-500" />
@@ -452,7 +452,7 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold-500/5 blur-[120px] rounded-full -mr-48 -mt-48" />
                 <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/5 blur-[100px] rounded-full -ml-24 -mb-24" />
 
-                <div className="relative z-10 p-8">
+                <div className="relative z-10 p-4 sm:p-6 md:p-8">
                     <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
 
                         {/* Customer Main Identity Block */}
@@ -894,7 +894,7 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                                         <div
                                                             key={order.id}
                                                             onClick={() => onNavigate && onNavigate('admin-order-details', order.id)}
-                                                            className="group relative overflow-hidden flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-gold-500/30 transition-all cursor-pointer shadow-lg hover:shadow-gold-500/5"
+                                                            className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-gold-500/30 transition-all cursor-pointer shadow-lg hover:shadow-gold-500/5 min-w-0"
                                                         >
                                                             <div className="flex items-center gap-5 relative z-10">
                                                                 <div className="relative">
@@ -927,7 +927,7 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center gap-8 relative z-10">
+                                                            <div className="flex items-center gap-4 sm:gap-8 relative z-10 w-full sm:w-auto justify-between sm:justify-end">
                                                                 <div className="text-right">
                                                                     <Badge status={order.status} className="mb-2" />
                                                                     <div className="text-lg font-black text-white tabular-nums tracking-tighter">
@@ -1578,13 +1578,13 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                                 value={suspensionDays}
                                                 onChange={(e) => setSuspensionDays(Number(e.target.value))}
                                                 disabled={isBanning}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-orange-500/50"
+                                                className="w-full min-h-[44px] bg-[#1A1814] border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-orange-500/50 appearance-none cursor-pointer [color-scheme:dark]"
                                             >
-                                                <option value={3}>3 {isAr ? 'أيام' : 'Days'}</option>
-                                                <option value={7}>7 {isAr ? 'أيام' : 'Days'}</option>
-                                                <option value={15}>15 {isAr ? 'يوم' : 'Days'}</option>
-                                                <option value={30}>30 {isAr ? 'يوم' : 'Days'}</option>
-                                                <option value={90}>90 {isAr ? 'يوم' : 'Days'}</option>
+                                                <option value={3} className="bg-[#1A1814] text-white">3 {isAr ? 'أيام' : 'Days'}</option>
+                                                <option value={7} className="bg-[#1A1814] text-white">7 {isAr ? 'أيام' : 'Days'}</option>
+                                                <option value={15} className="bg-[#1A1814] text-white">15 {isAr ? 'يوم' : 'Days'}</option>
+                                                <option value={30} className="bg-[#1A1814] text-white">30 {isAr ? 'يوم' : 'Days'}</option>
+                                                <option value={90} className="bg-[#1A1814] text-white">90 {isAr ? 'يوم' : 'Days'}</option>
                                             </select>
                                         </div>
                                     )}

@@ -124,9 +124,9 @@ export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => vo
     };
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-5 sm:space-y-6 pb-20 min-w-0 overflow-x-clip">
             {/* Header & Controls */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-[#0a0a0a]/40 backdrop-blur-xl p-6 rounded-[1.5rem] border border-white/5 shadow-2xl sticky top-0 z-30">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 sm:gap-6 bg-[#0a0a0a]/40 backdrop-blur-xl p-4 sm:p-6 rounded-[1.5rem] border border-white/5 shadow-2xl sticky top-0 z-30 min-w-0">
                 <div className="space-y-1">
                     <h1 className="text-2xl md:text-3xl font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
                         <PackageSearch className="text-gold-500" size={28} />
@@ -228,10 +228,10 @@ export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => vo
                         >
                             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-gold-500/50 via-white/10 to-transparent" />
                             
-                            <div className="p-6 space-y-5 flex flex-col h-full">
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-3 flex-1">
-                                        <div className="flex items-center gap-2">
+                            <div className="p-4 sm:p-6 space-y-5 flex flex-col h-full min-w-0">
+                                <div className="flex justify-between items-start gap-3 min-w-0">
+                                    <div className="space-y-3 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <div className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg">
                                                 <span className="text-[10px] font-mono font-black text-gold-500 tracking-tighter">#{String(order.id).slice(0, 8).toUpperCase()}</span>
                                             </div>
@@ -244,16 +244,16 @@ export const OrderControl: React.FC<{ onNavigate?: (path: string, id: any) => vo
                                             </div>
                                         </div>
                                         
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-500/20 to-transparent flex items-center justify-center border border-white/5 overflow-hidden">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-500/20 to-transparent flex items-center justify-center border border-white/5 overflow-hidden shrink-0">
                                                 {order.customer?.avatar ? (
                                                     <img src={order.customer.avatar} alt={order.customer.name} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <User size={18} className="text-gold-500/40" />
                                                 )}
                                             </div>
-                                            <div>
-                                                <h3 className="text-sm font-black text-white/90 truncate max-w-[140px]">{order.customer?.name || 'Customer'}</h3>
+                                            <div className="min-w-0">
+                                                <h3 className="text-sm font-black text-white/90 truncate">{order.customer?.name || 'Customer'}</h3>
                                                 <p className="text-[10px] text-gold-500/40 font-bold uppercase tracking-widest">{order.customer?.customerCode || 'ID_SYNC'}</p>
                                             </div>
                                         </div>
