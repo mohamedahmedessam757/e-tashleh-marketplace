@@ -3,7 +3,6 @@ import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, PermissionRequirement } from '../decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -36,28 +35,26 @@ export class PermissionsGuard implements CanActivate {
     // 2026 Security: Fetch fresh role from DB to prevent stale JWT role issues
     const dbUser = await this.prisma.user.findUnique({
       where: { id: user.id },
-      select: { role: true }
+      select: { role: true, status: true }
     });
 
     const currentRole = (dbUser?.role || user.role || '').toString().toUpperCase();
 
-    // Only SUPER_ADMIN is the ultimate authority. ADMIN (and every other staff role) is
-    // subject to the SAME granular permission checks — otherwise the RBAC model is bypassable
-    // by anyone holding the ADMIN role.
-    if (currentRole === 'SUPER_ADMIN') {
-      return true;
-    }
-
-    // Fetch the specific permissions for this admin user
+    // Fetch the specific permissions for this admin user first — inactive staff
+    // must never bypass via SUPER_ADMIN short-circuit.
     const adminPerm = await this.prisma.adminPermission.findUnique({
       where: { userId: user.id },
     });
 
-    if (!adminPerm) {
-      throw new ForbiddenException('Admin account has no permissions record');
-    }
+    const userSuspended =
+      dbUser?.status === 'SUSPENDED' ||
+      dbUser?.status === 'BLOCKED' ||
+      user.status === 'SUSPENDED' ||
+      user.status === 'BLOCKED' ||
+      user.accountAccessBlocked === true ||
+      user.adminInactive === true;
 
-    if (!adminPerm.isActive) {
+    if ((adminPerm && !adminPerm.isActive) || (userSuspended && !!adminPerm)) {
       // Allow read-only dashboard shell so an access banner can render.
       const method = String(
         context.switchToHttp().getRequest()?.method || 'GET',
@@ -66,6 +63,15 @@ export class PermissionsGuard implements CanActivate {
         return true;
       }
       throw new ForbiddenException('Admin account is inactive');
+    }
+
+    // Only SUPER_ADMIN is the ultimate authority when the account is active.
+    if (currentRole === 'SUPER_ADMIN') {
+      return true;
+    }
+
+    if (!adminPerm) {
+      throw new ForbiddenException('Admin account has no permissions record');
     }
 
     const permissions = adminPerm.permissions as any;

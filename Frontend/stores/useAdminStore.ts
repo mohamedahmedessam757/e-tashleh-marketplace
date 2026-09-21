@@ -750,8 +750,12 @@ export const useAdminStore = create<AdminState>()(
           useAdminPermissionsStore.getState().setMyPermissions(permissions);
         }
 
-        get().fetchDashboardStats();
-        get().fetchAllStores();
+        // Banned / inactive staff: skip heavy dashboard fetches that can surface
+        // 403/500 noise — AccountAccessGuard shows the access banner instead.
+        if (!safeUser.accountAccessBlocked && !safeUser.adminInactive) {
+          get().fetchDashboardStats();
+          get().fetchAllStores();
+        }
       },
 
       logoutAdmin: () => {

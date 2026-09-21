@@ -214,6 +214,25 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         }
       }
 
+      // Always merge access fields from API — Supabase RLS may omit status columns.
+      const accessFromApi = await loadProfileFromApi();
+      if (accessFromApi && resolvedUser) {
+        const accessBlocked = Boolean(
+          accessFromApi.accountAccessBlocked ||
+            accessFromApi.adminInactive ||
+            accessFromApi.status === 'SUSPENDED' ||
+            accessFromApi.status === 'BLOCKED',
+        );
+        resolvedUser = {
+          ...resolvedUser,
+          status: accessFromApi.status ?? resolvedUser.status,
+          suspendReason: accessFromApi.suspendReason ?? resolvedUser.suspendReason,
+          suspendedUntil: accessFromApi.suspendedUntil ?? resolvedUser.suspendedUntil,
+          accountAccessBlocked: accessBlocked,
+          adminInactive: accessFromApi.adminInactive ?? resolvedUser.adminInactive,
+        };
+      }
+
       const { data: settingsData } = await supabase
         .from('user_settings')
         .select('*')

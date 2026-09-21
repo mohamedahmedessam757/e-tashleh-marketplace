@@ -31,9 +31,9 @@ import { PlatformSettingsModule } from './platform-settings/platform-settings.mo
 import { VehicleCatalogModule } from './vehicle-catalog/vehicle-catalog.module';
 import { AdminPermissionsModule } from './admin-permissions/admin-permissions.module';
 import { VerificationTasksModule } from './verification-tasks/verification-tasks.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MaintenanceGuard } from './platform-settings/maintenance.guard';
-import { AccountWriteGuard } from './auth/guards/account-write.guard';
+import { AccountWriteInterceptor } from './auth/interceptors/account-write.interceptor';
 import { AuthorizationModule } from './common/authorization/authorization.module';
 import { WidersModule } from './widers/widers.module';
 import { EmailModule } from './email/email.module';
@@ -97,7 +97,7 @@ import { ContractChangesModule } from './contract-changes/contract-changes.modul
     providers: [
         { provide: APP_GUARD, useClass: ThrottlerGuard },
         { provide: APP_GUARD, useClass: MaintenanceGuard },
-        { provide: APP_GUARD, useClass: AccountWriteGuard },
+        { provide: APP_INTERCEPTOR, useClass: AccountWriteInterceptor },
     ],
 })
 export class AppModule { }

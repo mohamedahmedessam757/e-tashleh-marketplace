@@ -29,24 +29,63 @@ export const AccountAccessGuard: React.FC<AccountAccessGuardProps> = ({
     const unsub = subscribeToProfile();
     const poll = window.setInterval(() => {
       void useProfileStore.getState().fetchProfile();
-    }, 12_000);
+    }, 10_000);
     return () => {
       unsub?.();
       window.clearInterval(poll);
     };
   }, [fetchProfile, subscribeToProfile]);
 
+  // Keep admin session mirror in sync with live profile (ban / unban realtime).
+  useEffect(() => {
+    if (audience !== 'admin' || !user) return;
+    const admin = useAdminStore.getState().currentAdmin;
+    if (!admin || admin.id !== user.id) return;
+    const nextBlocked = Boolean(
+      user.accountAccessBlocked ||
+        user.adminInactive ||
+        user.status === 'SUSPENDED' ||
+        user.status === 'BLOCKED',
+    );
+    if (
+      admin.status === user.status &&
+      admin.accountAccessBlocked === nextBlocked &&
+      admin.suspendReason === user.suspendReason &&
+      admin.suspendedUntil === user.suspendedUntil
+    ) {
+      return;
+    }
+    useAdminStore.setState({
+      currentAdmin: {
+        ...admin,
+        status: user.status,
+        suspendReason: user.suspendReason,
+        suspendedUntil: user.suspendedUntil,
+        accountAccessBlocked: nextBlocked,
+        adminInactive: user.adminInactive,
+      },
+    });
+  }, [
+    audience,
+    user?.id,
+    user?.status,
+    user?.suspendReason,
+    user?.suspendedUntil,
+    user?.accountAccessBlocked,
+    user?.adminInactive,
+  ]);
+
   const source =
     audience === 'admin'
       ? {
-          status: currentAdmin?.status || user?.status,
-          reason: currentAdmin?.suspendReason || user?.suspendReason,
-          until: currentAdmin?.suspendedUntil || user?.suspendedUntil,
+          status: user?.status || currentAdmin?.status,
+          reason: user?.suspendReason || currentAdmin?.suspendReason,
+          until: user?.suspendedUntil || currentAdmin?.suspendedUntil,
           blocked:
-            currentAdmin?.accountAccessBlocked === true ||
-            currentAdmin?.adminInactive === true ||
             user?.accountAccessBlocked === true ||
-            user?.adminInactive === true,
+            user?.adminInactive === true ||
+            currentAdmin?.accountAccessBlocked === true ||
+            currentAdmin?.adminInactive === true,
         }
       : {
           status: user?.status,
@@ -64,11 +103,13 @@ export const AccountAccessGuard: React.FC<AccountAccessGuardProps> = ({
   }
 
   const resolvedKind =
-    status === 'SUSPENDED' && source.until
-      ? 'TEMPORARY'
-      : status === 'BLOCKED'
-        ? 'PERMANENT'
-        : 'TEMPORARY';
+    status === 'BLOCKED'
+      ? 'PERMANENT'
+      : status === 'SUSPENDED' && source.until
+        ? 'TEMPORARY'
+        : status === 'SUSPENDED'
+          ? 'TEMPORARY'
+          : 'PERMANENT';
 
   return (
     <AccountAccessBanner

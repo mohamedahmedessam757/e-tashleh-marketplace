@@ -16,8 +16,8 @@ export const WholesaleScreen: React.FC<WholesaleScreenProps> = ({ onBack }) => {
 
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            <div className="absolute top-4 z-20 end-4">
-                <LanguageToggle compact />
+            <div className="fixed top-4 z-30 end-4 start-auto safe-area-top">
+                <LanguageToggle compact className="shadow-lg shadow-black/40 backdrop-blur-md" />
             </div>
             {/* Background Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
