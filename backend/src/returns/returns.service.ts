@@ -3210,11 +3210,9 @@ export class ReturnsService {
         if (caseRecord.invoiceId) {
             const caseInvoice = await tx.invoice.findUnique({
                 where: { id: caseRecord.invoiceId },
-                select: { total: true, totalAmount: true },
+                select: { total: true },
             });
-            offerInvoiceTotal = Number(
-                (caseInvoice as any)?.total ?? (caseInvoice as any)?.totalAmount ?? 0,
-            );
+            offerInvoiceTotal = Number(caseInvoice?.total ?? 0);
         }
         const offerPrice = Number(caseRecord.offer?.unitPrice || 0);
         const acceptedOfferPrice = Number(order.acceptedOffer?.unitPrice || 0);
