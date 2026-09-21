@@ -3209,6 +3209,7 @@ export class OrdersService {
                     where: {
                         status: { in: ['accepted', 'ACCEPTED'] },
                         shippedFromCart: false,
+                        fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
                     },
                     include: {
                         store: true,
@@ -3870,24 +3871,20 @@ export class OrdersService {
         });
 
         if (validOffers.length === 0) {
-            return {
-                success: false,
-                reason:
+            throw new BadRequestException({
+                statusCode: 400,
+                message:
                     'No items are ready for shipping. Each part must be prepared, verified, and handed over to admin by its merchant before you can ship it from the assembly cart.',
-            };
+                messageAr:
+                    'لا توجد قطع جاهزة للشحن. يجب تجهيز كل قطعة وتوثيقها وتسليمها للإدارة قبل طلب الشحن من سلة التجميع.',
+                messageEn:
+                    'No items are ready for shipping. Each part must be prepared, verified, and handed over to admin before you can ship from the assembly cart.',
+                code: 'CART_NO_READY_ITEMS',
+            });
         }
 
-        const totalWeightKg = validOffers.reduce(
-            (sum, offer) => sum + Number(offer.weightKg || 0),
-            0,
-        );
-        const logisticsCfg = await this.logisticsConfig.getConfig();
-        if (
-            totalWeightKg > 0 &&
-            this.logisticsConfig.isWeightEnforcementEnabled(logisticsCfg)
-        ) {
-            await this.logisticsConfig.assertWeightAllowed(totalWeightKg);
-        }
+        // Weight was validated when each offer was submitted. Do NOT re-sum batch weight
+        // against single-package globalMax — cart batches intentionally combine parts.
 
         // Actor info for logging
         const actor = isSystemAutoTrigger 

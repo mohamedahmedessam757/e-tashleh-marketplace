@@ -11,7 +11,7 @@ import { getCurrentUserId } from '../../../utils/auth';
 
 export const ShippingCartPage: React.FC = () => {
     const { t } = useLanguage();
-    const { items, loading, fetchCartItems, requestShipping, requestingShipping, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
+    const { items, loading, error, fetchCartItems, requestShipping, requestingShipping, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
     
     const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
 
@@ -106,6 +106,12 @@ export const ShippingCartPage: React.FC = () => {
 
             <AssemblyCartAutoShipNote />
             <AssemblyCartHandoverBanner items={items} />
+
+            {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-xl text-red-200 text-sm font-medium">
+                    {error}
+                </div>
+            )}
 
             {selectedOfferIds.length > 0 && (
                 <motion.div

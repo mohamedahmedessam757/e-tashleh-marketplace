@@ -146,7 +146,16 @@ export const useCartStore = create<CartState>((set, get) => ({
             }
         } catch (err: any) {
             console.error('[useCartStore] Error requesting shipping:', err);
-            set({ error: err.message, requestingShipping: false });
+            const data = err?.response?.data;
+            const message =
+                (typeof data?.messageAr === 'string' && data.messageAr) ||
+                (typeof data?.messageEn === 'string' && data.messageEn) ||
+                (typeof data?.message === 'string' && data.message) ||
+                (Array.isArray(data?.message) ? data.message.join(', ') : null) ||
+                data?.reason ||
+                err?.message ||
+                'Failed to request shipping';
+            set({ error: message, requestingShipping: false });
             return false;
         }
     }

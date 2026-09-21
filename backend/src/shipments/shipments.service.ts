@@ -260,17 +260,19 @@ export class ShipmentsService {
     }
 
     async create(data: CreateShipmentDto, userId?: string | null) {
-        // Updated for 2026 Partial Shipping: Multiple shipments per order are allowed
-        // Idempotency check now includes waybillId to allow separate shipments for the same order
-        const existing = await this.prisma.shipment.findFirst({
-            where: { 
-                orderId: data.orderId,
-                waybillId: data.waybillId || null
+        // Partial / cart shipping: many shipments per order are allowed.
+        // Idempotency only when an explicit waybillId is provided — never collapse
+        // distinct cart batches that share waybillId=null into one shipment.
+        if (data.waybillId) {
+            const existing = await this.prisma.shipment.findFirst({
+                where: {
+                    orderId: data.orderId,
+                    waybillId: data.waybillId,
+                },
+            });
+            if (existing) {
+                return existing;
             }
-        });
-        if (existing) {
-            // Idempotent: return existing shipment if the waybill matches
-            return existing;
         }
 
         const shipment = await this.prisma.shipment.create({
@@ -516,7 +518,7 @@ export class ShipmentsService {
     async findMyShipments(userId: string, role: string) {
         let orderFilter: any = {};
 
-        if (role === 'VENDOR') {
+        if (role === 'VENDOR' || role === 'MERCHANT') {
             const store = await this.prisma.store.findUnique({ where: { ownerId: userId } });
             if (!store) return [];
             // For vendors: verify ownership via storeId or acceptedOffer.storeId
@@ -530,7 +532,7 @@ export class ShipmentsService {
                     {
                         OR: [
                             { shipments: { some: {} } },
-                            { status: { in: ['READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'RETURNED', 'COMPLETED'] } }
+                            { status: { in: ['READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'SHIPPED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'RETURNED', 'COMPLETED'] } }
                         ]
                     }
                 ]
@@ -541,7 +543,7 @@ export class ShipmentsService {
                 customerId: userId,
                 OR: [
                     { shipments: { some: {} } },
-                    { status: { in: ['READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'RETURNED', 'COMPLETED'] } }
+                    { status: { in: ['READY_FOR_SHIPPING', 'PARTIALLY_SHIPPED', 'SHIPPED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'RETURNED', 'COMPLETED'] } }
                 ]
             };
         }
@@ -554,6 +556,8 @@ export class ShipmentsService {
                 id: true,
                 orderNumber: true,
                 status: true,
+                requestType: true,
+                shippingType: true,
                 vehicleMake: true,
                 vehicleModel: true,
                 partName: true,
