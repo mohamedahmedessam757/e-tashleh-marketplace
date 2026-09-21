@@ -2,10 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
- * Postgres session-level advisory locks for cron jobs. In a multi-instance deployment every
- * instance fires the same @Cron, which double-processes financial jobs (escrow release,
- * payout reminders, expiry refunds). Wrapping a job in an advisory lock ensures only ONE
- * instance runs it at a time; others skip that tick.
+ * Postgres transaction-scoped advisory locks for cron jobs.
+ *
+ * IMPORTANT: Do NOT use session-level pg_try_advisory_lock with Prisma's pool —
+ * acquire and unlock can land on different connections, leaking the lock forever
+ * so every subsequent tick logs "skipped — lock held by another instance".
+ *
+ * pg_try_advisory_xact_lock is held for the duration of the wrapping transaction
+ * and auto-releases on commit/rollback (even if the worker crashes mid-job).
  */
 @Injectable()
 export class CronLockService {
@@ -15,7 +19,7 @@ export class CronLockService {
 
     /**
      * Deterministically map a string key to a signed 32-bit integer lock id.
-     * pg_try_advisory_lock(int) accepts this range; a 32-bit space is more than enough
+     * pg_try_advisory_xact_lock(int) accepts this range; a 32-bit space is more than enough
      * to keep our handful of named cron jobs collision-free.
      */
     private lockId(key: string): number {
@@ -32,24 +36,38 @@ export class CronLockService {
     /**
      * Run `fn` only if the advisory lock for `key` can be acquired immediately.
      * Returns { ran: false } when another instance already holds the lock.
+     *
+     * `fn` may use other pool connections; the xact lock stays held on the
+     * transaction connection until `fn` completes and the transaction commits.
      */
     async runWithLock<T>(key: string, fn: () => Promise<T>): Promise<{ ran: boolean; result?: T }> {
         const id = this.lockId(key);
-        const rows = await this.prisma.$queryRaw<Array<{ locked: boolean }>>`
-            SELECT pg_try_advisory_lock(${id}) AS locked
-        `;
-        const locked = rows?.[0]?.locked === true;
-        if (!locked) {
-            this.logger.debug(`Cron "${key}" skipped — lock held by another instance.`);
-            return { ran: false };
-        }
         try {
-            const result = await fn();
-            return { ran: true, result };
-        } finally {
-            await this.prisma.$queryRaw`SELECT pg_advisory_unlock(${id})`.catch((err) =>
-                this.logger.warn(`Failed to release cron lock "${key}": ${err?.message ?? err}`),
+            return await this.prisma.$transaction(
+                async (tx) => {
+                    const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
+                        SELECT pg_try_advisory_xact_lock(${id}) AS locked
+                    `;
+                    const locked = rows?.[0]?.locked === true;
+                    if (!locked) {
+                        this.logger.debug(`Cron "${key}" skipped — lock held by another instance.`);
+                        return { ran: false };
+                    }
+                    const result = await fn();
+                    return { ran: true, result };
+                },
+                {
+                    // Cleanup / escrow ticks can exceed the default interactive tx timeout.
+                    maxWait: 10_000,
+                    timeout: 120_000,
+                },
             );
+        } catch (err: any) {
+            this.logger.error(
+                `Cron lock "${key}" failed: ${err?.message ?? err}`,
+                err?.stack,
+            );
+            throw err;
         }
     }
 }

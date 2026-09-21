@@ -417,14 +417,16 @@ export function buildFulfillmentStepHint(
 
     switch (stepIndex) {
         case 3: {
+            // Cumulative ranks → exclusive "still in prep" vs already prepared+
             const prepared = stepCounts.prepared ?? 0;
-            if (prepared > 0 && stepCounts.preparation === 0) {
+            const inPrep = Math.max(0, (stepCounts.preparation ?? 0) - prepared);
+            if (prepared > 0 && inPrep === 0) {
                 return `${prepared}/${total} ${isAr ? 'تم التجهيز' : 'prepared'}`;
             }
-            if (prepared > 0 && stepCounts.preparation > 0) {
-                return `${prepared}/${total} ${isAr ? 'تم التجهيز' : 'prepared'} · ${stepCounts.preparation} ${isAr ? 'باقٍ' : 'left'}`;
+            if (prepared > 0 && inPrep > 0) {
+                return `${prepared}/${total} ${isAr ? 'تم التجهيز' : 'prepared'} · ${inPrep} ${isAr ? 'باقٍ' : 'left'}`;
             }
-            return `${stepCounts.preparation}/${total} ${isAr ? 'في التجهيز' : 'in prep'}`;
+            return `${inPrep}/${total} ${isAr ? 'في التجهيز' : 'in prep'}`;
         }
         case 4: {
             if (isCorrectionFamilyOrderStatus(orderStatus)) {
@@ -434,7 +436,11 @@ export function buildFulfillmentStepHint(
                 }
                 return `${total}/${total} ${isAr ? 'إعادة مطابقة' : 'rematch'}`;
             }
-            const inReview = stepCounts.verification ?? 0;
+            // Exact VERIFICATION only (not yet approved)
+            const inReview = Math.max(
+                0,
+                (stepCounts.verification ?? 0) - (stepCounts.verificationSuccess ?? 0),
+            );
             if (inReview > 0) {
                 return `${inReview}/${total} ${isAr ? 'قيد المراجعة' : 'under review'}`;
             }

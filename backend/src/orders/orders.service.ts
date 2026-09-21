@@ -1446,6 +1446,49 @@ export class OrdersService {
         const meta = { triggeredBy: actor.id, triggerActorType: actor.type, source: 'enforceExpiredSla' };
         const expired = this.orderSla.isSlaExpired(order, durationCfg);
 
+        // --- Multi-item: per-offer verification correction docs can expire while the
+        // parent order stays in VERIFICATION (siblings still progressing). Cron is the
+        // safety net; this near-realtime path covers open order pages.
+        if (
+            this.offerFulfillment.isMultiItemOrder(order) &&
+            status !== OrderStatus.CORRECTION_PERIOD
+        ) {
+            const now = new Date();
+            const expiredDocs = await this.prisma.verificationDocument.findMany({
+                where: {
+                    orderId,
+                    adminStatus: 'REJECTED',
+                    correctionDeadlineAt: { lt: now },
+                    offerId: { not: null },
+                },
+                select: { offerId: true },
+                take: 50,
+            });
+            const expiredOfferIds = [
+                ...new Set(
+                    expiredDocs
+                        .map((d) => d.offerId)
+                        .filter((id): id is string => !!id),
+                ),
+            ];
+            if (expiredOfferIds.length) {
+                const partial = await this.cancelOffersForExpiredCorrection(
+                    orderId,
+                    expiredOfferIds,
+                );
+                if (partial.changed) {
+                    const refreshed = await this.prisma.order.findUnique({
+                        where: { id: orderId },
+                    });
+                    return {
+                        changed: true,
+                        order: refreshed ?? order,
+                        reason: 'cancelled_offer_correction_docs',
+                    };
+                }
+            }
+        }
+
         // --- Collection → reveal or cancel ---
         if (status === OrderStatus.COLLECTING_OFFERS || status === OrderStatus.AWAITING_OFFERS) {
             if (!expired) return { changed: false, order, reason: 'not_expired' };
@@ -4837,6 +4880,17 @@ export class OrdersService {
             await this.offerFulfillment.cancelOffersFulfillment(orderId, ids, reason);
 
         if (cancelledOfferIds.length) {
+            // Clear expired correction clocks so clients stop showing rematch CTAs.
+            await this.prisma.verificationDocument.updateMany({
+                where: {
+                    orderId,
+                    offerId: { in: cancelledOfferIds },
+                    adminStatus: 'REJECTED',
+                    correctionDeadlineAt: { not: null },
+                },
+                data: { correctionDeadlineAt: null, updatedAt: new Date() },
+            }).catch(() => undefined);
+
             await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
                 previousStatus: order.status,
                 merchantFault: true,
@@ -4878,8 +4932,69 @@ export class OrdersService {
                     offerId: offer.id,
                     partialCancel: true,
                     waEvent: 'ORDER_STATUS',
+                    status: 'CANCELLED',
                 },
             }).catch(() => undefined);
+        }
+
+        if (cancelledOfferIds.length) {
+            const partNames = targets
+                .filter((o) => cancelledOfferIds.includes(o.id))
+                .map((o) => o.orderPart?.name || order.partName);
+            const partLabel = resolveCancelPartLabel({ partNames });
+
+            await this.notifications
+                .notifyWithDedup(
+                    order.customerId,
+                    `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:correction_doc:${cancelledOfferIds
+                        .slice()
+                        .sort()
+                        .join(',')}`,
+                    120,
+                    {
+                        recipientId: order.customerId,
+                        recipientRole: 'CUSTOMER',
+                        titleAr: 'إلغاء قطعة من الطلب',
+                        titleEn: 'Part cancelled from order',
+                        messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وجاري استرجاع مبلغ القطعة الملغاة.`,
+                        messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; refund for cancelled parts is processing.`,
+                        type: 'ORDER',
+                        link: `/dashboard/orders/${order.id}`,
+                        metadata: {
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+                            status:
+                                nextStatus === OrderStatus.CANCELLED ? 'CANCELLED' : 'PARTIAL',
+                            cancelKind: 'NON_MATCH',
+                            partialCancel: true,
+                            offerIds: cancelledOfferIds,
+                            partName: partLabel,
+                            part_name: partLabel,
+                            cancel_reason_ar: merchantFaultCancelReasonAr('NON_MATCH'),
+                            status_detail: merchantFaultCancelReasonAr('NON_MATCH'),
+                        },
+                    },
+                )
+                .catch(() => undefined);
+
+            await this.notifications
+                .notifyAdmins({
+                    titleAr: 'إلغاء قطعة — انتهاء مهلة التصحيح',
+                    titleEn: 'Part cancelled — correction deadline expired',
+                    messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} تلقائياً بعد انتهاء مهلة التصحيح (${partLabel || 'قطعة'}).`,
+                    messageEn: `A part on order #${order.orderNumber} was auto-cancelled after the correction window ended (${partLabel || 'part'}).`,
+                    type: 'ORDER',
+                    link: `/admin/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        offerIds: cancelledOfferIds,
+                        partialCancel: true,
+                        source: 'expired_correction_doc',
+                    },
+                })
+                .catch(() => undefined);
         }
 
         if (nextStatus !== order.status && nextStatus !== OrderStatus.CANCELLED) {

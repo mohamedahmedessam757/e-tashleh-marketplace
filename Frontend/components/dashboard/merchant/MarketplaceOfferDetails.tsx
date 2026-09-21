@@ -13,7 +13,7 @@ import {
     ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
-import { PartCorrectionStatus, CorrectionCountdown, resolvePartCorrectionDeadline } from '../shared/PartCorrectionStatus';
+import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { SubmitOfferModal } from './SubmitOfferModal';
@@ -655,6 +655,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     const merchantFulfillmentSummary = useMemo(() => {
         const total = merchantAcceptedOffers.length;
         if (total <= 1) return fulfillmentSummary;
+        // Match customer/API cumulative ranks (not exclusive buckets).
         const stepCounts = {
             preparation: 0,
             prepared: 0,
@@ -668,13 +669,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         };
         for (const o of merchantAcceptedOffers) {
             const s = normalizeOfferFulfillmentStatus(o.fulfillmentStatus);
+            const r = getFulfillmentRank(s);
             if (s === 'AWAITING_PAYMENT') stepCounts.awaitingPayment++;
-            else if (s === 'IN_PREPARATION') stepCounts.preparation++;
-            else if (s === 'PREPARED') stepCounts.prepared++;
-            else if (s === 'VERIFICATION') stepCounts.verification++;
-            else if (s === 'VERIFICATION_SUCCESS') stepCounts.handoverPending++;
-            else if (s === 'READY_FOR_SHIPPING') stepCounts.readyForShipping++;
-            else if (s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED') stepCounts.shipped++;
+            if (r >= getFulfillmentRank('IN_PREPARATION')) stepCounts.preparation++;
+            if (r >= getFulfillmentRank('PREPARED')) stepCounts.prepared++;
+            if (r >= getFulfillmentRank('VERIFICATION')) stepCounts.verification++;
+            if (r >= getFulfillmentRank('VERIFICATION_SUCCESS')) stepCounts.verificationSuccess++;
+            if (s === 'VERIFICATION_SUCCESS') stepCounts.handoverPending++;
+            if (r >= getFulfillmentRank('READY_FOR_SHIPPING')) stepCounts.readyForShipping++;
+            if (o.shippedFromCart || s === 'SHIPPED' || s === 'DELIVERED' || s === 'COMPLETED') {
+                stepCounts.shipped++;
+            }
+            if (!o.shippedFromCart) stepCounts.inCart++;
         }
         return { total, stepCounts };
     }, [merchantAcceptedOffers, fulfillmentSummary]);
@@ -1917,26 +1923,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             {partVerificationDoc.adminRejectionReason}
                                                                         </p>
                                                                     )}
-                                                                    {isPartInCorrection && (() => {
-                                                                        const deadlineAt = resolvePartCorrectionDeadline(
-                                                                            partVerificationDoc,
-                                                                            order?.correctionDeadlineAt,
-                                                                        );
-                                                                        if (!deadlineAt) return null;
-                                                                        return (
-                                                                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-red-300/70">
-                                                                                    {isAr ? 'متبقي للتصحيح' : 'Correction left'}
-                                                                                </span>
-                                                                                <CorrectionCountdown
-                                                                                    deadlineAt={deadlineAt}
-                                                                                    isAr={isAr}
-                                                                                    labeled
-                                                                                    className="text-xs"
-                                                                                />
-                                                                            </div>
-                                                                        );
-                                                                    })()}
                                                                     {order.requestType === 'multiple' && (
                                                                         <div className="mt-2">
                                                                             <CartShipmentBadge
@@ -2062,29 +2048,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                                 ? 'مطلوب إعادة التوثيق — فترة التصحيح'
                                                                                 : 'Correction required — rematch'}
                                                                         </span>
-                                                                        {(() => {
-                                                                            const partDoc = getVerificationDocForOffer(
-                                                                                order?.verificationDocuments,
-                                                                                partOffer.id,
-                                                                            );
-                                                                            const deadlineAt = resolvePartCorrectionDeadline(
-                                                                                partDoc,
-                                                                                order?.correctionDeadlineAt,
-                                                                            );
-                                                                            if (!deadlineAt) return null;
-                                                                            return (
-                                                                                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs">
-                                                                                    <span className="text-red-300/70 font-bold uppercase tracking-wider text-[10px]">
-                                                                                        {isAr ? 'متبقي' : 'Left'}
-                                                                                    </span>
-                                                                                    <CorrectionCountdown
-                                                                                        deadlineAt={deadlineAt}
-                                                                                        isAr={isAr}
-                                                                                        labeled
-                                                                                    />
-                                                                                </span>
-                                                                            );
-                                                                        })()}
                                                                     </div>
                                                                 )}
                                                                 {!fulfillmentLocked &&
