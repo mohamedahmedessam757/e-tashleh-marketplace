@@ -6,6 +6,10 @@ import { StatusTimeline } from '../../ui/StatusTimeline';
 import { OfferCard } from '../OfferCard';
 import { PartOffersDrawer } from '../PartOffersDrawer';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
+import {
+    PartPreparationAlert,
+    orderHasPartPreparationTimer,
+} from '../shared/PartPreparationAlert';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { ShipmentTracker } from '../shipments/ShipmentTracker';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -495,7 +499,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                         <span className="text-sm font-medium">{(t.dashboard.orders as any)?.backToList || 'Back to list'}</span>
                     </button>
 
-                    <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
+                    {!orderHasPartPreparationTimer(order) && (
+                        <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
+                    )}
                 </div>
 
                 <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-white/5">
@@ -924,7 +930,12 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                             </div>
 
                                             {primaryOffer && (
-                                                <div className="px-4 sm:px-5 pb-3">
+                                                <div className="px-4 sm:px-5 pb-3 space-y-2">
+                                                    <PartPreparationAlert
+                                                        order={order}
+                                                        fulfillmentStatus={primaryOffer.fulfillmentStatus}
+                                                        isAr={isAr}
+                                                    />
                                                     <PartCorrectionStatus
                                                         isAr={isAr}
                                                         compact

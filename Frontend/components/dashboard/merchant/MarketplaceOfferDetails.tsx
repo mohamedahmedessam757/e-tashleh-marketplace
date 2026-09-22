@@ -15,6 +15,10 @@ import {
 import { CountdownTimer } from '../OrderDetails';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
+import {
+    PartPreparationAlert,
+    orderHasPartPreparationTimer,
+} from '../shared/PartPreparationAlert';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { SubmitOfferModal } from './SubmitOfferModal';
 import { GlassCard } from '../../ui/GlassCard';
@@ -1163,9 +1167,11 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     </div>
                 </div>
 
-                {/* Status Badge & Timer */}
+                {/* Status Badge & Timer — prep/delayed timer lives on the IN_PREPARATION part card only */}
                 <div className="flex flex-col md:flex-row flex-wrap items-stretch gap-2 sm:gap-4 bg-white/5 px-4 py-3 rounded-xl border border-white/10 w-full md:w-auto min-w-0">
-                    <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
+                    {!orderHasPartPreparationTimer(order) && (
+                        <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
+                    )}
                     {(() => {
                         if (order.status === 'NON_MATCHING') {
                             return (
@@ -2217,6 +2223,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                 )}
                                                             </div>
                                                         )}
+
+                                                        <PartPreparationAlert
+                                                            order={order}
+                                                            fulfillmentStatus={partOffer.fulfillmentStatus}
+                                                            isAr={isAr}
+                                                            className="mt-3"
+                                                        />
 
                                                         <PartCorrectionStatus
                                                             isAr={isAr}

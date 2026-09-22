@@ -46,6 +46,10 @@ import { ShipmentTracker } from './shipments/ShipmentTracker';
 import { OrderCountdown } from '../ui/OrderCountdown';
 import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
 import { WarrantyProtectionCard } from '../ui/WarrantyProtectionCard';
+import {
+    PartPreparationAlert,
+    orderHasPartPreparationTimer,
+} from './shared/PartPreparationAlert';
 import { useResolutionStore } from '../../stores/useResolutionStore';
 import { bumpFulfillmentSummary } from '../../utils/fulfillmentSummarySync';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../utils/orderSla';
@@ -1332,7 +1336,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                     {['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT', 'PARTIALLY_PAID', 'PREPARATION', 'DELAYED_PREPARATION', 'NON_MATCHING', 'CORRECTION_PERIOD'].includes(order.status) &&
                         !expiryScenario &&
-                        !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) && (
+                        !(order.status === 'AWAITING_SELECTION' && visibleOffers.length === 0) &&
+                        !orderHasPartPreparationTimer(order) && (
                         <OrderStatusCountdown order={order} variant="card" className="max-w-full sm:max-w-md w-full sm:w-auto min-w-0" />
                     )}
                     {!isMultiPartOrder &&
@@ -2018,7 +2023,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                             </div>
 
                                             {acceptedPartOffer && (
-                                                <div className="px-4 sm:px-5 pb-3">
+                                                <div className="px-4 sm:px-5 pb-3 space-y-2">
+                                                    <PartPreparationAlert
+                                                        order={order}
+                                                        fulfillmentStatus={acceptedPartOffer.fulfillmentStatus}
+                                                        isAr={language === 'ar'}
+                                                    />
                                                     <PartCorrectionStatus
                                                         isAr={language === 'ar'}
                                                         compact
