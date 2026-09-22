@@ -17,7 +17,6 @@ import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import {
     PartPreparationAlert,
-    orderHasPartPreparationTimer,
 } from '../shared/PartPreparationAlert';
 import { WarrantyProtectionCard } from '../../ui/WarrantyProtectionCard';
 import { SubmitOfferModal } from './SubmitOfferModal';
