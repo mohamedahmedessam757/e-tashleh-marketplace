@@ -1396,7 +1396,13 @@ export class OrdersService {
     async enforceExpiredSla(
         orderId: string,
         actor: { id: string; type: ActorType; name?: string },
-    ): Promise<{ changed: boolean; order: Order; reason?: string }> {
+        opts?: { skipRefund?: boolean },
+    ): Promise<{
+        changed: boolean;
+        order: Order;
+        reason?: string;
+        pendingRefundOfferIds?: string[];
+    }> {
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
             include: {
@@ -1846,11 +1852,22 @@ export class OrdersService {
                         cancelReason,
                     );
 
-                if (cancelledOfferIds.length) {
-                    await this.escrowService.refundPaidOrderOnCancel(orderId, cancelReason, {
+                // Concurrent enforce may win the cancel race — never notify/refund with empty ids.
+                if (!cancelledOfferIds.length) {
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: true,
+                        order: refreshed ?? order,
+                        reason: 'delayed_prep_already_cancelled',
+                    };
+                }
+
+                const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
+                if (!opts?.skipRefund) {
+                    // Near-realtime / non-cron path: refund immediately (outside any advisory lock).
+                    await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
                         previousStatus: OrderStatus.DELAYED_PREPARATION,
-                        merchantFault: true,
-                        offerIds: cancelledOfferIds,
+                        reason: cancelReason,
                     });
                 }
 
@@ -1943,6 +1960,7 @@ export class OrdersService {
                         changed: true,
                         order: refreshed ?? order,
                         reason: 'cancelled_delayed_prep_all_parts',
+                        pendingRefundOfferIds,
                     };
                 }
 
@@ -1951,6 +1969,7 @@ export class OrdersService {
                     changed: true,
                     order: refreshed ?? order,
                     reason: 'cancelled_delayed_prep_partial',
+                    pendingRefundOfferIds,
                 };
             }
 
@@ -2083,16 +2102,21 @@ export class OrdersService {
                         correctionCancelReason,
                     );
 
-                if (cancelledOfferIds.length) {
-                    await this.escrowService.refundPaidOrderOnCancel(
-                        orderId,
-                        correctionCancelReason,
-                        {
-                            previousStatus: OrderStatus.CORRECTION_PERIOD,
-                            merchantFault: true,
-                            offerIds: cancelledOfferIds,
-                        },
-                    );
+                if (!cancelledOfferIds.length) {
+                    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId } });
+                    return {
+                        changed: true,
+                        order: refreshed ?? order,
+                        reason: 'correction_already_cancelled',
+                    };
+                }
+
+                const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
+                if (!opts?.skipRefund) {
+                    await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
+                        previousStatus: OrderStatus.CORRECTION_PERIOD,
+                        reason: correctionCancelReason,
+                    });
                 }
 
                 for (const offer of targetOffers.filter((o) =>
@@ -2198,6 +2222,7 @@ export class OrdersService {
                         nextStatus === OrderStatus.CANCELLED
                             ? 'cancelled_correction_all_parts'
                             : 'cancelled_correction_partial',
+                    pendingRefundOfferIds,
                 };
             }
 
@@ -5038,7 +5063,7 @@ export class OrdersService {
     }
 
     /**
-     * Stripe/DB refund for offers already cancelled by correction-deadline expiry.
+     * Stripe/DB refund for offers already cancelled (late prep, correction expiry, etc.).
      * Must run outside any Postgres advisory-lock transaction.
      */
     async refundCancelledCorrectionOffers(
@@ -5058,7 +5083,7 @@ export class OrdersService {
         });
         if (result?.skipped || (result?.amountRefunded ?? 0) <= 0) {
             this.logger.error(
-                `Correction cancel refund incomplete order=${orderId} offers=${unique.join(',')} ` +
+                `Part-cancel refund incomplete order=${orderId} offers=${unique.join(',')} ` +
                     `skipped=${result?.skipped} reason=${result?.reason} amount=${result?.amountRefunded ?? 0}`,
             );
             await this.notifications
@@ -5073,7 +5098,8 @@ export class OrdersService {
                         orderId,
                         offerIds: unique,
                         refundReason: result?.reason || null,
-                        source: 'correction_cancel_refund_pending',
+                        previousStatus: opts?.previousStatus || null,
+                        source: 'part_cancel_refund_pending',
                     },
                 })
                 .catch(() => undefined);

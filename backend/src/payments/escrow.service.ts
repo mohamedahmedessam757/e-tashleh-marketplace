@@ -760,13 +760,54 @@ export class EscrowService {
                 'لا يوجد سجل دفع ناجح لهذا الطلب. لا يمكن تنفيذ الاسترداد.',
             );
         }
-        if (!payment.stripePaymentId) {
-            throw new BadRequestException('Stripe payment ID missing. Cannot refund.');
-        }
         if (!escrow) {
             throw new BadRequestException(
                 'لا يوجد سجل ضمان مرتبط بالطلب. راجع سجل الضمان ثم أعد المحاولة.',
             );
+        }
+        if (!payment.stripePaymentId) {
+            // Mock/dev payments (skip-payment / ALLOW_MOCK_PAYMENTS) have no Stripe PI —
+            // still settle escrow + merchant gateway-fee liability on the ledger.
+            if (process.env.ALLOW_MOCK_PAYMENTS === 'true') {
+                const maxRefundableDb = Math.max(
+                    0,
+                    Number(payment.totalAmount) - Number(payment.refundedAmount || 0),
+                );
+                const amountToRefund = Math.min(
+                    Math.max(0, Number(refundAmount)),
+                    maxRefundableDb,
+                );
+                if (amountToRefund <= 0) {
+                    throw new BadRequestException(
+                        'لا يوجد مبلغ متبقٍ قابل للاسترداد على عملية الدفع (ربما تم استرداد المبلغ بالكامل مسبقاً).',
+                    );
+                }
+                const order = await this.prisma.order.findUnique({
+                    where: { id: orderId },
+                    select: { orderNumber: true },
+                });
+                this.logger.warn(
+                    `Ledger-only cancel refund (no Stripe PI) order=${orderId} payment=${payment.id} amount=${amountToRefund}`,
+                );
+                return {
+                    orderId,
+                    refundAmount: amountToRefund,
+                    cappedFrom:
+                        Number(refundAmount) > amountToRefund ? Number(refundAmount) : undefined,
+                    stripeRefundId: `ledger-only:${payment.id}`,
+                    escrowId: escrow.id,
+                    paymentId: payment.id,
+                    escrowHeldStatus: escrow.status,
+                    merchantAmount: escrow.merchantAmount,
+                    customerId: payment.customerId,
+                    reason,
+                    faultParty,
+                    paymentTotalAmount: payment.totalAmount,
+                    priorRefunded: payment.refundedAmount,
+                    orderNumber: order?.orderNumber,
+                };
+            }
+            throw new BadRequestException('Stripe payment ID missing. Cannot refund.');
         }
 
         const maxRefundable = paymentId
@@ -1354,6 +1395,9 @@ export class EscrowService {
         });
 
         if (!payments.length) {
+            this.logger.warn(
+                `refundPaidOrderOnCancel NO_PAYMENT order=${orderId} offerIds=${scopedOfferIds.join(',') || '-'}`,
+            );
             return { skipped: true, reason: 'NO_PAYMENT' };
         }
 
@@ -1569,6 +1613,9 @@ export class EscrowService {
         }
 
         if (!anyAttempted && totalRefundedNow <= 0) {
+            this.logger.warn(
+                `refundPaidOrderOnCancel ALREADY_REFUNDED order=${orderId} offerIds=${scopedOfferIds.join(',') || '-'}`,
+            );
             return { skipped: true, reason: 'ALREADY_REFUNDED' };
         }
 

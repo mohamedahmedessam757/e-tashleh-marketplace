@@ -40,18 +40,25 @@ export class OrderCleanupService {
         }
         // Prevent overlapping runs across instances (and slow ticks overlapping themselves).
         // Stripe refunds must run AFTER the advisory lock transaction commits — never inside it.
-        type PendingCorrectionRefund = { orderId: string; offerIds: string[]; previousStatus?: string | null };
+        type PendingPartRefund = {
+            orderId: string;
+            offerIds: string[];
+            previousStatus?: string | null;
+            reason?: string;
+        };
         const { ran, result: pendingRefunds } = await this.cronLock.runWithLock(
             'order-cleanup-minute',
-            async (): Promise<PendingCorrectionRefund[]> => {
+            async (): Promise<PendingPartRefund[]> => {
+                const pending: PendingPartRefund[] = [];
                 await this.handleCollectingOffersReveal();
                 await this.expireAwaitingSelection();
                 await this.expireAwaitingPayment();
                 await this.handlePreparationDelays();
-                await this.handleCriticalPreparationFailures();
+                await this.handleCriticalPreparationFailures(pending);
                 await this.handleNonMatchingToCorrection();
-                await this.handleCorrectionPeriodExpiry();
-                const pending = await this.handleExpiredOfferCorrectionDocs();
+                await this.handleCorrectionPeriodExpiry(pending);
+                const correctionPending = await this.handleExpiredOfferCorrectionDocs();
+                pending.push(...correctionPending);
                 // Formerly hourly — keep ≤1 minute lag when nobody has the order open
                 await this.handleOfferAutoCompletion();
                 await this.handleSingleItemOrderAutoCompletion();
@@ -68,10 +75,11 @@ export class OrderCleanupService {
             try {
                 await this.ordersService.refundCancelledCorrectionOffers(job.orderId, job.offerIds, {
                     previousStatus: job.previousStatus,
+                    reason: job.reason,
                 });
             } catch (err) {
                 this.logger.error(
-                    `Deferred correction refund failed for ${job.orderId}:`,
+                    `Deferred part-cancel refund failed for ${job.orderId}:`,
                     err,
                 );
             }
@@ -1005,7 +1013,14 @@ export class OrderCleanupService {
         }
     }
 
-    async handleCriticalPreparationFailures() {
+    async handleCriticalPreparationFailures(
+        pendingRefunds?: Array<{
+            orderId: string;
+            offerIds: string[];
+            previousStatus?: string | null;
+            reason?: string;
+        }>,
+    ) {
         const criticalOrders = await this.prisma.order.findMany({
             where: { status: OrderStatus.DELAYED_PREPARATION },
             select: { id: true, orderNumber: true },
@@ -1013,11 +1028,25 @@ export class OrderCleanupService {
 
         for (const order of criticalOrders) {
             try {
-                await this.ordersService.enforceExpiredSla(order.id, {
-                    type: ActorType.SYSTEM,
-                    id: 'system-scheduler',
-                    name: 'System SLA',
-                });
+                const result = await this.ordersService.enforceExpiredSla(
+                    order.id,
+                    {
+                        type: ActorType.SYSTEM,
+                        id: 'system-scheduler',
+                        name: 'System SLA',
+                    },
+                    // Stripe must not run while the cleanup advisory lock transaction is open.
+                    { skipRefund: true },
+                );
+                if (result.pendingRefundOfferIds?.length && pendingRefunds) {
+                    pendingRefunds.push({
+                        orderId: order.id,
+                        offerIds: result.pendingRefundOfferIds,
+                        previousStatus: OrderStatus.DELAYED_PREPARATION,
+                        reason:
+                            'System: Exceeded extra grace period for preparation. Order abandoned by merchant.',
+                    });
+                }
             } catch (err: any) {
                 this.logger.error(
                     `Failed executing handleCriticalPreparationFailures on ${order.id}: ${err?.message || err}`,
@@ -1045,7 +1074,14 @@ export class OrderCleanupService {
         }
     }
 
-    private async handleCorrectionPeriodExpiry() {
+    private async handleCorrectionPeriodExpiry(
+        pendingRefunds?: Array<{
+            orderId: string;
+            offerIds: string[];
+            previousStatus?: string | null;
+            reason?: string;
+        }>,
+    ) {
         const expiredOrders = await this.prisma.order.findMany({
             where: { status: OrderStatus.CORRECTION_PERIOD },
             select: { id: true, orderNumber: true },
@@ -1053,11 +1089,24 @@ export class OrderCleanupService {
 
         for (const order of expiredOrders) {
             try {
-                await this.ordersService.enforceExpiredSla(order.id, {
-                    type: ActorType.SYSTEM,
-                    id: 'system-scheduler',
-                    name: 'System Scheduler',
-                });
+                const result = await this.ordersService.enforceExpiredSla(
+                    order.id,
+                    {
+                        type: ActorType.SYSTEM,
+                        id: 'system-scheduler',
+                        name: 'System Scheduler',
+                    },
+                    { skipRefund: true },
+                );
+                if (result.pendingRefundOfferIds?.length && pendingRefunds) {
+                    pendingRefunds.push({
+                        orderId: order.id,
+                        offerIds: result.pendingRefundOfferIds,
+                        previousStatus: OrderStatus.CORRECTION_PERIOD,
+                        reason:
+                            'System: Merchant failed to provide corrected verification within correction limit.',
+                    });
+                }
             } catch (err) {
                 this.logger.error(`Failed processing correction timeout for ${order.id}:`, err);
             }
