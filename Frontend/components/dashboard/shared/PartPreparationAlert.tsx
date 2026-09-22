@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Clock, Package } from 'lucide-react';
-import { OrderStatusCountdown } from '../ui/OrderStatusCountdown';
-import { normalizeOfferFulfillmentStatus } from '../../utils/offerFulfillmentHelpers';
+import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
+import { normalizeOfferFulfillmentStatus } from '../../../utils/offerFulfillmentHelpers';
 
 type OrderLike = {
   status?: string | null;
