@@ -1167,11 +1167,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                     </div>
                 </div>
 
-                {/* Status Badge & Timer — prep/delayed timer lives on the IN_PREPARATION part card only */}
+                {/* Status Badge & Timer */}
                 <div className="flex flex-col md:flex-row flex-wrap items-stretch gap-2 sm:gap-4 bg-white/5 px-4 py-3 rounded-xl border border-white/10 w-full md:w-auto min-w-0">
-                    {!orderHasPartPreparationTimer(order) && (
-                        <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
-                    )}
+                    <OrderStatusCountdown order={order} variant="card" className="flex-1 min-w-0 border-0 bg-transparent shadow-none p-0" />
                     {(() => {
                         if (order.status === 'NON_MATCHING') {
                             return (
