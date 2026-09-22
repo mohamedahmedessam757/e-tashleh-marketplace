@@ -281,6 +281,8 @@ export const PaymentStep: React.FC = () => {
 
   /**
    * Step 2: Final Success (Callback from Stripe Component)
+   * Only mark the offer paid after backend fulfillment confirms SUCCESS.
+   * Optimistic "تم الدفع" before fulfill left merchants stuck on بانتظار الدفع.
    */
   const handlePaymentSuccess = async (paymentIntent?: { id?: string }) => {
     const paidId = String(activePaymentOfferId!);
@@ -288,22 +290,56 @@ export const PaymentStep: React.FC = () => {
     if (paymentSuccessHandledRef.current.has(dedupeKey)) return;
     paymentSuccessHandledRef.current.add(dedupeKey);
 
+    clearPaymentError();
+    setSuccessMessage(
+      isAr
+        ? 'جاري تأكيد الدفع في النظام…'
+        : 'Confirming payment with the platform…',
+    );
+
+    // Ensure backend ledger (payment, escrow, wallets, fulfillment) is fulfilled
+    // before the customer UI shows "paid" — not only after webhook delivery.
+    if (paymentIntent?.id) {
+      try {
+        const result = await paymentsApi.confirmIntent(paymentIntent.id);
+        const status = String(result?.status || '').toUpperCase();
+        if (status !== 'SUCCESS') {
+          paymentSuccessHandledRef.current.delete(dedupeKey);
+          useCheckoutStore.setState({
+            paymentError: isAr
+              ? `تم استلام الدفع من Stripe لكن التأكيد لم يكتمل بعد (${status || 'UNKNOWN'}). أعد المحاولة أو انتظر لحظات.`
+              : `Stripe received the payment but platform confirmation is incomplete (${status || 'UNKNOWN'}). Retry or wait a moment.`,
+          });
+          setSuccessMessage(null);
+          return;
+        }
+      } catch (err) {
+        paymentSuccessHandledRef.current.delete(dedupeKey);
+        useCheckoutStore.setState({
+          paymentError: formatApiErrorMessage(
+            err,
+            isAr
+              ? 'فشل تأكيد الدفع في المنصة. المبلغ قد يكون محجوزاً لدى Stripe — أعد المحاولة ولا تدفع مرة أخرى.'
+              : 'Platform payment confirmation failed. Funds may be held by Stripe — retry without paying again.',
+          ),
+        });
+        setSuccessMessage(null);
+        return;
+      }
+    }
+
     useCheckoutStore.setState((state) => ({
       paidOfferIds: [
         ...new Set([...state.paidOfferIds.map(String), paidId]),
       ],
     }));
 
-    // Ensure backend ledger (payment, escrow, wallets) is fulfilled immediately — not only after delivery/webhook
-    if (paymentIntent?.id) {
-      try {
-        await paymentsApi.confirmIntent(paymentIntent.id);
-      } catch (err) {
-        console.warn('Payment confirm-intent:', err);
-      }
-    }
-
     await syncPaidOffersForOrder([paidId]);
+
+    const oid = String(currentOrder?.id || orderId || '');
+    if (oid) {
+      void useOrderStore.getState().fetchOrder(oid);
+    }
 
     // Sync saved card immediately so Quick Pay works on next offer
     if (paymentIntent?.id) {

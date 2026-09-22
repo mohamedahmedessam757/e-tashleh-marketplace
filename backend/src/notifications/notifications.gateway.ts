@@ -59,11 +59,19 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   handleDisconnect(_client: Socket) {}
 
-  sendToUser(userId: string, notification: any) {
+  sendToUser(userId: string, notification: unknown) {
+    if (!this.server) {
+      this.logger.debug(`WS server not ready; skip emit to user_${userId}`);
+      return;
+    }
     this.server.to(`user_${userId}`).emit('new_notification', notification);
   }
 
-  sendToAdmins(notification: any) {
+  sendToAdmins(notification: unknown) {
+    if (!this.server) {
+      this.logger.debug('WS server not ready; skip emit to admins');
+      return;
+    }
     this.server.to('admins').emit('admin_alert', notification);
   }
 }

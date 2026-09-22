@@ -71,8 +71,14 @@ export class NotificationsService {
             },
         });
 
-        // 4. Real-time Emission
-        this.gateway.sendToUser(data.recipientId, notification);
+        // 4. Real-time Emission (never block persistence if WS is down)
+        try {
+            this.gateway.sendToUser(data.recipientId, notification);
+        } catch (err) {
+            this.logger.warn(
+                `Realtime emit failed (notif=${notification.id}): ${err instanceof Error ? err.message : err}`,
+            );
+        }
 
         // 5. WhatsApp transactional dispatch — AWAIT for eligible roles so the send
         // completes before the HTTP request ends (void fire-and-forget was dropping txn_*).

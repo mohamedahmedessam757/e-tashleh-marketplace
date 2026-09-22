@@ -1230,10 +1230,19 @@ export class PaymentsService {
             if (claim.count === 0) {
                 const existing = await tx.paymentTransaction.findUnique({
                     where: { id: payment.id },
-                    select: { status: true },
+                    select: { status: true, offerId: true },
                 });
                 if (existing?.status === 'SUCCESS') {
-                    this.logger.log(`Payment intent ${paymentIntentId} already fulfilled. Skipping.`);
+                    this.logger.log(`Payment intent ${paymentIntentId} already fulfilled. Healing offer fulfillment if needed.`);
+                    if (existing.offerId) {
+                        await tx.offer.updateMany({
+                            where: {
+                                id: existing.offerId,
+                                fulfillmentStatus: OfferFulfillmentStatus.AWAITING_PAYMENT,
+                            },
+                            data: { fulfillmentStatus: OfferFulfillmentStatus.IN_PREPARATION },
+                        });
+                    }
                     return null;
                 }
                 throw new BadRequestException(
@@ -1468,32 +1477,44 @@ export class PaymentsService {
                 this.logger.warn(`Fulfillment recompute after payment failed: ${err?.message}`),
             );
 
-            // Notify Merchant
-            if (orderTransitioned) {
-                const prepareCopy = paymentConfirmedPrepare({
-                    isMulti: isMultiItemOrder({ requestType }),
+            // Always notify merchant when an offer is paid (multi: unlock that part immediately).
+            // Full-order transition keeps the stronger "ready for preparation" copy.
+            const prepareCopy = paymentConfirmedPrepare({
+                isMulti: isMultiItemOrder({ requestType }),
+                orderNumber,
+            });
+            await this.notifications.create({
+                recipientId: storeOwnerId,
+                recipientRole: 'VENDOR',
+                titleAr: orderTransitioned
+                    ? 'طلب جديد جاهز للتجهيز! 📦'
+                    : 'تم دفع قطعة في طلب مجمع 💵',
+                titleEn: orderTransitioned
+                    ? 'New Order Ready for Preparation! 📦'
+                    : 'A part was paid on a multi-item order 💵',
+                messageAr: orderTransitioned
+                    ? prepareCopy.messageAr
+                    : `تم تأكيد دفع العرض #${offerNumber} في الطلب #${orderNumber}. يمكنك تجهيز هذه القطعة الآن.`,
+                messageEn: orderTransitioned
+                    ? prepareCopy.messageEn
+                    : `Payment confirmed for offer #${offerNumber} on order #${orderNumber}. You can prepare this part now.`,
+                type: 'payment',
+                link: `/merchant/orders/${orderId}`,
+                metadata: {
+                    orderId,
+                    offerId: payment.offerId,
+                    invoiceNumber,
                     orderNumber,
-                });
-                await this.notifications.create({
-                    recipientId: storeOwnerId,
-                    recipientRole: 'VENDOR',
-                    titleAr: 'طلب جديد جاهز للتجهيز! 📦',
-                    titleEn: 'New Order Ready for Preparation! 📦',
-                    messageAr: prepareCopy.messageAr,
-                    messageEn: prepareCopy.messageEn,
-                    type: 'payment',
-                    link: `/merchant/orders/${orderId}`,
-                    metadata: {
-                        orderId,
-                        invoiceNumber,
-                        orderNumber,
-                        amount: totalAmount,
-                        waEvent: 'INVOICE_ISSUED',
-                        ctaAr: 'عرض التفاصيل',
-                        ctaEn: 'View Details',
-                    },
-                }).catch(() => {});
+                    offerNumber,
+                    amount: totalAmount,
+                    waEvent: 'INVOICE_ISSUED',
+                    ctaAr: 'عرض التفاصيل',
+                    ctaEn: 'View Details',
+                },
+            }).catch(() => {});
 
+            // Notify Merchant / Admin
+            if (orderTransitioned) {
                 this.notifications.notifyAdmins({
                     titleAr: 'تم سداد طلب بنجاح 💵',
                     titleEn: 'Order Payment Successful 💵',
@@ -1693,7 +1714,14 @@ export class PaymentsService {
             transactionNumber: payment.transactionNumber,
             totalAmount: payment.totalAmount,
             orderId: payment.orderId,
-            orderStatus: payment.order.status
+            orderStatus: payment.order.status,
+            offerId: payment.offerId,
+            fulfillmentStatus: (
+                await this.prisma.offer.findUnique({
+                    where: { id: offerId },
+                    select: { fulfillmentStatus: true },
+                })
+            )?.fulfillmentStatus ?? null,
         };
     }
 
@@ -1708,7 +1736,7 @@ export class PaymentsService {
 
         const payment = await this.prisma.paymentTransaction.findFirst({
             where: { stripePaymentId: paymentIntentId },
-            select: { id: true, customerId: true, status: true },
+            select: { id: true, customerId: true, status: true, offerId: true },
         });
 
         if (!payment) {
@@ -1718,6 +1746,8 @@ export class PaymentsService {
             throw new ForbiddenException('Not owner of this payment');
         }
         if (payment.status === 'SUCCESS') {
+            // Heal drift: SUCCESS payment must never leave offer on AWAITING_PAYMENT
+            await this.ensurePaidOfferInPreparation(payment.offerId ?? undefined);
             return { status: 'SUCCESS', alreadyFulfilled: true };
         }
 
@@ -1733,6 +1763,38 @@ export class PaymentsService {
         }
 
         return { status: intent.status };
+    }
+
+    /**
+     * SUCCESS payment must unlock merchant fulfillment (IN_PREPARATION).
+     * Heals drift if webhook/confirm claimed payment without advancing the offer.
+     */
+    private async ensurePaidOfferInPreparation(offerId?: string | null) {
+        if (!offerId) return;
+        const updated = await this.prisma.offer.updateMany({
+            where: {
+                id: offerId,
+                fulfillmentStatus: OfferFulfillmentStatus.AWAITING_PAYMENT,
+            },
+            data: { fulfillmentStatus: OfferFulfillmentStatus.IN_PREPARATION },
+        });
+        if (updated.count > 0) {
+            const offer = await this.prisma.offer.findUnique({
+                where: { id: offerId },
+                select: { orderId: true },
+            });
+            if (offer?.orderId) {
+                await this.prisma.order.update({
+                    where: { id: offer.orderId },
+                    data: { updatedAt: new Date() },
+                });
+                await this.offerFulfillment.recomputeOrderStatus(offer.orderId).catch((err) =>
+                    this.logger.warn(
+                        `Fulfillment recompute after payment heal failed: ${err?.message}`,
+                    ),
+                );
+            }
+        }
     }
 
     /**

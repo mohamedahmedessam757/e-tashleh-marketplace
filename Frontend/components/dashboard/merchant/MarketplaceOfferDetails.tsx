@@ -418,11 +418,21 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             if (order?.status && terminal.includes(String(order.status).toUpperCase())) {
                 return [];
             }
-            return merchantAcceptedOffers.filter(
-                (o) => normalizeOfferFulfillmentStatus(o.fulfillmentStatus) === 'AWAITING_PAYMENT',
+            const paidOfferIds = new Set(
+                (order?.payments || [])
+                    .filter((p: any) => String(p.status || '').toUpperCase() === 'SUCCESS' && p.offerId)
+                    .map((p: any) => String(p.offerId)),
             );
+            return merchantAcceptedOffers.filter((o) => {
+                if (paidOfferIds.has(String(o.id))) return false;
+                const offerPayments = (o as any).payments as Array<{ status?: string }> | undefined;
+                if (offerPayments?.some((p) => String(p.status || '').toUpperCase() === 'SUCCESS')) {
+                    return false;
+                }
+                return normalizeOfferFulfillmentStatus(o.fulfillmentStatus) === 'AWAITING_PAYMENT';
+            });
         },
-        [merchantAcceptedOffers, order?.status],
+        [merchantAcceptedOffers, order?.status, order?.payments],
     );
     const offersNeedingVerification = useMemo(
         () =>
@@ -2051,7 +2061,15 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     </span>
                                                                 )}
                                                                 {!fulfillmentLocked &&
-                                                                    normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'AWAITING_PAYMENT' && (
+                                                                    normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'AWAITING_PAYMENT' &&
+                                                                    !((order?.payments || []) as Array<{ status?: string; offerId?: string }>).some(
+                                                                        (p) =>
+                                                                            String(p.offerId) === String(partOffer.id) &&
+                                                                            String(p.status || '').toUpperCase() === 'SUCCESS',
+                                                                    ) &&
+                                                                    !((partOffer as any).payments as Array<{ status?: string }> | undefined)?.some(
+                                                                        (p) => String(p.status || '').toUpperCase() === 'SUCCESS',
+                                                                    ) && (
                                                                     <span className="px-4 py-2 rounded-lg text-xs font-bold bg-orange-500/10 text-orange-300 border border-orange-500/25 flex items-center gap-1.5">
                                                                         <DollarSign size={14} />
                                                                         {isAr ? 'مقفل — بانتظار دفع العميل' : 'Locked — awaiting customer payment'}

@@ -88,7 +88,15 @@ export class LoyaltyGateway implements OnGatewayConnection, OnGatewayDisconnect,
     }
 
     emitLoyaltyUpdate(targetId: string, role: 'CUSTOMER' | 'VENDOR', data: any) {
-        const room = `${role}_${targetId}`;
-        this.server.to(room).emit('loyaltyUpdated', data);
+        if (!this.server) {
+            this.logger.warn(`emitLoyaltyUpdate skipped (no WS server): ${role}_${targetId}`);
+            return;
+        }
+        try {
+            const room = `${role}_${targetId}`;
+            this.server.to(room).emit('loyaltyUpdated', data);
+        } catch (e: any) {
+            this.logger.warn(`emitLoyaltyUpdate failed: ${e?.message || e}`);
+        }
     }
 }

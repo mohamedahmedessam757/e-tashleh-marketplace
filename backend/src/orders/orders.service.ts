@@ -597,7 +597,7 @@ export class OrdersService {
                         orderBy: { createdAt: 'desc' }
                     },
                     payments: {
-                        select: { id: true, createdAt: true, status: true },
+                        select: { id: true, createdAt: true, status: true, offerId: true },
                         orderBy: { createdAt: 'asc' },
                         take: 3,
                     },
@@ -673,6 +673,11 @@ export class OrdersService {
                                 },
                             },
                         },
+                        payments: {
+                            where: { status: 'SUCCESS' },
+                            select: { id: true, status: true, paidAt: true },
+                            take: 1,
+                        },
                     },
                 },
                 invoices: { 
@@ -685,7 +690,7 @@ export class OrdersService {
                 verificationDocuments: { orderBy: { createdAt: 'desc' } },
                 shippingAddresses: { orderBy: { createdAt: 'asc' } },
                 payments: {
-                    select: { id: true, createdAt: true, status: true },
+                    select: { id: true, createdAt: true, status: true, offerId: true },
                     orderBy: { createdAt: 'asc' },
                 },
                 _count: {

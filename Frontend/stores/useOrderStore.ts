@@ -142,6 +142,8 @@ export interface OrderOffer {
     cartBatchSize?: number | null;
     handoverPending?: boolean;
     fulfillmentStatus?: string;
+    /** SUCCESS payment rows when API includes them (merchant/customer paid SSOT). */
+    payments?: Array<{ id?: string; status?: string; paidAt?: string }>;
     preparedAt?: string;
     verificationSubmittedAt?: string;
     readyForShippingAt?: string;
@@ -1063,6 +1065,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     cartBatchSize: offer.cartBatchSize ?? null,
                     handoverPending: offer.handoverPending ?? offer.fulfillmentStatus === 'VERIFICATION_SUCCESS',
                     fulfillmentStatus: offer.fulfillmentStatus || offer.fulfillment_status,
+                    payments: Array.isArray(offer.payments)
+                        ? offer.payments.map((p: any) => ({
+                              id: p.id,
+                              status: p.status,
+                              paidAt: p.paidAt || p.paid_at,
+                          }))
+                        : undefined,
                     preparedAt: offer.preparedAt || offer.prepared_at,
                     verificationSubmittedAt: offer.verificationSubmittedAt || offer.verification_submitted_at,
                     readyForShippingAt: offer.readyForShippingAt || offer.ready_for_shipping_at,
@@ -1156,6 +1165,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                       }))
                     : [],
                 invoices: o.invoices || [],
+                payments: Array.isArray(o.payments)
+                    ? o.payments.map((p: any) => ({
+                          id: p.id,
+                          status: p.status,
+                          createdAt: p.createdAt || p.created_at,
+                          paidAt: p.paidAt || p.paid_at,
+                          offerId: p.offerId || p.offer_id || null,
+                      }))
+                    : [],
                 warranty_active_at: o.warranty_active_at || o.warrantyActiveAt,
                 warranty_end_at: o.warranty_end_at || o.warrantyEndAt,
                 review: (() => {
