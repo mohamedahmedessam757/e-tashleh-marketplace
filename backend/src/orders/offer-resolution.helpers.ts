@@ -6,6 +6,11 @@ export function getOfferReturnWindowEndsAt(deliveredAt: Date): Date {
     return new Date(deliveredAt.getTime() + windowMs);
 }
 
+/**
+ * Short post-delivery return/dispute window only.
+ * Warranty claims after the window use isOfferWarrantyClaimEligible / warranty UI —
+ * they must not keep generic return/dispute CTAs alive.
+ */
 export function isOfferReturnEligible(input: {
     fulfillmentStatus: OfferFulfillmentStatus;
     deliveredAt: Date | null;
@@ -23,10 +28,7 @@ export function isOfferReturnEligible(input: {
     if (!input.deliveredAt) return false;
     const endsAt = getOfferReturnWindowEndsAt(input.deliveredAt);
     const now = input.now ?? Date.now();
-    if (now <= endsAt.getTime()) return true;
-    // After short window: still eligible when offer warranty is active (warranty claims).
-    if (input.warrantyEndAt && new Date(input.warrantyEndAt).getTime() > now) return true;
-    return false;
+    return now <= endsAt.getTime();
 }
 
 export function aggregateMultiItemDeliveryStatus(

@@ -2120,6 +2120,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                               resolutionLocked,
                                                               hasOpenCase,
                                                           );
+                                                const isWarrantyEligible = Boolean(
+                                                    (meta as { isWarrantyEligible?: boolean } | undefined)
+                                                        ?.isWarrantyEligible,
+                                                );
+                                                const warrantyEndAt =
+                                                    (typeof meta?.warrantyEndAt === 'string'
+                                                        ? meta.warrantyEndAt
+                                                        : null) ||
+                                                    (acceptedPartOffer as { warrantyEndAt?: string })
+                                                        .warrantyEndAt ||
+                                                    null;
                                                 const cardOffer: PartReturnWindowOffer = {
                                                     offerId: acceptedPartOffer.id,
                                                     orderPartId: p.id,
@@ -2133,8 +2144,10 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     completedAt: meta?.completedAt ?? acceptedPartOffer.completedAt ?? null,
                                                     returnWindowEndsAt: meta?.returnWindowEndsAt ?? null,
                                                     isReturnEligible,
+                                                    isWarrantyEligible,
                                                     resolutionLocked,
                                                     hasOpenCase,
+                                                    warrantyEndAt,
                                                 };
                                                 return (
                                                     <div className="border-t border-white/5 px-5 py-4 space-y-3">
@@ -2144,14 +2157,17 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                             onReturn={openReturnForPart}
                                                             onDispute={openDisputeForPart}
                                                         />
-                                                        {typeof meta?.warrantyEndAt === 'string' && meta.warrantyEndAt && (
-                                                            <WarrantyProtectionCard
-                                                                order={{
-                                                                    ...order,
-                                                                    warranty_end_at: meta.warrantyEndAt,
-                                                                }}
-                                                                variant="compact"
-                                                                onClaim={() => {
+                                                        {warrantyEndAt &&
+                                                            (isWarrantyEligible || !isReturnEligible) && (
+                                                            <WarrantyBadge
+                                                                endDate={warrantyEndAt}
+                                                                status={
+                                                                    new Date(warrantyEndAt).getTime() >
+                                                                    Date.now()
+                                                                        ? 'WARRANTY_ACTIVE'
+                                                                        : 'WARRANTY_EXPIRED'
+                                                                }
+                                                                onReplace={() => {
                                                                     setReturnInitialReason('warranty_claim');
                                                                     openReturnForPart(cardOffer);
                                                                 }}

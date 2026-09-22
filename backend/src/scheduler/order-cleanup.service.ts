@@ -57,7 +57,19 @@ export class OrderCleanupService {
                 await this.handleCriticalPreparationFailures(pending);
                 await this.handleNonMatchingToCorrection();
                 await this.handleCorrectionPeriodExpiry(pending);
-                const correctionPending = await this.handleExpiredOfferCorrectionDocs();
+                const correctionPending = await this.handleExpiredOfferCorrectionDocs().catch(
+                    (err) => {
+                        this.logger.error(
+                            'handleExpiredOfferCorrectionDocs failed (continuing cleanup):',
+                            err,
+                        );
+                        return [] as Array<{
+                            orderId: string;
+                            offerIds: string[];
+                            previousStatus?: string | null;
+                        }>;
+                    },
+                );
                 pending.push(...correctionPending);
                 // Formerly hourly — keep ≤1 minute lag when nobody has the order open
                 await this.handleOfferAutoCompletion();

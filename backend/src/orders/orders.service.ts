@@ -3616,11 +3616,19 @@ export class OrdersService {
                 const inShortWindow =
                     offerDeliveredAt != null && Date.now() <= returnExpiryDate.getTime();
                 const warrantyActive = isOfferInWarranty(offer as any);
+                // Short return/dispute window only — warranty claims use isWarrantyEligible.
                 const isReturnEligible =
                     !isOfferCompleted &&
                     offer.fulfillmentStatus === OfferFulfillmentStatus.DELIVERED &&
                     offerDeliveredAt != null &&
-                    (inShortWindow || warrantyActive);
+                    inShortWindow;
+                const isWarrantyEligible =
+                    warrantyActive ||
+                    (!inShortWindow &&
+                        !!(offer as { hasWarranty?: boolean }).hasWarranty &&
+                        !!(offer as { warrantyDuration?: string | null }).warrantyDuration &&
+                        (offer.fulfillmentStatus === OfferFulfillmentStatus.DELIVERED ||
+                            offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED));
 
                 const offerPayment = order.payments?.find((p) => p.offerId === offer.id);
 
@@ -3640,7 +3648,7 @@ export class OrdersService {
                     deliveredAt: itemDeliveredAt,
                     returnExpiryDate: returnExpiryDate,
                     isReturnEligible: isReturnEligible,
-                    isWarrantyEligible: warrantyActive,
+                    isWarrantyEligible: isWarrantyEligible || warrantyActive,
                     storeName: offer.store?.name || order.store?.name || 'Verified Seller',
                     vehicleMake: order.vehicleMake,
                     vehicleModel: order.vehicleModel,

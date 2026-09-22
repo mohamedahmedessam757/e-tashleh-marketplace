@@ -19,6 +19,8 @@ export interface FulfillmentSummaryPartHint {
   completedAt?: string | null;
   returnWindowEndsAt?: string | null;
   isReturnEligible?: boolean;
+  isWarrantyEligible?: boolean;
+  inShortReturnWindow?: boolean;
   resolutionLocked?: boolean;
   hasOpenCase?: boolean;
   warrantyEndAt?: string | null;

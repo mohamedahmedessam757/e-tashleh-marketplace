@@ -23,7 +23,9 @@ function asDate(value: Date | string | null | undefined): Date | null {
 
 /**
  * True when this offer's warranty period is still active.
- * Prefers warrantyEndAt; falls back to duration from warrantyActiveAt/completedAt/deliveredAt.
+ * Prefers warrantyEndAt; falls back to duration from warrantyActiveAt/completedAt only.
+ * Do NOT use deliveredAt — that would treat warranty as active during the short
+ * return window and keep generic return/dispute CTAs alive after the window.
  */
 export function isOfferInWarranty(
   offer: WarrantyOfferLike,
@@ -34,10 +36,7 @@ export function isOfferInWarranty(
 
   if (!offerHasUsableWarranty(offer)) return false;
 
-  const start =
-    asDate(offer.warrantyActiveAt) ||
-    asDate(offer.completedAt) ||
-    asDate(offer.deliveredAt);
+  const start = asDate(offer.warrantyActiveAt) || asDate(offer.completedAt);
   if (!start) return false;
 
   const computedEnd = calculateWarrantyEndDate(
@@ -48,8 +47,27 @@ export function isOfferInWarranty(
 }
 
 /**
+ * Past short window + usable warranty (even before cron sets warrantyActiveAt).
+ * Used for warranty CTAs / claims after the 24h return window.
+ */
+export function isOfferPastWindowWarrantyEligible(
+  offer: WarrantyOfferLike & { fulfillmentStatus?: string | null },
+  opts: {
+    inShortReturnWindow: boolean;
+    now?: Date;
+  },
+): boolean {
+  if (opts.inShortReturnWindow) return false;
+  const status = String(offer.fulfillmentStatus || '').toUpperCase();
+  if (status && status !== 'DELIVERED' && status !== 'COMPLETED') return false;
+  if (isOfferInWarranty(offer, opts.now ?? new Date())) return true;
+  return offerHasUsableWarranty(offer);
+}
+
+/**
  * Short post-delivery return window OR (warranty claim/replacement while in warranty).
  * Disputes should not use the warranty branch — callers pass reason only for returns.
+ * Warranty claims remain allowed after auto-complete (COMPLETED + resolutionLocked).
  */
 export function isOfferWarrantyClaimEligible(
   offer: WarrantyOfferLike & {
@@ -62,11 +80,9 @@ export function isOfferWarrantyClaimEligible(
     now?: Date;
   },
 ): boolean {
-  if (offer.resolutionLocked) return false;
-  if (String(offer.fulfillmentStatus || '') === 'COMPLETED') return false;
   if (opts.inShortReturnWindow) return true;
   if (!isWarrantyClaimReason(reason)) return false;
-  return isOfferInWarranty(offer, opts.now ?? new Date());
+  return isOfferPastWindowWarrantyEligible(offer, opts);
 }
 
 export type CompletionWarrantyResult = {

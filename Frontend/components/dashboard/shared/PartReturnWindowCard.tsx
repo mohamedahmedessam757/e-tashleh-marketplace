@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCcw, CheckCircle2, Lock } from 'lucide-react';
 import { OrderCountdown } from '../../ui/OrderCountdown';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../../utils/orderSla';
+import { getServerNowMs } from '../../../utils/serverClock';
 
 export interface PartReturnWindowOffer {
     offerId: string;
@@ -13,9 +14,13 @@ export interface PartReturnWindowOffer {
     deliveredAt?: string | null;
     completedAt?: string | null;
     returnWindowEndsAt?: string | null;
+    /** Short 24h return/dispute window only */
     isReturnEligible?: boolean;
+    /** Past short window with usable warranty */
+    isWarrantyEligible?: boolean;
     resolutionLocked?: boolean;
     hasOpenCase?: boolean;
+    warrantyEndAt?: string | null;
 }
 
 interface PartReturnWindowCardProps {
@@ -24,6 +29,19 @@ interface PartReturnWindowCardProps {
     onReturn: (offer: PartReturnWindowOffer) => void;
     onDispute: (offer: PartReturnWindowOffer) => void;
     className?: string;
+}
+
+function isShortWindowOpen(offer: PartReturnWindowOffer): boolean {
+    if (offer.isReturnEligible === true) return true;
+    if (offer.isReturnEligible === false) return false;
+    const endMs = offer.returnWindowEndsAt
+        ? new Date(offer.returnWindowEndsAt).getTime()
+        : offer.deliveredAt
+          ? new Date(offer.deliveredAt).getTime() +
+            POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000
+          : null;
+    if (endMs == null) return false;
+    return getServerNowMs() < endMs;
 }
 
 export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
@@ -36,16 +54,23 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
     const status = String(offer.fulfillmentStatus || '').toUpperCase();
     const isDelivered = status === 'DELIVERED';
     const hasOpenCase = !!offer.hasOpenCase;
-    // Locked without an open case = return window closed. Keep DELIVERED+locked+open-case as dispute UI.
     const isCompleted =
         status === 'COMPLETED' || (!!offer.resolutionLocked && !hasOpenCase);
-    // While fulfillment-summary is still loading, isReturnEligible may be undefined —
-    // keep the timer visible instead of flashing "expired".
+    const inWarrantyPhase =
+        !!offer.isWarrantyEligible ||
+        (!!offer.warrantyEndAt && new Date(offer.warrantyEndAt).getTime() > getServerNowMs());
+
+    // Generic return/dispute CTAs only while the short post-delivery window is open.
+    // After that, warranty parts switch to the warranty banner (not this card's actions).
     const canAct =
         isDelivered &&
         !hasOpenCase &&
         !isCompleted &&
-        offer.isReturnEligible !== false;
+        !inWarrantyPhase &&
+        isShortWindowOpen(offer);
+
+    // Hide entirely once warranty phase owns the CTA — parent shows WarrantyBadge.
+    if (inWarrantyPhase && !hasOpenCase && !canAct) return null;
 
     if (!isDelivered && !isCompleted) return null;
 
@@ -124,7 +149,7 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                         </div>
                     </>
                 )}
-                {isDelivered && !canAct && !hasOpenCase && !isCompleted && offer.isReturnEligible === false && (
+                {isDelivered && !canAct && !hasOpenCase && !isCompleted && !inWarrantyPhase && (
                     <div className="flex items-center gap-2 text-red-400 text-[11px] font-bold">
                         <CheckCircle2 size={14} />
                         {isAr ? 'انتهت مهلة الإرجاع لهذه القطعة' : 'Return window expired for this item'}

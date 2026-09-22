@@ -3,6 +3,9 @@ import { OrderStatus } from '@prisma/client';
 import {
   calculateWarrantyEndDate,
   resolveCompletionWarranty,
+  isOfferInWarranty,
+  isOfferPastWindowWarrantyEligible,
+  isOfferWarrantyClaimEligible,
 } from './warranty-activation.util';
 
 describe('calculateWarrantyEndDate', () => {
@@ -66,5 +69,63 @@ describe('resolveCompletionWarranty', () => {
         OrderStatus.DELIVERED,
       ),
     ).toEqual({ activate: false, effectiveStatus: OrderStatus.DELIVERED });
+  });
+});
+
+describe('isOfferInWarranty / past-window warranty', () => {
+  it('does not treat deliveredAt alone as active warranty', () => {
+    expect(
+      isOfferInWarranty({
+        hasWarranty: true,
+        warrantyDuration: '3months',
+        deliveredAt: new Date('2026-01-01T00:00:00Z'),
+      }),
+    ).toBe(false);
+  });
+
+  it('allows warranty claim after short window even before activation fields', () => {
+    expect(
+      isOfferWarrantyClaimEligible(
+        {
+          hasWarranty: true,
+          warrantyDuration: '3months',
+          fulfillmentStatus: 'DELIVERED',
+          resolutionLocked: false,
+          deliveredAt: new Date('2026-01-01T00:00:00Z'),
+        },
+        'warranty_claim',
+        { inShortReturnWindow: false },
+      ),
+    ).toBe(true);
+  });
+
+  it('allows warranty claim after COMPLETED + locked when warranty active', () => {
+    const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    expect(
+      isOfferWarrantyClaimEligible(
+        {
+          hasWarranty: true,
+          warrantyDuration: '3months',
+          fulfillmentStatus: 'COMPLETED',
+          resolutionLocked: true,
+          warrantyEndAt: end,
+        },
+        'warranty_claim',
+        { inShortReturnWindow: false },
+      ),
+    ).toBe(true);
+  });
+
+  it('marks past-window warranty phase for usable warranty offers', () => {
+    expect(
+      isOfferPastWindowWarrantyEligible(
+        {
+          hasWarranty: true,
+          warrantyDuration: '3months',
+          fulfillmentStatus: 'DELIVERED',
+        },
+        { inShortReturnWindow: false },
+      ),
+    ).toBe(true);
   });
 });

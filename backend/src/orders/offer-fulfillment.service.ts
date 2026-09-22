@@ -23,8 +23,9 @@ import { aggregateMultiItemDeliveryStatus } from './offer-resolution.helpers';
 import {
     calculateWarrantyEndDate,
     resolveCompletionWarranty,
-    isOfferInWarranty,
+    isOfferPastWindowWarrantyEligible,
     isOfferWarrantyClaimEligible,
+    offerHasUsableWarranty,
 } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
@@ -1001,6 +1002,9 @@ export class OfferFulfillmentService {
             completedAt?: Date | null;
             resolutionLocked?: boolean;
             hasOpenCase?: boolean;
+            hasWarranty?: boolean | null;
+            warrantyDuration?: string | null;
+            warrantyActiveAt?: Date | null;
             warrantyEndAt?: Date | null;
         }>,
     ) {
@@ -1184,6 +1188,27 @@ export class OfferFulfillmentService {
         },
     ) {
         const partName = offer.orderPart?.name || 'this item';
+        const endsAt = this.getOfferReturnWindowEndsAt(offer);
+        const inShortWindow = !!(endsAt && Date.now() <= endsAt.getTime());
+
+        // Past short window: warranty claims/replacements still allowed while warranty is usable,
+        // including after auto-complete (COMPLETED + resolutionLocked).
+        // Disputes never get the warranty extension.
+        if (
+            opts?.mode !== 'dispute' &&
+            isOfferWarrantyClaimEligible(offer, opts?.reason ?? undefined, {
+                inShortReturnWindow: inShortWindow,
+            })
+        ) {
+            const status = offer.fulfillmentStatus;
+            if (
+                status === OfferFulfillmentStatus.DELIVERED ||
+                status === OfferFulfillmentStatus.COMPLETED
+            ) {
+                return;
+            }
+        }
+
         if (offer.resolutionLocked || offer.fulfillmentStatus === OfferFulfillmentStatus.COMPLETED) {
             throw new BadRequestException(
                 `Return/dispute window has closed for "${partName}" (item completed).`,
@@ -1199,20 +1224,7 @@ export class OfferFulfillmentService {
                 `Delivery timestamp missing for "${partName}". Please contact support.`,
             );
         }
-        const endsAt = this.getOfferReturnWindowEndsAt(offer);
-        const inShortWindow = !!(endsAt && Date.now() <= endsAt.getTime());
         if (inShortWindow) return;
-
-        // Past short window: warranty claims/replacements still allowed while offer warranty is active.
-        // Disputes never get the warranty extension.
-        if (
-            opts?.mode !== 'dispute' &&
-            isOfferWarrantyClaimEligible(offer, opts?.reason ?? undefined, {
-                inShortReturnWindow: false,
-            })
-        ) {
-            return;
-        }
 
         const returnHours = this.orderDurationConfig.getReturnWindowHoursSync();
         throw new BadRequestException(
@@ -1220,6 +1232,7 @@ export class OfferFulfillmentService {
         );
     }
 
+    /** Short 24h return/dispute window only — not warranty claims. */
     isOfferReturnEligible(offer: {
         fulfillmentStatus: OfferFulfillmentStatus;
         deliveredAt?: Date | null;
@@ -1235,10 +1248,23 @@ export class OfferFulfillmentService {
         if (offer.fulfillmentStatus !== OfferFulfillmentStatus.DELIVERED) return false;
         if (!offer.deliveredAt) return false;
         const endsAt = this.getOfferReturnWindowEndsAt(offer);
-        const inShortWindow = endsAt != null && Date.now() <= endsAt.getTime();
-        if (inShortWindow) return true;
-        // Warranty-active offers remain eligible for warranty claims after the short window.
-        return isOfferInWarranty(offer);
+        return endsAt != null && Date.now() <= endsAt.getTime();
+    }
+
+    /** After short window (or completed), usable warranty → show warranty CTA / allow claim. */
+    isOfferWarrantyPhase(offer: {
+        fulfillmentStatus: OfferFulfillmentStatus;
+        deliveredAt?: Date | null;
+        resolutionLocked?: boolean;
+        hasWarranty?: boolean | null;
+        warrantyDuration?: string | null;
+        warrantyEndAt?: Date | null;
+        warrantyActiveAt?: Date | null;
+        completedAt?: Date | null;
+    }) {
+        const endsAt = this.getOfferReturnWindowEndsAt(offer);
+        const inShortWindow = !!(endsAt && Date.now() <= endsAt.getTime());
+        return isOfferPastWindowWarrantyEligible(offer, { inShortReturnWindow: inShortWindow });
     }
 
     async completeOfferAfterWindow(
@@ -1330,21 +1356,45 @@ export class OfferFulfillmentService {
             completedAt?: Date | null;
             resolutionLocked?: boolean;
             orderPartId?: string | null;
+            hasWarranty?: boolean | null;
+            warrantyDuration?: string | null;
+            warrantyActiveAt?: Date | null;
             warrantyEndAt?: Date | null;
         },
         hasOpenCase = false,
     ) {
         const endsAt = this.getOfferReturnWindowEndsAt(offer);
+        const inShortWindow = !!(endsAt && Date.now() <= endsAt.getTime());
         const isReturnEligible =
             !hasOpenCase && this.isOfferReturnEligible(offer);
+        const isWarrantyEligible =
+            !hasOpenCase && this.isOfferWarrantyPhase(offer);
+
+        let warrantyEndAt = offer.warrantyEndAt ?? null;
+        // Before cron activates warranty fields, still expose a provisional end so
+        // the customer UI can switch from return/dispute to the warranty banner.
+        if (!warrantyEndAt && isWarrantyEligible && offerHasUsableWarranty(offer)) {
+            const start =
+                offer.warrantyActiveAt ||
+                offer.completedAt ||
+                endsAt ||
+                new Date();
+            warrantyEndAt = calculateWarrantyEndDate(
+                start instanceof Date ? start : new Date(start),
+                String(offer.warrantyDuration),
+            );
+        }
+
         return {
             deliveredAt: offer.deliveredAt?.toISOString() ?? null,
             completedAt: offer.completedAt?.toISOString() ?? null,
             returnWindowEndsAt: endsAt?.toISOString() ?? null,
+            inShortReturnWindow: inShortWindow,
             isReturnEligible,
+            isWarrantyEligible,
             resolutionLocked: !!offer.resolutionLocked,
             hasOpenCase,
-            warrantyEndAt: offer.warrantyEndAt?.toISOString() ?? null,
+            warrantyEndAt: warrantyEndAt?.toISOString() ?? null,
         };
     }
 }
