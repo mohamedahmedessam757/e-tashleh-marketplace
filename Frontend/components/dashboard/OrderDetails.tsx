@@ -596,13 +596,16 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
     const BackIcon = language === 'ar' ? ChevronRight : ChevronLeft;
 
-    const openReturnForPart = (offer: PartReturnWindowOffer) => {
+    const openReturnForPart = (
+        offer: PartReturnWindowOffer,
+        opts?: { initialReason?: string },
+    ) => {
         setResolutionPart({
             orderPartId: offer.orderPartId || undefined,
             partName: offer.partName,
             merchantName: offer.merchantName,
         });
-        setReturnInitialReason(undefined);
+        setReturnInitialReason(opts?.initialReason);
         setShowReturnModal(true);
     };
 
@@ -1258,8 +1261,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                 isMultiPartOrder,
                             );
                             if (!resolved) return;
-                            setReturnInitialReason('warranty_claim');
                             setResolutionPart(resolved);
+                            setReturnInitialReason('warranty_claim');
                             setShowReturnModal(true);
                         }} 
                     />
@@ -2167,11 +2170,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                 warrantyEndAtOverride={warrantyEndAt}
                                                                 partLabel={p.name}
                                                                 onClaim={(offerId) => {
-                                                                    setReturnInitialReason('warranty_claim');
-                                                                    openReturnForPart({
-                                                                        ...cardOffer,
-                                                                        offerId: String(offerId || acceptedPartOffer.id),
-                                                                    });
+                                                                    openReturnForPart(
+                                                                        {
+                                                                            ...cardOffer,
+                                                                            offerId: String(
+                                                                                offerId || acceptedPartOffer.id,
+                                                                            ),
+                                                                        },
+                                                                        { initialReason: 'warranty_claim' },
+                                                                    );
                                                                 }}
                                                             />
                                                         )}
@@ -2692,11 +2699,13 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 onClose={() => {
                     setShowReturnModal(false);
                     setResolutionPart(null);
+                    setReturnInitialReason(undefined);
                 }}
                 orderId={order.id}
                 orderPartId={modalOrderPartId}
                 eligibleParts={isMultiPartOrder ? eligibleResolutionParts : undefined}
                 initialReason={returnInitialReason}
+                lockReason={returnInitialReason === 'warranty_claim'}
                 merchantName={modalMerchantName}
                 partName={modalPartName}
                 onSuccess={refreshResolutionUi}

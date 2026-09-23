@@ -28,6 +28,8 @@ interface ReturnRequestModalProps {
     partName?: string;
     eligibleParts?: EligibleResolutionPart[];
     initialReason?: string;
+    /** When true (warranty path), reason is fixed to initialReason and not editable. */
+    lockReason?: boolean;
 }
 
 const USAGE_CONDITIONS = [
@@ -51,7 +53,8 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
     merchantName: initialMerchantName,
     partName: initialPartName,
     eligibleParts: initialEligibleParts,
-    initialReason
+    initialReason,
+    lockReason = false,
 }) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
@@ -113,6 +116,8 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
             });
         }
     }, [isOpen, initialOrderId, initialOrderPartId, initialPartName, initialMerchantName, initialReason]);
+
+    const reasonLocked = lockReason && !!initialReason;
 
     useEffect(() => {
         if (!isOpen || selectedPart || initialOrderPartId) return;
@@ -324,24 +329,53 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
                                 <div className="relative">
                                     <select 
                                         value={reason}
-                                        onChange={(e) => setReason(e.target.value)}
-                                        className={`w-full bg-[#0A0A0A] border rounded-2xl px-5 py-4 text-xs text-white outline-none transition-colors appearance-none cursor-pointer ${isAr ? 'text-right' : 'text-left'}
-                                        ${attemptedSubmit && !reason ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-cyan-500/50'}`}
+                                        onChange={(e) => {
+                                            if (reasonLocked) return;
+                                            setReason(e.target.value);
+                                        }}
+                                        disabled={reasonLocked}
+                                        aria-readonly={reasonLocked}
+                                        className={`w-full bg-[#0A0A0A] border rounded-2xl px-5 py-4 text-xs text-white outline-none transition-colors appearance-none ${
+                                            reasonLocked ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'
+                                        } ${isAr ? 'text-right' : 'text-left'}
+                                        ${attemptedSubmit && !reason ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : reasonLocked ? 'border-emerald-500/40 focus:border-emerald-500/50' : 'border-white/10 focus:border-cyan-500/50'}`}
                                     >
-                                        <option value="" className="bg-[#0A0A0A]">{t.dashboard.common?.select || (isAr ? 'اختر السبب...' : 'Select Reason...')}</option>
-                                        <option value="not_matching" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.not_matching}</option>
-                                        <option value="defective" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.defective}</option>
-                                        <option value="not_working" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.not_working}</option>
-                                        <option value="wrong_item" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.wrong_item}</option>
-                                        <option value="wrong_size" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.wrong_size}</option>
-                                        <option value="warranty_claim" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.warranty_claim}</option>
-                                        <option value="replacement" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.replacement}</option>
-                                        <option value="other" className="bg-[#0A0A0A]">{isAr ? 'أخرى - توضيح إضافي' : 'Other - Additional Context'}</option>
+                                        {reasonLocked ? (
+                                            <option value={initialReason} className="bg-[#0A0A0A]">
+                                                {initialReason === 'warranty_claim'
+                                                    ? t.dashboard.resolution.reasons.warranty_claim
+                                                    : initialReason === 'replacement'
+                                                      ? t.dashboard.resolution.reasons.replacement
+                                                      : initialReason}
+                                            </option>
+                                        ) : (
+                                            <>
+                                                <option value="" className="bg-[#0A0A0A]">{t.dashboard.common?.select || (isAr ? 'اختر السبب...' : 'Select Reason...')}</option>
+                                                <option value="not_matching" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.not_matching}</option>
+                                                <option value="defective" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.defective}</option>
+                                                <option value="not_working" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.not_working}</option>
+                                                <option value="wrong_item" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.wrong_item}</option>
+                                                <option value="wrong_size" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.wrong_size}</option>
+                                                <option value="warranty_claim" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.warranty_claim}</option>
+                                                <option value="replacement" className="bg-[#0A0A0A]">{t.dashboard.resolution.reasons.replacement}</option>
+                                                <option value="other" className="bg-[#0A0A0A]">{isAr ? 'أخرى - توضيح إضافي' : 'Other - Additional Context'}</option>
+                                            </>
+                                        )}
                                     </select>
-                                    <div className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'left-6' : 'right-6'} pointer-events-none text-white/20`}>
-                                        {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                                    </div>
+                                    {!reasonLocked && (
+                                        <div className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'left-6' : 'right-6'} pointer-events-none text-white/20`}>
+                                            {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                        </div>
+                                    )}
                                 </div>
+                                {reasonLocked && (
+                                    <p className="mt-2 text-[10px] font-bold text-emerald-400/80 flex items-center gap-1.5">
+                                        <ShieldCheck size={12} />
+                                        {isAr
+                                            ? 'السبب مقفل على مطالبة الضمان لهذه القطعة'
+                                            : 'Reason locked to warranty claim for this part'}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
