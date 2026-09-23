@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNumber,
@@ -131,6 +132,11 @@ export class AdminVerdictExtraDto {
   @Min(0)
   @Max(1_000_000)
   shippingCompanyLiability?: number;
+
+  /** When SHIPPING_COMPANY fault: include gateway + refund fees in carrier liability (default true). */
+  @IsOptional()
+  @IsBoolean()
+  includePlatformFeesInCarrierLiability?: boolean;
 
   @IsOptional()
   @IsString()

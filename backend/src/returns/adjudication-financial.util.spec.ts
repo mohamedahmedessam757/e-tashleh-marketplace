@@ -78,6 +78,8 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(r.shippingBearer).toBe('SHIPPING_COMPANY');
         // RT shipping (20) + gateway 3% + refund fee 1.5% on 100 = 24.5
         expect(r.shippingCompanyLiability).toBeCloseTo(24.5);
+        expect(r.shippingCompanyFeesInLiability).toBeCloseTo(4.5);
+        expect(r.includePlatformFeesInCarrierLiability).toBe(true);
         expect(r.platformRetainedAmount).toBe(0);
         expect(r.merchantWalletDebits.platformFees).toBe(0);
     });
@@ -107,7 +109,7 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(r.merchantWalletDebits.shipping).toBe(20);
     });
 
-    it('shipping company + refund no: zero customer refund, shipping liability still recorded', () => {
+    it('shipping company + refund no: zero customer refund, shipping+fees liability by default', () => {
         const r = computeAdjudicationFinancials({
             ...BASE,
             faultParty: 'SHIPPING_COMPANY',
@@ -116,9 +118,36 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(r.finalCustomerRefundAmount).toBe(0);
         expect(r.feeBearer).toBe('PLATFORM');
         expect(r.shippingBearer).toBe('SHIPPING_COMPANY');
-        expect(r.shippingCompanyLiability).toBe(20);
+        // Default: RT shipping (20) + fees (4.5) = 24.5
+        expect(r.shippingCompanyLiability).toBeCloseTo(24.5);
+        expect(r.shippingCompanyFeesInLiability).toBeCloseTo(4.5);
+        expect(r.includePlatformFeesInCarrierLiability).toBe(true);
         expect(r.merchantWalletDebits.platformFees).toBe(0);
         expect(r.refundExecutionStatusSeed).toBe('NOT_REQUIRED');
+    });
+
+    it('shipping company: admin can exclude platform fees from carrier liability', () => {
+        const r = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'SHIPPING_COMPANY',
+            finalRefundDecision: 'NO_CUSTOMER_REFUND',
+            includePlatformFeesInCarrierLiability: false,
+        });
+        expect(r.shippingCompanyLiability).toBe(20);
+        expect(r.shippingCompanyFeesInLiability).toBe(0);
+        expect(r.includePlatformFeesInCarrierLiability).toBe(false);
+    });
+
+    it('shipping company + refund yes still respects fee toggle off', () => {
+        const r = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'SHIPPING_COMPANY',
+            finalRefundDecision: 'REFUND_CUSTOMER',
+            includePlatformFeesInCarrierLiability: false,
+        });
+        expect(r.finalCustomerRefundAmount).toBe(100);
+        expect(r.shippingCompanyLiability).toBe(20);
+        expect(r.shippingCompanyFeesInLiability).toBe(0);
     });
 
     it('ignores non-finite fee percents and rounds money to cents', () => {

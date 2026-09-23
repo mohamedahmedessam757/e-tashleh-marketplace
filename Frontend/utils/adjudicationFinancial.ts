@@ -20,6 +20,8 @@ export interface AdjudicationPreviewInput {
     faultParty: AdjudicationFaultParty;
     finalRefundDecision?: FinalRefundDecision;
     maxRefundable?: number | null;
+    /** Default true for SHIPPING_COMPANY — include gateway + refund fees in carrier liability. */
+    includePlatformFeesInCarrierLiability?: boolean;
 }
 
 export interface AdjudicationPreviewResult {
@@ -35,6 +37,8 @@ export interface AdjudicationPreviewResult {
     customerFullRefund: boolean;
     merchantDebits: { shipping: number; platformFees: number };
     shippingCompanyLiability: number;
+    shippingCompanyFeesInLiability: number;
+    includePlatformFeesInCarrierLiability: boolean;
     showFeesOnCustomerNet: boolean;
     showShippingOnCustomerNet: boolean;
     finalRefundDecision: FinalRefundDecision;
@@ -66,6 +70,14 @@ function normalizeFinalRefundDecision(
     return fault === 'CLOSE_COMPLETE_REFUND' ? 'REFUND_CUSTOMER' : 'NO_CUSTOMER_REFUND';
 }
 
+function resolveIncludeFeesOnCarrier(
+    fault: string,
+    explicit: boolean | undefined,
+): boolean {
+    if (fault !== 'SHIPPING_COMPANY') return false;
+    return explicit !== false;
+}
+
 export function computeAdjudicationPreview(
     input: AdjudicationPreviewInput,
 ): AdjudicationPreviewResult {
@@ -77,6 +89,10 @@ export function computeAdjudicationPreview(
     const isCloseComplete = fault === 'CLOSE_COMPLETE_REFUND';
     const finalRefundDecision = normalizeFinalRefundDecision(input.finalRefundDecision, fault);
     const refundRequired = finalRefundDecision === 'REFUND_CUSTOMER';
+    const includePlatformFeesInCarrierLiability = resolveIncludeFeesOnCarrier(
+        fault,
+        input.includePlatformFeesInCarrierLiability,
+    );
 
     const gatewayFee = (orderPaidTotal * gatewayFeePct) / 100;
     const refundFee = (orderPaidTotal * refundFeePct) / 100;
@@ -88,9 +104,22 @@ export function computeAdjudicationPreview(
     let retained = 0;
     let merchantDebits = { shipping: 0, platformFees: 0 };
     let shippingCompanyLiability = 0;
+    let shippingCompanyFeesInLiability = 0;
     let customerFullRefund = false;
     let showFeesOnCustomerNet = true;
     let showShippingOnCustomerNet = false;
+
+    const applyShippingCompanyLiability = () => {
+        shippingCompanyFeesInLiability = includePlatformFeesInCarrierLiability
+            ? platformFees
+            : 0;
+        shippingCompanyLiability = shippingRoundtrip + shippingCompanyFeesInLiability;
+        shippingBearer = shippingCompanyLiability > 0 ? 'SHIPPING_COMPANY' : 'NONE';
+        feeBearer = 'PLATFORM';
+        retained = 0;
+        showFeesOnCustomerNet = false;
+        showShippingOnCustomerNet = false;
+    };
 
     if (!refundRequired) {
         if (fault === 'CUSTOMER') {
@@ -114,27 +143,24 @@ export function computeAdjudicationPreview(
             shippingCompanyLiability = 0;
             showFeesOnCustomerNet = false;
             showShippingOnCustomerNet = false;
+        } else if (fault === 'SHIPPING_COMPANY') {
+            applyShippingCompanyLiability();
+            net = 0;
         } else {
-            feeBearer = isMerchantFault(fault) ? 'MERCHANT' : fault === 'SHIPPING_COMPANY' ? 'PLATFORM' : 'CUSTOMER';
-            shippingBearer =
-                fault === 'SHIPPING_COMPANY'
-                    ? shippingRoundtrip > 0
-                        ? 'SHIPPING_COMPANY'
-                        : 'NONE'
-                    : isMerchantFault(fault)
-                      ? shippingRoundtrip > 0
-                          ? 'MERCHANT'
-                          : 'NONE'
-                      : shippingRoundtrip > 0
-                        ? 'CUSTOMER'
-                        : 'NONE';
+            feeBearer = isMerchantFault(fault) ? 'MERCHANT' : 'CUSTOMER';
+            shippingBearer = isMerchantFault(fault)
+                ? shippingRoundtrip > 0
+                    ? 'MERCHANT'
+                    : 'NONE'
+                : shippingRoundtrip > 0
+                  ? 'CUSTOMER'
+                  : 'NONE';
             retained = feeBearer === 'CUSTOMER' || feeBearer === 'MERCHANT' ? platformFees : 0;
             merchantDebits = {
                 shipping: shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0,
                 platformFees: feeBearer === 'MERCHANT' ? platformFees : 0,
             };
-            shippingCompanyLiability =
-                shippingBearer === 'SHIPPING_COMPANY' ? shippingRoundtrip : 0;
+            shippingCompanyLiability = 0;
             net = 0;
             showFeesOnCustomerNet = false;
             showShippingOnCustomerNet = false;
@@ -153,12 +179,9 @@ export function computeAdjudicationPreview(
         retained = platformFees;
         showFeesOnCustomerNet = false;
     } else if (fault === 'SHIPPING_COMPANY') {
-        feeBearer = 'PLATFORM';
-        shippingBearer = shippingRoundtrip > 0 ? 'SHIPPING_COMPANY' : 'NONE';
+        applyShippingCompanyLiability();
         net = orderPaidTotal;
         customerFullRefund = true;
-        shippingCompanyLiability = shippingRoundtrip + platformFees;
-        showFeesOnCustomerNet = false;
     } else {
         feeBearer = 'CUSTOMER';
         shippingBearer = shippingRoundtrip > 0 ? 'CUSTOMER' : 'NONE';
@@ -187,6 +210,8 @@ export function computeAdjudicationPreview(
         customerFullRefund,
         merchantDebits,
         shippingCompanyLiability,
+        shippingCompanyFeesInLiability,
+        includePlatformFeesInCarrierLiability,
         showFeesOnCustomerNet,
         showShippingOnCustomerNet,
         finalRefundDecision,

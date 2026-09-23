@@ -119,6 +119,9 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const [gatewayFeePct, setGatewayFeePct] = useState<number>(3);
     const [refundFeePct, setRefundFeePct] = useState<number>(1.50);
     const [shippingRoundtrip, setShippingRoundtrip] = useState<number>(0);
+    /** When SHIPPING_COMPANY: include Stripe gateway + refund fees in carrier liability (default ON). */
+    const [includePlatformFeesInCarrierLiability, setIncludePlatformFeesInCarrierLiability] =
+        useState(true);
     const [penaltyType, setPenaltyType] = useState<'FRAUD' | 'NEGLIGENCE' | null>(null);
     const [penaltyAmount, setPenaltyAmount] = useState<number>(50000);
     const [merchantBalance, setMerchantBalance] = useState<number | null>(null);
@@ -151,6 +154,9 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             return;
         }
         setFaultParty(next);
+        if (next === 'SHIPPING_COMPANY') {
+            setIncludePlatformFeesInCarrierLiability(true);
+        }
     };
 
     useEffect(() => {
@@ -219,6 +225,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                 dispute?.maxRefundable != null && dispute.maxRefundable >= 0
                     ? dispute.maxRefundable
                     : null,
+            includePlatformFeesInCarrierLiability,
         });
         return {
             gatewayFee: preview.gatewayFee,
@@ -234,7 +241,16 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
 
     const finPreview = useMemo(
         () => computeFinancialBreakdown(),
-        [orderPaidTotal, gatewayFeePct, refundFeePct, shippingRoundtrip, faultParty, finalRefundDecision, dispute?.maxRefundable],
+        [
+            orderPaidTotal,
+            gatewayFeePct,
+            refundFeePct,
+            shippingRoundtrip,
+            faultParty,
+            finalRefundDecision,
+            includePlatformFeesInCarrierLiability,
+            dispute?.maxRefundable,
+        ],
     );
 
     const getFaultPartyLabel = (party?: string) => {
@@ -465,6 +481,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             finalRefundDecision: breakdown.finalRefundDecision,
             finalCustomerRefundAmount: normalizedFinalRefundAmount,
             shippingCompanyLiability: breakdown.shippingCompanyLiability,
+            includePlatformFeesInCarrierLiability:
+                faultParty === 'SHIPPING_COMPANY' ? includePlatformFeesInCarrierLiability : undefined,
             resolutionMode: isCloseCompleteRefund ? 'CLOSE_COMPLETE_REFUND' : undefined,
             shippingRefund:
                 Number(breakdown.merchantDebits?.shipping || 0) > 0
@@ -1220,6 +1238,48 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          </div>
                                                      </div>
 
+                                                     {faultParty === 'SHIPPING_COMPANY' && (
+                                                         <button
+                                                             type="button"
+                                                             onClick={() =>
+                                                                 setIncludePlatformFeesInCarrierLiability((v) => !v)
+                                                             }
+                                                             className={`w-full p-4 rounded-2xl border text-right transition-all ${
+                                                                 includePlatformFeesInCarrierLiability
+                                                                     ? 'bg-purple-500/15 border-purple-500/40 text-white'
+                                                                     : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+                                                             }`}
+                                                         >
+                                                             <div className="flex items-center justify-between gap-3 mb-2">
+                                                                 <span className="text-xs font-black">
+                                                                     {isAr
+                                                                         ? 'إضافة رسوم Stripe + الاسترداد لالتزام شركة الشحن'
+                                                                         : 'Add Stripe + refund fees to carrier liability'}
+                                                                 </span>
+                                                                 <span
+                                                                     className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                                         includePlatformFeesInCarrierLiability
+                                                                             ? 'bg-purple-500 text-black'
+                                                                             : 'bg-white/10 text-white/40'
+                                                                     }`}
+                                                                 >
+                                                                     {includePlatformFeesInCarrierLiability
+                                                                         ? (isAr ? 'مفعّل' : 'ON')
+                                                                         : (isAr ? 'متوقف' : 'OFF')}
+                                                                 </span>
+                                                             </div>
+                                                             <p className="text-[10px] leading-relaxed text-white/50">
+                                                                 {includePlatformFeesInCarrierLiability
+                                                                     ? (isAr
+                                                                           ? `الالتزام = شحن (${shippingRoundtrip.toFixed(2)}) + رسوم (${finPreview.platformFees.toFixed(2)}) = ${finPreview.shippingCompanyLiability.toFixed(2)} AED`
+                                                                           : `Liability = shipping (${shippingRoundtrip.toFixed(2)}) + fees (${finPreview.platformFees.toFixed(2)}) = ${finPreview.shippingCompanyLiability.toFixed(2)} AED`)
+                                                                     : (isAr
+                                                                           ? `الالتزام = شحن فقط (${shippingRoundtrip.toFixed(2)} AED) — الرسوم لن تُسجَّل على شركة الشحن`
+                                                                           : `Liability = shipping only (${shippingRoundtrip.toFixed(2)} AED) — fees will not be charged to the carrier`)}
+                                                             </p>
+                                                         </button>
+                                                     )}
+
                                                      {/* Financial Breakdown Table */}
                                                      <div className="mt-6 pt-6 border-t border-white/5 space-y-3">
                                                          <div className="flex justify-between text-[10px]">
@@ -1299,7 +1359,9 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                 <span className="text-orange-400 font-mono">-{finPreview.platformFees.toFixed(2)} AED</span>
                                                             </div>
                                                          )}
-                                                         {faultParty === 'SHIPPING_COMPANY' && finPreview.refundRequired && finPreview.platformFees > 0 && (
+                                                         {faultParty === 'SHIPPING_COMPANY' &&
+                                                          includePlatformFeesInCarrierLiability &&
+                                                          finPreview.platformFees > 0 && (
                                                          <>
                                                          <div className="flex justify-between text-[10px]">
                                                              <span className="text-purple-400/60 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم بوابة الدفع (ضمن التزام شركة الشحن)' : 'Gateway fee (within carrier liability)'}</span>
@@ -1311,9 +1373,11 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          </div>
                                                          </>
                                                          )}
-                                                         {faultParty === 'SHIPPING_COMPANY' && !finPreview.refundRequired && finPreview.platformFees > 0 && (
+                                                         {faultParty === 'SHIPPING_COMPANY' &&
+                                                          !includePlatformFeesInCarrierLiability &&
+                                                          finPreview.platformFees > 0 && (
                                                             <div className="flex justify-between text-[10px]">
-                                                                <span className="text-white/45 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم المنصة (تتحملها المنصة — ليست على شركة الشحن)' : 'Platform fees (absorbed by platform — not on carrier)'}</span>
+                                                                <span className="text-white/45 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم المنصة (مستبعدة من التزام شركة الشحن)' : 'Platform fees (excluded from carrier liability)'}</span>
                                                                 <span className="text-white/50 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
                                                             </div>
                                                          )}
@@ -1579,14 +1643,14 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          {faultParty === 'MERCHANT'
                                                              ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees
                                                              : faultParty === 'SHIPPING_COMPANY'
-                                                               ? (finPreview.refundRequired
+                                                               ? (includePlatformFeesInCarrierLiability
                                                                    ? (isAr ? 'رسوم Stripe (ضمن التزام شركة الشحن)' : 'Stripe fees (within carrier liability)')
-                                                                   : (isAr ? 'رسوم المنصة (تتحملها المنصة — ليست على شركة الشحن)' : 'Platform fees (absorbed — not on carrier)'))
+                                                                   : (isAr ? 'رسوم المنصة (مستبعدة من التزام شركة الشحن)' : 'Platform fees (excluded from carrier)'))
                                                                : faultParty === 'CUSTOMER' || isCloseCompleteRefund
                                                                ? (isAr ? 'رسوم المنصة (من صافي العميل)' : 'Platform fees (from customer net)')
                                                                : (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees}
                                                      </span>
-                                                     <span className={`font-mono ${faultParty === 'SHIPPING_COMPANY' && !finPreview.refundRequired ? 'text-white/40' : 'text-orange-400'}`}>
+                                                     <span className={`font-mono ${faultParty === 'SHIPPING_COMPANY' && !includePlatformFeesInCarrierLiability ? 'text-white/40' : 'text-orange-400'}`}>
                                                          {finPreview.platformFees.toFixed(2)} AED
                                                      </span>
                                                  </div>

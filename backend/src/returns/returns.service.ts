@@ -177,15 +177,23 @@ export class ReturnsService {
 
     private async rebuildFinFromCase(caseRecord: any): Promise<AdjudicationFinancialResult> {
         const orderAmount = await this.resolveAdjudicationOrderAmount(caseRecord.orderId, caseRecord);
+        const shippingRoundtrip = Number(
+            caseRecord.shippingRoundtrip || caseRecord.shippingRefund || 0,
+        );
+        const storedLiability = Number(caseRecord.shippingCompanyLiability || 0);
+        // Reconstruct fee toggle from persisted liability when replaying invoices.
+        const includeFees =
+            String(caseRecord.faultParty || '').toUpperCase() === 'SHIPPING_COMPANY'
+                ? storedLiability > shippingRoundtrip + 0.009
+                : undefined;
         return computeAdjudicationFinancials({
             orderPaidTotal: orderAmount,
             gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 3),
             refundFeePct: Number(caseRecord.refundFeePct ?? 1.5),
-            shippingRoundtrip: Number(
-                caseRecord.shippingRoundtrip || caseRecord.shippingRefund || 0,
-            ),
+            shippingRoundtrip,
             faultParty: caseRecord.faultParty || 'MERCHANT',
             finalRefundDecision: caseRecord.finalRefundDecision,
+            includePlatformFeesInCarrierLiability: includeFees,
         });
     }
 
@@ -1795,6 +1803,10 @@ export class ReturnsService {
                 | 'NO_CUSTOMER_REFUND'
                 | undefined,
             maxRefundable,
+            includePlatformFeesInCarrierLiability:
+                extra?.includePlatformFeesInCarrierLiability === undefined
+                    ? undefined
+                    : Boolean(extra.includePlatformFeesInCarrierLiability),
         });
 
         return {
@@ -1940,6 +1952,10 @@ export class ReturnsService {
                     : String(extra?.faultParty || 'MERCHANT'),
                 finalRefundDecision,
                 maxRefundable: maxRefundablePre,
+                includePlatformFeesInCarrierLiability:
+                    extra?.includePlatformFeesInCarrierLiability === undefined
+                        ? undefined
+                        : Boolean(extra.includePlatformFeesInCarrierLiability),
             });
             const netRefundAmount = preFin.customerStripeRefund;
             if (netRefundAmount > 0 && orderAmount > 0 && maxRefundablePre <= 0) {
@@ -2422,12 +2438,18 @@ export class ReturnsService {
                         // Persist carrier liability into finance ledger + platform wallet balance
                         const liabilityAmount = Number(refundFinancials.shippingCompanyLiability || 0);
                         if (liabilityAmount > 0.009) {
-                            // Fees are only part of carrier liability when a customer refund is executed.
-                            // No-refund SC cases: RT shipping only — never attribute Stripe fees to the carrier.
+                            // Prefer explicit fees-in-liability from financial engine (toggle-aware).
                             const stripeFeesInLiability = Math.max(
                                 0,
-                                Math.round((liabilityAmount - Number(shipObligation || 0) + Number.EPSILON) * 100) /
-                                    100,
+                                Number(
+                                    refundFinancials.shippingCompanyFeesInLiability ??
+                                        Math.round(
+                                            (liabilityAmount -
+                                                Number(shipObligation || 0) +
+                                                Number.EPSILON) *
+                                                100,
+                                        ) / 100,
+                                ),
                             );
                             const liabilityKey = makeReturnsLineItemIdempotencyKey(
                                 caseId,
@@ -2461,6 +2483,8 @@ export class ReturnsService {
                                             notes: `Adjudication liability — case ${caseId.substring(0, 8)}`,
                                             metadata: {
                                                 faultParty: 'SHIPPING_COMPANY',
+                                                includePlatformFeesInCarrierLiability:
+                                                    refundFinancials.includePlatformFeesInCarrierLiability,
                                                 gatewayFeeAmount:
                                                     stripeFeesInLiability > 0
                                                         ? refundFinancials.gatewayFeeAmount

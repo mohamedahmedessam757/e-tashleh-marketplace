@@ -86,7 +86,7 @@ async function main() {
     }
     if (liabilityReversed > 0.009) {
       await client.query(
-        `UPDATE platform_wallets
+        `UPDATE platform_wallet
          SET shipping_company_liability_balance =
                GREATEST(0, COALESCE(shipping_company_liability_balance, 0) - $1)`,
         [liabilityReversed],
