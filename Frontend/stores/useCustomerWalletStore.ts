@@ -451,10 +451,10 @@ export const subscribeToWalletUpdates = () => {
                         createdAt: req.created_at,
                         updatedAt: req.updated_at
                     });
-                    if (req.status === 'COMPLETED' || req.status === 'APPROVED') {
-                        useCustomerWalletStore.getState().fetchWalletData(true);
-                    }
                 }
+                // Always re-fetch from Nest so status/notes stay consistent even when RLS blocks payload fields
+                void useCustomerWalletStore.getState().fetchWithdrawals();
+                void useCustomerWalletStore.getState().fetchWalletData(true);
             }
         );
 

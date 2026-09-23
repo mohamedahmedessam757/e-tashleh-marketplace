@@ -4303,7 +4303,7 @@ export class PaymentsService {
             );
         }
 
-        return this.prisma.$transaction(async (tx) => {
+        const createdMerchantWithdrawal = await this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT id FROM stores WHERE id = ${store.id}::uuid FOR UPDATE`;
 
             // Re-validate AFTER acquiring the row lock to close the TOCTOU window:
@@ -4373,12 +4373,31 @@ export class PaymentsService {
                     messageAr: `قام التاجر ${store.name} بطلب سحب ${amount} AED عبر ${payoutMethod === 'STRIPE' ? 'Stripe' : 'تحويل بنكي'}`,
                     messageEn: `Merchant ${store.name} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
-                    metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, payoutMethod }
+                    metadata: {
+                        type: 'WITHDRAWAL_REQUEST',
+                        requestId: request.id,
+                        payoutMethod,
+                        role: 'VENDOR',
+                        storeId: store.id,
+                        ownerId: store.ownerId,
+                        status: request.status,
+                    },
                 });
             }
 
             return request;
         });
+
+        this.notifications.emitWithdrawalUpdated({
+            requestId: createdMerchantWithdrawal.id,
+            status: createdMerchantWithdrawal.status,
+            role: 'VENDOR',
+            storeId: store.id,
+            ownerId: store.ownerId,
+            action: 'WITHDRAWAL_REQUEST',
+        });
+
+        return createdMerchantWithdrawal;
     }
 
     async requestCustomerWithdrawal(userId: string, amount: number, payoutMethod: string = 'BANK_TRANSFER', ip?: string | null) {
@@ -4444,7 +4463,7 @@ export class PaymentsService {
             }
         }
 
-        return this.prisma.$transaction(async (tx) => {
+        const createdCustomerWithdrawal = await this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT id FROM users WHERE id = ${user.id}::uuid FOR UPDATE`;
 
             // Re-validate AFTER acquiring the row lock to close the TOCTOU window.
@@ -4506,12 +4525,29 @@ export class PaymentsService {
                     messageAr: `قام العميل ${user.name || user.email} بطلب سحب ${amount} AED عبر ${methodLabel}`,
                     messageEn: `Customer ${user.name || user.email} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
-                    metadata: { type: 'WITHDRAWAL_REQUEST', requestId: request.id, role: 'CUSTOMER', payoutMethod }
+                    metadata: {
+                        type: 'WITHDRAWAL_REQUEST',
+                        requestId: request.id,
+                        role: 'CUSTOMER',
+                        payoutMethod,
+                        userId: user.id,
+                        status: request.status,
+                    },
                 });
             }
 
             return request;
         });
+
+        this.notifications.emitWithdrawalUpdated({
+            requestId: createdCustomerWithdrawal.id,
+            status: createdCustomerWithdrawal.status,
+            role: 'CUSTOMER',
+            userId: user.id,
+            action: 'WITHDRAWAL_REQUEST',
+        });
+
+        return createdCustomerWithdrawal;
     }
 
     async getWithdrawalRequests(userId: string, role: string, filters?: any) {
@@ -4689,16 +4725,20 @@ export class PaymentsService {
                 rejectionReason: req.rejectionReason || null,
                 stripeTransferId: req.stripeTransferId || null,
                 processedAt: req.status !== 'PENDING' ? (req.completedAt || req.approvedAt || req.updatedAt) : null,
+                // Admin billing must see full bank payout details to execute BANK_TRANSFER.
+                // Do not mask IBAN / SWIFT for staff — customer/vendor UIs still use masked views.
                 store: req.store
                     ? {
                           ...req.store,
-                          bankIban: maskIban(req.store.bankIban),
+                          bankIban: req.store.bankIban || null,
+                          maskedBankIban: maskIban(req.store.bankIban),
                       }
                     : null,
                 user: req.user
                     ? {
                           ...req.user,
-                          bankIban: maskIban(req.user.bankIban),
+                          bankIban: req.user.bankIban || null,
+                          maskedBankIban: maskIban(req.user.bankIban),
                       }
                     : null,
             };
@@ -4765,6 +4805,13 @@ export class PaymentsService {
         if (!request) throw new NotFoundException('Withdrawal request not found');
         await this.assertCanAccessWithdrawal(userId, role, request);
 
+        const isAdminRole = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'ACCOUNTANT'].includes(role);
+        const ibanForReceipt = request.ibanSnapshot
+            ? isAdminRole
+                ? request.ibanSnapshot
+                : maskIban(request.ibanSnapshot)
+            : null;
+
         return {
             receiptNumber: `WD-${request.id.slice(0, 8).toUpperCase()}`,
             id: request.id,
@@ -4780,7 +4827,7 @@ export class PaymentsService {
             transferCompletedAt: request.transferCompletedAt,
             rejectionReason: request.rejectionReason,
             adminNotes: request.adminNotes,
-            ibanSnapshot: request.ibanSnapshot ? maskIban(request.ibanSnapshot) : null,
+            ibanSnapshot: ibanForReceipt,
             stripeTransferId: request.stripeTransferId,
             accountName:
                 request.role === 'CUSTOMER'

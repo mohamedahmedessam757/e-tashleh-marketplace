@@ -286,6 +286,23 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isConnected: false });
     });
 
+    // Refresh withdrawal queues for admin / customer / vendor clients
+    const refreshWithdrawalViews = (_meta: Record<string, unknown> = {}) => {
+      void import('./useAdminStore').then(({ useAdminStore }) => {
+        void useAdminStore.getState().fetchWithdrawals(true);
+      });
+      void import('./useCustomerWalletStore').then(({ useCustomerWalletStore }) => {
+        const wallet = useCustomerWalletStore.getState();
+        void wallet.fetchWithdrawals();
+        void wallet.fetchWalletData(true);
+      });
+      void import('./useMerchantWalletStore').then(({ useMerchantWalletStore }) => {
+        const merchant = useMerchantWalletStore.getState();
+        void merchant.fetchWithdrawalData();
+        void merchant.fetchWallet();
+      });
+    };
+
     // 3.1 Common Handler
     const handleNewNotification = (payload: any) => {
       console.log('[Notifications] Received real-time event:', payload);
@@ -359,6 +376,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           void useVendorStore.getState().fetchVendorProfile();
         });
       }
+
+      // Withdrawal lifecycle — refresh admin/customer/vendor queues immediately
+      const withdrawalType = String(meta.type || mapped.type || '').toUpperCase();
+      if (withdrawalType.includes('WITHDRAWAL')) {
+        refreshWithdrawalViews(meta);
+      }
     };
 
     // Listen for standard notifications
@@ -366,6 +389,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     // Listen for administrative alerts if applicable
     socket.on('admin_alert', handleNewNotification);
+
+    // Dedicated withdrawal sync (faster than waiting on notification payload alone)
+    socket.on('withdrawal_updated', (payload: Record<string, unknown>) => {
+      refreshWithdrawalViews(payload || {});
+    });
 
     socket.on('connect_error', (err) => {
       console.error('[Notifications] Connection error:', err.message);

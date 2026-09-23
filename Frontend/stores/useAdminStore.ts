@@ -1570,13 +1570,17 @@ export const useAdminStore = create<AdminState>()(
 
         fetchWithdrawals();
 
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        const schedule = () => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => fetchWithdrawals(true), 400);
+        };
+
         const channel = supabase.channel('admin-withdrawals-realtime')
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'withdrawal_requests' },
-            () => {
-              fetchWithdrawals();
-            }
+            schedule,
           )
           .subscribe();
 

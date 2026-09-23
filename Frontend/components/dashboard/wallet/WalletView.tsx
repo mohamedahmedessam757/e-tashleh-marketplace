@@ -132,6 +132,25 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         fetchBankDetails();
     }, [fetchWalletData, fetchWithdrawals, fetchBankDetails]);
 
+    // Keep withdrawal limits in sync with admin financial settings (real-time).
+    useEffect(() => {
+        const refreshLimits = () => {
+            void fetchWalletData(true);
+            void fetchWithdrawals();
+        };
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') refreshLimits();
+        };
+        window.addEventListener('focus', refreshLimits);
+        document.addEventListener('visibilitychange', onVisible);
+        const interval = window.setInterval(refreshLimits, 5_000);
+        return () => {
+            window.removeEventListener('focus', refreshLimits);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.clearInterval(interval);
+        };
+    }, [fetchWalletData, fetchWithdrawals]);
+
     // --- STRIPE CONNECT RETURN HANDLER ---
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);

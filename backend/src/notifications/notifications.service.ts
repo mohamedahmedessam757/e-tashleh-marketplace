@@ -189,7 +189,34 @@ export class NotificationsService {
             createdAt: new Date()
         });
 
+        const meta = (data.metadata || {}) as Record<string, unknown>;
+        const metaType = String(meta.type || '').toUpperCase();
+        if (metaType.includes('WITHDRAWAL')) {
+            this.gateway.emitWithdrawalUpdated({
+                requestId: String(meta.requestId || ''),
+                status: meta.status != null ? String(meta.status) : undefined,
+                role: meta.role != null ? String(meta.role) : undefined,
+                userId: meta.userId != null ? String(meta.userId) : undefined,
+                storeId: meta.storeId != null ? String(meta.storeId) : undefined,
+                ownerId: meta.ownerId != null ? String(meta.ownerId) : undefined,
+                action: metaType,
+            });
+        }
+
         return result;
+    }
+
+    /** Push withdrawal queue refresh to admins + recipient over Socket.IO */
+    emitWithdrawalUpdated(payload: {
+        requestId: string;
+        status?: string | null;
+        role?: string | null;
+        userId?: string | null;
+        storeId?: string | null;
+        ownerId?: string | null;
+        action?: string;
+    }) {
+        this.gateway.emitWithdrawalUpdated(payload);
     }
 
     /**

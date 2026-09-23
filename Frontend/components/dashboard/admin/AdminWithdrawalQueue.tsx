@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AlertOctagon,
   CheckCircle2,
@@ -77,6 +77,19 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
     },
     ['withdrawal_requests', 'wallet_transactions', 'stores'],
   );
+
+  // Fast fallback while on the queue — Socket.IO + Supabase can both miss events under Nest JWT auth.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === 'visible') void fetchWithdrawals(true);
+    };
+    const interval = window.setInterval(tick, 4000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [fetchWithdrawals]);
 
   const statusLabel = (status: string) => {
     const key = status as keyof typeof t.admin.billing.withdrawals.statusLabels;
@@ -356,20 +369,56 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
             <h3 className="text-lg font-black text-blue-500">{t.admin.billing.bankModal.title}</h3>
             {(() => {
               const entity = selectedReq.role === 'CUSTOMER' ? selectedReq.user : selectedReq.store;
-              if (!entity?.bankIban && !entity?.bankName) {
+              const fullIban =
+                (typeof selectedReq.ibanSnapshot === 'string' && selectedReq.ibanSnapshot.trim()) ||
+                (typeof entity?.bankIban === 'string' && entity.bankIban.trim()) ||
+                '';
+              const hasBankInfo = !!(
+                fullIban ||
+                entity?.bankName ||
+                entity?.bankAccountHolder ||
+                entity?.bankSwift
+              );
+              if (!hasBankInfo) {
                 return <p className="text-rose-400 text-sm">{t.admin.billing.bankModal.noDetails}</p>;
               }
               return (
-                <div className="space-y-3 text-sm">
-                  <p><span className="text-white/40">{t.admin.billing.bankModal.accountHolder}: </span>{entity.bankAccountHolder || '—'}</p>
-                  <p><span className="text-white/40">IBAN: </span>{entity.bankIban || '—'}</p>
-                  {!entity.bankDetailsVerified && canApprove && (
+                <div className="space-y-3 text-sm font-mono break-all">
+                  <p>
+                    <span className="text-white/40 font-sans">{t.admin.billing.bankModal.accountHolder}: </span>
+                    <span className="text-white font-sans font-bold">{entity?.bankAccountHolder || '—'}</span>
+                  </p>
+                  <p>
+                    <span className="text-white/40 font-sans">{t.admin.billing.bankModal.bankName}: </span>
+                    <span className="text-white font-sans font-bold">{entity?.bankName || '—'}</span>
+                  </p>
+                  <p>
+                    <span className="text-white/40 font-sans">
+                      {selectedReq.ibanSnapshot ? t.admin.billing.bankModal.ibanAtRequest : 'IBAN'}:{' '}
+                    </span>
+                    <span className="text-emerald-300 font-bold tracking-wide">{fullIban || '—'}</span>
+                  </p>
+                  {entity?.bankSwift ? (
+                    <p>
+                      <span className="text-white/40 font-sans">{t.admin.billing.bankModal.swift}: </span>
+                      <span className="text-white font-bold">{entity.bankSwift}</span>
+                    </p>
+                  ) : null}
+                  <p>
+                    <span className="text-white/40 font-sans">{t.admin.billing.bankModal.verificationStatus}: </span>
+                    <span className={entity?.bankDetailsVerified ? 'text-emerald-400 font-sans' : 'text-amber-400 font-sans'}>
+                      {entity?.bankDetailsVerified
+                        ? t.admin.billing.bankModal.verified
+                        : t.admin.billing.bankModal.unverified}
+                    </span>
+                  </p>
+                  {!entity?.bankDetailsVerified && canApprove && entity?.id && (
                     <button
                       type="button"
                       onClick={async () => {
                         await verifyBankDetails(entity.id, selectedReq.role);
                       }}
-                      className="w-full py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold"
+                      className="w-full py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-sans"
                     >
                       {t.admin.billing.bankModal.verifyAction}
                     </button>

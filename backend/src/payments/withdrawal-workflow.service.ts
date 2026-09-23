@@ -203,6 +203,7 @@ export class WithdrawalWorkflowService {
       messageAr: 'تم اعتماد طلب السحب، وجارٍ تنفيذ عملية التحويل البنكي.',
       messageEn: 'Your withdrawal has been approved and bank transfer is in progress.',
       metadataType: 'WITHDRAWAL_APPROVED',
+      extra: { status: updated.status },
     });
 
     return updated;
@@ -255,7 +256,7 @@ export class WithdrawalWorkflowService {
       messageAr: `تم رفض طلب سحب ${amount} درهم. السبب: ${reason}.`,
       messageEn: `Your withdrawal of AED ${amount} has been rejected. Reason: ${reason}.`,
       metadataType: 'WITHDRAWAL_REJECTED',
-      extra: { reason },
+      extra: { reason, status: updated.status },
     });
 
     return updated;
@@ -519,7 +520,7 @@ export class WithdrawalWorkflowService {
             ? `Net AED ${transferAmount.toFixed(2)} transferred after settling AED ${settlementAmount.toFixed(2)} in liabilities.`
             : `Your withdrawal of AED ${amount} has been completed.`,
         metadataType: 'WITHDRAWAL_COMPLETED',
-        extra: { transferAmount, settlementAmount, stripeTransferId: transferId },
+        extra: { transferAmount, settlementAmount, stripeTransferId: transferId, status: updated.status },
       });
 
       return updated;
@@ -595,7 +596,7 @@ export class WithdrawalWorkflowService {
       messageAr: `تم إفراج مبلغ ${amount} درهم وإعادته لمحفظتك. السبب: ${reason}.`,
       messageEn: `AED ${amount} has been released back to your wallet. Reason: ${reason}.`,
       metadataType: 'WITHDRAWAL_RELEASED',
-      extra: { reason },
+      extra: { reason, status: updated.status },
     });
 
     return updated;
@@ -635,6 +636,16 @@ export class WithdrawalWorkflowService {
           cancelledBy: userId,
         },
       });
+    });
+
+    this.notifications.emitWithdrawalUpdated({
+      requestId: updated.id,
+      status: updated.status,
+      role: request.role,
+      userId: request.userId,
+      storeId: request.storeId,
+      ownerId: request.store?.ownerId || null,
+      action: 'WITHDRAWAL_CANCELLED',
     });
 
     return updated;
@@ -705,8 +716,23 @@ export class WithdrawalWorkflowService {
       metadata: {
         type: payload.metadataType,
         requestId: request.id,
+        role: request.role,
+        userId: request.userId,
+        storeId: request.storeId,
+        ownerId: request.store?.ownerId || null,
+        status: request.status,
         ...payload.extra,
       },
+    });
+
+    this.notifications.emitWithdrawalUpdated({
+      requestId: request.id,
+      status: String(payload.extra?.status || request.status || ''),
+      role: request.role,
+      userId: request.userId,
+      storeId: request.storeId,
+      ownerId: request.store?.ownerId || null,
+      action: payload.metadataType,
     });
   }
 }

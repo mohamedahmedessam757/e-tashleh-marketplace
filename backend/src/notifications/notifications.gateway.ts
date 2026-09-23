@@ -48,7 +48,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       (client.data as { userId?: string }).userId = dbUser.id;
       client.join(`user_${dbUser.id}`);
       const r = dbUser.role?.toUpperCase();
-      if (r === 'ADMIN' || r === 'SUPER_ADMIN' || r === 'SUPPORT') {
+      if (r === 'ADMIN' || r === 'SUPER_ADMIN' || r === 'SUPPORT' || r === 'ACCOUNTANT') {
         client.join('admins');
       }
     } catch (e) {
@@ -73,5 +73,34 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       return;
     }
     this.server.to('admins').emit('admin_alert', notification);
+  }
+
+  /**
+   * Live sync for withdrawal queues (admin + recipient) — Nest JWT auth, not Supabase RLS.
+   */
+  emitWithdrawalUpdated(payload: {
+    requestId: string;
+    status?: string | null;
+    role?: string | null;
+    userId?: string | null;
+    storeId?: string | null;
+    ownerId?: string | null;
+    action?: string;
+  }) {
+    if (!this.server) {
+      this.logger.debug('WS server not ready; skip withdrawal_updated');
+      return;
+    }
+    const event = {
+      ...payload,
+      at: new Date().toISOString(),
+    };
+    this.server.to('admins').emit('withdrawal_updated', event);
+    if (payload.userId) {
+      this.server.to(`user_${payload.userId}`).emit('withdrawal_updated', event);
+    }
+    if (payload.ownerId && payload.ownerId !== payload.userId) {
+      this.server.to(`user_${payload.ownerId}`).emit('withdrawal_updated', event);
+    }
   }
 }
