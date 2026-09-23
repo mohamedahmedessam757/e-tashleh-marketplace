@@ -7,11 +7,10 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  Hash,
-  Calendar,
-  CreditCard,
-  User,
-  Landmark,
+  Clock3,
+  Building2,
+  Mail,
+  Wallet,
 } from 'lucide-react';
 import { client as api } from '../../../services/api/client';
 import { printIsolatedHtml } from '../../../utils/print';
@@ -21,6 +20,31 @@ interface WithdrawalReceiptModalProps {
   onClose: () => void;
   withdrawalId: string | null;
   language?: 'ar' | 'en';
+}
+
+function MetaCell({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/8 bg-black/25 px-3.5 py-3 min-w-0 inv-section">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-gold-500/80 font-bold mb-1.5 inv-label">
+        {label}
+      </p>
+      <p
+        className={`text-sm text-white font-semibold break-words leading-snug inv-value ${
+          mono ? 'font-mono text-[12px] tracking-wide' : ''
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
 }
 
 export const WithdrawalReceiptModal: React.FC<WithdrawalReceiptModalProps> = ({
@@ -81,6 +105,11 @@ export const WithdrawalReceiptModal: React.FC<WithdrawalReceiptModalProps> = ({
   const status = String(receipt?.status || '').toUpperCase();
   const isSuccess = ['COMPLETED', 'TRANSFERRED', 'APPROVED', 'PROCESSING'].includes(status);
   const isFailed = ['REJECTED', 'FAILED', 'CANCELLED'].includes(status);
+  const notes = receipt?.rejectionReason || receipt?.adminNotes || null;
+  const methodLabel =
+    String(receipt?.payoutMethod || '')
+      .replace(/_/g, ' ')
+      .trim() || '—';
 
   const fmtDate = (value?: string | null) => {
     if (!value) return '—';
@@ -94,62 +123,78 @@ export const WithdrawalReceiptModal: React.FC<WithdrawalReceiptModalProps> = ({
     });
   };
 
+  const statusBadgeClass = isFailed
+    ? 'border-rose-400/40 text-rose-300 bg-rose-500/15'
+    : isSuccess
+      ? 'border-emerald-400/40 text-emerald-300 bg-emerald-500/15'
+      : 'border-gold-400/40 text-gold-300 bg-gold-500/15';
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5">
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 12 }}
-          className="relative w-full max-w-xl bg-[#1A1814] border border-gold-500/20 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 12, scale: 0.98 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="relative w-full max-w-lg overflow-hidden max-h-[94vh] flex flex-col rounded-[1.35rem] border border-gold-500/25 bg-[#12110F] shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
         >
-          <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
-            <div className="flex items-center gap-2 text-gold-500">
-              <FileText size={18} />
-              <h3 className="font-bold text-white">
-                {isAr ? 'إيصال سحب' : 'Withdrawal Receipt'}
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={!receipt || isPrinting || loading}
-                onClick={() => void handlePrint()}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-gold-400 bg-gold-500/10 border border-gold-500/20 hover:bg-gold-500 hover:text-black disabled:opacity-40 text-xs font-bold"
-                title={isAr ? 'طباعة' : 'Print'}
-              >
-                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
-                {isAr ? 'طباعة' : 'Print'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5"
-              >
-                <X size={16} />
-              </button>
+          {/* Top chrome */}
+          <div className="relative shrink-0 px-4 sm:px-5 py-3.5 border-b border-white/8 bg-gradient-to-l from-gold-500/10 via-transparent to-transparent">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gold-500/15 border border-gold-500/25 flex items-center justify-center text-gold-400 shrink-0">
+                  <FileText size={16} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-black text-white text-sm tracking-wide truncate">
+                    {isAr ? 'إيصال سحب' : 'Withdrawal Receipt'}
+                  </h3>
+                  <p className="text-[10px] text-white/35 font-medium">
+                    {isAr ? 'وثيقة رسمية للتحويل' : 'Official payout document'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  disabled={!receipt || isPrinting || loading}
+                  onClick={() => void handlePrint()}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-gold-300 bg-gold-500/10 border border-gold-500/25 hover:bg-gold-500 hover:text-black disabled:opacity-40 text-[11px] font-black transition-colors"
+                >
+                  {isPrinting ? <Loader2 size={13} className="animate-spin" /> : <Printer size={13} />}
+                  {isAr ? 'طباعة' : 'Print'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-2 rounded-xl text-white/45 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="p-4 sm:p-6 overflow-y-auto">
+          <div className="overflow-y-auto custom-scrollbar">
             {loading && (
-              <div className="flex justify-center py-10">
-                <Loader2 className="animate-spin text-gold-500" />
+              <div className="flex justify-center py-16">
+                <Loader2 className="animate-spin text-gold-500" size={28} />
               </div>
             )}
-            {error && <p className="text-rose-400 text-sm">{error}</p>}
+            {error && (
+              <div className="m-5 p-4 rounded-xl border border-rose-500/25 bg-rose-500/10 text-rose-300 text-sm">
+                {error}
+              </div>
+            )}
 
             {!loading && !error && receipt && (
-              <div ref={printRef} dir={dir} className="space-y-3">
-                {/* Print-only brand header (invoice style) */}
+              <div ref={printRef} dir={dir} className="p-4 sm:p-5 space-y-4">
+                {/* Print brand header */}
                 <div className="hidden print:flex inv-print-logo-header justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/logo.png"
-                      alt="E-Tashleh"
-                      className="w-14 h-14 object-contain inv-brand-logo"
-                    />
+                    <img src="/logo.png" alt="E-Tashleh" className="w-14 h-14 object-contain inv-brand-logo" />
                     <div>
                       <h1 className="text-2xl font-black text-[#b8860b] uppercase tracking-wider m-0">
                         E-Tashleh
@@ -169,171 +214,176 @@ export const WithdrawalReceiptModal: React.FC<WithdrawalReceiptModalProps> = ({
                   </div>
                 </div>
 
-                {/* Screen header */}
-                <div className="flex justify-between items-start gap-3 print:hidden">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                {/* Brand + status row */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-white border border-gold-500/40 flex items-center justify-center p-1.5 shrink-0 shadow-[0_0_24px_rgba(184,134,11,0.12)]">
                       <img
                         src="/logo.png"
                         alt="E-Tashleh"
-                        className="w-9 h-9 object-contain inv-brand-logo"
+                        className="w-full h-full object-contain inv-brand-logo"
                       />
-                      <h1 className="text-xl font-bold text-white inv-value">E-Tashleh.net</h1>
                     </div>
-                    <p className="text-[10px] uppercase tracking-widest text-gold-500/80 wr-gold">
-                      {isAr ? 'رقم الإيصال' : 'Receipt No.'}
-                    </p>
-                    <p className="text-white font-mono font-bold text-lg inv-value">
-                      {receipt.receiptNumber}
-                    </p>
+                    <div className="min-w-0">
+                      <h1 className="text-lg sm:text-xl font-black text-white tracking-tight inv-value truncate">
+                        E-Tashleh.net
+                      </h1>
+                      <p className="text-[11px] text-white/40 inv-label">
+                        {isAr ? 'سوق قطع غيار السيارات' : 'Automotive spare parts marketplace'}
+                      </p>
+                    </div>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase ${
-                      isFailed
-                        ? 'border-rose-500/30 text-rose-400 bg-rose-500/10'
-                        : isSuccess
-                          ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                          : 'border-white/10 text-gold-400 bg-gold-500/10'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wide shrink-0 ${statusBadgeClass}`}
                   >
                     {isFailed ? <XCircle size={12} /> : <CheckCircle2 size={12} />}
                     {receipt.status}
                   </span>
                 </div>
 
-                {/* Amount + method */}
-                <div className="inv-total-box wr-card">
-                  <p className="inv-label text-[10px] uppercase m-0 mb-1">
-                    {isAr ? 'المبلغ المحوّل' : 'Payout Amount'}
-                  </p>
-                  <p className="inv-total-amount m-0">
-                    {Number(receipt.amount).toLocaleString()} {receipt.currency || 'AED'}
-                  </p>
-                  <p className="inv-label text-xs m-0 mt-1">{receipt.payoutMethod}</p>
-                </div>
-
-                <div className="inv-section wr-card space-y-2">
-                  <div className="inv-section-header">
-                    <Hash className="inv-icon" size={13} />
-                    <h3>{isAr ? 'بيانات الإيصال' : 'Receipt Details'}</h3>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <Hash className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                    <span className="text-gray-400 inv-label shrink-0">
-                      {isAr ? 'المعرّف:' : 'ID:'}
-                    </span>
-                    <span className="text-white font-semibold break-all inv-value font-mono text-xs">
-                      {receipt.id}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <CreditCard className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                    <span className="text-gray-400 inv-label shrink-0">
-                      {isAr ? 'الحالة:' : 'Status:'}
-                    </span>
-                    <span className="text-white font-semibold inv-value">{receipt.status}</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <User className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                    <span className="text-gray-400 inv-label shrink-0">
-                      {isAr ? 'الحساب:' : 'Account:'}
-                    </span>
-                    <span className="text-white font-semibold break-all inv-value">
-                      {receipt.accountName || '—'}
-                    </span>
-                  </div>
-                  {receipt.accountCode ? (
-                    <div className="flex items-start gap-2 text-sm">
-                      <Hash className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                      <span className="text-gray-400 inv-label shrink-0">
-                        {isAr ? 'المرجع:' : 'Reference:'}
-                      </span>
-                      <span className="text-white font-semibold break-all inv-value">
-                        {receipt.accountCode}
-                      </span>
+                {/* Hero amount card */}
+                <div className="relative overflow-hidden rounded-2xl border border-gold-500/35 bg-gradient-to-br from-gold-500/18 via-[#1A1712] to-black p-5 sm:p-6 inv-total-box">
+                  <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(184,134,11,0.18),transparent_55%)]" />
+                  <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-gold-400/90 font-black mb-2 inv-label">
+                        {isAr ? 'المبلغ المحوّل' : 'Payout Amount'}
+                      </p>
+                      <p className="text-3xl sm:text-4xl font-black text-gold-400 inv-total-amount leading-none">
+                        {Number(receipt.amount).toLocaleString()}{' '}
+                        <span className="text-lg align-middle text-gold-500/80">
+                          {receipt.currency || 'AED'}
+                        </span>
+                      </p>
                     </div>
-                  ) : null}
-                </div>
-
-                <div className="inv-section wr-card space-y-2">
-                  <div className="inv-section-header">
-                    <Calendar className="inv-icon" size={13} />
-                    <h3>{isAr ? 'التواريخ' : 'Timeline'}</h3>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                    <span className="text-gray-400 inv-label shrink-0">
-                      {isAr ? 'تاريخ الطلب:' : 'Requested:'}
-                    </span>
-                    <span className="text-white font-semibold inv-value">
-                      {fmtDate(receipt.createdAt)}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                    <span className="text-gray-400 inv-label shrink-0">
-                      {isAr ? 'تاريخ الإكمال:' : 'Completed:'}
-                    </span>
-                    <span className="text-white font-semibold inv-value">
-                      {fmtDate(receipt.completedAt)}
-                    </span>
+                    <div className="flex flex-col items-start sm:items-end gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/35 border border-gold-500/25 text-[10px] font-black uppercase tracking-wider text-gold-300">
+                        <Wallet size={12} />
+                        {methodLabel}
+                      </span>
+                      <p className="font-mono text-xs text-white/55 inv-value">
+                        {receipt.receiptNumber}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
+                {/* Party + timeline grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MetaCell
+                    label={isAr ? 'المستفيد' : 'Beneficiary'}
+                    value={
+                      <span className="inline-flex items-center gap-2">
+                        <Building2 size={14} className="text-gold-500 inv-icon shrink-0" />
+                        {receipt.accountName || '—'}
+                      </span>
+                    }
+                  />
+                  <MetaCell
+                    label={isAr ? 'المرجع' : 'Reference'}
+                    value={
+                      receipt.accountCode ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Mail size={14} className="text-gold-500 inv-icon shrink-0" />
+                          <span className="break-all">{receipt.accountCode}</span>
+                        </span>
+                      ) : (
+                        '—'
+                      )
+                    }
+                  />
+                  <MetaCell
+                    label={isAr ? 'تاريخ الطلب' : 'Requested'}
+                    value={
+                      <span className="inline-flex items-center gap-2">
+                        <Clock3 size={14} className="text-gold-500 inv-icon shrink-0" />
+                        {fmtDate(receipt.createdAt)}
+                      </span>
+                    }
+                  />
+                  <MetaCell
+                    label={isAr ? 'تاريخ الإكمال' : 'Completed'}
+                    value={
+                      <span className="inline-flex items-center gap-2">
+                        <CheckCircle2 size={14} className="text-gold-500 inv-icon shrink-0" />
+                        {fmtDate(receipt.completedAt)}
+                      </span>
+                    }
+                  />
+                </div>
+
+                {/* Transfer strip */}
                 {(receipt.ibanSnapshot || receipt.stripeTransferId || receipt.processedBy?.name) && (
-                  <div className="inv-section wr-card space-y-2">
-                    <div className="inv-section-header">
-                      <Landmark className="inv-icon" size={13} />
-                      <h3>{isAr ? 'تفاصيل التحويل' : 'Transfer Details'}</h3>
+                  <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-3 inv-section">
+                    <div className="flex items-center gap-2 inv-section-header border-0 p-0 m-0">
+                      <div className="w-7 h-7 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
+                        <Building2 size={13} className="text-gold-400 inv-icon" />
+                      </div>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-gold-400 m-0">
+                        {isAr ? 'تفاصيل التحويل' : 'Transfer Details'}
+                      </h3>
                     </div>
-                    {receipt.ibanSnapshot ? (
-                      <div className="flex items-start gap-2 text-sm">
-                        <Landmark className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                        <span className="text-gray-400 inv-label shrink-0">IBAN:</span>
-                        <span className="text-white font-semibold break-all inv-value font-mono text-xs">
-                          {receipt.ibanSnapshot}
-                        </span>
-                      </div>
-                    ) : null}
-                    {receipt.stripeTransferId ? (
-                      <div className="flex items-start gap-2 text-sm">
-                        <CreditCard className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                        <span className="text-gray-400 inv-label shrink-0">Transfer:</span>
-                        <span className="text-white font-semibold break-all inv-value font-mono text-xs">
-                          {receipt.stripeTransferId}
-                        </span>
-                      </div>
-                    ) : null}
-                    {receipt.processedBy?.name ? (
-                      <div className="flex items-start gap-2 text-sm">
-                        <User className="w-4 h-4 text-gold-500 inv-icon mt-0.5 shrink-0" />
-                        <span className="text-gray-400 inv-label shrink-0">
-                          {isAr ? 'المعالج:' : 'Processed by:'}
-                        </span>
-                        <span className="text-white font-semibold inv-value">
-                          {receipt.processedBy.name}
-                        </span>
-                      </div>
-                    ) : null}
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {receipt.ibanSnapshot ? (
+                        <div className="rounded-xl bg-black/30 border border-white/8 px-3.5 py-3">
+                          <p className="text-[10px] uppercase tracking-wider text-white/35 mb-1 inv-label">
+                            IBAN
+                          </p>
+                          <p className="font-mono text-[12px] sm:text-sm text-emerald-300/95 font-bold tracking-wide break-all inv-value">
+                            {receipt.ibanSnapshot}
+                          </p>
+                        </div>
+                      ) : null}
+                      {receipt.stripeTransferId ? (
+                        <div className="rounded-xl bg-black/30 border border-white/8 px-3.5 py-3">
+                          <p className="text-[10px] uppercase tracking-wider text-white/35 mb-1 inv-label">
+                            Transfer ID
+                          </p>
+                          <p className="font-mono text-[12px] text-white font-semibold break-all inv-value">
+                            {receipt.stripeTransferId}
+                          </p>
+                        </div>
+                      ) : null}
+                      {receipt.processedBy?.name ? (
+                        <div className="rounded-xl bg-black/30 border border-white/8 px-3.5 py-3 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-white/35 mb-1 inv-label">
+                              {isAr ? 'المعالج' : 'Processed by'}
+                            </p>
+                            <p className="text-sm text-white font-semibold inv-value">
+                              {receipt.processedBy.name}
+                            </p>
+                          </div>
+                          <span className="text-[10px] px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white/45 font-bold uppercase">
+                            Staff
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 )}
 
-                {(receipt.rejectionReason || receipt.adminNotes) && (
-                  <div className="inv-section wr-card">
-                    <div className="inv-section-header">
-                      <FileText className="inv-icon" size={13} />
-                      <h3>{isAr ? 'ملاحظات' : 'Notes'}</h3>
-                    </div>
-                    <p className="text-sm text-white/80 inv-value m-0">
-                      {receipt.rejectionReason || receipt.adminNotes}
+                {/* Notes */}
+                {notes ? (
+                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3.5 inv-section">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-amber-400/90 font-black mb-1.5 inv-label">
+                      {isAr ? 'ملاحظات' : 'Notes'}
                     </p>
+                    <p className="text-sm text-white/85 leading-relaxed inv-value m-0">{notes}</p>
                   </div>
-                )}
+                ) : null}
 
-                <div className="inv-footer">
-                  {isAr
-                    ? 'هذا الإيصال صادر من منصة إي تشليح لأغراض الإثبات والسجلات المالية.'
-                    : 'Issued by E-Tashleh for proof of payout and financial records.'}
+                {/* Compact ref footer */}
+                <div className="pt-1 border-t border-white/8 space-y-2 inv-footer">
+                  <p className="text-[10px] text-white/30 font-mono break-all inv-label m-0">
+                    ID: {receipt.id}
+                  </p>
+                  <p className="text-[10px] text-white/40 text-center leading-relaxed m-0">
+                    {isAr
+                      ? 'هذا الإيصال صادر من منصة إي تشليح لأغراض الإثبات والسجلات المالية.'
+                      : 'Issued by E-Tashleh for proof of payout and financial records.'}
+                  </p>
                 </div>
               </div>
             )}
