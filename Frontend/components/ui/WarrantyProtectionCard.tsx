@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Clock, Package, AlertCircle, ExternalLink, ChevronDown } from 'lucide-react';
+import { Shield, Package, AlertCircle, ExternalLink, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { Order, OrderOffer } from '../../stores/useOrderStore';
+import { Order } from '../../stores/useOrderStore';
 import { getServerNowMs } from '../../utils/serverClock';
 
 interface WarrantyProtectionCardProps {
@@ -11,10 +11,24 @@ interface WarrantyProtectionCardProps {
     onClaim?: (partId?: string) => void;
     variant?: 'full' | 'compact';
     role?: 'customer' | 'admin' | 'merchant';
+    /** Scope the banner to one offer so replace/claim stays per-part. */
+    focusOfferId?: string;
+    /** Per-offer warranty end (overrides order.warranty_end_at countdown). */
+    warrantyEndAtOverride?: string | null;
+    /** Optional part title when scoped (shown under the hub title). */
+    partLabel?: string | null;
 }
 
 // Optimized with React.memo for 2026 performance standards
-export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = React.memo(({ order, onClaim, variant = 'full', role = 'customer' }) => {
+export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = React.memo(({
+    order,
+    onClaim,
+    variant = 'full',
+    role = 'customer',
+    focusOfferId,
+    warrantyEndAtOverride,
+    partLabel,
+}) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
     const wt = t.warranty; // New warranty translations added in Phase 2
@@ -24,12 +38,21 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
     
     // Find parts with warranty - Robust detection (Phase 3 Polish)
     const warrantyParts = React.useMemo(() => {
-        const partsFromOffers = order.offers?.filter(o => 
+        let partsFromOffers = order.offers?.filter(o => 
             o.status === 'accepted' && (o.hasWarranty || o.has_warranty || o.warranty)
         ) || [];
+        if (focusOfferId) {
+            partsFromOffers = partsFromOffers.filter((o) => String(o.id) === String(focusOfferId));
+            if (partsFromOffers.length === 0) {
+                const focused = order.offers?.find((o) => String(o.id) === String(focusOfferId));
+                if (focused) {
+                    partsFromOffers = [focused as typeof partsFromOffers[number]];
+                }
+            }
+        }
         
         // Fallback to order.parts if offers are empty or missing warranty info
-        if (partsFromOffers.length === 0 && order.parts) {
+        if (partsFromOffers.length === 0 && order.parts && !focusOfferId) {
             return order.parts.map(p => ({
                 id: p.id,
                 merchantName: p.merchantName || order.merchantName || 'Vendor',
@@ -39,15 +62,33 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
             }));
         }
         return partsFromOffers;
-    }, [order.offers, order.parts]);
+    }, [order.offers, order.parts, order.merchantName, order.acceptedOffer?.warranty, focusOfferId]);
+
+    const countdownEndAt =
+        warrantyEndAtOverride ||
+        (focusOfferId
+            ? (order.offers?.find((o) => String(o.id) === String(focusOfferId)) as
+                  | { warrantyEndAt?: string; warranty_end_at?: string }
+                  | undefined)?.warrantyEndAt ||
+              (order.offers?.find((o) => String(o.id) === String(focusOfferId)) as
+                  | { warranty_end_at?: string }
+                  | undefined)?.warranty_end_at ||
+              null
+            : null) ||
+        order.warranty_end_at ||
+        null;
     
     // Auto-expand if parts exist
     const [isExpanded, setIsExpanded] = useState(warrantyParts.length > 0);
 
     useEffect(() => {
-        if (!order.warranty_end_at) return;
+        if (!countdownEndAt) {
+            setTimeLeft(null);
+            setIsExpired(true);
+            return;
+        }
 
-        const target = new Date(order.warranty_end_at!).getTime();
+        const target = new Date(countdownEndAt).getTime();
         // Compact UI shows d/h/m only — tick every 30s to keep lists light
         const tickMs = variant === 'compact' ? 30_000 : 1_000;
 
@@ -75,13 +116,13 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
         calculate();
         const interval = setInterval(calculate, tickMs);
         return () => clearInterval(interval);
-    }, [order.warranty_end_at, variant]);
+    }, [countdownEndAt, variant]);
 
     // Helper to calculate expiration for individual parts - Master Sync Logic 2026
     const calculatePartExpiry = (durationStr: string) => {
-        if (!order.warranty_end_at || !durationStr) return null;
+        if (!countdownEndAt || !durationStr) return null;
         
-        const mainExpiry = new Date(order.warranty_end_at).getTime();
+        const mainExpiry = new Date(countdownEndAt).getTime();
         
         const parseToMs = (str: string) => {
             const d = str.toLowerCase().trim();
@@ -112,11 +153,7 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
         return activeAt + thisDurationMs;
     };
 
-    const isPartExpired = (durationStr: string) => {
-        const expiry = calculatePartExpiry(durationStr);
-        if (!expiry) return false;
-        return new Date().getTime() > expiry;
-    };
+    if (!countdownEndAt && warrantyParts.length === 0) return null;
 
     if (variant === 'compact') {
         return (
@@ -158,10 +195,20 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                             <h3 className={`text-xl font-black ${isExpired ? 'text-white/40' : 'text-white'}`}>
                                 {isAr ? 'ضمان أى تشليح 2026' : 'E-TASHLEH WARRANTY 2026'}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                                 <span className={`text-xs font-bold ${isExpired ? 'text-red-400' : 'text-emerald-400'}`}>
-                                    {isExpired ? (isAr ? 'فترة الضمان انتهت' : 'Warranty period has ended') : (isAr ? 'طلبك محمي بالكامل' : 'Your order is fully protected')}
+                                    {isExpired
+                                        ? (isAr ? 'فترة الضمان انتهت' : 'Warranty period has ended')
+                                        : focusOfferId
+                                          ? (isAr ? 'هذه القطعة محمية بالضمان' : 'This part is under warranty')
+                                          : (isAr ? 'طلبك محمي بالكامل' : 'Your order is fully protected')}
                                 </span>
+                                {partLabel && (
+                                    <>
+                                        <span className="text-white/20 text-[10px]">•</span>
+                                        <span className="text-xs font-bold text-white/70">{partLabel}</span>
+                                    </>
+                                )}
                                 <div className={`w-1 h-1 rounded-full ${isExpired ? 'bg-red-500' : 'bg-emerald-500 animate-ping'}`} />
                             </div>
                         </div>
@@ -199,11 +246,20 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                         <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
                             {isAr ? 'متبقي على انتهاء الحماية' : 'REMAINING UNTIL EXPIRATION'}
                         </span>
+                        {role === 'customer' && !isExpired && focusOfferId && (
+                            <button
+                                type="button"
+                                onClick={() => onClaim?.(focusOfferId)}
+                                className="mt-2 px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-[0_0_18px_rgba(196,169,92,0.45)] border border-gold-400/60"
+                            >
+                                {isAr ? 'طلب استبدال هذه القطعة' : 'REPLACE THIS PART'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* Parts under warranty section */}
-                {warrantyParts.length > 0 && (
+                {/* Parts under warranty section — skip list when already scoped to one offer */}
+                {warrantyParts.length > 0 && !focusOfferId && (
                     <div className="mt-8 pt-6 border-t border-white/5">
                         <button 
                             onClick={() => setIsExpanded(!isExpanded)}
@@ -231,13 +287,12 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                                             const partExpiry = calculatePartExpiry(o.warranty || '');
                                             const expired = partExpiry ? new Date().getTime() > partExpiry : isExpired;
                                             
-                                            // Precise day calculation synchronized with main counter using Floor to match big timer
                                             const timeLeftDays = partExpiry 
                                                 ? Math.max(0, Math.floor((partExpiry - new Date().getTime()) / (1000 * 60 * 60 * 24))) 
                                                 : 0;
 
                                             return (
-                                                <div key={idx} className={`p-4 bg-white/[0.03] border rounded-xl flex items-center justify-between group transition-all ${
+                                                <div key={o.id || idx} className={`p-4 bg-white/[0.03] border rounded-xl flex items-center justify-between group transition-all ${
                                                     expired ? 'border-white/5 opacity-50' : 'border-emerald-500/10 hover:bg-white/[0.05] hover:border-emerald-500/30'
                                                 }`}>
                                                     <div className="flex items-center gap-3">
@@ -266,7 +321,7 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                                                         <button 
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
-                                                                onClaim?.(o.id); // Pass the specific part/offer ID
+                                                                onClaim?.(o.id);
                                                             }}
                                                             className="px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-[0_0_18px_rgba(196,169,92,0.45)] will-change-transform border border-gold-400/60"
                                                         >

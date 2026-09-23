@@ -339,6 +339,27 @@ export function isOfferFulfillmentCancelled(fulfillmentStatus?: string | null): 
     return String(fulfillmentStatus || '').toUpperCase() === 'CANCELLED';
 }
 
+/** Exclude cancelled / fully-refunded offers from live admin financial totals. */
+export function isOfferIncludedInLiveFinancialTotals(offer: {
+    status?: string | null;
+    fulfillmentStatus?: string | null;
+    payments?: Array<{ status?: string | null }> | null;
+}): boolean {
+    if (isOfferFulfillmentCancelled(offer.fulfillmentStatus)) return false;
+    const payments = offer.payments || [];
+    if (payments.length === 0) return true;
+    const hasActiveSuccess = payments.some(
+        (p) => String(p.status || '').toUpperCase() === 'SUCCESS',
+    );
+    if (!hasActiveSuccess) {
+        const onlyTerminal = payments.every((p) =>
+            ['REFUNDED', 'CANCELLED', 'FAILED'].includes(String(p.status || '').toUpperCase()),
+        );
+        if (onlyTerminal) return false;
+    }
+    return hasActiveSuccess || payments.length === 0;
+}
+
 /** Post-inspection success — never show rematch CTAs even if a stale REJECTED doc remains. */
 const POST_VERIFICATION_SUCCESS_STATUSES = new Set([
     'VERIFICATION_SUCCESS',

@@ -2239,6 +2239,42 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                             orderCorrectionDeadlineAt={order?.correctionDeadlineAt}
                                                         />
 
+                                                        {(() => {
+                                                            const meta = partResolutionByOfferId.get(partOffer.id);
+                                                            const warrantyEndAt =
+                                                                (typeof meta?.warrantyEndAt === 'string'
+                                                                    ? meta.warrantyEndAt
+                                                                    : null) ||
+                                                                partOffer.warrantyEndAt ||
+                                                                null;
+                                                            const isWarrantyEligible = Boolean(
+                                                                (meta as { isWarrantyEligible?: boolean } | undefined)
+                                                                    ?.isWarrantyEligible ||
+                                                                    warrantyEndAt,
+                                                            );
+                                                            const fs = String(
+                                                                partOffer.fulfillmentStatus || '',
+                                                            ).toUpperCase();
+                                                            if (
+                                                                !warrantyEndAt ||
+                                                                !isWarrantyEligible ||
+                                                                (fs !== 'COMPLETED' && fs !== 'DELIVERED')
+                                                            ) {
+                                                                return null;
+                                                            }
+                                                            return (
+                                                                <div className="mt-4">
+                                                                    <WarrantyProtectionCard
+                                                                        order={order}
+                                                                        role="merchant"
+                                                                        focusOfferId={partOffer.id}
+                                                                        warrantyEndAtOverride={warrantyEndAt}
+                                                                        partLabel={part.name}
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        })()}
+
                                                         {/* 2026 Governance: Edit / Cancel until offersStopAt */}
                                                         {(order.status === 'AWAITING_OFFERS' || order.status === 'COLLECTING_OFFERS') &&
                                                             !partOffer.isWithdrawn && (

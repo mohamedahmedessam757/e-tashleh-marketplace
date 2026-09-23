@@ -51,6 +51,9 @@ import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSu
 import {
     computeShipmentDeliverySummary,
     resolveOrderTimelineStatus,
+    isOfferIncludedInLiveFinancialTotals,
+    getMerchantFulfillmentDisplayLabel,
+    isOfferFulfillmentCancelled,
 } from '../../../utils/offerFulfillmentHelpers';
 import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
 import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
@@ -267,9 +270,29 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         const tick = () => {
             void fetchOrder(id).catch(() => {});
         };
-        const timer = window.setInterval(tick, 12_000);
+        const timer = window.setInterval(tick, 5_000);
         return () => window.clearInterval(timer);
     }, [orderId, fetchOrder]);
+
+    const billableAcceptedOffers = useMemo(() => {
+        return (order?.acceptedOffers || []).filter((offer: any) =>
+            isOfferIncludedInLiveFinancialTotals(offer),
+        );
+    }, [order?.acceptedOffers]);
+
+    const liveFinancialTotal = useMemo(() => {
+        if (!order) return 0;
+        if (billableAcceptedOffers.length === 0) return 0;
+        return billableAcceptedOffers.reduce((sum: number, offer: any) => {
+            return (
+                sum +
+                computeOfferFinalPrice(
+                    { unitPrice: offer.unitPrice, shippingCost: offer.shippingCost },
+                    financial,
+                ).finalPrice
+            );
+        }, 0);
+    }, [billableAcceptedOffers, financial, order]);
 
     const offerModificationLogs = useMemo(() => {
         const OFFER_ACTIONS = new Set([
@@ -440,9 +463,6 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
     const isExpired = isOrderExpired();
     const noOp = () => { };
-
-    // Financial calculations
-    const orderPrice = Number(order.price) || 0;
 
     return (
         <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 relative min-w-0 overflow-x-clip">
@@ -890,6 +910,43 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                             <span className="text-[10px] font-mono text-gold-500/50 uppercase tracking-wider">
                                                                 {isAr ? `قطعة ${idx + 1}` : `Part ${idx + 1}`}
                                                             </span>
+                                                            {primaryOffer?.fulfillmentStatus && (
+                                                                <span
+                                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-black ${
+                                                                        isOfferFulfillmentCancelled(primaryOffer.fulfillmentStatus)
+                                                                            ? 'border-rose-500/40 bg-rose-500/15 text-rose-200'
+                                                                            : String(primaryOffer.fulfillmentStatus).toUpperCase() === 'COMPLETED'
+                                                                              ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
+                                                                              : String(primaryOffer.fulfillmentStatus).toUpperCase() === 'DELIVERED'
+                                                                                ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200'
+                                                                                : 'border-amber-500/40 bg-amber-500/15 text-amber-100'
+                                                                    }`}
+                                                                >
+                                                                    {getMerchantFulfillmentDisplayLabel(
+                                                                        primaryOffer.fulfillmentStatus,
+                                                                        order.status,
+                                                                        isAr,
+                                                                        { requestType: order.requestType },
+                                                                    )}
+                                                                    {primaryOffer.warrantyEndAt &&
+                                                                        String(primaryOffer.fulfillmentStatus).toUpperCase() ===
+                                                                            'COMPLETED' && (
+                                                                            <span className="opacity-80">
+                                                                                · {isAr ? 'ضمان' : 'Warranty'}
+                                                                            </span>
+                                                                        )}
+                                                                </span>
+                                                            )}
+                                                            {!primaryOffer && hasOffers && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-white/15 bg-white/5 text-white/50 text-[10px] font-bold">
+                                                                    {isAr ? 'بانتظار قبول عرض' : 'Awaiting accepted offer'}
+                                                                </span>
+                                                            )}
+                                                            {!hasOffers && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-white/15 bg-white/5 text-white/40 text-[10px] font-bold">
+                                                                    {isAr ? 'لا عروض' : 'No offers'}
+                                                                </span>
+                                                            )}
                                                             {p.shippingClass && (
                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/15 bg-white/5 text-white/70 text-[10px] font-bold">
                                                                     <Truck size={10} />
@@ -1513,9 +1570,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             {t.admin.orderDetails.financials || 'Financial Summary'}
                         </h3>
 
-                        {order.acceptedOffers && order.acceptedOffers.length > 0 ? (
+                        {billableAcceptedOffers.length > 0 ? (
                             <div className="space-y-4">
-                                {order.acceptedOffers.map((offer: any, idx: number) => {
+                                {billableAcceptedOffers.map((offer: any, idx: number) => {
                                     const { unitPrice: base, shippingCost: shipping, commission, finalPrice: partTotal } =
                                         computeOfferFinalPrice(
                                             { unitPrice: offer.unitPrice, shippingCost: offer.shippingCost },
@@ -1567,6 +1624,14 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     );
                                 })}
 
+                                {(order.acceptedOffers?.length || 0) > billableAcceptedOffers.length && (
+                                    <p className="text-[11px] text-white/40">
+                                        {isAr
+                                            ? `تم استبعاد ${(order.acceptedOffers?.length || 0) - billableAcceptedOffers.length} قطعة ملغاة/مستردة من الإجمالي الحي`
+                                            : `${(order.acceptedOffers?.length || 0) - billableAcceptedOffers.length} cancelled/refunded part(s) excluded from live total`}
+                                    </p>
+                                )}
+
                                 <div className="pt-4 border-t border-white/10 mt-4">
                                     <div className="flex justify-between items-end text-white">
                                         <div>
@@ -1575,7 +1640,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         </div>
                                         <div className="text-right">
                                             <span className="text-green-400 font-mono text-2xl font-bold block leading-none">
-                                                {orderPrice.toFixed(2)} AED
+                                                {liveFinancialTotal.toFixed(2)} AED
                                             </span>
                                         </div>
                                     </div>

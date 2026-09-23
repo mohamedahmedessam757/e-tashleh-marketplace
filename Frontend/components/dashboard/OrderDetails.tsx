@@ -1239,8 +1239,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                 </motion.div>
             )}
 
-            {/* Premium Warranty Protection Hub (2026) */}
-            {order.warranty_end_at &&
+            {/* Premium Warranty Protection Hub (2026) — single-item only; multi uses per-part cards */}
+            {!isMultiPartOrder &&
+                order.warranty_end_at &&
                 (order.status === 'WARRANTY_ACTIVE' ||
                     order.status === 'COMPLETED') && (
                 <motion.div 
@@ -2159,17 +2160,18 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                         />
                                                         {warrantyEndAt &&
                                                             (isWarrantyEligible || !isReturnEligible) && (
-                                                            <WarrantyBadge
-                                                                endDate={warrantyEndAt}
-                                                                status={
-                                                                    new Date(warrantyEndAt).getTime() >
-                                                                    Date.now()
-                                                                        ? 'WARRANTY_ACTIVE'
-                                                                        : 'WARRANTY_EXPIRED'
-                                                                }
-                                                                onReplace={() => {
+                                                            <WarrantyProtectionCard
+                                                                order={order}
+                                                                role="customer"
+                                                                focusOfferId={acceptedPartOffer.id}
+                                                                warrantyEndAtOverride={warrantyEndAt}
+                                                                partLabel={p.name}
+                                                                onClaim={(offerId) => {
                                                                     setReturnInitialReason('warranty_claim');
-                                                                    openReturnForPart(cardOffer);
+                                                                    openReturnForPart({
+                                                                        ...cardOffer,
+                                                                        offerId: String(offerId || acceptedPartOffer.id),
+                                                                    });
                                                                 }}
                                                             />
                                                         )}

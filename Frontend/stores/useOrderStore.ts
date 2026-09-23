@@ -15,6 +15,7 @@ import { markOrderCancelledByCustomer, clearOrderCancelledByCustomer } from '../
 import { useAdminStore } from './useAdminStore';
 import { getAccessToken } from '../utils/auth';
 import { isAcceptedOfferStatus } from '../utils/offerStatusHelpers';
+import { isOfferIncludedInLiveFinancialTotals } from '../utils/offerFulfillmentHelpers';
 import { bumpFulfillmentSummary } from '../utils/fulfillmentSummarySync';
 
 // Module-level debounce timer to prevent realtime spam and race conditions with DB transactions
@@ -153,6 +154,12 @@ export interface OrderOffer {
     resolutionLocked?: boolean;
     hasOpenCase?: boolean;
     returnWindowEndsAt?: string;
+    hasWarranty?: boolean;
+    has_warranty?: boolean;
+    warrantyDuration?: string;
+    warrantyActiveAt?: string;
+    warrantyEndAt?: string;
+    warranty_end_at?: string;
 }
 
 /** Grouped-order shipment batch (one customer selection = one shipment + waybill). */
@@ -1078,6 +1085,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     deliveredAt: offer.deliveredAt || offer.delivered_at || undefined,
                     completedAt: offer.completedAt || offer.completed_at || undefined,
                     resolutionLocked: !!(offer.resolutionLocked ?? offer.resolution_locked),
+                    hasWarranty: !!(offer.hasWarranty ?? offer.has_warranty),
+                    warrantyDuration: offer.warrantyDuration || offer.warranty_duration || undefined,
+                    warrantyActiveAt: offer.warrantyActiveAt || offer.warranty_active_at || undefined,
+                    warrantyEndAt: offer.warrantyEndAt || offer.warranty_end_at || undefined,
                     hasOpenCase:
                         typeof offer.hasOpenCase === 'boolean'
                             ? offer.hasOpenCase
@@ -1105,9 +1116,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     ...o.customer,
                     customerCode: o.customer.id ? `CUS-${o.customer.id.substring(0, 6).toUpperCase()}` : undefined
                 } : undefined,
-                price: o.totalAmount ? Number(o.totalAmount) : (() => {
+                price: (() => {
                     const financial = useAdminStore.getState().systemConfig?.financial;
-                    const allAccepted = o.offers?.filter((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())) || [];
+                    const allAccepted = (o.offers || []).filter(
+                        (of: any) =>
+                            isAcceptedOfferStatus(of.status) &&
+                            isOfferIncludedInLiveFinancialTotals(of),
+                    );
                     if (allAccepted.length > 0) {
                         return allAccepted.reduce((total: number, of: any) => {
                             return total + computeOfferFinalPrice(
@@ -1116,7 +1131,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                             ).finalPrice;
                         }, 0);
                     }
-                    return 0;
+                    // Fallback to backend total only when we cannot rebuild from live offers
+                    return o.totalAmount ? Number(o.totalAmount) : 0;
                 })(),
                 merchantName: o.offers?.find((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase()))?.store?.name || null,
                 acceptedOffer: o.offers?.find((of: any) => ['ACCEPTED', 'COMPLETED', 'SHIPPED', 'DELIVERED'].includes(String(of.status).toUpperCase())),

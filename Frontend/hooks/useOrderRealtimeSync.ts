@@ -122,6 +122,20 @@ export function useOrderRealtimeSync(
             )
             .subscribe();
 
+        const paymentsChannel = supabase
+            .channel(`order_payments_sync_${orderId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'payment_transactions',
+                    filter: `order_id=eq.${orderId}`,
+                },
+                () => scheduleFetch(orderId),
+            )
+            .subscribe();
+
         let reviewsChannel: ReturnType<typeof supabase.channel> | null = null;
         if (includeReviews) {
             reviewsChannel = supabase
@@ -141,6 +155,7 @@ export function useOrderRealtimeSync(
             supabase.removeChannel(offersChannel);
             supabase.removeChannel(orderPartsChannel);
             supabase.removeChannel(verificationChannel);
+            supabase.removeChannel(paymentsChannel);
             if (reviewsChannel) supabase.removeChannel(reviewsChannel);
         };
     }, [orderId, includeReviews]);
