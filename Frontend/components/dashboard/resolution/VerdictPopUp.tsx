@@ -103,11 +103,13 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
 
     if (!currentPopUp) return null;
 
-    const isPayee = currentPopUp.metadata?.isPayee;
+    const isPayee = Boolean(currentPopUp.metadata?.isPayee);
+    const shippingBearer = String(currentPopUp.metadata?.shippingBearer || '').toUpperCase();
     const shippingCost = Number(currentPopUp.metadata?.shippingCost || 0);
     const hasNavAction = Boolean(currentPopUp.link && onNavigate);
     const ctaLabel = resolveVerdictPopupCta(currentPopUp, isAr);
     const showPayIcon = Boolean(isPayee && shippingCost > 0);
+    const isCarrierNotice = shippingBearer === 'SHIPPING_COMPANY' && shippingCost > 0;
 
     return (
         <AnimatePresence>
@@ -125,10 +127,10 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                     className="w-full max-w-lg"
                 >
                     <GlassCard
-                        className={`relative overflow-hidden border-2 p-8 ${isPayee ? 'border-red-500/30 shadow-[0_0_50px_-12px_rgba(239,68,68,0.3)]' : 'border-cyan-500/30'}`}
+                        className={`relative overflow-hidden border-2 p-8 ${isPayee ? 'border-red-500/30 shadow-[0_0_50px_-12px_rgba(239,68,68,0.3)]' : isCarrierNotice ? 'border-purple-500/30 shadow-[0_0_50px_-12px_rgba(168,85,247,0.25)]' : 'border-cyan-500/30'}`}
                     >
                         <div
-                            className={`absolute top-0 right-0 p-12 opacity-10 ${isPayee ? 'text-red-500' : 'text-cyan-500'}`}
+                            className={`absolute top-0 right-0 p-12 opacity-10 ${isPayee ? 'text-red-500' : isCarrierNotice ? 'text-purple-400' : 'text-cyan-500'}`}
                         >
                             <Gavel size={160} />
                         </div>
@@ -136,7 +138,7 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                         <div className="relative z-10 space-y-6">
                             <div className="flex items-center justify-between">
                                 <div
-                                    className={`flex items-center gap-3 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${isPayee ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400'}`}
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${isPayee ? 'bg-red-500/20 text-red-400' : isCarrierNotice ? 'bg-purple-500/20 text-purple-300' : 'bg-cyan-500/20 text-cyan-400'}`}
                                 >
                                     {isPayee ? <ShieldAlert size={14} /> : <Info size={14} />}
                                     {isAr ? 'إشعار مهم' : 'Important notice'}
@@ -181,6 +183,24 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                                     </p>
                                 </div>
                             )}
+                            {isCarrierNotice && !isPayee && (
+                                <div className="p-6 bg-purple-500/10 border border-purple-500/20 rounded-[32px] space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black text-purple-300 uppercase tracking-widest">
+                                            {isAr ? 'التزام شركة الشحن' : 'Carrier liability'}
+                                        </span>
+                                        <div className="text-right">
+                                            <span className="text-2xl font-black text-white">{shippingCost}</span>
+                                            <span className="ml-1 text-[10px] font-bold text-white/40"> AED</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-purple-300/70 font-bold leading-relaxed">
+                                        {isAr
+                                            ? 'لا يُطلب منك سداد تكاليف الشحن — الالتزام المالي مسجَّل على شركة الشحن.'
+                                            : 'You are not asked to pay shipping — liability is recorded against the shipping company.'}
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                 {hasNavAction && (
@@ -211,7 +231,7 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
                         </div>
 
                         <motion.div
-                            className={`absolute inset-0 border-2 rounded-[inherit] pointer-events-none ${isPayee ? 'border-red-500/50' : 'border-cyan-500/50'}`}
+                            className={`absolute inset-0 border-2 rounded-[inherit] pointer-events-none ${isPayee ? 'border-red-500/50' : isCarrierNotice ? 'border-purple-500/40' : 'border-cyan-500/50'}`}
                             animate={{ opacity: [0.3, 0.6, 0.3] }}
                             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                         />

@@ -15,7 +15,8 @@ async function main() {
     await client.query('BEGIN');
 
     const ret = await client.query(
-      `SELECT id, offer_id, order_id, status, fault_party, verdict_locked
+      `SELECT id, offer_id, order_id, status, fault_party, verdict_locked,
+              shipping_company_liability, shipping_payee
        FROM returns WHERE id = $1 FOR UPDATE`,
       [CASE_ID],
     );
@@ -71,6 +72,34 @@ async function main() {
       }
     }
 
+    // Reverse any shipping-company liability wallet / platform balance for this case
+    const scLiab = await client.query(
+      `SELECT id, amount, metadata
+       FROM wallet_transactions
+       WHERE transaction_type = 'SHIPPING_COMPANY_LIABILITY'
+         AND (metadata->>'caseId') = $1`,
+      [CASE_ID],
+    );
+    let liabilityReversed = 0;
+    for (const row of scLiab.rows) {
+      liabilityReversed += Number(row.amount || 0);
+    }
+    if (liabilityReversed > 0.009) {
+      await client.query(
+        `UPDATE platform_wallets
+         SET shipping_company_liability_balance =
+               GREATEST(0, COALESCE(shipping_company_liability_balance, 0) - $1)`,
+        [liabilityReversed],
+      );
+      await client.query(
+        `DELETE FROM wallet_transactions
+         WHERE transaction_type = 'SHIPPING_COMPANY_LIABILITY'
+           AND (metadata->>'caseId') = $1`,
+        [CASE_ID],
+      );
+      console.log('reversed SC liability', liabilityReversed);
+    }
+
     await client.query(
       `UPDATE returns SET
          status = 'PENDING',
@@ -124,6 +153,17 @@ async function main() {
       `DELETE FROM invoices WHERE shipping_batch_key LIKE $1`,
       [`RETURNS_FEE:${CASE_ID}%`],
     );
+
+    // Mark mistaken verdict notifications as read for this case
+    const notif = await client.query(
+      `UPDATE notifications
+       SET is_read = true,
+           updated_at = NOW()
+       WHERE (metadata->>'caseId') = $1
+         AND is_read = false`,
+      [CASE_ID],
+    );
+    console.log('marked notifications read', notif.rowCount);
 
     await client.query('COMMIT');
     console.log('RESET_OK', CASE_ID);

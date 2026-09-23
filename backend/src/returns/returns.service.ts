@@ -2422,6 +2422,13 @@ export class ReturnsService {
                         // Persist carrier liability into finance ledger + platform wallet balance
                         const liabilityAmount = Number(refundFinancials.shippingCompanyLiability || 0);
                         if (liabilityAmount > 0.009) {
+                            // Fees are only part of carrier liability when a customer refund is executed.
+                            // No-refund SC cases: RT shipping only — never attribute Stripe fees to the carrier.
+                            const stripeFeesInLiability = Math.max(
+                                0,
+                                Math.round((liabilityAmount - Number(shipObligation || 0) + Number.EPSILON) * 100) /
+                                    100,
+                            );
                             const liabilityKey = makeReturnsLineItemIdempotencyKey(
                                 caseId,
                                 'SHIPPING_COMPANY_LIABILITY',
@@ -2447,15 +2454,21 @@ export class ReturnsService {
                                             currency: 'AED',
                                             status: 'OPEN',
                                             shippingAmount: shipObligation,
-                                            stripeFeesAmount: Number(refundFinancials.platformFeesTotal || 0),
+                                            stripeFeesAmount: stripeFeesInLiability,
                                             refundAmount: Number(
                                                 refundFinancials.finalCustomerRefundAmount || 0,
                                             ),
                                             notes: `Adjudication liability — case ${caseId.substring(0, 8)}`,
                                             metadata: {
                                                 faultParty: 'SHIPPING_COMPANY',
-                                                gatewayFeeAmount: refundFinancials.gatewayFeeAmount,
-                                                refundFeeAmount: refundFinancials.refundFeeAmount,
+                                                gatewayFeeAmount:
+                                                    stripeFeesInLiability > 0
+                                                        ? refundFinancials.gatewayFeeAmount
+                                                        : 0,
+                                                refundFeeAmount:
+                                                    stripeFeesInLiability > 0
+                                                        ? refundFinancials.refundFeeAmount
+                                                        : 0,
                                                 shippingRoundtrip: shipObligation,
                                                 finalRefundDecision,
                                                 idempotencyKey: liabilityKey,
@@ -2491,7 +2504,10 @@ export class ReturnsService {
                                         transactionType: 'SHIPPING_COMPANY_LIABILITY',
                                         amount: liabilityAmount,
                                         currency: 'AED',
-                                        description: `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping + Stripe fees)`,
+                                        description:
+                                            stripeFeesInLiability > 0
+                                                ? `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping + Stripe fees)`
+                                                : `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping only)`,
                                         balanceAfter: Number(
                                             (updatedPw as any).shippingCompanyLiabilityBalance ||
                                                 liabilityAmount,
@@ -2501,9 +2517,7 @@ export class ReturnsService {
                                             caseType: type,
                                             orderId: caseRecord.orderId,
                                             shippingAmount: shipObligation,
-                                            stripeFeesAmount: Number(
-                                                refundFinancials.platformFeesTotal || 0,
-                                            ),
+                                            stripeFeesAmount: stripeFeesInLiability,
                                             refundAmount: Number(
                                                 refundFinancials.finalCustomerRefundAmount || 0,
                                             ),
@@ -2531,7 +2545,14 @@ export class ReturnsService {
                 } else if (extra.faultParty) {
                     const faultLower = String(extra.faultParty || '').toUpperCase();
                     const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
-                    updateData.shippingPayee = isMerchantFault ? 'MERCHANT' : 'CUSTOMER';
+                    if (faultLower === 'SHIPPING_COMPANY') {
+                        updateData.shippingPayee = 'SHIPPING_COMPANY';
+                        updateData.shippingPaymentStatus = 'PENDING_SETTLEMENT';
+                    } else if (isWarrantyFault(faultLower) || isMerchantFault) {
+                        updateData.shippingPayee = 'MERCHANT';
+                    } else {
+                        updateData.shippingPayee = 'CUSTOMER';
+                    }
                 }
             }
 
@@ -2792,21 +2813,54 @@ export class ReturnsService {
         recipientList.forEach(recipient => {
             const faultLower = String(extra.faultParty || '').toUpperCase();
             const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
-            
-            const isPayee = isMerchantFault ? recipient.role === 'MERCHANT' : recipient.role === 'CUSTOMER';
+            const isWarranty = isWarrantyFault(faultLower);
+            const isShippingCompany = faultLower === 'SHIPPING_COMPANY';
+            const shippingBearer = String(
+                refundFinancials?.shippingBearer ||
+                    (isWarranty || isMerchantFault
+                        ? 'MERCHANT'
+                        : isShippingCompany
+                          ? 'SHIPPING_COMPANY'
+                          : faultLower === 'CUSTOMER'
+                            ? 'CUSTOMER'
+                            : 'NONE'),
+            ).toUpperCase();
             const shippingCost = Number(extra.shippingRefund || extra.shippingRoundtrip || 0);
+
+            const responsibleLabelAr =
+                shippingBearer === 'MERCHANT'
+                    ? 'التاجر'
+                    : shippingBearer === 'CUSTOMER'
+                      ? 'العميل'
+                      : shippingBearer === 'SHIPPING_COMPANY'
+                        ? 'شركة الشحن'
+                        : 'الطرف المسؤول';
+            const responsibleLabelEn =
+                shippingBearer === 'MERCHANT'
+                    ? 'Merchant'
+                    : shippingBearer === 'CUSTOMER'
+                      ? 'Customer'
+                      : shippingBearer === 'SHIPPING_COMPANY'
+                        ? 'Shipping company'
+                        : 'Responsible party';
+
+            // Only merchant/customer can be asked to pay RT shipping — never for carrier liability.
+            const isPayee =
+                shippingCost > 0 &&
+                ((shippingBearer === 'MERCHANT' && recipient.role === 'MERCHANT') ||
+                    (shippingBearer === 'CUSTOMER' && recipient.role === 'CUSTOMER'));
             
             let finalMessageAr = `تم إغلاق النزاع للطلب #${caseRecord.order?.orderNumber} بقرار: ${vTextAr}. الملاحظات: ${notes}`;
             let finalMessageEn = `Case for Order #${caseRecord.order?.orderNumber} closed with verdict: ${vTextEn}. Notes: ${notes}`;
 
-            if (shippingCost > 0) {
-                const faultTextAr = isMerchantFault ? 'التاجر' : 'العميل';
-                const faultTextEn = isMerchantFault ? 'Merchant' : 'Customer';
-                
-                finalMessageAr += `\n\n⚠️ تم تحديد ${faultTextAr} كطرف مسؤول عن تكاليف الشحن بقيمة ${shippingCost} AED.`;
-                finalMessageEn += `\n\n⚠️ ${faultTextEn} has been identified as responsible for shipping costs of AED ${shippingCost}.`;
+            if (shippingCost > 0 && shippingBearer !== 'NONE') {
+                finalMessageAr += `\n\n⚠️ تم تحديد ${responsibleLabelAr} كطرف مسؤول عن تكاليف الشحن بقيمة ${shippingCost} AED.`;
+                finalMessageEn += `\n\n⚠️ ${responsibleLabelEn} has been identified as responsible for shipping costs of AED ${shippingCost}.`;
 
-                if (isPayee) {
+                if (shippingBearer === 'SHIPPING_COMPANY') {
+                    finalMessageAr += `\n\n📋 الالتزام المالي مسجَّل على شركة الشحن في مركز المالية — لا يُطلب سداد شحن من التاجر أو العميل.`;
+                    finalMessageEn += `\n\n📋 Financial liability is recorded against the shipping company in Billing — neither merchant nor customer is asked to pay return shipping.`;
+                } else if (isPayee) {
                     if (recipient.role === 'MERCHANT') {
                         finalMessageAr += `\n\n⛔ تحذير: في حال عدم السداد، ستظل مستحقاتك مجمدة في الموقع وقد يتعرض حسابك للإغلاق. يرجى التوجه لتفاصيل الطلب للسداد.`;
                         finalMessageEn += `\n\n⛔ Warning: If unpaid, your funds will remain frozen and your account may be subject to closure. Please go to Order Details to pay.`;
@@ -2834,11 +2888,13 @@ export class ReturnsService {
                 messageAr: finalMessageAr,
                 messageEn: finalMessageEn,
                 type: 'DISPUTE',
-                link: recipient.role === 'MERCHANT' ? `dispute-details/${caseId}` : `dispute-details/${caseId}`,
+                link: `dispute-details/${caseId}`,
                 metadata: {
                     caseId,
                     isPayee,
                     shippingCost,
+                    shippingBearer,
+                    faultParty: faultLower,
                     adjudicationFeePending: Boolean(pendingAdjudicationFee),
                     adjudicationFeeAmount: pendingAdjudicationFee?.amount,
                     waEvent: 'ORDER_STATUS',

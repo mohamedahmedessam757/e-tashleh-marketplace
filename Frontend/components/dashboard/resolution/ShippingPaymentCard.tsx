@@ -76,9 +76,12 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
         );
     }
 
-    const isPayee = role === 'ADMIN' ? false : caseRecord.shippingPayee === role;
+    const payee = String(caseRecord.shippingPayee || '').toUpperCase();
+    const isCarrierLiability = payee === 'SHIPPING_COMPANY';
+    const isPayee = role === 'ADMIN' ? false : !isCarrierLiability && caseRecord.shippingPayee === role;
     /** PAID only when Stripe/wallet payment was recorded (not legacy auto-marked at verdict). */
     const isPaid =
+        !isCarrierLiability &&
         caseRecord.shippingPaymentStatus === 'PAID' &&
         Boolean(caseRecord.shippingPaymentMethod);
     const needsPayment =
@@ -99,7 +102,61 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
     // 2026 Resilient Translation Mapping
     const resT = (role === 'MERCHANT' 
         ? (t as any).dashboard?.merchant?.resolution 
+        : role === 'ADMIN'
+          ? (t as any).admin?.resolution || (t as any).dashboard?.resolution
         : (t as any).dashboard?.resolution) || {};
+
+    // Carrier liability: neither merchant nor customer pays RT shipping in-app.
+    if (isCarrierLiability) {
+        return (
+            <GlassCard className="relative overflow-hidden p-8 border-2 border-purple-500/30 bg-purple-500/[0.03]">
+                <div className="absolute -top-24 -right-24 w-64 h-64 blur-[100px] rounded-full opacity-20 pointer-events-none bg-purple-500" />
+                <div className="relative z-10 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-start gap-5">
+                            <div className="p-5 rounded-[24px] shadow-2xl bg-purple-500/20 text-purple-300">
+                                <Truck size={32} strokeWidth={2.5} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center gap-3">
+                                    <h4 className="text-xl font-black text-white uppercase tracking-tighter">
+                                        {resT.shipping_logistics || (isAr ? 'لوجستيات الشحن للمرتجعات' : 'Return Shipping Logistics')}
+                                    </h4>
+                                    <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] px-3 py-1 font-black uppercase tracking-widest rounded-full">
+                                        {isAr ? 'شركة الشحن' : 'CARRIER'}
+                                    </Badge>
+                                </div>
+                                <p className="text-sm text-white/50 font-bold leading-relaxed max-w-xl">
+                                    {isAr
+                                        ? 'شركة الشحن هي الطرف المسؤول عن تكاليف الشحن. الالتزام مسجَّل في مركز المالية — لا يُطلب سداد من التاجر أو العميل.'
+                                        : 'The shipping company is liable for return shipping. Liability is recorded in Billing — neither merchant nor customer is asked to pay.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] block mb-1">
+                                {isAr ? 'التزام شركة الشحن' : 'CARRIER LIABILITY'}
+                            </span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-5xl font-black tracking-tighter text-purple-300">
+                                    {amount.toLocaleString()}
+                                </span>
+                                <span className="text-lg font-black text-white/30 uppercase">AED</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="w-full p-6 bg-purple-500/5 rounded-[24px] border border-purple-500/20 flex items-center justify-center gap-4 text-purple-300/80">
+                        <Clock size={20} />
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">
+                            {role === 'ADMIN'
+                                ? (isAr ? 'بانتظار تسوية شركة الشحن من مركز المالية' : 'Awaiting carrier settlement in Billing')
+                                : (isAr ? 'لا يلزمك سداد — الالتزام على شركة الشحن' : 'No payment required — carrier liability')}
+                        </span>
+                    </div>
+                </div>
+            </GlassCard>
+        );
+    }
 
     const handleStripePayment = async () => {
         setIsProcessing(true);

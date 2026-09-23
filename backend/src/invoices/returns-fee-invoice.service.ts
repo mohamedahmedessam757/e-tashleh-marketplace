@@ -49,6 +49,17 @@ export class ReturnsFeeInvoiceService {
     private commissionIssuable(plan: FeeSettlementPlan, ctx: ReturnsFeeInvoiceContext): boolean {
         const commissionLines = plan.lineItems.filter((l) => l.invoiceDocType === 'COMMISSION');
         if (commissionLines.length === 0) return false;
+        // Do not issue COMMISSION docs when platform "absorbs" fees with zero retention
+        // (WARRANTY / SHIPPING_COMPANY) — those amounts are not collectible invoices.
+        const onlyPlatformRetention = commissionLines.every(
+            (l) => l.fundingPath === 'PLATFORM_RETENTION_ONLY',
+        );
+        if (
+            onlyPlatformRetention &&
+            Number(plan.invariants?.expectedPlatformRetentionCreditAmount || 0) <= 0.009
+        ) {
+            return false;
+        }
         const wallet = commissionLines.some((l) => l.fundingPath === 'WALLET_DEBIT');
         return !wallet || ctx.adjudicationFeePaid;
     }
@@ -56,6 +67,10 @@ export class ReturnsFeeInvoiceService {
     private shippingIssuable(plan: FeeSettlementPlan, ctx: ReturnsFeeInvoiceContext): boolean {
         const shippingLines = plan.lineItems.filter((l) => l.invoiceDocType === 'SHIPPING');
         if (shippingLines.length === 0) return false;
+        // Carrier liability: invoice only after admin records a settlement payment (separate flow).
+        // Avoid creating a premature SHIPPING tax doc that looks like someone already paid.
+        const carrierOnly = shippingLines.every((l) => l.payer === 'SHIPPING_COMPANY');
+        if (carrierOnly && !ctx.shippingPaid) return false;
         const wallet = shippingLines.some((l) => l.fundingPath === 'WALLET_DEBIT');
         return !wallet || ctx.shippingPaid;
     }

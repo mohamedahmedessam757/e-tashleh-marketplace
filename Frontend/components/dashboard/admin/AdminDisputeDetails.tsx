@@ -84,6 +84,7 @@ interface AdminDisputeDetailsProps {
 
 export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId, onBack, onNavigate }) => {
     const { t, language } = useLanguage();
+    const isAr = language === 'ar';
     const { getCaseById, adminVerdict, updateReturnPhase, updateAdminVerdict } = useResolutionStore();
     const { getOrder, forceStatus, fetchOrder } = useOrderStore();
     const { addNotification } = useNotificationStore();
@@ -127,6 +128,31 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const dispute = getCaseById(caseId);
     const order = dispute ? getOrder(String(dispute.orderId)) : undefined;
 
+    const customerCitesShippingCompany = (() => {
+        const text = String(dispute?.description || '').toLowerCase();
+        return (
+            text.includes('شركة الشحن') ||
+            text.includes('شركه الشحن') ||
+            text.includes('shipping company') ||
+            text.includes('carrier')
+        );
+    })();
+
+    const selectFaultParty = (next: typeof faultParty) => {
+        if (
+            next === 'WARRANTY' &&
+            customerCitesShippingCompany &&
+            !window.confirm(
+                isAr
+                    ? 'وصف العميل يذكر خطأ شركة الشحن. الضمان يحمّل الشحن على التاجر وليس على شركة الشحن. هل تريد المتابعة بالضمان؟\n(للخطأ اللوجستي اختر «خطأ شركة الشحن»)'
+                    : 'Customer description cites a shipping-company error. Warranty assigns RT shipping to the merchant, not the carrier. Continue with Warranty?\n(For logistics fault, choose Shipping Company.)',
+            )
+        ) {
+            return;
+        }
+        setFaultParty(next);
+    };
+
     useEffect(() => {
         const loadGatewayFee = async () => {
             try {
@@ -157,7 +183,6 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke only on unmount
     }, []);
 
-    const isAr = language === 'ar';
     const NextIcon = isAr ? ChevronLeft : ChevronRight;
     const PrevIcon = isAr ? ChevronRight : ChevronLeft;
 
@@ -1038,7 +1063,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                  ].map((opt: { id: string; label: string; icon: React.ElementType }) => (
                                                      <button
                                                          key={opt.id}
-                                                         onClick={() => setFaultParty(opt.id as any)}
+                                                         onClick={() => selectFaultParty(opt.id as any)}
                                                          className={`w-full p-5 rounded-2xl border flex items-center justify-between transition-all ${faultParty === opt.id ? 'bg-gold-500/10 border-gold-500/40 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'}`}
                                                      >
                                                          <div className="flex items-center gap-4">
@@ -1051,6 +1076,20 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      </button>
                                                  ))}
                                              </div>
+                                             {customerCitesShippingCompany && faultParty === 'WARRANTY' && (
+                                                 <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-[10px] font-bold text-amber-200">
+                                                     {isAr
+                                                         ? 'تنبيه: وصف العميل يشير لشركة الشحن — تأكد أنك لم تختر الضمان بالخطأ.'
+                                                         : 'Warning: customer description cites the shipping company — confirm Warranty is intentional.'}
+                                                 </div>
+                                             )}
+                                             {customerCitesShippingCompany && faultParty !== 'SHIPPING_COMPANY' && faultParty !== 'WARRANTY' && (
+                                                 <div className="p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 text-[10px] font-bold text-purple-200">
+                                                     {isAr
+                                                         ? 'وصف العميل يذكر خطأ شركة الشحن — الخيار المناسب غالباً: خطأ شركة الشحن.'
+                                                         : 'Customer description mentions shipping-company fault — prefer Shipping Company.'}
+                                                 </div>
+                                             )}
                                              {isCloseCompleteRefund && (
                                                  <div className="p-4 rounded-2xl border border-gold-500/30 bg-gold-500/5">
                                                      <p className="text-[11px] font-bold text-gold-200/90 leading-relaxed">
@@ -1260,17 +1299,29 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                 <span className="text-orange-400 font-mono">-{finPreview.platformFees.toFixed(2)} AED</span>
                                                             </div>
                                                          )}
-                                                         {faultParty === 'SHIPPING_COMPANY' && finPreview.platformFees > 0 && (
+                                                         {faultParty === 'SHIPPING_COMPANY' && finPreview.refundRequired && finPreview.platformFees > 0 && (
                                                          <>
                                                          <div className="flex justify-between text-[10px]">
-                                                             <span className="text-purple-400/60 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم بوابة الدفع (تتحملها المنصة → على شركة الشحن)' : 'Gateway fee (platform → carrier liability)'}</span>
+                                                             <span className="text-purple-400/60 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم بوابة الدفع (ضمن التزام شركة الشحن)' : 'Gateway fee (within carrier liability)'}</span>
                                                              <span className="text-purple-400 font-mono">{finPreview.gatewayFee.toFixed(2)} AED</span>
                                                          </div>
                                                          <div className="flex justify-between text-[10px]">
-                                                             <span className="text-purple-400/60 flex items-center gap-2"><RotateCcw size={10} /> {isAr ? 'رسوم الاسترداد Stripe (تتحملها المنصة → على شركة الشحن)' : 'Stripe refund fee (platform → carrier liability)'}</span>
+                                                             <span className="text-purple-400/60 flex items-center gap-2"><RotateCcw size={10} /> {isAr ? 'رسوم الاسترداد Stripe (ضمن التزام شركة الشحن)' : 'Stripe refund fee (within carrier liability)'}</span>
                                                              <span className="text-purple-400 font-mono">{finPreview.refundFee.toFixed(2)} AED</span>
                                                          </div>
                                                          </>
+                                                         )}
+                                                         {faultParty === 'SHIPPING_COMPANY' && !finPreview.refundRequired && finPreview.platformFees > 0 && (
+                                                            <div className="flex justify-between text-[10px]">
+                                                                <span className="text-white/45 flex items-center gap-2"><CreditCard size={10} /> {isAr ? 'رسوم المنصة (تتحملها المنصة — ليست على شركة الشحن)' : 'Platform fees (absorbed by platform — not on carrier)'}</span>
+                                                                <span className="text-white/50 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
+                                                            </div>
+                                                         )}
+                                                         {faultParty === 'WARRANTY' && finPreview.merchantDebits.shipping > 0 && (
+                                                            <div className="flex justify-between text-[10px]">
+                                                                <span className="text-cyan-400/70 flex items-center gap-2"><Truck size={10} /> {isAr ? 'شحن ذهاباً وإياباً (على التاجر — ضمان)' : 'Round-trip shipping (merchant — warranty)'}</span>
+                                                                <span className="text-cyan-400 font-mono">{finPreview.merchantDebits.shipping.toFixed(2)} AED</span>
+                                                            </div>
                                                          )}
                                                          {finPreview.showShippingOnCustomerNet && shippingRoundtrip > 0 && (
                                                             <div className="flex justify-between text-[10px]">
@@ -1474,7 +1525,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                  <button
                                                      key={opt.id}
                                                      type="button"
-                                                     onClick={() => setFaultParty(opt.id as any)}
+                                                     onClick={() => selectFaultParty(opt.id as any)}
                                                      className={`p-3 rounded-xl border text-[11px] font-bold transition-all ${
                                                          faultParty === opt.id
                                                              ? 'bg-gold-500/10 border-gold-500/40 text-white'
@@ -1522,18 +1573,22 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                  <span>{(t.admin.disputeManager.verdictTerminal as any).finalCustomerRefundAmountLabel}</span>
                                                  <span className="text-emerald-400 font-mono">{finPreview.finalCustomerRefundAmount.toFixed(2)} AED</span>
                                              </div>
-                                             {finPreview.platformFees > 0 && (
+                                             {finPreview.platformFees > 0 && faultParty !== 'WARRANTY' && (
                                                  <div className="flex justify-between gap-3 text-white/60">
                                                      <span>
                                                          {faultParty === 'MERCHANT'
                                                              ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees
                                                              : faultParty === 'SHIPPING_COMPANY'
-                                                               ? (isAr ? 'رسوم Stripe (على شركة الشحن)' : 'Stripe fees (carrier liability)')
+                                                               ? (finPreview.refundRequired
+                                                                   ? (isAr ? 'رسوم Stripe (ضمن التزام شركة الشحن)' : 'Stripe fees (within carrier liability)')
+                                                                   : (isAr ? 'رسوم المنصة (تتحملها المنصة — ليست على شركة الشحن)' : 'Platform fees (absorbed — not on carrier)'))
                                                                : faultParty === 'CUSTOMER' || isCloseCompleteRefund
                                                                ? (isAr ? 'رسوم المنصة (من صافي العميل)' : 'Platform fees (from customer net)')
                                                                : (t.admin.disputeManager.verdictTerminal as any).merchantDebitFees}
                                                      </span>
-                                                     <span className="text-orange-400 font-mono">{finPreview.platformFees.toFixed(2)} AED</span>
+                                                     <span className={`font-mono ${faultParty === 'SHIPPING_COMPANY' && !finPreview.refundRequired ? 'text-white/40' : 'text-orange-400'}`}>
+                                                         {finPreview.platformFees.toFixed(2)} AED
+                                                     </span>
                                                  </div>
                                              )}
                                              {shippingRoundtrip > 0 && (
@@ -1541,8 +1596,9 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      <span>
                                                          {faultParty === 'SHIPPING_COMPANY'
                                                              ? (isAr ? 'شحن ذهاباً وإياباً (على شركة الشحن)' : 'Round-trip shipping (carrier)')
-                                                             : faultParty === 'MERCHANT'
-                                                               ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitShipping
+                                                             : faultParty === 'MERCHANT' || faultParty === 'WARRANTY'
+                                                               ? (t.admin.disputeManager.verdictTerminal as any).merchantDebitShipping ||
+                                                                 (isAr ? 'شحن ذهاباً وإياباً (على التاجر)' : 'Round-trip shipping (merchant)')
                                                                : (isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)')}
                                                      </span>
                                                      <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
@@ -1731,15 +1787,19 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                 </div>
                                             )}
                                             
-                                            {/* 2026 Detailed Fee Breakdown Display */}
-                                            {(dispute.gatewayFeeAmount ?? 0) > 0 && (
+                                            {/* Show Stripe fee lines only when they were actually charged to a party (not PLATFORM-absorbed display noise). */}
+                                            {String((dispute as any).feeBearer || '').toUpperCase() !== 'PLATFORM' &&
+                                             String(dispute.faultParty || '').toUpperCase() !== 'WARRANTY' &&
+                                             (dispute.gatewayFeeAmount ?? 0) > 0 && (
                                                 <div className="flex justify-between items-center p-3 bg-red-500/5 rounded-2xl border border-red-500/10">
                                                    <span className="text-[10px] text-red-400/60 font-bold uppercase">{isAr ? 'رسوم البوابة (3%)' : 'Gateway Fee (3%)'}</span>
                                                    <span className="text-sm font-black text-red-400 font-mono">{Number(dispute.gatewayFeeAmount).toLocaleString()} AED</span>
                                                 </div>
                                             )}
                                             
-                                            {(dispute.refundFeeAmount ?? 0) > 0 && (
+                                            {String((dispute as any).feeBearer || '').toUpperCase() !== 'PLATFORM' &&
+                                             String(dispute.faultParty || '').toUpperCase() !== 'WARRANTY' &&
+                                             (dispute.refundFeeAmount ?? 0) > 0 && (
                                                 <div className="flex justify-between items-center p-3 bg-red-500/5 rounded-2xl border border-red-500/10">
                                                    <span className="text-[10px] text-red-400/60 font-bold uppercase">{isAr ? 'رسوم الاسترداد (1.5%)' : 'Refund Fee (1.5%)'}</span>
                                                    <span className="text-sm font-black text-red-400 font-mono">{Number(dispute.refundFeeAmount).toLocaleString()} AED</span>
@@ -1753,10 +1813,20 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                 </div>
                                             )}
 
-                                            {(dispute as any).feeBearer && (
+                                            {(dispute as any).feeBearer &&
+                                             String((dispute as any).feeBearer).toUpperCase() !== 'PLATFORM' &&
+                                             String(dispute.faultParty || '').toUpperCase() !== 'WARRANTY' && (
                                                 <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
                                                    <span className="text-[10px] text-white/50 font-bold uppercase">{isAr ? 'تحميل الرسوم' : 'Fee bearer'}</span>
                                                    <span className="text-xs font-black text-white font-mono">{(dispute as any).feeBearer}</span>
+                                                </div>
+                                            )}
+                                            {String(dispute.shippingPayee || '').toUpperCase() === 'SHIPPING_COMPANY' && (
+                                                <div className="flex justify-between items-center p-3 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                                                   <span className="text-[10px] text-purple-300/80 font-bold uppercase">{isAr ? 'التزام شركة الشحن' : 'Carrier liability'}</span>
+                                                   <span className="text-sm font-black text-purple-300 font-mono">
+                                                     {Number((dispute as any).shippingCompanyLiability || dispute.shippingRefund || 0).toLocaleString()} AED
+                                                   </span>
                                                 </div>
                                             )}
                                             <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
