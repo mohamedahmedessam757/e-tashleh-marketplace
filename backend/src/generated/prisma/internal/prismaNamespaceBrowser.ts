@@ -111,7 +111,9 @@ export const ModelName = {
   VerificationLink: 'VerificationLink',
   VerificationActivityLog: 'VerificationActivityLog',
   FinancialSettlement: 'FinancialSettlement',
-  FinancialAdjustment: 'FinancialAdjustment'
+  FinancialAdjustment: 'FinancialAdjustment',
+  ShippingCompanyObligation: 'ShippingCompanyObligation',
+  ShippingCompanySettlement: 'ShippingCompanySettlement'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -546,6 +548,7 @@ export const OrderPartScalarFieldEnum = {
   images: 'images',
   video: 'video',
   quantity: 'quantity',
+  shippingClass: 'shippingClass',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -925,6 +928,7 @@ export const PlatformWalletScalarFieldEnum = {
   commissionBalance: 'commissionBalance',
   feesBalance: 'feesBalance',
   totalRevenue: 'totalRevenue',
+  shippingCompanyLiabilityBalance: 'shippingCompanyLiabilityBalance',
   updatedAt: 'updatedAt'
 } as const
 
@@ -1536,6 +1540,45 @@ export const FinancialAdjustmentScalarFieldEnum = {
 } as const
 
 export type FinancialAdjustmentScalarFieldEnum = (typeof FinancialAdjustmentScalarFieldEnum)[keyof typeof FinancialAdjustmentScalarFieldEnum]
+
+
+export const ShippingCompanyObligationScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  caseType: 'caseType',
+  orderId: 'orderId',
+  orderNumber: 'orderNumber',
+  amountOriginal: 'amountOriginal',
+  amountRemaining: 'amountRemaining',
+  amountSettled: 'amountSettled',
+  currency: 'currency',
+  status: 'status',
+  shippingAmount: 'shippingAmount',
+  stripeFeesAmount: 'stripeFeesAmount',
+  refundAmount: 'refundAmount',
+  notes: 'notes',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShippingCompanyObligationScalarFieldEnum = (typeof ShippingCompanyObligationScalarFieldEnum)[keyof typeof ShippingCompanyObligationScalarFieldEnum]
+
+
+export const ShippingCompanySettlementScalarFieldEnum = {
+  id: 'id',
+  obligationId: 'obligationId',
+  amount: 'amount',
+  currency: 'currency',
+  adminId: 'adminId',
+  note: 'note',
+  invoiceId: 'invoiceId',
+  walletTransactionId: 'walletTransactionId',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type ShippingCompanySettlementScalarFieldEnum = (typeof ShippingCompanySettlementScalarFieldEnum)[keyof typeof ShippingCompanySettlementScalarFieldEnum]
 
 
 export const SortOrder = {

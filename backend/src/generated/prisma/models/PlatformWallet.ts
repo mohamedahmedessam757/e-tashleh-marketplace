@@ -30,12 +30,14 @@ export type PlatformWalletAvgAggregateOutputType = {
   commissionBalance: runtime.Decimal | null
   feesBalance: runtime.Decimal | null
   totalRevenue: runtime.Decimal | null
+  shippingCompanyLiabilityBalance: runtime.Decimal | null
 }
 
 export type PlatformWalletSumAggregateOutputType = {
   commissionBalance: runtime.Decimal | null
   feesBalance: runtime.Decimal | null
   totalRevenue: runtime.Decimal | null
+  shippingCompanyLiabilityBalance: runtime.Decimal | null
 }
 
 export type PlatformWalletMinAggregateOutputType = {
@@ -43,6 +45,7 @@ export type PlatformWalletMinAggregateOutputType = {
   commissionBalance: runtime.Decimal | null
   feesBalance: runtime.Decimal | null
   totalRevenue: runtime.Decimal | null
+  shippingCompanyLiabilityBalance: runtime.Decimal | null
   updatedAt: Date | null
 }
 
@@ -51,6 +54,7 @@ export type PlatformWalletMaxAggregateOutputType = {
   commissionBalance: runtime.Decimal | null
   feesBalance: runtime.Decimal | null
   totalRevenue: runtime.Decimal | null
+  shippingCompanyLiabilityBalance: runtime.Decimal | null
   updatedAt: Date | null
 }
 
@@ -59,6 +63,7 @@ export type PlatformWalletCountAggregateOutputType = {
   commissionBalance: number
   feesBalance: number
   totalRevenue: number
+  shippingCompanyLiabilityBalance: number
   updatedAt: number
   _all: number
 }
@@ -68,12 +73,14 @@ export type PlatformWalletAvgAggregateInputType = {
   commissionBalance?: true
   feesBalance?: true
   totalRevenue?: true
+  shippingCompanyLiabilityBalance?: true
 }
 
 export type PlatformWalletSumAggregateInputType = {
   commissionBalance?: true
   feesBalance?: true
   totalRevenue?: true
+  shippingCompanyLiabilityBalance?: true
 }
 
 export type PlatformWalletMinAggregateInputType = {
@@ -81,6 +88,7 @@ export type PlatformWalletMinAggregateInputType = {
   commissionBalance?: true
   feesBalance?: true
   totalRevenue?: true
+  shippingCompanyLiabilityBalance?: true
   updatedAt?: true
 }
 
@@ -89,6 +97,7 @@ export type PlatformWalletMaxAggregateInputType = {
   commissionBalance?: true
   feesBalance?: true
   totalRevenue?: true
+  shippingCompanyLiabilityBalance?: true
   updatedAt?: true
 }
 
@@ -97,6 +106,7 @@ export type PlatformWalletCountAggregateInputType = {
   commissionBalance?: true
   feesBalance?: true
   totalRevenue?: true
+  shippingCompanyLiabilityBalance?: true
   updatedAt?: true
   _all?: true
 }
@@ -192,6 +202,7 @@ export type PlatformWalletGroupByOutputType = {
   commissionBalance: runtime.Decimal
   feesBalance: runtime.Decimal
   totalRevenue: runtime.Decimal
+  shippingCompanyLiabilityBalance: runtime.Decimal
   updatedAt: Date
   _count: PlatformWalletCountAggregateOutputType | null
   _avg: PlatformWalletAvgAggregateOutputType | null
@@ -223,6 +234,7 @@ export type PlatformWalletWhereInput = {
   commissionBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFilter<"PlatformWallet"> | Date | string
 }
 
@@ -231,6 +243,7 @@ export type PlatformWalletOrderByWithRelationInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -242,6 +255,7 @@ export type PlatformWalletWhereUniqueInput = Prisma.AtLeast<{
   commissionBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFilter<"PlatformWallet"> | Date | string
 }, "id">
 
@@ -250,6 +264,7 @@ export type PlatformWalletOrderByWithAggregationInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PlatformWalletCountOrderByAggregateInput
   _avg?: Prisma.PlatformWalletAvgOrderByAggregateInput
@@ -266,6 +281,7 @@ export type PlatformWalletScalarWhereWithAggregatesInput = {
   commissionBalance?: Prisma.DecimalWithAggregatesFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalWithAggregatesFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalWithAggregatesFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalWithAggregatesFilter<"PlatformWallet"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PlatformWallet"> | Date | string
 }
 
@@ -274,6 +290,7 @@ export type PlatformWalletCreateInput = {
   commissionBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Date | string
 }
 
@@ -282,6 +299,7 @@ export type PlatformWalletUncheckedCreateInput = {
   commissionBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Date | string
 }
 
@@ -290,6 +308,7 @@ export type PlatformWalletUpdateInput = {
   commissionBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -298,6 +317,7 @@ export type PlatformWalletUncheckedUpdateInput = {
   commissionBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -306,6 +326,7 @@ export type PlatformWalletCreateManyInput = {
   commissionBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Date | string
 }
 
@@ -314,6 +335,7 @@ export type PlatformWalletUpdateManyMutationInput = {
   commissionBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -322,6 +344,7 @@ export type PlatformWalletUncheckedUpdateManyInput = {
   commissionBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   feesBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalRevenue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  shippingCompanyLiabilityBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -330,6 +353,7 @@ export type PlatformWalletCountOrderByAggregateInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -337,6 +361,7 @@ export type PlatformWalletAvgOrderByAggregateInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
 }
 
 export type PlatformWalletMaxOrderByAggregateInput = {
@@ -344,6 +369,7 @@ export type PlatformWalletMaxOrderByAggregateInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -352,6 +378,7 @@ export type PlatformWalletMinOrderByAggregateInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -359,6 +386,7 @@ export type PlatformWalletSumOrderByAggregateInput = {
   commissionBalance?: Prisma.SortOrder
   feesBalance?: Prisma.SortOrder
   totalRevenue?: Prisma.SortOrder
+  shippingCompanyLiabilityBalance?: Prisma.SortOrder
 }
 
 
@@ -368,6 +396,7 @@ export type PlatformWalletSelect<ExtArgs extends runtime.Types.Extensions.Intern
   commissionBalance?: boolean
   feesBalance?: boolean
   totalRevenue?: boolean
+  shippingCompanyLiabilityBalance?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["platformWallet"]>
 
@@ -376,6 +405,7 @@ export type PlatformWalletSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   commissionBalance?: boolean
   feesBalance?: boolean
   totalRevenue?: boolean
+  shippingCompanyLiabilityBalance?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["platformWallet"]>
 
@@ -384,6 +414,7 @@ export type PlatformWalletSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   commissionBalance?: boolean
   feesBalance?: boolean
   totalRevenue?: boolean
+  shippingCompanyLiabilityBalance?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["platformWallet"]>
 
@@ -392,10 +423,11 @@ export type PlatformWalletSelectScalar = {
   commissionBalance?: boolean
   feesBalance?: boolean
   totalRevenue?: boolean
+  shippingCompanyLiabilityBalance?: boolean
   updatedAt?: boolean
 }
 
-export type PlatformWalletOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "commissionBalance" | "feesBalance" | "totalRevenue" | "updatedAt", ExtArgs["result"]["platformWallet"]>
+export type PlatformWalletOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "commissionBalance" | "feesBalance" | "totalRevenue" | "shippingCompanyLiabilityBalance" | "updatedAt", ExtArgs["result"]["platformWallet"]>
 
 export type $PlatformWalletPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PlatformWallet"
@@ -405,6 +437,10 @@ export type $PlatformWalletPayload<ExtArgs extends runtime.Types.Extensions.Inte
     commissionBalance: runtime.Decimal
     feesBalance: runtime.Decimal
     totalRevenue: runtime.Decimal
+    /**
+     * Outstanding shipping-company obligations (carrier owes platform)
+     */
+    shippingCompanyLiabilityBalance: runtime.Decimal
     updatedAt: Date
   }, ExtArgs["result"]["platformWallet"]>
   composites: {}
@@ -833,6 +869,7 @@ export interface PlatformWalletFieldRefs {
   readonly commissionBalance: Prisma.FieldRef<"PlatformWallet", 'Decimal'>
   readonly feesBalance: Prisma.FieldRef<"PlatformWallet", 'Decimal'>
   readonly totalRevenue: Prisma.FieldRef<"PlatformWallet", 'Decimal'>
+  readonly shippingCompanyLiabilityBalance: Prisma.FieldRef<"PlatformWallet", 'Decimal'>
   readonly updatedAt: Prisma.FieldRef<"PlatformWallet", 'DateTime'>
 }
     

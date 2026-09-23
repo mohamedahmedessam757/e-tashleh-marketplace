@@ -6,7 +6,9 @@
  * - MERCHANT/STORE/VENDOR + NO_CUSTOMER_REFUND → 0 customer refund; merchant still owes fees + shipping
  * - CUSTOMER + REFUND_CUSTOMER → paid − fees − shipping; customer bears fees/shipping
  * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; 0 fees/shipping charges (claim dismissed)
- * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform fees; shipping-company liability
+ * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform absorbs Stripe fees;
+ *   shipping-company liability = RT shipping + Stripe fees (platform recovers from carrier)
+ * - SHIPPING_COMPANY + NO_CUSTOMER_REFUND → 0 refund; liability = RT shipping only
  * - WARRANTY / WARRANTY_EXCHANGE → 0 customer refund; 0 platform fees; merchant pays round-trip shipping only
  * - CLOSE_COMPLETE_REFUND → forced REFUND_CUSTOMER; paid − fees; no shipping
  * - Stripe call only when REFUND_CUSTOMER and amount > 0
@@ -187,7 +189,8 @@ export function computeAdjudicationFinancials(
         feeBearer = 'PLATFORM';
         shippingBearer = shippingRoundtrip > 0 ? 'SHIPPING_COMPANY' : 'NONE';
         customerStripeRefund = orderPaidTotal;
-        shippingCompanyLiability = shippingRoundtrip;
+        // Carrier reimburses platform for RT shipping + Stripe fees absorbed on full refund
+        shippingCompanyLiability = roundMoney2(shippingRoundtrip + platformFeesTotal);
         platformRetainedAmount = 0;
     } else {
         // CUSTOMER (default guilty party for claims)

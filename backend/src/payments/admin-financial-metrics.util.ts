@@ -396,7 +396,10 @@ export async function computeAdminFinancialKpis(
   const userWalletLiabilitiesAed =
     Number(customerBalanceAgg._sum.customerBalance || 0) +
     Number(merchantStoreAgg._sum.balance || 0);
-  const pendingLiabilities = userWalletLiabilitiesAed + paymentGatewayFees;
+  const pendingLiabilities =
+    userWalletLiabilitiesAed +
+    paymentGatewayFees +
+    Number((platformWallet as any)?.shippingCompanyLiabilityBalance || 0);
 
   const escrowReleased = Number(escrowReleasedAgg._sum.merchantAmount || 0);
   const clawbackDebits = Number(merchantClawbackAgg._sum.amount || 0);

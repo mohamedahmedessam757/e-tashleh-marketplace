@@ -24,6 +24,9 @@ export interface ReturnsFeeInvoiceContext {
     invoiceGroupId?: string | null;
     adjudicationFeePaid: boolean;
     shippingPaid: boolean;
+    /** When true, invoices are labeled as warranty-related for merchant/admin viewers */
+    isWarranty?: boolean;
+    warrantyLabel?: string | null;
 }
 
 @Injectable()
@@ -124,6 +127,9 @@ export class ReturnsFeeInvoiceService {
 
         const total = Number(lines.reduce((s, l) => s + l.amount, 0).toFixed(2));
         const invoiceNumber = await this.nextInvoiceNumber(tx, 'COMMISSION');
+        const partSnap = ctx.isWarranty
+            ? `Warranty — ${ctx.partName || 'Adjudication fees'}${ctx.warrantyLabel ? ` (${ctx.warrantyLabel})` : ''}`
+            : ctx.partName || 'Adjudication fees';
         try {
             await tx.invoice.create({
                 data: {
@@ -141,13 +147,15 @@ export class ReturnsFeeInvoiceService {
                     invoiceGroupId: ctx.invoiceGroupId || undefined,
                     parentInvoiceId: ctx.parentInvoiceId || undefined,
                     shippingBatchKey: batchKey,
-                    partNameSnapshot: ctx.partName || 'Adjudication fees',
+                    partNameSnapshot: partSnap,
                     lineItems: lines.map((l) => ({
                         kind: l.kind,
                         amount: l.amount,
                         payer: l.payer,
                         fundingPath: l.fundingPath,
                         caseId: plan.caseId,
+                        warranty: Boolean(ctx.isWarranty),
+                        warrantyLabel: ctx.warrantyLabel || undefined,
                     })) as unknown as Prisma.InputJsonValue,
                 },
             });
@@ -174,6 +182,9 @@ export class ReturnsFeeInvoiceService {
 
         const total = Number(lines.reduce((s, l) => s + l.amount, 0).toFixed(2));
         const invoiceNumber = await this.nextInvoiceNumber(tx, 'SHIPPING');
+        const shippingLabel = ctx.isWarranty
+            ? `Warranty round-trip shipping — ${ctx.partName || 'Part'}${ctx.warrantyLabel ? ` (${ctx.warrantyLabel})` : ''}`
+            : ctx.partName || 'Round-trip shipping';
         try {
             await tx.invoice.create({
                 data: {
@@ -191,14 +202,16 @@ export class ReturnsFeeInvoiceService {
                     invoiceGroupId: ctx.invoiceGroupId || undefined,
                     parentInvoiceId: ctx.parentInvoiceId || undefined,
                     shippingBatchKey: batchKey,
-                    partNameSnapshot: ctx.partName || 'Round-trip shipping',
+                    partNameSnapshot: shippingLabel,
                     lineItems: lines.map((l) => ({
                         kind: l.kind,
                         amount: l.amount,
                         payer: l.payer,
                         fundingPath: l.fundingPath,
-                        partName: 'Round-trip shipping',
+                        partName: shippingLabel,
                         caseId: plan.caseId,
+                        warranty: Boolean(ctx.isWarranty),
+                        warrantyLabel: ctx.warrantyLabel || undefined,
                     })) as unknown as Prisma.InputJsonValue,
                 },
             });
@@ -316,6 +329,30 @@ export class ReturnsFeeInvoiceService {
             opts?.adminId ||
             (needsAdminOwner ? await this.resolvePlatformActorId(db) : null);
 
+        const faultUpper = String(opts?.extra?.faultParty || caseRow.faultParty || '').toUpperCase();
+        const isWarranty =
+            faultUpper === 'WARRANTY' ||
+            faultUpper === 'WARRANTY_EXCHANGE';
+
+        let warrantyLabel: string | null = null;
+        let partName = master?.partNameSnapshot || null;
+        if (isWarranty && caseRow.offerId) {
+            const offer = await db.offer.findUnique({
+                where: { id: caseRow.offerId },
+                select: {
+                    warrantyDuration: true,
+                    warrantyEndAt: true,
+                    orderPart: { select: { name: true } },
+                },
+            });
+            warrantyLabel =
+                offer?.warrantyDuration ||
+                (offer?.warrantyEndAt
+                    ? `until ${new Date(offer.warrantyEndAt).toISOString().slice(0, 10)}`
+                    : 'warranty');
+            if (offer?.orderPart?.name) partName = offer.orderPart.name;
+        }
+
         await this.ensureFromPlan(
             plan,
             {
@@ -325,11 +362,13 @@ export class ReturnsFeeInvoiceService {
                 merchantOwnerId,
                 adminId,
                 currency: master?.currency || 'AED',
-                partName: master?.partNameSnapshot || null,
+                partName,
                 parentInvoiceId: master?.id || null,
                 invoiceGroupId: master?.invoiceGroupId || master?.id || null,
                 adjudicationFeePaid: adjPaid,
                 shippingPaid: shipPaid,
+                isWarranty,
+                warrantyLabel,
             },
             opts?.tx,
         );

@@ -322,3 +322,13 @@ export type FinancialSettlement = Prisma.FinancialSettlementModel
  * 
  */
 export type FinancialAdjustment = Prisma.FinancialAdjustmentModel
+/**
+ * Model ShippingCompanyObligation
+ * Carrier owes platform after SHIPPING_COMPANY fault adjudication.
+ */
+export type ShippingCompanyObligation = Prisma.ShippingCompanyObligationModel
+/**
+ * Model ShippingCompanySettlement
+ * Admin-recorded payment from the shipping company that reduces an obligation.
+ */
+export type ShippingCompanySettlement = Prisma.ShippingCompanySettlementModel

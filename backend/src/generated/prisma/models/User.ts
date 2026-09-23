@@ -693,6 +693,7 @@ export type UserWhereInput = {
   adminActivityLogs?: Prisma.AdminActivityLogListRelationFilter
   financialSettlements?: Prisma.FinancialSettlementListRelationFilter
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentListRelationFilter
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementListRelationFilter
   riskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertListRelationFilter
@@ -806,6 +807,7 @@ export type UserOrderByWithRelationInput = {
   adminActivityLogs?: Prisma.AdminActivityLogOrderByRelationAggregateInput
   financialSettlements?: Prisma.FinancialSettlementOrderByRelationAggregateInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentOrderByRelationAggregateInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementOrderByRelationAggregateInput
   riskAlerts?: Prisma.CustomerRiskAlertOrderByRelationAggregateInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertOrderByRelationAggregateInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertOrderByRelationAggregateInput
@@ -922,6 +924,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   adminActivityLogs?: Prisma.AdminActivityLogListRelationFilter
   financialSettlements?: Prisma.FinancialSettlementListRelationFilter
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentListRelationFilter
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementListRelationFilter
   riskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertListRelationFilter
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertListRelationFilter
@@ -1154,6 +1157,7 @@ export type UserCreateInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -1266,6 +1270,7 @@ export type UserUncheckedCreateInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -1378,6 +1383,7 @@ export type UserUpdateInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -1490,6 +1496,7 @@ export type UserUncheckedUpdateInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -2795,6 +2802,20 @@ export type UserUpdateOneWithoutFinancialAdjustmentsCreatedNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFinancialAdjustmentsCreatedInput, Prisma.UserUpdateWithoutFinancialAdjustmentsCreatedInput>, Prisma.UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput>
 }
 
+export type UserCreateNestedOneWithoutShippingCompanySettlementsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedCreateWithoutShippingCompanySettlementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShippingCompanySettlementsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutShippingCompanySettlementsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedCreateWithoutShippingCompanySettlementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShippingCompanySettlementsInput
+  upsert?: Prisma.UserUpsertWithoutShippingCompanySettlementsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutShippingCompanySettlementsInput, Prisma.UserUpdateWithoutShippingCompanySettlementsInput>, Prisma.UserUncheckedUpdateWithoutShippingCompanySettlementsInput>
+}
+
 export type UserCreateWithoutWhatsAppMessageLogsInput = {
   id?: string
   email: string
@@ -2900,6 +2921,7 @@ export type UserCreateWithoutWhatsAppMessageLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3011,6 +3033,7 @@ export type UserUncheckedCreateWithoutWhatsAppMessageLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3138,6 +3161,7 @@ export type UserUpdateWithoutWhatsAppMessageLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -3249,6 +3273,7 @@ export type UserUncheckedUpdateWithoutWhatsAppMessageLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -3360,6 +3385,7 @@ export type UserCreateWithoutReferredUsersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3471,6 +3497,7 @@ export type UserUncheckedCreateWithoutReferredUsersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3587,6 +3614,7 @@ export type UserCreateWithoutReferredByInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -3698,6 +3726,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -3830,6 +3859,7 @@ export type UserUpdateWithoutReferredUsersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -3941,6 +3971,7 @@ export type UserUncheckedUpdateWithoutReferredUsersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -4127,6 +4158,7 @@ export type UserCreateWithoutSettingsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -4238,6 +4270,7 @@ export type UserUncheckedCreateWithoutSettingsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -4365,6 +4398,7 @@ export type UserUpdateWithoutSettingsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -4476,6 +4510,7 @@ export type UserUncheckedUpdateWithoutSettingsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -4587,6 +4622,7 @@ export type UserCreateWithoutStoreInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -4698,6 +4734,7 @@ export type UserUncheckedCreateWithoutStoreInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -4825,6 +4862,7 @@ export type UserUpdateWithoutStoreInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -4936,6 +4974,7 @@ export type UserUncheckedUpdateWithoutStoreInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5047,6 +5086,7 @@ export type UserCreateWithoutOrdersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -5158,6 +5198,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -5285,6 +5326,7 @@ export type UserUpdateWithoutOrdersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -5396,6 +5438,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5507,6 +5550,7 @@ export type UserCreateWithoutVerificationReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -5618,6 +5662,7 @@ export type UserUncheckedCreateWithoutVerificationReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -5745,6 +5790,7 @@ export type UserUpdateWithoutVerificationReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -5856,6 +5902,7 @@ export type UserUncheckedUpdateWithoutVerificationReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -5967,6 +6014,7 @@ export type UserCreateWithoutStaticPagesUpdatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -6078,6 +6126,7 @@ export type UserUncheckedCreateWithoutStaticPagesUpdatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -6205,6 +6254,7 @@ export type UserUpdateWithoutStaticPagesUpdatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -6316,6 +6366,7 @@ export type UserUncheckedUpdateWithoutStaticPagesUpdatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -6427,6 +6478,7 @@ export type UserCreateWithoutAnnouncementsCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -6538,6 +6590,7 @@ export type UserUncheckedCreateWithoutAnnouncementsCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -6665,6 +6718,7 @@ export type UserUpdateWithoutAnnouncementsCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -6776,6 +6830,7 @@ export type UserUncheckedUpdateWithoutAnnouncementsCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -6887,6 +6942,7 @@ export type UserCreateWithoutNotificationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -6998,6 +7054,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -7125,6 +7182,7 @@ export type UserUpdateWithoutNotificationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -7236,6 +7294,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -7347,6 +7406,7 @@ export type UserCreateWithoutReturnsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -7458,6 +7518,7 @@ export type UserUncheckedCreateWithoutReturnsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -7585,6 +7646,7 @@ export type UserUpdateWithoutReturnsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -7696,6 +7758,7 @@ export type UserUncheckedUpdateWithoutReturnsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -7807,6 +7870,7 @@ export type UserCreateWithoutDisputesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -7918,6 +7982,7 @@ export type UserUncheckedCreateWithoutDisputesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -8045,6 +8110,7 @@ export type UserUpdateWithoutDisputesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -8156,6 +8222,7 @@ export type UserUncheckedUpdateWithoutDisputesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -8267,6 +8334,7 @@ export type UserCreateWithoutCaseMessagesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -8378,6 +8446,7 @@ export type UserUncheckedCreateWithoutCaseMessagesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -8505,6 +8574,7 @@ export type UserUpdateWithoutCaseMessagesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -8616,6 +8686,7 @@ export type UserUncheckedUpdateWithoutCaseMessagesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -8727,6 +8798,7 @@ export type UserCreateWithoutOrderChatsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -8838,6 +8910,7 @@ export type UserUncheckedCreateWithoutOrderChatsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -8965,6 +9038,7 @@ export type UserUpdateWithoutOrderChatsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -9076,6 +9150,7 @@ export type UserUncheckedUpdateWithoutOrderChatsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -9187,6 +9262,7 @@ export type UserCreateWithoutAccountRecoveryRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -9298,6 +9374,7 @@ export type UserUncheckedCreateWithoutAccountRecoveryRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -9425,6 +9502,7 @@ export type UserUpdateWithoutAccountRecoveryRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -9536,6 +9614,7 @@ export type UserUncheckedUpdateWithoutAccountRecoveryRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -9647,6 +9726,7 @@ export type UserCreateWithoutProfileChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -9758,6 +9838,7 @@ export type UserUncheckedCreateWithoutProfileChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -9885,6 +9966,7 @@ export type UserUpdateWithoutProfileChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -9996,6 +10078,7 @@ export type UserUncheckedUpdateWithoutProfileChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -10107,6 +10190,7 @@ export type UserCreateWithoutSecurityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -10218,6 +10302,7 @@ export type UserUncheckedCreateWithoutSecurityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -10345,6 +10430,7 @@ export type UserUpdateWithoutSecurityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -10456,6 +10542,7 @@ export type UserUncheckedUpdateWithoutSecurityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -10567,6 +10654,7 @@ export type UserCreateWithoutSessionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -10678,6 +10766,7 @@ export type UserUncheckedCreateWithoutSessionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -10805,6 +10894,7 @@ export type UserUpdateWithoutSessionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -10916,6 +11006,7 @@ export type UserUncheckedUpdateWithoutSessionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -11027,6 +11118,7 @@ export type UserCreateWithoutPaymentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -11138,6 +11230,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -11265,6 +11358,7 @@ export type UserUpdateWithoutPaymentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -11376,6 +11470,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -11487,6 +11582,7 @@ export type UserCreateWithoutWalletTransactionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -11598,6 +11694,7 @@ export type UserUncheckedCreateWithoutWalletTransactionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -11725,6 +11822,7 @@ export type UserUpdateWithoutWalletTransactionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -11836,6 +11934,7 @@ export type UserUncheckedUpdateWithoutWalletTransactionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -11947,6 +12046,7 @@ export type UserCreateWithoutInvoicesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -12058,6 +12158,7 @@ export type UserUncheckedCreateWithoutInvoicesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -12185,6 +12286,7 @@ export type UserUpdateWithoutInvoicesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -12296,6 +12398,7 @@ export type UserUncheckedUpdateWithoutInvoicesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -12407,6 +12510,7 @@ export type UserCreateWithoutCardsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -12518,6 +12622,7 @@ export type UserUncheckedCreateWithoutCardsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -12645,6 +12750,7 @@ export type UserUpdateWithoutCardsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -12756,6 +12862,7 @@ export type UserUncheckedUpdateWithoutCardsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -12867,6 +12974,7 @@ export type UserCreateWithoutCreatedContractsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -12978,6 +13086,7 @@ export type UserUncheckedCreateWithoutCreatedContractsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -13105,6 +13214,7 @@ export type UserUpdateWithoutCreatedContractsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -13216,6 +13326,7 @@ export type UserUncheckedUpdateWithoutCreatedContractsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -13327,6 +13438,7 @@ export type UserCreateWithoutContractChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -13438,6 +13550,7 @@ export type UserUncheckedCreateWithoutContractChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -13554,6 +13667,7 @@ export type UserCreateWithoutResolvedContractChangesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -13665,6 +13779,7 @@ export type UserUncheckedCreateWithoutResolvedContractChangesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -13792,6 +13907,7 @@ export type UserUpdateWithoutContractChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -13903,6 +14019,7 @@ export type UserUncheckedUpdateWithoutContractChangeRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -14025,6 +14142,7 @@ export type UserUpdateWithoutResolvedContractChangesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -14136,6 +14254,7 @@ export type UserUncheckedUpdateWithoutResolvedContractChangesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -14247,6 +14366,7 @@ export type UserCreateWithoutShippingWaybillsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -14358,6 +14478,7 @@ export type UserUncheckedCreateWithoutShippingWaybillsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -14485,6 +14606,7 @@ export type UserUpdateWithoutShippingWaybillsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -14596,6 +14718,7 @@ export type UserUncheckedUpdateWithoutShippingWaybillsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -14707,6 +14830,7 @@ export type UserCreateWithoutUpdatedShipmentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -14818,6 +14942,7 @@ export type UserUncheckedCreateWithoutUpdatedShipmentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -14945,6 +15070,7 @@ export type UserUpdateWithoutUpdatedShipmentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -15056,6 +15182,7 @@ export type UserUncheckedUpdateWithoutUpdatedShipmentsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -15167,6 +15294,7 @@ export type UserCreateWithoutChangedShipmentStatusesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -15278,6 +15406,7 @@ export type UserUncheckedCreateWithoutChangedShipmentStatusesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -15405,6 +15534,7 @@ export type UserUpdateWithoutChangedShipmentStatusesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -15516,6 +15646,7 @@ export type UserUncheckedUpdateWithoutChangedShipmentStatusesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -15627,6 +15758,7 @@ export type UserCreateWithoutSubmittedReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -15738,6 +15870,7 @@ export type UserUncheckedCreateWithoutSubmittedReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -15865,6 +15998,7 @@ export type UserUpdateWithoutSubmittedReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -15976,6 +16110,7 @@ export type UserUncheckedUpdateWithoutSubmittedReviewsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -16087,6 +16222,7 @@ export type UserCreateWithoutWithdrawalRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -16198,6 +16334,7 @@ export type UserUncheckedCreateWithoutWithdrawalRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -16314,6 +16451,7 @@ export type UserCreateWithoutProcessedWithdrawalsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -16425,6 +16563,7 @@ export type UserUncheckedCreateWithoutProcessedWithdrawalsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -16552,6 +16691,7 @@ export type UserUpdateWithoutWithdrawalRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -16663,6 +16803,7 @@ export type UserUncheckedUpdateWithoutWithdrawalRequestsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -16785,6 +16926,7 @@ export type UserUpdateWithoutProcessedWithdrawalsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -16896,6 +17038,7 @@ export type UserUncheckedUpdateWithoutProcessedWithdrawalsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17007,6 +17150,7 @@ export type UserCreateWithoutPlatformErrorsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -17118,6 +17262,7 @@ export type UserUncheckedCreateWithoutPlatformErrorsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -17234,6 +17379,7 @@ export type UserCreateWithoutPlatformErrorsResolvedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -17345,6 +17491,7 @@ export type UserUncheckedCreateWithoutPlatformErrorsResolvedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -17472,6 +17619,7 @@ export type UserUpdateWithoutPlatformErrorsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -17583,6 +17731,7 @@ export type UserUncheckedUpdateWithoutPlatformErrorsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17705,6 +17854,7 @@ export type UserUpdateWithoutPlatformErrorsResolvedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -17816,6 +17966,7 @@ export type UserUncheckedUpdateWithoutPlatformErrorsResolvedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -17927,6 +18078,7 @@ export type UserCreateWithoutCreatedViolationTypesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -18038,6 +18190,7 @@ export type UserUncheckedCreateWithoutCreatedViolationTypesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -18165,6 +18318,7 @@ export type UserUpdateWithoutCreatedViolationTypesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -18276,6 +18430,7 @@ export type UserUncheckedUpdateWithoutCreatedViolationTypesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -18387,6 +18542,7 @@ export type UserCreateWithoutViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -18498,6 +18654,7 @@ export type UserUncheckedCreateWithoutViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -18614,6 +18771,7 @@ export type UserCreateWithoutIssuedViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -18725,6 +18883,7 @@ export type UserUncheckedCreateWithoutIssuedViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -18852,6 +19011,7 @@ export type UserUpdateWithoutViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -18963,6 +19123,7 @@ export type UserUncheckedUpdateWithoutViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -19085,6 +19246,7 @@ export type UserUpdateWithoutIssuedViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -19196,6 +19358,7 @@ export type UserUncheckedUpdateWithoutIssuedViolationsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -19307,6 +19470,7 @@ export type UserCreateWithoutViolationAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -19418,6 +19582,7 @@ export type UserUncheckedCreateWithoutViolationAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -19534,6 +19699,7 @@ export type UserCreateWithoutReviewedAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -19645,6 +19811,7 @@ export type UserUncheckedCreateWithoutReviewedAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -19772,6 +19939,7 @@ export type UserUpdateWithoutViolationAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -19883,6 +20051,7 @@ export type UserUncheckedUpdateWithoutViolationAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -20005,6 +20174,7 @@ export type UserUpdateWithoutReviewedAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -20116,6 +20286,7 @@ export type UserUncheckedUpdateWithoutReviewedAppealsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -20227,6 +20398,7 @@ export type UserCreateWithoutPenaltyActionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -20338,6 +20510,7 @@ export type UserUncheckedCreateWithoutPenaltyActionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -20454,6 +20627,7 @@ export type UserCreateWithoutApprovedPenaltiesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -20565,6 +20739,7 @@ export type UserUncheckedCreateWithoutApprovedPenaltiesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -20692,6 +20867,7 @@ export type UserUpdateWithoutPenaltyActionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -20803,6 +20979,7 @@ export type UserUncheckedUpdateWithoutPenaltyActionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -20925,6 +21102,7 @@ export type UserUpdateWithoutApprovedPenaltiesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21036,6 +21214,7 @@ export type UserUncheckedUpdateWithoutApprovedPenaltiesInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -21147,6 +21326,7 @@ export type UserCreateWithoutScoreLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -21258,6 +21438,7 @@ export type UserUncheckedCreateWithoutScoreLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -21385,6 +21566,7 @@ export type UserUpdateWithoutScoreLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21496,6 +21678,7 @@ export type UserUncheckedUpdateWithoutScoreLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -21607,6 +21790,7 @@ export type UserCreateWithoutAdminActivityLogsInput = {
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -21718,6 +21902,7 @@ export type UserUncheckedCreateWithoutAdminActivityLogsInput = {
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -21845,6 +22030,7 @@ export type UserUpdateWithoutAdminActivityLogsInput = {
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -21956,6 +22142,7 @@ export type UserUncheckedUpdateWithoutAdminActivityLogsInput = {
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -22068,6 +22255,7 @@ export type UserCreateWithoutLoyaltyReviewAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -22179,6 +22367,7 @@ export type UserUncheckedCreateWithoutLoyaltyReviewAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -22295,6 +22484,7 @@ export type UserCreateWithoutDecidedLoyaltyAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -22406,6 +22596,7 @@ export type UserUncheckedCreateWithoutDecidedLoyaltyAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -22533,6 +22724,7 @@ export type UserUpdateWithoutLoyaltyReviewAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -22644,6 +22836,7 @@ export type UserUncheckedUpdateWithoutLoyaltyReviewAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -22766,6 +22959,7 @@ export type UserUpdateWithoutDecidedLoyaltyAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -22877,6 +23071,7 @@ export type UserUncheckedUpdateWithoutDecidedLoyaltyAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -22988,6 +23183,7 @@ export type UserCreateWithoutRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -23099,6 +23295,7 @@ export type UserUncheckedCreateWithoutRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -23215,6 +23412,7 @@ export type UserCreateWithoutReviewedRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
@@ -23326,6 +23524,7 @@ export type UserUncheckedCreateWithoutReviewedRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
@@ -23453,6 +23652,7 @@ export type UserUpdateWithoutRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -23564,6 +23764,7 @@ export type UserUncheckedUpdateWithoutRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -23686,6 +23887,7 @@ export type UserUpdateWithoutReviewedRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
@@ -23797,6 +23999,7 @@ export type UserUncheckedUpdateWithoutReviewedRiskAlertsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
   decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
@@ -23907,6 +24110,7 @@ export type UserCreateWithoutAdminPermissionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -24018,6 +24222,7 @@ export type UserUncheckedCreateWithoutAdminPermissionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -24134,6 +24339,7 @@ export type UserCreateWithoutCreatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -24245,6 +24451,7 @@ export type UserUncheckedCreateWithoutCreatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -24361,6 +24568,7 @@ export type UserCreateWithoutUpdatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -24472,6 +24680,7 @@ export type UserUncheckedCreateWithoutUpdatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -24599,6 +24808,7 @@ export type UserUpdateWithoutAdminPermissionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -24710,6 +24920,7 @@ export type UserUncheckedUpdateWithoutAdminPermissionInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -24832,6 +25043,7 @@ export type UserUpdateWithoutCreatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -24943,6 +25155,7 @@ export type UserUncheckedUpdateWithoutCreatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -25065,6 +25278,7 @@ export type UserUpdateWithoutUpdatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -25176,6 +25390,7 @@ export type UserUncheckedUpdateWithoutUpdatedAdminPermissionsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -25287,6 +25502,7 @@ export type UserCreateWithoutVerificationTasksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -25398,6 +25614,7 @@ export type UserUncheckedCreateWithoutVerificationTasksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -25514,6 +25731,7 @@ export type UserCreateWithoutVerificationTasksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -25625,6 +25843,7 @@ export type UserUncheckedCreateWithoutVerificationTasksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -25752,6 +25971,7 @@ export type UserUpdateWithoutVerificationTasksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -25863,6 +26083,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -25985,6 +26206,7 @@ export type UserUpdateWithoutVerificationTasksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -26096,6 +26318,7 @@ export type UserUncheckedUpdateWithoutVerificationTasksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -26207,6 +26430,7 @@ export type UserCreateWithoutVerificationTaskPhotosInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -26318,6 +26542,7 @@ export type UserUncheckedCreateWithoutVerificationTaskPhotosInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -26445,6 +26670,7 @@ export type UserUpdateWithoutVerificationTaskPhotosInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -26556,6 +26782,7 @@ export type UserUncheckedUpdateWithoutVerificationTaskPhotosInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -26667,6 +26894,7 @@ export type UserCreateWithoutVerificationLinksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -26778,6 +27006,7 @@ export type UserUncheckedCreateWithoutVerificationLinksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -26894,6 +27123,7 @@ export type UserCreateWithoutVerificationLinksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -27005,6 +27235,7 @@ export type UserUncheckedCreateWithoutVerificationLinksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -27132,6 +27363,7 @@ export type UserUpdateWithoutVerificationLinksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -27243,6 +27475,7 @@ export type UserUncheckedUpdateWithoutVerificationLinksCreatedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -27365,6 +27598,7 @@ export type UserUpdateWithoutVerificationLinksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -27476,6 +27710,7 @@ export type UserUncheckedUpdateWithoutVerificationLinksAssignedInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -27587,6 +27822,7 @@ export type UserCreateWithoutVerificationActivityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -27698,6 +27934,7 @@ export type UserUncheckedCreateWithoutVerificationActivityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -27825,6 +28062,7 @@ export type UserUpdateWithoutVerificationActivityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -27936,6 +28174,7 @@ export type UserUncheckedUpdateWithoutVerificationActivityLogsInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -28047,6 +28286,7 @@ export type UserCreateWithoutFinancialSettlementsInput = {
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -28158,6 +28398,7 @@ export type UserUncheckedCreateWithoutFinancialSettlementsInput = {
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -28285,6 +28526,7 @@ export type UserUpdateWithoutFinancialSettlementsInput = {
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -28396,6 +28638,7 @@ export type UserUncheckedUpdateWithoutFinancialSettlementsInput = {
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -28507,6 +28750,7 @@ export type UserCreateWithoutFinancialAdjustmentsCreatedInput = {
   caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
@@ -28618,6 +28862,7 @@ export type UserUncheckedCreateWithoutFinancialAdjustmentsCreatedInput = {
   caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedCreateNestedManyWithoutAdminInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
@@ -28745,6 +28990,7 @@ export type UserUpdateWithoutFinancialAdjustmentsCreatedInput = {
   caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -28856,6 +29102,471 @@ export type UserUncheckedUpdateWithoutFinancialAdjustmentsCreatedInput = {
   caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserCreateWithoutShippingCompanySettlementsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkCreateNestedManyWithoutAssignedOfficerInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventCreateNestedManyWithoutResolverInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredUsersInput
+  referredUsers?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertCreateNestedManyWithoutDeciderInput
+}
+
+export type UserUncheckedCreateWithoutShippingCompanySettlementsInput = {
+  id?: string
+  email: string
+  phone?: string | null
+  passwordHash: string
+  countryCode?: string | null
+  country?: string | null
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  name?: string | null
+  emailVerifiedAt?: Date | string | null
+  otpCode?: string | null
+  otpExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatar?: string | null
+  recoveryStatus?: string | null
+  withdrawalsFrozenUntil?: Date | string | null
+  lastLoginIp?: string | null
+  lastLoginDevice?: string | null
+  widersContactId?: string | null
+  whatsappOptIn?: boolean
+  widersSyncedAt?: Date | string | null
+  adminNotes?: string | null
+  suspendedUntil?: Date | string | null
+  suspendReason?: string | null
+  bankName?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+  bankSwift?: string | null
+  bankDetailsVerified?: boolean
+  stripeAccountId?: string | null
+  stripeOnboarded?: boolean
+  stripeCustomerId?: string | null
+  customerBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: $Enums.LoyaltyTier
+  pointsLastResetAt?: Date | string | null
+  totalSpent?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: number
+  referralCount?: number
+  referralCode?: string | null
+  referredById?: string | null
+  referralStartsAt?: Date | string | null
+  violationScore?: number
+  totalDeliveredOrders?: number
+  totalReturnDisputeOrders?: number
+  cachedReturnRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: boolean
+  withdrawalFreezeNote?: string | null
+  withdrawalFreezeSignature?: string | null
+  orderLimit?: number
+  dailyOrderCount?: number
+  restrictionAlertMessage?: string | null
+  store?: Prisma.StoreUncheckedCreateNestedOneWithoutOwnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  returns?: Prisma.ReturnRequestUncheckedCreateNestedManyWithoutCustomerInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutCustomerInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutCustomerInput
+  settings?: Prisma.UserSettingsUncheckedCreateNestedOneWithoutUserInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedCreateNestedManyWithoutUserInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutUserInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+  securityLogs?: Prisma.SecurityLogUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  cards?: Prisma.UserCardUncheckedCreateNestedManyWithoutUserInput
+  Session?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  createdContracts?: Prisma.PlatformContractUncheckedCreateNestedManyWithoutCreatorInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedCreateNestedManyWithoutAdminReviewerInput
+  invoices?: Prisma.InvoiceUncheckedCreateNestedManyWithoutCustomerInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedCreateNestedManyWithoutAssignedByInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutCreatedByInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedCreateNestedManyWithoutAssignedOfficerInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedCreateNestedManyWithoutOfficerInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedCreateNestedManyWithoutOfficerInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutIssuerInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedCreateNestedManyWithoutRecipientUserInput
+  adminPermission?: Prisma.AdminPermissionUncheckedCreateNestedOneWithoutUserInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedCreateNestedManyWithoutUpdatedByInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedCreateNestedManyWithoutUpdatedByInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutUserInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedCreateNestedManyWithoutResolverInput
+  referredUsers?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutUserInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedCreateNestedManyWithoutProcessorInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedCreateNestedManyWithoutUserInput
+  submittedReviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  updatedShipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutUpdaterInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedCreateNestedManyWithoutChangerInput
+  violations?: Prisma.ViolationUncheckedCreateNestedManyWithoutTargetUserInput
+  issuedViolations?: Prisma.ViolationUncheckedCreateNestedManyWithoutIssuerInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutUserInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedCreateNestedManyWithoutReviewerInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutTargetUserInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedCreateNestedManyWithoutApproverInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedCreateNestedManyWithoutTargetUserInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedCreateNestedManyWithoutCreatorInput
+  caseMessages?: Prisma.CaseMessageUncheckedCreateNestedManyWithoutSenderInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedCreateNestedManyWithoutAdminInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedCreateNestedManyWithoutRunByInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedCreateNestedManyWithoutCreatedByInput
+  riskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutUserInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedCreateNestedManyWithoutReviewerInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutUserInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUncheckedCreateNestedManyWithoutDeciderInput
+}
+
+export type UserCreateOrConnectWithoutShippingCompanySettlementsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedCreateWithoutShippingCompanySettlementsInput>
+}
+
+export type UserUpsertWithoutShippingCompanySettlementsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedUpdateWithoutShippingCompanySettlementsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedCreateWithoutShippingCompanySettlementsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutShippingCompanySettlementsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutShippingCompanySettlementsInput, Prisma.UserUncheckedUpdateWithoutShippingCompanySettlementsInput>
+}
+
+export type UserUpdateWithoutShippingCompanySettlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUpdateManyWithoutAssignedOfficerNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUpdateManyWithoutResolverNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredUsersNestedInput
+  referredUsers?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
+  reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
+  loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
+  decidedLoyaltyAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutDeciderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutShippingCompanySettlementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  otpCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  otpExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recoveryStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalsFrozenUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginDevice?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  widersContactId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsappOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  widersSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankAccountHolder?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankIban?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankSwift?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bankDetailsVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeAccountId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  customerFrozenBalance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyTier?: Prisma.EnumLoyaltyTierFieldUpdateOperationsInput | $Enums.LoyaltyTier
+  pointsLastResetAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  totalSpent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loyaltyPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCount?: Prisma.IntFieldUpdateOperationsInput | number
+  referralCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referralStartsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  violationScore?: Prisma.IntFieldUpdateOperationsInput | number
+  totalDeliveredOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReturnDisputeOrders?: Prisma.IntFieldUpdateOperationsInput | number
+  cachedReturnRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  withdrawalsFrozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  withdrawalFreezeNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  withdrawalFreezeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyOrderCount?: Prisma.IntFieldUpdateOperationsInput | number
+  restrictionAlertMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  store?: Prisma.StoreUncheckedUpdateOneWithoutOwnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  returns?: Prisma.ReturnRequestUncheckedUpdateManyWithoutCustomerNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutCustomerNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutCustomerNestedInput
+  settings?: Prisma.UserSettingsUncheckedUpdateOneWithoutUserNestedInput
+  accountRecoveryRequests?: Prisma.AccountRecoveryRequestUncheckedUpdateManyWithoutUserNestedInput
+  profileChangeRequests?: Prisma.ProfileChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  contractChangeRequests?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutUserNestedInput
+  resolvedContractChanges?: Prisma.ContractChangeRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+  securityLogs?: Prisma.SecurityLogUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  cards?: Prisma.UserCardUncheckedUpdateManyWithoutUserNestedInput
+  Session?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  createdContracts?: Prisma.PlatformContractUncheckedUpdateManyWithoutCreatorNestedInput
+  verificationReviews?: Prisma.VerificationDocumentUncheckedUpdateManyWithoutAdminReviewerNestedInput
+  invoices?: Prisma.InvoiceUncheckedUpdateManyWithoutCustomerNestedInput
+  verificationTasksAssigned?: Prisma.VerificationTaskUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTasksCreated?: Prisma.VerificationTaskUncheckedUpdateManyWithoutAssignedByNestedInput
+  verificationLinksCreated?: Prisma.VerificationLinkUncheckedUpdateManyWithoutCreatedByNestedInput
+  verificationLinksAssigned?: Prisma.VerificationLinkUncheckedUpdateManyWithoutAssignedOfficerNestedInput
+  verificationActivityLogs?: Prisma.VerificationActivityLogUncheckedUpdateManyWithoutOfficerNestedInput
+  verificationTaskPhotos?: Prisma.VerificationTaskPhotoUncheckedUpdateManyWithoutOfficerNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutIssuerNestedInput
+  whatsAppMessageLogs?: Prisma.WhatsAppMessageLogUncheckedUpdateManyWithoutRecipientUserNestedInput
+  adminPermission?: Prisma.AdminPermissionUncheckedUpdateOneWithoutUserNestedInput
+  createdAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedAdminPermissions?: Prisma.AdminPermissionUncheckedUpdateManyWithoutUpdatedByNestedInput
+  staticPagesUpdated?: Prisma.StaticPageUncheckedUpdateManyWithoutUpdatedByNestedInput
+  announcementsCreated?: Prisma.PlatformAnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  platformErrors?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutUserNestedInput
+  platformErrorsResolved?: Prisma.PlatformErrorEventUncheckedUpdateManyWithoutResolverNestedInput
+  referredUsers?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  withdrawalRequests?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutUserNestedInput
+  processedWithdrawals?: Prisma.WithdrawalRequestUncheckedUpdateManyWithoutProcessorNestedInput
+  walletTransactions?: Prisma.WalletTransactionUncheckedUpdateManyWithoutUserNestedInput
+  submittedReviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  updatedShipments?: Prisma.ShipmentUncheckedUpdateManyWithoutUpdaterNestedInput
+  changedShipmentStatuses?: Prisma.ShipmentStatusLogUncheckedUpdateManyWithoutChangerNestedInput
+  violations?: Prisma.ViolationUncheckedUpdateManyWithoutTargetUserNestedInput
+  issuedViolations?: Prisma.ViolationUncheckedUpdateManyWithoutIssuerNestedInput
+  violationAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutUserNestedInput
+  reviewedAppeals?: Prisma.ViolationAppealUncheckedUpdateManyWithoutReviewerNestedInput
+  penaltyActions?: Prisma.PenaltyActionUncheckedUpdateManyWithoutTargetUserNestedInput
+  approvedPenalties?: Prisma.PenaltyActionUncheckedUpdateManyWithoutApproverNestedInput
+  scoreLogs?: Prisma.ViolationScoreLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  createdViolationTypes?: Prisma.ViolationTypeUncheckedUpdateManyWithoutCreatorNestedInput
+  caseMessages?: Prisma.CaseMessageUncheckedUpdateManyWithoutSenderNestedInput
+  adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
+  financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
+  financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -29022,6 +29733,7 @@ export type UserUpdateWithoutReferredByInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUpdateManyWithoutUserNestedInput
@@ -29133,6 +29845,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   adminActivityLogs?: Prisma.AdminActivityLogUncheckedUpdateManyWithoutAdminNestedInput
   financialSettlements?: Prisma.FinancialSettlementUncheckedUpdateManyWithoutRunByNestedInput
   financialAdjustmentsCreated?: Prisma.FinancialAdjustmentUncheckedUpdateManyWithoutCreatedByNestedInput
+  shippingCompanySettlements?: Prisma.ShippingCompanySettlementUncheckedUpdateManyWithoutAdminNestedInput
   riskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutUserNestedInput
   reviewedRiskAlerts?: Prisma.CustomerRiskAlertUncheckedUpdateManyWithoutReviewerNestedInput
   loyaltyReviewAlerts?: Prisma.LoyaltyReviewAlertUncheckedUpdateManyWithoutUserNestedInput
@@ -29249,6 +29962,7 @@ export type UserCountOutputType = {
   adminActivityLogs: number
   financialSettlements: number
   financialAdjustmentsCreated: number
+  shippingCompanySettlements: number
   riskAlerts: number
   reviewedRiskAlerts: number
   loyaltyReviewAlerts: number
@@ -29305,6 +30019,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   adminActivityLogs?: boolean | UserCountOutputTypeCountAdminActivityLogsArgs
   financialSettlements?: boolean | UserCountOutputTypeCountFinancialSettlementsArgs
   financialAdjustmentsCreated?: boolean | UserCountOutputTypeCountFinancialAdjustmentsCreatedArgs
+  shippingCompanySettlements?: boolean | UserCountOutputTypeCountShippingCompanySettlementsArgs
   riskAlerts?: boolean | UserCountOutputTypeCountRiskAlertsArgs
   reviewedRiskAlerts?: boolean | UserCountOutputTypeCountReviewedRiskAlertsArgs
   loyaltyReviewAlerts?: boolean | UserCountOutputTypeCountLoyaltyReviewAlertsArgs
@@ -29667,6 +30382,13 @@ export type UserCountOutputTypeCountFinancialAdjustmentsCreatedArgs<ExtArgs exte
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountShippingCompanySettlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShippingCompanySettlementWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountRiskAlertsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CustomerRiskAlertWhereInput
 }
@@ -29800,6 +30522,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   adminActivityLogs?: boolean | Prisma.User$adminActivityLogsArgs<ExtArgs>
   financialSettlements?: boolean | Prisma.User$financialSettlementsArgs<ExtArgs>
   financialAdjustmentsCreated?: boolean | Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>
+  shippingCompanySettlements?: boolean | Prisma.User$shippingCompanySettlementsArgs<ExtArgs>
   riskAlerts?: boolean | Prisma.User$riskAlertsArgs<ExtArgs>
   reviewedRiskAlerts?: boolean | Prisma.User$reviewedRiskAlertsArgs<ExtArgs>
   loyaltyReviewAlerts?: boolean | Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>
@@ -30032,6 +30755,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   adminActivityLogs?: boolean | Prisma.User$adminActivityLogsArgs<ExtArgs>
   financialSettlements?: boolean | Prisma.User$financialSettlementsArgs<ExtArgs>
   financialAdjustmentsCreated?: boolean | Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>
+  shippingCompanySettlements?: boolean | Prisma.User$shippingCompanySettlementsArgs<ExtArgs>
   riskAlerts?: boolean | Prisma.User$riskAlertsArgs<ExtArgs>
   reviewedRiskAlerts?: boolean | Prisma.User$reviewedRiskAlertsArgs<ExtArgs>
   loyaltyReviewAlerts?: boolean | Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>
@@ -30101,6 +30825,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     adminActivityLogs: Prisma.$AdminActivityLogPayload<ExtArgs>[]
     financialSettlements: Prisma.$FinancialSettlementPayload<ExtArgs>[]
     financialAdjustmentsCreated: Prisma.$FinancialAdjustmentPayload<ExtArgs>[]
+    shippingCompanySettlements: Prisma.$ShippingCompanySettlementPayload<ExtArgs>[]
     riskAlerts: Prisma.$CustomerRiskAlertPayload<ExtArgs>[]
     reviewedRiskAlerts: Prisma.$CustomerRiskAlertPayload<ExtArgs>[]
     loyaltyReviewAlerts: Prisma.$LoyaltyReviewAlertPayload<ExtArgs>[]
@@ -30607,6 +31332,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   adminActivityLogs<T extends Prisma.User$adminActivityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActivityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   financialSettlements<T extends Prisma.User$financialSettlementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$financialSettlementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FinancialSettlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   financialAdjustmentsCreated<T extends Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$financialAdjustmentsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FinancialAdjustmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shippingCompanySettlements<T extends Prisma.User$shippingCompanySettlementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shippingCompanySettlementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShippingCompanySettlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   riskAlerts<T extends Prisma.User$riskAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$riskAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerRiskAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviewedRiskAlerts<T extends Prisma.User$reviewedRiskAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewedRiskAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerRiskAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   loyaltyReviewAlerts<T extends Prisma.User$loyaltyReviewAlertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$loyaltyReviewAlertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoyaltyReviewAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -32343,6 +33069,30 @@ export type User$financialAdjustmentsCreatedArgs<ExtArgs extends runtime.Types.E
   take?: number
   skip?: number
   distinct?: Prisma.FinancialAdjustmentScalarFieldEnum | Prisma.FinancialAdjustmentScalarFieldEnum[]
+}
+
+/**
+ * User.shippingCompanySettlements
+ */
+export type User$shippingCompanySettlementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShippingCompanySettlement
+   */
+  select?: Prisma.ShippingCompanySettlementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShippingCompanySettlement
+   */
+  omit?: Prisma.ShippingCompanySettlementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShippingCompanySettlementInclude<ExtArgs> | null
+  where?: Prisma.ShippingCompanySettlementWhereInput
+  orderBy?: Prisma.ShippingCompanySettlementOrderByWithRelationInput | Prisma.ShippingCompanySettlementOrderByWithRelationInput[]
+  cursor?: Prisma.ShippingCompanySettlementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShippingCompanySettlementScalarFieldEnum | Prisma.ShippingCompanySettlementScalarFieldEnum[]
 }
 
 /**

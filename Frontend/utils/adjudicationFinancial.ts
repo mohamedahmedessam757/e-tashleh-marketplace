@@ -157,7 +157,7 @@ export function computeAdjudicationPreview(
         shippingBearer = shippingRoundtrip > 0 ? 'SHIPPING_COMPANY' : 'NONE';
         net = orderPaidTotal;
         customerFullRefund = true;
-        shippingCompanyLiability = shippingRoundtrip;
+        shippingCompanyLiability = shippingRoundtrip + platformFees;
         showFeesOnCustomerNet = false;
     } else {
         feeBearer = 'CUSTOMER';

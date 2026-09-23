@@ -38,6 +38,7 @@ import {
     BarChart3,
     Shield,
     RotateCcw,
+    Truck,
 } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 import { BarChart } from '../../ui/Charts';
@@ -77,6 +78,11 @@ const AdminFinancialPenalties = lazy(() =>
 const AdminFinancialReports = lazy(() =>
   import('./AdminFinancialReports').then((m) => ({ default: m.AdminFinancialReports })),
 );
+const AdminShippingCompanyObligations = lazy(() =>
+  import('./AdminShippingCompanyObligations').then((m) => ({
+    default: m.AdminShippingCompanyObligations,
+  })),
+);
 
 type BillingTab =
   | 'OVERVIEW'
@@ -87,6 +93,7 @@ type BillingTab =
   | 'TRANSACTIONS'
   | 'REFUNDS'
   | 'SETTLEMENT'
+  | 'SHIPPING_COMPANY_OBLIGATIONS'
   | 'PENALTIES'
   | 'REPORTS';
 
@@ -267,6 +274,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         { id: 'TRANSACTIONS' as BillingTab, label: t.admin.billing.panels.ledger, icon: ClipboardCheck, permissionKey: 'TRANSACTIONS', group: 'platform' },
         { id: 'REFUNDS' as BillingTab, label: t.admin.billing.panels.refunds, icon: RotateCcw, permissionKey: 'REFUNDS', group: 'platform' },
         { id: 'SETTLEMENT' as BillingTab, label: t.admin.billing.panels.settlement, icon: Scale, permissionKey: 'SETTLEMENT', group: 'platform' },
+        { id: 'SHIPPING_COMPANY_OBLIGATIONS' as BillingTab, label: t.admin.billing.panels.shippingCompanyObligations, icon: Truck, permissionKey: 'SHIPPING_COMPANY_OBLIGATIONS', group: 'platform' },
         { id: 'PENALTIES' as BillingTab, label: t.admin.billing.panels.penalties, icon: AlertOctagon, permissionKey: 'PENALTIES', group: 'platform' },
         { id: 'REPORTS' as BillingTab, label: t.admin.billing.panels.reports, icon: BarChart3, permissionKey: 'REPORTS', group: 'platform' },
     ], [t]);
@@ -841,6 +849,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                 {activeTab === 'CUSTOMER_ACCOUNTS' && <AdminCustomerAccounts onNavigate={onNavigate} />}
                 {activeTab === 'REFUNDS' && <AdminFinancialRefunds />}
                 {activeTab === 'SETTLEMENT' && <AdminSettlement />}
+                {activeTab === 'SHIPPING_COMPANY_OBLIGATIONS' && <AdminShippingCompanyObligations />}
                 {activeTab === 'PENALTIES' && <AdminFinancialPenalties />}
                 {activeTab === 'REPORTS' && <AdminFinancialReports />}
             </Suspense>

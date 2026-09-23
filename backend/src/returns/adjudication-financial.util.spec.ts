@@ -76,7 +76,8 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(r.finalCustomerRefundAmount).toBe(100);
         expect(r.feeBearer).toBe('PLATFORM');
         expect(r.shippingBearer).toBe('SHIPPING_COMPANY');
-        expect(r.shippingCompanyLiability).toBe(20);
+        // RT shipping (20) + gateway 3% + refund fee 1.5% on 100 = 24.5
+        expect(r.shippingCompanyLiability).toBeCloseTo(24.5);
         expect(r.platformRetainedAmount).toBe(0);
         expect(r.merchantWalletDebits.platformFees).toBe(0);
     });

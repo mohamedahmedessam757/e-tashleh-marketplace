@@ -519,6 +519,23 @@ export class PaymentsController {
         return this.adminFinancialService.runSettlement(req.user.id, body, getAuditContext(req));
     }
 
+    @Get('admin/shipping-company-obligations')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getShippingCompanyObligations(@Query() filters: any) {
+        return this.adminFinancialService.getShippingCompanyObligations(filters);
+    }
+
+    @Post('admin/shipping-company-obligations/settle')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'edit')
+    recordShippingCompanySettlement(
+        @Request() req,
+        @Body() body: { obligationId: string; amount: number; note?: string },
+    ) {
+        return this.adminFinancialService.recordShippingCompanySettlement(req.user.id, body);
+    }
+
     @Get('admin/financial-adjustments')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'view')

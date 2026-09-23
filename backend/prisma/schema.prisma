@@ -327,6 +327,7 @@ model User {
   adminActivityLogs     AdminActivityLog[]
   financialSettlements  FinancialSettlement[] @relation("FinancialSettlementRunner")
   financialAdjustmentsCreated FinancialAdjustment[] @relation("FinancialAdjustmentCreator")
+  shippingCompanySettlements ShippingCompanySettlement[] @relation("ShippingCompanySettlementAdmin")
 
   // Customer Return Risk Tracking (2026)
   totalDeliveredOrders     Int                 @default(0) @map("total_delivered_orders")
@@ -1366,6 +1367,8 @@ model PlatformWallet {
   commissionBalance Decimal  @default(0) @map("commission_balance") @db.Decimal(14, 2)
   feesBalance       Decimal  @default(0) @map("fees_balance") @db.Decimal(14, 2)
   totalRevenue      Decimal  @default(0) @map("total_revenue") @db.Decimal(14, 2)
+  /// Outstanding shipping-company obligations (carrier owes platform)
+  shippingCompanyLiabilityBalance Decimal @default(0) @map("shipping_company_liability_balance") @db.Decimal(14, 2)
   updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
   @@map("platform_wallet")
@@ -2334,4 +2337,54 @@ model FinancialAdjustment {
   @@index([targetStoreId])
   @@index([createdAt])
   @@map("financial_adjustments")
+}
+
+/// Carrier owes platform after SHIPPING_COMPANY fault adjudication.
+model ShippingCompanyObligation {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId          String   @unique @map("case_id") @db.Uuid
+  caseType        String   @map("case_type") // return | dispute
+  orderId         String   @map("order_id") @db.Uuid
+  orderNumber     String?  @map("order_number")
+  amountOriginal  Decimal  @map("amount_original") @db.Decimal(14, 2)
+  amountRemaining Decimal  @map("amount_remaining") @db.Decimal(14, 2)
+  amountSettled   Decimal  @default(0) @map("amount_settled") @db.Decimal(14, 2)
+  currency        String   @default("AED")
+  status          String   @default("OPEN") // OPEN | PARTIAL | SETTLED
+  shippingAmount  Decimal  @default(0) @map("shipping_amount") @db.Decimal(14, 2)
+  stripeFeesAmount Decimal @default(0) @map("stripe_fees_amount") @db.Decimal(14, 2)
+  refundAmount    Decimal  @default(0) @map("refund_amount") @db.Decimal(14, 2)
+  notes           String?
+  metadata        Json?    @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  settlements ShippingCompanySettlement[]
+
+  @@index([status])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("shipping_company_obligations")
+}
+
+/// Admin-recorded payment from the shipping company that reduces an obligation.
+model ShippingCompanySettlement {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  obligationId        String   @map("obligation_id") @db.Uuid
+  amount              Decimal  @db.Decimal(14, 2)
+  currency            String   @default("AED")
+  adminId             String   @map("admin_id") @db.Uuid
+  note                String?
+  invoiceId           String?  @map("invoice_id") @db.Uuid
+  walletTransactionId String?  @map("wallet_transaction_id") @db.Uuid
+  metadata            Json?    @default("{}")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  obligation ShippingCompanyObligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  admin      User                      @relation("ShippingCompanySettlementAdmin", fields: [adminId], references: [id])
+
+  @@index([obligationId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("shipping_company_settlements")
 }

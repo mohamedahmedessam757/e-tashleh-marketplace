@@ -99,6 +99,7 @@ export const GRANULAR_PERMISSIONS: Record<string, { fields: string[], actions: s
       'TRANSACTIONS',
       'REFUNDS',
       'SETTLEMENT',
+      'SHIPPING_COMPANY_OBLIGATIONS',
       'PENALTIES',
       'REPORTS',
     ]

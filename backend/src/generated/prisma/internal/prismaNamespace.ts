@@ -444,7 +444,9 @@ export const ModelName = {
   VerificationLink: 'VerificationLink',
   VerificationActivityLog: 'VerificationActivityLog',
   FinancialSettlement: 'FinancialSettlement',
-  FinancialAdjustment: 'FinancialAdjustment'
+  FinancialAdjustment: 'FinancialAdjustment',
+  ShippingCompanyObligation: 'ShippingCompanyObligation',
+  ShippingCompanySettlement: 'ShippingCompanySettlement'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -460,7 +462,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "platformAnnouncement" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "platformErrorEvent" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog" | "financialSettlement" | "financialAdjustment"
+    modelProps: "otpChallenge" | "whatsAppMessageLog" | "widersWebhookEvent" | "user" | "userSettings" | "store" | "storeDocument" | "order" | "verificationDocument" | "offer" | "offerRejection" | "auditLog" | "staticPage" | "platformAnnouncement" | "orderPart" | "notification" | "returnRequest" | "dispute" | "caseMessage" | "orderChat" | "orderChatMessage" | "accountRecoveryRequest" | "profileChangeRequest" | "securityLog" | "session" | "orderShippingAddress" | "paymentTransaction" | "walletTransaction" | "escrowTransaction" | "platformWallet" | "invoice" | "userCard" | "platformContract" | "contractAcceptance" | "contractChangeRequest" | "shippingWaybill" | "shipment" | "shipmentStatusLog" | "review" | "ratingImpactRule" | "withdrawalRequest" | "platformSettings" | "platformErrorEvent" | "vehicleMake" | "vehicleModel" | "violationType" | "violation" | "violationAppeal" | "penaltyThreshold" | "penaltyAction" | "violationScoreLog" | "adminActivityLog" | "loyaltyReviewAlert" | "customerRiskAlert" | "adminPermission" | "verificationTask" | "verificationTaskPhoto" | "verificationLink" | "verificationActivityLog" | "financialSettlement" | "financialAdjustment" | "shippingCompanyObligation" | "shippingCompanySettlement"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4978,6 +4980,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ShippingCompanyObligation: {
+      payload: Prisma.$ShippingCompanyObligationPayload<ExtArgs>
+      fields: Prisma.ShippingCompanyObligationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShippingCompanyObligationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShippingCompanyObligationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        findFirst: {
+          args: Prisma.ShippingCompanyObligationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShippingCompanyObligationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        findMany: {
+          args: Prisma.ShippingCompanyObligationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>[]
+        }
+        create: {
+          args: Prisma.ShippingCompanyObligationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        createMany: {
+          args: Prisma.ShippingCompanyObligationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShippingCompanyObligationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>[]
+        }
+        delete: {
+          args: Prisma.ShippingCompanyObligationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        update: {
+          args: Prisma.ShippingCompanyObligationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShippingCompanyObligationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShippingCompanyObligationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShippingCompanyObligationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShippingCompanyObligationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanyObligationPayload>
+        }
+        aggregate: {
+          args: Prisma.ShippingCompanyObligationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShippingCompanyObligation>
+        }
+        groupBy: {
+          args: Prisma.ShippingCompanyObligationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShippingCompanyObligationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShippingCompanyObligationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShippingCompanyObligationCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShippingCompanySettlement: {
+      payload: Prisma.$ShippingCompanySettlementPayload<ExtArgs>
+      fields: Prisma.ShippingCompanySettlementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShippingCompanySettlementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShippingCompanySettlementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        findFirst: {
+          args: Prisma.ShippingCompanySettlementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShippingCompanySettlementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        findMany: {
+          args: Prisma.ShippingCompanySettlementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>[]
+        }
+        create: {
+          args: Prisma.ShippingCompanySettlementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        createMany: {
+          args: Prisma.ShippingCompanySettlementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShippingCompanySettlementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>[]
+        }
+        delete: {
+          args: Prisma.ShippingCompanySettlementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        update: {
+          args: Prisma.ShippingCompanySettlementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShippingCompanySettlementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShippingCompanySettlementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShippingCompanySettlementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShippingCompanySettlementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShippingCompanySettlementPayload>
+        }
+        aggregate: {
+          args: Prisma.ShippingCompanySettlementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShippingCompanySettlement>
+        }
+        groupBy: {
+          args: Prisma.ShippingCompanySettlementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShippingCompanySettlementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShippingCompanySettlementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShippingCompanySettlementCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5433,6 +5583,7 @@ export const OrderPartScalarFieldEnum = {
   images: 'images',
   video: 'video',
   quantity: 'quantity',
+  shippingClass: 'shippingClass',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5812,6 +5963,7 @@ export const PlatformWalletScalarFieldEnum = {
   commissionBalance: 'commissionBalance',
   feesBalance: 'feesBalance',
   totalRevenue: 'totalRevenue',
+  shippingCompanyLiabilityBalance: 'shippingCompanyLiabilityBalance',
   updatedAt: 'updatedAt'
 } as const
 
@@ -6423,6 +6575,45 @@ export const FinancialAdjustmentScalarFieldEnum = {
 } as const
 
 export type FinancialAdjustmentScalarFieldEnum = (typeof FinancialAdjustmentScalarFieldEnum)[keyof typeof FinancialAdjustmentScalarFieldEnum]
+
+
+export const ShippingCompanyObligationScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  caseType: 'caseType',
+  orderId: 'orderId',
+  orderNumber: 'orderNumber',
+  amountOriginal: 'amountOriginal',
+  amountRemaining: 'amountRemaining',
+  amountSettled: 'amountSettled',
+  currency: 'currency',
+  status: 'status',
+  shippingAmount: 'shippingAmount',
+  stripeFeesAmount: 'stripeFeesAmount',
+  refundAmount: 'refundAmount',
+  notes: 'notes',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShippingCompanyObligationScalarFieldEnum = (typeof ShippingCompanyObligationScalarFieldEnum)[keyof typeof ShippingCompanyObligationScalarFieldEnum]
+
+
+export const ShippingCompanySettlementScalarFieldEnum = {
+  id: 'id',
+  obligationId: 'obligationId',
+  amount: 'amount',
+  currency: 'currency',
+  adminId: 'adminId',
+  note: 'note',
+  invoiceId: 'invoiceId',
+  walletTransactionId: 'walletTransactionId',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type ShippingCompanySettlementScalarFieldEnum = (typeof ShippingCompanySettlementScalarFieldEnum)[keyof typeof ShippingCompanySettlementScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -7104,6 +7295,8 @@ export type GlobalOmitConfig = {
   verificationActivityLog?: Prisma.VerificationActivityLogOmit
   financialSettlement?: Prisma.FinancialSettlementOmit
   financialAdjustment?: Prisma.FinancialAdjustmentOmit
+  shippingCompanyObligation?: Prisma.ShippingCompanyObligationOmit
+  shippingCompanySettlement?: Prisma.ShippingCompanySettlementOmit
 }
 
 /* Types for Logging */

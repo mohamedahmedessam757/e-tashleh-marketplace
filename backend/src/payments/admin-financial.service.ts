@@ -1445,4 +1445,338 @@ export class AdminFinancialService {
     await workbook.xlsx.write(res);
     res.end();
   }
+
+  // ─── Shipping company obligations (carrier liability ledger) ─────────────
+
+  async getShippingCompanyObligations(filters?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, Number(filters?.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(filters?.limit) || 25));
+    const skip = (page - 1) * limit;
+    const status = String(filters?.status || '').toUpperCase();
+    const search = normalizeSearchQuery(filters?.search);
+
+    const where: any = {};
+    if (status && status !== 'ALL') {
+      where.status = status;
+    }
+    if (search) {
+      const orderIds = await resolveOrderIds(this.prisma, search);
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { caseId: { equals: search } },
+        ...(orderIds.length ? [{ orderId: { in: orderIds } }] : []),
+      ];
+    }
+
+    const prismaAny = this.prisma as any;
+    const [rows, total, openAgg, platformWallet] = await Promise.all([
+      prismaAny.shippingCompanyObligation.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          settlements: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            include: {
+              admin: { select: { id: true, name: true, email: true } },
+            },
+          },
+        },
+      }),
+      prismaAny.shippingCompanyObligation.count({ where }),
+      prismaAny.shippingCompanyObligation.aggregate({
+        where: { status: { in: ['OPEN', 'PARTIAL'] } },
+        _sum: { amountRemaining: true },
+        _count: { id: true },
+      }),
+      this.prisma.platformWallet.findFirst(),
+    ]);
+
+    return {
+      data: rows.map((r: any) => ({
+        id: r.id,
+        caseId: r.caseId,
+        caseType: r.caseType,
+        orderId: r.orderId,
+        orderNumber: r.orderNumber,
+        amountOriginal: roundMoney(Number(r.amountOriginal)),
+        amountRemaining: roundMoney(Number(r.amountRemaining)),
+        amountSettled: roundMoney(Number(r.amountSettled)),
+        currency: r.currency,
+        status: r.status,
+        shippingAmount: roundMoney(Number(r.shippingAmount)),
+        stripeFeesAmount: roundMoney(Number(r.stripeFeesAmount)),
+        refundAmount: roundMoney(Number(r.refundAmount)),
+        notes: r.notes,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        settlements: (r.settlements || []).map((s: any) => ({
+          id: s.id,
+          amount: roundMoney(Number(s.amount)),
+          note: s.note,
+          invoiceId: s.invoiceId,
+          createdAt: s.createdAt,
+          admin: s.admin?.name || s.admin?.email || s.adminId,
+        })),
+      })),
+      pagination: { page, limit, total },
+      summary: {
+        totalOutstanding: roundMoney(
+          Number(
+            platformWallet?.shippingCompanyLiabilityBalance ??
+              openAgg._sum?.amountRemaining ??
+              0,
+          ),
+        ),
+        openCount: Number(openAgg._count?.id || 0),
+      },
+    };
+  }
+
+  async recordShippingCompanySettlement(
+    adminId: string,
+    body: { obligationId: string; amount: number; note?: string },
+  ) {
+    const obligationId = String(body?.obligationId || '').trim();
+    const amount = roundMoney(Number(body?.amount));
+    if (!obligationId) throw new BadRequestException('obligationId is required');
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('Settlement amount must be a positive number');
+    }
+
+    const prismaAny = this.prisma as any;
+
+    return this.prisma.$transaction(async (tx) => {
+      const txAny = tx as any;
+      const obligation = await txAny.shippingCompanyObligation.findUnique({
+        where: { id: obligationId },
+      });
+      if (!obligation) throw new NotFoundException('Shipping company obligation not found');
+      if (String(obligation.status).toUpperCase() === 'SETTLED') {
+        throw new BadRequestException('Obligation is already fully settled');
+      }
+
+      const remaining = roundMoney(Number(obligation.amountRemaining));
+      if (amount > remaining + 0.009) {
+        throw new BadRequestException(
+          `Amount exceeds remaining liability (${remaining.toFixed(2)} AED)`,
+        );
+      }
+
+      const newRemaining = roundMoney(Math.max(0, remaining - amount));
+      const newSettled = roundMoney(Number(obligation.amountSettled) + amount);
+      const newStatus =
+        newRemaining <= 0.009 ? 'SETTLED' : newSettled > 0.009 ? 'PARTIAL' : 'OPEN';
+
+      const updated = await txAny.shippingCompanyObligation.update({
+        where: { id: obligationId },
+        data: {
+          amountRemaining: newRemaining,
+          amountSettled: newSettled,
+          status: newStatus,
+        },
+      });
+
+      let pw = await tx.platformWallet.findFirst();
+      if (!pw) {
+        pw = await tx.platformWallet.create({
+          data: {
+            feesBalance: 0,
+            commissionBalance: 0,
+            totalRevenue: 0,
+            shippingCompanyLiabilityBalance: 0,
+          } as any,
+        });
+      }
+      const updatedPw = await tx.platformWallet.update({
+        where: { id: pw.id },
+        data: {
+          shippingCompanyLiabilityBalance: { decrement: amount },
+        } as any,
+      });
+
+      // Clamp wallet balance if it went negative due to historical drift
+      const balAfter = Math.max(
+        0,
+        Number((updatedPw as any).shippingCompanyLiabilityBalance || 0),
+      );
+      if (balAfter !== Number((updatedPw as any).shippingCompanyLiabilityBalance)) {
+        await tx.platformWallet.update({
+          where: { id: pw.id },
+          data: { shippingCompanyLiabilityBalance: balAfter } as any,
+        });
+      }
+
+      const walletTx = await tx.walletTransaction.create({
+        data: {
+          userId: adminId,
+          role: 'SHIPPING_COMPANY',
+          type: 'DEBIT',
+          transactionType: 'SHIPPING_COMPANY_SETTLEMENT',
+          amount,
+          currency: obligation.currency || 'AED',
+          description: `Shipping company settlement — case ${String(obligation.caseId).substring(0, 8)}`,
+          balanceAfter: balAfter,
+          metadata: {
+            obligationId,
+            caseId: obligation.caseId,
+            caseType: obligation.caseType,
+            orderId: obligation.orderId,
+            note: body.note || null,
+          },
+        },
+      });
+
+      // Issue a payment receipt invoice (admin-visible) for the carrier payment
+      let invoiceId: string | null = null;
+      const payment = await tx.paymentTransaction.findFirst({
+        where: {
+          orderId: obligation.orderId,
+          status: { in: ['SUCCESS', 'REFUNDED', 'PARTIALLY_REFUNDED'] },
+        },
+        orderBy: { paidAt: 'desc' },
+        select: { id: true },
+      });
+      if (payment?.id) {
+        const master = await tx.invoice.findFirst({
+          where: { paymentId: payment.id, invoiceType: 'MASTER' },
+          select: { id: true, invoiceGroupId: true, currency: true },
+        });
+        const batchKey = `SCO-SETTLE:${obligationId}:${walletTx.id}`;
+        const existingInv = await tx.invoice.findFirst({
+          where: { shippingBatchKey: batchKey },
+          select: { id: true },
+        });
+        if (!existingInv) {
+          let invoiceNumber = `INV-SCO-${Date.now().toString(36).toUpperCase()}`;
+          try {
+            const rows = await tx.$queryRaw<{ generate_typed_invoice_number: string }[]>`
+              SELECT generate_typed_invoice_number(${'SHIPPING'})
+            `;
+            if (rows?.[0]?.generate_typed_invoice_number) {
+              invoiceNumber = rows[0].generate_typed_invoice_number;
+            }
+          } catch {
+            /* fallback above */
+          }
+          const inv = await tx.invoice.create({
+            data: {
+              invoiceNumber,
+              orderId: obligation.orderId,
+              paymentId: payment.id,
+              customerId: adminId,
+              subtotal: 0,
+              shipping: amount,
+              commission: 0,
+              total: amount,
+              currency: master?.currency || obligation.currency || 'AED',
+              status: 'PAID',
+              invoiceType: 'SHIPPING',
+              invoiceGroupId: master?.invoiceGroupId || master?.id || undefined,
+              parentInvoiceId: master?.id || undefined,
+              shippingBatchKey: batchKey,
+              partNameSnapshot: `Shipping company settlement — ${obligation.orderNumber || obligation.orderId}`,
+              lineItems: [
+                {
+                  kind: 'SHIPPING_COMPANY_SETTLEMENT',
+                  amount,
+                  payer: 'SHIPPING_COMPANY',
+                  obligationId,
+                  caseId: obligation.caseId,
+                  note: body.note || null,
+                },
+              ] as unknown as Prisma.InputJsonValue,
+            },
+          });
+          invoiceId = inv.id;
+        } else {
+          invoiceId = existingInv.id;
+        }
+      }
+
+      const settlement = await txAny.shippingCompanySettlement.create({
+        data: {
+          obligationId,
+          amount,
+          currency: obligation.currency || 'AED',
+          adminId,
+          note: body.note || null,
+          invoiceId,
+          walletTransactionId: walletTx.id,
+          metadata: {
+            previousRemaining: remaining,
+            newRemaining,
+            newStatus,
+          },
+        },
+      });
+
+      // Mark case shipping payment PAID when fully settled
+      if (newStatus === 'SETTLED') {
+        const caseType = String(obligation.caseType || '').toLowerCase();
+        if (caseType === 'return') {
+          await tx.returnRequest
+            .update({
+              where: { id: obligation.caseId },
+              data: {
+                shippingPaymentStatus: 'PAID',
+                shippingPaymentMethod: 'CARRIER_SETTLEMENT',
+              } as any,
+            })
+            .catch(() => null);
+        } else if (caseType === 'dispute') {
+          await tx.dispute
+            .update({
+              where: { id: obligation.caseId },
+              data: {
+                shippingPaymentStatus: 'PAID',
+                shippingPaymentMethod: 'CARRIER_SETTLEMENT',
+              } as any,
+            })
+            .catch(() => null);
+        }
+      }
+
+      await this.auditLogs.logFinancialAction({
+        entity: 'FINANCIAL',
+        action: 'SHIPPING_COMPANY_SETTLEMENT',
+        actorType: ActorType.ADMIN,
+        actorId: adminId,
+        reason: body.note || 'Carrier settlement recorded',
+        metadata: {
+          obligationId,
+          settlementId: settlement.id,
+          amount,
+          invoiceId,
+          caseId: obligation.caseId,
+          orderId: obligation.orderId,
+          newStatus,
+          newRemaining,
+        },
+      });
+
+      return {
+        success: true,
+        obligation: {
+          id: updated.id,
+          amountRemaining: roundMoney(Number(updated.amountRemaining)),
+          amountSettled: roundMoney(Number(updated.amountSettled)),
+          status: updated.status,
+        },
+        settlement: {
+          id: settlement.id,
+          amount,
+          invoiceId,
+          walletTransactionId: walletTx.id,
+        },
+      };
+    });
+  }
 }

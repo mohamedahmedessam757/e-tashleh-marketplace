@@ -112,6 +112,41 @@ export class ReturnsService {
                 params.caseRecord.shippingRefund ??
                 0,
         );
+        const faultHint = String(
+            params.extra?.faultParty || params.caseRecord.faultParty || '',
+        ).toUpperCase();
+        const returnType = String(params.caseRecord.returnType || '').toUpperCase();
+        const isWarranty =
+            isWarrantyFault(faultHint) || returnType === 'EXCHANGE';
+
+        let warrantyLabel: string | null = null;
+        let partNameResolved = master?.partNameSnapshot || null;
+        if (isWarranty) {
+            if (params.caseRecord.offerId) {
+                const offer = await params.tx.offer.findUnique({
+                    where: { id: params.caseRecord.offerId },
+                    select: {
+                        warrantyDuration: true,
+                        warrantyEndAt: true,
+                        orderPart: { select: { name: true } },
+                    },
+                });
+                warrantyLabel =
+                    offer?.warrantyDuration ||
+                    (offer?.warrantyEndAt
+                        ? `until ${new Date(offer.warrantyEndAt).toISOString().slice(0, 10)}`
+                        : 'warranty');
+                if (offer?.orderPart?.name) partNameResolved = offer.orderPart.name;
+            }
+            if (!partNameResolved && params.caseRecord.orderPartId) {
+                const part = await params.tx.orderPart.findUnique({
+                    where: { id: params.caseRecord.orderPartId },
+                    select: { name: true },
+                });
+                partNameResolved = part?.name || partNameResolved;
+            }
+        }
+
         const plan = buildFeeSettlementPlan({
             caseId: params.caseId,
             shippingRoundtrip,
@@ -128,11 +163,13 @@ export class ReturnsService {
                 merchantOwnerId: store?.ownerId || null,
                 adminId: params.adminId,
                 currency: master?.currency || 'AED',
-                partName: master?.partNameSnapshot || null,
+                partName: partNameResolved,
                 parentInvoiceId: master?.id || null,
                 invoiceGroupId: master?.invoiceGroupId || master?.id || null,
                 adjudicationFeePaid: params.adjudicationFeePaid,
                 shippingPaid: params.shippingPaid,
+                isWarranty,
+                warrantyLabel,
             },
             params.tx,
         );
@@ -2382,6 +2419,101 @@ export class ReturnsService {
                     if (bearer === 'SHIPPING_COMPANY') {
                         updateData.shippingPayee = 'SHIPPING_COMPANY';
                         updateData.shippingPaymentStatus = 'PENDING_SETTLEMENT';
+
+                        // Persist carrier liability into finance ledger + platform wallet balance
+                        const liabilityAmount = Number(refundFinancials.shippingCompanyLiability || 0);
+                        if (liabilityAmount > 0.009) {
+                            const liabilityKey = makeReturnsLineItemIdempotencyKey(
+                                caseId,
+                                'SHIPPING_COMPANY_LIABILITY',
+                                updateData.refundExecutionStatus ||
+                                    refundFinancials.refundExecutionStatusSeed,
+                            );
+                            const alreadyLogged = await this.walletTxExistsByKey(tx, liabilityKey);
+                            if (!alreadyLogged) {
+                                const existingObl = await (tx as any).shippingCompanyObligation.findUnique({
+                                    where: { caseId },
+                                    select: { id: true },
+                                });
+                                if (!existingObl) {
+                                    await (tx as any).shippingCompanyObligation.create({
+                                        data: {
+                                            caseId,
+                                            caseType: type,
+                                            orderId: caseRecord.orderId,
+                                            orderNumber: caseRecord.order?.orderNumber || null,
+                                            amountOriginal: liabilityAmount,
+                                            amountRemaining: liabilityAmount,
+                                            amountSettled: 0,
+                                            currency: 'AED',
+                                            status: 'OPEN',
+                                            shippingAmount: shipObligation,
+                                            stripeFeesAmount: Number(refundFinancials.platformFeesTotal || 0),
+                                            refundAmount: Number(
+                                                refundFinancials.finalCustomerRefundAmount || 0,
+                                            ),
+                                            notes: `Adjudication liability — case ${caseId.substring(0, 8)}`,
+                                            metadata: {
+                                                faultParty: 'SHIPPING_COMPANY',
+                                                gatewayFeeAmount: refundFinancials.gatewayFeeAmount,
+                                                refundFeeAmount: refundFinancials.refundFeeAmount,
+                                                shippingRoundtrip: shipObligation,
+                                                finalRefundDecision,
+                                                idempotencyKey: liabilityKey,
+                                            },
+                                        },
+                                    });
+                                }
+
+                                let pw = await tx.platformWallet.findFirst();
+                                if (!pw) {
+                                    pw = await tx.platformWallet.create({
+                                        data: {
+                                            feesBalance: 0,
+                                            commissionBalance: 0,
+                                            totalRevenue: 0,
+                                        },
+                                    });
+                                }
+                                const updatedPw = await tx.platformWallet.update({
+                                    where: { id: pw.id },
+                                    data: {
+                                        shippingCompanyLiabilityBalance: {
+                                            increment: liabilityAmount,
+                                        },
+                                    } as any,
+                                });
+
+                                await tx.walletTransaction.create({
+                                    data: {
+                                        userId: adminId,
+                                        role: 'SHIPPING_COMPANY',
+                                        type: 'CREDIT',
+                                        transactionType: 'SHIPPING_COMPANY_LIABILITY',
+                                        amount: liabilityAmount,
+                                        currency: 'AED',
+                                        description: `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping + Stripe fees)`,
+                                        balanceAfter: Number(
+                                            (updatedPw as any).shippingCompanyLiabilityBalance ||
+                                                liabilityAmount,
+                                        ),
+                                        metadata: {
+                                            caseId,
+                                            caseType: type,
+                                            orderId: caseRecord.orderId,
+                                            shippingAmount: shipObligation,
+                                            stripeFeesAmount: Number(
+                                                refundFinancials.platformFeesTotal || 0,
+                                            ),
+                                            refundAmount: Number(
+                                                refundFinancials.finalCustomerRefundAmount || 0,
+                                            ),
+                                            idempotencyKey: liabilityKey,
+                                        },
+                                    },
+                                });
+                            }
+                        }
                     } else if (bearer === 'MERCHANT') {
                         updateData.shippingPayee = 'MERCHANT';
                         if (shipObligation > 0 && !updateData.shippingPaymentStatus) {
@@ -2651,7 +2783,7 @@ export class ReturnsService {
             const isMerchantFault = ['STORE', 'MERCHANT', 'VENDOR'].includes(faultLower);
             
             const isPayee = isMerchantFault ? recipient.role === 'MERCHANT' : recipient.role === 'CUSTOMER';
-            const shippingCost = Number(extra.shippingRefund || 0);
+            const shippingCost = Number(extra.shippingRefund || extra.shippingRoundtrip || 0);
             
             let finalMessageAr = `تم إغلاق النزاع للطلب #${caseRecord.order?.orderNumber} بقرار: ${vTextAr}. الملاحظات: ${notes}`;
             let finalMessageEn = `Case for Order #${caseRecord.order?.orderNumber} closed with verdict: ${vTextEn}. Notes: ${notes}`;
@@ -2704,6 +2836,67 @@ export class ReturnsService {
                 console.error(`[ASYNC_NOTIFICATION_FAILURE] Failed to notify ${recipient.role} ${recipient.id}: ${err.message}`);
             });
         });
+
+        // Warranty: dedicated merchant notice — part name, order number, warranty duration, RT shipping due
+        if (
+            isWarrantyExchangeVerdict &&
+            merchantOwnerId &&
+            Number(extra?.shippingRoundtrip || extra?.shippingRefund || 0) > 0
+        ) {
+            void (async () => {
+                try {
+                    let partName = 'Part';
+                    let warrantyLabel = 'warranty';
+                    if (caseRecord.offerId) {
+                        const offer = await this.prisma.offer.findUnique({
+                            where: { id: caseRecord.offerId },
+                            select: {
+                                warrantyDuration: true,
+                                warrantyEndAt: true,
+                                orderPart: { select: { name: true } },
+                            },
+                        });
+                        if (offer?.orderPart?.name) partName = offer.orderPart.name;
+                        warrantyLabel =
+                            offer?.warrantyDuration ||
+                            (offer?.warrantyEndAt
+                                ? `until ${new Date(offer.warrantyEndAt).toISOString().slice(0, 10)}`
+                                : 'warranty');
+                    } else if (caseRecord.orderPartId) {
+                        const part = await this.prisma.orderPart.findUnique({
+                            where: { id: caseRecord.orderPartId },
+                            select: { name: true },
+                        });
+                        if (part?.name) partName = part.name;
+                    }
+                    const shipAmt = Number(extra?.shippingRoundtrip || extra?.shippingRefund || 0);
+                    const orderNo = caseRecord.order?.orderNumber || caseRecord.orderId;
+                    await this.notificationsService.create({
+                        recipientId: merchantOwnerId,
+                        recipientRole: 'MERCHANT',
+                        titleAr: 'ضمان — مطلوب سداد شحن الذهاب والإياب',
+                        titleEn: 'Warranty — round-trip shipping payment required',
+                        messageAr: `القطعة: «${partName}»\nالطلب: #${orderNo}\nمدة الضمان: ${warrantyLabel}\nالمبلغ المطلوب (شحن ذهاب وإياب): ${shipAmt.toFixed(2)} AED\n\nيرجى السداد من تفاصيل النزاع لإصدار بوليصة الإرجاع والاستبدال.`,
+                        messageEn: `Part: «${partName}»\nOrder: #${orderNo}\nWarranty: ${warrantyLabel}\nAmount due (round-trip shipping): ${shipAmt.toFixed(2)} AED\n\nPlease pay from dispute details to issue the return/replacement waybill.`,
+                        type: 'DISPUTE',
+                        link: `dispute-details/${caseId}`,
+                        metadata: {
+                            caseId,
+                            warranty: true,
+                            partName,
+                            warrantyLabel,
+                            shippingCost: shipAmt,
+                            orderNumber: orderNo,
+                            waEvent: 'ORDER_STATUS',
+                        },
+                    });
+                } catch (err: any) {
+                    console.error(
+                        `[ASYNC_NOTIFICATION_FAILURE] Warranty merchant notify failed: ${err?.message}`,
+                    );
+                }
+            })();
+        }
 
         // Dedicated PENDING adjudication-fee notice (Stripe/wallet collection)
         if (pendingAdjudicationFee) {
