@@ -105,7 +105,21 @@ export async function computeCustomerCompletedOrdersCount(
   customerId: string,
 ): Promise<number> {
   return prisma.order.count({
-    where: { customerId, status: 'COMPLETED' },
+    where: {
+      customerId,
+      OR: [
+        { status: { in: [...CUSTOMER_TERMINAL_REWARD_STATUSES] } },
+        {
+          status: { in: ['DELIVERED', 'PARTIALLY_DELIVERED'] },
+          offers: {
+            some: {
+              status: { in: ['accepted', 'ACCEPTED'] },
+              fulfillmentStatus: 'COMPLETED',
+            },
+          },
+        },
+      ],
+    },
   });
 }
 
@@ -179,19 +193,45 @@ export function buildActiveReferralWindowFilter(windowCutoff: Date) {
   };
 }
 
+const PENDING_REWARD_EXCLUDED_FULFILLMENT = new Set([
+  'COMPLETED',
+  'CANCELLED',
+]);
+
+function paymentStillPendingReward(payment: {
+  commission?: unknown;
+  offer?: { fulfillmentStatus?: string | null } | null;
+  offerId?: string | null;
+}): boolean {
+  const fs = String(payment.offer?.fulfillmentStatus || '').toUpperCase();
+  if (PENDING_REWARD_EXCLUDED_FULFILLMENT.has(fs)) return false;
+  return true;
+}
+
 export function computePendingLoyaltyFromOrders(
-  pendingOrders: Array<{ id?: string; payments: Array<{ commission?: unknown }> }>,
+  pendingOrders: Array<{
+    id?: string;
+    payments: Array<{
+      commission?: unknown;
+      offerId?: string | null;
+      offer?: { fulfillmentStatus?: string | null } | null;
+    }>;
+  }>,
   tierCashbackRate: number,
   excludeOrderIds?: Set<string>,
+  excludeOfferIds?: Set<string>,
 ): number {
   return Number(
     pendingOrders
       .filter((order) => !order.id || !excludeOrderIds?.has(order.id))
       .reduce((sum, order) => {
-        const commission = order.payments.reduce(
-          (cSum, p) => cSum + Number(p.commission || 0),
-          0,
-        );
+        const commission = order.payments
+          .filter((p) => {
+            if (!paymentStillPendingReward(p)) return false;
+            if (p.offerId && excludeOfferIds?.has(p.offerId)) return false;
+            return true;
+          })
+          .reduce((cSum, p) => cSum + Number(p.commission || 0), 0);
         const raw = commission * tierCashbackRate;
         const MIN_ORDER_REWARD = 2.0;
         const MAX_ORDER_REWARD = 150.0;
@@ -204,16 +244,27 @@ export function computePendingLoyaltyFromOrders(
 
 /** Same grant rule as LoyaltyService: 1 AED platform commission = 1 loyalty point. */
 export function computePendingLoyaltyPointsFromOrders(
-  pendingOrders: Array<{ id?: string; payments: Array<{ commission?: unknown }> }>,
+  pendingOrders: Array<{
+    id?: string;
+    payments: Array<{
+      commission?: unknown;
+      offerId?: string | null;
+      offer?: { fulfillmentStatus?: string | null } | null;
+    }>;
+  }>,
   excludeOrderIds?: Set<string>,
+  excludeOfferIds?: Set<string>,
 ): number {
   return pendingOrders
     .filter((order) => !order.id || !excludeOrderIds?.has(order.id))
     .reduce((sum, order) => {
-      const commission = order.payments.reduce(
-        (cSum, p) => cSum + Number(p.commission || 0),
-        0,
-      );
+      const commission = order.payments
+        .filter((p) => {
+          if (!paymentStillPendingReward(p)) return false;
+          if (p.offerId && excludeOfferIds?.has(p.offerId)) return false;
+          return true;
+        })
+        .reduce((cSum, p) => cSum + Number(p.commission || 0), 0);
       return sum + (commission > 0 ? Math.floor(commission) : 0);
     }, 0);
 }
@@ -246,7 +297,34 @@ export function extractOrderProfitOrderIds(
   return ids;
 }
 
-/** Cashback credited before order reached a terminal completion status. Net of reversals. */
+/** Orders fully settled by a legacy order-level ORDER_PROFIT (no offerId). */
+export function extractFullyRewardedOrderIds(
+  txs: Array<{ transactionType?: string | null; metadata?: unknown }>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const tx of txs) {
+    if (tx.transactionType !== 'ORDER_PROFIT') continue;
+    const meta = (tx.metadata || {}) as { orderId?: string; offerId?: string };
+    if (meta.orderId && !meta.offerId) ids.add(meta.orderId);
+  }
+  return ids;
+}
+
+export function extractRewardedOfferIds(
+  txs: Array<{ transactionType?: string | null; metadata?: unknown }>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const tx of txs) {
+    if (tx.transactionType !== 'ORDER_PROFIT') continue;
+    const offerId = (tx.metadata as { offerId?: string } | null)?.offerId;
+    if (typeof offerId === 'string' && offerId.length > 0) ids.add(offerId);
+  }
+  return ids;
+}
+
+/** Cashback credited before order reached a terminal completion status. Net of reversals.
+ *  Offer-scoped grants are intentionally available while sibling parts are still open.
+ */
 export function sumPrematureOrderProfit(
   txs: Array<{
     amount: unknown;
@@ -259,8 +337,9 @@ export function sumPrematureOrderProfit(
   const raw = txs
     .filter((tx) => {
       if (tx.transactionType !== 'ORDER_PROFIT') return false;
-      const orderId = (tx.metadata as { orderId?: string } | null)?.orderId;
-      return !!orderId && nonTerminalOrderIds.has(orderId);
+      const meta = (tx.metadata || {}) as { orderId?: string; offerId?: string };
+      if (meta.offerId) return false;
+      return !!meta.orderId && nonTerminalOrderIds.has(meta.orderId);
     })
     .reduce((sum, tx) => {
       const amount = Number(tx.amount || 0);
@@ -306,9 +385,11 @@ export function sumPrematureLoyaltyPoints(
       if (tx.transactionType !== 'ORDER_PROFIT') return false;
       const meta = (tx.metadata || {}) as {
         orderId?: string;
+        offerId?: string;
         commission?: unknown;
         pointsReversed?: unknown;
       };
+      if (meta.offerId) return false;
       return !!meta.orderId && nonTerminalOrderIds.has(meta.orderId);
     })
     .reduce((sum, tx) => {

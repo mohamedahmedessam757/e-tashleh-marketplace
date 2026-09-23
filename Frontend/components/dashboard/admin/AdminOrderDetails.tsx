@@ -328,6 +328,14 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         return { completedCount, totalCount: parts.length };
     }, [fulfillmentSummary]);
 
+    const partResolutionByOfferId = useMemo(() => {
+        const map = new Map<string, NonNullable<typeof fulfillmentSummary>['parts'][number]>();
+        fulfillmentSummary?.parts?.forEach((p) => {
+            if (p.offerId) map.set(String(p.offerId), p);
+        });
+        return map;
+    }, [fulfillmentSummary]);
+
     const isAr = language === 'ar';
     const ArrowIcon = isAr ? ChevronRight : ChevronLeft;
 
@@ -544,7 +552,17 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                     <Badge status={order.shipments[0].status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                                 )}
                             </div>
-                            {(order.warranty_end_at || order.status === 'WARRANTY_ACTIVE') && (
+                            {(order.warranty_end_at ||
+                                order.status === 'WARRANTY_ACTIVE' ||
+                                (order.offers || []).some(
+                                    (o: any) =>
+                                        o.warrantyEndAt ||
+                                        o.warranty_end_at ||
+                                        (o.hasWarranty &&
+                                            ['COMPLETED', 'DELIVERED'].includes(
+                                                String(o.fulfillmentStatus || '').toUpperCase(),
+                                            )),
+                                )) && (
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                     <WarrantyProtectionCard
                                         order={order}
@@ -584,7 +602,12 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
 
                     {/* Premium Warranty Protection Hub for Admin */}
-                    {order.status === 'WARRANTY_ACTIVE' && order.warranty_end_at && (
+                    {(order.status === 'WARRANTY_ACTIVE' ||
+                        (!!order.warranty_end_at &&
+                            ['DELIVERED', 'COMPLETED', 'PARTIALLY_DELIVERED', 'WARRANTY_EXPIRED'].includes(
+                                String(order.status),
+                            ))) &&
+                        order.warranty_end_at && (
                         <div className="px-4 sm:px-6 py-4 border-b border-white/5 bg-emerald-500/5">
                             <WarrantyProtectionCard order={order} role="admin" />
                         </div>
@@ -1002,6 +1025,146 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         offerId={primaryOffer.id}
                                                         orderCorrectionDeadlineAt={order.correctionDeadlineAt}
                                                     />
+                                                    {(() => {
+                                                        const meta = partResolutionByOfferId.get(String(primaryOffer.id));
+                                                        const warrantyEndAt =
+                                                            (typeof meta?.warrantyEndAt === 'string'
+                                                                ? meta.warrantyEndAt
+                                                                : null) ||
+                                                            primaryOffer.warrantyEndAt ||
+                                                            null;
+                                                        const isWarrantyEligible = Boolean(
+                                                            meta?.isWarrantyEligible || warrantyEndAt,
+                                                        );
+                                                        const fs = String(
+                                                            primaryOffer.fulfillmentStatus || '',
+                                                        ).toUpperCase();
+                                                        if (
+                                                            !warrantyEndAt ||
+                                                            !isWarrantyEligible ||
+                                                            (fs !== 'COMPLETED' && fs !== 'DELIVERED')
+                                                        ) {
+                                                            return null;
+                                                        }
+                                                        return (
+                                                            <WarrantyProtectionCard
+                                                                order={order}
+                                                                role="admin"
+                                                                focusOfferId={primaryOffer.id}
+                                                                warrantyEndAtOverride={warrantyEndAt}
+                                                                partLabel={p.name}
+                                                            />
+                                                        );
+                                                    })()}
+                                                    {(() => {
+                                                        const meta = partResolutionByOfferId.get(String(primaryOffer.id));
+                                                        const payment = Array.isArray(primaryOffer.payments)
+                                                            ? primaryOffer.payments.find(
+                                                                  (pay: { status?: string }) =>
+                                                                      String(pay.status || '').toUpperCase() ===
+                                                                      'SUCCESS',
+                                                              ) || primaryOffer.payments[0]
+                                                            : null;
+                                                        const detailRows: { label: string; value: string }[] = [
+                                                            {
+                                                                label: isAr ? 'التاجر' : 'Merchant',
+                                                                value:
+                                                                    primaryOffer.merchantName ||
+                                                                    primaryOffer.store?.name ||
+                                                                    '—',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'رقم العرض' : 'Offer #',
+                                                                value: primaryOffer.offerNumber || primaryOffer.id?.slice(0, 8) || '—',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'الاستلام' : 'Delivered',
+                                                                value: meta?.deliveredAt
+                                                                    ? new Date(meta.deliveredAt).toLocaleString(
+                                                                          isAr ? 'ar-AE' : 'en-AE',
+                                                                      )
+                                                                    : primaryOffer.deliveredAt
+                                                                      ? new Date(primaryOffer.deliveredAt).toLocaleString(
+                                                                            isAr ? 'ar-AE' : 'en-AE',
+                                                                        )
+                                                                      : '—',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'الإكمال' : 'Completed',
+                                                                value: meta?.completedAt
+                                                                    ? new Date(meta.completedAt).toLocaleString(
+                                                                          isAr ? 'ar-AE' : 'en-AE',
+                                                                      )
+                                                                    : primaryOffer.completedAt
+                                                                      ? new Date(primaryOffer.completedAt).toLocaleString(
+                                                                            isAr ? 'ar-AE' : 'en-AE',
+                                                                        )
+                                                                      : '—',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'نهاية الضمان' : 'Warranty ends',
+                                                                value:
+                                                                    meta?.warrantyEndAt || primaryOffer.warrantyEndAt
+                                                                        ? new Date(
+                                                                              String(
+                                                                                  meta?.warrantyEndAt ||
+                                                                                      primaryOffer.warrantyEndAt,
+                                                                              ),
+                                                                          ).toLocaleString(isAr ? 'ar-AE' : 'en-AE')
+                                                                        : primaryOffer.hasWarranty
+                                                                          ? isAr
+                                                                              ? 'مفعّل (بانتظار الختم)'
+                                                                              : 'Active (pending stamp)'
+                                                                          : isAr
+                                                                            ? 'بدون ضمان'
+                                                                            : 'No warranty',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'نافذة الإرجاع' : 'Return window',
+                                                                value: meta?.returnWindowEndsAt
+                                                                    ? new Date(meta.returnWindowEndsAt).toLocaleString(
+                                                                          isAr ? 'ar-AE' : 'en-AE',
+                                                                      )
+                                                                    : '—',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'حالة الدفع' : 'Payment',
+                                                                value: payment?.status
+                                                                    ? String(payment.status)
+                                                                    : isAr
+                                                                      ? 'غير مرتبط'
+                                                                      : 'Unlinked',
+                                                            },
+                                                            {
+                                                                label: isAr ? 'قفل النزاع' : 'Resolution lock',
+                                                                value:
+                                                                    meta?.resolutionLocked || primaryOffer.resolutionLocked
+                                                                        ? isAr
+                                                                            ? 'مقفول'
+                                                                            : 'Locked'
+                                                                        : isAr
+                                                                          ? 'مفتوح'
+                                                                          : 'Open',
+                                                            },
+                                                        ];
+                                                        return (
+                                                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {detailRows.map((row) => (
+                                                                    <div
+                                                                        key={row.label}
+                                                                        className="flex items-start justify-between gap-2 text-[11px]"
+                                                                    >
+                                                                        <span className="text-white/40 font-bold uppercase tracking-wider shrink-0">
+                                                                            {row.label}
+                                                                        </span>
+                                                                        <span className="text-white/80 font-semibold text-end break-all">
+                                                                            {row.value}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
 

@@ -45,6 +45,52 @@ export class OrderCompletionFinanceService {
      * Idempotent settlement for a terminal order: release HELD/RELEASING escrow,
      * then grant cashback/points and referral (each step isolated).
      */
+    async settleCompletedOffer(offerId: string): Promise<void> {
+        const offer = await this.prisma.offer.findUnique({
+            where: { id: offerId },
+            select: {
+                id: true,
+                orderId: true,
+                fulfillmentStatus: true,
+            },
+        });
+        if (!offer || String(offer.fulfillmentStatus) !== 'COMPLETED') {
+            return;
+        }
+
+        const payment = await this.prisma.paymentTransaction.findFirst({
+            where: { offerId, status: 'SUCCESS' },
+            select: { id: true },
+        });
+        if (payment) {
+            try {
+                await this.escrowService.releaseFunds(
+                    offer.orderId,
+                    'AUTO_48H',
+                    undefined,
+                    payment.id,
+                );
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                if (!(err instanceof NotFoundException || message.includes('No HELD escrow'))) {
+                    this.logger.warn(
+                        `Escrow release failed for offer ${offerId} payment ${payment.id}: ${message}`,
+                    );
+                }
+            }
+        }
+
+        try {
+            await this.loyaltyService.grantOfferCompletionRewards(offerId);
+        } catch (err) {
+            this.logger.warn(
+                `Offer loyalty grant failed for ${offerId}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+        }
+    }
+
     async settleCompletedOrder(orderId: string): Promise<void> {
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
@@ -187,6 +233,20 @@ export class OrderCompletionFinanceService {
     }
 
     async healCustomerCompletionRewards(customerId: string, limit = 20): Promise<void> {
+        const completedOffers = await this.prisma.offer.findMany({
+            where: {
+                fulfillmentStatus: 'COMPLETED',
+                order: { customerId },
+                payments: { some: { status: 'SUCCESS' } },
+            },
+            select: { id: true },
+            orderBy: { updatedAt: 'desc' },
+            take: limit,
+        });
+        for (const offer of completedOffers) {
+            await this.settleCompletedOffer(offer.id);
+        }
+
         const orders = await this.prisma.order.findMany({
             where: {
                 customerId,

@@ -1344,6 +1344,13 @@ export class OfferFulfillmentService {
             metadata: { offerId, partName: txnResult.offer.orderPart?.name },
         });
 
+        void this.completionFinance.settleCompletedOffer(offerId).catch((err) => {
+            console.error(
+                `Offer completion finance failed for ${offerId}:`,
+                err instanceof Error ? err.message : err,
+            );
+        });
+
         const nextStatus = await this.recomputeOrderStatus(txnResult.orderId);
         return { offer: txnResult.offer, orderStatus: nextStatus };
     }

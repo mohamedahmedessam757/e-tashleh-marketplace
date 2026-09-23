@@ -19,6 +19,7 @@ import {
   computeLoyaltyReverseProportion,
   computePartialReverseAmount,
 } from './loyalty-reverse.util';
+import { isWarrantyClaimReason } from '../orders/warranty-activation.util';
 
 const TERMINAL_REWARD_STATUSES = new Set([
   'COMPLETED',
@@ -146,8 +147,312 @@ export class LoyaltyService {
    * Hardened logic: Rewards are granted only for successful, non-disputed orders.
    * Covers BOTH sides: customer cashback/tier and merchant lifetime earnings/tier.
    */
+  /**
+   * Grant cashback/points for one COMPLETED offer (multi-item isolation).
+   * Safe while sibling parts are still in flight — does not require order-level terminal status.
+   * Idempotent on metadata.offerId.
+   */
+  async grantOfferCompletionRewards(offerId: string) {
+    this.logger.log(`[LoyaltyEngine] Processing offer-scoped rewards for offer ${offerId}`);
+
+    const offer = await this.prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        order: { include: { customer: true } },
+        payments: { where: { status: 'SUCCESS' } },
+      },
+    });
+
+    if (!offer?.order?.customer) {
+      this.logger.warn(`[LoyaltyEngine] Offer ${offerId} context missing.`);
+      return;
+    }
+
+    if (offer.fulfillmentStatus !== 'COMPLETED') {
+      this.logger.warn(
+        `[LoyaltyEngine] Offer ${offerId} not COMPLETED (${offer.fulfillmentStatus}). Skipping.`,
+      );
+      return;
+    }
+
+    const orderId = offer.orderId;
+    const customerId = offer.order.customerId;
+
+    const [openDispute, openReturn] = await Promise.all([
+      this.prisma.dispute.findFirst({
+        where: {
+          orderId,
+          status: OPEN_DISPUTE_STATUS_FILTER,
+          OR: [
+            { offerId },
+            ...(offer.orderPartId ? [{ orderPartId: offer.orderPartId }] : []),
+          ],
+        },
+        select: { id: true },
+      }),
+      this.prisma.returnRequest.findFirst({
+        where: {
+          orderId,
+          status: OPEN_RETURN_STATUS_FILTER,
+          OR: [
+            { offerId },
+            ...(offer.orderPartId ? [{ orderPartId: offer.orderPartId }] : []),
+          ],
+        },
+        select: { id: true, returnType: true, reason: true },
+      }),
+    ]);
+
+    if (openDispute) {
+      this.logger.warn(
+        `[LoyaltyEngine] Offer ${offerId} has open dispute — rewards deferred.`,
+      );
+      return;
+    }
+
+    // Warranty exchange keeps the sale settled — do not hold cashback.
+    const returnIsWarrantyExchange =
+      !!openReturn &&
+      (String(openReturn.returnType || '').toUpperCase() === 'EXCHANGE' ||
+        isWarrantyClaimReason(openReturn.reason));
+    if (openReturn && !returnIsWarrantyExchange) {
+      this.logger.warn(
+        `[LoyaltyEngine] Offer ${offerId} has open refund return — rewards deferred.`,
+      );
+      return;
+    }
+
+    const existingOfferProfit = await this.prisma.walletTransaction.findFirst({
+      where: {
+        userId: customerId,
+        transactionType: 'ORDER_PROFIT',
+        metadata: { path: ['offerId'], equals: offerId },
+      },
+      select: { id: true },
+    });
+    if (existingOfferProfit) {
+      this.logger.warn(`[LoyaltyEngine] Offer ${offerId} rewards already granted.`);
+      return;
+    }
+
+    // Legacy order-level grant (no offerId) already covered this order — skip.
+    const orderLevelGrants = await this.prisma.walletTransaction.findMany({
+      where: {
+        userId: customerId,
+        transactionType: 'ORDER_PROFIT',
+        metadata: { path: ['orderId'], equals: orderId },
+      },
+      select: { id: true, metadata: true },
+    });
+    const hasLegacyOrderGrant = orderLevelGrants.some((tx) => {
+      const meta = (tx.metadata || {}) as { offerId?: string };
+      return !meta.offerId;
+    });
+    if (hasLegacyOrderGrant) {
+      this.logger.warn(
+        `[LoyaltyEngine] Order ${orderId} already has order-level rewards. Skipping offer ${offerId}.`,
+      );
+      return;
+    }
+
+    const payment = offer.payments[0];
+    const commission = Number(payment?.commission || 0);
+    const paymentTotal = Number(payment?.totalAmount || 0);
+
+    const offerProfitWhere = {
+      userId: customerId,
+      transactionType: 'ORDER_PROFIT' as const,
+      metadata: { path: ['offerId'], equals: offerId },
+    };
+
+    if (commission <= 0) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201602, hashtext(${offerId}))`;
+        const existing = await tx.walletTransaction.findFirst({
+          where: offerProfitWhere,
+          select: { id: true },
+        });
+        if (existing) return;
+        await tx.walletTransaction.create({
+          data: {
+            userId: customerId,
+            role: 'CUSTOMER',
+            type: 'CREDIT',
+            transactionType: 'ORDER_PROFIT',
+            amount: 0,
+            currency: 'AED',
+            description: `Item completion marker (no commission): #${offer.order.orderNumber}`,
+            balanceAfter: Number(offer.order.customer.customerBalance),
+            metadata: {
+              orderId,
+              offerId,
+              paymentId: payment?.id,
+              skipReason: 'no_commission',
+            },
+          },
+        });
+      });
+      return;
+    }
+
+    const tierConfig = await this.getTierConfigMap();
+    const defaultTier = tierConfig.BASIC || { percent: 0.02, monthlyCap: 2000 };
+    const config = tierConfig[offer.order.customer.loyaltyTier] || defaultTier;
+
+    const EARNED_RAW = commission * config.percent;
+    const MIN_ORDER_REWARD = 2.0;
+    const MAX_ORDER_REWARD = 150.0;
+    let earnedProfit = Math.max(MIN_ORDER_REWARD, Math.min(MAX_ORDER_REWARD, EARNED_RAW));
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    let effectiveMonthlyCap = config.monthlyCap;
+    if (offer.order.customer.loyaltyTier === 'PARTNER') {
+      const monthlySpentTotal = await this.prisma.order.aggregate({
+        where: {
+          customerId,
+          status: 'COMPLETED',
+          createdAt: { gte: startOfMonth },
+        },
+        _sum: { totalAmount: true },
+      });
+      effectiveMonthlyCap = Number(monthlySpentTotal._sum.totalAmount || 0) * 0.1;
+      if (effectiveMonthlyCap < 5000) effectiveMonthlyCap = 5000;
+    }
+
+    const monthlyProfits = await this.prisma.walletTransaction.aggregate({
+      where: {
+        userId: customerId,
+        transactionType: 'ORDER_PROFIT',
+        createdAt: { gte: startOfMonth },
+      },
+      _sum: { amount: true },
+    });
+    const currentMonthlyProfitTotal = Number(monthlyProfits._sum.amount || 0);
+    let hitMonthlyCap = false;
+    if (currentMonthlyProfitTotal >= effectiveMonthlyCap) {
+      earnedProfit = 0;
+      hitMonthlyCap = true;
+    } else if (currentMonthlyProfitTotal + earnedProfit > effectiveMonthlyCap) {
+      earnedProfit = effectiveMonthlyCap - currentMonthlyProfitTotal;
+    }
+
+    const earnedPoints = Math.floor(commission);
+    const currentTotalSpent = Number(offer.order.customer.totalSpent);
+    const newTotalSpent = currentTotalSpent + paymentTotal;
+    const oldTier = offer.order.customer.loyaltyTier;
+    const newTier = await this.calculateTier(newTotalSpent);
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(87201602, hashtext(${offerId}))`;
+      const existing = await tx.walletTransaction.findFirst({
+        where: offerProfitWhere,
+        select: { id: true },
+      });
+      if (existing) return null;
+
+      const updatedUser = await tx.user.update({
+        where: { id: customerId },
+        data: {
+          totalSpent: newTotalSpent,
+          loyaltyTier: newTier,
+          loyaltyPoints: { increment: earnedPoints },
+          customerBalance: { increment: earnedProfit },
+        },
+      });
+
+      await tx.walletTransaction.create({
+        data: {
+          userId: customerId,
+          role: 'CUSTOMER',
+          type: 'CREDIT',
+          transactionType: 'ORDER_PROFIT',
+          amount: earnedProfit,
+          currency: 'AED',
+          description: `Item Success Reward: #${offer.order.orderNumber} (${oldTier} Level)`,
+          balanceAfter: Number(updatedUser.customerBalance),
+          metadata: {
+            orderId,
+            offerId,
+            paymentId: payment?.id,
+            commission,
+            earnedPoints,
+            rate: `${config.percent * 100}%`,
+            capsApplied: earnedProfit < EARNED_RAW,
+            skipReason: hitMonthlyCap ? 'monthly_cap' : undefined,
+            scope: 'offer',
+          },
+        },
+      });
+
+      return updatedUser;
+    });
+
+    if (!result) {
+      this.logger.warn(`[LoyaltyEngine] Offer ${offerId} rewards already granted (race).`);
+      return;
+    }
+
+    this.loyaltyGateway.emitLoyaltyUpdate(customerId, 'CUSTOMER', {
+      tier: newTier,
+      loyaltyPoints: result.loyaltyPoints,
+      customerBalance: Number(result.customerBalance),
+      earnedPoints,
+      earnedProfit,
+      totalSpent: Number(result.totalSpent),
+    });
+
+    if (this.isTierUpgrade(oldTier, newTier)) {
+      await this.notifications.create({
+        recipientId: customerId,
+        recipientRole: 'CUSTOMER',
+        titleAr: 'ارتقاء مستوى الولاء! 🎊',
+        titleEn: 'Loyalty Level Ascended! 🎊',
+        messageAr: `مبروك! لقد وصلت إلى مستوى ${newTier}. نسبة أرباحك الآن هي ${tierConfig[newTier].percent * 100}%.`,
+        messageEn: `Congrats! You have reached ${newTier} level. Your profit share is now ${tierConfig[newTier].percent * 100}%.`,
+        type: 'loyalty',
+        link: '/dashboard/wallet',
+      });
+    }
+
+    return { earnedPoints, earnedProfit, newTier };
+  }
+
   async grantOrderCompletionRewards(orderId: string) {
     this.logger.log(`[LoyaltyEngine] Processing 2026 hardened rewards for order ${orderId}`);
+
+    // Multi-item: settle each COMPLETED offer independently (siblings may still be open).
+    const completedOffers = await this.prisma.offer.findMany({
+      where: {
+        orderId,
+        fulfillmentStatus: 'COMPLETED',
+        status: { in: ['accepted', 'ACCEPTED'] },
+      },
+      select: { id: true },
+    });
+    if (completedOffers.length > 0) {
+      for (const offer of completedOffers) {
+        await this.grantOfferCompletionRewards(offer.id);
+      }
+      const orderProfitRows = await this.prisma.walletTransaction.findMany({
+        where: {
+          transactionType: 'ORDER_PROFIT',
+          metadata: { path: ['orderId'], equals: orderId },
+        },
+        select: { metadata: true },
+      });
+      const hasOfferScoped = orderProfitRows.some(
+        (tx) => !!(tx.metadata as { offerId?: string } | null)?.offerId,
+      );
+      if (hasOfferScoped) {
+        this.logger.log(
+          `[LoyaltyEngine] Order ${orderId} settled via offer-scoped rewards (${completedOffers.length} offers).`,
+        );
+        return;
+      }
+    }
 
     // 1. Fetch Order with Security Audit Data
     const order = await this.prisma.order.findUnique({

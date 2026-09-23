@@ -96,6 +96,40 @@ describe('customer wallet metrics — referral rules', () => {
   it('includes CLOSED among terminal reward statuses', () => {
     expect(CUSTOMER_TERMINAL_REWARD_STATUSES).toContain('CLOSED');
     expect(CUSTOMER_TERMINAL_REWARD_STATUSES).toContain('COMPLETED');
+    expect(CUSTOMER_TERMINAL_REWARD_STATUSES).toContain('WARRANTY_ACTIVE');
+  });
+
+  it('pending loyalty excludes COMPLETED offer commissions', () => {
+    expect(
+      computePendingLoyaltyFromOrders(
+        [
+          {
+            id: 'o1',
+            payments: [
+              { commission: 100, offerId: 'a', offer: { fulfillmentStatus: 'COMPLETED' } },
+              { commission: 100, offerId: 'b', offer: { fulfillmentStatus: 'DELIVERED' } },
+            ],
+          },
+        ],
+        0.02,
+      ),
+    ).toBe(2);
+  });
+
+  it('premature cashback ignores offer-scoped grants', () => {
+    expect(
+      sumPrematureOrderProfit(
+        [
+          {
+            amount: 2,
+            type: 'CREDIT',
+            transactionType: 'ORDER_PROFIT',
+            metadata: { orderId: 'o1', offerId: 'off1' },
+          },
+        ],
+        new Set(['o1']),
+      ),
+    ).toBe(0);
   });
 
   it('pending referral = 1% of summed platform commission', () => {

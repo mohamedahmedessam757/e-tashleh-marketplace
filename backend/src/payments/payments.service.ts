@@ -48,6 +48,8 @@ import {
     CUSTOMER_PENDING_REWARD_ORDER_STATUSES,
     CUSTOMER_TERMINAL_REWARD_STATUSES,
     extractOrderProfitOrderIds,
+    extractFullyRewardedOrderIds,
+    extractRewardedOfferIds,
     sumPrematureOrderProfit,
     sumPrematureReferralProfit,
     sumPrematureLoyaltyPoints,
@@ -2678,7 +2680,14 @@ export class PaymentsService {
                     customerId: userId,
                     status: { in: [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES] },
                 },
-                include: { payments: { where: { status: 'SUCCESS' } } },
+                include: {
+                    payments: {
+                        where: { status: 'SUCCESS' },
+                        include: {
+                            offer: { select: { fulfillmentStatus: true } },
+                        },
+                    },
+                },
             }),
             this.prisma.order.findMany({
                 where: {
@@ -2688,7 +2697,14 @@ export class PaymentsService {
                         ...buildActiveReferralWindowFilter(referralWindowCutoff),
                     },
                 },
-                include: { payments: { where: { status: 'SUCCESS' } } },
+                include: {
+                    payments: {
+                        where: { status: 'SUCCESS' },
+                        include: {
+                            offer: { select: { fulfillmentStatus: true } },
+                        },
+                    },
+                },
             }),
             this.getCustomerTransactions(userId),
             this.prisma.walletTransaction.findMany({
@@ -2734,13 +2750,16 @@ export class PaymentsService {
             finConfig,
         );
         const rewardSplits = splitRewardAggregates(rewardTxs, startOfMonth);
-        const rewardedOrderIds = extractOrderProfitOrderIds(orderProfitTxs);
+        const rewardedOrderIds = extractFullyRewardedOrderIds(orderProfitTxs);
+        const rewardedOfferIds = extractRewardedOfferIds(orderProfitTxs);
+        const allProfitOrderIds = extractOrderProfitOrderIds(orderProfitTxs);
         const pendingLoyaltyRewards = Number(
             (
                 computePendingLoyaltyFromOrders(
                     pendingOwnOrders,
                     tierCashbackRate,
                     rewardedOrderIds,
+                    rewardedOfferIds,
                 )
             ).toFixed(2),
         );
@@ -2751,9 +2770,9 @@ export class PaymentsService {
         let prematureCashbackHeld = 0;
         let prematureReferralHeld = 0;
         let prematureLoyaltyPointsHeld = 0;
-        if (rewardedOrderIds.size > 0) {
+        if (allProfitOrderIds.size > 0) {
             const rewardedOrders = await this.prisma.order.findMany({
-                where: { id: { in: [...rewardedOrderIds] } },
+                where: { id: { in: [...allProfitOrderIds] } },
                 select: { id: true, status: true },
             });
             const terminalSet = new Set<string>(CUSTOMER_TERMINAL_REWARD_STATUSES);
@@ -2779,6 +2798,7 @@ export class PaymentsService {
         const pendingLoyaltyPoints = computePendingLoyaltyPointsFromOrders(
             pendingOwnOrders,
             rewardedOrderIds,
+            rewardedOfferIds,
         ) + prematureLoyaltyPointsHeld;
         const availableLoyaltyPoints = Math.max(
             0,

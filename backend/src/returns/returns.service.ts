@@ -460,15 +460,24 @@ export class ReturnsService {
         );
         const evidenceUrls = await Promise.all(uploadPromises);
 
-        // Freeze escrow BEFORE creating case — fail fast if funds cannot be secured
-        await this.freezeEscrowForCase(
-            order,
-            {
-                id: acceptedOfferPreview.id,
-                payments: acceptedOfferPreview.payments,
-            },
-            'Return request opened — escrow frozen pending review',
-        );
+        // Warranty exchange (replacement under warranty) must NOT freeze escrow —
+        // funds are already released to the merchant; only the part enters the
+        // return/exchange pipeline. Standard refund returns still freeze HELD escrow.
+        const skipEscrowFreeze =
+            isWarrantyClaimReason(reason) &&
+            (isOfferInWarranty(acceptedOfferPreview) ||
+                offerHasUsableWarranty(acceptedOfferPreview));
+
+        if (!skipEscrowFreeze) {
+            await this.freezeEscrowForCase(
+                order,
+                {
+                    id: acceptedOfferPreview.id,
+                    payments: acceptedOfferPreview.payments,
+                },
+                'Return request opened — escrow frozen pending review',
+            );
+        }
 
         // 3. Create Return Record (Transaction)
         const result = await this.prisma.$transaction(async (tx) => {

@@ -154,6 +154,8 @@ export interface OrderOffer {
     resolutionLocked?: boolean;
     hasOpenCase?: boolean;
     returnWindowEndsAt?: string;
+    isReturnEligible?: boolean;
+    isWarrantyEligible?: boolean;
     hasWarranty?: boolean;
     has_warranty?: boolean;
     warrantyDuration?: string;
@@ -1099,6 +1101,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                         offer.returnWindowEndsAt ||
                         offer.return_window_ends_at ||
                         undefined,
+                    isReturnEligible:
+                        typeof offer.isReturnEligible === 'boolean'
+                            ? offer.isReturnEligible
+                            : typeof offer.is_return_eligible === 'boolean'
+                              ? offer.is_return_eligible
+                              : undefined,
+                    isWarrantyEligible:
+                        typeof offer.isWarrantyEligible === 'boolean'
+                            ? offer.isWarrantyEligible
+                            : typeof offer.is_warranty_eligible === 'boolean'
+                              ? offer.is_warranty_eligible
+                              : undefined,
                 })) : [],
                 createdAt: o.createdAt,
                 updatedAt: o.updatedAt,
