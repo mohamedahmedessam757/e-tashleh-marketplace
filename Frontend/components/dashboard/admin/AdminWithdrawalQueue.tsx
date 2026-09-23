@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   Landmark,
+  Loader2,
   RefreshCw,
   RotateCcw,
 } from 'lucide-react';
@@ -67,6 +68,8 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showReleaseModal, setShowReleaseModal] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [verifyingBankId, setVerifyingBankId] = useState<string | null>(null);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
 
   const statusFilter = (financialFilters.withdrawalStatus || 'PENDING') as StatusFilter;
 
@@ -109,12 +112,19 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
   };
 
   const handleApprove = async (req: any) => {
-    if (!canApprove) return;
+    if (!canApprove || approvingId) return;
     setApprovingId(req.id);
-    const res = await approveWithdrawal(req.id, undefined, currentAdmin?.name, currentAdmin?.email);
-    setApprovingId(null);
-    if (!res.success) alert(res.message);
+    setActionBusyId(req.id);
+    try {
+      const res = await approveWithdrawal(req.id, undefined, currentAdmin?.name, currentAdmin?.email);
+      if (!res.success) alert(res.message);
+    } finally {
+      setApprovingId(null);
+      setActionBusyId(null);
+    }
   };
+
+  const rowBusy = (id: string) => actionBusyId === id || approvingId === id;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -239,19 +249,21 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                         <div className="flex gap-2 justify-end flex-wrap">
                           <button
                             type="button"
+                            disabled={rowBusy(req.id)}
                             onClick={() => setReceiptId(req.id)}
-                            className="w-10 h-10 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black rounded-xl border border-gold-500/20 flex items-center justify-center"
+                            className="w-10 h-10 bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-black rounded-xl border border-gold-500/20 flex items-center justify-center disabled:opacity-50"
                             title={isAr ? 'إيصال' : 'Receipt'}
                           >
                             <FileText size={18} />
                           </button>
                           <button
                             type="button"
+                            disabled={rowBusy(req.id) || verifyingBankId === req.id}
                             onClick={() => {
                               setSelectedReq(req);
                               setShowBankModal(true);
                             }}
-                            className="w-10 h-10 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl border border-blue-500/20 flex items-center justify-center"
+                            className="w-10 h-10 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl border border-blue-500/20 flex items-center justify-center disabled:opacity-50"
                             title={t.admin.billing.withdrawals.table.viewBank}
                           >
                             <Landmark size={18} />
@@ -260,23 +272,28 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                           {req.status === 'PENDING' && canApprove && (
                             <button
                               type="button"
-                              disabled={approvingId === req.id}
-                              onClick={() => handleApprove(req)}
+                              disabled={rowBusy(req.id)}
+                              onClick={() => void handleApprove(req)}
                               className="w-10 h-10 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-black rounded-xl border border-emerald-500/20 flex items-center justify-center disabled:opacity-50"
                               title={t.admin.billing.withdrawals.actions.approve}
                             >
-                              <CheckCircle2 size={18} />
+                              {approvingId === req.id ? (
+                                <Loader2 size={18} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={18} />
+                              )}
                             </button>
                           )}
 
                           {req.status === 'PENDING' && canReject && (
                             <button
                               type="button"
+                              disabled={rowBusy(req.id)}
                               onClick={() => {
                                 setSelectedReq(req);
                                 setShowRejectModal(true);
                               }}
-                              className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl border border-rose-500/20 flex items-center justify-center"
+                              className="w-10 h-10 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl border border-rose-500/20 flex items-center justify-center disabled:opacity-50"
                               title={t.admin.billing.withdrawals.actions.invalidate}
                             >
                               <AlertOctagon size={18} />
@@ -286,11 +303,12 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                           {req.status === 'PROCESSING' && canApprove && (
                             <button
                               type="button"
+                              disabled={rowBusy(req.id)}
                               onClick={() => {
                                 setSelectedReq(req);
                                 setShowCompleteModal(true);
                               }}
-                              className="w-10 h-10 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-black rounded-xl border border-emerald-500/20 flex items-center justify-center"
+                              className="w-10 h-10 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-black rounded-xl border border-emerald-500/20 flex items-center justify-center disabled:opacity-50"
                               title={t.admin.billing.withdrawals.actions.complete}
                             >
                               <CheckCircle2 size={18} />
@@ -300,11 +318,12 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                           {req.status === 'PROCESSING' && canReject && (
                             <button
                               type="button"
+                              disabled={rowBusy(req.id)}
                               onClick={() => {
                                 setSelectedReq(req);
                                 setShowReleaseModal(true);
                               }}
-                              className="w-10 h-10 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black rounded-xl border border-amber-500/20 flex items-center justify-center"
+                              className="w-10 h-10 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black rounded-xl border border-amber-500/20 flex items-center justify-center disabled:opacity-50"
                               title={t.admin.billing.withdrawals.actions.release}
                             >
                               <RotateCcw size={18} />
@@ -313,10 +332,11 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
 
                           <button
                             type="button"
+                            disabled={rowBusy(req.id)}
                             onClick={() =>
                               onNavigate?.(req.role === 'VENDOR' ? 'store-profile' : 'customer-profile', req.userId || req.storeId)
                             }
-                            className="w-10 h-10 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl border border-white/10 flex items-center justify-center"
+                            className="w-10 h-10 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl border border-white/10 flex items-center justify-center disabled:opacity-50"
                           >
                             <ExternalLink size={16} />
                           </button>
@@ -415,11 +435,20 @@ export const AdminWithdrawalQueue: React.FC<AdminWithdrawalQueueProps> = ({ role
                   {!entity?.bankDetailsVerified && canApprove && entity?.id && (
                     <button
                       type="button"
+                      disabled={verifyingBankId === selectedReq.id}
                       onClick={async () => {
-                        await verifyBankDetails(entity.id, selectedReq.role);
+                        setVerifyingBankId(selectedReq.id);
+                        try {
+                          await verifyBankDetails(entity.id, selectedReq.role);
+                        } finally {
+                          setVerifyingBankId(null);
+                        }
                       }}
-                      className="w-full py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-sans"
+                      className="w-full py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-sans disabled:opacity-50 inline-flex items-center justify-center gap-2"
                     >
+                      {verifyingBankId === selectedReq.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : null}
                       {t.admin.billing.bankModal.verifyAction}
                     </button>
                   )}

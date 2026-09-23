@@ -42,6 +42,7 @@ export const RejectWithdrawalModal: React.FC<RejectWithdrawalModalProps> = ({ is
             return;
         }
 
+        if (isProcessing) return;
         setIsProcessing(true);
         try {
             const res = await rejectWithdrawal(
@@ -163,7 +164,9 @@ export const RejectWithdrawalModal: React.FC<RejectWithdrawalModalProps> = ({ is
                         ) : (
                             <ShieldAlert size={18} />
                         )}
-                        {isAr ? 'تأكيد الرفض' : 'Confirm Rejection'}
+                        {isProcessing
+                            ? (isAr ? 'جاري التنفيذ...' : 'Processing...')
+                            : (isAr ? 'تأكيد الرفض' : 'Confirm Rejection')}
                     </button>
                 </div>
             </div>
