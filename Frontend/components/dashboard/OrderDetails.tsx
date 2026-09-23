@@ -72,6 +72,7 @@ import {
     merchantOfferNeedsCorrection,
     computeShipmentDeliverySummary,
     allShipmentBatchesDelivered,
+    pickPrimaryOutboundShipment,
     resolveOrderTimelineStatus,
 } from '../../utils/offerFulfillmentHelpers';
 import { MerchantHandoverPendingBanner } from './shared/MerchantHandoverPendingBanner';
@@ -309,7 +310,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
     useOrderRealtimeSync(orderId, { includeReviews: true });
     useEnforceExpiredOrderSla(order);
     const displayStatus = order ? getDisplayOrderStatus(order) : '';
-    const shipment = shipments.find(s => s.orderId === (orderId || ''));
+    const shipment = pickPrimaryOutboundShipment(shipments, orderId || '');
     const fulfillmentSummary = useOrderFulfillmentSummary(orderId || undefined, order);
 
     const timelineStatus = useMemo(

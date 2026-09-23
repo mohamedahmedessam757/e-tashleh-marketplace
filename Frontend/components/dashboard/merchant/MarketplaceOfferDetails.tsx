@@ -66,6 +66,7 @@ import {
     resolveMerchantTimelineFromOffers,
     resolveOrderTimelineStatus,
     computeShipmentDeliverySummary,
+    pickPrimaryOutboundShipment,
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow, isBiddingStopped } from '../../../utils/offerGovernance';
 import { getServerNowMs, syncServerClock } from '../../../utils/serverClock';
@@ -518,7 +519,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     );
 
     const shipment = useMemo(
-        () => shipments.find((s) => s.orderId === (orderId || '')),
+        () => pickPrimaryOutboundShipment(shipments, orderId || ''),
         [shipments, orderId],
     );
 

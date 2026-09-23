@@ -666,6 +666,40 @@ export function resolveOrderTimelineStatus(
     return shipIdx > orderIdx ? fromShipment : order;
 }
 
+const RETURN_LOGISTICS_STATUSES = new Set([
+    'RETURN_LABEL_ISSUED',
+    'RETURN_STARTED',
+    'RECEIVED_FROM_CUSTOMER',
+    'DELIVERED_TO_VENDOR',
+    'RETURN_COMPLETED_TO_CUSTOMER',
+    'RETURN_TO_SENDER_INITIATED',
+]);
+
+/** True when a shipment row is return/exchange logistics (not original outbound delivery). */
+export function isReturnLogisticsShipment(status?: string | null): boolean {
+    return RETURN_LOGISTICS_STATUSES.has(String(status || '').toUpperCase());
+}
+
+/**
+ * Pick the primary outbound shipment for order-level badges/trackers.
+ * Never let a newer return shipment hide delivered outbound batches.
+ */
+export function pickPrimaryOutboundShipment<
+    T extends { orderId?: string; status?: string; createdAt?: string },
+>(shipments: T[] | null | undefined, orderId: string): T | undefined {
+    const forOrder = (shipments || []).filter(
+        (s) => String(s.orderId || '') === String(orderId || ''),
+    );
+    if (forOrder.length === 0) return undefined;
+    const outbound = forOrder.filter((s) => !isReturnLogisticsShipment(s.status));
+    const pool = outbound.length > 0 ? outbound : forOrder;
+    return [...pool].sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+    })[0];
+}
+
 export function computeShipmentDeliverySummary(
     shipments?: Array<{ status?: string }> | null,
     orderStatus?: string,
@@ -677,10 +711,15 @@ export function computeShipmentDeliverySummary(
         return null;
     }
     if (!shipments?.length || shipments.length <= 1) return null;
-    const delivered = shipments.filter(
+    const outbound = shipments.filter(
+        (s) => !isReturnLogisticsShipment(s.status),
+    );
+    const pool = outbound.length > 0 ? outbound : shipments;
+    if (pool.length <= 1) return null;
+    const delivered = pool.filter(
         (s) => String(s.status || '').toUpperCase() === 'DELIVERED_TO_CUSTOMER',
     ).length;
-    return { total: shipments.length, delivered };
+    return { total: pool.length, delivered };
 }
 
 export function buildShipmentDeliveryStepHint(

@@ -20,6 +20,7 @@ import {
     ORDER_STATUS_FILTER_VALUES,
     PENDING_ORDER_BUCKET,
 } from '../../utils/orderStatusFilter.util';
+import { pickPrimaryOutboundShipment } from '../../utils/offerFulfillmentHelpers';
 
 
 
@@ -326,7 +327,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({ onNavigate }) => {
                                                     <div className="flex flex-wrap items-center gap-2 max-w-full">
                                                         <Badge status={order.status as StatusType} />
                                                         {(() => {
-                                                            const shipment = shipments.find(s => s.orderId === order.id);
+                                                            const shipment = pickPrimaryOutboundShipment(shipments, order.id);
                                                             if (shipment && !['CANCELLED', 'AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_SELECTION', 'AWAITING_PAYMENT'].includes(order.status)) {
                                                                 return (
                                                                     <>
