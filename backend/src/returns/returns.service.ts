@@ -2673,20 +2673,32 @@ export class ReturnsService {
             });
 
             if (refundFinancials) {
-                await this.persistReturnsFeeInvoices({
-                    tx,
-                    caseId,
-                    type,
-                    caseRecord,
-                    fin: refundFinancials,
-                    extra,
-                    adminId,
-                    refundExecutionStatus: String(updateData.refundExecutionStatus || 'NOT_REQUIRED'),
-                    adjudicationFeePaid: String(updateData.adjudicationFeePaymentStatus || '') === 'PAID',
-                    shippingPaid:
-                        String(updateData.shippingPaymentStatus || '') === 'PAID' ||
-                        String(updateData.shippingPaymentStatus || '') === 'WITHHELD_PENDING',
-                });
+                // Isolate fee-invoice writes: a unique collision must not abort the verdict TX
+                // (Postgres aborts the whole TX on statement failure unless a SAVEPOINT is used).
+                await tx.$executeRaw`SAVEPOINT adjudication_fee_invoices`;
+                try {
+                    await this.persistReturnsFeeInvoices({
+                        tx,
+                        caseId,
+                        type,
+                        caseRecord,
+                        fin: refundFinancials,
+                        extra,
+                        adminId,
+                        refundExecutionStatus: String(updateData.refundExecutionStatus || 'NOT_REQUIRED'),
+                        adjudicationFeePaid: String(updateData.adjudicationFeePaymentStatus || '') === 'PAID',
+                        shippingPaid:
+                            String(updateData.shippingPaymentStatus || '') === 'PAID' ||
+                            String(updateData.shippingPaymentStatus || '') === 'WITHHELD_PENDING',
+                    });
+                    await tx.$executeRaw`RELEASE SAVEPOINT adjudication_fee_invoices`;
+                } catch (invErr: any) {
+                    await tx.$executeRaw`ROLLBACK TO SAVEPOINT adjudication_fee_invoices`;
+                    console.warn(
+                        `[ADJUDICATION] Fee invoice persistence skipped for case ${caseId}:`,
+                        invErr?.message || invErr,
+                    );
+                }
             }
 
             return updated;

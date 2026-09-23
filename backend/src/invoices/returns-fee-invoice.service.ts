@@ -87,7 +87,22 @@ export class ReturnsFeeInvoiceService {
     }
 
     private isUniqueViolation(err: unknown): boolean {
-        return (err as { code?: string })?.code === 'P2002';
+        const e = err as {
+            code?: string;
+            message?: string;
+            cause?: { code?: string; message?: string };
+            meta?: { target?: unknown };
+        };
+        if (e?.code === 'P2002') return true;
+        // Postgres unique_violation via driver adapter
+        if (e?.cause?.code === '23505' || e?.code === '23505') return true;
+        const msg = `${e?.message || ''} ${e?.cause?.message || ''}`.toLowerCase();
+        return (
+            msg.includes('unique constraint') ||
+            msg.includes('duplicate key') ||
+            msg.includes('invoices_payment_type_unique') ||
+            msg.includes('invoices_returns_fee_batch_unique')
+        );
     }
 
     private async nextInvoiceNumber(tx: Tx, type: 'COMMISSION' | 'SHIPPING'): Promise<string> {
