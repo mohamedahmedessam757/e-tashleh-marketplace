@@ -117,7 +117,7 @@ export class ReturnsService {
         ).toUpperCase();
         const returnType = String(params.caseRecord.returnType || '').toUpperCase();
         const isWarranty =
-            isWarrantyFault(faultHint) || returnType === 'EXCHANGE';
+            isWarrantyFault(faultHint);
 
         let warrantyLabel: string | null = null;
         let partNameResolved = master?.partNameSnapshot || null;
@@ -1906,8 +1906,7 @@ export class ReturnsService {
 
         const faultLowerEarly = String(extra?.faultParty || '').toUpperCase();
         const isCloseCompleteRefund = faultLowerEarly === 'CLOSE_COMPLETE_REFUND';
-        const isWarrantyExchangeVerdict =
-            isWarrantyFault(faultLowerEarly) || returnType === 'EXCHANGE';
+        const isWarrantyExchangeVerdict = isWarrantyFault(faultLowerEarly);
         if (isWarrantyFault(faultLowerEarly) && String(extra?.finalRefundDecision || '').toUpperCase() === 'REFUND_CUSTOMER') {
             throw new BadRequestException(
                 'WARRANTY_NO_CASH_REFUND: حكم الضمان لا يسمح برد مبلغ نقدي للعميل — الاستبدال فقط مع شحن ذهاباً وإياباً على التاجر.',
@@ -2908,6 +2907,31 @@ export class ReturnsService {
                     );
                 }
             })();
+        }
+
+        // Shipping-company liability: notify admins that finance ledger was updated
+        if (
+            String(extra?.faultParty || '').toUpperCase() === 'SHIPPING_COMPANY' &&
+            Number(refundFinancials?.shippingCompanyLiability || 0) > 0.009
+        ) {
+            const liabilityAmt = Number(refundFinancials.shippingCompanyLiability);
+            const orderNo = caseRecord.order?.orderNumber || caseRecord.orderId;
+            this.notificationsService
+                .notifyAdmins({
+                    titleAr: 'التزام جديد على شركة الشحن',
+                    titleEn: 'New shipping-company liability',
+                    messageAr: `تم تسجيل التزام ${liabilityAmt.toFixed(2)} AED على شركة الشحن للطلب #${orderNo} (قضية ${caseId.substring(0, 8)}). راجع المالية → التزامات شركة الشحن.`,
+                    messageEn: `Recorded ${liabilityAmt.toFixed(2)} AED shipping-company liability for order #${orderNo} (case ${caseId.substring(0, 8)}). Open Billing → Shipping Company Obligations.`,
+                    type: 'DISPUTE',
+                    link: `admin/billing`,
+                    metadata: {
+                        caseId,
+                        shippingCompanyLiability: liabilityAmt,
+                        orderId: caseRecord.orderId,
+                        waEvent: 'ORDER_STATUS',
+                    },
+                })
+                .catch(() => {});
         }
 
         // Dedicated PENDING adjudication-fee notice (Stripe/wallet collection)

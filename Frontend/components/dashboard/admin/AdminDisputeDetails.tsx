@@ -239,7 +239,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setFinalRefundDecision('REFUND_CUSTOMER');
             if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
         }
-        if (isExchangeCase && faultParty !== 'WARRANTY' && faultParty !== 'CLOSE_COMPLETE_REFUND') {
+        if (isExchangeCase && faultParty !== 'WARRANTY' && faultParty !== 'CLOSE_COMPLETE_REFUND' && faultParty !== 'SHIPPING_COMPANY' && faultParty !== 'MERCHANT' && faultParty !== 'CUSTOMER') {
+            // Default exchange claims to WARRANTY only when no fault has been chosen yet
             setFaultParty('WARRANTY');
             return;
         }
@@ -1467,6 +1468,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                  { id: 'MERCHANT', label: isAr ? 'خطأ التاجر' : 'Merchant fault' },
                                                  { id: 'CUSTOMER', label: isAr ? 'خطأ العميل' : 'Customer fault' },
                                                  { id: 'SHIPPING_COMPANY', label: isAr ? 'خطأ شركة الشحن' : 'Shipping fault' },
+                                                 { id: 'WARRANTY', label: isAr ? 'الضمان (استبدال)' : 'Warranty (exchange)' },
                                                  { id: 'CLOSE_COMPLETE_REFUND', label: isAr ? 'إغلاق + استرداد صافي' : 'Close + net refund' },
                                              ].map((opt) => (
                                                  <button
@@ -1482,6 +1484,30 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      {opt.label}
                                                  </button>
                                              ))}
+                                         </div>
+                                         <div className={`p-3 rounded-xl border text-[11px] font-black ${
+                                             faultParty === 'SHIPPING_COMPANY'
+                                                 ? 'bg-purple-500/10 border-purple-500/30 text-purple-200'
+                                                 : faultParty === 'WARRANTY'
+                                                   ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
+                                                   : 'bg-white/5 border-white/10 text-white/60'
+                                         }`}>
+                                             {isAr ? 'الطرف المخطئ المحدد: ' : 'Selected fault party: '}
+                                             {getFaultPartyLabel(faultParty)}
+                                             {faultParty === 'SHIPPING_COMPANY' && (
+                                                 <span className="block mt-1 font-bold text-[10px] opacity-80">
+                                                     {isAr
+                                                         ? 'سيتم تسجيل التزام مالي على شركة الشحن في مركز المالية.'
+                                                         : 'A shipping-company liability will be recorded in Billing.'}
+                                                 </span>
+                                             )}
+                                             {faultParty === 'SHIPPING_COMPANY' && shippingRoundtrip <= 0 && (
+                                                 <span className="block mt-1 font-bold text-[10px] text-amber-300">
+                                                     {isAr
+                                                         ? 'تنبيه: تكلفة الشحن = 0 — لن يُسجَّل التزام. أدخل شحن الذهاب والإياب في المرحلة 2.'
+                                                         : 'Warning: shipping cost is 0 — no liability will be recorded. Set round-trip shipping in step 2.'}
+                                                 </span>
+                                             )}
                                          </div>
                                          <div className="space-y-2 text-[11px] font-bold">
                                              <div className="flex justify-between gap-3 text-white/60">
