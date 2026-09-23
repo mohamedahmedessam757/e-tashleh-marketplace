@@ -6,6 +6,8 @@ export type AdjudicationFaultParty =
     | 'CUSTOMER'
     | 'MERCHANT'
     | 'SHIPPING_COMPANY'
+    | 'WARRANTY'
+    | 'WARRANTY_EXCHANGE'
     | 'CLOSE_COMPLETE_REFUND'
     | string;
 export type FinalRefundDecision = 'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND';
@@ -48,11 +50,16 @@ function isMerchantFault(fault: string): boolean {
     return ['STORE', 'MERCHANT', 'VENDOR'].includes(fault);
 }
 
+function isWarrantyFault(fault: string): boolean {
+    return ['WARRANTY', 'WARRANTY_EXCHANGE'].includes(fault);
+}
+
 function normalizeFinalRefundDecision(
     decision: FinalRefundDecision | string | undefined,
     fault: string,
 ): FinalRefundDecision {
     const normalized = String(decision || '').toUpperCase();
+    if (isWarrantyFault(fault)) return 'NO_CUSTOMER_REFUND';
     if (normalized === 'REFUND_CUSTOMER' || normalized === 'NO_CUSTOMER_REFUND') {
         return normalized as FinalRefundDecision;
     }
@@ -92,6 +99,18 @@ export function computeAdjudicationPreview(
             retained = 0;
             net = 0;
             merchantDebits = { shipping: 0, platformFees: 0 };
+            shippingCompanyLiability = 0;
+            showFeesOnCustomerNet = false;
+            showShippingOnCustomerNet = false;
+        } else if (isWarrantyFault(fault)) {
+            feeBearer = 'PLATFORM';
+            shippingBearer = shippingRoundtrip > 0 ? 'MERCHANT' : 'NONE';
+            retained = 0;
+            net = 0;
+            merchantDebits = {
+                shipping: shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0,
+                platformFees: 0,
+            };
             shippingCompanyLiability = 0;
             showFeesOnCustomerNet = false;
             showShippingOnCustomerNet = false;

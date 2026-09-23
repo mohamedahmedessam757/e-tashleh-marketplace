@@ -7,6 +7,7 @@
  * - CUSTOMER + REFUND_CUSTOMER → paid − fees − shipping; customer bears fees/shipping
  * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; 0 fees/shipping charges (claim dismissed)
  * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform fees; shipping-company liability
+ * - WARRANTY / WARRANTY_EXCHANGE → 0 customer refund; 0 platform fees; merchant pays round-trip shipping only
  * - CLOSE_COMPLETE_REFUND → forced REFUND_CUSTOMER; paid − fees; no shipping
  * - Stripe call only when REFUND_CUSTOMER and amount > 0
  */
@@ -18,6 +19,8 @@ export type AdjudicationFaultParty =
     | 'STORE'
     | 'VENDOR'
     | 'SHIPPING_COMPANY'
+    | 'WARRANTY'
+    | 'WARRANTY_EXCHANGE'
     | 'CLOSE_COMPLETE_REFUND'
     | string;
 
@@ -73,11 +76,16 @@ function isMerchantFault(fault: string): boolean {
     return ['STORE', 'MERCHANT', 'VENDOR'].includes(fault);
 }
 
+export function isWarrantyFault(fault: string): boolean {
+    return ['WARRANTY', 'WARRANTY_EXCHANGE'].includes(fault);
+}
+
 function normalizeFinalRefundDecision(
     decision: FinalRefundDecision | string | undefined,
     fault: string,
 ): FinalRefundDecision {
     const normalized = String(decision || '').toUpperCase();
+    if (isWarrantyFault(fault)) return 'NO_CUSTOMER_REFUND';
     if (normalized === 'REFUND_CUSTOMER' || normalized === 'NO_CUSTOMER_REFUND') {
         return normalized;
     }
@@ -128,6 +136,15 @@ export function computeAdjudicationFinancials(
             customerStripeRefund = 0;
             platformRetainedAmount = 0;
             merchantShippingDebit = 0;
+            merchantPlatformFeesDebit = 0;
+            shippingCompanyLiability = 0;
+        } else if (isWarrantyFault(fault)) {
+            // Warranty replacement: no cash refund, no platform fees — merchant pays RT shipping only.
+            feeBearer = 'PLATFORM';
+            shippingBearer = shippingRoundtrip > 0 ? 'MERCHANT' : 'NONE';
+            customerStripeRefund = 0;
+            platformRetainedAmount = 0;
+            merchantShippingDebit = shippingBearer === 'MERCHANT' ? shippingRoundtrip : 0;
             merchantPlatformFeesDebit = 0;
             shippingCompanyLiability = 0;
         } else {

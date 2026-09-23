@@ -109,7 +109,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
 
     const [adminNotes, setAdminNotes] = useState('');
     const [faultParty, setFaultParty] = useState<
-        'CUSTOMER' | 'MERCHANT' | 'BOTH' | 'SHIPPING_COMPANY' | 'PLATFORM' | 'CLOSE_COMPLETE_REFUND'
+        'CUSTOMER' | 'MERCHANT' | 'BOTH' | 'SHIPPING_COMPANY' | 'PLATFORM' | 'WARRANTY' | 'CLOSE_COMPLETE_REFUND'
     >('MERCHANT');
     const [finalRefundDecision, setFinalRefundDecision] = useState<'REFUND_CUSTOMER' | 'NO_CUSTOMER_REFUND'>('REFUND_CUSTOMER');
     const [shippingRefund, setShippingRefund] = useState<number>(0);
@@ -179,6 +179,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         catalogOrderTotal > 0 &&
         Math.abs(catalogOrderTotal - dispute.paidTotal) > 0.01;
     const isCloseCompleteRefund = faultParty === 'CLOSE_COMPLETE_REFUND';
+    const isWarrantyFault = faultParty === 'WARRANTY';
+    const isExchangeCase = String((dispute as any)?.returnType || '').toUpperCase() === 'EXCHANGE';
 
     const computeFinancialBreakdown = () => {
         const preview = computeAdjudicationPreview({
@@ -217,6 +219,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                 MERCHANT: 'التاجر (إهمال)',
                 CUSTOMER: 'العميل (إدعاء)',
                 SHIPPING_COMPANY: 'شركة الشحن (إهمال)',
+                WARRANTY: 'الضمان (استبدال)',
                 CLOSE_COMPLETE_REFUND: t.admin.disputeManager.verdictTerminal.closeCompleteRefund,
             };
             return labels[key] || party || '—';
@@ -225,6 +228,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             MERCHANT: 'Merchant (Negligence)',
             CUSTOMER: 'Customer (Claim)',
             SHIPPING_COMPANY: 'Shipping Company (Negligence)',
+            WARRANTY: 'Warranty (Replacement)',
             CLOSE_COMPLETE_REFUND: t.admin.disputeManager.verdictTerminal.closeCompleteRefund,
         };
         return labelsEn[key] || party || '—';
@@ -235,6 +239,14 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setFinalRefundDecision('REFUND_CUSTOMER');
             if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
         }
+        if (isExchangeCase && faultParty !== 'WARRANTY' && faultParty !== 'CLOSE_COMPLETE_REFUND') {
+            setFaultParty('WARRANTY');
+            return;
+        }
+        if (faultParty === 'WARRANTY') {
+            setFinalRefundDecision('NO_CUSTOMER_REFUND');
+            if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
+        }
         // Customer claim / customer at fault → no refund, no merchant fine: zero the calculator
         if (faultParty === 'CUSTOMER') {
             setFinalRefundDecision('NO_CUSTOMER_REFUND');
@@ -242,10 +254,14 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setRefundFeePct(0);
             setShippingRoundtrip(0);
         }
-    }, [faultParty, adminApproval]);
+    }, [faultParty, adminApproval, isExchangeCase]);
 
     useEffect(() => {
-        if (adminApproval === 'REJECTED' && faultParty !== 'CLOSE_COMPLETE_REFUND') {
+        if (
+            adminApproval === 'REJECTED' &&
+            faultParty !== 'CLOSE_COMPLETE_REFUND' &&
+            faultParty !== 'WARRANTY'
+        ) {
             setFinalRefundDecision('NO_CUSTOMER_REFUND');
         }
     }, [adminApproval, faultParty]);
@@ -425,9 +441,15 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             shippingCompanyLiability: breakdown.shippingCompanyLiability,
             resolutionMode: isCloseCompleteRefund ? 'CLOSE_COMPLETE_REFUND' : undefined,
             shippingRefund:
-                adminApproval === 'APPROVED' && breakdown.finalRefundDecision === 'REFUND_CUSTOMER'
-                    ? shippingRoundtrip
-                    : 0,
+                Number(breakdown.merchantDebits?.shipping || 0) > 0
+                    ? Number(breakdown.merchantDebits.shipping)
+                    : breakdown.shippingBearer === 'SHIPPING_COMPANY' ||
+                        breakdown.shippingBearer === 'CUSTOMER'
+                      ? shippingRoundtrip
+                      : adminApproval === 'APPROVED' &&
+                          breakdown.finalRefundDecision === 'REFUND_CUSTOMER'
+                        ? shippingRoundtrip
+                        : 0,
             gatewayFeePct,
             refundFeePct,
             shippingRoundtrip,
@@ -1000,6 +1022,13 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      { id: 'MERCHANT', label: isAr ? 'التاجر (إهمال)' : 'Merchant (Negligence)', icon: Store },
                                                      { id: 'CUSTOMER', label: isAr ? 'العميل (إدعاء)' : 'Customer (Claim)', icon: User },
                                                      { id: 'SHIPPING_COMPANY', label: t.admin.disputeManager.verdictTerminal.shippingNegligence, icon: Truck },
+                                                     {
+                                                         id: 'WARRANTY',
+                                                         label:
+                                                             (t.admin.disputeManager.verdictTerminal as any).warrantyExchange ||
+                                                             (isAr ? 'الضمان (استبدال بدون استرداد)' : 'Warranty (replacement, no refund)'),
+                                                         icon: ShieldCheck,
+                                                     },
                                                       {
                                                           id: 'CLOSE_COMPLETE_REFUND',
                                                           label: t.admin.disputeManager.verdictTerminal.closeCompleteRefund,
@@ -1028,6 +1057,16 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                      </p>
                                                  </div>
                                              )}
+                                             {isWarrantyFault && (
+                                                 <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5">
+                                                     <p className="text-[11px] font-bold text-emerald-200/90 leading-relaxed">
+                                                         {(t.admin.disputeManager.verdictTerminal as any).warrantyExchangeHint ||
+                                                             (isAr
+                                                                 ? 'مسار الضمان: لا استرداد نقدي للعميل ولا رسوم منصة على التاجر — فقط شحن ذهاباً وإياباً. بعد دفع التاجر تُصدر بوليصة الإرجاع وتُفتح القطعة للشحن البديل.'
+                                                                 : 'Warranty path: no cash refund and no platform fees — merchant pays round-trip shipping only. After payment, the return label is issued and the part opens for replacement shipping.')}
+                                                     </p>
+                                                 </div>
+                                             )}
 
                                             <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
                                                 <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
@@ -1050,6 +1089,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                         const disabled =
                                                             (isCloseCompleteRefund &&
                                                                 opt.id === 'NO_CUSTOMER_REFUND') ||
+                                                            (isWarrantyFault &&
+                                                                opt.id === 'REFUND_CUSTOMER') ||
                                                             (adminApproval === 'REJECTED' &&
                                                                 opt.id === 'REFUND_CUSTOMER') ||
                                                             (faultParty === 'CUSTOMER' &&
@@ -1172,11 +1213,13 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                             <p className="text-[9px] font-bold text-white leading-tight">
                                                                 {isCloseCompleteRefund
                                                                     ? t.admin.disputeManager.verdictTerminal.closeCompleteRefundHint
-                                                                    : faultParty === 'MERCHANT'
-                                                                      ? (t.admin.disputeManager.verdictTerminal as any).feeGovernanceMerchant
-                                                                      : faultParty === 'SHIPPING_COMPANY'
-                                                                        ? (t.admin.disputeManager.verdictTerminal as any).feeGovernanceShipping
-                                                                        : (t.admin.disputeManager.verdictTerminal as any).feeGovernanceCustomer}
+                                                                    : faultParty === 'WARRANTY'
+                                                                      ? (t.admin.disputeManager.verdictTerminal as any).feeGovernanceWarranty
+                                                                      : faultParty === 'MERCHANT'
+                                                                        ? (t.admin.disputeManager.verdictTerminal as any).feeGovernanceMerchant
+                                                                        : faultParty === 'SHIPPING_COMPANY'
+                                                                          ? (t.admin.disputeManager.verdictTerminal as any).feeGovernanceShipping
+                                                                          : (t.admin.disputeManager.verdictTerminal as any).feeGovernanceCustomer}
                                                             </p>
                                                          </motion.div>
 

@@ -36,33 +36,60 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
     const [timeLeft, setTimeLeft] = useState<{ d: number, h: number, m: number, s: number } | null>(null);
     const [isExpired, setIsExpired] = useState(false);
     
-    // Find parts with warranty - Robust detection (Phase 3 Polish)
+    // Find parts with warranty — only true warranty coverage (never treat warranty:"no" as covered)
     const warrantyParts = React.useMemo(() => {
-        let partsFromOffers = order.offers?.filter(o => 
-            o.status === 'accepted' && (o.hasWarranty || o.has_warranty || o.warranty)
-        ) || [];
+        const hasRealWarranty = (o: {
+            hasWarranty?: boolean;
+            has_warranty?: boolean;
+            warranty?: string | boolean | null;
+            warrantyDuration?: string | null;
+        }) => {
+            if (o.hasWarranty === true || o.has_warranty === true) return true;
+            if (typeof o.warranty === 'boolean') return o.warranty;
+            const w = String(o.warranty || o.warrantyDuration || '')
+                .trim()
+                .toLowerCase();
+            if (!w || w === 'no' || w === 'false' || w === 'none' || w === '0') return false;
+            return true;
+        };
+
+        let partsFromOffers =
+            order.offers?.filter(
+                (o) =>
+                    ['accepted', 'ACCEPTED'].includes(String(o.status || '')) &&
+                    hasRealWarranty(o),
+            ) || [];
         if (focusOfferId) {
             partsFromOffers = partsFromOffers.filter((o) => String(o.id) === String(focusOfferId));
             if (partsFromOffers.length === 0) {
                 const focused = order.offers?.find((o) => String(o.id) === String(focusOfferId));
-                if (focused) {
-                    partsFromOffers = [focused as typeof partsFromOffers[number]];
+                if (focused && hasRealWarranty(focused)) {
+                    partsFromOffers = [focused as (typeof partsFromOffers)[number]];
                 }
             }
         }
-        
-        // Fallback to order.parts if offers are empty or missing warranty info
-        if (partsFromOffers.length === 0 && order.parts && !focusOfferId) {
-            return order.parts.map(p => ({
-                id: p.id,
-                merchantName: p.merchantName || order.merchantName || 'Vendor',
-                warranty: p.warrantyDuration || p.warranty || order.acceptedOffer?.warranty,
-                hasWarranty: true,
-                status: 'accepted'
-            }));
-        }
-        return partsFromOffers;
-    }, [order.offers, order.parts, order.merchantName, order.acceptedOffer?.warranty, focusOfferId]);
+
+        // Enrich with part name when available
+        return partsFromOffers.map((o) => {
+            const part = order.parts?.find((p) => p.id === o.orderPartId);
+            return {
+                ...o,
+                partName: part?.name || (o as { partName?: string }).partName || null,
+                merchantName:
+                    (o as { merchantName?: string; store?: { name?: string } }).merchantName ||
+                    (o as { store?: { name?: string } }).store?.name ||
+                    order.merchantName ||
+                    'Vendor',
+                warranty:
+                    o.warrantyDuration ||
+                    (typeof o.warranty === 'string' && !['yes', 'no', 'true', 'false'].includes(String(o.warranty).toLowerCase())
+                        ? o.warranty
+                        : null) ||
+                    (o as { warrantyEndAt?: string }).warrantyEndAt ||
+                    null,
+            };
+        });
+    }, [order.offers, order.parts, order.merchantName, focusOfferId]);
 
     const countdownEndAt =
         warrantyEndAtOverride ||
@@ -304,9 +331,17 @@ export const WarrantyProtectionCard: React.FC<WarrantyProtectionCardProps> = Rea
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{o.merchantName}</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="text-[10px] text-white/40 uppercase font-black">{o.warranty || (isAr ? 'ضمان المتجر' : 'STORE WARRANTY')}</p>
+                                                            <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
+                                                                {(o as { partName?: string | null }).partName || o.merchantName}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="text-[10px] text-white/40 uppercase font-black">
+                                                                    {(o as { partName?: string | null }).partName
+                                                                        ? o.merchantName
+                                                                        : null}
+                                                                    {(o as { partName?: string | null }).partName ? ' · ' : ''}
+                                                                    {o.warranty || (isAr ? 'ضمان المتجر' : 'STORE WARRANTY')}
+                                                                </p>
                                                                 <span className="text-white/20 text-[10px]">•</span>
                                                                 <span className={`text-[10px] font-black uppercase tracking-wider ${expired ? 'text-red-400' : 'text-emerald-400'}`}>
                                                                     {expired 

@@ -159,4 +159,19 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(close.finalRefundDecision).toBe('REFUND_CUSTOMER');
         expect(close.finalCustomerRefundAmount).toBeGreaterThan(0);
     });
+
+    it('WARRANTY: no cash refund, no platform fees, merchant pays RT shipping only', () => {
+        const fin = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'WARRANTY',
+            finalRefundDecision: 'NO_CUSTOMER_REFUND',
+            shippingRoundtrip: 10,
+        });
+        expect(fin.customerStripeRefund).toBe(0);
+        expect(fin.finalCustomerRefundAmount).toBe(0);
+        expect(fin.merchantWalletDebits.platformFees).toBe(0);
+        expect(fin.merchantWalletDebits.shipping).toBe(10);
+        expect(fin.shippingBearer).toBe('MERCHANT');
+        expect(fin.refundExecutionStatusSeed).toBe('NOT_REQUIRED');
+    });
 });

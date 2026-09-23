@@ -17,6 +17,7 @@ import {
     computeAdjudicationFinancials,
     AdjudicationFinancialResult,
     FinalRefundDecision,
+    isWarrantyFault,
 } from './adjudication-financial.util';
 import { REFUND_EXECUTION_STATUSES } from './dto/admin-verdict.dto';
 import { OfferFulfillmentService } from '../orders/offer-fulfillment.service';
@@ -495,7 +496,8 @@ export class ReturnsService {
                 ? await tx.shipment.findFirst({ where: { id: acceptedOffer.cartShipmentId } })
                 : await tx.shipment.findFirst({ where: { orderId: orderId } });
 
-            // Determine if this is a Warranty Return (Exchange Only) — offer-scoped, not order.warranty_end_at
+            // Warranty exchange: PENDING for admin WARRANTY verdict — do NOT auto-approve
+            // or auto-issue a return waybill before merchant pays round-trip shipping.
             let returnType = 'REFUND';
             let shouldAutoApprove = false;
 
@@ -510,24 +512,11 @@ export class ReturnsService {
             if (
                 acceptedOfferResolved &&
                 isWarrantyClaimReason(reason) &&
-                isOfferInWarranty(acceptedOfferResolved)
+                (isOfferInWarranty(acceptedOfferResolved) ||
+                    offerHasUsableWarranty(acceptedOfferResolved))
             ) {
                 returnType = 'EXCHANGE';
-                shouldAutoApprove = true;
-            } else if (
-                acceptedOfferResolved &&
-                offerHasUsableWarranty(acceptedOfferResolved) &&
-                isWarrantyClaimReason(reason)
-            ) {
-                // Has warranty flag but end date not stamped yet — treat past short window as EXCHANGE.
-                const standardWindowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
-                const deliveryMoment =
-                    (acceptedOfferResolved as { deliveredAt?: Date | null }).deliveredAt ??
-                    order.deliveredAt ??
-                    order.updatedAt;
-                if (deliveryMoment < new Date(Date.now() - standardWindowMs)) {
-                    returnType = 'EXCHANGE';
-                }
+                shouldAutoApprove = false;
             }
 
             const nextStatus = shouldAutoApprove ? 'APPROVED' : 'PENDING';
@@ -585,6 +574,7 @@ export class ReturnsService {
 
         const { returnRecord, shouldAutoApprove, acceptedOffer, handoverDeadline } = result;
 
+        // Legacy auto-approve path kept for non-warranty flows only (shouldAutoApprove is false for EXCHANGE).
         if (shouldAutoApprove) {
             const store = acceptedOffer?.storeId
                 ? await this.prisma.store.findUnique({ where: { id: acceptedOffer.storeId } })
@@ -1879,6 +1869,13 @@ export class ReturnsService {
 
         const faultLowerEarly = String(extra?.faultParty || '').toUpperCase();
         const isCloseCompleteRefund = faultLowerEarly === 'CLOSE_COMPLETE_REFUND';
+        const isWarrantyExchangeVerdict =
+            isWarrantyFault(faultLowerEarly) || returnType === 'EXCHANGE';
+        if (isWarrantyFault(faultLowerEarly) && String(extra?.finalRefundDecision || '').toUpperCase() === 'REFUND_CUSTOMER') {
+            throw new BadRequestException(
+                'WARRANTY_NO_CASH_REFUND: حكم الضمان لا يسمح برد مبلغ نقدي للعميل — الاستبدال فقط مع شحن ذهاباً وإياباً على التاجر.',
+            );
+        }
         const finalRefundDecision = this.normalizeFinalRefundDecision(
             verdict,
             faultLowerEarly,
@@ -1916,16 +1913,21 @@ export class ReturnsService {
             }
         }
         // CLOSE_COMPLETE: still a money refund — order/case must show REFUNDED (not COMPLETED)
+        // Warranty exchange: stay APPROVED until merchant pays RT shipping and logistics run.
         const nextStatus = isCloseCompleteRefund || refundRequired
             ? 'REFUNDED'
-            : verdict === 'REFUND'
-                ? 'RESOLVED'
-                : 'RESOLVED';
+            : isWarrantyExchangeVerdict
+                ? 'APPROVED'
+                : verdict === 'REFUND'
+                    ? 'RESOLVED'
+                    : 'RESOLVED';
         const orderStatus = isCloseCompleteRefund || refundRequired
             ? 'REFUNDED'
-            : verdict === 'REFUND'
-                ? 'COMPLETED'
-                : 'COMPLETED';
+            : isWarrantyExchangeVerdict
+                ? undefined // multi-item: keep order status; single handled below
+                : verdict === 'REFUND'
+                    ? 'COMPLETED'
+                    : 'COMPLETED';
 
         let stripeRefundCtx: StripeRefundContext | null = null;
         let refundFinancials: (AdjudicationFinancialResult & {
@@ -2453,27 +2455,40 @@ export class ReturnsService {
             } else {
                 const isMulti = this.isMultiItemOrder(caseRecord.order);
                 if (isMulti && caseRecord.offerId) {
-                    await tx.offer.update({
-                        where: { id: caseRecord.offerId },
-                        data: {
-                            resolutionLocked: true,
-                            ...(verdict === 'REFUND' && refundRequired
-                                ? { fulfillmentStatus: OfferFulfillmentStatus.CANCELLED }
-                                : {}),
-                            ...((verdict !== 'REFUND' || !refundRequired) && !isCloseCompleteRefund
-                                ? {
-                                      fulfillmentStatus: OfferFulfillmentStatus.COMPLETED,
-                                      completedAt: new Date(),
-                                  }
-                                : {}),
-                        },
-                    });
+                    if (isWarrantyExchangeVerdict) {
+                        // Keep offer past-window state; logistics await merchant RT shipping payment.
+                        await tx.offer.update({
+                            where: { id: caseRecord.offerId },
+                            data: { resolutionLocked: true },
+                        });
+                    } else {
+                        await tx.offer.update({
+                            where: { id: caseRecord.offerId },
+                            data: {
+                                resolutionLocked: true,
+                                ...(verdict === 'REFUND' && refundRequired
+                                    ? { fulfillmentStatus: OfferFulfillmentStatus.CANCELLED }
+                                    : {}),
+                                ...((verdict !== 'REFUND' || !refundRequired) && !isCloseCompleteRefund
+                                    ? {
+                                          fulfillmentStatus: OfferFulfillmentStatus.COMPLETED,
+                                          completedAt: new Date(),
+                                      }
+                                    : {}),
+                            },
+                        });
+                    }
                     // Multi: never force whole-order REFUNDED while sibling parts remain active.
                     // Order status is recomputed after the transaction (see below).
-                } else {
+                } else if (orderStatus) {
                     await tx.order.update({
                         where: { id: caseRecord.orderId },
                         data: { status: orderStatus },
+                    });
+                } else if (isWarrantyExchangeVerdict) {
+                    await tx.order.update({
+                        where: { id: caseRecord.orderId },
+                        data: { status: 'RETURN_APPROVED' },
                     });
                 }
             }
@@ -3209,6 +3224,19 @@ export class ReturnsService {
     private async generateReturnWaybill(tx: any, params: { order: any, caseRecord: any, store: any, adminId: string | null, handoverDeadline: Date }) {
         const { order, caseRecord, store, adminId, handoverDeadline } = params;
         const part = (order as any).parts?.find(p => p.id === caseRecord.orderPartId) || (order as any).parts?.[0];
+        let offerMeta = caseRecord.offer;
+        if (!offerMeta && caseRecord.offerId) {
+            offerMeta = await tx.offer.findUnique({
+                where: { id: caseRecord.offerId },
+                select: {
+                    id: true,
+                    warrantyDuration: true,
+                    warrantyEndAt: true,
+                    unitPrice: true,
+                    cartShipmentId: true,
+                },
+            });
+        }
 
         // Generate Platform-standard Unique Waybill Number (Spec v2026.4)
         const waybillNumber = `RTN-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Date.now().toString().slice(-4)}`;
@@ -3236,7 +3264,7 @@ export class ReturnsService {
             });
             offerInvoiceTotal = Number(caseInvoice?.total ?? 0);
         }
-        const offerPrice = Number(caseRecord.offer?.unitPrice || 0);
+        const offerPrice = Number(offerMeta?.unitPrice || caseRecord.offer?.unitPrice || 0);
         const acceptedOfferPrice = Number(order.acceptedOffer?.unitPrice || 0);
         const orderTotal = Number(order.totalAmount || 0);
         const isMultiReturn = this.isMultiItemOrder(order);
@@ -3276,7 +3304,19 @@ export class ReturnsService {
 
                 customerCode: (order.customer?.id || order.customerId || 'CUSTOMER').substring(0, 8).toUpperCase(),
                 partName: part?.name || 'Returned Item',
-                partDescription: `RTN-CASE:${caseRecord.id} | Deadline:${handoverDeadline.toISOString()} | Invoice:${caseRecord.invoiceId || 'N/A'}`,
+                partDescription: [
+                    `RTN-CASE:${caseRecord.id}`,
+                    `Order:#${order.orderNumber || order.id}`,
+                    part?.name ? `Part:${part.name}` : null,
+                    String(caseRecord.returnType || '').toUpperCase() === 'EXCHANGE' ||
+                    isWarrantyFault(String(caseRecord.faultParty || ''))
+                        ? `WARRANTY:${offerMeta?.warrantyDuration || offerMeta?.warrantyEndAt || 'active'}`
+                        : null,
+                    `Deadline:${handoverDeadline.toISOString()}`,
+                    `Invoice:${caseRecord.invoiceId || 'N/A'}`,
+                ]
+                    .filter(Boolean)
+                    .join(' | '),
                 
                 finalPrice,
                 
@@ -3423,7 +3463,9 @@ export class ReturnsService {
                 throw new BadRequestException('Shipping already paid');
             }
             
-            const amount = Number(caseRecord.shippingRefund);
+            const amount = Number(
+                caseRecord.shippingRefund || caseRecord.shippingRoundtrip || 0,
+            );
             if (amount <= 0) throw new BadRequestException('Invalid shipping amount');
 
             // 2. Role-specific Balance Check & Deduction
@@ -3494,27 +3536,151 @@ export class ReturnsService {
                 }
             });
 
-            // 5. Transition Shipment Status to RETURN_STARTED (بدء الارجاع)
-            const shipment = await tx.shipment.findFirst({
-                where: { orderId: caseRecord.orderId },
-                orderBy: { createdAt: 'desc' }
-            });
+            // 5. For warranty / return logistics: only touch the case's return shipment —
+            // never flip sibling outbound shipments on the same multi-item order.
+            const returnShipment =
+                (caseRecord.returnWaybillId
+                    ? await tx.shipment.findFirst({
+                          where: { waybillId: caseRecord.returnWaybillId },
+                          orderBy: { createdAt: 'desc' },
+                      })
+                    : null) ||
+                (caseRecord.orderPartId
+                    ? await tx.shipment.findFirst({
+                          where: {
+                              orderId: caseRecord.orderId,
+                              waybill: { partId: caseRecord.orderPartId },
+                              status: {
+                                  in: [
+                                      'RETURN_LABEL_ISSUED',
+                                      'RETURN_STARTED',
+                                      'RECEIVED_FROM_CUSTOMER',
+                                      'DELIVERED_TO_VENDOR',
+                                  ],
+                              },
+                          },
+                          orderBy: { createdAt: 'desc' },
+                      })
+                    : null);
 
-            if (shipment) {
+            if (returnShipment) {
                 await tx.shipment.update({
-                    where: { id: shipment.id },
-                    data: { status: 'RETURN_STARTED' as any }
+                    where: { id: returnShipment.id },
+                    data: { status: 'RETURN_STARTED' as any },
                 });
 
                 await tx.shipmentStatusLog.create({
                     data: {
-                        shipmentId: shipment.id,
-                        fromStatus: shipment.status,
+                        shipmentId: returnShipment.id,
+                        fromStatus: returnShipment.status,
                         toStatus: 'RETURN_STARTED' as any,
                         notes: 'بدء الارجاع - تم خصم تكلفة الشحن من المحفظة',
-                        source: 'API'
-                    }
+                        source: 'API',
+                    },
                 });
+            }
+
+            // Warranty exchange: after merchant pays RT shipping, issue return label (if missing)
+            // and reopen the offer for replacement outbound shipping (waybill pending).
+            const fault = String(caseRecord.faultParty || '').toUpperCase();
+            const isWarrantyCase =
+                isWarrantyFault(fault) ||
+                String(caseRecord.returnType || '').toUpperCase() === 'EXCHANGE';
+
+            if (isWarrantyCase && caseType === 'return') {
+                const order = await tx.order.findUnique({
+                    where: { id: caseRecord.orderId },
+                    include: {
+                        customer: true,
+                        parts: true,
+                        shippingAddresses: true,
+                        acceptedOffer: { include: { store: true } },
+                    },
+                });
+                const store =
+                    caseRecord.store ||
+                    (caseRecord.storeId
+                        ? await tx.store.findUnique({ where: { id: caseRecord.storeId } })
+                        : null);
+                if (order && store && !caseRecord.returnWaybillId) {
+                    const handoverDeadline =
+                        caseRecord.handoverDeadline ||
+                        new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+                    await this.generateReturnWaybill(tx, {
+                        order,
+                        caseRecord: {
+                            ...caseRecord,
+                            shippingRefund: amount,
+                            shippingPaymentStatus: 'PAID',
+                        },
+                        store,
+                        adminId: null,
+                        handoverDeadline,
+                    });
+                }
+
+                if (caseRecord.offerId) {
+                    const offer = await tx.offer.findUnique({
+                        where: { id: caseRecord.offerId },
+                        select: {
+                            id: true,
+                            orderPartId: true,
+                            warrantyDuration: true,
+                            warrantyEndAt: true,
+                            hasWarranty: true,
+                        },
+                    });
+                    if (offer) {
+                        await tx.offer.update({
+                            where: { id: offer.id },
+                            data: {
+                                fulfillmentStatus: OfferFulfillmentStatus.READY_FOR_SHIPPING,
+                                shippedFromCart: false,
+                                cartShipmentId: null,
+                                resolutionLocked: false,
+                                readyForShippingAt: new Date(),
+                            },
+                        });
+                    }
+
+                    const partName =
+                        order?.parts?.find((p: any) => p.id === caseRecord.orderPartId)?.name ||
+                        'Part';
+                    const warrantyLabel =
+                        offer?.warrantyDuration ||
+                        (offer?.warrantyEndAt
+                            ? `until ${new Date(offer.warrantyEndAt).toISOString().slice(0, 10)}`
+                            : 'warranty');
+
+                    // Notify admins — replacement outbound needs a shipping waybill.
+                    const admins = await tx.user.findMany({
+                        where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] as any } },
+                        select: { id: true },
+                        take: 20,
+                    });
+                    for (const admin of admins) {
+                        await this.notificationsService.create({
+                            recipientId: admin.id,
+                            recipientRole: 'ADMIN',
+                            type: 'ORDER',
+                            titleAr: 'ضمان — جاهز لإصدار بوليصة شحن بديلة',
+                            titleEn: 'Warranty — ready to issue replacement waybill',
+                            messageAr: `دفع التاجر شحن الذهاب والإياب لقطعة «${partName}» في الطلب #${order?.orderNumber || caseRecord.orderId}. الضمان: ${warrantyLabel}. أصدر بوليصة الشحن البديلة.`,
+                            messageEn: `Merchant paid round-trip shipping for «${partName}» on order #${order?.orderNumber || caseRecord.orderId}. Warranty: ${warrantyLabel}. Issue the replacement shipping waybill.`,
+                            link: `admin/orders/${caseRecord.orderId}`,
+                            metadata: {
+                                caseId,
+                                caseType,
+                                orderId: caseRecord.orderId,
+                                offerId: caseRecord.offerId,
+                                orderPartId: caseRecord.orderPartId,
+                                warranty: true,
+                                partName,
+                                warrantyLabel,
+                            },
+                        });
+                    }
+                }
             }
 
             // 6. Notify All Parties
