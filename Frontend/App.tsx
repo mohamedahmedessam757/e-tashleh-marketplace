@@ -22,6 +22,7 @@ const WholesaleScreen = lazy(() =>
 const HowWeWorkScreen = lazy(() =>
   import('./components/HowWeWorkScreen').then((m) => ({ default: m.HowWeWorkScreen })),
 );
+const FaqPage = lazy(() => import('./components/home/FaqPage').then((m) => ({ default: m.FaqPage })));
 const HowWeWorkTutorial = lazy(() =>
   import('./components/HowWeWorkTutorial').then((m) => ({ default: m.HowWeWorkTutorial })),
 );
@@ -129,6 +130,7 @@ type ViewState =
   | 'how-we-work'
   | 'how-we-work-tutorial'
   | 'earn-income'
+  | 'faq'
   | 'verify-link'
   | 'business-license'
   | 'business-license-verify'
@@ -805,6 +807,8 @@ function AppContent() {
                   handleNavigate('merchant-login');
                 }}
                 onWholesaleClick={() => handleNavigate('wholesale')}
+                onHowWeWorkClick={() => handleNavigate('how-we-work-tutorial')}
+                onFaqClick={() => handleNavigate('faq')}
                 onOpenSupport={() => setIsSupportOpen(true)}
                 onAdminClick={() => handleNavigate('admin-login')}
                 onNavigateToLegal={handleNavigateToLegal}
@@ -812,6 +816,19 @@ function AppContent() {
                 onEarnIncomeClick={() => handleNavigate('earn-income')}
                 onNavigateToLicense={handleNavigateToLicense}
               />
+            ) : currentView === 'faq' ? (
+              <Suspense fallback={routeFallback}>
+                <FaqPage
+                  onHome={() => handleNavigate('role-selection')}
+                  onAbout={() => handleNavigateToLandingSection('about')}
+                  onHowWeWork={() => handleNavigate('how-we-work-tutorial')}
+                  onOpenSupport={() => setIsSupportOpen(true)}
+                  onAdminClick={() => handleNavigate('admin-login')}
+                  onNavigateToLegal={handleNavigateToLegal}
+                  onNavigateToLandingSection={handleNavigateToLandingSection}
+                  onNavigateToLicense={handleNavigateToLicense}
+                />
+              </Suspense>
             ) : currentView === 'earn-income' ? (
               <Suspense fallback={routeFallback}>
                 <EarnIncomeLanding
@@ -854,7 +871,7 @@ function AppContent() {
               <Suspense fallback={routeFallback}>
                 <HowWeWorkTutorial
                   onComplete={() => handleNavigate('customer-login')}
-                  onBack={() => handleNavigate('how-we-work')}
+                  onBack={() => handleHistoryBack('role-selection')}
                   onOpenSupport={() => setIsSupportOpen(true)}
                   onAdminClick={() => handleNavigate('admin-login')}
                   onNavigateToLegal={handleNavigateToLegal}

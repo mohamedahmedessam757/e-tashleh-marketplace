@@ -86,23 +86,23 @@ export const HomeRoleButtons: React.FC<HomeRoleButtonsProps> = ({
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6">
             {buttons.map(({ key, title, desc, Icon, onClick, background, border, boxShadow, orderClass, delay }) => (
                 <button
                     key={key}
                     type="button"
                     onClick={onClick}
-                    className={`stagger-item ${orderClass} w-full min-h-[64px] md:min-h-[76px] group relative overflow-hidden rounded-xl p-3 md:p-4 flex items-center justify-between gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
+                    className={`stagger-item ${orderClass} w-full min-h-[64px] md:min-h-[76px] lg:min-h-[92px] group relative overflow-hidden rounded-xl p-3 md:p-4 lg:px-6 flex items-center justify-between gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
                     style={{ animationDelay: `${delay}s`, background, border, boxShadow }}
                 >
                     <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative flex items-center gap-2 md:gap-4 min-w-0">
-                        <span className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/20 flex items-center justify-center text-white shrink-0">
-                            <Icon size={18} />
+                        <span className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-black/20 flex items-center justify-center text-white shrink-0">
+                            <Icon size={20} />
                         </span>
                         <span className="flex flex-col items-start text-start min-w-0">
-                            <span className="text-sm md:text-lg font-bold text-white leading-tight">{title}</span>
-                            <span className="text-[11px] md:text-xs text-white/80 leading-snug mt-0.5">{desc}</span>
+                            <span className="text-sm md:text-lg lg:text-xl font-bold text-white leading-tight">{title}</span>
+                            <span className="text-[11px] md:text-xs lg:text-sm text-white/80 leading-snug mt-0.5">{desc}</span>
                         </span>
                     </span>
                     <ArrowIcon size={18} className="relative text-white/80 group-hover:text-white transition-colors shrink-0" />

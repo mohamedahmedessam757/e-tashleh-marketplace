@@ -15,7 +15,7 @@ export const HomePrimaryCta: React.FC<HomePrimaryCtaProps> = ({ onClick }) => {
         <button
             type="button"
             onClick={onClick}
-            className="stagger-item w-full rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1814]"
+            className="stagger-item w-full rounded-2xl p-4 md:p-5 lg:p-6 flex items-center justify-between gap-4 transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1814]"
             style={{
                 animationDelay: '0.3s',
                 background: 'linear-gradient(135deg, #D9BE6F, #A88B3E)',
@@ -23,12 +23,12 @@ export const HomePrimaryCta: React.FC<HomePrimaryCtaProps> = ({ onClick }) => {
             }}
         >
             <span className="flex items-center gap-4 min-w-0">
-                <span className="w-12 h-12 rounded-full bg-[#1A1814]/85 text-gold-400 flex items-center justify-center shrink-0">
-                    <Car size={24} aria-hidden="true" />
+                <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-[#1A1814]/85 text-gold-400 flex items-center justify-center shrink-0">
+                    <Car size={26} aria-hidden="true" />
                 </span>
                 <span className="flex flex-col items-start text-start min-w-0">
-                    <span className="text-lg md:text-2xl font-black text-[#1A1814] leading-tight">{cta.title}</span>
-                    <span className="text-xs md:text-sm text-[#1A1814]/75 font-semibold mt-0.5">{cta.desc}</span>
+                    <span className="text-lg md:text-2xl lg:text-3xl font-black text-[#1A1814] leading-tight">{cta.title}</span>
+                    <span className="text-xs md:text-sm lg:text-base text-[#1A1814]/75 font-semibold mt-0.5">{cta.desc}</span>
                 </span>
             </span>
             <Arrow className="text-[#1A1814] shrink-0" size={22} aria-hidden="true" />

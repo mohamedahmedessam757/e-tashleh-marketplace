@@ -22,7 +22,7 @@ export function buildEarnIncomeFromLocale(): EarnIncomeConfig {
 
   return {
     enabled: true,
-    heroIconUrl: '/logo_nomo.png',
+    heroIconUrl: '/logo.webp',
     heroTitleAr: ar.title,
     heroTitleEn: en.title,
     heroSubtitleAr: ar.subtitle,

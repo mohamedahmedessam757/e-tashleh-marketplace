@@ -7,12 +7,13 @@ import { HomePrimaryCta } from './home/HomePrimaryCta';
 import { HomeRoleButtons } from './home/HomeRoleButtons';
 import { HomeEarnBanner } from './home/HomeEarnBanner';
 import { HomeHighlights } from './home/HomeHighlights';
-import { HomeFaq } from './home/HomeFaq';
 
 interface RoleSelectionScreenProps {
     onCustomerClick: () => void;
     onMerchantClick: () => void;
     onWholesaleClick: () => void;
+    onHowWeWorkClick: () => void;
+    onFaqClick: () => void;
     onOpenSupport: () => void;
     onAdminClick: () => void;
     onNavigateToLegal: (section: 'terms' | 'privacy' | 'wallet-loyalty') => void;
@@ -25,6 +26,8 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
     onCustomerClick,
     onMerchantClick,
     onWholesaleClick,
+    onHowWeWorkClick,
+    onFaqClick,
     onOpenSupport,
     onAdminClick,
     onNavigateToLegal,
@@ -35,16 +38,17 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
     return (
         <div className="min-h-screen bg-[#1A1814] flex flex-col overflow-x-hidden">
             <HomeNavbar
+                active="home"
                 onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 onAbout={() => onNavigateToLandingSection('about')}
-                onHowWeWork={() => onNavigateToLandingSection('how-it-works')}
-                onFaq={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
+                onHowWeWork={onHowWeWorkClick}
+                onFaq={onFaqClick}
                 onContact={onOpenSupport}
             />
 
             <main className="flex-grow">
                 <HomeHero />
-                <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 -mt-12 md:-mt-16 flex flex-col gap-4 md:gap-5">
+                <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 -mt-12 md:-mt-20 pb-12 md:pb-16 flex flex-col gap-4 md:gap-5 lg:gap-6">
                     <HomeFeatureCards />
                     <HomePrimaryCta onClick={onCustomerClick} />
                     <HomeRoleButtons
@@ -55,7 +59,6 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
                     />
                     <HomeEarnBanner onClick={onEarnIncomeClick} />
                     <HomeHighlights />
-                    <HomeFaq />
                 </div>
             </main>
 

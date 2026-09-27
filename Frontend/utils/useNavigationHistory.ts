@@ -37,6 +37,7 @@ export function useNavigationHistory(
         else if (view === 'how-we-work') url = '/how-it-works';
         else if (view === 'how-we-work-tutorial') url = '/tutorial';
         else if (view === 'earn-income') url = '/earn-income';
+        else if (view === 'faq') url = '/faq';
         else if (view === 'invoice-scan' && viewId) url = `/invoice/${viewId}`;
         else if (view === 'waybill-scan' && viewId) url = `/waybill/${viewId}`;
         else if (view === 'dashboard') {
@@ -133,6 +134,7 @@ export function parseUrlToState(): NavigationState {
     if (path === '/how-it-works') return { view: 'how-we-work' };
     if (path === '/tutorial') return { view: 'how-we-work-tutorial' };
     if (path === '/earn-income') return { view: 'earn-income' };
+    if (path === '/faq') return { view: 'faq' };
 
     if (path.startsWith('/verify/')) {
         const token = path.split('/').filter(Boolean)[1];

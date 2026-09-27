@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  TrendingUp,
   Users,
   Wallet,
   ArrowRight,
@@ -118,13 +117,14 @@ export const EarnIncomeLanding: React.FC<EarnIncomeLandingProps> = ({ onBack, on
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gold-500 rounded-xl flex items-center justify-center shadow-lg shadow-gold-500/20 overflow-hidden">
-              {cms.heroIconUrl ? (
-                <img src={cms.heroIconUrl} alt="" className="w-full h-full object-contain p-1" />
-              ) : (
-                <TrendingUp size={20} className="text-black" />
-              )}
-            </div>
+            <img
+              src={cms.heroIconUrl && !cms.heroIconUrl.includes('logo_nomo') ? cms.heroIconUrl : '/logo.webp'}
+              alt="E-TASHLEH"
+              width={56}
+              height={56}
+              decoding="async"
+              className="w-12 h-12 md:w-14 md:h-14 object-contain"
+            />
             <div className="flex flex-col">
               <span className="text-lg font-black italic tracking-tighter uppercase leading-none">Loyalty</span>
               <span className="text-[10px] text-gold-500 font-bold uppercase tracking-widest leading-none mt-1">Version 2026</span>

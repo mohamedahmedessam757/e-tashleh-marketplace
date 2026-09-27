@@ -9,11 +9,12 @@ interface HomeNavbarProps {
     onHowWeWork: () => void;
     onFaq: () => void;
     onContact: () => void;
+    active?: 'home' | 'faq';
 }
 
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 rounded-md';
 
-export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWeWork, onFaq, onContact }) => {
+export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWeWork, onFaq, onContact, active = 'home' }) => {
     const { t } = useLanguage();
     const nav = t.common.home.nav;
     const [open, setOpen] = useState(false);
@@ -35,10 +36,10 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWe
     }, [open]);
 
     const items = [
-        { key: 'home', label: nav.home, onClick: onHome, active: true },
+        { key: 'home', label: nav.home, onClick: onHome, active: active === 'home' },
         { key: 'about', label: nav.about, onClick: onAbout, active: false },
         { key: 'how', label: nav.howWeWork, onClick: onHowWeWork, active: false },
-        { key: 'faq', label: nav.faq, onClick: onFaq, active: false },
+        { key: 'faq', label: nav.faq, onClick: onFaq, active: active === 'faq' },
         { key: 'contact', label: nav.contact, onClick: onContact, active: false },
     ];
 
@@ -52,18 +53,18 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWe
             <img
                 src="/logo.webp"
                 alt="E-TASHLEH"
-                width={56}
-                height={56}
+                width={80}
+                height={80}
                 fetchPriority="high"
                 decoding="async"
-                className="h-14 w-14 object-contain"
+                className="h-14 w-14 lg:h-[72px] lg:w-[72px] object-contain"
             />
         </button>
     );
 
     return (
         <header className="sticky top-0 z-40 bg-[#1A1814]/85 backdrop-blur-md border-b border-white/10">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-16 lg:h-20 flex items-center justify-between gap-4">
                 {/* Mobile: hamburger at start */}
                 <button
                     type="button"
@@ -79,14 +80,14 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWe
                 <div className="hidden lg:block">{logo}</div>
                 <div className="lg:hidden absolute left-1/2 -translate-x-1/2">{logo}</div>
 
-                <nav className="hidden lg:flex items-center gap-8">
+                <nav className="hidden lg:flex items-center gap-8 xl:gap-12">
                     {items.map((item) => (
                         <button
                             key={item.key}
                             type="button"
                             onClick={() => handleItem(item.onClick)}
                             aria-current={item.active ? 'page' : undefined}
-                            className={`py-1 text-sm font-bold transition-colors ${FOCUS_RING} ${item.active
+                            className={`py-1 text-[15px] font-bold transition-colors ${FOCUS_RING} ${item.active
                                 ? 'text-gold-400 border-b-2 border-gold-400 rounded-none'
                                 : 'text-white/80 hover:text-gold-400'
                                 }`}
@@ -104,7 +105,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWe
                     id="home-mobile-menu"
                     className="lg:hidden absolute inset-x-0 top-full bg-[#1A1814]/98 backdrop-blur-xl border-b border-white/10 shadow-2xl"
                 >
-                    <ul className="max-w-6xl mx-auto px-4 py-2 flex flex-col">
+                    <ul className="px-4 sm:px-6 py-2 flex flex-col">
                         {items.map((item) => (
                             <li key={item.key}>
                                 <button
