@@ -17,6 +17,7 @@ import { EvidenceCaptureField } from './EvidenceCaptureField';
 import { ResolutionPartPicker } from './ResolutionPartPicker';
 import type { EligibleResolutionPart } from './resolutionTypes';
 import { ordersApi } from '../../../services/api/orders';
+import { ReturnPolicyNotice } from './ReturnPolicyNotice';
 
 interface ReturnRequestModalProps {
     isOpen: boolean;
@@ -77,6 +78,7 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [attemptedSubmit, setAttemptedSubmit] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [policyNoticeOpen, setPolicyNoticeOpen] = useState(false);
 
     const pickerParts = useMemo(() => {
         if (initialEligibleParts?.length) return initialEligibleParts;
@@ -97,6 +99,7 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
 
     useEffect(() => {
         if (!isOpen) return;
+        setPolicyNoticeOpen(true);
         setReason(initialReason || '');
         setDescription('');
         setUsageCondition('');
@@ -230,6 +233,7 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 overflow-hidden [contain:layout]">
+            <ReturnPolicyNotice open={policyNoticeOpen} onClose={() => setPolicyNoticeOpen(false)} />
             <div
                 role="presentation"
                 onClick={onClose}

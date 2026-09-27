@@ -165,6 +165,72 @@ export const common = {
           { q: 'متى أستلم أرباحي؟', a: 'تُضاف المبالغ إلى محفظتك بعد استلام العميل للقطعة وانتهاء فترة الإرجاع، ويمكنك طلب السحب إلى حسابك البنكي.' },
           { q: 'هل يوجد دعم للمتاجر؟', a: 'نعم، فريق الدعم الفني متاح لمساعدتك عبر زر "تواصل معنا" أو واتساب الأعمال.' }
         ]
+      },
+      about: {
+        title: 'إي تشليح!',
+        intro: 'منصة وسيطة للتجارة الإلكترونية مملوكة لشركة إليب الإماراتية تعني بقطع غيار السيارات المستعملة الأصلية ومهمتنا هي تقديم أفضل متاجر وتشاليح قطع غيار السيارات المستعملة في الإمارات لك وانت في بيتك، لتوفير قطع غيار مستعملة أصلية وغير مجددة أو معدلة أو مُصلحة، مع حماية كاملة لحقوقك.',
+        highlights: [
+          'قطع أصلية وفق معايير جودة صارمة.',
+          'مطابقة القطعة والتأكد منها قبل الشحن.',
+          'شحن من الإمارات إلى السعودية للمنزل أو الورشة.',
+          'حماية أموالك: لا تُسلّم مستحقات المتجر إلا بعد استلامك وموافقتك.',
+          'استرجاع واستبدال ومتابعة الضمان عند استحقاقه.',
+          'برنامج ولاء وكاش باك يمكن تحويله إلى حسابك البنكي.'
+        ],
+        company: 'إليب ش.م.ح- شركة إماراتية مالك المنصة الإلكترونية إي-تشليح، مسجلة ومقرها رأس الخيمة - مركز كومباس للأعمال برأس مال مملوك 386مليون درهم إماراتي رخصة تجارية رقم 45000927 ويمكن التحقق من بياناتها عبر السجل الاقتصادي الوطني (نمو).',
+        sloganTitle: 'شعرنا:',
+        slogan: 'نبحث، نطابق، نتحقق، نشحن.... ونحمي حقوقك حتى ما بعد استلام قطعتك..',
+        missionTitle: 'رسالتنا:',
+        mission: [
+          'منذ عام 2005م، تفخر شركتنا بتاريخها العريق في خدمة توفير قطاع غيار السيارات المستعملة الأصلية لجميع دول الخليج من خلال فروعها الأربعة في كلا من اليابان وكوريا الجنوبية والولايات المتحدة الأمريكية وألمانيا، ومقرها الرئيسي في الإمارات العربية المتحدة.',
+          'ويبقى تركيزنا منصبًا على مواصلة نهجنا الراسخ في توفير قطع غيار السيارات المستعملة الأصلية وعالية الجودة من سيارات شبة جديدة وتقديمها بأسعار تنافسية لعملائنا.',
+          'وإيمانا منا بثقتكم بنا وحرصا على توسيع نطاق خدماتنا فقد وسعنا أعمالنا لتشمل المملكة العربية السعودية لربط عملائنا مباشرة مع تشاليح وتاجر الإمارات العربية المتحدة وتوفير عدة عروض للقطعة المطلوبة ليتمكن العميل من اختيار الأنسب له.'
+        ],
+        guaranteesTitle: 'نضمن لعملائنا:',
+        guarantees: [
+          'توصيلًا سلسًا من خلال موردينا الموثوق بهم، تحت إشرافنا المباشر وإجراءات صارمة لمراقبة معايير الجودة وتقديم خدمة (المطابقة) للقطعة قبل استلامها من المتاجر، مع الحفاظ على هامش ربحي بسيط لشركتنا يضمن نمونا المستقبلي.',
+          'ضمان لقطع الغيار المستعملة للسيارات بانها شبة جديدة وغير مجددة من خلال إلزام الموردين بتوفيرها من سيارات قليلة الممشى تطبق الشروط والاحكام.',
+          'ضمان الاسترجاع والاستبدال والالغاء للعملاء تطبق الشروط والاحكام.',
+          'ضمان قيمة مدفوعات العملاء حيث يتم حجزها لدينا وعدم تسليمة للمورد الا بعد تأكيد العميل واستلامة القطعة وموافقته عليها بعد ذلك نقوم بتحويل مبلغ القطعة للمورد.',
+          'ضمان سياسة شحن صارمة لشركات الشحن المتعامل معها لإيصال شحناتكم والزامها بالمدة المتفق عليها حسب سياستهم تطبق الشروط والاحكام.',
+          'ضمان سياسة شحن صارمة تلزم شركة الشحن في حال الخطأ او تلف او ضياع المنتج بإعادة قيمة المنتج تطبق الشروط والاحكام.'
+        ],
+        philosophyTitle: 'ينبع نجاح شركتنا المستمر من التزامنا بفلسفة العمل التالية:',
+        philosophy: [
+          'الحفاظ على فريق من المحترفين المؤهلين وتدريبهم باستمرار لتقديم خدمة عملاء استثنائية.',
+          'توفير بيئة عمل نظيفة وآمنة وممتعة، خالية من التمييز والتحيز.',
+          'تعزيز الاحترام المتبادل والعمل الجماعي بين الموظفين والعملاء والموردين.',
+          'تبني الأفكار الجديدة وتنفيذ التغييرات اللازمة لتعزيز مكانتنا كشركة رائدة في قطاعنا ومجتمعنا.'
+        ],
+        closing: [
+          'يرتبط مستقبل شركتنا ارتباطًا مباشرًا بنجاح موظفينا وعملائنا وموردينا حيث نبني معا شراكة متميزة لدعم الاعمال.',
+          'هدفنا الدائم هو بناء شراكات جديدة وتعزيز الشراكات القائمة - دون المساس بالعلاقات القيمة التي اكتسبناها.'
+        ]
+      }
+    },
+    policyNotices: {
+      close: 'إغلاق',
+      customerShipping: {
+        prohibitedTitle: 'القطع المحظورة للشحن إلى السعودية:',
+        prohibited: ['زجاج السيارات', 'أحزمة الأمان', 'الوسائد الهوائية', 'أنظمة الفرامل وأجزاؤها', 'البطاريات السائلة', 'الكفرات المستعملة', 'الأسلاك والضفائر الكهربائية', 'القطع المقلدة والقطع غير الأصلية', 'المنتجات الممنوعة في بلدك أو تحتاج لتصاريح.'],
+        nonReturnableTitle: 'المنتجات الغير قابلة للإرجاع:',
+        nonReturnable: ['القطع الكهربائية', 'الأفياش', 'السيور', 'المنتجات التي جرى استخدامها او تعديلها او تلفها او تضررها'],
+        termsNote: 'تطبق الشروط والاحكام.',
+        confirm: 'فهمت، متابعة'
+      },
+      returnDispute: {
+        title: 'تنبيه قبل تقديم طلب الإرجاع أو النزاع:',
+        items: [
+          'تقديم طلب الإرجاع خلال 24 ساعة من الاستلام، باستثناء القطع المشمولة بضمان المتجر.',
+          'إرفاق صور واضحة للقطعة وذكر سبب الطلب والعيب إن وجد.',
+          'القطع الكهربائية والأفياش والسيور غير قابلة للإرجاع.',
+          'المنتجات المستخدمة أو المعدلة أو المتضررة غير قابلة للإرجاع وفق السياسة.',
+          'يجب أن يكون المنتج بحالته الأصلية، غير مستخدم أو متضرر، مع التغليف والفاتورة.',
+          'بعد الموافقة، يجب تسليم المنتج لشركة الشحن خلال 48 ساعة، وإلا يُلغى طلب الإرجاع.',
+          'يخضع الطلب للشروط والأحكام وسياسة الإرجاع والضمان.'
+        ],
+        acknowledgement: 'بالمتابعة، أقر باطلاعي على الشروط والموافقة عليها',
+        confirm: 'متابعة'
       }
     },
     loyaltySystem: {
@@ -458,6 +524,72 @@ export const common = {
           { q: 'When do I get paid?', a: 'Funds are added to your wallet after the customer receives the part and the return period ends. You can then request a withdrawal to your bank account.' },
           { q: 'Is there support for stores?', a: 'Yes. Our technical support team is available through "Contact Us" or WhatsApp Business.' }
         ]
+      },
+      about: {
+        title: 'E-Tashleh!',
+        intro: 'An intermediary e-commerce platform owned by the Emirati company Elip, specializing in genuine used auto parts. Our mission is to bring you the best used auto parts stores and scrapyards in the UAE while you are at home, providing genuine used parts that are not refurbished, modified or repaired, with full protection of your rights.',
+        highlights: [
+          'Genuine parts that meet strict quality standards.',
+          'Part matching and verification before shipping.',
+          'Shipping from the UAE to Saudi Arabia, to your home or workshop.',
+          'Your money is protected: the store is not paid until you receive and approve your part.',
+          'Returns, exchanges and warranty follow-up when due.',
+          'A loyalty and cashback program that can be transferred to your bank account.'
+        ],
+        company: 'Elip (Free Zone Company) - an Emirati company and the owner of the E-Tashleh online platform, registered and headquartered in Ras Al Khaimah - Compass Business Centre, with an owned capital of AED 386 million, trade license No. 45000927. Its details can be verified through the National Economic Register (Nomo).',
+        sloganTitle: 'Our Motto:',
+        slogan: 'We search, we match, we verify, we ship... and we protect your rights even after you receive your part.',
+        missionTitle: 'Our Mission:',
+        mission: [
+          'Since 2005, our company has taken pride in its long history of supplying genuine used auto parts to all GCC countries through its four branches in Japan, South Korea, the United States and Germany, with its headquarters in the United Arab Emirates.',
+          'Our focus remains on continuing our established approach of providing genuine, high-quality used auto parts from nearly new vehicles at competitive prices for our customers.',
+          'Believing in your trust in us, and keen to broaden the scope of our services, we have expanded our business to the Kingdom of Saudi Arabia, connecting our customers directly with UAE scrapyards and merchants and providing multiple offers for the requested part so customers can choose what suits them best.'
+        ],
+        guaranteesTitle: 'We guarantee our customers:',
+        guarantees: [
+          'Seamless delivery through our trusted suppliers, under our direct supervision and strict quality-control procedures, including a part (matching) service before collecting it from the stores, while keeping a modest profit margin that secures our future growth.',
+          'A guarantee that used auto parts are nearly new and not refurbished, by requiring suppliers to source them from low-mileage vehicles. Terms and conditions apply.',
+          'Guaranteed returns, exchanges and cancellations for customers. Terms and conditions apply.',
+          'Protection of customer payments: they are held with us and not released to the supplier until the customer confirms receipt of the part and approves it; only then do we transfer the part amount to the supplier.',
+          'A strict shipping policy with our partner shipping companies to deliver your shipments within the agreed timeframe according to their policy. Terms and conditions apply.',
+          'A strict shipping policy that obliges the shipping company to refund the product value in case of error, damage or loss. Terms and conditions apply.'
+        ],
+        philosophyTitle: 'Our continued success stems from our commitment to the following business philosophy:',
+        philosophy: [
+          'Maintaining a team of qualified professionals and continuously training them to deliver exceptional customer service.',
+          'Providing a clean, safe and enjoyable work environment, free from discrimination and bias.',
+          'Promoting mutual respect and teamwork among employees, customers and suppliers.',
+          'Embracing new ideas and implementing the changes needed to strengthen our position as a leading company in our sector and community.'
+        ],
+        closing: [
+          'The future of our company is directly linked to the success of our employees, customers and suppliers, as together we build an outstanding partnership to support business.',
+          'Our constant goal is to build new partnerships and strengthen existing ones, without compromising the valuable relationships we have earned.'
+        ]
+      }
+    },
+    policyNotices: {
+      close: 'Close',
+      customerShipping: {
+        prohibitedTitle: 'Items prohibited from shipping to Saudi Arabia:',
+        prohibited: ['Car glass', 'Seat belts', 'Airbags', 'Brake systems and their parts', 'Liquid batteries', 'Used tires', 'Electrical wires and harnesses', 'Counterfeit and non-genuine parts', 'Products banned in your country or requiring permits.'],
+        nonReturnableTitle: 'Non-returnable products:',
+        nonReturnable: ['Electrical parts', 'Plugs and connectors', 'Belts', 'Products that have been used, modified, damaged or impaired'],
+        termsNote: 'Terms and conditions apply.',
+        confirm: 'Got it, continue'
+      },
+      returnDispute: {
+        title: 'Notice before submitting a return or dispute request:',
+        items: [
+          'Submit the return request within 24 hours of receipt, except for parts covered by the store warranty.',
+          'Attach clear photos of the part and state the reason for the request and the defect, if any.',
+          'Electrical parts, plugs and belts are non-returnable.',
+          'Used, modified or damaged products are non-returnable according to the policy.',
+          'The product must be in its original condition, unused and undamaged, with its packaging and invoice.',
+          'After approval, the product must be handed to the shipping company within 48 hours, otherwise the return request will be cancelled.',
+          'The request is subject to the terms and conditions and the return and warranty policy.'
+        ],
+        acknowledgement: 'By continuing, I confirm that I have read and agree to the terms.',
+        confirm: 'Continue'
       }
     },
     loyaltySystem: {

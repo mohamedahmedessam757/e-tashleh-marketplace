@@ -9,7 +9,7 @@ interface HomeNavbarProps {
     onHowWeWork: () => void;
     onFaq: () => void;
     onContact: () => void;
-    active?: 'home' | 'faq';
+    active?: 'home' | 'faq' | 'about';
 }
 
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 rounded-md';
@@ -37,7 +37,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ onHome, onAbout, onHowWe
 
     const items = [
         { key: 'home', label: nav.home, onClick: onHome, active: active === 'home' },
-        { key: 'about', label: nav.about, onClick: onAbout, active: false },
+        { key: 'about', label: nav.about, onClick: onAbout, active: active === 'about' },
         { key: 'how', label: nav.howWeWork, onClick: onHowWeWork, active: false },
         { key: 'faq', label: nav.faq, onClick: onFaq, active: active === 'faq' },
         { key: 'contact', label: nav.contact, onClick: onContact, active: false },

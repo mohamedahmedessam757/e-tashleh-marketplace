@@ -33,8 +33,8 @@ export const NomoBadge: React.FC<NomoBadgeProps> = ({ onClick }) => {
           </span>
         </div>
       </div>
-      <span className="sm:hidden text-[13px] font-bold text-white/90 font-mono tracking-widest mt-2 group-hover:text-white transition-colors">
-        {BUSINESS_LICENSE_NUMBER}
+      <span className="sm:hidden text-xs font-bold text-white/90 text-center leading-tight mt-2 max-w-[120px] group-hover:text-white transition-colors">
+        {t.footer.nomoTitle}
       </span>
     </button>
   );

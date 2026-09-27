@@ -21,6 +21,7 @@ import { EvidenceCaptureField } from './EvidenceCaptureField';
 import { ResolutionPartPicker } from './ResolutionPartPicker';
 import type { EligibleResolutionPart } from './resolutionTypes';
 import { ordersApi } from '../../../services/api/orders';
+import { ReturnPolicyNotice } from './ReturnPolicyNotice';
 
 interface DisputeModalProps {
     isOpen: boolean;
@@ -61,6 +62,7 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [attemptedSubmit, setAttemptedSubmit] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [policyNoticeOpen, setPolicyNoticeOpen] = useState(false);
 
     const disputeReasons = [
         { id: 'non_matching', ar: 'عدم مطابقة القطعة', en: 'Non-matching part' },
@@ -90,6 +92,7 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
 
     useEffect(() => {
         if (!isOpen) return;
+        setPolicyNoticeOpen(true);
         setReason('');
         setDescription('');
         setConfirmations({ integrity: false, policy: false });
@@ -187,6 +190,7 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 overflow-hidden">
+                <ReturnPolicyNotice open={policyNoticeOpen} onClose={() => setPolicyNoticeOpen(false)} />
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

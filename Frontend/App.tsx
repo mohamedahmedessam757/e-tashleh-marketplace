@@ -23,6 +23,7 @@ const HowWeWorkScreen = lazy(() =>
   import('./components/HowWeWorkScreen').then((m) => ({ default: m.HowWeWorkScreen })),
 );
 const FaqPage = lazy(() => import('./components/home/FaqPage').then((m) => ({ default: m.FaqPage })));
+const AboutPage = lazy(() => import('./components/home/AboutPage').then((m) => ({ default: m.AboutPage })));
 const HowWeWorkTutorial = lazy(() =>
   import('./components/HowWeWorkTutorial').then((m) => ({ default: m.HowWeWorkTutorial })),
 );
@@ -131,6 +132,7 @@ type ViewState =
   | 'how-we-work-tutorial'
   | 'earn-income'
   | 'faq'
+  | 'about'
   | 'verify-link'
   | 'business-license'
   | 'business-license-verify'
@@ -809,6 +811,7 @@ function AppContent() {
                 onWholesaleClick={() => handleNavigate('wholesale')}
                 onHowWeWorkClick={() => handleNavigate('how-we-work-tutorial')}
                 onFaqClick={() => handleNavigate('faq')}
+                onAboutClick={() => handleNavigate('about')}
                 onOpenSupport={() => setIsSupportOpen(true)}
                 onAdminClick={() => handleNavigate('admin-login')}
                 onNavigateToLegal={handleNavigateToLegal}
@@ -820,8 +823,21 @@ function AppContent() {
               <Suspense fallback={routeFallback}>
                 <FaqPage
                   onHome={() => handleNavigate('role-selection')}
-                  onAbout={() => handleNavigateToLandingSection('about')}
+                  onAbout={() => handleNavigate('about')}
                   onHowWeWork={() => handleNavigate('how-we-work-tutorial')}
+                  onOpenSupport={() => setIsSupportOpen(true)}
+                  onAdminClick={() => handleNavigate('admin-login')}
+                  onNavigateToLegal={handleNavigateToLegal}
+                  onNavigateToLandingSection={handleNavigateToLandingSection}
+                  onNavigateToLicense={handleNavigateToLicense}
+                />
+              </Suspense>
+            ) : currentView === 'about' ? (
+              <Suspense fallback={routeFallback}>
+                <AboutPage
+                  onHome={() => handleNavigate('role-selection')}
+                  onHowWeWork={() => handleNavigate('how-we-work-tutorial')}
+                  onFaq={() => handleNavigate('faq')}
                   onOpenSupport={() => setIsSupportOpen(true)}
                   onAdminClick={() => handleNavigate('admin-login')}
                   onNavigateToLegal={handleNavigateToLegal}
