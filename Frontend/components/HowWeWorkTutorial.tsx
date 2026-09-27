@@ -27,32 +27,20 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
     const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
+    const tut = t.common.howWeWorkTutorial;
 
-    const steps = [
-        "التسجيل.",
-        "إدخال بيانات السيارة والقطع المطلوبة.",
+    const steps: Array<string | {
+        title: string;
+        items: { title: string; desc: string }[];
+        warning: { title: string; items: string[] };
+    }> = [
+        ...tut.stepsBeforeShipping,
         {
-            title: "اختيار نوعية الشحن:",
-            items: [
-                { title: "الشحن المفرد:", desc: "يتم شحن طلب واحد بشحنة واحدة" },
-                { title: "تجميع الشحنات:", desc: "في حالة وجود أكثر من قطعة في الطلب الواحد يتم اختيار تجميع القطع لشحنها بشحنة واحدة." }
-            ],
-            warning: {
-                title: "يشترط في حال طلب تجميع الشحنات:",
-                items: [
-                    "دفع قيمة المنتجات قبل انتقالها لسلة التجميع.",
-                    "أقصى مدة لبقائها في سلة تجميع الشحنات 7 أيام."
-                ]
-            }
+            title: tut.shipping.title,
+            items: tut.shipping.items,
+            warning: { title: tut.shipping.warningTitle, items: tut.shipping.warnings },
         },
-        "استقبال العروض المقدمة من التشاليح في الإمارات خلال ٢٤ ساعة من تقديم طلبك.",
-        "يختار العميل العرض المناسب بالاتفاق مع البائع عبر الموقع ومدة العرض 48 ساعة فقط.",
-        "بعد اختيار العرض المناسب تأكيد عنوان الشحن.",
-        "الموافقة على الشروط والأحكام.",
-        "الدفع وإصدار الفاتورة.",
-        "طلبات التجميع ستذهب لسلة التجميع ولن تشحن إلا بطلب من العميل.",
-        "إصدار بوليصة الشحن وتجهيز الطلب لشركة الشحن.",
-        "تسليم الطلب للعميل والتأكد منه ومطابقته للفاتورة."
+        ...tut.stepsAfterShipping,
     ];
 
     return (
@@ -82,13 +70,15 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                     className="flex items-center gap-4 mb-10"
                 >
                     <button
+                        type="button"
                         onClick={onBack}
+                        aria-label={tut.back}
                         className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors"
                     >
                         {isAr ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
                     </button>
                     <h1 className="text-3xl font-bold text-white tracking-wide">
-                        {isAr ? 'كيف نعمل:' : 'How We Work:'}
+                        {tut.title}
                     </h1>
                 </motion.div>
 
@@ -112,7 +102,7 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                                     ) : (
                                         <div>
                                             <p className="font-semibold text-gold-400 mb-3">{step.title}</p>
-                                            <div className="space-y-3 pr-2 md:pr-4">
+                                            <div className="space-y-3 ps-2 md:ps-4">
                                                 {step.items.map((sub, i) => (
                                                     <p key={i}>
                                                         <span className="font-semibold text-gold-300">{sub.title}</span> {sub.desc}
@@ -120,9 +110,9 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                                                 ))}
 
                                                 {step.warning && (
-                                                    <div className="bg-orange-500/10 border-r-4 border-orange-500 p-4 mt-4 rounded-lg">
+                                                    <div className="bg-orange-500/10 border-s-4 border-orange-500 p-4 mt-4 rounded-lg">
                                                         <p className="font-semibold text-orange-400 mb-2">{step.warning.title}</p>
-                                                        <ul className="space-y-2 text-orange-200/80 pr-4">
+                                                        <ul className="space-y-2 text-orange-200/80 ps-4">
                                                             {step.warning.items.map((warn, i) => (
                                                                 <li key={i} className="flex items-start gap-2">
                                                                     <span className="text-orange-500 mt-1">•</span>
@@ -149,14 +139,10 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                     >
                         <h3 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
                             <Info size={24} />
-                            {isAr ? 'تنويه:' : 'Disclaimer:'}
+                            {tut.disclaimerTitle}
                         </h3>
                         <ul className="space-y-4 text-white/80">
-                            {[
-                                "يضمن الموقع قيمة المشتريات وعدم تسليم قيمتها للبائع إلا بعد استلام العميل للقطعة والتأكد منها.",
-                                "يضمن الموقع تطبيق سياسة الإرجاع والاستبدال والإلغاء.",
-                                "يضمن الموقع تطبيق سياسة عدم تضرر السلع من الشحن أو تأخرها عن المتفق عليه مع شركات الشحن."
-                            ].map((text, i) => (
+                            {tut.disclaimer.map((text, i) => (
                                 <li key={i} className="flex items-start gap-3">
                                     <CheckCircle2 className="text-blue-400 shrink-0 mt-0.5" size={20} />
                                     <span>{text}</span>
@@ -165,12 +151,13 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                             <li className="flex items-start gap-3">
                                 <AlertCircle className="text-gold-400 shrink-0 mt-0.5" size={20} />
                                 <span>
-                                    {isAr ? 'تطبق ' : 'Subject to '}
+                                    {tut.subjectTo}
                                     <button
+                                        type="button"
                                         onClick={() => onNavigateToLegal('terms')}
                                         className="text-gold-400 hover:text-gold-300 underline font-semibold mx-1"
                                     >
-                                        {isAr ? 'الشروط والأحكام' : 'Terms and Conditions'}
+                                        {tut.terms}
                                     </button>
                                 </span>
                             </li>
@@ -190,7 +177,7 @@ export const HowWeWorkTutorial: React.FC<HowWeWorkTutorialProps> = ({
                         className="px-8 md:px-12 py-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-white rounded-xl font-bold shadow-[0_4px_20px_rgba(168,139,62,0.3)] hover:shadow-[0_6px_25px_rgba(168,139,62,0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg"
                     >
                         {isAr && <ArrowIcon size={24} />}
-                        {isAr ? 'انتقل للطلب الآن' : 'Order Now'}
+                        {tut.orderNow}
                         {!isAr && <ArrowIcon size={24} />}
                     </button>
                 </motion.div>

@@ -208,6 +208,45 @@ export const common = {
         ]
       }
     },
+    howWeWorkTutorial: {
+      title: 'كيف نعمل:',
+      stepsBeforeShipping: [
+        'التسجيل.',
+        'إدخال بيانات السيارة والقطع المطلوبة.'
+      ],
+      shipping: {
+        title: 'اختيار نوعية الشحن:',
+        items: [
+          { title: 'الشحن المفرد:', desc: 'يتم شحن طلب واحد بشحنة واحدة' },
+          { title: 'تجميع الشحنات:', desc: 'في حالة وجود أكثر من قطعة في الطلب الواحد يتم اختيار تجميع القطع لشحنها بشحنة واحدة.' }
+        ],
+        warningTitle: 'يشترط في حال طلب تجميع الشحنات:',
+        warnings: [
+          'دفع قيمة المنتجات قبل انتقالها لسلة التجميع.',
+          'أقصى مدة لبقائها في سلة تجميع الشحنات 7 أيام.'
+        ]
+      },
+      stepsAfterShipping: [
+        'استقبال العروض المقدمة من التشاليح في الإمارات خلال ٢٤ ساعة من تقديم طلبك.',
+        'يختار العميل العرض المناسب بالاتفاق مع البائع عبر الموقع ومدة العرض 48 ساعة فقط.',
+        'بعد اختيار العرض المناسب تأكيد عنوان الشحن.',
+        'الموافقة على الشروط والأحكام.',
+        'الدفع وإصدار الفاتورة.',
+        'طلبات التجميع ستذهب لسلة التجميع ولن تشحن إلا بطلب من العميل.',
+        'إصدار بوليصة الشحن وتجهيز الطلب لشركة الشحن.',
+        'تسليم الطلب للعميل والتأكد منه ومطابقته للفاتورة.'
+      ],
+      disclaimerTitle: 'تنويه:',
+      disclaimer: [
+        'يضمن الموقع قيمة المشتريات وعدم تسليم قيمتها للبائع إلا بعد استلام العميل للقطعة والتأكد منها.',
+        'يضمن الموقع تطبيق سياسة الإرجاع والاستبدال والإلغاء.',
+        'يضمن الموقع تطبيق سياسة عدم تضرر السلع من الشحن أو تأخرها عن المتفق عليه مع شركات الشحن.'
+      ],
+      subjectTo: 'تطبق ',
+      terms: 'الشروط والأحكام',
+      orderNow: 'انتقل للطلب الآن',
+      back: 'رجوع'
+    },
     policyNotices: {
       close: 'إغلاق',
       customerShipping: {
@@ -566,6 +605,45 @@ export const common = {
           'Our constant goal is to build new partnerships and strengthen existing ones, without compromising the valuable relationships we have earned.'
         ]
       }
+    },
+    howWeWorkTutorial: {
+      title: 'How We Work:',
+      stepsBeforeShipping: [
+        'Register.',
+        'Enter your vehicle details and the parts you need.'
+      ],
+      shipping: {
+        title: 'Choose the shipping type:',
+        items: [
+          { title: 'Single shipping:', desc: 'One order is shipped in one shipment.' },
+          { title: 'Consolidated shipping:', desc: 'If an order contains more than one part, you can choose to consolidate the parts and ship them in one shipment.' }
+        ],
+        warningTitle: 'Requirements for consolidated shipping:',
+        warnings: [
+          'Pay for the products before they are moved to the consolidation cart.',
+          'Products can stay in the consolidation cart for a maximum of 7 days.'
+        ]
+      },
+      stepsAfterShipping: [
+        'Receive offers from UAE scrapyards within 24 hours of submitting your order.',
+        'The customer chooses the suitable offer in agreement with the seller through the website; offers are valid for 48 hours only.',
+        'After choosing the suitable offer, confirm the shipping address.',
+        'Agree to the terms and conditions.',
+        'Pay and receive the invoice.',
+        'Consolidated orders go to the consolidation cart and are shipped only at the customer\'s request.',
+        'The shipping waybill is issued and the order is prepared for the shipping company.',
+        'The order is delivered to the customer, who checks it and matches it against the invoice.'
+      ],
+      disclaimerTitle: 'Disclaimer:',
+      disclaimer: [
+        'The website guarantees the purchase amount and does not release it to the seller until the customer has received and checked the part.',
+        'The website guarantees the application of the return, exchange and cancellation policy.',
+        'The website guarantees the application of a policy protecting goods from shipping damage or delays beyond what was agreed with the shipping companies.'
+      ],
+      subjectTo: 'Subject to ',
+      terms: 'Terms and Conditions',
+      orderNow: 'Order Now',
+      back: 'Back'
     },
     policyNotices: {
       close: 'Close',
