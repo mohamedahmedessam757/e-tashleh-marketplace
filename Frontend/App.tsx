@@ -805,7 +805,6 @@ function AppContent() {
                   handleNavigate('merchant-login');
                 }}
                 onWholesaleClick={() => handleNavigate('wholesale')}
-                onHowWeWorkClick={() => handleNavigate('landing')}
                 onOpenSupport={() => setIsSupportOpen(true)}
                 onAdminClick={() => handleNavigate('admin-login')}
                 onNavigateToLegal={handleNavigateToLegal}

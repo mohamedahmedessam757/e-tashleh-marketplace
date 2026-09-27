@@ -180,6 +180,12 @@ body {
   opacity: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item { animation: none; opacity: 1; }
+}
+
+html { scroll-padding-top: 5rem; }
+
 @keyframes view-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

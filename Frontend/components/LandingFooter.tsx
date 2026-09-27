@@ -5,9 +5,6 @@ import {
   IconShield,
   IconFileText,
   IconWallet,
-  IconMail,
-  IconInfo,
-  IconCog,
   IconPhone,
   IconHelpCircle,
   IconMapPin,
@@ -24,7 +21,7 @@ interface LandingFooterProps {
     onNavigateToLicense?: () => void;
 }
 
-export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onAdminClick, onNavigateToLegal, onNavigateToLandingSection, onNavigateToLicense }) => {
+export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onAdminClick, onNavigateToLegal, onNavigateToLicense }) => {
     const { t } = useLanguage();
 
     const links = [
@@ -45,24 +42,6 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
             href: '#',
             icon: <IconWallet size={16} />,
             onClick: (e: React.MouseEvent) => { e.preventDefault(); onNavigateToLegal('wallet-loyalty'); }
-        },
-        {
-            label: t.common.footer.contact,
-            href: '#',
-            icon: <IconMail size={16} />,
-            onClick: (e: React.MouseEvent) => { e.preventDefault(); onOpenSupport(); }
-        },
-        {
-            label: t.common.footer.about,
-            href: '#',
-            icon: <IconInfo size={16} />,
-            onClick: (e: React.MouseEvent) => { e.preventDefault(); onNavigateToLandingSection('about'); }
-        },
-        {
-            label: t.common.footer.howWeWork,
-            href: '#',
-            icon: <IconCog size={16} />,
-            onClick: (e: React.MouseEvent) => { e.preventDefault(); onNavigateToLandingSection('how-it-works'); }
         },
     ];
 
@@ -100,7 +79,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
                             <a
                                 href={`https://wa.me/${siteContacts.whatsapp}`}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
                                 className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:bg-[#1DA851] transition-all transform hover:scale-105 hover:shadow-[#25D366]/40"
                                 aria-label={t.common.footer.whatsappBusiness}
                                 title={t.common.footer.whatsappBusiness}
@@ -121,11 +100,11 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenSupport, onA
                                 type="button"
                                 onClick={onOpenSupport}
                                 className="w-12 h-12 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-lg hover:bg-[#D97706] transition-all transform hover:scale-105 hover:shadow-[#F59E0B]/40"
-                                aria-label={t.common.footer.contact}
+                                aria-label={t.common.footer.technicalSupport}
                             >
                                 <IconHelpCircle size={20} />
                             </button>
-                            <span className="text-sm font-bold text-white/90">{t.common.footer.contact}</span>
+                            <span className="text-sm font-bold text-white/90">{t.common.footer.technicalSupport}</span>
                         </div>
                     </div>
 

@@ -116,6 +116,57 @@ export const common = {
         earnIncomeDesc: 'كل طلب = ربح كاش يُضاف إلى محفظتك'
       }
     },
+    home: {
+      nav: { home: 'الرئيسية', about: 'من نحن', howWeWork: 'كيف نعمل', faq: 'الأسئلة الشائعة', contact: 'تواصل معنا', openMenu: 'فتح القائمة', closeMenu: 'إغلاق القائمة' },
+      hero: {
+        brand: 'إي-تشليح',
+        line1: 'منصتك الإلكترونية لطلب قطع غيار السيارات المستعملة الأصلية',
+        line2: 'من الإمارات إلى بابك في السعودية',
+        line3: 'من خلال تشاليح ومتاجر موثوقة ومعتمدة لدينا',
+        tagline: 'اطلبها إلكترونيًا… ونحن نتولى الباقي.',
+        imageAlt: 'قطع غيار سيارات أصلية أمام أفق دبي'
+      },
+      features: {
+        warranty: { title: 'ضمان وإرجاع', desc: 'حسب الشروط والسياسات' },
+        shipping: { title: 'شحن إلى السعودية', desc: 'إلى باب بيتك أو ورشتك' },
+        payment: { title: 'حماية دفعتك', desc: 'لا يتم تحويل المبلغ للمتجر إلا بعد استلامك للقطعة' },
+        matching: { title: 'مطابقة القطعة', desc: 'نتحقق من مطابقة القطعة قبل شحنها' }
+      },
+      cta: { title: 'اطلب قطعتك الآن', desc: 'ابحث عن القطعة المناسبة واحصل على أفضل العروض من متاجر معتمدة' },
+      roles: {
+        customerDesc: 'متابعة طلباتك وعروض المتاجر',
+        storeDesc: 'إدارة متجرك وعروضك',
+        wholesaleDesc: 'أسعار خاصة للشركات والموردين',
+        earnDesc: 'من برنامج الإحالة والمكافآت'
+      },
+      earn: { title: 'فرصة لزيادة دخلك', desc: 'انضم إلى برنامج الولاء والإحالة وابدأ بجني المكافآت من كل طلب', button: 'اكتشف المزيد', imageAlt: 'ألماسة وعملات ذهبية' },
+      highlights: {
+        support: { title: 'دعم العملاء', desc: 'فريق دعم جاهز لمساعدتك' },
+        fastShipping: { title: 'شحن سريع', desc: 'من الإمارات إلى السعودية' },
+        original: { title: 'قطع أصلية', desc: 'مستعملة وغير مجددة' },
+        trust: { title: 'مصداقية وشفافية', desc: 'في كل خطوة من طلبك' }
+      },
+      faq: {
+        title: 'الأسئلة الشائعة',
+        subtitle: 'إجابات سريعة لأكثر ما يسأل عنه العملاء والمتاجر',
+        customersTab: 'للعملاء',
+        merchantsTab: 'للمتاجر',
+        customers: [
+          { q: 'كيف أطلب قطعة غيار؟', a: 'اضغط "اطلب قطعتك الآن"، أدخل بيانات سيارتك والقطعة المطلوبة، وستصلك عروض من متاجر وتشاليح معتمدة في الإمارات لتختار الأنسب.' },
+          { q: 'هل القطع أصلية؟', a: 'نعم، جميع القطع أصلية مستعملة وغير مجددة أو معاد إصلاحها، وتُعرض من متاجر موثوقة ومعتمدة لدينا.' },
+          { q: 'متى يستلم المتجر ثمن القطعة؟', a: 'لا يتم تحويل المبلغ للمتجر إلا بعد استلامك للقطعة والتأكد منها، لحماية دفعتك بالكامل.' },
+          { q: 'كيف أتأكد أن القطعة مطابقة قبل الشحن؟', a: 'تتم مطابقة القطعة بالصور والفيديو ومراجعتها قبل شحنها، لضمان وصول القطعة الصحيحة لسيارتك.' },
+          { q: 'هل يوجد ضمان وإرجاع؟', a: 'نعم، يتوفر الضمان والإرجاع أو الاستبدال حسب الشروط والسياسات المعتمدة في المنصة.' },
+          { q: 'أين يتم التوصيل؟', a: 'نشحن من الإمارات إلى جميع مناطق المملكة العربية السعودية، حتى باب بيتك أو ورشتك.' }
+        ],
+        merchants: [
+          { q: 'كيف أسجل متجري في المنصة؟', a: 'اضغط "دخول المتاجر" ثم أنشئ حساب متجر وأرفق بياناتك ومستنداتك التجارية، وسيتم مراجعة الطلب من فريق المنصة.' },
+          { q: 'كيف أستقبل الطلبات؟', a: 'تصلك طلبات العملاء في لوحة تحكم متجرك، فتقدم عرض السعر المناسب ويختار العميل أفضل عرض.' },
+          { q: 'متى أستلم أرباحي؟', a: 'تُضاف المبالغ إلى محفظتك بعد استلام العميل للقطعة وانتهاء فترة الإرجاع، ويمكنك طلب السحب إلى حسابك البنكي.' },
+          { q: 'هل يوجد دعم للمتاجر؟', a: 'نعم، فريق الدعم الفني متاح لمساعدتك عبر زر "تواصل معنا" أو واتساب الأعمال.' }
+        ]
+      }
+    },
     loyaltySystem: {
       title: 'اكسب دخل شهري معنا',
       subtitle: 'كل طلب = ربح كاش يُضاف إلى محفظتك',
@@ -192,7 +243,8 @@ export const common = {
     footer: {
       privacy: 'سياسة الخصوصية',
       terms: 'شروط الاستخدام',
-      walletLoyaltyTerms: 'شروط الأرباح والولاء والإحالات',
+      walletLoyaltyTerms: 'شروط برنامج الولاء والإحالة',
+      technicalSupport: 'الدعم الفني',
       contact: 'تواصل معنا',
       about: 'من نحن',
       howWeWork: 'كيف نعمل',
@@ -357,6 +409,57 @@ export const common = {
         earnIncomeDesc: 'Every order = Cash profit added to your wallet'
       }
     },
+    home: {
+      nav: { home: 'Home', about: 'About Us', howWeWork: 'How It Works', faq: 'FAQ', contact: 'Contact Us', openMenu: 'Open menu', closeMenu: 'Close menu' },
+      hero: {
+        brand: 'E-Tashleh',
+        line1: 'Your online platform for ordering genuine used auto parts',
+        line2: 'from the UAE to your door in Saudi Arabia',
+        line3: 'through trusted, verified scrapyards and stores',
+        tagline: 'Order online… we handle the rest.',
+        imageAlt: 'Genuine auto parts in front of the Dubai skyline'
+      },
+      features: {
+        warranty: { title: 'Warranty & Returns', desc: 'Subject to our terms and policies' },
+        shipping: { title: 'Shipping to Saudi Arabia', desc: 'To your home or workshop door' },
+        payment: { title: 'Payment Protection', desc: 'The store is paid only after you receive your part' },
+        matching: { title: 'Part Matching', desc: 'We verify the part matches before shipping' }
+      },
+      cta: { title: 'Order Your Part Now', desc: 'Find the right part and get the best offers from verified stores' },
+      roles: {
+        customerDesc: 'Track your orders and store offers',
+        storeDesc: 'Manage your store and offers',
+        wholesaleDesc: 'Special prices for companies and suppliers',
+        earnDesc: 'Through our referral and rewards program'
+      },
+      earn: { title: 'A Chance to Grow Your Income', desc: 'Join our loyalty and referral program and start earning rewards on every order', button: 'Learn More', imageAlt: 'Diamond and gold coins' },
+      highlights: {
+        support: { title: 'Customer Support', desc: 'A team ready to help you' },
+        fastShipping: { title: 'Fast Shipping', desc: 'From the UAE to Saudi Arabia' },
+        original: { title: 'Genuine Parts', desc: 'Used, never refurbished' },
+        trust: { title: 'Trust & Transparency', desc: 'At every step of your order' }
+      },
+      faq: {
+        title: 'Frequently Asked Questions',
+        subtitle: 'Quick answers to what customers and stores ask most',
+        customersTab: 'Customers',
+        merchantsTab: 'Stores',
+        customers: [
+          { q: 'How do I order a part?', a: 'Tap "Order Your Part Now", enter your car and part details, and you will receive offers from verified stores and scrapyards in the UAE to choose from.' },
+          { q: 'Are the parts genuine?', a: 'Yes. All parts are genuine used parts, never refurbished or rebuilt, offered by trusted and verified stores.' },
+          { q: 'When does the store get paid?', a: 'The amount is released to the store only after you receive and confirm your part, so your payment is fully protected.' },
+          { q: 'How do I know the part matches before shipping?', a: 'The part is matched using photos and video and reviewed before shipping, so the right part reaches your car.' },
+          { q: 'Is there a warranty and returns?', a: 'Yes. Warranty, returns and exchanges are available according to the platform terms and policies.' },
+          { q: 'Where do you deliver?', a: 'We ship from the UAE to all regions of Saudi Arabia, right to your home or workshop door.' }
+        ],
+        merchants: [
+          { q: 'How do I register my store?', a: 'Tap "Store Login", create a store account and upload your business details and documents. The platform team will review your request.' },
+          { q: 'How do I receive orders?', a: 'Customer requests appear in your store dashboard. You submit your price offer and the customer picks the best one.' },
+          { q: 'When do I get paid?', a: 'Funds are added to your wallet after the customer receives the part and the return period ends. You can then request a withdrawal to your bank account.' },
+          { q: 'Is there support for stores?', a: 'Yes. Our technical support team is available through "Contact Us" or WhatsApp Business.' }
+        ]
+      }
+    },
     loyaltySystem: {
       title: 'Earn Monthly Income with Us',
       subtitle: 'Every order = Cash profit added to your wallet',
@@ -450,7 +553,8 @@ export const common = {
     footer: {
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
-      walletLoyaltyTerms: 'Wallet, Loyalty & Referral Terms',
+      walletLoyaltyTerms: 'Loyalty & Referral Program Terms',
+      technicalSupport: 'Technical Support',
       contact: 'Contact Us',
       about: 'About Us',
       howWeWork: 'How We Work',
