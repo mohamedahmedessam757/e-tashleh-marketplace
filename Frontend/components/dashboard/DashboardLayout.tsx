@@ -58,7 +58,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   } = useVendorStore();
   const { currentAdmin, systemStatus, publicSystemStatus } = useAdminStore();
   const { startRealtime, stopRealtime } = useOrderStore();
-  const shipmentsStore = useShipmentsStore();
+  const {
+    fetchShipments: fetchShipmentsRT,
+    startRealtime: startShipmentsRealtime,
+    stopRealtime: stopShipmentsRealtime,
+  } = useShipmentsStore();
   const { fetchInvoices, fetchCards } = useBillingStore();
   const { fetchWallet } = useMerchantWalletStore();
   const { user, fetchProfile, subscribeToProfile } = useProfileStore();
@@ -220,17 +224,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     // (previously only the shipments list page subscribed, so the details page
     // needed a manual reload).
     if (role === 'customer' || role === 'merchant') {
-      shipmentsStore.fetchShipments();
-      shipmentsStore.startRealtime();
+      fetchShipmentsRT();
+      startShipmentsRealtime();
     }
 
     return () => {
       stopRealtime();
       if (role === 'customer' || role === 'merchant') {
-        shipmentsStore.stopRealtime();
+        stopShipmentsRealtime();
       }
     };
-  }, [role, vendorStoreId, startRealtime, stopRealtime, shipmentsStore]);
+  }, [role, vendorStoreId, startRealtime, stopRealtime, fetchShipmentsRT, startShipmentsRealtime, stopShipmentsRealtime]);
 
   // Define Menu Items per Role
   const customerNavItems = [
