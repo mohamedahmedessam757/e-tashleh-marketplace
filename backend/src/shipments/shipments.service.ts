@@ -446,6 +446,38 @@ export class ShipmentsService {
                 select: { hasWarranty: true, warrantyDuration: true },
             });
             const now = new Date();
+
+            // Close the return / warranty-exchange case carried by this shipment and put its
+            // offer back to COMPLETED (it was reopened to READY_FOR_SHIPPING when shipping was paid),
+            // otherwise every panel keeps showing "ready for shipping" after the exchange finished.
+            const exchangeCases = await this.prisma.returnRequest.findMany({
+                where: {
+                    orderId: shipment.orderId,
+                    status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
+                    OR: [
+                        ...(shipment.waybillId ? [{ returnWaybillId: shipment.waybillId }] : []),
+                        { shipmentId: shipment.id },
+                    ],
+                },
+                select: { id: true, offerId: true },
+            });
+            for (const c of exchangeCases) {
+                await this.prisma.returnRequest.update({
+                    where: { id: c.id },
+                    data: { status: 'RESOLVED', updatedAt: now },
+                });
+                if (c.offerId) {
+                    await this.prisma.offer.update({
+                        where: { id: c.offerId },
+                        data: {
+                            fulfillmentStatus: OfferFulfillmentStatus.COMPLETED,
+                            resolutionLocked: true,
+                            shippedFromCart: false,
+                        },
+                    });
+                }
+            }
+
             const warranty = resolveCompletionWarranty(
                 acceptedOffers,
                 now,
