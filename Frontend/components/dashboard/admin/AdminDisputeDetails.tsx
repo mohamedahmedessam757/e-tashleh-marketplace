@@ -265,6 +265,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         }
         if (faultParty === 'WARRANTY') {
             setFinalRefundDecision('NO_CUSTOMER_REFUND');
+            setGatewayFeePct(0);
+            setRefundFeePct(0);
             if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
         }
         // Customer claim / customer at fault → no refund, no merchant fine: zero the calculator
@@ -472,8 +474,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                           breakdown.finalRefundDecision === 'REFUND_CUSTOMER'
                         ? shippingRoundtrip
                         : 0,
-            gatewayFeePct,
-            refundFeePct,
+            gatewayFeePct: isWarrantyFault ? 0 : gatewayFeePct,
+            refundFeePct: isWarrantyFault ? 0 : refundFeePct,
             shippingRoundtrip,
             penaltyType,
             penaltyAmount: penaltyType ? penaltyAmount : 0,
@@ -1179,7 +1181,15 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                  : 'Customer claim: calculator auto-zeroed (no customer refund, no merchant fine).'}
                                                          </div>
                                                      )}
+                                                     {isWarrantyFault && (
+                                                         <div className="p-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 text-[11px] text-emerald-200/90 font-bold leading-relaxed">
+                                                             {isAr
+                                                                 ? 'الضمان: رسوم بوابة الدفع ورسوم الاسترداد = 0% — لا استرداد نقدي، التاجر يدفع شحن الذهاب والإياب فقط.'
+                                                                 : 'Warranty: gateway and refund fees are fixed at 0% — no cash refund; merchant pays round-trip shipping only.'}
+                                                         </div>
+                                                     )}
                                                      {/* Fee Percentage Controls */}
+                                                     {!isWarrantyFault && (
                                                      <div className={`grid grid-cols-2 gap-4 ${faultParty === 'CUSTOMER' ? 'opacity-50 pointer-events-none' : ''}`}>
                                                          <div className="space-y-2">
                                                              <label className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{isAr ? 'رسوم البوابة (%)' : 'GATEWAY FEE (%)'}</label>
@@ -1198,6 +1208,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                              </div>
                                                          </div>
                                                      </div>
+                                                     )}
 
                                                      {/* Round-trip Shipping Control */}
                                                      <div className={`space-y-2 ${faultParty === 'CUSTOMER' ? 'opacity-50 pointer-events-none' : ''}`}>

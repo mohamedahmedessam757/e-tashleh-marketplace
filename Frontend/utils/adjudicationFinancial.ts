@@ -82,10 +82,11 @@ export function computeAdjudicationPreview(
     input: AdjudicationPreviewInput,
 ): AdjudicationPreviewResult {
     const orderPaidTotal = Math.max(0, Number(input.orderPaidTotal) || 0);
-    const gatewayFeePct = Number(input.gatewayFeePct ?? 0);
-    const refundFeePct = Number(input.refundFeePct ?? 0);
-    const shippingRoundtrip = Math.max(0, Number(input.shippingRoundtrip) || 0);
     const fault = normalizeFault(input.faultParty);
+    const warranty = isWarrantyFault(fault);
+    const gatewayFeePct = warranty ? 0 : Number(input.gatewayFeePct ?? 0);
+    const refundFeePct = warranty ? 0 : Number(input.refundFeePct ?? 0);
+    const shippingRoundtrip = Math.max(0, Number(input.shippingRoundtrip) || 0);
     const isCloseComplete = fault === 'CLOSE_COMPLETE_REFUND';
     const finalRefundDecision = normalizeFinalRefundDecision(input.finalRefundDecision, fault);
     const refundRequired = finalRefundDecision === 'REFUND_CUSTOMER';
