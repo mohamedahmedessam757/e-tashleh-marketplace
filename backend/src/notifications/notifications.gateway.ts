@@ -103,4 +103,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       this.server.to(`user_${payload.ownerId}`).emit('withdrawal_updated', event);
     }
   }
+
+  /** Live sync for shipments list / details / waybills (customer, merchant, admins). */
+  emitShipmentUpdated(userIds: string[], payload: { orderId: string; shipmentIds: string[] }) {
+    if (!this.server) return;
+    const event = { ...payload, at: new Date().toISOString() };
+    this.server.to('admins').emit('shipment_updated', event);
+    for (const id of new Set(userIds)) {
+      this.server.to(`user_${id}`).emit('shipment_updated', event);
+    }
+  }
 }

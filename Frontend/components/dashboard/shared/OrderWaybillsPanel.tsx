@@ -109,8 +109,17 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
             )
             .subscribe();
 
+        const onShipmentUpdated = (e: Event) => {
+            const detail = (e as CustomEvent<{ orderId?: string }>).detail;
+            if (detail?.orderId && String(detail.orderId) === String(orderId)) {
+                fetchWaybills();
+            }
+        };
+        window.addEventListener('shipment-updated', onShipmentUpdated);
+
         return () => {
             supabase.removeChannel(channel);
+            window.removeEventListener('shipment-updated', onShipmentUpdated);
         };
     }, [orderId]);
 

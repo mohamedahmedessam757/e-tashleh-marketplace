@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Truck, ArrowLeft, ArrowRight, Box, Package, MapPin, Calendar, FileText, Receipt, ShieldCheck, UserCheck, Store, Building2, ClipboardList, Info, Clock, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useShipmentsStore } from '../../../stores/useShipmentsStore';
+import { shipmentsApi, type ShipmentStatusLog } from '../../../services/api/shipments.api';
 import { GlassCard } from '../../ui/GlassCard';
 import { Badge } from '../../ui/Badge';
 import { ShipmentTracker, statusTranslations } from './ShipmentTracker';
@@ -24,11 +25,39 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
     // Find shipment from store
     const shipment = shipments.find(s => s.id === shipmentId);
 
+    const [logs, setLogs] = useState<ShipmentStatusLog[]>([]);
+
     useEffect(() => {
         if (shipments.length === 0) {
             fetchShipments();
         }
     }, [shipments.length, fetchShipments]);
+
+    useEffect(() => {
+        if (!shipmentId) return;
+        let cancelled = false;
+        const loadLogs = () =>
+            shipmentsApi
+                .getLogs(shipmentId)
+                .then((rows) => {
+                    if (!cancelled) setLogs(Array.isArray(rows) ? rows : []);
+                })
+                .catch(() => undefined);
+        loadLogs();
+        const onShipmentUpdated = (e: Event) => {
+            const detail = (e as CustomEvent<{ shipmentIds?: string[] }>).detail || {};
+            if (!detail.shipmentIds?.length || detail.shipmentIds.includes(shipmentId)) loadLogs();
+        };
+        window.addEventListener('shipment-updated', onShipmentUpdated);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('shipment-updated', onShipmentUpdated);
+        };
+    }, [shipmentId]);
+
+    const sortedLogs = [...logs].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
     if (!shipment) {
         return (
@@ -370,20 +399,23 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
                          <div className="space-y-5 sm:space-y-6 relative ms-2">
                              <div className="absolute top-0 bottom-0 start-0 w-px bg-white/10" />
 
-                             {[shipment.status, 'PACKAGED_FOR_SHIPPING', 'QUALITY_CHECK_PASSED'].map((st, i) => (
-                                 <div key={i} className="relative ps-6">
+                             {(sortedLogs.length
+                                 ? sortedLogs.map((l) => ({ key: l.id, st: l.toStatus, at: l.createdAt, notes: l.notes }))
+                                 : [{ key: 'current', st: shipment.status, at: String(shipment.updatedAt), notes: undefined as string | undefined }]
+                             ).map((item, i) => (
+                                 <div key={item.key} className="relative ps-6">
                                      <div className={`absolute start-[-4.5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#151310] ${i === 0 ? 'bg-gold-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'bg-white/20'}`} />
                                      <div className="space-y-1 min-w-0">
                                          <p className={`text-sm font-bold break-words ${i === 0 ? 'text-white' : 'text-white/40'}`}>
-                                             {statusTranslations[st]?.[isAr ? 'ar' : 'en'] || st}
+                                             {statusTranslations[item.st]?.[isAr ? 'ar' : 'en'] || item.st}
                                          </p>
                                          <p className="text-[10px] text-white/20 flex items-center gap-2">
                                              <Calendar size={10} />
-                                             {new Date(new Date(shipment.updatedAt).getTime() - i * 3600000).toLocaleString(isAr ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: 'numeric' })}
+                                             {new Date(item.at).toLocaleString(isAr ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', hour: 'numeric', minute: 'numeric' })}
                                          </p>
-                                         {i === 0 && (
-                                              <div className="bg-white/5 p-2 rounded-lg text-[10px] text-gold-500/60 mt-2 border border-gold-500/10 leading-relaxed">
-                                                  {isAr ? 'تم تحديث الحالة تلقائياً عبر نظام التشليح' : 'Status auto-updated via Tashleh Pulse'}
+                                         {item.notes && (
+                                              <div className="bg-white/5 p-2 rounded-lg text-[10px] text-gold-500/60 mt-2 border border-gold-500/10 leading-relaxed break-words">
+                                                  {item.notes}
                                               </div>
                                          )}
                                      </div>

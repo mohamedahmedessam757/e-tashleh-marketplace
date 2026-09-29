@@ -395,6 +395,28 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       refreshWithdrawalViews(payload || {});
     });
 
+    // Shipments live sync — Supabase realtime is RLS-blocked for anon clients,
+    // so the backend relays shipment / status-log / waybill changes over this socket.
+    socket.on('shipment_updated', (payload: { orderId?: string; shipmentIds?: string[] }) => {
+      window.dispatchEvent(new CustomEvent('shipment-updated', { detail: payload || {} }));
+      void import('./useShipmentsStore').then(({ useShipmentsStore }) => {
+        const s = useShipmentsStore.getState();
+        if (s.subscription || s.shipments.length > 0) void s.fetchShipments();
+      });
+      void import('./useShipmentStore').then(({ useShipmentStore }) => {
+        const s = useShipmentStore.getState();
+        if (s.subscription || s.shipments.length > 0) void s.silentFetchShipments();
+      });
+      if (payload?.orderId) {
+        void import('./useOrderStore').then(({ useOrderStore }) => {
+          const store = useOrderStore.getState();
+          if (store.activeOrderId && String(store.activeOrderId) === String(payload.orderId)) {
+            void store.fetchOrder(String(payload.orderId));
+          }
+        });
+      }
+    });
+
     socket.on('connect_error', (err) => {
       console.error('[Notifications] Connection error:', err.message);
     });

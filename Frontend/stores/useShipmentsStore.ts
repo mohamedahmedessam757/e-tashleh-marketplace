@@ -86,7 +86,8 @@ export const useShipmentsStore = create<ShipmentsState>((set, get) => ({
         // MAINTENANCE GUARD (2026 Silencer)
         if (useAdminStore.getState().publicSystemStatus?.maintenanceMode) return;
 
-        set({ loading: true, error: null });
+        // Only show the spinner on first load — realtime refreshes stay silent
+        if (get().shipments.length === 0) set({ loading: true, error: null });
         try {
             // Use the NestJS API (Prisma) to bypass Supabase RLS recursion
             const data = await shipmentsApi.getMyShipments();
@@ -121,7 +122,7 @@ export const useShipmentsStore = create<ShipmentsState>((set, get) => ({
                 updatedAt: item.updatedAt
             }));
 
-            set({ shipments: finalShipments, loading: false });
+            set({ shipments: finalShipments, loading: false, error: null });
         } catch (err: any) {
             console.error('[useShipmentsStore] Fetch error:', err);
             set({ error: err?.response?.data?.message || err.message || 'Unknown error', loading: false });

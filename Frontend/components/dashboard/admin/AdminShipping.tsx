@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GlassCard } from '../../ui/GlassCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { Truck, MapPin, Package, ExternalLink, AlertTriangle, CheckCircle2, Factory, ShieldCheck, Box, RefreshCcw, XCircle, FileText, ChevronRight, Save, Settings2, History } from 'lucide-react';
@@ -149,9 +149,29 @@ export const AdminShipping: React.FC<AdminShippingProps> = ({ initialSearch }) =
         }
     }, [shipments, selectedShipment]);
 
+    // Live logs for the open shipment (backend relays shipment_updated over the socket)
+    useEffect(() => {
+        if (view !== 'detail' || !selectedShipment) return;
+        const shipmentId = selectedShipment.id;
+        const orderId = selectedShipment.orderId;
+        const onShipmentUpdated = (e: Event) => {
+            const detail = (e as CustomEvent<{ orderId?: string; shipmentIds?: string[] }>).detail || {};
+            const hit =
+                (detail.shipmentIds || []).includes(shipmentId) ||
+                (!!detail.orderId && String(detail.orderId) === String(orderId));
+            if (hit) shipmentsApi.getLogs(shipmentId).then(setLogs).catch(() => undefined);
+        };
+        window.addEventListener('shipment-updated', onShipmentUpdated);
+        return () => window.removeEventListener('shipment-updated', onShipmentUpdated);
+    }, [view, selectedShipment?.id, selectedShipment?.orderId]);
+
     // Deep-link from order details: filter by order id / number; open detail only if one batch
+    const deepLinkHandledRef = useRef<string | null>(null);
     useEffect(() => {
         if (!initialSearch || shipments.length === 0) return;
+        // Realtime refreshes must not reset the form the admin is editing
+        if (deepLinkHandledRef.current === initialSearch) return;
+        deepLinkHandledRef.current = initialSearch;
 
         const matches = shipments.filter((s) => shipmentMatchesQuery(s, initialSearch));
         setSearch(initialSearch);

@@ -212,11 +212,11 @@ export class OrderSlaService {
         const endMs = this.toMs(order.warranty_end_at);
         const startMs = this.toMs(order.updatedAt) ?? this.toMs(order.deliveredAt);
         if (endMs != null && startMs != null && endMs > startMs) {
-          return this.buildSlaUntil(status, 'sla.return', startMs, endMs);
+          return this.buildSlaUntil(status, 'sla.warranty', startMs, endMs);
         }
         if (endMs != null) {
           // Degenerate range: still expose endsAt for countdown/enforce
-          return this.buildSlaUntil(status, 'sla.return', endMs - 1000, endMs);
+          return this.buildSlaUntil(status, 'sla.warranty', endMs - 1000, endMs);
         }
         return null;
       }

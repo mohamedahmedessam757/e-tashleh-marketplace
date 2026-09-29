@@ -6,11 +6,17 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationsGateway } from './notifications.gateway';
 import { JwtAuthSharedModule } from '../auth/jwt-auth-shared.module';
 import { ConfigModule } from '@nestjs/config';
+import { ShipmentsRealtimeRelayService } from './shipments-realtime-relay.service';
 
 @Module({
     imports: [PrismaModule, JwtAuthSharedModule, ConfigModule],
     controllers: [NotificationsController],
-    providers: [NotificationsService, NotificationsGateway, AccountAccessNotifyService],
+    providers: [
+        NotificationsService,
+        NotificationsGateway,
+        AccountAccessNotifyService,
+        ShipmentsRealtimeRelayService,
+    ],
     exports: [NotificationsService, AccountAccessNotifyService],
 })
 export class NotificationsModule { }

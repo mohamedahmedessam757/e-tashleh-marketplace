@@ -25,6 +25,7 @@ const SLA_KEY_MAP: Record<string, string> = {
   'sla.delayedPreparation': 'delayedPreparation',
   'sla.shipping': 'shipping',
   'sla.return': 'return',
+  'sla.warranty': 'warranty',
   'sla.correction': 'correction',
   'sla.nonMatchingGrace': 'nonMatchingGrace',
 };

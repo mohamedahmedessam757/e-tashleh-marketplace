@@ -246,10 +246,10 @@ export function resolveOrderActiveSla(
       const endMs = toMs(order.warranty_end_at);
       const startMs = toMs(order.updatedAt) ?? toMs(order.deliveredAt);
       if (endMs != null && startMs != null && endMs > startMs) {
-        return buildSlaUntil(status, 'sla.return', startMs, endMs);
+        return buildSlaUntil(status, 'sla.warranty', startMs, endMs);
       }
       if (endMs != null) {
-        return buildSlaUntil(status, 'sla.return', endMs - 1000, endMs);
+        return buildSlaUntil(status, 'sla.warranty', endMs - 1000, endMs);
       }
       return null;
     }
