@@ -9,10 +9,13 @@ import { ActorType, ViolationTargetType, Prisma } from '@prisma/client';
 import { ViolationsService } from '../violations/violations.service';
 import {
     isOfferInWarranty,
+    isOfferWarrantyClaimEligible,
     isWarrantyClaimReason,
     offerHasUsableWarranty,
 } from '../orders/warranty-activation.util';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../orders/order-time.constants';
+
+const SINGLE_WARRANTY_CLAIM_ORDER_STATUSES = ['DELIVERED', 'COMPLETED', 'WARRANTY_ACTIVE'];
 import {
     computeAdjudicationFinancials,
     AdjudicationFinancialResult,
@@ -241,6 +244,12 @@ export class ReturnsService {
 
         if (isMulti) {
             this.offerFulfillment.assertOfferReturnWindow(acceptedOffer, { mode, reason });
+        } else if (
+            mode === 'return' &&
+            SINGLE_WARRANTY_CLAIM_ORDER_STATUSES.includes(order.status) &&
+            isOfferWarrantyClaimEligible(acceptedOffer, reason, { inShortReturnWindow: false })
+        ) {
+            // Warranty claim after completion — same per-offer rule as multi-item parts.
         } else if (order.status === 'DELIVERED') {
             const deliveryMoment = order.deliveredAt ?? order.updatedAt;
             const windowMs = POST_DELIVERY_RETURN_DISPUTE_HOURS * 60 * 60 * 1000;
