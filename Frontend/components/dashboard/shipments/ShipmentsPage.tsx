@@ -10,15 +10,11 @@ export const ShipmentsPage: React.FC<{ onNavigate?: (path: string, id?: any) => 
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
 
-    const { shipments, loading, error, fetchShipments, startRealtime, stopRealtime } = useShipmentsStore();
+    const { shipments, loading, error, fetchShipments } = useShipmentsStore();
 
     useEffect(() => {
         fetchShipments();
-        startRealtime();
-        return () => {
-            stopRealtime();
-        };
-    }, [fetchShipments, startRealtime, stopRealtime]);
+    }, [fetchShipments]);
 
     return (
         <div className="space-y-5 sm:space-y-8 min-w-0 overflow-x-clip">

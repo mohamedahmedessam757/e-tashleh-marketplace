@@ -8,6 +8,7 @@ import { useProfileStore } from '../../stores/useProfileStore';
 import { useVendorStore } from '../../stores/useVendorStore';
 import { useAdminStore } from '../../stores/useAdminStore';
 import { useOrderStore } from '../../stores/useOrderStore';
+import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { useBillingStore } from '../../stores/useBillingStore';
 import { useMerchantWalletStore } from '../../stores/useMerchantWalletStore';
 import { useResolutionStore } from '../../stores/useResolutionStore';
@@ -57,6 +58,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   } = useVendorStore();
   const { currentAdmin, systemStatus, publicSystemStatus } = useAdminStore();
   const { startRealtime, stopRealtime } = useOrderStore();
+  const shipmentsStore = useShipmentsStore();
   const { fetchInvoices, fetchCards } = useBillingStore();
   const { fetchWallet } = useMerchantWalletStore();
   const { user, fetchProfile, subscribeToProfile } = useProfileStore();
@@ -213,10 +215,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     const merchantStoreId = role === 'merchant' ? vendorStoreId || undefined : undefined;
     startRealtime(getCurrentUserId() || undefined, role, merchantStoreId);
 
+    // Shipments realtime for customer & merchant so the shipments list AND the
+    // shipment details page update live when the admin changes a shipment status
+    // (previously only the shipments list page subscribed, so the details page
+    // needed a manual reload).
+    if (role === 'customer' || role === 'merchant') {
+      shipmentsStore.fetchShipments();
+      shipmentsStore.startRealtime();
+    }
+
     return () => {
       stopRealtime();
+      if (role === 'customer' || role === 'merchant') {
+        shipmentsStore.stopRealtime();
+      }
     };
-  }, [role, vendorStoreId, startRealtime, stopRealtime]);
+  }, [role, vendorStoreId, startRealtime, stopRealtime, shipmentsStore]);
 
   // Define Menu Items per Role
   const customerNavItems = [

@@ -63,6 +63,9 @@ export const useShipmentsStore = create<ShipmentsState>((set, get) => ({
             .on('postgres_changes', { event: '*', schema: 'public', table: 'shipments' }, () => {
                 fetchShipments();
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shipment_status_logs' }, () => {
+                fetchShipments();
+            })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
                 fetchShipments();
             })
