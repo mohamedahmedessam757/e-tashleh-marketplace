@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
-import { ShipmentStatus, ActorType, Prisma, OrderStatus } from '@prisma/client';
+import { ShipmentStatus, ActorType, Prisma, OrderStatus, OfferFulfillmentStatus } from '@prisma/client';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { UsersService } from '../users/users.service';
 import {
@@ -409,6 +409,23 @@ export class ShipmentsService {
                 'REFUNDED',
             ];
             if (orderRow && !terminal.includes(orderRow.status)) {
+                // Single-part orders never go through the assembly cart, so their offer
+                // would stay READY_FOR_SHIPPING and pin the order there after carrier pickup.
+                const orderParts = await this.prisma.order.findUnique({
+                    where: { id: shipment.orderId },
+                    select: { requestType: true, parts: { select: { id: true } } },
+                });
+                if (orderParts && !this.offerFulfillment.isMultiItemOrder(orderParts)) {
+                    await this.prisma.offer.updateMany({
+                        where: {
+                            orderId: shipment.orderId,
+                            status: { in: ['accepted', 'ACCEPTED'] },
+                            cartShipmentId: null,
+                            fulfillmentStatus: OfferFulfillmentStatus.READY_FOR_SHIPPING,
+                        },
+                        data: { fulfillmentStatus: OfferFulfillmentStatus.SHIPPED },
+                    });
+                }
                 await this.offerFulfillment.recomputeOrderStatus(shipment.orderId);
             }
         }
