@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Truck } from 'lucide-react';
 import { isAcceptedOfferStatus } from '../../../utils/offerStatusHelpers';
+import { isOfferFulfillmentCancelled } from '../../../utils/offerFulfillmentHelpers';
 
 interface PartialShippingProgressCardProps {
     order: {
@@ -17,6 +18,9 @@ interface PartialShippingProgressCardProps {
     className?: string;
 }
 
+const IN_TRANSIT = new Set(['SHIPPED']);
+const DELIVERED = new Set(['DELIVERED', 'COMPLETED']);
+
 export const PartialShippingProgressCard: React.FC<PartialShippingProgressCardProps> = ({
     order,
     isAr,
@@ -25,30 +29,33 @@ export const PartialShippingProgressCard: React.FC<PartialShippingProgressCardPr
     const stats = useMemo(() => {
         const accepted =
             order.offers?.filter((o) => isAcceptedOfferStatus(o.status)) || [];
-        const total = accepted.length || 1;
-        const shipped = accepted.filter((o) => o.shippedFromCart).length;
-        const inCart = accepted.filter((o) => !o.shippedFromCart).length;
-        const handoverPending = accepted.filter(
-            (o) =>
-                !o.shippedFromCart &&
-                String(o.fulfillmentStatus || '').toUpperCase() === 'VERIFICATION_SUCCESS',
-        ).length;
-        const readyInCart = accepted.filter(
-            (o) =>
-                !o.shippedFromCart &&
-                String(o.fulfillmentStatus || '').toUpperCase() === 'READY_FOR_SHIPPING',
-        ).length;
-        const pct = Math.round((shipped / total) * 100);
-        return { total, shipped, inCart, handoverPending, readyInCart, pct };
+        const fs = (o: { fulfillmentStatus?: string }) =>
+            String(o.fulfillmentStatus || '').toUpperCase();
+
+        const excluded = accepted.filter((o) => isOfferFulfillmentCancelled(o.fulfillmentStatus)).length;
+        const active = accepted.filter((o) => !isOfferFulfillmentCancelled(o.fulfillmentStatus));
+        const inTransit = active.filter((o) => IN_TRANSIT.has(fs(o))).length;
+        const delivered = active.filter((o) => DELIVERED.has(fs(o))).length;
+        const shipped = inTransit + delivered;
+        const pending = active.filter((o) => !IN_TRANSIT.has(fs(o)) && !DELIVERED.has(fs(o)));
+        const inCart = pending.length;
+        const handoverPending = pending.filter((o) => fs(o) === 'VERIFICATION_SUCCESS').length;
+        const readyInCart = pending.filter((o) => fs(o) === 'READY_FOR_SHIPPING').length;
+        const total = active.length;
+        const pct = total > 0 ? Math.round((shipped / total) * 100) : 0;
+        return { total, shipped, inTransit, delivered, inCart, handoverPending, readyInCart, excluded, pct };
     }, [order.offers]);
 
     const isGrouped = String(order.requestType || '').toLowerCase() === 'multiple';
     const show =
         isGrouped &&
+        stats.total > 0 &&
         (order.status === 'PARTIALLY_SHIPPED' ||
-            (stats.shipped > 0 && stats.inCart > 0));
+            (stats.shipped > 0 && (stats.inCart > 0 || stats.excluded > 0)));
 
     if (!show) return null;
+
+    const allShipped = stats.inCart === 0;
 
     return (
         <motion.div
@@ -66,9 +73,13 @@ export const PartialShippingProgressCard: React.FC<PartialShippingProgressCardPr
                             {isAr ? 'تقدم الشحن الجزئي' : 'Partial shipping progress'}
                         </h4>
                         <p className="text-white/40 text-[10px] uppercase tracking-wider">
-                            {isAr
-                                ? 'يتم شحن طلبك على دفعات'
-                                : 'Your grouped order ships in batches'}
+                            {allShipped
+                                ? isAr
+                                    ? 'تم شحن جميع القطع النشطة في الطلب'
+                                    : 'All active parts of this order have shipped'
+                                : isAr
+                                    ? 'يتم شحن طلبك على دفعات'
+                                    : 'Your grouped order ships in batches'}
                         </p>
                     </div>
                 </div>
@@ -88,9 +99,21 @@ export const PartialShippingProgressCard: React.FC<PartialShippingProgressCardPr
                     {stats.shipped}/{stats.total}{' '}
                     {isAr ? 'قطعة شُحنت' : 'shipped'}
                 </span>
-                <span className="text-[10px] text-white/30 font-bold uppercase">
-                    {stats.inCart} {isAr ? 'في السلة' : 'in cart'}
-                </span>
+                {stats.delivered > 0 && (
+                    <span className="text-[10px] text-emerald-400/80 font-bold uppercase">
+                        {stats.delivered} {isAr ? 'تم توصيلها' : 'delivered'}
+                    </span>
+                )}
+                {stats.inTransit > 0 && (
+                    <span className="text-[10px] text-blue-300/80 font-bold uppercase">
+                        {stats.inTransit} {isAr ? 'قيد الشحن' : 'in transit'}
+                    </span>
+                )}
+                {stats.inCart > 0 && (
+                    <span className="text-[10px] text-white/30 font-bold uppercase">
+                        {stats.inCart} {isAr ? 'في السلة' : 'in cart'}
+                    </span>
+                )}
                 {stats.readyInCart > 0 && (
                     <span className="text-[10px] text-green-400/80 font-bold uppercase">
                         {stats.readyInCart} {isAr ? 'جاهزة للاختيار' : 'ready to ship'}
@@ -100,6 +123,12 @@ export const PartialShippingProgressCard: React.FC<PartialShippingProgressCardPr
                     <span className="text-[10px] text-amber-400/80 font-bold uppercase">
                         {stats.handoverPending}{' '}
                         {isAr ? 'بانتظار تسليم التاجر' : 'awaiting merchant handover'}
+                    </span>
+                )}
+                {stats.excluded > 0 && (
+                    <span className="text-[10px] text-rose-400/80 font-bold uppercase">
+                        {stats.excluded}{' '}
+                        {isAr ? 'ملغاة / مستردة (خارج الحساب)' : 'cancelled / refunded (excluded)'}
                     </span>
                 )}
             </div>

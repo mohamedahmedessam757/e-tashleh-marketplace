@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Package } from 'lucide-react';
-import { getOrderTimelineStepIndex } from '../../../utils/offerFulfillmentHelpers';
+import {
+    getOrderTimelineStepIndex,
+    isReturnLogisticsShipment,
+} from '../../../utils/offerFulfillmentHelpers';
 
 interface PartialDeliveryProgressCardProps {
     shipments?: Array<{ id?: string; status?: string }>;
@@ -18,15 +21,17 @@ export const PartialDeliveryProgressCard: React.FC<PartialDeliveryProgressCardPr
     isAr,
     className = '',
 }) => {
-    if (getOrderTimelineStepIndex(orderStatus) < 5) {
-        return null;
-    }
+    const isOutbound = (status?: string) => {
+        const s = String(status || '').toUpperCase();
+        return !isReturnLogisticsShipment(s) && s !== 'CANCELLED';
+    };
+    const outboundBatches = shipmentBatches.filter((b) => isOutbound(b.status));
 
     const stats = useMemo(() => {
         const list =
             shipments.length > 0
-                ? shipments
-                : shipmentBatches.map((b) => ({
+                ? shipments.filter((s) => isOutbound(s.status))
+                : outboundBatches.map((b) => ({
                       id: b.shipmentId,
                       status: b.status,
                   }));
@@ -39,7 +44,7 @@ export const PartialDeliveryProgressCard: React.FC<PartialDeliveryProgressCardPr
         return { total, delivered, pending: total - delivered, pct, list };
     }, [shipments, shipmentBatches, orderStatus]);
 
-    if (!stats || stats.delivered === 0 || stats.delivered >= stats.total) {
+    if (getOrderTimelineStepIndex(orderStatus) < 5 || !stats || stats.delivered === 0 || stats.delivered >= stats.total) {
         return null;
     }
 
@@ -77,7 +82,7 @@ export const PartialDeliveryProgressCard: React.FC<PartialDeliveryProgressCardPr
             </div>
 
             <ul className="space-y-2">
-                {(shipmentBatches.length > 0 ? shipmentBatches : stats.list).map((row: any, i) => {
+                {(outboundBatches.length > 0 ? outboundBatches : stats.list).map((row: any, i) => {
                     const delivered =
                         String(row.status || '').toUpperCase() === 'DELIVERED_TO_CUSTOMER';
                     const label =
