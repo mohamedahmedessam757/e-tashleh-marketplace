@@ -177,7 +177,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
                                 {isRTL ? 'تواصل معنا' : 'Get in Touch'}
                                 <span className="w-1.5 h-1.5 bg-gold-500 rounded-full animate-pulse" />
                             </h3>
-                            <p className="text-gold-500/60 font-medium text-[11px] tracking-wide">
+                            <p className="text-gold-500/80 font-medium text-sm mt-1.5">
                                 {isRTL ? 'نحن هنا لمساعدتك دائماً' : 'We are here to help you'}
                             </p>
                         </div>
@@ -196,15 +196,15 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
                             {/* Name Field */}
                             <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase text-white/20 tracking-[0.15em] px-1 flex items-center gap-2">
-                                    <User size={10} className="text-gold-500" />
+                                <label className="text-sm md:text-[15px] font-bold text-white/85 px-1 flex items-center gap-2">
+                                    <User size={16} className="text-gold-500 shrink-0" />
                                     {isRTL ? 'الاسم بالكامل' : 'Full Name'}
-                                    <span className="text-gold-500/50">*</span>
+                                    <span className="text-gold-500">*</span>
                                 </label>
                                 <input 
                                     type="text" 
                                     required
-                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/5 font-bold text-sm"
+                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/35 placeholder:font-medium font-bold text-sm"
                                     placeholder={isRTL ? 'أدخل اسمك هنا' : 'Enter your name'}
                                     value={formData.name}
                                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -213,15 +213,15 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
                             {/* Email Address */}
                             <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase text-white/20 tracking-[0.15em] px-1 flex items-center gap-2">
-                                    <Mail size={10} className="text-gold-500" />
+                                <label className="text-sm md:text-[15px] font-bold text-white/85 px-1 flex items-center gap-2">
+                                    <Mail size={16} className="text-gold-500 shrink-0" />
                                     {isRTL ? 'البريد الإلكتروني' : 'Email Address'}
-                                    <span className="text-gold-500/50">*</span>
+                                    <span className="text-gold-500">*</span>
                                 </label>
                                 <input 
                                     type="email" 
                                     required
-                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/5 font-bold text-sm"
+                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/35 placeholder:font-medium font-bold text-sm"
                                     placeholder="mail@example.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -230,8 +230,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
                             {/* Phone Number */}
                             <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase text-white/20 tracking-[0.15em] px-1 flex items-center gap-2">
-                                    <PhoneCall size={10} className="text-gold-500" />
+                                <label className="text-sm md:text-[15px] font-bold text-white/85 px-1 flex items-center gap-2">
+                                    <PhoneCall size={16} className="text-gold-500 shrink-0" />
                                     {isRTL ? 'رقم الجوال' : 'Phone Number'}
                                 </label>
                                 <div className="flex bg-white/[0.02] border border-white/10 hover:border-white/20 focus-within:border-gold-500 rounded-xl overflow-hidden transition-all h-[46px]">
@@ -244,7 +244,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
                                     </select>
                                     <input 
                                         type="tel" 
-                                        className="w-full bg-transparent px-4 text-white outline-none placeholder:text-white/5 font-bold text-sm"
+                                        className="w-full bg-transparent px-4 text-white outline-none placeholder:text-white/35 placeholder:font-medium font-bold text-sm"
                                         placeholder="5XXXXXXXX"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 9)})}
@@ -254,13 +254,13 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
                             {/* Subject Field */}
                             <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase text-white/20 tracking-[0.15em] px-1 flex items-center gap-2">
-                                    <HelpCircle size={10} className="text-gold-500" />
+                                <label className="text-sm md:text-[15px] font-bold text-white/85 px-1 flex items-center gap-2">
+                                    <HelpCircle size={16} className="text-gold-500 shrink-0" />
                                     {isRTL ? 'الموضوع' : 'Subject'}
                                 </label>
                                 <input 
                                     type="text" 
-                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/5 font-bold text-sm"
+                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/35 placeholder:font-medium font-bold text-sm"
                                     placeholder={isRTL ? 'بماذا يمكننا مساعدتك؟' : 'How can we help?'}
                                     value={formData.subject}
                                     onChange={(e) => setFormData({...formData, subject: e.target.value})}
@@ -269,17 +269,20 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
 
                             {/* Message Field */}
                             <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase text-white/20 tracking-[0.15em] px-1 flex items-center justify-between">
+                                <label className="text-sm md:text-[15px] font-bold text-white/85 px-1 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <span className="w-1 h-1 bg-gold-500 rounded-full" />
+                                        <span className="w-1.5 h-1.5 bg-gold-500 rounded-full shrink-0" />
                                         {isRTL ? 'تفاصيل الرسالة' : 'Message Details'}
+                                        <span className="text-gold-500">*</span>
                                     </div>
-                                    <span className="text-[8px] text-white/10 tracking-widest">{formData.message.length}/500</span>
+                                    <span className="text-xs font-medium text-white/45 tabular-nums">{formData.message.length}/500</span>
                                 </label>
                                 <textarea 
                                     rows={3}
                                     required
-                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/5 font-bold text-sm resize-none"
+                                    maxLength={500}
+                                    placeholder={isRTL ? 'اكتب رسالتك هنا' : 'Write your message here'}
+                                    className="w-full bg-white/[0.02] border border-white/10 hover:border-white/20 focus:border-gold-500 focus:bg-gold-500/[0.01] rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-white/35 placeholder:font-medium font-bold text-sm resize-none"
                                     value={formData.message}
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                                 />
@@ -297,7 +300,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
                                             <Loader2 className="animate-spin text-gold-500" size={18} />
                                         ) : (
                                             <>
-                                                <span className="text-white font-black uppercase tracking-widest text-[11px]">
+                                                <span className="text-white font-black text-sm">
                                                     {isRTL ? 'إرسال الرسالة' : 'Send Message'}
                                                 </span>
                                                 <Send size={14} className={`text-gold-500 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 ${isRTL ? 'rotate-180' : ''}`} />

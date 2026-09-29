@@ -1,10 +1,11 @@
 import React, { useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Car, Calendar, Hash, Camera, Info, ChevronDown, AlertCircle, HelpCircle } from 'lucide-react';
+import { Car, Calendar, Hash, Camera, Info, AlertCircle, HelpCircle } from 'lucide-react';
 import { useCreateOrderStore } from '../../../../stores/useCreateOrderStore';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useCatalogStore } from '../../../../stores/useCatalogStore';
 import { GlassCard } from '../../../ui/GlassCard';
+import { SearchableSelect, type SearchableSelectOption } from '../../../ui/SearchableSelect';
 import { useEffect } from 'react';
 
 export const VehicleDetailsStep: React.FC = () => {
@@ -26,9 +27,33 @@ export const VehicleDetailsStep: React.FC = () => {
     return makes.find(m => m.name === vehicle.make);
   }, [vehicle.make, makes]);
 
-  // Handle Manufacturer Change
-  const handleManufacturerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMake = e.target.value;
+  const makeOptions = useMemo<SearchableSelectOption[]>(() => {
+    const opts = makes.map((m) => ({
+      value: m.name,
+      label: isRTL ? m.nameAr || m.name : m.name,
+      keywords: [m.name, m.nameAr].filter(Boolean),
+    }));
+    if (vehicle.make && !makes.some((m) => m.name === vehicle.make)) {
+      opts.unshift({ value: vehicle.make, label: vehicle.make, keywords: [] });
+    }
+    return opts;
+  }, [makes, isRTL, vehicle.make]);
+
+  const modelOptions = useMemo<SearchableSelectOption[]>(() => {
+    const models = selectedManufacturer?.models || [];
+    const opts = models.map((m) => ({
+      value: m.name,
+      label: isRTL ? m.nameAr || m.name : m.name,
+      keywords: [m.name, m.nameAr].filter(Boolean),
+    }));
+    if (vehicle.model && !models.some((m) => m.name === vehicle.model)) {
+      opts.unshift({ value: vehicle.model, label: vehicle.model, keywords: [] });
+    }
+    return opts;
+  }, [selectedManufacturer, isRTL, vehicle.model]);
+
+  const handleManufacturerChange = (newMake: string) => {
+    if (newMake === vehicle.make) return;
     updateVehicle({
       make: newMake,
       model: '', // Reset model when make changes
@@ -36,9 +61,8 @@ export const VehicleDetailsStep: React.FC = () => {
     });
   };
 
-  // Handle Type (Model) Change
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateVehicle({ model: e.target.value });
+  const handleTypeChange = (newModel: string) => {
+    updateVehicle({ model: newModel });
   };
 
   // Handle Year Change (Manual Input)
@@ -78,29 +102,21 @@ export const VehicleDetailsStep: React.FC = () => {
           <label className="text-sm font-medium text-white/80">
             {language === 'ar' ? "الشركة المصنعة" : "Manufacturer"} <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <Car className={`absolute top-3.5 w-5 h-5 text-gold-500 pointer-events-none z-10 ${isRTL ? 'right-3.5' : 'left-3.5'}`} />
-            <select
-              value={vehicle.make}
-              onChange={handleManufacturerChange}
-              className={`w-full bg-white/5 border rounded-xl py-3 text-white outline-none transition-all appearance-none ${showErrors && !vehicle.make ? 'border-red-500 ring-2 ring-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.5)] focus:border-red-500' : 'border-white/10 focus:border-gold-500 focus:ring-1 focus:ring-gold-500'} ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} ${!vehicle.make ? 'text-white/30' : ''}`}
-            >
-              <option value="" disabled className="bg-[#1A1814] text-gray-400">
-                {isLoading ? (language === 'ar' ? "جاري التحميل..." : "Loading...") : (language === 'ar' ? "اختر الشركة المصنعة" : "Select Manufacturer")}
-              </option>
-              {vehicle.make && !makes.some((m) => m.name === vehicle.make) && (
-                <option value={vehicle.make} className="bg-[#1A1814] text-white">
-                  {vehicle.make}
-                </option>
-              )}
-              {makes.map((m) => (
-                <option key={m.id} value={m.name} className="bg-[#1A1814] text-white">
-                  {language === 'ar' ? m.nameAr : m.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className={`absolute top-4 w-4 h-4 text-white/30 pointer-events-none ${isRTL ? 'left-3.5' : 'right-3.5'}`} />
-          </div>
+          <SearchableSelect
+            value={vehicle.make}
+            onChange={handleManufacturerChange}
+            options={makeOptions}
+            icon={<Car className="w-5 h-5" />}
+            isRTL={isRTL}
+            hasError={showErrors && !vehicle.make}
+            ariaLabel={isRTL ? 'الشركة المصنعة' : 'Manufacturer'}
+            placeholder={
+              isLoading
+                ? (isRTL ? 'جاري التحميل...' : 'Loading...')
+                : (isRTL ? 'اكتب اسم الشركة أو اختر من القائمة' : 'Type a manufacturer or pick from the list')
+            }
+            noResultsText={isRTL ? 'لا توجد شركة بهذا الاسم' : 'No manufacturer matches'}
+          />
           {showErrors && !vehicle.make && (
             <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-red-500 text-xs flex items-center gap-1 mt-1.5 font-medium">
               <AlertCircle size={14} />
@@ -114,31 +130,18 @@ export const VehicleDetailsStep: React.FC = () => {
           <label className="text-sm font-medium text-white/80">
             {language === 'ar' ? "نوع السيارة" : "Vehicle Type"} <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <Hash className={`absolute top-3.5 w-4 h-4 text-gold-500 pointer-events-none z-10 ${isRTL ? 'right-3.5' : 'left-3.5'}`} />
-            <select
-              value={vehicle.model}
-              onChange={handleTypeChange}
-              disabled={!vehicle.make}
-              className={`w-full bg-white/5 border rounded-xl py-3 text-white outline-none transition-all appearance-none ${showErrors && !vehicle.model ? 'border-red-500 ring-2 ring-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.5)] focus:border-red-500' : 'border-white/10 focus:border-gold-500 focus:ring-1 focus:ring-gold-500'} ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} ${!vehicle.make ? 'opacity-50 cursor-not-allowed' : ''} ${!vehicle.model ? 'text-white/30' : ''}`}
-            >
-              <option value="" disabled className="bg-[#1A1814] text-gray-400">
-                {language === 'ar' ? "اختر نوع السيارة" : "Select Vehicle Type"}
-              </option>
-              {vehicle.model &&
-                !(selectedManufacturer?.models || []).some((m) => m.name === vehicle.model) && (
-                <option value={vehicle.model} className="bg-[#1A1814] text-white">
-                  {vehicle.model}
-                </option>
-              )}
-              {selectedManufacturer?.models.map((model) => (
-                <option key={model.id} value={model.name} className="bg-[#1A1814] text-white">
-                  {language === 'ar' ? model.nameAr : model.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className={`absolute top-4 w-4 h-4 text-white/30 pointer-events-none ${isRTL ? 'left-3.5' : 'right-3.5'}`} />
-          </div>
+          <SearchableSelect
+            value={vehicle.model}
+            onChange={handleTypeChange}
+            options={modelOptions}
+            disabled={!vehicle.make}
+            icon={<Hash className="w-4 h-4 mt-0.5" />}
+            isRTL={isRTL}
+            hasError={showErrors && !vehicle.model}
+            ariaLabel={isRTL ? 'نوع السيارة' : 'Vehicle Type'}
+            placeholder={isRTL ? 'اكتب نوع السيارة أو اختر من القائمة' : 'Type a vehicle type or pick from the list'}
+            noResultsText={isRTL ? 'لا يوجد نوع بهذا الاسم' : 'No vehicle type matches'}
+          />
           {showErrors && !vehicle.model && (
             <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-red-500 text-xs flex items-center gap-1 mt-1.5 font-medium">
               <AlertCircle size={14} />
