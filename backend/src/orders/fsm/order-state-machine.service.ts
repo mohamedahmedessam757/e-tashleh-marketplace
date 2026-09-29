@@ -15,7 +15,7 @@ export class OrderStateMachine {
         [OrderStatus.PREPARED]: [OrderStatus.VERIFICATION, OrderStatus.CANCELLED],
         [OrderStatus.VERIFICATION]: [OrderStatus.VERIFICATION_SUCCESS, OrderStatus.NON_MATCHING, OrderStatus.CANCELLED],
         [OrderStatus.VERIFICATION_SUCCESS]: [OrderStatus.READY_FOR_SHIPPING, OrderStatus.CANCELLED],
-        [OrderStatus.READY_FOR_SHIPPING]: [OrderStatus.SHIPPED, OrderStatus.PARTIALLY_SHIPPED, OrderStatus.CANCELLED],
+        [OrderStatus.READY_FOR_SHIPPING]: [OrderStatus.SHIPPED, OrderStatus.PARTIALLY_SHIPPED, OrderStatus.PARTIALLY_DELIVERED, OrderStatus.DELIVERED, OrderStatus.CANCELLED],
         [OrderStatus.NON_MATCHING]: [OrderStatus.CORRECTION_PERIOD, OrderStatus.CANCELLED],
         [OrderStatus.CORRECTION_PERIOD]: [OrderStatus.CORRECTION_SUBMITTED, OrderStatus.CANCELLED],
         [OrderStatus.CORRECTION_SUBMITTED]: [OrderStatus.VERIFICATION_SUCCESS, OrderStatus.NON_MATCHING, OrderStatus.CANCELLED],
