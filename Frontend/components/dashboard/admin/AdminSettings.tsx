@@ -1012,7 +1012,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                             <input
                               type="number"
                               min={0}
-                              value={tierData.withdrawalMin ?? 100}
+                              value={tierData.withdrawalMin ?? formData.financial?.minWithdrawalCustomer ?? 1}
                               onChange={(e) => {
                                 const tiers = { ...(formData.financial?.loyaltyTiers || {}) };
                                 tiers[tier] = { ...tierData, withdrawalMin: parseInt(e.target.value) || 0 };
@@ -1110,7 +1110,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                             ))}
                             <div>
                               <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأدنى' : 'Withdrawal min'}</label>
-                              <input type="number" min={0} value={tierData.withdrawalMin ?? 100} onChange={(e) => updateStoreTier('withdrawalMin', parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50" />
+                              <input type="number" min={0} value={tierData.withdrawalMin ?? formData.financial?.minWithdrawalMerchant ?? 1} onChange={(e) => updateStoreTier('withdrawalMin', parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white outline-none focus:border-gold-500/50" />
                             </div>
                             <div>
                               <label className="text-[9px] text-white/30 uppercase block mb-1">{isAr ? 'حد السحب الأقصى' : 'Withdrawal max'}</label>

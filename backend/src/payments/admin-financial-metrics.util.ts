@@ -125,6 +125,32 @@ function buildGrossSalesPaymentWhere(
   };
 }
 
+/** SUCCESS payments with shipping — carrier payout base (include refunded orders; shipping already owed). */
+function buildShippingCollectedPaymentWhere(
+  range: AdminDateRange,
+): Prisma.PaymentTransactionWhereInput {
+  const dateFilter = buildPaymentDateFilter(range);
+  return {
+    status: 'SUCCESS',
+    shippingCost: { gt: 0 },
+    order: { status: { not: 'CANCELLED' } },
+    ...(dateFilter
+      ? {
+          OR: [
+            { paidAt: dateFilter },
+            { paidAt: null, createdAt: dateFilter },
+          ],
+        }
+      : {}),
+  };
+}
+
+export interface ShippingTrendPoint {
+  date: string;
+  shippingCollected: number;
+  count: number;
+}
+
 /** Previous period of equal length, ending the day before range.startDate. */
 export function buildPreviousAdminDateRange(
   range: AdminDateRange,
@@ -184,6 +210,7 @@ export async function computeAdminFinancialKpis(
   range: AdminDateRange,
 ): Promise<AdminFinancialKpis> {
   const grossSalesWhere = buildGrossSalesPaymentWhere(range);
+  const shippingWhere = buildShippingCollectedPaymentWhere(range);
   const dateFilter = buildPaymentDateFilter(range);
   const walletDate = dateFilter ? { createdAt: dateFilter } : {};
 
@@ -191,6 +218,7 @@ export async function computeAdminFinancialKpis(
     grossSalesAgg,
     commissionAgg,
     shippingAgg,
+    scShippingAgg,
     referralAgg,
     referralCountResult,
     pendingWithdrawalsAgg,
@@ -224,9 +252,17 @@ export async function computeAdminFinancialKpis(
       _sum: { commission: true },
     }),
     prisma.paymentTransaction.aggregate({
-      where: grossSalesWhere,
+      where: shippingWhere,
       _sum: { shippingCost: true },
+      _count: { id: true },
     }),
+    // Return / adjudication shipping owed to carrier (obligation ledger)
+    (prisma as any).shippingCompanyObligation.aggregate({
+      where: {
+        ...(dateFilter ? { createdAt: dateFilter } : {}),
+      },
+      _sum: { shippingAmount: true, amountOriginal: true },
+    }).catch(() => ({ _sum: { shippingAmount: 0, amountOriginal: 0 } })),
     prisma.walletTransaction.aggregate({
       where: {
         type: 'CREDIT',
@@ -378,7 +414,12 @@ export async function computeAdminFinancialKpis(
   const partialRefunds = Number(partialRefundsAgg._sum.refundedAmount || 0);
   const totalRefunds = fullRefunds + partialRefunds;
   const netSales = grossSales - totalRefunds;
-  const shippingCollected = Number(shippingAgg._sum.shippingCost || 0);
+  const outboundShipping = Number(shippingAgg._sum.shippingCost || 0);
+  const returnCarrierShipping = Number(
+    (scShippingAgg as any)?._sum?.shippingAmount || 0,
+  );
+  // Total owed / paid to shipping company from orders + return liabilities
+  const shippingCollected = outboundShipping + returnCarrierShipping;
 
   // Net profit deducts payment-time Stripe fees only (never adjudication retention).
   const netCommission =
@@ -520,6 +561,51 @@ export async function computeSalesTrend(
       date: day,
       grossSales: roundMoney(gross),
       netSales: roundMoney(gross - refunds),
+    };
+  });
+}
+
+/** Daily shipping totals owed to the carrier (order outbound shipping from paid transactions). */
+export async function computeShippingTrend(
+  prisma: PrismaService,
+  range: AdminDateRange,
+): Promise<ShippingTrendPoint[]> {
+  const { startDate, endDate } = range;
+
+  const rows =
+    startDate && endDate
+      ? await prisma.$queryRaw<Array<{ day: Date; shipping: unknown; cnt: unknown }>>`
+          SELECT
+            DATE(COALESCE(pt."paid_at", pt."created_at")) AS day,
+            COALESCE(SUM(pt."shipping_cost"), 0) AS shipping,
+            COUNT(*)::int AS cnt
+          FROM "payment_transactions" pt
+          JOIN "orders" o ON o."id" = pt."order_id"
+          WHERE pt."status" = 'SUCCESS'
+            AND pt."shipping_cost" > 0
+            AND o."status" <> 'CANCELLED'
+            AND COALESCE(pt."paid_at", pt."created_at") BETWEEN ${startDate} AND ${endDate}
+          GROUP BY DATE(COALESCE(pt."paid_at", pt."created_at"))
+          ORDER BY day ASC`
+      : await prisma.$queryRaw<Array<{ day: Date; shipping: unknown; cnt: unknown }>>`
+          SELECT
+            DATE(COALESCE(pt."paid_at", pt."created_at")) AS day,
+            COALESCE(SUM(pt."shipping_cost"), 0) AS shipping,
+            COUNT(*)::int AS cnt
+          FROM "payment_transactions" pt
+          JOIN "orders" o ON o."id" = pt."order_id"
+          WHERE pt."status" = 'SUCCESS'
+            AND pt."shipping_cost" > 0
+            AND o."status" <> 'CANCELLED'
+          GROUP BY DATE(COALESCE(pt."paid_at", pt."created_at"))
+          ORDER BY day ASC`;
+
+  return rows.map((r) => {
+    const day = r.day instanceof Date ? r.day.toISOString().slice(0, 10) : String(r.day);
+    return {
+      date: day,
+      shippingCollected: roundMoney(Number(r.shipping || 0)),
+      count: Number(r.cnt || 0),
     };
   });
 }

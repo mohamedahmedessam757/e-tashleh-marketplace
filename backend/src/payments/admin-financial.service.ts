@@ -14,6 +14,7 @@ import {
   computeAdminFinancialKpis,
   buildAdminDateRange,
   computeSalesTrend,
+  computeShippingTrend,
   computeTopSpenders,
   computeTopEarners,
   roundMoney,
@@ -71,7 +72,6 @@ export const FINANCIAL_REPORT_IDS = [
 const REPORT_ID_ALIASES: Record<string, FinancialReportId> = {
   'platform-revenue-summary': 'platform-revenue',
   'gateway-fees': 'commission-summary',
-  'shipping-collected': 'daily-transactions',
   'refunds-summary': 'refund-summary',
   'withdrawals-summary': 'withdrawal-summary',
   'escrow-holdings': 'escrow-summary',
@@ -92,7 +92,8 @@ type CoreReportId =
   | 'customer-spending'
   | 'platform-revenue'
   | 'reconciliation'
-  | 'daily-transactions';
+  | 'daily-transactions'
+  | 'shipping-collected';
 
 export type FinancialReportId = (typeof FINANCIAL_REPORT_IDS)[number];
 
@@ -780,6 +781,7 @@ export class AdminFinancialService {
       'platform-revenue',
       'reconciliation',
       'daily-transactions',
+      'shipping-collected',
     ];
     if (!coreIds.includes(resolvedId)) {
       throw new NotFoundException(`Unknown report type: ${reportId}`);
@@ -1098,12 +1100,9 @@ export class AdminFinancialService {
       case 'daily-transactions': {
         const trend = await computeSalesTrend(this.prisma, range);
         const kpis = await computeAdminFinancialKpis(this.prisma, range);
-        const isShipping = reportId === 'shipping-collected';
-        const rows = (trend || []).map((t: { date?: string; total?: number; count?: number }) => ({
+        const rows = (trend || []).map((t: { date?: string; grossSales?: number }) => ({
           date: t.date,
-          ...(isShipping
-            ? { shippingCollected: kpis.shippingCollected ?? 0 }
-            : { total: t.total, count: t.count }),
+          total: t.grossSales,
         }));
         return {
           ...base,
@@ -1114,6 +1113,27 @@ export class AdminFinancialService {
           },
           rows,
           trend,
+        };
+      }
+      case 'shipping-collected': {
+        const [shippingTrend, kpis] = await Promise.all([
+          computeShippingTrend(this.prisma, range),
+          computeAdminFinancialKpis(this.prisma, range),
+        ]);
+        const rows = (shippingTrend || []).map((t) => ({
+          date: t.date,
+          shippingCollected: t.shippingCollected,
+          count: t.count,
+        }));
+        return {
+          ...base,
+          summary: {
+            shippingCollected: kpis.shippingCollected,
+            rowCount: rows.length,
+            paymentCount: rows.reduce((s, r) => s + Number(r.count || 0), 0),
+          },
+          rows,
+          trend: shippingTrend,
         };
       }
       default:
@@ -1216,6 +1236,39 @@ export class AdminFinancialService {
       currencyActivatedAt,
     };
 
+    const customerMin = Number(
+      nextFinancial.minWithdrawalCustomer ?? beforeFinancial.minWithdrawalCustomer ?? 100,
+    );
+    const merchantMin = Number(
+      nextFinancial.minWithdrawalMerchant ?? beforeFinancial.minWithdrawalMerchant ?? 100,
+    );
+
+    // Keep loyalty/store tier floors in sync so stale withdrawalMin:100 cannot override
+    // the platform minimum the admin just saved.
+    const loyaltyTiers = {
+      ...((beforeFinancial.loyaltyTiers as Record<string, any>) || {}),
+      ...((nextFinancial.loyaltyTiers as Record<string, any>) || {}),
+    };
+    for (const key of Object.keys(loyaltyTiers)) {
+      loyaltyTiers[key] = {
+        ...(loyaltyTiers[key] || {}),
+        withdrawalMin: customerMin,
+      };
+    }
+    nextFinancial.loyaltyTiers = loyaltyTiers;
+
+    const storeLoyaltyTiers = {
+      ...((beforeFinancial.storeLoyaltyTiers as Record<string, any>) || {}),
+      ...((nextFinancial.storeLoyaltyTiers as Record<string, any>) || {}),
+    };
+    for (const key of Object.keys(storeLoyaltyTiers)) {
+      storeLoyaltyTiers[key] = {
+        ...(storeLoyaltyTiers[key] || {}),
+        withdrawalMin: merchantMin,
+      };
+    }
+    nextFinancial.storeLoyaltyTiers = storeLoyaltyTiers;
+
     await this.prisma.platformSettings.upsert({
       where: { settingKey: 'system_config' },
       update: {
@@ -1227,12 +1280,6 @@ export class AdminFinancialService {
       },
     });
 
-    const customerMin = Number(
-      nextFinancial.minWithdrawalCustomer ?? beforeFinancial.minWithdrawalCustomer ?? 100,
-    );
-    const merchantMin = Number(
-      nextFinancial.minWithdrawalMerchant ?? beforeFinancial.minWithdrawalMerchant ?? 100,
-    );
     const withdrawalRow = await this.prisma.platformSettings.findUnique({
       where: { settingKey: 'withdrawal_limits' },
     });

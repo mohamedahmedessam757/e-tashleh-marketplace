@@ -42,6 +42,7 @@ export type OrderPartMinAggregateOutputType = {
   notes: string | null
   video: string | null
   quantity: number | null
+  shippingClass: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -54,6 +55,7 @@ export type OrderPartMaxAggregateOutputType = {
   notes: string | null
   video: string | null
   quantity: number | null
+  shippingClass: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -67,6 +69,7 @@ export type OrderPartCountAggregateOutputType = {
   images: number
   video: number
   quantity: number
+  shippingClass: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -89,6 +92,7 @@ export type OrderPartMinAggregateInputType = {
   notes?: true
   video?: true
   quantity?: true
+  shippingClass?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -101,6 +105,7 @@ export type OrderPartMaxAggregateInputType = {
   notes?: true
   video?: true
   quantity?: true
+  shippingClass?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -114,6 +119,7 @@ export type OrderPartCountAggregateInputType = {
   images?: true
   video?: true
   quantity?: true
+  shippingClass?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -214,6 +220,7 @@ export type OrderPartGroupByOutputType = {
   images: string[]
   video: string | null
   quantity: number
+  shippingClass: string | null
   createdAt: Date
   updatedAt: Date
   _count: OrderPartCountAggregateOutputType | null
@@ -250,6 +257,7 @@ export type OrderPartWhereInput = {
   images?: Prisma.StringNullableListFilter<"OrderPart">
   video?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   quantity?: Prisma.IntFilter<"OrderPart"> | number
+  shippingClass?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
@@ -267,6 +275,7 @@ export type OrderPartOrderByWithRelationInput = {
   images?: Prisma.SortOrder
   video?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  shippingClass?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   order?: Prisma.OrderOrderByWithRelationInput
@@ -287,6 +296,7 @@ export type OrderPartWhereUniqueInput = Prisma.AtLeast<{
   images?: Prisma.StringNullableListFilter<"OrderPart">
   video?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   quantity?: Prisma.IntFilter<"OrderPart"> | number
+  shippingClass?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
@@ -304,6 +314,7 @@ export type OrderPartOrderByWithAggregationInput = {
   images?: Prisma.SortOrder
   video?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  shippingClass?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderPartCountOrderByAggregateInput
@@ -325,6 +336,7 @@ export type OrderPartScalarWhereWithAggregatesInput = {
   images?: Prisma.StringNullableListFilter<"OrderPart">
   video?: Prisma.StringNullableWithAggregatesFilter<"OrderPart"> | string | null
   quantity?: Prisma.IntWithAggregatesFilter<"OrderPart"> | number
+  shippingClass?: Prisma.StringNullableWithAggregatesFilter<"OrderPart"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrderPart"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"OrderPart"> | Date | string
 }
@@ -337,6 +349,7 @@ export type OrderPartCreateInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
@@ -354,6 +367,7 @@ export type OrderPartUncheckedCreateInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
@@ -369,6 +383,7 @@ export type OrderPartUpdateInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
@@ -386,6 +401,7 @@ export type OrderPartUncheckedUpdateInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
@@ -402,6 +418,7 @@ export type OrderPartCreateManyInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -414,6 +431,7 @@ export type OrderPartUpdateManyMutationInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -427,6 +445,7 @@ export type OrderPartUncheckedUpdateManyInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,6 +474,7 @@ export type OrderPartCountOrderByAggregateInput = {
   images?: Prisma.SortOrder
   video?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  shippingClass?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -471,6 +491,7 @@ export type OrderPartMaxOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   video?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  shippingClass?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -483,6 +504,7 @@ export type OrderPartMinOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   video?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  shippingClass?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -598,6 +620,7 @@ export type OrderPartCreateWithoutOrderInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
@@ -613,6 +636,7 @@ export type OrderPartUncheckedCreateWithoutOrderInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
@@ -658,6 +682,7 @@ export type OrderPartScalarWhereInput = {
   images?: Prisma.StringNullableListFilter<"OrderPart">
   video?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   quantity?: Prisma.IntFilter<"OrderPart"> | number
+  shippingClass?: Prisma.StringNullableFilter<"OrderPart"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrderPart"> | Date | string
 }
@@ -670,6 +695,7 @@ export type OrderPartCreateWithoutOffersInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
@@ -686,6 +712,7 @@ export type OrderPartUncheckedCreateWithoutOffersInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
@@ -716,6 +743,7 @@ export type OrderPartUpdateWithoutOffersInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
@@ -732,6 +760,7 @@ export type OrderPartUncheckedUpdateWithoutOffersInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
@@ -746,6 +775,7 @@ export type OrderPartCreateWithoutShippingAddressInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
@@ -762,6 +792,7 @@ export type OrderPartUncheckedCreateWithoutShippingAddressInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
@@ -792,6 +823,7 @@ export type OrderPartUpdateWithoutShippingAddressInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
@@ -808,6 +840,7 @@ export type OrderPartUncheckedUpdateWithoutShippingAddressInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
@@ -822,6 +855,7 @@ export type OrderPartCreateWithoutShippingWaybillsInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
@@ -838,6 +872,7 @@ export type OrderPartUncheckedCreateWithoutShippingWaybillsInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
@@ -868,6 +903,7 @@ export type OrderPartUpdateWithoutShippingWaybillsInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
@@ -884,6 +920,7 @@ export type OrderPartUncheckedUpdateWithoutShippingWaybillsInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
@@ -898,6 +935,7 @@ export type OrderPartCreateManyOrderInput = {
   images?: Prisma.OrderPartCreateimagesInput | string[]
   video?: string | null
   quantity?: number
+  shippingClass?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -910,6 +948,7 @@ export type OrderPartUpdateWithoutOrderInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
@@ -925,6 +964,7 @@ export type OrderPartUncheckedUpdateWithoutOrderInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
@@ -940,6 +980,7 @@ export type OrderPartUncheckedUpdateManyWithoutOrderInput = {
   images?: Prisma.OrderPartUpdateimagesInput | string[]
   video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -993,6 +1034,7 @@ export type OrderPartSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   images?: boolean
   video?: boolean
   quantity?: boolean
+  shippingClass?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1011,6 +1053,7 @@ export type OrderPartSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   images?: boolean
   video?: boolean
   quantity?: boolean
+  shippingClass?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1025,6 +1068,7 @@ export type OrderPartSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   images?: boolean
   video?: boolean
   quantity?: boolean
+  shippingClass?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1039,11 +1083,12 @@ export type OrderPartSelectScalar = {
   images?: boolean
   video?: boolean
   quantity?: boolean
+  shippingClass?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrderPartOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "name" | "description" | "notes" | "images" | "video" | "quantity" | "createdAt" | "updatedAt", ExtArgs["result"]["orderPart"]>
+export type OrderPartOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "name" | "description" | "notes" | "images" | "video" | "quantity" | "shippingClass" | "createdAt" | "updatedAt", ExtArgs["result"]["orderPart"]>
 export type OrderPartInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   offers?: boolean | Prisma.OrderPart$offersArgs<ExtArgs>
@@ -1075,6 +1120,10 @@ export type $OrderPartPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     images: string[]
     video: string | null
     quantity: number
+    /**
+     * Customer-declared logistics class: engine | gearbox | standard
+     */
+    shippingClass: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["orderPart"]>
@@ -1512,6 +1561,7 @@ export interface OrderPartFieldRefs {
   readonly images: Prisma.FieldRef<"OrderPart", 'String[]'>
   readonly video: Prisma.FieldRef<"OrderPart", 'String'>
   readonly quantity: Prisma.FieldRef<"OrderPart", 'Int'>
+  readonly shippingClass: Prisma.FieldRef<"OrderPart", 'String'>
   readonly createdAt: Prisma.FieldRef<"OrderPart", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"OrderPart", 'DateTime'>
 }

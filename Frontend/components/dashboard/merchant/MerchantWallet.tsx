@@ -196,6 +196,28 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
         }
     }, [fetchWallet, fetchWithdrawalData, currentUser?.id, dateRange.start, dateRange.end, stats.storeId]);
 
+    // Keep withdrawal limits in sync with admin financial settings (real-time).
+    useEffect(() => {
+        const refreshLimits = () => {
+            void fetchWallet({
+                startDate: dateRange.start || undefined,
+                endDate: dateRange.end || undefined,
+            });
+            void fetchWithdrawalData();
+        };
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') refreshLimits();
+        };
+        window.addEventListener('focus', refreshLimits);
+        document.addEventListener('visibilitychange', onVisible);
+        const interval = window.setInterval(refreshLimits, 15_000);
+        return () => {
+            window.removeEventListener('focus', refreshLimits);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.clearInterval(interval);
+        };
+    }, [fetchWallet, fetchWithdrawalData, dateRange.start, dateRange.end]);
+
     useEffect(() => {
         const loadPerformance = async () => {
             try {

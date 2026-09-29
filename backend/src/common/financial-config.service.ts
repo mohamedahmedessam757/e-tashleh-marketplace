@@ -56,21 +56,21 @@ export interface WithdrawalLimitProfile {
   stripeConnectEnabled: boolean;
 }
 
-const DEFAULT_TIER_WITHDRAWAL: Record<string, { withdrawalMin: number; withdrawalMax: number }> = {
-  BASIC: { withdrawalMin: 100, withdrawalMax: 2000 },
-  SILVER: { withdrawalMin: 100, withdrawalMax: 3000 },
-  GOLD: { withdrawalMin: 100, withdrawalMax: 5000 },
-  VIP: { withdrawalMin: 100, withdrawalMax: 8000 },
-  PARTNER: { withdrawalMin: 100, withdrawalMax: 10000 },
-  ELITE: { withdrawalMin: 100, withdrawalMax: 10000 },
+const DEFAULT_TIER_WITHDRAWAL: Record<string, { withdrawalMin?: number; withdrawalMax: number }> = {
+  BASIC: { withdrawalMax: 2000 },
+  SILVER: { withdrawalMax: 3000 },
+  GOLD: { withdrawalMax: 5000 },
+  VIP: { withdrawalMax: 8000 },
+  PARTNER: { withdrawalMax: 10000 },
+  ELITE: { withdrawalMax: 10000 },
 };
 
-const DEFAULT_STORE_TIER_WITHDRAWAL: Record<string, { withdrawalMin: number; withdrawalMax: number }> = {
-  BASIC: { withdrawalMin: 100, withdrawalMax: 2000 },
-  SILVER: { withdrawalMin: 100, withdrawalMax: 3000 },
-  GOLD: { withdrawalMin: 100, withdrawalMax: 5000 },
-  VIP: { withdrawalMin: 100, withdrawalMax: 8000 },
-  ELITE: { withdrawalMin: 100, withdrawalMax: 10000 },
+const DEFAULT_STORE_TIER_WITHDRAWAL: Record<string, { withdrawalMin?: number; withdrawalMax: number }> = {
+  BASIC: { withdrawalMax: 2000 },
+  SILVER: { withdrawalMax: 3000 },
+  GOLD: { withdrawalMax: 5000 },
+  VIP: { withdrawalMax: 8000 },
+  ELITE: { withdrawalMax: 10000 },
 };
 
 const DEFAULT_LOYALTY_TIERS: Record<string, LoyaltyTierConfig> = {
@@ -133,7 +133,7 @@ function mergeTierConfig<T extends object>(
 export class FinancialConfigService {
   private readonly logger = new Logger(FinancialConfigService.name);
   private cache: { config: FinancialConfig; expiresAt: number } | null = null;
-  private readonly TTL_MS = 60_000;
+  private readonly TTL_MS = 5_000;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -249,9 +249,9 @@ export class FinancialConfigService {
     ]);
     const tier = user?.loyaltyTier || 'BASIC';
     const tierCfg = config.loyaltyTiers[tier] ?? config.loyaltyTiers.BASIC;
-    const tierMin = tierCfg.withdrawalMin ?? global.customerMin;
+    // Platform financial minWithdrawalCustomer is authoritative for the wallet floor.
+    const min = global.customerMin;
     const tierMax = tierCfg.withdrawalMax ?? global.max;
-    const min = Math.max(global.customerMin, tierMin);
     const max = Math.min(global.max, tierMax);
     const payoutMethods: ('BANK_TRANSFER' | 'STRIPE')[] = ['BANK_TRANSFER'];
     if (config.stripeConnectEnabled) payoutMethods.push('STRIPE');
@@ -269,9 +269,9 @@ export class FinancialConfigService {
     ]);
     const tier = store?.loyaltyTier || 'BASIC';
     const tierCfg = config.storeLoyaltyTiers[tier] ?? config.storeLoyaltyTiers.BASIC;
-    const tierMin = tierCfg.withdrawalMin ?? global.merchantMin;
+    // Platform financial minWithdrawalMerchant is authoritative for the wallet floor.
+    const min = global.merchantMin;
     const tierMax = tierCfg.withdrawalMax ?? global.max;
-    const min = Math.max(global.merchantMin, tierMin);
     const max = Math.min(global.max, tierMax);
     const payoutMethods: ('BANK_TRANSFER' | 'STRIPE')[] = ['BANK_TRANSFER'];
     if (config.stripeConnectEnabled) payoutMethods.push('STRIPE');
