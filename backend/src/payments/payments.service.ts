@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -114,7 +115,28 @@ export class PaymentsService {
         private readonly invoiceSnapshot: InvoiceSnapshotService,
         private readonly returnsFeeInvoices: ReturnsFeeInvoiceService,
         private readonly completionFinance: OrderCompletionFinanceService,
+        private readonly moduleRef: ModuleRef,
     ) { }
+
+    /**
+     * ReturnsModule imports PaymentsModule, so ReturnsService is resolved lazily
+     * (dynamic import + ModuleRef) to avoid a DI / module-load cycle.
+     */
+    private async runReturnShippingLogistics(
+        caseType: 'return' | 'dispute',
+        caseId: string,
+        note: string,
+    ): Promise<void> {
+        try {
+            const { ReturnsService } = await import('../returns/returns.service');
+            const returns = this.moduleRef.get(ReturnsService, { strict: false });
+            await returns.runShippingPaidLogistics(caseType, caseId, note);
+        } catch (err: any) {
+            this.logger.error(
+                `Return logistics failed after shipping payment for ${caseType} ${caseId}: ${err?.message || err}`,
+            );
+        }
+    }
 
     /**
      * Process a payment for a single offer within an order.
@@ -1908,34 +1930,18 @@ export class PaymentsService {
                     });
                 }
 
-                const shipment = await tx.shipment.findFirst({
-                    where: { orderId: caseRow.orderId },
-                    orderBy: { createdAt: 'desc' },
-                });
-
-                if (shipment) {
-                    await tx.shipment.update({
-                        where: { id: shipment.id },
-                        data: { status: 'RETURN_STARTED' as any },
-                    });
-
-                    await tx.shipmentStatusLog.create({
-                        data: {
-                            shipmentId: shipment.id,
-                            fromStatus: shipment.status,
-                            toStatus: 'RETURN_STARTED' as any,
-                            notes: 'بدء الارجاع - تم سداد تكلفة الشحن عبر Stripe',
-                            source: 'API',
-                        },
-                    });
-                }
-
                 return caseRow;
             },
             { timeout: 20000, maxWait: 10000 },
         );
 
         if (!updatedCase) return;
+
+        await this.runReturnShippingLogistics(
+            caseType,
+            caseId,
+            'بدء الارجاع - تم سداد تكلفة الشحن عبر Stripe',
+        );
 
         const titleAr = 'تم سداد تكلفة الشحن!';
         const titleEn = 'Shipping Paid!';
@@ -2142,26 +2148,6 @@ export class PaymentsService {
                                 },
                             },
                         });
-
-                        const shipment = await tx.shipment.findFirst({
-                            where: { orderId: caseBefore.orderId },
-                            orderBy: { createdAt: 'desc' },
-                        });
-                        if (shipment) {
-                            await tx.shipment.update({
-                                where: { id: shipment.id },
-                                data: { status: 'RETURN_STARTED' as any },
-                            });
-                            await tx.shipmentStatusLog.create({
-                                data: {
-                                    shipmentId: shipment.id,
-                                    fromStatus: shipment.status,
-                                    toStatus: 'RETURN_STARTED' as any,
-                                    notes: 'بدء الارجاع - سداد مجمع (رسوم حكم + شحن) عبر Stripe',
-                                    source: 'API',
-                                },
-                            });
-                        }
                     }
                 }
 
@@ -2170,6 +2156,14 @@ export class PaymentsService {
             },
             { timeout: 20000, maxWait: 10000 },
         );
+
+        if (settled.shipClaimed) {
+            await this.runReturnShippingLogistics(
+                caseType,
+                caseId,
+                'بدء الارجاع - سداد مجمع (رسوم حكم + شحن) عبر Stripe',
+            );
+        }
 
         // Notifications AFTER commit (WhatsApp-safe, no TX hold)
         const totalPaid =
@@ -3636,6 +3630,7 @@ export class PaymentsService {
             select: { id: true },
         });
 
+        const shippingPaidCases: Array<{ caseType: 'return' | 'dispute'; caseId: string }> = [];
         const result = await this.prisma.$transaction(
             async (tx) => {
                 let balance = Number(store.balance || 0);
@@ -3797,6 +3792,9 @@ export class PaymentsService {
                         }
 
                         settledIds.push(line.id);
+                        if (line.kind === 'SHIPPING_FEE') {
+                            shippingPaidCases.push({ caseType: line.source, caseId: line.sourceId });
+                        }
                         if (line.orderId) {
                             const pay = await tx.paymentTransaction.findFirst({
                                 where: {
@@ -3845,6 +3843,14 @@ export class PaymentsService {
             },
             { timeout: 25000, maxWait: 10000 },
         );
+
+        for (const c of shippingPaidCases) {
+            await this.runReturnShippingLogistics(
+                c.caseType,
+                c.caseId,
+                'بدء الارجاع - تم سداد تكلفة الشحن عبر Stripe (تسوية مستحقات)',
+            );
+        }
 
         // Invoices (best-effort, idempotent by shippingBatchKey)
         for (const hint of result.invoiceHints) {
