@@ -2001,6 +2001,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                 shipments={order.shipments as any}
                                                                 orderPartId={acceptedPartOffer.orderPartId || p.id}
                                                                 cartShipmentId={acceptedPartOffer.cartShipmentId}
+                                                                fulfillmentStatus={acceptedPartOffer.fulfillmentStatus}
                                                                 isAr={language === 'ar'}
                                                             />
                                                         )}

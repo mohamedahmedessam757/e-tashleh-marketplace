@@ -593,7 +593,14 @@ export class OrdersService {
                         orderBy: { createdAt: 'desc' }
                     },
                     shipments: {
-                        select: { id: true, status: true, carrierName: true, trackingNumber: true, createdAt: true },
+                        select: {
+                            id: true,
+                            status: true,
+                            carrierName: true,
+                            trackingNumber: true,
+                            createdAt: true,
+                            waybill: { select: { partId: true, waybillNumber: true } },
+                        },
                         orderBy: { createdAt: 'desc' }
                     },
                     payments: {

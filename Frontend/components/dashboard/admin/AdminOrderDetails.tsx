@@ -999,6 +999,18 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                                 </button>
                                                             )}
                                                         </div>
+                                                        {order.requestType === 'multiple' &&
+                                                            primaryOffer &&
+                                                            String(primaryOffer.status).toUpperCase() === 'ACCEPTED' && (
+                                                            <PartShipmentStatus
+                                                                className="mt-1.5"
+                                                                shipments={order.shipments as any}
+                                                                orderPartId={p.id}
+                                                                cartShipmentId={primaryOffer.cartShipmentId}
+                                                                fulfillmentStatus={primaryOffer.fulfillmentStatus}
+                                                                isAr={isAr}
+                                                            />
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -1770,13 +1782,6 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                             order={order}
                                                             allOffers={order.offers || order.acceptedOffers || []}
                                                             inAssemblyCart={!offer.shippedFromCart}
-                                                            isAr={isAr}
-                                                        />
-                                                        <PartShipmentStatus
-                                                            className="mt-1.5"
-                                                            shipments={order.shipments as any}
-                                                            orderPartId={offer.orderPartId}
-                                                            cartShipmentId={offer.cartShipmentId}
                                                             isAr={isAr}
                                                         />
                                                     </div>

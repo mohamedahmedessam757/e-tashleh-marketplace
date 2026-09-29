@@ -2016,6 +2016,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             shipments={order.shipments as any}
                                                                             orderPartId={partOffer.orderPartId}
                                                                             cartShipmentId={partOffer.cartShipmentId}
+                                                                            fulfillmentStatus={partOffer.fulfillmentStatus}
                                                                             isAr={isAr}
                                                                         />
                                                                     )}
