@@ -436,27 +436,34 @@ export class ShipmentsService {
             );
         }
 
-        // 2026 Logic: When return to customer is completed -> mark order COMPLETED (or WARRANTY_ACTIVE)
+        // Return shipment back to customer: settle only the case / part carried by this shipment.
         if ((newStatus as string) === 'RETURN_COMPLETED_TO_CUSTOMER' && shipment.order) {
-            const acceptedOffers = await this.prisma.offer.findMany({
-                where: {
-                    orderId: shipment.orderId,
-                    status: { in: ['accepted', 'ACCEPTED'] },
-                },
-                select: { hasWarranty: true, warrantyDuration: true },
-            });
             const now = new Date();
+            const waybillPartId = shipment.waybillId
+                ? (
+                      await this.prisma.shippingWaybill.findUnique({
+                          where: { id: shipment.waybillId },
+                          select: { partId: true },
+                      })
+                  )?.partId ?? null
+                : null;
 
-            // Close the return / warranty-exchange case carried by this shipment and put its
-            // offer back to COMPLETED (it was reopened to READY_FOR_SHIPPING when shipping was paid),
-            // otherwise every panel keeps showing "ready for shipping" after the exchange finished.
+            // Warranty exchange: close the case and put its offer back to COMPLETED (it was
+            // reopened to READY_FOR_SHIPPING when shipping was paid). Refund cases are left alone —
+            // their offer is cancelled/refunded, never completed.
             const exchangeCases = await this.prisma.returnRequest.findMany({
                 where: {
                     orderId: shipment.orderId,
                     status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
-                    OR: [
-                        ...(shipment.waybillId ? [{ returnWaybillId: shipment.waybillId }] : []),
-                        { shipmentId: shipment.id },
+                    AND: [
+                        {
+                            OR: [
+                                ...(shipment.waybillId ? [{ returnWaybillId: shipment.waybillId }] : []),
+                                { shipmentId: shipment.id },
+                                ...(waybillPartId ? [{ orderPartId: waybillPartId }] : []),
+                            ],
+                        },
+                        { OR: [{ returnType: 'EXCHANGE' }, { faultParty: 'WARRANTY' }] },
                     ],
                 },
                 select: { id: true, offerId: true },
@@ -478,6 +485,25 @@ export class ShipmentsService {
                 }
             }
 
+            const orderShape = await this.prisma.order.findUnique({
+                where: { id: shipment.orderId },
+                select: { requestType: true, parts: { select: { id: true } } },
+            });
+            if (orderShape && this.offerFulfillment.isMultiItemOrder(orderShape)) {
+                // Multi-item: siblings keep their own return windows — the order follows its
+                // offers (recompute also runs completion finance only when truly terminal).
+                await this.offerFulfillment.recomputeOrderStatus(shipment.orderId);
+                await this.notifyRelevantUsers(shipment.orderId, newStatus, data.notes, data.customsDelayNote ?? shipment.customsDelayNote);
+                return this.reloadShipmentForAdmin(id);
+            }
+
+            const acceptedOffers = await this.prisma.offer.findMany({
+                where: {
+                    orderId: shipment.orderId,
+                    status: { in: ['accepted', 'ACCEPTED'] },
+                },
+                select: { hasWarranty: true, warrantyDuration: true },
+            });
             const warranty = resolveCompletionWarranty(
                 acceptedOffers,
                 now,

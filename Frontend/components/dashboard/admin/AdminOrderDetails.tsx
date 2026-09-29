@@ -40,6 +40,7 @@ import {
 } from '../../ui/ReturnDisputePhaseBanner';
 import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
+import { PartShipmentStatus } from '../shared/PartShipmentStatus';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
@@ -54,6 +55,7 @@ import {
     isOfferIncludedInLiveFinancialTotals,
     getMerchantFulfillmentDisplayLabel,
     isOfferFulfillmentCancelled,
+    pickPrimaryOutboundShipment,
 } from '../../../utils/offerFulfillmentHelpers';
 import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils/offerPricing';
 import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
@@ -319,6 +321,13 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         [order?.shipments, order?.status],
     );
 
+    const orderLevelShipment = useMemo(() => {
+        const list = (order?.shipments || []) as any[];
+        if (list.length === 0) return undefined;
+        if (order?.requestType !== 'multiple') return list[0];
+        return pickPrimaryOutboundShipment(list, String(order.id)) ?? list[0];
+    }, [order?.shipments, order?.requestType, order?.id]);
+
     const multiItemCompletion = useMemo(() => {
         const parts = fulfillmentSummary?.parts ?? [];
         if (parts.length <= 1) return null;
@@ -548,8 +557,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         totalCount={multiItemCompletion.totalCount}
                                     />
                                 )}
-                                {order.shipments && order.shipments.length > 0 && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
-                                    <Badge status={order.shipments[0].status as StatusType} className="animate-in fade-in zoom-in duration-500" />
+                                {orderLevelShipment && !['CANCELLED', 'AWAITING_OFFERS', 'AWAITING_PAYMENT'].includes(order.status) && (
+                                    <Badge status={orderLevelShipment.status as StatusType} className="animate-in fade-in zoom-in duration-500" />
                                 )}
                             </div>
                             {(order.warranty_end_at ||
@@ -643,8 +652,8 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
 
                     {/* Derived Shipment Status for Tracker Accuracy */}
                     {(() => {
-                        const derivedShipmentStatus = (order.shipments && order.shipments.length > 0)
-                            ? order.shipments[0].status
+                        const derivedShipmentStatus = orderLevelShipment
+                            ? orderLevelShipment.status
                             : order.status === 'READY_FOR_SHIPPING'
                                 ? 'PREPARED'
                                 : order.status === 'VERIFICATION_SUCCESS'
@@ -658,7 +667,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                         : order.status;
                         const timelineStatus = resolveOrderTimelineStatus(
                             order.status,
-                            order.shipments?.[0]?.status,
+                            orderLevelShipment?.status,
                         );
                         
                         return !['AWAITING_OFFERS', 'COLLECTING_OFFERS', 'AWAITING_PAYMENT', 'CANCELLED'].includes(order.status) ? (
@@ -1761,6 +1770,13 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                             order={order}
                                                             allOffers={order.offers || order.acceptedOffers || []}
                                                             inAssemblyCart={!offer.shippedFromCart}
+                                                            isAr={isAr}
+                                                        />
+                                                        <PartShipmentStatus
+                                                            className="mt-1.5"
+                                                            shipments={order.shipments as any}
+                                                            orderPartId={offer.orderPartId}
+                                                            cartShipmentId={offer.cartShipmentId}
                                                             isAr={isAr}
                                                         />
                                                     </div>

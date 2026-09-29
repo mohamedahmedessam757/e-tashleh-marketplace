@@ -67,12 +67,14 @@ import {
     resolveOrderTimelineStatus,
     computeShipmentDeliverySummary,
     pickPrimaryOutboundShipment,
+    resolvePartShipment,
 } from '../../../utils/offerFulfillmentHelpers';
 import { getOfferGovernanceWindow, isBiddingStopped } from '../../../utils/offerGovernance';
 import { getServerNowMs, syncServerClock } from '../../../utils/serverClock';
 import { resolveMarketPartBadgeKind } from '../../../utils/marketPartBadge';
 import { MerchantHandoverPendingBanner } from '../shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
+import { PartShipmentStatus } from '../shared/PartShipmentStatus';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { useOrderFulfillmentSummary } from '../../../hooks/useOrderFulfillmentSummary';
 import {
@@ -2008,14 +2010,30 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                             />
                                                                         </div>
                                                                     )}
+                                                                    {order.requestType === 'multiple' && (
+                                                                        <PartShipmentStatus
+                                                                            className="mt-2"
+                                                                            shipments={order.shipments as any}
+                                                                            orderPartId={partOffer.orderPartId}
+                                                                            cartShipmentId={partOffer.cartShipmentId}
+                                                                            isAr={isAr}
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                                 );
                                                             })()}
                                                             {(() => {
+                                                                const partShipmentStatus =
+                                                                    order.requestType === 'multiple'
+                                                                        ? resolvePartShipment(order.shipments as any, {
+                                                                              orderPartId: partOffer.orderPartId,
+                                                                              cartShipmentId: partOffer.cartShipmentId,
+                                                                          })?.status
+                                                                        : undefined;
                                                                 const logistics = getMerchantPartLogisticsLabel({
                                                                     order,
                                                                     partOffer,
-                                                                    shipmentStatus: shipment?.status,
+                                                                    shipmentStatus: partShipmentStatus ?? shipment?.status,
                                                                     isAr,
                                                                 });
                                                                 if (!logistics.show) return null;

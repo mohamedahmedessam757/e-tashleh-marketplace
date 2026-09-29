@@ -700,6 +700,35 @@ export function pickPrimaryOutboundShipment<
     })[0];
 }
 
+type PartShipmentLike = {
+    id?: string;
+    status?: string;
+    createdAt?: string | Date;
+    waybill?: { partId?: string | null } | null;
+};
+
+/**
+ * Shipment that currently carries one part of the order: its latest return shipment
+ * (matched by waybill.partId) or the outbound batch it shipped in (offer.cartShipmentId).
+ */
+export function resolvePartShipment<T extends PartShipmentLike>(
+    shipments: T[] | null | undefined,
+    part: { orderPartId?: string | null; cartShipmentId?: string | null },
+): T | undefined {
+    const list = shipments || [];
+    const candidates = list.filter(
+        (s) =>
+            (!!part.cartShipmentId && s.id === part.cartShipmentId) ||
+            (!!part.orderPartId && s.waybill?.partId === part.orderPartId),
+    );
+    if (candidates.length === 0) return undefined;
+    return [...candidates].sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+    })[0];
+}
+
 export function computeShipmentDeliverySummary(
     shipments?: Array<{ status?: string }> | null,
     orderStatus?: string,

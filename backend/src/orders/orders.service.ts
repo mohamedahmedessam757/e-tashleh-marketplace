@@ -654,7 +654,10 @@ export class OrdersService {
                 customer: { select: { id: true, name: true, email: true, phone: true } },
                 acceptedOffer: { include: { store: true } },
                 reviews: true,
-                shipments: { orderBy: { createdAt: 'desc' } },
+                shipments: {
+                    orderBy: { createdAt: 'desc' },
+                    include: { waybill: { select: { partId: true, waybillNumber: true } } },
+                },
                 offers: {
                     orderBy: { createdAt: 'asc' },
                     include: {

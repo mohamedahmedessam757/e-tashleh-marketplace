@@ -77,6 +77,7 @@ import {
 } from '../../utils/offerFulfillmentHelpers';
 import { MerchantHandoverPendingBanner } from './shared/MerchantHandoverPendingBanner';
 import { CartShipmentBadge } from './shared/CartShipmentBadge';
+import { PartShipmentStatus } from './shared/PartShipmentStatus';
 import { PartialShippingProgressCard } from './shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from './shared/PartialDeliveryProgressCard';
 import { PartReturnWindowCard, PartReturnWindowOffer } from './shared/PartReturnWindowCard';
@@ -1993,6 +1994,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                                     isAr={language === 'ar'}
                                                                 />
                                                             </div>
+                                                        )}
+                                                        {acceptedPartOffer && order.requestType === 'multiple' && (
+                                                            <PartShipmentStatus
+                                                                className="mt-1.5"
+                                                                shipments={order.shipments as any}
+                                                                orderPartId={acceptedPartOffer.orderPartId || p.id}
+                                                                cartShipmentId={acceptedPartOffer.cartShipmentId}
+                                                                isAr={language === 'ar'}
+                                                            />
                                                         )}
                                                     </div>
 
