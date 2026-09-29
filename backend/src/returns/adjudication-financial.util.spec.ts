@@ -159,8 +159,8 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
             faultParty: 'MERCHANT',
             finalRefundDecision: 'REFUND_CUSTOMER',
         });
-        expect(r.gatewayFeePct).toBe(3);
-        expect(r.refundFeePct).toBe(1.5);
+        expect(r.gatewayFeePct).toBe(0);
+        expect(r.refundFeePct).toBe(0);
         expect(r.finalCustomerRefundAmount).toBe(100.01);
         expect(r.merchantWalletDebits.shipping).toBe(10);
     });

@@ -82,8 +82,8 @@ export function computeAdjudicationPreview(
     input: AdjudicationPreviewInput,
 ): AdjudicationPreviewResult {
     const orderPaidTotal = Math.max(0, Number(input.orderPaidTotal) || 0);
-    const gatewayFeePct = Number(input.gatewayFeePct ?? 3);
-    const refundFeePct = Number(input.refundFeePct ?? 1.5);
+    const gatewayFeePct = Number(input.gatewayFeePct ?? 0);
+    const refundFeePct = Number(input.refundFeePct ?? 0);
     const shippingRoundtrip = Math.max(0, Number(input.shippingRoundtrip) || 0);
     const fault = normalizeFault(input.faultParty);
     const isCloseComplete = fault === 'CLOSE_COMPLETE_REFUND';

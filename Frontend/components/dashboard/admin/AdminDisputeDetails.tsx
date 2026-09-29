@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { API_URL } from '../../../services/api/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, 
@@ -53,8 +52,6 @@ import {
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
 import { storageApi } from '../../../services/api/storage';
-import { getAccessToken } from '../../../utils/auth';
-
 type AdminEvidenceItem = {
     id: string;
     url: string;
@@ -116,8 +113,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const [shippingRefund, setShippingRefund] = useState<number>(0);
     
     // 2026 Phase 5: Financial Adjudication States
-    const [gatewayFeePct, setGatewayFeePct] = useState<number>(3);
-    const [refundFeePct, setRefundFeePct] = useState<number>(1.50);
+    const [gatewayFeePct, setGatewayFeePct] = useState<number>(0);
+    const [refundFeePct, setRefundFeePct] = useState<number>(0);
     const [shippingRoundtrip, setShippingRoundtrip] = useState<number>(0);
     /** When SHIPPING_COMPANY: include Stripe gateway + refund fees in carrier liability (default ON). */
     const [includePlatformFeesInCarrierLiability, setIncludePlatformFeesInCarrierLiability] =
@@ -158,25 +155,6 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setIncludePlatformFeesInCarrierLiability(true);
         }
     };
-
-    useEffect(() => {
-        const loadGatewayFee = async () => {
-            try {
-                const token = getAccessToken();
-                const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    const pct = Number(data.financial?.gatewayFeePercent);
-                    if (Number.isFinite(pct) && pct >= 0) setGatewayFeePct(pct);
-                }
-            } catch {
-                /* keep default */
-            }
-        };
-        loadGatewayFee();
-    }, []);
 
     useEffect(() => {
         return () => {
