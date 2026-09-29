@@ -57,9 +57,6 @@ import { AdminSearchInput } from './AdminSearchInput';
 import { OverviewKpiSection } from './OverviewKpiSection';
 import { AdminBillingTabNav } from './AdminBillingTabNav';
 
-const OrderFinancialDrawer = lazy(() =>
-  import('./OrderFinancialDrawer').then((m) => ({ default: m.OrderFinancialDrawer })),
-);
 const AdminSellerAccounts = lazy(() =>
   import('./AdminSellerAccounts').then((m) => ({ default: m.AdminSellerAccounts })),
 );
@@ -96,6 +93,20 @@ type BillingTab =
   | 'SHIPPING_COMPANY_OBLIGATIONS'
   | 'PENALTIES'
   | 'REPORTS';
+
+const BILLING_TABS: BillingTab[] = [
+  'OVERVIEW',
+  'CUSTOMER_ACCOUNTS',
+  'SELLER_ACCOUNTS',
+  'CUSTOMER_WITHDRAWALS',
+  'MERCHANT_WITHDRAWALS',
+  'TRANSACTIONS',
+  'REFUNDS',
+  'SETTLEMENT',
+  'SHIPPING_COMPANY_OBLIGATIONS',
+  'PENALTIES',
+  'REPORTS',
+];
 
 interface AdminBillingProps {
     onNavigate?: (path: string, id: any) => void;
@@ -155,8 +166,10 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
     const [tempRate, setTempRate] = useState(commissionRate);
     const [limits, setLimits] = useState(withdrawalLimits);
-    const [activeTab, setActiveTab] = useState<BillingTab>('OVERVIEW');
-    const [selectedOrderIdForTimeline, setSelectedOrderIdForTimeline] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<BillingTab>(() => {
+        const tab = new URLSearchParams(window.location.search).get('tab');
+        return tab && BILLING_TABS.includes(tab as BillingTab) ? (tab as BillingTab) : 'OVERVIEW';
+    });
     const [showPayoutModal, setShowPayoutModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showBankModal, setShowBankModal] = useState(false);
@@ -366,12 +379,8 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     }, []);
 
     const handleFeedViewAudit = useCallback((orderId: string) => {
-        startTransition(() => setSelectedOrderIdForTimeline(orderId));
-    }, []);
-
-    const handleCloseOrderTimeline = useCallback(() => {
-        setSelectedOrderIdForTimeline(null);
-    }, []);
+        onNavigate?.('admin-order-financial-audit', orderId);
+    }, [onNavigate]);
 
     const handleSaveCommission = () => {
         setCommissionRate(tempRate);
@@ -869,16 +878,6 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                 selectedRequest={selectedWithdrawalReq}
             />
             </BlurredSection>
-            {/* Phase 4: Financial Audit Drawer */}
-            {selectedOrderIdForTimeline && (
-              <Suspense fallback={null}>
-                <OrderFinancialDrawer
-                  orderId={selectedOrderIdForTimeline}
-                  onClose={handleCloseOrderTimeline}
-                />
-              </Suspense>
-            )}
-
             {/* Phase 5: Real-time Notifications */}
             <FinancialToast />
         </div>

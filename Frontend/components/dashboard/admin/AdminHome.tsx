@@ -26,6 +26,7 @@ import { AdminDisputeDetails } from './AdminDisputeDetails';
 import { AdminBilling } from './AdminBilling';
 import { AdminInvoicesHub } from './AdminInvoicesHub';
 import { AdminOrderInvoicePage } from './AdminOrderInvoicePage';
+import { AdminOrderFinancialAuditPage } from './AdminOrderFinancialAuditPage';
 import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminPlatformErrors } from './AdminPlatformErrors';
 import { AdminWhatsAppLogs } from './AdminWhatsAppLogs';
@@ -375,6 +376,17 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         return (
             <PermissionGuard page="invoices" action="view">
                 <AdminInvoicesHub onNavigate={navigate} />
+            </PermissionGuard>
+        );
+    }
+    if (subPath === 'admin-order-financial-audit' && viewId) {
+        return (
+            <PermissionGuard page="billing" action="view">
+                <AdminOrderFinancialAuditPage
+                    orderId={viewId}
+                    onNavigate={navigate}
+                    onBack={() => navigate('billing', undefined, 'TRANSACTIONS')}
+                />
             </PermissionGuard>
         );
     }
