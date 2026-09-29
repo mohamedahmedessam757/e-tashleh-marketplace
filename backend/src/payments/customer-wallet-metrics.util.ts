@@ -43,6 +43,15 @@ export const CUSTOMER_TERMINAL_REWARD_STATUSES = [
   'CLOSED',
 ] as const;
 
+/**
+ * Warranty exchange keeps the purchase (no refund), so an order sitting in a
+ * RETURN_* status only because of an open exchange still counts as realized.
+ */
+export const OPEN_WARRANTY_EXCHANGE_RETURN_FILTER = {
+  returnType: 'EXCHANGE',
+  status: { notIn: ['REJECTED', 'CANCELLED'] },
+};
+
 export const REFERRAL_WINDOW_DAYS = 180;
 export const REFERRAL_RATE = 0.01;
 
@@ -118,6 +127,7 @@ export async function computeCustomerCompletedOrdersCount(
             },
           },
         },
+        { returns: { some: OPEN_WARRANTY_EXCHANGE_RETURN_FILTER } },
       ],
     },
   });

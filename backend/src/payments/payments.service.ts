@@ -47,6 +47,7 @@ import {
     computeCustomerAvailableBalance,
     CUSTOMER_PENDING_REWARD_ORDER_STATUSES,
     CUSTOMER_TERMINAL_REWARD_STATUSES,
+    OPEN_WARRANTY_EXCHANGE_RETURN_FILTER,
     extractOrderProfitOrderIds,
     extractFullyRewardedOrderIds,
     extractRewardedOfferIds,
@@ -2781,6 +2782,16 @@ export class PaymentsService {
                     .filter((o) => !terminalSet.has(o.status))
                     .map((o) => o.id),
             );
+            if (nonTerminalRewardedIds.size > 0) {
+                const warrantyExchanges = await this.prisma.returnRequest.findMany({
+                    where: {
+                        orderId: { in: [...nonTerminalRewardedIds] },
+                        ...OPEN_WARRANTY_EXCHANGE_RETURN_FILTER,
+                    },
+                    select: { orderId: true },
+                });
+                for (const r of warrantyExchanges) nonTerminalRewardedIds.delete(r.orderId);
+            }
             prematureCashbackHeld = sumPrematureOrderProfit(
                 orderProfitTxs,
                 nonTerminalRewardedIds,

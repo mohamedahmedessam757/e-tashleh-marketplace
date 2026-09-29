@@ -16,6 +16,11 @@ import { getSystemConfigDefaults, mergeSystemConfig } from '../utils/systemConfi
 import type { EarnIncomeConfig } from '../types/earnIncome';
 import { clearAccessToken, getAccessToken } from '../utils/auth';
 
+function toLocalDateInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 let feedRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let financialsRefreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -686,8 +691,8 @@ export const useAdminStore = create<AdminState>()(
       newEventsCount: 0,
       financialToasts: [],
       financialFilters: {
-        startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0],
+        startDate: toLocalDateInput(new Date(new Date().setDate(new Date().getDate() - 30))),
+        endDate: toLocalDateInput(new Date()),
         period: '',
         type: 'ALL',
         role: 'ALL',
@@ -1710,6 +1715,18 @@ export const useAdminStore = create<AdminState>()(
 
           if (res.ok) {
             const { data, hasMore, nextCursor } = await res.json();
+            const current = get().financialFeed;
+
+            // Silent realtime refresh must never drop rows already loaded via "load more".
+            if (reset && silent && current.length > data.length) {
+              const freshIds = new Set((data as UnifiedFinancialEvent[]).map((e) => e.id));
+              set({
+                financialFeed: [...data, ...current.filter((e) => !freshIds.has(e.id))],
+                isFeedLoading: false,
+              });
+              return;
+            }
+
             const newFeed = reset ? data : [...financialFeed, ...data];
 
             set({
@@ -2479,6 +2496,13 @@ export const useAdminStore = create<AdminState>()(
           financialToasts,
           activitySubscription,
           catalogSubscription,
+          // Ledger rows + date filters must be rebuilt on load; a persisted endDate
+          // from a previous day would silently hide newer transactions.
+          financialFeed,
+          feedCursor,
+          feedHasMore,
+          feedFilters,
+          financialFilters,
           ...rest 
         } = state;
         return rest;
