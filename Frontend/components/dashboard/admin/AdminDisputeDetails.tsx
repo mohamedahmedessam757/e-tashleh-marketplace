@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { API_URL } from '../../../services/api/config';
+import { getAccessToken } from '../../../utils/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, 
@@ -52,6 +54,10 @@ import {
 import { storesApi } from '../../../services/api/stores';
 import { computeAdjudicationPreview } from '../../../utils/adjudicationFinancial';
 import { storageApi } from '../../../services/api/storage';
+
+const DEFAULT_GATEWAY_FEE_PCT = 3;
+const DEFAULT_REFUND_FEE_PCT = 1.5;
+
 type AdminEvidenceItem = {
     id: string;
     url: string;
@@ -113,8 +119,10 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     const [shippingRefund, setShippingRefund] = useState<number>(0);
     
     // 2026 Phase 5: Financial Adjudication States
-    const [gatewayFeePct, setGatewayFeePct] = useState<number>(0);
-    const [refundFeePct, setRefundFeePct] = useState<number>(0);
+    const [defaultGatewayFeePct, setDefaultGatewayFeePct] = useState<number>(DEFAULT_GATEWAY_FEE_PCT);
+    const [gatewayFeePct, setGatewayFeePct] = useState<number>(DEFAULT_GATEWAY_FEE_PCT);
+    const [refundFeePct, setRefundFeePct] = useState<number>(DEFAULT_REFUND_FEE_PCT);
+    const feesAutoZeroedRef = useRef(false);
     const [shippingRoundtrip, setShippingRoundtrip] = useState<number>(0);
     /** When SHIPPING_COMPANY: include Stripe gateway + refund fees in carrier liability (default ON). */
     const [includePlatformFeesInCarrierLiability, setIncludePlatformFeesInCarrierLiability] =
@@ -267,6 +275,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setFinalRefundDecision('NO_CUSTOMER_REFUND');
             setGatewayFeePct(0);
             setRefundFeePct(0);
+            feesAutoZeroedRef.current = true;
             if (adminApproval === 'REJECTED') setAdminApproval('APPROVED');
         }
         // Customer claim / customer at fault → no refund, no merchant fine: zero the calculator
@@ -275,8 +284,37 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             setGatewayFeePct(0);
             setRefundFeePct(0);
             setShippingRoundtrip(0);
+            feesAutoZeroedRef.current = true;
         }
-    }, [faultParty, adminApproval, isExchangeCase]);
+        // Leaving warranty/customer: restore the standard fee percentages
+        if (faultParty !== 'WARRANTY' && faultParty !== 'CUSTOMER' && feesAutoZeroedRef.current) {
+            setGatewayFeePct(defaultGatewayFeePct);
+            setRefundFeePct(DEFAULT_REFUND_FEE_PCT);
+            feesAutoZeroedRef.current = false;
+        }
+    }, [faultParty, adminApproval, isExchangeCase, defaultGatewayFeePct]);
+
+    useEffect(() => {
+        const loadGatewayFee = async () => {
+            try {
+                const token = getAccessToken();
+                const res = await fetch(`${API_URL}/payments/admin/financial-settings`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const pct = Number(data.financial?.gatewayFeePercent);
+                    if (Number.isFinite(pct) && pct >= 0) {
+                        setDefaultGatewayFeePct(pct);
+                        if (!feesAutoZeroedRef.current) setGatewayFeePct(pct);
+                    }
+                }
+            } catch {
+                /* keep default */
+            }
+        };
+        loadGatewayFee();
+    }, []);
 
     useEffect(() => {
         if (

@@ -130,8 +130,8 @@ export function computeAdjudicationFinancials(
     const orderPaidTotal = roundMoney2(Math.max(0, Number(input.orderPaidTotal) || 0));
     const fault = normalizeFault(input.faultParty);
     const warranty = isWarrantyFault(fault);
-    const gatewayFeePct = warranty ? 0 : sanitizePct(input.gatewayFeePct ?? 0, 0);
-    const refundFeePct = warranty ? 0 : sanitizePct(input.refundFeePct ?? 0, 0);
+    const gatewayFeePct = warranty ? 0 : sanitizePct(input.gatewayFeePct ?? 3, 3);
+    const refundFeePct = warranty ? 0 : sanitizePct(input.refundFeePct ?? 1.5, 1.5);
     const shippingRoundtrip = roundMoney2(Math.max(0, Number(input.shippingRoundtrip) || 0));
     const isCloseComplete = fault === 'CLOSE_COMPLETE_REFUND';
     const finalRefundDecision = normalizeFinalRefundDecision(input.finalRefundDecision, fault);

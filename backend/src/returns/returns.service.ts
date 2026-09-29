@@ -191,8 +191,8 @@ export class ReturnsService {
                 : undefined;
         return computeAdjudicationFinancials({
             orderPaidTotal: orderAmount,
-            gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 0),
-            refundFeePct: Number(caseRecord.refundFeePct ?? 0),
+            gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 3),
+            refundFeePct: Number(caseRecord.refundFeePct ?? 1.5),
             shippingRoundtrip,
             faultParty: caseRecord.faultParty || 'MERCHANT',
             finalRefundDecision: caseRecord.finalRefundDecision,
@@ -1801,8 +1801,8 @@ export class ReturnsService {
 
         const fin = computeAdjudicationFinancials({
             orderPaidTotal: orderAmount,
-            gatewayFeePct: Number(extra?.gatewayFeePct ?? 0),
-            refundFeePct: Number(extra?.refundFeePct ?? 0),
+            gatewayFeePct: Number(extra?.gatewayFeePct ?? 3),
+            refundFeePct: Number(extra?.refundFeePct ?? 1.5),
             shippingRoundtrip: Number(extra?.shippingRoundtrip ?? 0),
             faultParty: isCloseCompleteRefund
                 ? 'CLOSE_COMPLETE_REFUND'
@@ -1953,8 +1953,8 @@ export class ReturnsService {
             );
             const preFin = computeAdjudicationFinancials({
                 orderPaidTotal: orderAmount,
-                gatewayFeePct: Number(extra?.gatewayFeePct ?? 0),
-                refundFeePct: Number(extra?.refundFeePct ?? 0),
+                gatewayFeePct: Number(extra?.gatewayFeePct ?? 3),
+                refundFeePct: Number(extra?.refundFeePct ?? 1.5),
                 shippingRoundtrip: Number(extra?.shippingRoundtrip ?? 0),
                 faultParty: isCloseCompleteRefund
                     ? 'CLOSE_COMPLETE_REFUND'
