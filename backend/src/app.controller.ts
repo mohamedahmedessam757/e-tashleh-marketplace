@@ -1,4 +1,5 @@
 import { Controller, Get, Header } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from './prisma/prisma.service';
 import { PlatformBrandingService } from './common/platform-branding.service';
 import { OrderDurationConfigService } from './common/order-duration-config.service';
@@ -21,6 +22,7 @@ export class AppController {
     }
 
     @Get('health')
+    @SkipThrottle()
     async healthCheck() {
         const dbOk = await this.prisma.isHealthy();
         return {
@@ -32,12 +34,14 @@ export class AppController {
 
     /** Public server clock for client countdown skew correction (display only). */
     @Get('meta/server-time')
+    @SkipThrottle()
     @Header('Cache-Control', 'no-store')
     getServerTime() {
         return { serverNow: new Date().toISOString() };
     }
 
     @Get('system/status')
+    @SkipThrottle()
     @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
     async getSystemStatus() {
         const statusSetting = await this.prisma.platformSettings.findUnique({

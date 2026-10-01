@@ -49,6 +49,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         if (await this.isHealthy()) {
             return true;
         }
+        await new Promise((r) => setTimeout(r, 300));
+        if (await this.isHealthy()) {
+            return true;
+        }
 
         this.logger.warn('Database ping failed — attempting reconnect…');
         await this.$disconnect().catch(() => undefined);

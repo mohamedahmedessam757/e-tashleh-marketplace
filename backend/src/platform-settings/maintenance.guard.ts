@@ -5,7 +5,17 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MaintenanceGuard implements CanActivate {
   private readonly logger = new Logger(MaintenanceGuard.name);
 
+  private cache: { value: any; expiresAt: number } | null = null;
+
   constructor(private prisma: PrismaService) {}
+
+  private async getStatus(): Promise<any> {
+    const now = Date.now();
+    if (this.cache && this.cache.expiresAt > now) return this.cache.value;
+    const row = await this.prisma.platformSettings.findUnique({ where: { settingKey: 'system_status' } });
+    this.cache = { value: row?.settingValue ?? null, expiresAt: now + 10_000 };
+    return this.cache.value;
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -25,19 +35,10 @@ export class MaintenanceGuard implements CanActivate {
     }
 
     try {
-      if (!(await this.prisma.ensureConnected())) {
-        this.logger.warn('Database unreachable — skipping maintenance check (fail-open).');
-        return true;
-      }
-
       // 2. Fetch Maintenance Status
-      const statusSetting = await this.prisma.platformSettings.findUnique({
-        where: { settingKey: 'system_status' },
-      });
+      const status = await this.getStatus();
+      if (!status) return true;
 
-      if (!statusSetting) return true;
-
-      const status = statusSetting.settingValue as any;
       const isMaintenance = status?.maintenanceMode === true;
 
       if (!isMaintenance) return true;
